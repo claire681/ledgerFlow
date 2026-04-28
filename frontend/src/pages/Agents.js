@@ -48,7 +48,7 @@ export default function Agents() {
     setMessages(newMsgs);
     setLoading(true);
     try {
-      const res  = await fetch('/api/v1/agents/chat', {
+      const res  = await fetch('https://api.getnovala.com/api/v1/agents/chat', {
         method:  'POST',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,

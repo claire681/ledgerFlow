@@ -199,7 +199,7 @@ export default function Team() {
 
   const load = async () => {
     try {
-      const data = await safeFetch('/api/v1/team/members');
+      const data = await safeFetch('https://api.getnovala.com/api/v1/team/members');
       if (data.members) {
         setMembers(data.members);
         setSummary(data.summary || {});
@@ -247,7 +247,7 @@ export default function Team() {
     if (!invEmail.includes('@')) { setError('Please enter a valid email address'); return; }
     setSaving(true); setError('');
     try {
-      await safeFetch('/api/v1/team/invite', {
+      await safeFetch('https://api.getnovala.com/api/v1/team/invite', {
         method: 'POST',
         body:   JSON.stringify({ email: invEmail.trim(), full_name: invName.trim() || null, role: invRole }),
       });
@@ -266,7 +266,7 @@ export default function Team() {
     if (!selected) return;
     setSaving(true); setError('');
     try {
-      await safeFetch(`/api/v1/team/${selected.id}/role`, {
+      await safeFetch(`https://api.getnovala.com/api/v1/team/${selected.id}/role`, {
         method: 'PATCH',
         body:   JSON.stringify({ role: editRole }),
       });
@@ -285,7 +285,7 @@ export default function Team() {
     if (!selected) return;
     setSaving(true); setError('');
     try {
-      await safeFetch(`/api/v1/team/${selected.id}`, { method: 'DELETE' });
+      await safeFetch(`https://api.getnovala.com/api/v1/team/${selected.id}`, { method: 'DELETE' });
       closeModal();
       showSuccess(`✓ ${selected.email} removed from team`);
       await load();
@@ -299,7 +299,7 @@ export default function Team() {
   // ── Activate ──────────────────────────────────────────────
   const handleActivate = async (member) => {
     try {
-      await safeFetch(`/api/v1/team/${member.id}/status`, {
+      await safeFetch(`https://api.getnovala.com/api/v1/team/${member.id}/status`, {
         method: 'PATCH',
         body:   JSON.stringify({ status: 'active' }),
       });

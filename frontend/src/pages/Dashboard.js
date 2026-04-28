@@ -17,7 +17,7 @@ import {
 } from '../services/api';
 import { generateReport } from '../services/pdfGenerator';
 
-const BASE     = '/api/v1';
+const BASE     = 'https://api.getnovala.com/api/v1';
 const ACCENT   = '#0AB98A';
 const getToken = () => localStorage.getItem('token') || localStorage.getItem('access_token') || '';
 

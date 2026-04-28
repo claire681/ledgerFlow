@@ -61,7 +61,7 @@ export default function Transactions() {
     if (!window.confirm(`Delete transaction from "${vendor}"?`)) return;
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-      const res   = await fetch(`/api/v1/transactions/${id}`, {
+      const res   = await fetch(`https://api.getnovala.com/api/v1/transactions/${id}`, {
         method:  'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -83,7 +83,7 @@ export default function Transactions() {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const res  = await fetch('/api/v1/transactions/import-csv', {
+      const res  = await fetch('https://api.getnovala.com/api/v1/transactions/import-csv', {
         method:  'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         body:    formData,

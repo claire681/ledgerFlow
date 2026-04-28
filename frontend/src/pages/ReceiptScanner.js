@@ -9,7 +9,7 @@ import {
 import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
 
-const BASE     = '/api/v1';
+const BASE     = 'https://api.getnovala.com/api/v1';
 const getToken = () => localStorage.getItem('token') || '';
 const ACCENT   = '#0AB98A';
 const GRAD     = 'linear-gradient(135deg, #0AB98A 0%, #0EA5E9 100%)';

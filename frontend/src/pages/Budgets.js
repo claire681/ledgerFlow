@@ -148,7 +148,7 @@ export default function Budgets() {
   const load = async () => {
     setLoading(true);
     try {
-      const res  = await fetch('/api/v1/budgets/', {
+      const res  = await fetch('https://api.getnovala.com/api/v1/budgets/', {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       const data = await res.json();
@@ -232,7 +232,7 @@ export default function Budgets() {
 
     setSaving(true);
     try {
-      const res = await fetch('/api/v1/budgets/', {
+      const res = await fetch('https://api.getnovala.com/api/v1/budgets/', {
         method:  'POST',
         headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
         body:    JSON.stringify({ category: finalCat, monthly_limit: parseFloat(limit), currency }),
@@ -250,7 +250,7 @@ export default function Budgets() {
   };
 
   const handleUpdate = async (budgetId, body) => {
-    const res = await fetch(`/api/v1/budgets/${budgetId}`, {
+    const res = await fetch(`https://api.getnovala.com/api/v1/budgets/${budgetId}`, {
       method:  'PATCH',
       headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
       body:    JSON.stringify(body),
@@ -262,7 +262,7 @@ export default function Budgets() {
 
   const handleDelete = async (cat) => {
     try {
-      const res = await fetch(`/api/v1/budgets/${encodeURIComponent(cat)}`, {
+      const res = await fetch(`https://api.getnovala.com/api/v1/budgets/${encodeURIComponent(cat)}`, {
         method:  'DELETE',
         headers: { Authorization: `Bearer ${getToken()}` },
       });

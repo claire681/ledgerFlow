@@ -72,7 +72,7 @@ export default function Currency() {
       .catch(() => setLastUpdated('Offline rates'))
       .finally(() => setLoading(false));
 
-    fetch('/api/v1/transactions/', {
+    fetch('https://api.getnovala.com/api/v1/transactions/', {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     }).then(r => r.json()).then(d => setTransactions(Array.isArray(d) ? d : [])).catch(() => {});
   }, []);

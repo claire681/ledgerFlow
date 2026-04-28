@@ -1,0 +1,1 @@
+export const API_BASE = 'https://api.getnovala.com/api/v1';

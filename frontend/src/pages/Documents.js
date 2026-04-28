@@ -10,7 +10,7 @@ import {
 import { useAI } from '../hooks/useAI';
 import DocumentViewer from '../components/DocumentViewer';
 
-const BASE   = '/api/v1';
+const BASE   = 'https://api.getnovala.com/api/v1';
 const ACCENT = '#0AB98A';
 const GRAD   = 'linear-gradient(135deg, #0AB98A 0%, #0EA5E9 100%)';
 

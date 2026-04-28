@@ -587,7 +587,7 @@ export default function Invoices() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/invoices/', { headers: getHeaders() });
+      const res = await fetch('https://api.getnovala.com/api/v1/invoices/', { headers: getHeaders() });
       const data = await safeJson(res);
       setInvoices(mergeInvoices(data));
     } catch {
@@ -733,7 +733,7 @@ export default function Invoices() {
 
   const openCreate = async () => {
     try {
-      const res = await fetch('/api/v1/invoices/', { headers: getHeaders() });
+      const res = await fetch('https://api.getnovala.com/api/v1/invoices/', { headers: getHeaders() });
       const d = await safeJson(res);
       resetForm(`INV-${String((Array.isArray(d) ? d.length : 0) + 1001).padStart(4, '0')}`);
     } catch {
@@ -789,7 +789,7 @@ export default function Invoices() {
 
     try {
       const payload = buildPayload(isEdit ? selected?.status : 'draft');
-      const url = isEdit ? `/api/v1/invoices/${selected.id}` : '/api/v1/invoices/';
+      const url = isEdit ? `https://api.getnovala.com/api/v1/invoices/${selected.id}` : 'https://api.getnovala.com/api/v1/invoices/';
       const method = isEdit ? 'PATCH' : 'POST';
 
       const res = await fetch(url, {
@@ -831,7 +831,7 @@ export default function Invoices() {
   };
 
   const handleStatus = async (id, status) => {
-    const res = await fetch(`/api/v1/invoices/${id}`, {
+    const res = await fetch(`https://api.getnovala.com/api/v1/invoices/${id}`, {
       method: 'PATCH',
       headers: getHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ status }),
@@ -853,7 +853,7 @@ export default function Invoices() {
       invoices.find((inv) => inv.id === id) ||
       (selected?.id === id ? selected : null);
 
-    const res = await fetch(`/api/v1/invoices/${id}`, {
+    const res = await fetch(`https://api.getnovala.com/api/v1/invoices/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });

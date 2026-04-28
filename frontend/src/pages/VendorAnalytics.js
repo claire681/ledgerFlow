@@ -23,7 +23,7 @@ export default function VendorAnalytics() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res  = await fetch('/api/v1/transactions/', {
+        const res  = await fetch('https://api.getnovala.com/api/v1/transactions/', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         const data = await res.json();
