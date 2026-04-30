@@ -216,7 +216,7 @@ function IntegrationCard({ integration, onConnect, onDisconnect, onSync, onTest,
   const thisResult  = testResult?.provider === integration.provider ? testResult : null;
 
   return (
-    <div style={{ ...card, padding:20, display:'flex', flexDirection:'column', gap:12 }}>
+    <div style={{ ...card, padding:16, display:'flex', flexDirection:'column', gap:12, overflow:'hidden', boxSizing:'border-box' }}>
       {/* Header */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
         <div style={{ display:'flex', alignItems:'center', gap:12, flex:1, minWidth:0 }}>
@@ -383,7 +383,7 @@ export default function Integrations() {
         )}
       </div>
 
-      <div style={{ padding: pad }}>
+      <div style={{ padding: pad, overflow:'hidden', boxSizing:'border-box' }}>
 
         {success && (
           <div style={{ padding:'12px 16px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.08)', border:'1px solid rgba(10,185,138,0.2)', color:ACCENT, fontSize:13, marginBottom:16, display:'flex', alignItems:'center', gap:8 }}>
@@ -422,7 +422,7 @@ export default function Integrations() {
 
         {/* Integration cards — 1 col on mobile, auto on desktop */}
         {!loading && (
-          <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px,1fr))', gap: isMobile ? 12 : 16 }}>
+          <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px,1fr))', gap: isMobile ? 12 : 16, overflow:'hidden' }}>
             {integrations.map(integration => (
               <IntegrationCard
                 key={integration.provider}
