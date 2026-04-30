@@ -74,7 +74,7 @@ const LogoIcon = () => (
   </svg>
 );
 
-export default function Sidebar({ onLogout }) {
+export default function Sidebar({ onLogout, onNavigate }) {
   const navigate      = useNavigate();
   const location      = useLocation();
   const [hov, setHov] = useState(null);
