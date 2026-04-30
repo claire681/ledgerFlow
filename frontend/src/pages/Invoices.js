@@ -77,6 +77,7 @@ const inp = {
 };
 
 function InvoicePreview({ inv }) {
+  const isMobile  = useIsMobile();
   const lineItems = inv.line_items || inv.items || [];
   const subtotal  = Number(inv.subtotal || lineItems.reduce((s,it) => s + (Number(it.quantity??it.qty??1)) * (Number(it.price??it.rate??0)), 0));
   const taxAmt    = Number(inv.tax_amount || 0);
@@ -84,22 +85,25 @@ function InvoicePreview({ inv }) {
   const paid      = inv.status === 'paid';
 
   return (
-    <div style={{ fontFamily:"'Georgia','Times New Roman',serif", background:'#fff', color:'#1a1a2e', lineHeight:1.6, padding:'48px 52px', minHeight:900, position:'relative' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:40 }}>
+    <div style={{ fontFamily:"'Georgia','Times New Roman',serif", background:'#fff', color:'#1a1a2e', lineHeight:1.6, padding: isMobile ? '24px 16px' : '48px 52px', position:'relative' }}>
+
+      {/* Header — stack on mobile */}
+      <div style={{ display:'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent:'space-between', alignItems:'flex-start', marginBottom: isMobile ? 20 : 40, gap: isMobile ? 12 : 0 }}>
         <div>
-          <div style={{ fontSize:38, fontWeight:700, color:'#52b788', letterSpacing:'0.02em', marginBottom:16 }}>INVOICE</div>
+          <div style={{ fontSize: isMobile ? 28 : 38, fontWeight:700, color:'#52b788', letterSpacing:'0.02em', marginBottom:12 }}>INVOICE</div>
           {inv.from_name    && <div style={{ fontSize:14, fontWeight:700, color:'#1a1a2e', marginBottom:2 }}>{inv.from_name}</div>}
           {inv.from_bn      && <div style={{ fontSize:13, color:'#444', marginBottom:2 }}>BN {inv.from_bn}</div>}
           {inv.from_address && <div style={{ fontSize:13, color:'#444', whiteSpace:'pre-line', marginBottom:2 }}>{inv.from_address}</div>}
           {inv.from_email   && <div style={{ fontSize:13, color:'#444', marginBottom:2 }}>{inv.from_email}</div>}
           {inv.from_phone   && <div style={{ fontSize:13, color:'#444' }}>{inv.from_phone}</div>}
         </div>
-        <div style={{ flexShrink:0, marginLeft:32, minHeight:40, display:'flex', alignItems:'flex-start' }}>
-          {inv.logo_url && <img src={inv.logo_url} alt="logo" style={{ maxHeight:80, maxWidth:220, objectFit:'contain', display:'block' }}/>}
-        </div>
+        {inv.logo_url && (
+          <img src={inv.logo_url} alt="logo" style={{ maxHeight: isMobile ? 48 : 80, maxWidth: isMobile ? 140 : 220, objectFit:'contain', display:'block' }}/>
+        )}
       </div>
 
-      <div style={{ background:'#eaf7f0', padding:'24px 28px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:40, marginBottom:0 }}>
+      {/* Bill to + Invoice details — stack on mobile */}
+      <div style={{ background:'#eaf7f0', padding: isMobile ? '16px' : '24px 28px', display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 16 : 40, marginBottom:0 }}>
         <div>
           <div style={{ fontSize:13, fontWeight:700, color:'#1a1a2e', marginBottom:6 }}>Bill to</div>
           <div style={{ fontSize:14, color:'#1a1a2e' }}>{inv.to_name||'—'}</div>
@@ -108,43 +112,53 @@ function InvoicePreview({ inv }) {
         </div>
         <div>
           <div style={{ fontSize:13, fontWeight:700, color:'#1a1a2e', marginBottom:6 }}>Invoice details</div>
-          {[['Invoice no.:',inv.invoice_number||'—'],['Terms:',inv.terms||'Net 30'],['Invoice date:',fmtDate(inv.date)],['Due date:',fmtDate(inv.due_date)]].map(([l,v]) => (
-            <div key={l} style={{ display:'flex', gap:8, fontSize:13, color:'#1a1a2e', marginBottom:3 }}>
-              <span style={{ minWidth:100 }}>{l}</span><span>{v}</span>
+          {[
+            ['Invoice no.:',  inv.invoice_number||'—'],
+            ['Terms:',        inv.terms||'Net 30'],
+            ['Invoice date:', fmtDate(inv.date)],
+            ['Due date:',     fmtDate(inv.due_date)],
+          ].map(([l,v]) => (
+            <div key={l} style={{ display:'flex', gap:8, fontSize:13, color:'#1a1a2e', marginBottom:3, flexWrap:'wrap' }}>
+              <span style={{ minWidth: isMobile ? 90 : 100, fontWeight:600 }}>{l}</span>
+              <span>{v}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
-        <thead>
-          <tr>
-            {[{label:'#',align:'left',w:30},{label:'Product or service',align:'left',w:160},{label:'Description',align:'left',w:''},{label:'Qty',align:'right',w:50},{label:'Rate',align:'right',w:90},{label:'Amount',align:'right',w:90}].map(col => (
-              <th key={col.label} style={{ padding:'12px 8px', textAlign:col.align, fontWeight:600, color:'#1a1a2e', fontSize:13, width:col.w||'auto', borderBottom:'1px solid #bbb' }}>{col.label}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {lineItems.length === 0 ? (
-            <tr><td colSpan={6} style={{ textAlign:'center', padding:'32px 0', color:'#94a3b8', fontSize:13 }}>No line items</td></tr>
-          ) : lineItems.map((item,i) => {
-            const qty=Number(item.quantity??item.qty??1), price=Number(item.price??item.rate??0);
-            return (
-              <tr key={i} style={{ borderBottom:'1px solid #eee' }}>
-                <td style={{ padding:'14px 8px', fontSize:13, color:'#1a1a2e', verticalAlign:'top' }}>{i+1}.</td>
-                <td style={{ padding:'14px 8px', fontSize:13, fontWeight:700, color:'#1a1a2e', verticalAlign:'top' }}>{item.service||item.description||'—'}</td>
-                <td style={{ padding:'14px 8px', fontSize:13, color:'#444', verticalAlign:'top' }}>{item.service?item.description:''}</td>
-                <td style={{ padding:'14px 8px', fontSize:13, color:'#1a1a2e', textAlign:'right', verticalAlign:'top' }}>{qty}</td>
-                <td style={{ padding:'14px 8px', fontSize:13, color:'#1a1a2e', textAlign:'right', verticalAlign:'top' }}>${price.toFixed(2)}</td>
-                <td style={{ padding:'14px 8px', fontSize:13, fontWeight:600, color:'#1a1a2e', textAlign:'right', verticalAlign:'top' }}>${(qty*price).toFixed(2)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      {/* Line items table — scrollable on mobile */}
+      <div style={{ overflowX: isMobile ? 'auto' : 'visible', marginTop:0 }}>
+        <table style={{ width: isMobile ? 'max-content' : '100%', minWidth: isMobile ? 480 : 'auto', borderCollapse:'collapse', fontSize:13 }}>
+          <thead>
+            <tr>
+              {[{label:'#',align:'left',w:30},{label:'Description',align:'left',w:160},{label:'',align:'left',w:''},{label:'Qty',align:'right',w:50},{label:'Rate',align:'right',w:90},{label:'Amount',align:'right',w:90}].map(col => (
+                <th key={col.label} style={{ padding:'12px 8px', textAlign:col.align, fontWeight:600, color:'#1a1a2e', fontSize:13, width:col.w||'auto', borderBottom:'1px solid #bbb', whiteSpace:'nowrap' }}>{col.label}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {lineItems.length === 0 ? (
+              <tr><td colSpan={6} style={{ textAlign:'center', padding:'32px 0', color:'#94a3b8', fontSize:13 }}>No line items</td></tr>
+            ) : lineItems.map((item,i) => {
+              const qty=Number(item.quantity??item.qty??1), price=Number(item.price??item.rate??0);
+              return (
+                <tr key={i} style={{ borderBottom:'1px solid #eee' }}>
+                  <td style={{ padding:'12px 8px', fontSize:13, color:'#1a1a2e', verticalAlign:'top' }}>{i+1}.</td>
+                  <td style={{ padding:'12px 8px', fontSize:13, fontWeight:700, color:'#1a1a2e', verticalAlign:'top' }}>{item.service||item.description||'—'}</td>
+                  <td style={{ padding:'12px 8px', fontSize:13, color:'#444', verticalAlign:'top' }}>{item.service?item.description:''}</td>
+                  <td style={{ padding:'12px 8px', fontSize:13, color:'#1a1a2e', textAlign:'right', verticalAlign:'top' }}>{qty}</td>
+                  <td style={{ padding:'12px 8px', fontSize:13, color:'#1a1a2e', textAlign:'right', verticalAlign:'top', whiteSpace:'nowrap' }}>${price.toFixed(2)}</td>
+                  <td style={{ padding:'12px 8px', fontSize:13, fontWeight:600, color:'#1a1a2e', textAlign:'right', verticalAlign:'top', whiteSpace:'nowrap' }}>${(qty*price).toFixed(2)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
-      <div style={{ display:'flex', justifyContent:'flex-end', marginTop:24, marginBottom:40 }}>
-        <div style={{ width:300 }}>
+      {/* Totals */}
+      <div style={{ display:'flex', justifyContent:'flex-end', marginTop:20, marginBottom:32 }}>
+        <div style={{ width: isMobile ? '100%' : 300 }}>
           <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid #ddd' }}>
             <span style={{ fontSize:13, color:'#444' }}>Total</span>
             <span style={{ fontSize:13, color:'#1a1a2e', fontWeight:600 }}>${totalAmt.toFixed(2)}</span>
@@ -161,8 +175,9 @@ function InvoicePreview({ inv }) {
         </div>
       </div>
 
+      {/* Notes */}
       {inv.notes && (
-        <div style={{ borderTop:'1px solid #e2e8f0', paddingTop:20, marginTop:8 }}>
+        <div style={{ borderTop:'1px solid #e2e8f0', paddingTop:20 }}>
           <div style={{ fontSize:11, fontWeight:700, color:'#94a3b8', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Notes</div>
           <div style={{ fontSize:13, color:'#64748b', lineHeight:1.7 }}>{inv.notes}</div>
         </div>
@@ -748,7 +763,7 @@ export default function Invoices() {
           </div>
 
           <div style={{ background:'#f1f5f9', borderRadius:12, padding: isMobile ? 8 : 20, overflowX: isMobile ? 'auto' : 'visible' }}>
-            <div ref={printRef} style={{ boxShadow:'0 4px 24px rgba(0,0,0,0.10)', borderRadius:8, overflow:'hidden', minWidth: isMobile ? 600 : 'auto' }}>
+            <div ref={printRef} style={{ boxShadow:'0 4px 24px rgba(0,0,0,0.10)', borderRadius:8, overflow:'hidden' }}>
               <InvoicePreview inv={selected}/>
             </div>
           </div>
