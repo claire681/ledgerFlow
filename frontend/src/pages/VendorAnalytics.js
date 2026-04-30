@@ -13,18 +13,29 @@ import { useAI } from '../hooks/useAI';
 
 const COLORS = ['#0AB98A','#3B82F6','#8B5CF6','#F59E0B','#EF4444','#06B6D4'];
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
+  return isMobile;
+}
+
 export default function VendorAnalytics() {
   const [transactions, setTransactions] = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [selected,     setSelected]     = useState(null);
 
   const { setPageContext } = useAI();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const load = async () => {
       try {
         const res  = await fetch('https://api.getnovala.com/api/v1/transactions/', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          headers: { Authorization:`Bearer ${localStorage.getItem('token')}` },
         });
         const data = await res.json();
         setTransactions(Array.isArray(data) ? data : []);
@@ -36,273 +47,252 @@ export default function VendorAnalytics() {
 
   const vendorMap = transactions.reduce((acc, t) => {
     const v = t.vendor || 'Unknown';
-    if (!acc[v]) acc[v] = {
-      vendor: v, total: 0, count: 0, transactions: [],
-      category: t.category || t.ml_category || 'Uncategorized',
-      lastDate: t.txn_date || '',
-    };
+    if (!acc[v]) acc[v] = { vendor:v, total:0, count:0, transactions:[], category:t.category||t.ml_category||'Uncategorized', lastDate:t.txn_date||'' };
     acc[v].total += Math.abs(t.amount);
     acc[v].count += 1;
     acc[v].transactions.push(t);
-    if ((t.txn_date || '') > acc[v].lastDate) acc[v].lastDate = t.txn_date || '';
+    if ((t.txn_date||'') > acc[v].lastDate) acc[v].lastDate = t.txn_date||'';
     return acc;
   }, {});
 
-  const vendors    = Object.values(vendorMap).sort((a, b) => b.total - a.total);
+  const vendors    = Object.values(vendorMap).sort((a,b) => b.total - a.total);
   const topVendors = vendors.slice(0, 8);
-  const totalSpend = vendors.reduce((s, v) => s + v.total, 0);
+  const totalSpend = vendors.reduce((s,v) => s + v.total, 0);
 
-  const catMap  = transactions.reduce((acc, t) => {
-    const c = t.category || t.ml_category || 'Uncategorized';
-    acc[c]  = (acc[c] || 0) + Math.abs(t.amount);
-    return acc;
-  }, {});
-  const catData = Object.entries(catMap)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 6);
+  const catMap  = transactions.reduce((acc,t) => { const c=t.category||t.ml_category||'Uncategorized'; acc[c]=(acc[c]||0)+Math.abs(t.amount); return acc; }, {});
+  const catData = Object.entries(catMap).map(([name,value]) => ({name,value})).sort((a,b) => b.value-a.value).slice(0,6);
 
-  const fmt = n => n >= 1000 ? `$${(n / 1000).toFixed(1)}K` : `$${n.toFixed(0)}`;
+  const fmt = n => n >= 1000 ? `$${(n/1000).toFixed(1)}K` : `$${n.toFixed(0)}`;
 
   useEffect(() => {
-  setPageContext('vendors', {
-    page:          'vendors',
-    total_vendors: transactions.length,
-  });
-}, [transactions]);
+    setPageContext('vendors', { page:'vendors', total_vendors:transactions.length });
+  }, [transactions]);
+
+  const pad = isMobile ? '12px' : '24px 28px';
+
   return (
     <div style={page}>
 
-      <div style={topBar}>
+      {/* Top bar */}
+      <div style={{
+        ...topBar,
+        padding: isMobile ? '16px' : undefined,
+      }}>
         <div>
-          <div style={{ fontSize:20, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>
-            Vendor Analytics
-          </div>
-          <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>
-            See where your money goes
-          </div>
+          <div style={{ fontSize:isMobile?18:20, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>Vendor Analytics</div>
+          <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>See where your money goes</div>
         </div>
       </div>
 
-      <div style={{ padding:'24px 28px' }}>
+      <div style={{ padding: pad }}>
 
-        {loading && (
-          <div style={{ textAlign:'center', padding:40, color:L.textMuted }}>
-            Loading...
-          </div>
-        )}
+        {loading && <div style={{ textAlign:'center', padding:40, color:L.textMuted }}>Loading...</div>}
 
         {!loading && transactions.length === 0 && (
-          <div style={{ ...card, padding:60, textAlign:'center' }}>
-            <div style={{
-              width:60, height:60, borderRadius:16,
-              background:L.accentSoft, border:`1px solid ${L.accentBorder}`,
-              display:'flex', alignItems:'center', justifyContent:'center',
-              margin:'0 auto 16px',
-            }}>
-              <BarChart2 size={26} color={L.accent} />
+          <div style={{ ...card, padding:isMobile?40:60, textAlign:'center' }}>
+            <div style={{ width:60, height:60, borderRadius:16, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
+              <BarChart2 size={26} color={L.accent}/>
             </div>
-            <div style={{ fontSize:15, fontWeight:600, color:L.text, marginBottom:6 }}>
-              No transaction data yet
-            </div>
-            <div style={{ fontSize:13, color:L.textMuted }}>
-              Upload documents to see vendor analytics
-            </div>
+            <div style={{ fontSize:15, fontWeight:600, color:L.text, marginBottom:6 }}>No transaction data yet</div>
+            <div style={{ fontSize:13, color:L.textMuted }}>Upload documents to see vendor analytics</div>
           </div>
         )}
 
         {!loading && transactions.length > 0 && (
           <>
-            {/* Summary cards */}
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
+            {/* Summary cards — 2x2 on mobile, 4 across on desktop */}
+            <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(4,1fr)', gap:isMobile?10:14, marginBottom:isMobile?14:20 }}>
               {[
-                { label:'Total Vendors',  value:vendors.length,                                      color:L.accent, icon:<Users size={16} />       },
-                { label:'Total Spending', value:fmt(totalSpend),                                     color:L.red,    icon:<TrendingDown size={16} /> },
-                { label:'Avg per Vendor', value:fmt(vendors.length ? totalSpend/vendors.length : 0), color:L.gold,   icon:<DollarSign size={16} />   },
-                { label:'Top Vendor',     value:topVendors[0]?.vendor||'—',                          color:L.blue,   icon:<Store size={16} />        },
+                { label:'Total Vendors',  value:vendors.length,                                      color:L.accent, icon:<Users size={16}/> },
+                { label:'Total Spending', value:fmt(totalSpend),                                     color:L.red,    icon:<TrendingDown size={16}/> },
+                { label:'Avg per Vendor', value:fmt(vendors.length?totalSpend/vendors.length:0),     color:L.gold,   icon:<DollarSign size={16}/> },
+                { label:'Top Vendor',     value:topVendors[0]?.vendor||'—',                          color:L.blue,   icon:<Store size={16}/> },
               ].map(c => (
-                <div key={c.label} style={{ ...card, padding:'18px 20px' }}>
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-                    <div style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em', textTransform:'uppercase' }}>
-                      {c.label}
-                    </div>
+                <div key={c.label} style={{ ...card, padding:isMobile?'12px 14px':'18px 20px' }}>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+                    <div style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em', textTransform:'uppercase' }}>{c.label}</div>
                     <span style={{ color:c.color, opacity:0.6 }}>{c.icon}</span>
                   </div>
-                  <div style={{
-                    fontSize: c.label==='Top Vendor' ? 15 : 24, fontWeight:700, color:c.color,
-                    overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
-                  }}>
+                  <div style={{ fontSize:c.label==='Top Vendor'?13:isMobile?18:24, fontWeight:700, color:c.color, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                     {c.value}
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Charts */}
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 340px', gap:16, marginBottom:20 }}>
+            {/* Charts — stack on mobile */}
+            <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 340px', gap:isMobile?12:16, marginBottom:isMobile?14:20 }}>
 
               {/* Bar chart */}
-              <div style={{ ...card, padding:'22px 24px' }}>
+              <div style={{ ...card, padding:isMobile?'16px':'22px 24px' }}>
                 <div style={{ fontSize:14, fontWeight:700, color:L.text, marginBottom:4, display:'flex', alignItems:'center', gap:8 }}>
-                  <BarChart2 size={15} color={L.accent} />
-                  Top Vendors by Spending
+                  <BarChart2 size={15} color={L.accent}/> Top Vendors by Spending
                 </div>
-                <div style={{ fontSize:12, color:L.textMuted, marginBottom:16 }}>
-                  Highest spend vendors
-                </div>
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={topVendors} margin={{ top:4, right:4, left:-16, bottom:60 }}>
-                    <CartesianGrid strokeDasharray="4 4" stroke={L.borderLight} vertical={false} />
-                    <XAxis dataKey="vendor" tick={{ fill:L.textMuted, fontSize:10 }}
-                      angle={-35} textAnchor="end" axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill:L.textMuted, fontSize:10 }}
-                      axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
-                    <Tooltip
-                      contentStyle={{ background:'#fff', border:`1px solid ${L.border}`, borderRadius:L.radiusSm, fontSize:12, boxShadow:L.shadowMd }}
-                      formatter={v => [fmt(v), 'Spent']}
-                    />
-                    <Bar dataKey="total" fill={L.accent} radius={[4,4,0,0]} />
+                <div style={{ fontSize:12, color:L.textMuted, marginBottom:14 }}>Highest spend vendors</div>
+                <ResponsiveContainer width="100%" height={isMobile?200:240}>
+                  <BarChart data={topVendors} margin={{ top:4, right:4, left:-16, bottom: isMobile?50:60 }}>
+                    <CartesianGrid strokeDasharray="4 4" stroke={L.border} vertical={false}/>
+                    <XAxis dataKey="vendor" tick={{ fill:L.textMuted, fontSize:isMobile?9:10 }} angle={-35} textAnchor="end" axisLine={false} tickLine={false}/>
+                    <YAxis tick={{ fill:L.textMuted, fontSize:isMobile?9:10 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`}/>
+                    <Tooltip contentStyle={{ background:'#fff', border:`1px solid ${L.border}`, borderRadius:L.radiusSm, fontSize:12, boxShadow:L.shadowMd }} formatter={v => [fmt(v),'Spent']}/>
+                    <Bar dataKey="total" fill={L.accent} radius={[4,4,0,0]}/>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
               {/* Pie chart */}
-              <div style={{ ...card, padding:'22px 24px' }}>
+              <div style={{ ...card, padding:isMobile?'16px':'22px 24px' }}>
                 <div style={{ fontSize:14, fontWeight:700, color:L.text, marginBottom:4, display:'flex', alignItems:'center', gap:8 }}>
-                  <PieIcon size={15} color={L.accent} />
-                  Spending by Category
+                  <PieIcon size={15} color={L.accent}/> Spending by Category
                 </div>
-                <div style={{ fontSize:12, color:L.textMuted, marginBottom:16 }}>Category breakdown</div>
-                <ResponsiveContainer width="100%" height={180}>
+                <div style={{ fontSize:12, color:L.textMuted, marginBottom:14 }}>Category breakdown</div>
+                <ResponsiveContainer width="100%" height={isMobile?160:180}>
                   <PieChart>
-                    <Pie data={catData} cx="50%" cy="50%"
-                      innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value">
-                      {catData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    <Pie data={catData} cx="50%" cy="50%" innerRadius={isMobile?45:55} outerRadius={isMobile?70:80} paddingAngle={3} dataKey="value">
+                      {catData.map((_,i) => <Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
                     </Pie>
-                    <Tooltip
-                      contentStyle={{ background:'#fff', border:`1px solid ${L.border}`, borderRadius:L.radiusSm, fontSize:11 }}
-                      formatter={v => [fmt(v)]}
-                    />
+                    <Tooltip contentStyle={{ background:'#fff', border:`1px solid ${L.border}`, borderRadius:L.radiusSm, fontSize:11 }} formatter={v => [fmt(v)]}/>
                   </PieChart>
                 </ResponsiveContainer>
-                <div style={{ display:'flex', flexDirection:'column', gap:6, marginTop:8 }}>
-                  {catData.slice(0, 4).map((c, i) => (
+                <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr 1fr':'1fr', gap:isMobile?6:6, marginTop:8 }}>
+                  {catData.slice(0, isMobile?6:4).map((c,i) => (
                     <div key={c.name} style={{ display:'flex', alignItems:'center', gap:8 }}>
-                      <div style={{ width:8, height:8, borderRadius:2, flexShrink:0, background:COLORS[i % COLORS.length] }} />
-                      <span style={{ fontSize:11, color:L.textSub, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                        {c.name}
-                      </span>
-                      <span style={{ fontSize:11, fontWeight:600, color:L.text, fontFamily:L.fontMono }}>
-                        {fmt(c.value)}
-                      </span>
+                      <div style={{ width:8, height:8, borderRadius:2, flexShrink:0, background:COLORS[i%COLORS.length] }}/>
+                      <span style={{ fontSize:11, color:L.textSub, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.name}</span>
+                      <span style={{ fontSize:11, fontWeight:600, color:L.text, fontFamily:L.fontMono }}>{fmt(c.value)}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Vendor table */}
+            {/* Vendor list */}
             <div style={{ ...card, overflow:'hidden' }}>
-              <div style={{ padding:'16px 20px', borderBottom:`1px solid ${L.borderLight}`, display:'flex', alignItems:'center', gap:8 }}>
-                <Store size={15} color={L.accent} />
+              <div style={{ padding:isMobile?'14px 16px':'16px 20px', borderBottom:`1px solid ${L.border}`, display:'flex', alignItems:'center', gap:8 }}>
+                <Store size={15} color={L.accent}/>
                 <div style={{ fontSize:14, fontWeight:700, color:L.text }}>All Vendors</div>
               </div>
-              <div style={{
-                display:'grid', gridTemplateColumns:'1fr 120px 80px 160px 120px',
-                padding:'8px 20px', borderBottom:`1px solid ${L.borderLight}`, background:L.pageBg,
-              }}>
-                {[
-                  { label:'VENDOR',      icon:<Store size={9} />       },
-                  { label:'TOTAL SPENT', icon:<DollarSign size={9} />  },
-                  { label:'ORDERS',      icon:<ShoppingCart size={9} /> },
-                  { label:'CATEGORY',    icon:<Tag size={9} />          },
-                  { label:'LAST ORDER',  icon:<Calendar size={9} />     },
-                ].map(h => (
-                  <div key={h.label} style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em', display:'flex', alignItems:'center', gap:4 }}>
-                    {h.icon}{h.label}
-                  </div>
-                ))}
-              </div>
+
+              {/* Desktop table header */}
+              {!isMobile && (
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 120px 80px 160px 120px', padding:'8px 20px', borderBottom:`1px solid ${L.border}`, background:L.pageBg }}>
+                  {[
+                    { label:'VENDOR',      icon:<Store size={9}/> },
+                    { label:'TOTAL SPENT', icon:<DollarSign size={9}/> },
+                    { label:'ORDERS',      icon:<ShoppingCart size={9}/> },
+                    { label:'CATEGORY',    icon:<Tag size={9}/> },
+                    { label:'LAST ORDER',  icon:<Calendar size={9}/> },
+                  ].map(h => (
+                    <div key={h.label} style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em', display:'flex', alignItems:'center', gap:4 }}>
+                      {h.icon}{h.label}
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {vendors.map((v, i) => (
                 <div key={v.vendor}>
-                  <div
-                    onClick={() => setSelected(selected === v.vendor ? null : v.vendor)}
-                    style={{
-                      display:'grid', gridTemplateColumns:'1fr 120px 80px 160px 120px',
-                      padding:'13px 20px', cursor:'pointer',
-                      borderBottom:`1px solid ${L.borderLight}`,
-                      transition:'background 0.1s', alignItems:'center',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = L.rowHover}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                      <div style={{
-                        width:32, height:32, borderRadius:8,
-                        background:`${COLORS[i % COLORS.length]}15`,
-                        display:'flex', alignItems:'center', justifyContent:'center',
-                        fontSize:13, fontWeight:700, color:COLORS[i % COLORS.length], flexShrink:0,
-                      }}>
-                        {v.vendor.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div style={{ fontSize:13, fontWeight:600, color:L.text }}>{v.vendor}</div>
-                        <div style={{ fontSize:10, color:L.textMuted }}>
-                          {v.count} transaction{v.count !== 1 ? 's' : ''}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ fontSize:13, fontWeight:700, color:L.red, fontFamily:L.fontMono, display:'flex', alignItems:'center', gap:4 }}>
-                      <TrendingDown size={11} />
-                      {fmt(v.total)}
-                    </div>
-
-                    <div style={{ fontSize:13, color:L.textSub, display:'flex', alignItems:'center', gap:4 }}>
-                      <ShoppingCart size={11} color={L.textFaint} />
-                      {v.count}
-                    </div>
-
+                  {isMobile ? (
+                    /* ── Mobile vendor card ── */
                     <div>
-                      <span style={badge(L.blue, L.blueSoft, L.blueBorder)}>
-                        {v.category}
-                      </span>
-                    </div>
-
-                    <div style={{ fontSize:11, color:L.textMuted, fontFamily:L.fontMono, display:'flex', alignItems:'center', gap:4 }}>
-                      <Calendar size={10} color={L.textFaint} />
-                      {v.lastDate || '—'}
-                    </div>
-                  </div>
-
-                  {selected === v.vendor && (
-                    <div style={{
-                      padding:'14px 20px 14px 62px',
-                      background:L.accentSoft,
-                      borderBottom:`1px solid ${L.accentBorder}`,
-                    }}>
-                      <div style={{ fontSize:11, fontWeight:700, color:L.accent, marginBottom:10, display:'flex', alignItems:'center', gap:6 }}>
-                        <Activity size={12} />
-                        Transaction History
-                      </div>
-                      {v.transactions.map(t => (
-                        <div key={t.id} style={{
-                          display:'flex', gap:16, alignItems:'center',
-                          padding:'6px 0', borderBottom:`1px solid ${L.accentBorder}`,
-                          fontSize:12,
-                        }}>
-                          <span style={{ color:L.textMuted, fontFamily:L.fontMono, width:90, display:'flex', alignItems:'center', gap:4 }}>
-                            <Calendar size={10} />{t.txn_date || '—'}
-                          </span>
-                          <span style={{ color:L.red, fontWeight:700, fontFamily:L.fontMono, display:'flex', alignItems:'center', gap:4 }}>
-                            <DollarSign size={11} />{Math.abs(t.amount).toLocaleString()}
-                          </span>
-                          <span style={{ color:L.textMuted, display:'flex', alignItems:'center', gap:4 }}>
-                            <Tag size={10} />{t.category || t.ml_category || 'Uncategorized'}
-                          </span>
+                      <div onClick={() => setSelected(selected===v.vendor?null:v.vendor)}
+                        style={{ padding:'14px 16px', borderBottom:`1px solid ${L.border}`, cursor:'pointer' }}>
+                        {/* Row 1: avatar + name + total */}
+                        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
+                          <div style={{ width:36, height:36, borderRadius:9, background:`${COLORS[i%COLORS.length]}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, fontWeight:700, color:COLORS[i%COLORS.length], flexShrink:0 }}>
+                            {v.vendor.charAt(0).toUpperCase()}
+                          </div>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ fontSize:13, fontWeight:600, color:L.text, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{v.vendor}</div>
+                            <div style={{ fontSize:10, color:L.textMuted }}>{v.count} transaction{v.count!==1?'s':''}</div>
+                          </div>
+                          <div style={{ fontSize:14, fontWeight:700, color:L.red, fontFamily:L.fontMono, flexShrink:0, display:'flex', alignItems:'center', gap:4 }}>
+                            <TrendingDown size={12}/>{fmt(v.total)}
+                          </div>
                         </div>
-                      ))}
+                        {/* Row 2: category + last date */}
+                        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                          <span style={badge(L.blue, L.blueSoft, L.blueBorder)}>{v.category}</span>
+                          {v.lastDate && (
+                            <span style={{ fontSize:11, color:L.textMuted, display:'flex', alignItems:'center', gap:4, fontFamily:L.fontMono }}>
+                              <Calendar size={10} color={L.textFaint}/>{v.lastDate}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Mobile transaction history */}
+                      {selected === v.vendor && (
+                        <div style={{ padding:'12px 16px', background:L.accentSoft, borderBottom:`1px solid ${L.accentBorder}` }}>
+                          <div style={{ fontSize:11, fontWeight:700, color:L.accent, marginBottom:10, display:'flex', alignItems:'center', gap:6 }}>
+                            <Activity size={12}/> Transaction History
+                          </div>
+                          {v.transactions.map(t => (
+                            <div key={t.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:`1px solid ${L.accentBorder}` }}>
+                              <div>
+                                <div style={{ fontSize:12, color:L.textMuted, fontFamily:L.fontMono, display:'flex', alignItems:'center', gap:4 }}>
+                                  <Calendar size={10}/>{t.txn_date||'—'}
+                                </div>
+                                <div style={{ fontSize:11, color:L.textMuted, marginTop:2, display:'flex', alignItems:'center', gap:4 }}>
+                                  <Tag size={10}/>{t.category||t.ml_category||'Uncategorized'}
+                                </div>
+                              </div>
+                              <div style={{ fontSize:13, fontWeight:700, color:L.red, fontFamily:L.fontMono, display:'flex', alignItems:'center', gap:4 }}>
+                                <DollarSign size={11}/>{Math.abs(t.amount).toLocaleString()}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* ── Desktop vendor row ── */
+                    <div>
+                      <div onClick={() => setSelected(selected===v.vendor?null:v.vendor)}
+                        style={{ display:'grid', gridTemplateColumns:'1fr 120px 80px 160px 120px', padding:'13px 20px', cursor:'pointer', borderBottom:`1px solid ${L.border}`, transition:'background 0.1s', alignItems:'center' }}
+                        onMouseEnter={e => e.currentTarget.style.background=L.pageBg}
+                        onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                          <div style={{ width:32, height:32, borderRadius:8, background:`${COLORS[i%COLORS.length]}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:COLORS[i%COLORS.length], flexShrink:0 }}>
+                            {v.vendor.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontSize:13, fontWeight:600, color:L.text }}>{v.vendor}</div>
+                            <div style={{ fontSize:10, color:L.textMuted }}>{v.count} transaction{v.count!==1?'s':''}</div>
+                          </div>
+                        </div>
+                        <div style={{ fontSize:13, fontWeight:700, color:L.red, fontFamily:L.fontMono, display:'flex', alignItems:'center', gap:4 }}>
+                          <TrendingDown size={11}/>{fmt(v.total)}
+                        </div>
+                        <div style={{ fontSize:13, color:L.textSub, display:'flex', alignItems:'center', gap:4 }}>
+                          <ShoppingCart size={11} color={L.textFaint}/>{v.count}
+                        </div>
+                        <div><span style={badge(L.blue, L.blueSoft, L.blueBorder)}>{v.category}</span></div>
+                        <div style={{ fontSize:11, color:L.textMuted, fontFamily:L.fontMono, display:'flex', alignItems:'center', gap:4 }}>
+                          <Calendar size={10} color={L.textFaint}/>{v.lastDate||'—'}
+                        </div>
+                      </div>
+
+                      {selected === v.vendor && (
+                        <div style={{ padding:'14px 20px 14px 62px', background:L.accentSoft, borderBottom:`1px solid ${L.accentBorder}` }}>
+                          <div style={{ fontSize:11, fontWeight:700, color:L.accent, marginBottom:10, display:'flex', alignItems:'center', gap:6 }}>
+                            <Activity size={12}/> Transaction History
+                          </div>
+                          {v.transactions.map(t => (
+                            <div key={t.id} style={{ display:'flex', gap:16, alignItems:'center', padding:'6px 0', borderBottom:`1px solid ${L.accentBorder}`, fontSize:12 }}>
+                              <span style={{ color:L.textMuted, fontFamily:L.fontMono, width:90, display:'flex', alignItems:'center', gap:4 }}>
+                                <Calendar size={10}/>{t.txn_date||'—'}
+                              </span>
+                              <span style={{ color:L.red, fontWeight:700, fontFamily:L.fontMono, display:'flex', alignItems:'center', gap:4 }}>
+                                <DollarSign size={11}/>{Math.abs(t.amount).toLocaleString()}
+                              </span>
+                              <span style={{ color:L.textMuted, display:'flex', alignItems:'center', gap:4 }}>
+                                <Tag size={10}/>{t.category||t.ml_category||'Uncategorized'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
