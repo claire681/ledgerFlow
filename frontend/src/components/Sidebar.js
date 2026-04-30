@@ -245,8 +245,8 @@ export default function Sidebar({ onLogout }) {
               return (
                 <div
                   key={item.path}
-                  onClick={() => navigate(item.path)}
-                  onMouseEnter={() => setHov(item.path)}
+                  onClick={() => { navigate(item.path); onNavigate && onNavigate(); }}
+                 onMouseEnter={() => setHov(item.path)}
                   onMouseLeave={() => setHov(null)}
                   style={{
                     display:      'flex',
