@@ -51,12 +51,23 @@ export default function Login({ onLogin }) {
         onLogin(res.data.access_token);
       }
     } catch (err) {
-      const msg = err.response?.data?.detail || 'Something went wrong';
-      setError(typeof msg === 'string' ? msg : 'Please check your details');
-    } finally {
-      setLoading(false);
+      const detail = err.response?.data?.detail;
+      if (!detail) {
+        setError('Could not connect to server. Please try again.');
+        return;
+      }
+      if (typeof detail === 'string') {
+        const d = detail.toLowerCase();
+        if (d.includes('password'))                        setError('Incorrect password. Please try again.');
+        else if (d.includes('email') || d.includes('user') || d.includes('not found')) setError('No account found with this email address.');
+        else if (d.includes('exist') || d.includes('already'))                         setError('An account with this email already exists. Sign in instead.');
+        else if (d.includes('invalid'))                    setError('Invalid email or password. Please check and try again.');
+        else                                               setError(detail);
+      } else {
+        setError('Please check your email and password.');
+      }
     }
-  };
+  }
 
   const inputStyle = {
     width:        '100%',
