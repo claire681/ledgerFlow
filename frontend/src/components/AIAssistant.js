@@ -22,8 +22,6 @@ const C = {
   font:        "'Inter', -apple-system, sans-serif",
 };
 
-// ── This is the single source of truth for all page AI configs ────────────
-// Keys must EXACTLY match what each page passes to setPageContext()
 const PAGE_AI_CONFIG = {
   dashboard: {
     name:     'Executive Finance Copilot',
@@ -161,48 +159,33 @@ const PAGE_AI_CONFIG = {
 
 const DEFAULT_CONFIG = PAGE_AI_CONFIG.dashboard;
 
+// ── Mobile detection ──────────────────────────────────────────
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return isMobile;
+}
+
 function MessageBubble({ message, aiName }) {
   const isUser = message.role === 'user';
   return (
-    <div style={{
-      display:        'flex',
-      justifyContent: isUser ? 'flex-end' : 'flex-start',
-      marginBottom:   12,
-    }}>
+    <div style={{ display:'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', marginBottom:12 }}>
       {!isUser && (
-        <div style={{
-          width: 28, height: 28, borderRadius: 8,
-          background: C.accentSoft, border: `1px solid ${C.accentBorder}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0, marginRight: 8, marginTop: 2,
-        }}>
+        <div style={{ width:28, height:28, borderRadius:8, background:C.accentSoft, border:`1px solid ${C.accentBorder}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginRight:8, marginTop:2 }}>
           <Sparkles size={13} color={C.accent} />
         </div>
       )}
-      <div style={{
-        maxWidth:     '78%',
-        padding:      '10px 13px',
-        borderRadius: isUser ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
-        background:   isUser ? C.accent : C.pageBg,
-        border:       isUser ? 'none'   : `1px solid ${C.border}`,
-        boxShadow:    isUser ? 'none'   : '0 1px 3px rgba(0,0,0,0.04)',
-      }}>
+      <div style={{ maxWidth:'78%', padding:'10px 13px', borderRadius: isUser ? '12px 12px 4px 12px' : '12px 12px 12px 4px', background: isUser ? C.accent : C.pageBg, border: isUser ? 'none' : `1px solid ${C.border}`, boxShadow: isUser ? 'none' : '0 1px 3px rgba(0,0,0,0.04)' }}>
         {!isUser && (
-          <div style={{
-            fontSize: 9, fontWeight: 700, color: C.accent,
-            letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5,
-            display: 'flex', alignItems: 'center', gap: 4,
-          }}>
-            <Sparkles size={8} color={C.accent} />
-            {aiName}
+          <div style={{ fontSize:9, fontWeight:700, color:C.accent, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:5, display:'flex', alignItems:'center', gap:4 }}>
+            <Sparkles size={8} color={C.accent} />{aiName}
           </div>
         )}
-        <div style={{
-          fontSize: 13, lineHeight: 1.6,
-          color:    isUser ? '#FFFFFF' : C.text,
-          fontFamily: C.font,
-          whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-        }}>
+        <div style={{ fontSize:13, lineHeight:1.6, color: isUser ? '#FFFFFF' : C.text, fontFamily:C.font, whiteSpace:'pre-wrap', wordBreak:'break-word' }}>
           {message.content}
         </div>
       </div>
@@ -212,25 +195,13 @@ function MessageBubble({ message, aiName }) {
 
 function TypingIndicator() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-      <div style={{
-        width: 28, height: 28, borderRadius: 8,
-        background: C.accentSoft, border: `1px solid ${C.accentBorder}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-      }}>
+    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
+      <div style={{ width:28, height:28, borderRadius:8, background:C.accentSoft, border:`1px solid ${C.accentBorder}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
         <Sparkles size={13} color={C.accent} />
       </div>
-      <div style={{
-        padding: '10px 14px', borderRadius: '12px 12px 12px 4px',
-        background: C.pageBg, border: `1px solid ${C.border}`,
-        display: 'flex', alignItems: 'center', gap: 4,
-      }}>
-        {[0, 1, 2].map(i => (
-          <div key={i} style={{
-            width: 6, height: 6, borderRadius: '50%',
-            background: C.accent, opacity: 0.6,
-            animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
-          }} />
+      <div style={{ padding:'10px 14px', borderRadius:'12px 12px 12px 4px', background:C.pageBg, border:`1px solid ${C.border}`, display:'flex', alignItems:'center', gap:4 }}>
+        {[0,1,2].map(i => (
+          <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:C.accent, opacity:0.6, animation:`bounce 1.2s ease-in-out ${i*0.2}s infinite` }}/>
         ))}
       </div>
     </div>
@@ -248,15 +219,13 @@ export default function AIAssistant() {
   const [isMinimized, setMinimized] = useState(false);
   const messagesEndRef               = useRef(null);
   const inputRef                     = useRef(null);
+  const isMobile                     = useIsMobile();
 
-  // Get config for current page — always falls back to dashboard config
-  const config = PAGE_AI_CONFIG[currentPage] || DEFAULT_CONFIG;
-
-  // Use config chips if no backend suggestions or suggestions are too generic
+  const config       = PAGE_AI_CONFIG[currentPage] || DEFAULT_CONFIG;
   const displayChips = suggestions.length > 0 ? suggestions : config.chips;
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior:'smooth' });
   }, [messages, loading]);
 
   useEffect(() => {
@@ -279,124 +248,160 @@ export default function AIAssistant() {
     }
   };
 
+  // ── Mobile dimensions ─────────────────────────────────────
+  const mobileHeight = isMinimized ? 56 : '55vh';
+
+  // ── Desktop dimensions ────────────────────────────────────
+  const desktopHeight = isMinimized ? 56 : 580;
+
   return (
     <>
       <style>{`
         @keyframes bounce {
-          0%, 60%, 100% { transform: translateY(0); }
-          30% { transform: translateY(-4px); }
+          0%,60%,100% { transform:translateY(0); }
+          30%          { transform:translateY(-4px); }
         }
         @keyframes slideUp {
           from { opacity:0; transform:translateY(16px) scale(0.97); }
           to   { opacity:1; transform:translateY(0) scale(1); }
         }
+        @keyframes slideUpMobile {
+          from { transform:translateY(100%); }
+          to   { transform:translateY(0); }
+        }
         @keyframes pulse {
-          0%,100% { box-shadow: 0 0 0 0   rgba(10,185,138,0.4); }
-          50%     { box-shadow: 0 0 0 8px rgba(10,185,138,0);   }
+          0%,100% { box-shadow:0 0 0 0   rgba(10,185,138,0.4); }
+          50%     { box-shadow:0 0 0 8px rgba(10,185,138,0);   }
         }
       `}</style>
 
-      {/* Floating button */}
+      {/* ── Floating button ── */}
       {!isOpen && (
         <button
           onClick={toggleAssistant}
           title={`Ask ${config.name}`}
           style={{
-            position: 'fixed', bottom: 28, right: 28,
-            width: 52, height: 52, borderRadius: 16,
-            background: 'linear-gradient(135deg, #0AB98A 0%, #0EA5E9 100%)',
-            border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 9999,
-            boxShadow: '0 4px 20px rgba(10,185,138,0.4)',
-            animation: 'pulse 3s ease-in-out infinite',
-            transition: 'transform 0.15s ease',
+            position:     'fixed',
+            bottom:       isMobile ? 20 : 28,
+            right:        isMobile ? 16 : 28,
+            width:        isMobile ? 48 : 52,
+            height:       isMobile ? 48 : 52,
+            borderRadius: 16,
+            background:   'linear-gradient(135deg, #0AB98A 0%, #0EA5E9 100%)',
+            border:       'none', cursor:'pointer',
+            display:      'flex', alignItems:'center', justifyContent:'center',
+            zIndex:       9999,
+            boxShadow:    '0 4px 20px rgba(10,185,138,0.4)',
+            animation:    'pulse 3s ease-in-out infinite',
           }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
-          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
         >
-          <Sparkles size={22} color="#FFFFFF" />
+          <Sparkles size={isMobile ? 20 : 22} color="#FFFFFF" />
         </button>
       )}
 
-      {/* Chat panel */}
+      {/* ── Mobile overlay backdrop ── */}
+      {isOpen && isMobile && !isMinimized && (
+        <div
+          onClick={closeAssistant}
+          style={{
+            position:   'fixed',
+            inset:      0,
+            background: 'rgba(0,0,0,0.3)',
+            zIndex:     9998,
+          }}
+        />
+      )}
+
+      {/* ── Chat panel ── */}
       {isOpen && (
         <div style={{
-          position: 'fixed', bottom: 28, right: 28,
-          width: 380, height: isMinimized ? 56 : 580,
-          borderRadius: 20, background: C.bg,
-          border: `1px solid ${C.border}`, boxShadow: C.shadow,
-          zIndex: 9999, display: 'flex', flexDirection: 'column',
-          overflow: 'hidden', fontFamily: C.font,
-          animation: 'slideUp 0.2s ease', transition: 'height 0.25s ease',
+          position:   'fixed',
+          // Mobile: bottom sheet from bottom edge
+          // Desktop: floating bottom right
+          ...(isMobile ? {
+            bottom:       0,
+            left:         0,
+            right:        0,
+            width:        '100%',
+            height:       mobileHeight,
+            borderRadius: '20px 20px 0 0',
+            animation:    'slideUpMobile 0.3s ease',
+          } : {
+            bottom:       28,
+            right:        28,
+            width:        380,
+            height:       desktopHeight,
+            borderRadius: 20,
+            animation:    'slideUp 0.2s ease',
+          }),
+          background:     C.bg,
+          border:         `1px solid ${C.border}`,
+          boxShadow:      C.shadow,
+          zIndex:         9999,
+          display:        'flex',
+          flexDirection:  'column',
+          overflow:       'hidden',
+          fontFamily:     C.font,
+          transition:     'height 0.25s ease',
         }}>
 
-          {/* Header */}
+          {/* ── Header ── */}
           <div
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '14px 16px',
-              background: 'linear-gradient(135deg, #0AB98A 0%, #0EA5E9 100%)',
-              flexShrink: 0, cursor: 'pointer',
-            }}
             onClick={() => setMinimized(p => !p)}
+            style={{
+              display:        'flex',
+              alignItems:     'center',
+              justifyContent: 'space-between',
+              padding:        isMobile ? '14px 20px' : '14px 16px',
+              background:     'linear-gradient(135deg, #0AB98A 0%, #0EA5E9 100%)',
+              flexShrink:     0,
+              cursor:         'pointer',
+            }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            {/* Mobile drag handle */}
+            {isMobile && (
               <div style={{
-                width: 28, height: 28, borderRadius: 8,
-                background: 'rgba(255,255,255,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
+                position:     'absolute',
+                top:          8,
+                left:         '50%',
+                transform:    'translateX(-50%)',
+                width:        40,
+                height:       4,
+                borderRadius: 2,
+                background:   'rgba(255,255,255,0.5)',
+              }}/>
+            )}
+
+            <div style={{ display:'flex', alignItems:'center', gap:9 }}>
+              <div style={{ width:28, height:28, borderRadius:8, background:'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center' }}>
                 <Sparkles size={14} color="#FFFFFF" />
               </div>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.02em' }}>
+                <div style={{ fontSize: isMobile ? 13 : 11, fontWeight:700, color:'#FFFFFF', letterSpacing:'0.02em' }}>
                   {config.name}
                 </div>
-                <div style={{
-                  fontSize: 9, color: 'rgba(255,255,255,0.85)',
-                  display: 'flex', alignItems: 'center', gap: 4,
-                }}>
+                <div style={{ fontSize:9, color:'rgba(255,255,255,0.85)', display:'flex', alignItems:'center', gap:4 }}>
                   <Wifi size={8} color="rgba(255,255,255,0.85)" />
                   {config.pageName} • Online
                 </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:4 }}>
               {messages.length > 0 && (
-                <button
-                  onClick={e => { e.stopPropagation(); clearConversation(); }}
-                  title="Clear conversation"
-                  style={{
-                    background: 'rgba(255,255,255,0.15)', border: 'none',
-                    borderRadius: 7, cursor: 'pointer', padding: 5,
-                    display: 'flex', color: '#FFFFFF',
-                  }}
-                >
+                <button onClick={e => { e.stopPropagation(); clearConversation(); }}
+                  style={{ background:'rgba(255,255,255,0.15)', border:'none', borderRadius:7, cursor:'pointer', padding:5, display:'flex', color:'#FFFFFF' }}>
                   <Trash2 size={12} />
                 </button>
               )}
-              <button
-                onClick={e => { e.stopPropagation(); setMinimized(p => !p); }}
-                style={{
-                  background: 'rgba(255,255,255,0.15)', border: 'none',
-                  borderRadius: 7, cursor: 'pointer', padding: 5,
-                  display: 'flex', color: '#FFFFFF',
-                  transform: isMinimized ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s',
-                }}
-              >
-                <ChevronDown size={13} />
-              </button>
-              <button
-                onClick={e => { e.stopPropagation(); closeAssistant(); }}
-                style={{
-                  background: 'rgba(255,255,255,0.15)', border: 'none',
-                  borderRadius: 7, cursor: 'pointer', padding: 5,
-                  display: 'flex', color: '#FFFFFF',
-                }}
-              >
+              {!isMobile && (
+                <button onClick={e => { e.stopPropagation(); setMinimized(p => !p); }}
+                  style={{ background:'rgba(255,255,255,0.15)', border:'none', borderRadius:7, cursor:'pointer', padding:5, display:'flex', color:'#FFFFFF', transform: isMinimized ? 'rotate(180deg)' : 'rotate(0deg)', transition:'transform 0.2s' }}>
+                  <ChevronDown size={13} />
+                </button>
+              )}
+              <button onClick={e => { e.stopPropagation(); closeAssistant(); }}
+                style={{ background:'rgba(255,255,255,0.15)', border:'none', borderRadius:7, cursor:'pointer', padding:5, display:'flex', color:'#FFFFFF' }}>
                 <X size={13} />
               </button>
             </div>
@@ -404,29 +409,16 @@ export default function AIAssistant() {
 
           {!isMinimized && (
             <>
-              {/* Messages */}
-              <div style={{
-                flex: 1, overflowY: 'auto', padding: '16px 14px 8px',
-                scrollbarWidth: 'thin', scrollbarColor: `${C.textFaint} transparent`,
-              }}>
+              {/* ── Messages ── */}
+              <div style={{ flex:1, overflowY:'auto', padding: isMobile ? '14px 16px 8px' : '16px 14px 8px', scrollbarWidth:'thin', scrollbarColor:`${C.textFaint} transparent` }}>
 
-                {/* Empty state — fully page specific */}
                 {messages.length === 0 && (
-                  <div style={{ textAlign: 'center', padding: '20px 16px' }}>
-                    <div style={{
-                      width: 48, height: 48, borderRadius: 14,
-                      background: C.accentSoft, border: `1px solid ${C.accentBorder}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      margin: '0 auto 14px',
-                    }}>
+                  <div style={{ textAlign:'center', padding: isMobile ? '16px' : '20px 16px' }}>
+                    <div style={{ width:48, height:48, borderRadius:14, background:C.accentSoft, border:`1px solid ${C.accentBorder}`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px' }}>
                       {config.icon}
                     </div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 8 }}>
-                      {config.name}
-                    </div>
-                    <div style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.7 }}>
-                      {config.intro}
-                    </div>
+                    <div style={{ fontSize:14, fontWeight:700, color:C.text, marginBottom:8 }}>{config.name}</div>
+                    <div style={{ fontSize:12, color:C.textMuted, lineHeight:1.7 }}>{config.intro}</div>
                   </div>
                 )}
 
@@ -438,62 +430,34 @@ export default function AIAssistant() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Chips — always page specific */}
+              {/* ── Chips ── */}
               {messages.length < 2 && (
-                <div style={{
-                  padding: '6px 14px 4px', borderTop: `1px solid ${C.border}`,
-                  display: 'flex', gap: 6, flexWrap: 'wrap', flexShrink: 0,
-                }}>
-                  {(displayChips.slice(0, 3)).map(s => (
-                    <button key={s} onClick={() => ask(s)} disabled={loading} style={{
-                      padding: '5px 10px', borderRadius: 20,
-                      background: C.accentSoft, border: `1px solid ${C.accentBorder}`,
-                      color: C.accent, cursor: 'pointer', fontSize: 10,
-                      fontWeight: 500, fontFamily: C.font, transition: 'all 0.15s',
-                      whiteSpace: 'nowrap', maxWidth: '100%',
-                      overflow: 'hidden', textOverflow: 'ellipsis',
-                    }}>
+                <div style={{ padding:'6px 14px 4px', borderTop:`1px solid ${C.border}`, display:'flex', gap:6, flexWrap:'wrap', flexShrink:0 }}>
+                  {displayChips.slice(0, 3).map(s => (
+                    <button key={s} onClick={() => ask(s)} disabled={loading} style={{ padding:'5px 10px', borderRadius:20, background:C.accentSoft, border:`1px solid ${C.accentBorder}`, color:C.accent, cursor:'pointer', fontSize:10, fontWeight:500, fontFamily:C.font, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'100%' }}>
                       {s}
                     </button>
                   ))}
                 </div>
               )}
 
-              {/* Input */}
-              <div style={{
-                padding: '10px 12px 14px', borderTop: `1px solid ${C.border}`,
-                display: 'flex', gap: 8, alignItems: 'flex-end',
-                flexShrink: 0, background: C.bg,
-              }}>
+              {/* ── Input ── */}
+              <div style={{ padding: isMobile ? '10px 16px 20px' : '10px 12px 14px', borderTop:`1px solid ${C.border}`, display:'flex', gap:8, alignItems:'flex-end', flexShrink:0, background:C.bg }}>
                 <textarea
                   ref={inputRef}
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={`Ask the ${config.name}...`}
+                  placeholder={`Ask ${config.name}...`}
                   rows={1}
-                  style={{
-                    flex: 1, padding: '9px 12px',
-                    background: C.pageBg, border: `1px solid ${C.border}`,
-                    borderRadius: 10, color: C.text, fontSize: 13,
-                    fontFamily: C.font, outline: 'none', resize: 'none',
-                    maxHeight: 80, lineHeight: 1.5, transition: 'border-color 0.15s',
-                  }}
+                  style={{ flex:1, padding:'9px 12px', background:C.pageBg, border:`1px solid ${C.border}`, borderRadius:10, color:C.text, fontSize:13, fontFamily:C.font, outline:'none', resize:'none', maxHeight:80, lineHeight:1.5 }}
                   onFocus={e => e.target.style.borderColor = C.accentBorder}
                   onBlur={e  => e.target.style.borderColor = C.border}
                 />
                 <button
                   onClick={handleSend}
                   disabled={!input.trim() || loading}
-                  style={{
-                    width: 36, height: 36, borderRadius: 10,
-                    background: !input.trim() || loading ? C.textFaint : C.accent,
-                    border: 'none',
-                    cursor: !input.trim() || loading ? 'not-allowed' : 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0, transition: 'all 0.15s',
-                  }}
-                >
+                  style={{ width:36, height:36, borderRadius:10, background: !input.trim() || loading ? C.textFaint : C.accent, border:'none', cursor: !input.trim() || loading ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                   <Send size={14} color="#FFFFFF" />
                 </button>
               </div>
