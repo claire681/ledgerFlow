@@ -21,6 +21,7 @@ import ReceiptScanner  from './pages/ReceiptScanner';
 import Agents          from './pages/Agents';
 import Team            from './pages/Team';
 import Integrations    from './pages/Integrations';
+import Onboarding      from './pages/Onboarding';
 import { Menu, X }     from 'lucide-react';
 
 const ACCENT = '#0AB98A';
@@ -41,95 +42,36 @@ function AppLayout({ onLogout }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Close sidebar when route changes on mobile
   const handleNavigate = () => {
     if (isMobile) setSidebarOpen(false);
   };
 
   return (
-    <div style={{
-      display:    'flex',
-      height:     '100vh',
-      overflow:   'hidden',
-      background: '#F8FAFC',
-      fontFamily: "'Inter', -apple-system, sans-serif",
-      position:   'relative',
-    }}>
+    <div style={{ display:'flex', height:'100vh', overflow:'hidden', background:'#F8FAFC', fontFamily:"'Inter', -apple-system, sans-serif", position:'relative' }}>
 
-      {/* Mobile overlay — darkens background when sidebar is open */}
+      {/* Mobile overlay */}
       {isMobile && sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          style={{
-            position:   'fixed',
-            inset:      0,
-            background: 'rgba(0,0,0,0.5)',
-            zIndex:     40,
-          }}
-        />
+        <div onClick={() => setSidebarOpen(false)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:40 }}/>
       )}
 
       {/* Sidebar */}
-      <div style={{
-        position:   isMobile ? 'fixed' : 'relative',
-        top:        0,
-        left:       0,
-        height:     '100vh',
-        zIndex:     50,
-        transform:  isMobile
-          ? sidebarOpen ? 'translateX(0)' : 'translateX(-100%)'
-          : 'translateX(0)',
-        transition: 'transform 0.25s ease',
-      }}>
+      <div style={{ position:isMobile?'fixed':'relative', top:0, left:0, height:'100vh', zIndex:50, transform:isMobile?(sidebarOpen?'translateX(0)':'translateX(-100%)'):'translateX(0)', transition:'transform 0.25s ease' }}>
         <Sidebar onLogout={onLogout} onNavigate={handleNavigate}/>
       </div>
 
       {/* Main content */}
-      <main style={{
-        flex:      1,
-        overflowY: 'auto',
-        position:  'relative',
-        width:     isMobile ? '100%' : undefined,
-      }}>
+      <main style={{ flex:1, overflowY:'auto', position:'relative', width:isMobile?'100%':undefined }}>
 
         {/* Mobile top bar */}
         {isMobile && (
-          <div style={{
-            position:       'sticky',
-            top:            0,
-            zIndex:         30,
-            background:     BG,
-            display:        'flex',
-            alignItems:     'center',
-            justifyContent: 'space-between',
-            padding:        '12px 16px',
-            borderBottom:   '1px solid #1E293B',
-          }}>
-            <button
-              onClick={() => setSidebarOpen(o => !o)}
-              style={{
-                background: 'none',
-                border:     'none',
-                cursor:     'pointer',
-                color:      '#F1F5F9',
-                display:    'flex',
-                alignItems: 'center',
-                padding:    4,
-              }}
-            >
+          <div style={{ position:'sticky', top:0, zIndex:30, background:BG, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px', borderBottom:'1px solid #1E293B' }}>
+            <button onClick={() => setSidebarOpen(o => !o)} style={{ background:'none', border:'none', cursor:'pointer', color:'#F1F5F9', display:'flex', alignItems:'center', padding:4 }}>
               {sidebarOpen ? <X size={22}/> : <Menu size={22}/>}
             </button>
-
-            <div style={{
-              fontSize:      16,
-              fontWeight:    700,
-              color:         '#F1F5F9',
-              letterSpacing: '-0.01em',
-            }}>
-              No<span style={{ color: ACCENT }}>vala</span>
+            <div style={{ fontSize:16, fontWeight:700, color:'#F1F5F9', letterSpacing:'-0.01em' }}>
+              No<span style={{ color:ACCENT }}>vala</span>
             </div>
-
-            <div style={{ width: 30 }}/>
+            <div style={{ width:30 }}/>
           </div>
         )}
 
@@ -150,7 +92,6 @@ function AppLayout({ onLogout }) {
         </Routes>
       </main>
 
-      {/* Floating AI Assistant */}
       <AIAssistant/>
     </div>
   );
@@ -158,14 +99,34 @@ function AppLayout({ onLogout }) {
 
 // ── Root app ───────────────────────────────────────────────────────────────
 export default function App() {
-  const [token,   setToken]   = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [token,             setToken]             = useState(null);
+  const [loading,           setLoading]           = useState(true);
+  const [onboardingDone,    setOnboardingDone]    = useState(false);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
+  // ── Load token from storage ──────────────────────────────
   useEffect(() => {
     const stored = localStorage.getItem('token');
     if (stored) setToken(stored);
     setLoading(false);
   }, []);
+
+  // ── Check onboarding status whenever token changes ───────
+  useEffect(() => {
+    if (!token) {
+      setCheckingOnboarding(false);
+      setOnboardingDone(false);
+      return;
+    }
+    setCheckingOnboarding(true);
+    fetch('https://api.getnovala.com/api/v1/onboarding/status', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.json())
+      .then(d => setOnboardingDone(d.onboarding_completed || false))
+      .catch(() => setOnboardingDone(true)) // on error, skip onboarding
+      .finally(() => setCheckingOnboarding(false));
+  }, [token]);
 
   const handleLogin = (t, email) => {
     setToken(t);
@@ -176,21 +137,24 @@ export default function App() {
   const handleLogout = () => {
     localStorage.clear();
     setToken(null);
+    setOnboardingDone(false);
   };
 
-  if (loading) {
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('novala_just_onboarded', 'true');
+    setOnboardingDone(true);
+  };
+
+  // ── Loading spinner ──────────────────────────────────────
+  if (loading || (token && checkingOnboarding)) {
     return (
-      <div style={{
-        display:        'flex',
-        alignItems:     'center',
-        justifyContent: 'center',
-        height:         '100vh',
-        background:     '#F8FAFC',
-        fontSize:       14,
-        color:          '#64748B',
-        fontFamily:     "'Inter', sans-serif",
-      }}>
-        Loading Novala...
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', background:'#F8FAFC', fontSize:14, color:'#64748B', fontFamily:"'Inter', sans-serif" }}>
+        <div style={{ textAlign:'center' }}>
+          <div style={{ fontSize:24, fontWeight:800, color:'#0F172A', marginBottom:8 }}>
+            No<span style={{ color:ACCENT }}>vala</span>
+          </div>
+          <div style={{ fontSize:13, color:'#94A3B8' }}>Loading your account...</div>
+        </div>
       </div>
     );
   }
@@ -198,14 +162,19 @@ export default function App() {
   return (
     <AIProvider>
       <Router>
-        {token ? (
-          <AppLayout onLogout={handleLogout}/>
-        ) : (
+        {!token ? (
+          /* ── Not logged in ── */
           <Routes>
             <Route path="/login"    element={<Login onLogin={handleLogin}/>}/>
             <Route path="/register" element={<Login onLogin={handleLogin}/>}/>
             <Route path="*"         element={<Navigate to="/login"/>}/>
           </Routes>
+        ) : !onboardingDone ? (
+          /* ── Logged in but onboarding not complete ── */
+          <Onboarding onComplete={handleOnboardingComplete}/>
+        ) : (
+          /* ── Fully authenticated and onboarded ── */
+          <AppLayout onLogout={handleLogout}/>
         )}
       </Router>
     </AIProvider>
