@@ -167,4 +167,10 @@ export const getPLReport       = (params) => api.get('/analytics/pl-report', { p
 export const getBalanceSheet   = (params) => api.get('/analytics/balance-sheet', { params });
 export const getCashFlowReport = (params) => api.get('/analytics/cash-flow-report', { params });
 
+// ── Bills ─────────────────────────────────────────────────────────────────
+export const getBills     = ()     => api.get('/bills/');
+export const createBill   = (data) => api.post('/bills/', data);
+export const markBillPaid = (id)   => api.patch(`/bills/${id}/pay`);
+export const deleteBill   = (id)   => api.delete(`/bills/${id}`);
+
 export default api;
