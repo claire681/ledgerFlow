@@ -39,6 +39,7 @@ const NAV = [
       { path: '/tax',      label: 'Tax',      icon: Percent                },
       { path: '/currency', label: 'Currency', icon: RefreshCw              },
       { path: '/billpay', label: 'Bill Pay', icon: CreditCard },
+      { path: '/variance', label: 'Variance', icon: TrendingUp },
     ],
   },
   {

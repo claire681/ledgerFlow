@@ -24,8 +24,9 @@ import Integrations        from './pages/Integrations';
 import Onboarding          from './pages/Onboarding';
 import FinancialReports    from './pages/FinancialReports';
 import Reconciliation      from './pages/Reconciliation';
+import BillPay             from './pages/BillPay';
+import VarianceReports     from './pages/VarianceReports';
 import { Menu, X }         from 'lucide-react';
-import BillPay from './pages/BillPay';
 
 const ACCENT = '#0AB98A';
 const BG     = '#0F172A';
@@ -88,7 +89,8 @@ function AppLayout({ onLogout }) {
           <Route path="/integrations"   element={<Integrations/>}     />
           <Route path="/reports"        element={<FinancialReports/>} />
           <Route path="/reconciliation" element={<Reconciliation/>}   />
-          <Route path="/billpay" element={<BillPay/>}/>
+          <Route path="/billpay"        element={<BillPay/>}          />
+          <Route path="/variance"       element={<VarianceReports/>}  />
           <Route path="*"               element={<Navigate to="/"/>}  />
         </Routes>
       </main>
