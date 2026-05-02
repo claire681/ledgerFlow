@@ -6,7 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
   PieChart, Receipt, Percent, RefreshCw,
   BarChart3, ScanLine, Link2,
   Users, LogOut, ShieldCheck, TrendingUp,
-  BarChart2, GitMerge,
+  BarChart2, GitMerge, CreditCard,
 } from 'lucide-react';
 
 const ACCENT   = '#0AB98A';
