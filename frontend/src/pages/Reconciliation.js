@@ -30,7 +30,7 @@ const STATUS = {
   matched:    { label:'Matched',    color:ACCENT,    bg:'rgba(10,185,138,0.08)',  border:'rgba(10,185,138,0.2)'  },
   unmatched:  { label:'Unmatched',  color:'#F59E0B', bg:'rgba(245,158,11,0.08)', border:'rgba(245,158,11,0.2)'  },
   reconciled: { label:'Reconciled', color:'#3B82F6', bg:'rgba(59,130,246,0.08)', border:'rgba(59,130,246,0.2)'  },
-  flagged:    { label:'Flagged',    color:'#EF4444', bg:'rgba(239,68,68,0.08)',   border:'rgba(239,68,68,0.2)'   },
+ flagged:    { label:'Flagged',    color:'#EF4444', bg:'rgba(239,68,68,0.08)',   border:'rgba(239,68,68,0.2)'   },
 };
 
 export default function Reconciliation() {
