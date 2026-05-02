@@ -26,6 +26,8 @@ import FinancialReports    from './pages/FinancialReports';
 import Reconciliation      from './pages/Reconciliation';
 import BillPay             from './pages/BillPay';
 import VarianceReports     from './pages/VarianceReports';
+import LedgerView         from './pages/LedgerView';
+import DocumentComparison from './pages/DocumentComparison';
 import { Menu, X }         from 'lucide-react';
 
 const ACCENT = '#0AB98A';
@@ -91,6 +93,8 @@ function AppLayout({ onLogout }) {
           <Route path="/reconciliation" element={<Reconciliation/>}   />
           <Route path="/billpay"        element={<BillPay/>}          />
           <Route path="/variance"       element={<VarianceReports/>}  />
+          <Route path="/ledger"     element={<LedgerView/>}        />
+          <Route path="/comparison" element={<DocumentComparison/>}/>  
           <Route path="*"               element={<Navigate to="/"/>}  />
         </Routes>
       </main>

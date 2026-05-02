@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-
-  import {
+import {
   LayoutDashboard, FileText, ArrowLeftRight,
   PieChart, Receipt, Percent, RefreshCw,
   BarChart3, ScanLine, Link2,
   Users, LogOut, ShieldCheck, TrendingUp,
-  BarChart2, GitMerge, CreditCard,
+  BarChart2, GitMerge, CreditCard, BookOpen,
+  GitCompare,
 } from 'lucide-react';
 
 const ACCENT   = '#0AB98A';
@@ -24,45 +24,47 @@ const NAV = [
   {
     section: 'Core',
     items: [
-      { path: '/',             label: 'Dashboard',    icon: LayoutDashboard },
-      { path: '/documents',    label: 'Documents',    icon: FileText        },
-      { path: '/transactions', label: 'Transactions', icon: ArrowLeftRight  },
+      { path:'/',             label:'Dashboard',    icon:LayoutDashboard },
+      { path:'/documents',    label:'Documents',    icon:FileText        },
+      { path:'/transactions', label:'Transactions', icon:ArrowLeftRight  },
     ],
   },
   {
     section: 'Finance',
     items: [
-      { path: '/reconciliation', label: 'Reconciliation', icon: GitMerge },
-      { path: '/reports',  label: 'Reports',  icon: BarChart2, badge: 'NEW' },
-      { path: '/budgets',  label: 'Budgets',  icon: PieChart               },
-      { path: '/invoices', label: 'Invoices', icon: Receipt                },
-      { path: '/tax',      label: 'Tax',      icon: Percent                },
-      { path: '/currency', label: 'Currency', icon: RefreshCw              },
-      { path: '/billpay', label: 'Bill Pay', icon: CreditCard },
-      { path: '/variance', label: 'Variance', icon: TrendingUp },
+      { path:'/reports',        label:'Reports',        icon:BarChart2,  badge:'NEW' },
+      { path:'/reconciliation', label:'Reconciliation', icon:GitMerge               },
+      { path:'/ledger',         label:'Ledger View',    icon:BookOpen               },
+      { path:'/variance',       label:'Variance',       icon:TrendingUp             },
+      { path:'/billpay',        label:'Bill Pay',       icon:CreditCard             },
+      { path:'/budgets',        label:'Budgets',        icon:PieChart               },
+      { path:'/invoices',       label:'Invoices',       icon:Receipt                },
+      { path:'/tax',            label:'Tax',            icon:Percent                },
+      { path:'/currency',       label:'Currency',       icon:RefreshCw              },
     ],
   },
   {
     section: 'Intelligence',
     items: [
-      { path: '/vendors',  label: 'Vendors', icon: BarChart3, badge: null  },
-      { path: '/receipts', label: 'Scanner', icon: ScanLine,  badge: 'AI' },
+      { path:'/vendors',    label:'Vendors',    icon:BarChart3, badge:null  },
+      { path:'/receipts',   label:'Scanner',    icon:ScanLine,  badge:'AI'  },
+      { path:'/comparison', label:'Doc Compare',icon:GitCompare             },
     ],
   },
   {
     section: 'Organization',
     items: [
-      { path: '/team',         label: 'Team',         icon: Users },
-      { path: '/integrations', label: 'Integrations', icon: Link2 },
+      { path:'/team',         label:'Team',         icon:Users },
+      { path:'/integrations', label:'Integrations', icon:Link2 },
     ],
   },
 ];
 
 const ROLES = {
-  admin:      { label: 'Admin',      color: '#0AB98A' },
-  accountant: { label: 'Accountant', color: '#60A5FA' },
-  staff:      { label: 'Staff',      color: '#94A3B8' },
-  viewer:     { label: 'Viewer',     color: '#94A3B8' },
+  admin:      { label:'Admin',      color:'#0AB98A' },
+  accountant: { label:'Accountant', color:'#60A5FA' },
+  staff:      { label:'Staff',      color:'#94A3B8' },
+  viewer:     { label:'Viewer',     color:'#94A3B8' },
 };
 
 const LogoIcon = () => (
@@ -87,7 +89,6 @@ export default function Sidebar({ onLogout, onNavigate }) {
   return (
     <aside style={{ width:244, minWidth:244, height:'100vh', background:BG, display:'flex', flexDirection:'column', overflow:'hidden', position:'relative', fontFamily:FONT }}>
 
-      {/* Top accent line */}
       <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:GRAD, zIndex:1 }}/>
 
       {/* Logo */}
@@ -169,7 +170,6 @@ export default function Sidebar({ onLogout, onNavigate }) {
           </div>
           <div style={{ width:6, height:6, borderRadius:'50%', background:ACCENT, boxShadow:`0 0 6px ${ACCENT}` }}/>
         </div>
-
         <button onClick={onLogout}
           onMouseEnter={e => { e.currentTarget.style.background='rgba(239,68,68,0.07)'; e.currentTarget.style.borderColor='rgba(239,68,68,0.18)'; e.currentTarget.style.color='#EF4444'; }}
           onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.color=TEXT_DIM; }}
