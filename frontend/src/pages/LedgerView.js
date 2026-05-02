@@ -1,17 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Upload, X, Sparkles, ArrowRight, FileText,
-  CheckCircle, AlertTriangle, GitCompare,
-  Download, Eye, ChevronRight,
+  Download, Sparkles, ArrowRight, BookOpen,
+  Calendar, Search, Filter, ChevronDown,
 } from 'lucide-react';
 import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
+import { getTransactions } from '../services/api';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const ACCENT   = '#0AB98A';
-const BASE     = 'https://api.getnovala.com/api/v1';
-const getToken = () => localStorage.getItem('token') || '';
+const ACCENT = '#0AB98A';
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -27,174 +25,125 @@ const fmt = (n) => new Intl.NumberFormat('en-US', {
   style:'currency', currency:'USD', minimumFractionDigits:2,
 }).format(Number(n) || 0);
 
-function DropZone({ label, file, onFile, onClear, isMobile }) {
-  const [drag, setDrag] = useState(false);
-  const ref = useRef(null);
-
-  return (
-    <div style={{ flex:1 }}>
-      <div style={{ fontSize:11, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>{label}</div>
-      <div
-        onDrop={e => { e.preventDefault(); setDrag(false); const f=e.dataTransfer.files[0]; if(f) onFile(f); }}
-        onDragOver={e => { e.preventDefault(); setDrag(true); }}
-        onDragLeave={() => setDrag(false)}
-        onClick={() => !file && ref.current?.click()}
-        style={{ border:`2px dashed ${drag?ACCENT:file?ACCENT:L.border}`, borderRadius:L.radius, padding:isMobile?20:28, textAlign:'center', cursor:file?'default':'pointer', background:drag||file?'rgba(10,185,138,0.04)':'#fff', transition:'all 0.2s', minHeight:120, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-        <input ref={ref} type="file" accept=".pdf,.png,.jpg,.jpeg,.csv" style={{ display:'none' }} onChange={e => onFile(e.target.files[0])}/>
-        {file ? (
-          <div>
-            <div style={{ width:40, height:40, borderRadius:10, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 10px' }}>
-              <FileText size={20} color={ACCENT}/>
-            </div>
-            <div style={{ fontSize:13, fontWeight:600, color:L.text, marginBottom:4 }}>{file.name}</div>
-            <div style={{ fontSize:11, color:ACCENT, marginBottom:10 }}>Ready to compare ✓</div>
-            <button onClick={e => { e.stopPropagation(); onClear(); }}
-              style={{ background:'none', border:`1px solid ${L.border}`, borderRadius:L.radiusSm, padding:'4px 12px', cursor:'pointer', fontSize:11, color:L.textMuted, fontFamily:L.font, display:'inline-flex', alignItems:'center', gap:4 }}>
-              <X size={11}/> Remove
-            </button>
-          </div>
-        ) : (
-          <div>
-            <div style={{ width:40, height:40, borderRadius:10, background:L.pageBg, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 10px' }}>
-              <Upload size={20} color={L.textMuted}/>
-            </div>
-            <div style={{ fontSize:13, fontWeight:600, color:L.text, marginBottom:4 }}>{isMobile?'Tap to upload':'Drop file here'}</div>
-            <div style={{ fontSize:11, color:L.textMuted }}>PDF, PNG, JPG, CSV</div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+// Map transaction categories to account codes
+function getAccountCode(category, txnType) {
+  const codes = {
+    'Revenue':               '4000',
+    'Income':                '4000',
+    'Sales':                 '4100',
+    'Rent & Facilities':     '5100',
+    'Software & SaaS':       '5200',
+    'Utilities':             '5300',
+    'Insurance':             '5400',
+    'Marketing':             '5500',
+    'Professional Services': '5600',
+    'Hardware & Equipment':  '5700',
+    'Payroll':               '5800',
+    'Transportation':        '5900',
+    'Food & Meals':          '6000',
+    'General Expense':       '6100',
+    'Uncategorized':         '6999',
+  };
+  if (txnType === 'income') return codes[category] || '4000';
+  return codes[category] || '6100';
 }
 
-function DiffRow({ label, val1, val2, type }) {
-  const isDiff  = String(val1) !== String(val2);
-  const isNum   = type === 'number';
-  const numDiff = isNum ? (Number(val2)||0) - (Number(val1)||0) : null;
-
-  return (
-    <div style={{ display:'grid', gridTemplateColumns:'160px 1fr 1fr 120px', padding:'10px 20px', borderBottom:`1px solid ${L.border}`, alignItems:'center', background:isDiff?'rgba(245,158,11,0.04)':'transparent' }}>
-      <div style={{ fontSize:11, color:L.textMuted, fontWeight:600 }}>{label}</div>
-      <div style={{ fontSize:12, color:L.text, fontFamily:isNum?L.fontMono:'inherit', padding:'4px 8px', borderRadius:6, background:isDiff?'rgba(239,68,68,0.06)':'transparent' }}>
-        {isNum && val1 ? fmt(val1) : val1 || '—'}
-      </div>
-      <div style={{ fontSize:12, color:L.text, fontFamily:isNum?L.fontMono:'inherit', padding:'4px 8px', borderRadius:6, background:isDiff?'rgba(10,185,138,0.06)':'transparent' }}>
-        {isNum && val2 ? fmt(val2) : val2 || '—'}
-      </div>
-      <div style={{ fontSize:11, fontWeight:600 }}>
-        {isDiff ? (
-          isNum && numDiff !== null ? (
-            <span style={{ color:numDiff>0?L.red:ACCENT }}>
-              {numDiff>0?'+':''}{fmt(numDiff)}
-            </span>
-          ) : (
-            <span style={{ color:'#F59E0B', display:'flex', alignItems:'center', gap:4 }}>
-              <AlertTriangle size={11}/> Changed
-            </span>
-          )
-        ) : (
-          <span style={{ color:ACCENT, display:'flex', alignItems:'center', gap:4 }}>
-            <CheckCircle size={11}/> Match
-          </span>
-        )}
-      </div>
-    </div>
-  );
+function getAccountName(category, txnType) {
+  if (txnType === 'income') return 'Revenue — ' + (category || 'General Income');
+  return 'Expense — ' + (category || 'General Expense');
 }
 
-export default function DocumentComparison() {
-  const [file1,     setFile1]     = useState(null);
-  const [file2,     setFile2]     = useState(null);
-  const [doc1,      setDoc1]      = useState(null);
-  const [doc2,      setDoc2]      = useState(null);
-  const [comparing, setComparing] = useState(false);
-  const [compared,  setCompared]  = useState(false);
-  const [error,     setError]     = useState('');
+export default function LedgerView() {
+  const [txns,    setTxns]    = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search,  setSearch]  = useState('');
+  const [filter,  setFilter]  = useState('all');
+  const [period,  setPeriod]  = useState('all');
   const { setPageContext, askAndOpen } = useAI();
   const isMobile = useIsMobile();
 
-  useEffect(() => { setPageContext('comparison', { page:'comparison' }); }, []);
+  useEffect(() => {
+    setPageContext('ledger', { page:'ledger' });
+    const load = async () => {
+      try {
+        const res = await getTransactions({});
+        setTxns(Array.isArray(res.data) ? res.data : []);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    };
+    load();
+  }, []);
 
-  const uploadDoc = async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const res  = await fetch(`${BASE}/documents/upload?txn_type=expense`, {
-      method:'POST', headers:{ Authorization:`Bearer ${getToken()}` }, body:formData,
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Upload failed');
+  // Filter by period
+  const now   = new Date();
+  const filtered = txns.filter(t => {
+    const matchSearch = !search ||
+      (t.vendor||'').toLowerCase().includes(search.toLowerCase()) ||
+      (t.category||'').toLowerCase().includes(search.toLowerCase());
+    const matchType = filter === 'all' || t.txn_type === filter;
+    let matchPeriod = true;
+    if (period !== 'all' && t.txn_date) {
+      const d = new Date(t.txn_date);
+      if (period === 'month')   matchPeriod = d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+      if (period === 'quarter') matchPeriod = Math.floor(d.getMonth()/3)===Math.floor(now.getMonth()/3) && d.getFullYear()===now.getFullYear();
+      if (period === 'year')    matchPeriod = d.getFullYear()===now.getFullYear();
+    }
+    return matchSearch && matchType && matchPeriod;
+  }).sort((a,b) => (a.txn_date||'').localeCompare(b.txn_date||''));
 
-    // Poll for completion
-    return new Promise((resolve, reject) => {
-      const interval = setInterval(async () => {
-        try {
-          const statusRes  = await fetch(`${BASE}/documents/upload-status/${data.job_id}`, { headers:{ Authorization:`Bearer ${getToken()}` } });
-          const statusData = await statusRes.json();
-          if (statusData.status === 'completed') {
-            clearInterval(interval);
-            const docsRes  = await fetch(`${BASE}/documents/`, { headers:{ Authorization:`Bearer ${getToken()}` } });
-            const docsList = await docsRes.json();
-            resolve(Array.isArray(docsList) ? docsList[0] : null);
-          }
-          if (statusData.status === 'failed') {
-            clearInterval(interval);
-            reject(new Error('Processing failed'));
-          }
-        } catch (e) { clearInterval(interval); reject(e); }
-      }, 1500);
-    });
-  };
+  // Build ledger entries — each transaction becomes debit + credit
+  const ledgerEntries = filtered.map((t, i) => {
+    const amount   = Math.abs(t.amount || 0);
+    const isIncome = t.txn_type === 'income';
+    const ref      = `TXN-${String(t.id).padStart(5,'0')}`;
+    return {
+      id:       t.id,
+      date:     t.txn_date || '—',
+      ref,
+      description: t.vendor || 'Unknown',
+      account:  getAccountName(t.category, t.txn_type),
+      code:     getAccountCode(t.category, t.txn_type),
+      debit:    isIncome ? 0      : amount,
+      credit:   isIncome ? amount : 0,
+      category: t.category || 'Uncategorized',
+      txnType:  t.txn_type,
+    };
+  });
 
-  const handleCompare = async () => {
-    if (!file1 || !file2) return;
-    setComparing(true); setError(''); setDoc1(null); setDoc2(null); setCompared(false);
-    try {
-      const [d1, d2] = await Promise.all([uploadDoc(file1), uploadDoc(file2)]);
-      setDoc1(d1); setDoc2(d2); setCompared(true);
-    } catch (e) { setError('Comparison failed: ' + e.message); }
-    finally { setComparing(false); }
-  };
+  // Running balance
+  let balance = 0;
+  const entriesWithBalance = ledgerEntries.map(e => {
+    balance += e.credit - e.debit;
+    return { ...e, balance };
+  });
 
-  const reset = () => {
-    setFile1(null); setFile2(null); setDoc1(null); setDoc2(null);
-    setCompared(false); setError('');
-  };
-
-  const differences = compared && doc1 && doc2 ? [
-    { label:'Vendor',       val1:doc1.vendor,        val2:doc2.vendor,        type:'text'   },
-    { label:'Total Amount', val1:doc1.total_amount,  val2:doc2.total_amount,  type:'number' },
-    { label:'Date',         val1:doc1.doc_date,      val2:doc2.doc_date,      type:'text'   },
-    { label:'Category',     val1:doc1.suggested_cat, val2:doc2.suggested_cat, type:'text'   },
-    { label:'Tax Amount',   val1:doc1.tax_amount,    val2:doc2.tax_amount,    type:'number' },
-    { label:'Document Type',val1:doc1.doc_type,      val2:doc2.doc_type,      type:'text'   },
-  ] : [];
-
-  const diffCount = differences.filter(d => String(d.val1) !== String(d.val2)).length;
+  const totalDebits  = ledgerEntries.reduce((s,e) => s+e.debit,  0);
+  const totalCredits = ledgerEntries.reduce((s,e) => s+e.credit, 0);
+  const netBalance   = totalCredits - totalDebits;
 
   const exportPDF = () => {
-    if (!compared) return;
-    const doc = new jsPDF();
+    const doc = new jsPDF({ orientation:'landscape' });
     doc.setFontSize(18); doc.setTextColor(10,185,138);
     doc.text('Novala', 14, 16);
     doc.setFontSize(12); doc.setTextColor(100);
-    doc.text('Document Comparison Report', 14, 23);
+    doc.text('General Ledger', 14, 23);
     doc.setFontSize(9);
-    doc.text(`${file1?.name} vs ${file2?.name} · Generated: ${new Date().toLocaleDateString()}`, 14, 29);
-    doc.text(`${diffCount} difference${diffCount!==1?'s':''} found`, 14, 35);
+    doc.text(`Generated: ${new Date().toLocaleDateString()} · ${filtered.length} entries`, 14, 29);
 
     autoTable(doc, {
-      startY:40,
-      head:[['Field','Document 1','Document 2','Status']],
-      body:differences.map(d => [
-        d.label,
-        d.type==='number'&&d.val1?fmt(d.val1):d.val1||'—',
-        d.type==='number'&&d.val2?fmt(d.val2):d.val2||'—',
-        String(d.val1)===String(d.val2)?'Match':'Different',
+      startY:34,
+      head:[['Date','Ref','Description','Account','Code','Debit','Credit','Balance']],
+      body:entriesWithBalance.map(e => [
+        e.date, e.ref, e.description, e.account, e.code,
+        e.debit>0?fmt(e.debit):'—',
+        e.credit>0?fmt(e.credit):'—',
+        fmt(e.balance),
       ]),
-      styles:{ fontSize:9 },
+      styles:{ fontSize:8 },
       headStyles:{ fillColor:[10,185,138], textColor:255 },
+      columnStyles:{ 5:{halign:'right'}, 6:{halign:'right'}, 7:{halign:'right'} },
     });
-    doc.save('Novala_DocComparison.pdf');
+    doc.save('Novala_Ledger.pdf');
   };
 
   const pad = isMobile ? '12px' : '24px 28px';
@@ -205,164 +154,191 @@ export default function DocumentComparison() {
       {/* Top bar */}
       <div style={{ ...topBar, flexDirection:isMobile?'column':'row', alignItems:isMobile?'flex-start':'center', gap:isMobile?10:0, padding:isMobile?'16px':undefined }}>
         <div>
-          <div style={{ fontSize:isMobile?18:20, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>Document Comparison</div>
-          <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>Upload two documents — AI extracts and compares key fields</div>
+          <div style={{ fontSize:isMobile?18:20, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>Ledger View</div>
+          <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>General ledger with double-entry accounting format</div>
         </div>
-        <div style={{ display:'flex', gap:8 }}>
-          {compared && (
-            <button onClick={exportPDF}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font }}>
-              <Download size={13}/> Export PDF
-            </button>
-          )}
-          {compared && (
-            <button onClick={() => askAndOpen(`Compare these two documents: Doc1 vendor=${doc1?.vendor}, amount=${doc1?.total_amount}, date=${doc1?.doc_date}. Doc2 vendor=${doc2?.vendor}, amount=${doc2?.total_amount}, date=${doc2?.doc_date}. There are ${diffCount} differences. What do these differences mean and should I be concerned?`)}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', border:'none', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font }}>
-              <Sparkles size={13}/> Ask AI
-            </button>
-          )}
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+          <button onClick={exportPDF}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font }}>
+            <Download size={13}/> Export PDF
+          </button>
+          <button onClick={() => askAndOpen(`Analyze my general ledger. Total debits: ${fmt(totalDebits)}, total credits: ${fmt(totalCredits)}, net balance: ${fmt(netBalance)}. Are there any issues or anomalies I should know about?`)}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', border:'none', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font }}>
+            <Sparkles size={13}/> Ask AI
+          </button>
         </div>
       </div>
 
       <div style={{ padding: pad }}>
 
-        {/* Upload area */}
-        <div style={{ ...card, padding:isMobile?'16px':'24px', marginBottom:20 }}>
-          <div style={{ fontSize:14, fontWeight:700, color:L.text, marginBottom:16, display:'flex', alignItems:'center', gap:8 }}>
-            <GitCompare size={15} color={ACCENT}/> Upload Documents to Compare
-          </div>
-
-          <div style={{ display:'flex', gap:16, flexDirection:isMobile?'column':'row', marginBottom:20 }}>
-            <DropZone label="Document 1" file={file1} onFile={setFile1} onClear={() => setFile1(null)} isMobile={isMobile}/>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', color:L.textFaint, fontSize:isMobile?20:24, flexShrink:0 }}>VS</div>
-            <DropZone label="Document 2" file={file2} onFile={setFile2} onClear={() => setFile2(null)} isMobile={isMobile}/>
-          </div>
-
-          {error && (
-            <div style={{ padding:'10px 14px', borderRadius:L.radiusSm, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', color:'#EF4444', fontSize:12, marginBottom:16, display:'flex', alignItems:'center', gap:8 }}>
-              <AlertTriangle size={13}/>{error}
+        {/* Summary cards */}
+        <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(4,1fr)', gap:isMobile?10:14, marginBottom:20 }}>
+          {[
+            { label:'Total Entries',  value:filtered.length,   color:L.text,  sub:'Ledger records'    },
+            { label:'Total Debits',   value:fmt(totalDebits),  color:L.red,   sub:'Money out'         },
+            { label:'Total Credits',  value:fmt(totalCredits), color:ACCENT,  sub:'Money in'          },
+            { label:'Net Balance',    value:fmt(netBalance),   color:netBalance>=0?ACCENT:L.red, sub:'Credits minus debits' },
+          ].map(c => (
+            <div key={c.label} style={{ ...card, padding:isMobile?'12px 14px':'18px 20px' }}>
+              <div style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em', textTransform:'uppercase', marginBottom:8 }}>{c.label}</div>
+              <div style={{ fontSize:isMobile?15:18, fontWeight:700, color:c.color, fontFamily:L.fontMono, marginBottom:4, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.value}</div>
+              <div style={{ fontSize:10, color:L.textMuted }}>{c.sub}</div>
             </div>
-          )}
+          ))}
+        </div>
 
-          <div style={{ display:'flex', gap:8 }}>
-            <button onClick={handleCompare} disabled={!file1||!file2||comparing}
-              style={{ flex:1, padding:'12px', borderRadius:L.radiusSm, background:!file1||!file2||comparing?L.textFaint:'linear-gradient(135deg,#0AB98A,#0EA5E9)', color:'#fff', border:'none', cursor:!file1||!file2||comparing?'not-allowed':'pointer', fontSize:13, fontWeight:600, fontFamily:L.font, display:'flex', alignItems:'center', justifyContent:'center', gap:8, boxShadow:file1&&file2&&!comparing?'0 4px 14px rgba(10,185,138,0.3)':'none' }}>
-              {comparing ? (
-                <><span>AI is analyzing both documents...</span></>
-              ) : (
-                <><GitCompare size={14}/> Compare Documents</>
-              )}
-            </button>
-            {compared && (
-              <button onClick={reset}
-                style={{ padding:'12px 18px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:13, fontFamily:L.font }}>
-                Reset
+        {/* Toolbar */}
+        <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
+          {/* Search */}
+          <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', borderRadius:L.radiusSm, background:'#fff', border:`1px solid ${L.border}`, flex:isMobile?1:'none', minWidth:isMobile?0:220 }}>
+            <Search size={13} color={L.textMuted}/>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search vendor or category..."
+              style={{ border:'none', outline:'none', fontSize:12, color:L.text, fontFamily:L.font, background:'transparent', width:'100%' }}/>
+          </div>
+
+          {/* Type filter */}
+          <div style={{ display:'flex', gap:6, overflowX:'auto', scrollbarWidth:'none' }}>
+            {[
+              { value:'all',     label:'All'     },
+              { value:'income',  label:'Credits' },
+              { value:'expense', label:'Debits'  },
+            ].map(f => (
+              <button key={f.value} onClick={() => setFilter(f.value)}
+                style={{ padding:'7px 12px', borderRadius:20, cursor:'pointer', fontSize:11, fontWeight:600, border:'1px solid', whiteSpace:'nowrap', flexShrink:0, fontFamily:L.font, borderColor:filter===f.value?L.accentBorder:L.border, background:filter===f.value?L.accentSoft:'#fff', color:filter===f.value?L.accent:L.textMuted }}>
+                {f.label}
               </button>
-            )}
+            ))}
+          </div>
+
+          {/* Period filter */}
+          <div style={{ display:'flex', gap:6, overflowX:'auto', scrollbarWidth:'none' }}>
+            {[
+              { value:'all',     label:'All Time'    },
+              { value:'month',   label:'This Month'  },
+              { value:'quarter', label:'This Quarter'},
+              { value:'year',    label:'This Year'   },
+            ].map(f => (
+              <button key={f.value} onClick={() => setPeriod(f.value)}
+                style={{ padding:'7px 12px', borderRadius:20, cursor:'pointer', fontSize:11, fontWeight:600, border:'1px solid', whiteSpace:'nowrap', flexShrink:0, fontFamily:L.font, borderColor:period===f.value?L.accentBorder:L.border, background:period===f.value?L.accentSoft:'#fff', color:period===f.value?L.accent:L.textMuted }}>
+                {f.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Results */}
-        {compared && doc1 && doc2 && (
-          <>
-            {/* Summary */}
-            <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(3,1fr)', gap:isMobile?10:14, marginBottom:20 }}>
-              {[
-                { label:'Fields Compared', value:differences.length,                                    color:L.text  },
-                { label:'Differences',     value:diffCount,                                              color:diffCount>0?'#F59E0B':ACCENT },
-                { label:'Matches',         value:differences.length-diffCount,                          color:ACCENT  },
-              ].map(c => (
-                <div key={c.label} style={{ ...card, padding:isMobile?'12px 14px':'18px 20px' }}>
-                  <div style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em', textTransform:'uppercase', marginBottom:8 }}>{c.label}</div>
-                  <div style={{ fontSize:isMobile?24:32, fontWeight:700, color:c.color, fontFamily:L.fontMono }}>{c.value}</div>
-                </div>
+        {/* Ledger table */}
+        <div style={{ ...card, overflow:'hidden' }}>
+          <div style={{ padding:isMobile?'14px 16px':'16px 22px', borderBottom:`1px solid ${L.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div style={{ fontSize:14, fontWeight:700, color:L.text }}>General Ledger</div>
+            <div style={{ fontSize:12, color:L.textMuted }}>{filtered.length} entries</div>
+          </div>
+
+          {/* Desktop header */}
+          {!isMobile && (
+            <div style={{ display:'grid', gridTemplateColumns:'100px 90px 1fr 180px 60px 110px 110px 110px', padding:'8px 22px', borderBottom:`1px solid ${L.border}`, background:L.pageBg }}>
+              {['DATE','REF','DESCRIPTION','ACCOUNT','CODE','DEBIT','CREDIT','BALANCE'].map(h => (
+                <div key={h} style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em' }}>{h}</div>
               ))}
             </div>
+          )}
 
-            {/* Diff banner */}
-            <div style={{ padding:'12px 16px', borderRadius:L.radiusSm, background:diffCount>0?'rgba(245,158,11,0.08)':L.accentSoft, border:`1px solid ${diffCount>0?'rgba(245,158,11,0.2)':L.accentBorder}`, marginBottom:16, display:'flex', alignItems:'center', gap:10 }}>
-              {diffCount > 0 ? <AlertTriangle size={16} color="#F59E0B"/> : <CheckCircle size={16} color={ACCENT}/>}
-              <div style={{ fontSize:13, fontWeight:600, color:diffCount>0?'#F59E0B':ACCENT }}>
-                {diffCount > 0 ? `${diffCount} difference${diffCount!==1?'s':''} found between the two documents` : 'Documents match on all key fields'}
-              </div>
+          {loading && <div style={{ padding:40, textAlign:'center', color:L.textMuted }}>Loading ledger...</div>}
+
+          {!loading && filtered.length === 0 && (
+            <div style={{ padding:60, textAlign:'center' }}>
+              <BookOpen size={40} color={L.textFaint} style={{ marginBottom:12 }}/>
+              <div style={{ fontSize:15, fontWeight:600, color:L.text, marginBottom:6 }}>No ledger entries</div>
+              <div style={{ fontSize:13, color:L.textMuted }}>Upload documents to populate your ledger</div>
             </div>
+          )}
 
-            {/* Comparison table */}
-            <div style={{ ...card, overflow:'hidden' }}>
-              <div style={{ padding:isMobile?'14px 16px':'16px 22px', borderBottom:`1px solid ${L.border}` }}>
-                <div style={{ fontSize:14, fontWeight:700, color:L.text }}>Field Comparison</div>
-                <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>{file1?.name} vs {file2?.name}</div>
-              </div>
+          {entriesWithBalance.map((e, i) => {
+            const isIncome = e.txnType === 'income';
 
-              {/* Header */}
-              {!isMobile && (
-                <div style={{ display:'grid', gridTemplateColumns:'160px 1fr 1fr 120px', padding:'8px 20px', borderBottom:`1px solid ${L.border}`, background:L.pageBg }}>
-                  {['FIELD','DOCUMENT 1','DOCUMENT 2','STATUS'].map(h => (
-                    <div key={h} style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em' }}>{h}</div>
-                  ))}
-                </div>
-              )}
-
-              {isMobile ? (
-                differences.map(d => {
-                  const isDiff = String(d.val1) !== String(d.val2);
-                  return (
-                    <div key={d.label} style={{ padding:'12px 16px', borderBottom:`1px solid ${L.border}`, background:isDiff?'rgba(245,158,11,0.04)':'transparent' }}>
-                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-                        <div style={{ fontSize:11, fontWeight:700, color:L.textMuted }}>{d.label}</div>
-                        {isDiff ? (
-                          <span style={{ fontSize:10, fontWeight:600, color:'#F59E0B', display:'flex', alignItems:'center', gap:3 }}><AlertTriangle size={10}/> Changed</span>
-                        ) : (
-                          <span style={{ fontSize:10, fontWeight:600, color:ACCENT, display:'flex', alignItems:'center', gap:3 }}><CheckCircle size={10}/> Match</span>
-                        )}
-                      </div>
-                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-                        <div style={{ padding:'6px 8px', borderRadius:6, background:isDiff?'rgba(239,68,68,0.06)':L.pageBg }}>
-                          <div style={{ fontSize:9, color:L.textFaint, marginBottom:2 }}>DOC 1</div>
-                          <div style={{ fontSize:12, color:L.text, fontFamily:d.type==='number'?L.fontMono:'inherit' }}>
-                            {d.type==='number'&&d.val1?fmt(d.val1):d.val1||'—'}
-                          </div>
-                        </div>
-                        <div style={{ padding:'6px 8px', borderRadius:6, background:isDiff?'rgba(10,185,138,0.06)':L.pageBg }}>
-                          <div style={{ fontSize:9, color:L.textFaint, marginBottom:2 }}>DOC 2</div>
-                          <div style={{ fontSize:12, color:L.text, fontFamily:d.type==='number'?L.fontMono:'inherit' }}>
-                            {d.type==='number'&&d.val2?fmt(d.val2):d.val2||'—'}
-                          </div>
-                        </div>
-                      </div>
+            if (isMobile) {
+              return (
+                <div key={e.id} style={{ padding:'12px 16px', borderBottom:`1px solid ${L.border}`, background:i%2===0?'transparent':L.pageBg }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:4 }}>
+                    <div>
+                      <div style={{ fontSize:12, fontWeight:600, color:L.text }}>{e.description}</div>
+                      <div style={{ fontSize:10, color:L.textMuted, marginTop:2 }}>{e.date} · {e.ref} · {e.code}</div>
                     </div>
-                  );
-                })
+                    <div style={{ textAlign:'right', flexShrink:0, marginLeft:8 }}>
+                      {e.debit  > 0 && <div style={{ fontSize:12, fontWeight:700, color:L.red,   fontFamily:L.fontMono }}>DR {fmt(e.debit)}</div>}
+                      {e.credit > 0 && <div style={{ fontSize:12, fontWeight:700, color:ACCENT,  fontFamily:L.fontMono }}>CR {fmt(e.credit)}</div>}
+                      <div style={{ fontSize:10, color:L.textMuted, fontFamily:L.fontMono }}>Bal: {fmt(e.balance)}</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize:10, color:L.textMuted }}>{e.account}</div>
+                </div>
+              );
+            }
+
+            return (
+              <div key={e.id}
+                style={{ display:'grid', gridTemplateColumns:'100px 90px 1fr 180px 60px 110px 110px 110px', padding:'11px 22px', borderBottom:`1px solid ${L.border}`, alignItems:'center', background:i%2===0?'transparent':L.pageBg, transition:'background 0.1s' }}
+                onMouseEnter={e2 => e2.currentTarget.style.background=L.accentSoft}
+                onMouseLeave={e2 => e2.currentTarget.style.background=i%2===0?'transparent':L.pageBg}>
+                <div style={{ fontSize:11, color:L.textMuted, fontFamily:L.fontMono }}>{e.date}</div>
+                <div style={{ fontSize:10, color:L.textFaint, fontFamily:L.fontMono }}>{e.ref}</div>
+                <div style={{ fontSize:12, fontWeight:500, color:L.text, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{e.description}</div>
+                <div style={{ fontSize:10, color:L.textSub, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{e.account}</div>
+                <div style={{ fontSize:10, color:L.textFaint, fontFamily:L.fontMono }}>{e.code}</div>
+                <div style={{ fontSize:12, fontWeight:600, color:L.red,  fontFamily:L.fontMono, textAlign:'right' }}>{e.debit >0?fmt(e.debit):'—'}</div>
+                <div style={{ fontSize:12, fontWeight:600, color:ACCENT, fontFamily:L.fontMono, textAlign:'right' }}>{e.credit>0?fmt(e.credit):'—'}</div>
+                <div style={{ fontSize:12, fontWeight:700, color:e.balance>=0?ACCENT:L.red, fontFamily:L.fontMono, textAlign:'right' }}>{fmt(e.balance)}</div>
+              </div>
+            );
+          })}
+
+          {/* Totals row */}
+          {entriesWithBalance.length > 0 && (
+            <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr 1fr 1fr':'100px 90px 1fr 180px 60px 110px 110px 110px', padding:isMobile?'12px 16px':'12px 22px', background:L.pageBg, borderTop:`2px solid ${L.border}` }}>
+              {isMobile ? (
+                <>
+                  <div style={{ fontSize:12, fontWeight:700, color:L.text }}>Totals</div>
+                  <div style={{ fontSize:12, fontWeight:700, color:L.red,  fontFamily:L.fontMono }}>{fmt(totalDebits)}</div>
+                  <div style={{ fontSize:12, fontWeight:700, color:ACCENT, fontFamily:L.fontMono }}>{fmt(totalCredits)}</div>
+                </>
               ) : (
-                differences.map(d => (
-                  <DiffRow key={d.label} label={d.label} val1={d.val1} val2={d.val2} type={d.type}/>
-                ))
+                <>
+                  <div/><div/><div style={{ fontSize:12, fontWeight:700, color:L.text }}>TOTALS</div>
+                  <div/><div/>
+                  <div style={{ fontSize:12, fontWeight:700, color:L.red,  fontFamily:L.fontMono, textAlign:'right' }}>{fmt(totalDebits)}</div>
+                  <div style={{ fontSize:12, fontWeight:700, color:ACCENT, fontFamily:L.fontMono, textAlign:'right' }}>{fmt(totalCredits)}</div>
+                  <div style={{ fontSize:12, fontWeight:700, color:netBalance>=0?ACCENT:L.red, fontFamily:L.fontMono, textAlign:'right' }}>{fmt(netBalance)}</div>
+                </>
               )}
             </div>
-          </>
-        )}
+          )}
+        </div>
 
-        {/* Empty state */}
-        {!compared && !comparing && (
-          <div style={{ ...card, padding:isMobile?'40px 20px':60, textAlign:'center' }}>
-            <div style={{ width:60, height:60, borderRadius:16, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
-              <GitCompare size={26} color={ACCENT}/>
+        {/* AI Help */}
+        {!loading && txns.length > 0 && (
+          <div style={{ ...card, padding:isMobile?'16px':'20px 24px', marginTop:20 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
+              <div style={{ width:36, height:36, borderRadius:10, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <Sparkles size={18} color="#fff"/>
+              </div>
+              <div>
+                <div style={{ fontSize:14, fontWeight:700, color:L.text }}>AI Ledger Analysis</div>
+                <div style={{ fontSize:11, color:L.textMuted }}>Ask questions about your general ledger</div>
+              </div>
             </div>
-            <div style={{ fontSize:15, fontWeight:600, color:L.text, marginBottom:6 }}>Compare any two documents</div>
-            <div style={{ fontSize:13, color:L.textMuted, marginBottom:20, maxWidth:400, margin:'0 auto 20px' }}>
-              Upload two invoices, receipts, or contracts and AI will extract and compare all key fields — vendor, amount, date, category, and more.
-            </div>
-            <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(3,1fr)', gap:10, maxWidth:500, margin:'0 auto' }}>
+            <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(3,1fr)', gap:8 }}>
               {[
-                { emoji:'📄', label:'Invoice vs Invoice',  desc:'Spot billing discrepancies' },
-                { emoji:'🧾', label:'Receipt vs Statement', desc:'Verify payment records'     },
-                { emoji:'📋', label:'Contract vs Invoice',  desc:'Check terms vs charges'     },
-              ].map(u => (
-                <div key={u.label} style={{ padding:'14px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}` }}>
-                  <div style={{ fontSize:24, marginBottom:8 }}>{u.emoji}</div>
-                  <div style={{ fontSize:12, fontWeight:600, color:L.text, marginBottom:4 }}>{u.label}</div>
-                  <div style={{ fontSize:11, color:L.textMuted }}>{u.desc}</div>
-                </div>
+                { q:'Are there any unusual or duplicate entries in my ledger?',      icon:'🔍' },
+                { q:'Which account has the highest debit activity this period?',     icon:'📊' },
+                { q:'Summarize my ledger and flag anything that looks incorrect',    icon:'⚠️' },
+              ].map(item => (
+                <button key={item.q} onClick={() => askAndOpen(item.q)}
+                  style={{ display:'flex', alignItems:'center', gap:10, padding:'12px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}`, cursor:'pointer', fontFamily:L.font, textAlign:'left' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor=L.accentBorder; e.currentTarget.style.background=L.accentSoft; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor=L.border; e.currentTarget.style.background=L.pageBg; }}>
+                  <span style={{ fontSize:20 }}>{item.icon}</span>
+                  <span style={{ fontSize:12, color:L.textSub, flex:1, lineHeight:1.4 }}>{item.q}</span>
+                  <ArrowRight size={12} color={L.textFaint}/>
+                </button>
               ))}
             </div>
           </div>
