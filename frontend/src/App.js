@@ -91,7 +91,6 @@ function AppLayout({ onLogout }) {
           <Route path="/team"         element={<Team/>}           />
           <Route path="/integrations" element={<Integrations/>}   />
           <Route path="/reports" element={<FinancialReports/>}/>
-          <Route path="/reports" element={<FinancialReports/>}/>
           <Route path="*"             element={<Navigate to="/"/>}/>
         </Routes>
       </main>
