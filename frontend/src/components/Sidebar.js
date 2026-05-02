@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
+
+  import {
   LayoutDashboard, FileText, ArrowLeftRight,
   PieChart, Receipt, Percent, RefreshCw,
   BarChart3, ScanLine, Link2,
   Users, LogOut, ShieldCheck, TrendingUp,
-  BarChart2,
+  BarChart2, GitMerge,
 } from 'lucide-react';
 
 const ACCENT   = '#0AB98A';
@@ -31,6 +32,7 @@ const NAV = [
   {
     section: 'Finance',
     items: [
+      { path: '/reconciliation', label: 'Reconciliation', icon: GitMerge },
       { path: '/reports',  label: 'Reports',  icon: BarChart2, badge: 'NEW' },
       { path: '/budgets',  label: 'Budgets',  icon: PieChart               },
       { path: '/invoices', label: 'Invoices', icon: Receipt                },
