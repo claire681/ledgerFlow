@@ -24,7 +24,7 @@ import Integrations    from './pages/Integrations';
 import Onboarding      from './pages/Onboarding';
 import { Menu, X }     from 'lucide-react';
 import FinancialReports from './pages/FinancialReports';
-import FinancialReports from './pages/FinancialReports';
+
 
 const ACCENT = '#0AB98A';
 const BG     = '#0F172A';
