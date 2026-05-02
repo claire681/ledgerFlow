@@ -23,6 +23,7 @@ import Team            from './pages/Team';
 import Integrations    from './pages/Integrations';
 import Onboarding      from './pages/Onboarding';
 import { Menu, X }     from 'lucide-react';
+import FinancialReports from './pages/FinancialReports';
 
 const ACCENT = '#0AB98A';
 const BG     = '#0F172A';
@@ -88,6 +89,7 @@ function AppLayout({ onLogout }) {
           <Route path="/agents"       element={<Agents/>}         />
           <Route path="/team"         element={<Team/>}           />
           <Route path="/integrations" element={<Integrations/>}   />
+          <Route path="/reports" element={<FinancialReports/>}/>
           <Route path="*"             element={<Navigate to="/"/>}/>
         </Routes>
       </main>

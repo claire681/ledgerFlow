@@ -162,5 +162,9 @@ export const setPreferencesBulk = (data)       => api.post('/preferences/bulk', 
 export const deletePreference   = (key)        => api.delete(`/preferences/${key}`);
 
 export const getDailyBriefing = () => api.get('/analytics/briefing');
+// ── Financial Reports ─────────────────────────────────────────────────────
+export const getPLReport       = (params) => api.get('/analytics/pl-report', { params });
+export const getBalanceSheet   = (params) => api.get('/analytics/balance-sheet', { params });
+export const getCashFlowReport = (params) => api.get('/analytics/cash-flow-report', { params });
 
 export default api;
