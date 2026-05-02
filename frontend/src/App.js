@@ -6,8 +6,8 @@ import {
   CheckSquare, Square, TrendingUp, TrendingDown,
 } from 'lucide-react';
 import { L, card, page, topBar } from './styles/light';
-import { useAI } from '../hooks/useAI';
-import { getTransactions } from '../services/api';
+import { useAI } from './hooks/useAI';
+import { getTransactions } from './services/api';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
