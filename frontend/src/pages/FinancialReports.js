@@ -278,8 +278,6 @@ export default function FinancialReports() {
   useEffect(() => {
     setPageContext('reports', {
   page: 'reports',
-  activeTab: activeTab,
-  period: selectedPeriod,
   totalIncome: txns.filter(t=>t.txn_type==='income').reduce((s,t)=>s+Math.abs(t.amount||0),0),
   totalExpenses: txns.filter(t=>t.txn_type==='expense').reduce((s,t)=>s+Math.abs(t.amount||0),0),
   totalTransactions: txns.length,
