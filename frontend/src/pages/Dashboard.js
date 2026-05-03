@@ -300,6 +300,7 @@ export default function Dashboard() {
   const [userEmail,   setUserEmail]   = useState('');
   const [success,     setSuccess]     = useState('');
   const [briefing,    setBriefing]    = useState(null);
+  const [trialInfo,   setTrialInfo]   = useState(null);
 
   // ── Welcome banner state ──────────────────────────────────
   const [showWelcome, setShowWelcome] = useState(false);
@@ -340,9 +341,16 @@ export default function Dashboard() {
       try { const ins = await getAIInsights(); setInsights(ins.data?.insights || []); }
       catch { setInsights([]); }
 
-      try { const b = await getDailyBriefing(); setBriefing(b.data); }
-      catch { setBriefing(null); }
-
+     try {
+        const tr = await fetch(`${BASE}/billing/status`, { headers:{ Authorization:`Bearer ${getToken()}` } });
+        if (tr.ok) {
+          const trData = await tr.json();
+          const daysLeft = trData.trial_ends_at
+            ? Math.max(0, Math.ceil((new Date(trData.trial_ends_at) - new Date()) / (1000*60*60*24)))
+            : 14;
+          setTrialInfo({ ...trData, daysLeft });
+        }
+      } catch {}
       const revenue  = sData?.total_revenue  || 0;
       const expenses = sData?.total_expenses || 0;
       const net      = revenue - expenses;
@@ -502,6 +510,38 @@ export default function Dashboard() {
               <Sparkles size={13}/> Ask AI
             </button>
           </div>
+        </div>
+      )}
+
+      {/* ── Trial Banner ── */}
+      {trialInfo && trialInfo.subscription_status !== 'active' && (
+        <div style={{
+          margin:      isMobile ? '12px 16px 0' : '16px 28px 0',
+          padding:     '12px 20px',
+          borderRadius: 12,
+          background:  trialInfo.daysLeft <= 3 ? 'rgba(239,68,68,0.08)' : 'linear-gradient(135deg,rgba(10,185,138,0.08),rgba(14,165,233,0.08))',
+          border:      `1px solid ${trialInfo.daysLeft <= 3 ? 'rgba(239,68,68,0.25)' : 'rgba(10,185,138,0.25)'}`,
+          display:     'flex',
+          alignItems:  'center',
+          justifyContent: 'space-between',
+          gap:         12,
+          flexWrap:    'wrap',
+        }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <span style={{ fontSize:20 }}>{trialInfo.daysLeft <= 0 ? '🔒' : trialInfo.daysLeft <= 3 ? '⚠️' : '⏳'}</span>
+            <div>
+              <div style={{ fontSize:13, fontWeight:700, color: trialInfo.daysLeft <= 3 ? '#EF4444' : L.text }}>
+                {trialInfo.daysLeft <= 0 ? 'Your free trial has ended' : `${trialInfo.daysLeft} day${trialInfo.daysLeft !== 1 ? 's' : ''} left in your free trial`}
+              </div>
+              <div style={{ fontSize:11, color:L.textMuted, marginTop:2 }}>
+                {trialInfo.daysLeft <= 0 ? 'Upgrade now to continue using Novala' : 'Upgrade before your trial ends to keep full access'}
+              </div>
+            </div>
+          </div>
+          <button onClick={() => window.location.href = '/billing'}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:10, background: trialInfo.daysLeft <= 3 ? '#EF4444' : ACCENT, color:'#fff', border:'none', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font, flexShrink:0, boxShadow:`0 4px 12px ${trialInfo.daysLeft <= 3 ? 'rgba(239,68,68,0.3)' : 'rgba(10,185,138,0.3)'}` }}>
+            <Sparkles size={12}/> Upgrade Now
+          </button>
         </div>
       )}
 
