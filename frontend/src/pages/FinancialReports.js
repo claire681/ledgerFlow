@@ -276,7 +276,14 @@ export default function FinancialReports() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    setPageContext('reports', { page: 'reports' });
+    setPageContext('reports', {
+  page: 'reports',
+  activeTab: activeTab,
+  period: selectedPeriod,
+  totalIncome: txns.filter(t=>t.txn_type==='income').reduce((s,t)=>s+Math.abs(t.amount||0),0),
+  totalExpenses: txns.filter(t=>t.txn_type==='expense').reduce((s,t)=>s+Math.abs(t.amount||0),0),
+  totalTransactions: txns.length,
+});
 
     const load = async () => {
       try {

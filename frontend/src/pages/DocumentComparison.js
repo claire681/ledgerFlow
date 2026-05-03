@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Upload, X, Sparkles, ArrowRight, FileText,
   CheckCircle, AlertTriangle, GitCompare,
-  Download, Eye, ChevronRight,
+  Download, Eye,
 } from 'lucide-react';
 import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
@@ -113,7 +113,27 @@ export default function DocumentComparison() {
   const { setPageContext, askAndOpen } = useAI();
   const isMobile = useIsMobile();
 
-  useEffect(() => { setPageContext('comparison', { page:'comparison' }); }, []);
+  const differences = compared && doc1 && doc2 ? [
+    { label:'Vendor',        val1:doc1.vendor,        val2:doc2.vendor,        type:'text'   },
+    { label:'Total Amount',  val1:doc1.total_amount,  val2:doc2.total_amount,  type:'number' },
+    { label:'Date',          val1:doc1.doc_date,      val2:doc2.doc_date,      type:'text'   },
+    { label:'Category',      val1:doc1.suggested_cat, val2:doc2.suggested_cat, type:'text'   },
+    { label:'Tax Amount',    val1:doc1.tax_amount,    val2:doc2.tax_amount,    type:'number' },
+    { label:'Document Type', val1:doc1.doc_type,      val2:doc2.doc_type,      type:'text'   },
+  ] : [];
+
+  const diffCount = differences.filter(d => String(d.val1) !== String(d.val2)).length;
+
+  useEffect(() => {
+    setPageContext('comparison', {
+      page:        'comparison',
+      compared:    compared,
+      differences: diffCount,
+      doc1:        doc1 ? { vendor:doc1.vendor, amount:doc1.total_amount, date:doc1.doc_date } : null,
+      doc2:        doc2 ? { vendor:doc2.vendor, amount:doc2.total_amount, date:doc2.doc_date } : null,
+      howItWorks:  'Document Comparison lets you upload two documents and AI extracts and compares key fields like vendor, amount, date and category. It helps you spot overcharges, duplicate invoices, and discrepancies between contracts and invoices.',
+    });
+  }, [compared, doc1, doc2, diffCount]);
 
   const uploadDoc = async (file) => {
     const formData = new FormData();
@@ -124,7 +144,6 @@ export default function DocumentComparison() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || 'Upload failed');
 
-    // Poll for completion
     return new Promise((resolve, reject) => {
       const interval = setInterval(async () => {
         try {
@@ -160,17 +179,6 @@ export default function DocumentComparison() {
     setCompared(false); setError('');
   };
 
-  const differences = compared && doc1 && doc2 ? [
-    { label:'Vendor',       val1:doc1.vendor,        val2:doc2.vendor,        type:'text'   },
-    { label:'Total Amount', val1:doc1.total_amount,  val2:doc2.total_amount,  type:'number' },
-    { label:'Date',         val1:doc1.doc_date,      val2:doc2.doc_date,      type:'text'   },
-    { label:'Category',     val1:doc1.suggested_cat, val2:doc2.suggested_cat, type:'text'   },
-    { label:'Tax Amount',   val1:doc1.tax_amount,    val2:doc2.tax_amount,    type:'number' },
-    { label:'Document Type',val1:doc1.doc_type,      val2:doc2.doc_type,      type:'text'   },
-  ] : [];
-
-  const diffCount = differences.filter(d => String(d.val1) !== String(d.val2)).length;
-
   const exportPDF = () => {
     if (!compared) return;
     const doc = new jsPDF();
@@ -181,7 +189,6 @@ export default function DocumentComparison() {
     doc.setFontSize(9);
     doc.text(`${file1?.name} vs ${file2?.name} · Generated: ${new Date().toLocaleDateString()}`, 14, 29);
     doc.text(`${diffCount} difference${diffCount!==1?'s':''} found`, 14, 35);
-
     autoTable(doc, {
       startY:40,
       head:[['Field','Document 1','Document 2','Status']],
@@ -215,12 +222,10 @@ export default function DocumentComparison() {
               <Download size={13}/> Export PDF
             </button>
           )}
-          {compared && (
-            <button onClick={() => askAndOpen(`Compare these two documents: Doc1 vendor=${doc1?.vendor}, amount=${doc1?.total_amount}, date=${doc1?.doc_date}. Doc2 vendor=${doc2?.vendor}, amount=${doc2?.total_amount}, date=${doc2?.doc_date}. There are ${diffCount} differences. What do these differences mean and should I be concerned?`)}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', border:'none', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font }}>
-              <Sparkles size={13}/> Ask AI
-            </button>
-          )}
+          <button onClick={() => askAndOpen('How does Document Comparison work and how can it help me?')}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', border:'none', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font }}>
+            <Sparkles size={13}/> {compared ? 'Ask AI' : 'How it works'}
+          </button>
         </div>
       </div>
 
@@ -228,13 +233,16 @@ export default function DocumentComparison() {
 
         {/* Upload area */}
         <div style={{ ...card, padding:isMobile?'16px':'24px', marginBottom:20 }}>
-          <div style={{ fontSize:14, fontWeight:700, color:L.text, marginBottom:16, display:'flex', alignItems:'center', gap:8 }}>
+          <div style={{ fontSize:14, fontWeight:700, color:L.text, marginBottom:4, display:'flex', alignItems:'center', gap:8 }}>
             <GitCompare size={15} color={ACCENT}/> Upload Documents to Compare
+          </div>
+          <div style={{ fontSize:12, color:L.textMuted, marginBottom:16 }}>
+            Upload two invoices, receipts or contracts — AI will extract and compare vendor, amount, date and more
           </div>
 
           <div style={{ display:'flex', gap:16, flexDirection:isMobile?'column':'row', marginBottom:20 }}>
             <DropZone label="Document 1" file={file1} onFile={setFile1} onClear={() => setFile1(null)} isMobile={isMobile}/>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', color:L.textFaint, fontSize:isMobile?20:24, flexShrink:0 }}>VS</div>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', color:L.textFaint, fontSize:isMobile?20:24, flexShrink:0, fontWeight:700 }}>VS</div>
             <DropZone label="Document 2" file={file2} onFile={setFile2} onClear={() => setFile2(null)} isMobile={isMobile}/>
           </div>
 
@@ -247,11 +255,7 @@ export default function DocumentComparison() {
           <div style={{ display:'flex', gap:8 }}>
             <button onClick={handleCompare} disabled={!file1||!file2||comparing}
               style={{ flex:1, padding:'12px', borderRadius:L.radiusSm, background:!file1||!file2||comparing?L.textFaint:'linear-gradient(135deg,#0AB98A,#0EA5E9)', color:'#fff', border:'none', cursor:!file1||!file2||comparing?'not-allowed':'pointer', fontSize:13, fontWeight:600, fontFamily:L.font, display:'flex', alignItems:'center', justifyContent:'center', gap:8, boxShadow:file1&&file2&&!comparing?'0 4px 14px rgba(10,185,138,0.3)':'none' }}>
-              {comparing ? (
-                <><span>AI is analyzing both documents...</span></>
-              ) : (
-                <><GitCompare size={14}/> Compare Documents</>
-              )}
+              {comparing ? <span>AI is analyzing both documents...</span> : <><GitCompare size={14}/> Compare Documents</>}
             </button>
             {compared && (
               <button onClick={reset}
@@ -265,12 +269,11 @@ export default function DocumentComparison() {
         {/* Results */}
         {compared && doc1 && doc2 && (
           <>
-            {/* Summary */}
             <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(3,1fr)', gap:isMobile?10:14, marginBottom:20 }}>
               {[
-                { label:'Fields Compared', value:differences.length,                                    color:L.text  },
-                { label:'Differences',     value:diffCount,                                              color:diffCount>0?'#F59E0B':ACCENT },
-                { label:'Matches',         value:differences.length-diffCount,                          color:ACCENT  },
+                { label:'Fields Compared', value:differences.length,              color:L.text  },
+                { label:'Differences',     value:diffCount,                        color:diffCount>0?'#F59E0B':ACCENT },
+                { label:'Matches',         value:differences.length-diffCount,     color:ACCENT  },
               ].map(c => (
                 <div key={c.label} style={{ ...card, padding:isMobile?'12px 14px':'18px 20px' }}>
                   <div style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em', textTransform:'uppercase', marginBottom:8 }}>{c.label}</div>
@@ -279,22 +282,26 @@ export default function DocumentComparison() {
               ))}
             </div>
 
-            {/* Diff banner */}
-            <div style={{ padding:'12px 16px', borderRadius:L.radiusSm, background:diffCount>0?'rgba(245,158,11,0.08)':L.accentSoft, border:`1px solid ${diffCount>0?'rgba(245,158,11,0.2)':L.accentBorder}`, marginBottom:16, display:'flex', alignItems:'center', gap:10 }}>
-              {diffCount > 0 ? <AlertTriangle size={16} color="#F59E0B"/> : <CheckCircle size={16} color={ACCENT}/>}
-              <div style={{ fontSize:13, fontWeight:600, color:diffCount>0?'#F59E0B':ACCENT }}>
-                {diffCount > 0 ? `${diffCount} difference${diffCount!==1?'s':''} found between the two documents` : 'Documents match on all key fields'}
+            <div style={{ padding:'12px 16px', borderRadius:L.radiusSm, background:diffCount>0?'rgba(245,158,11,0.08)':L.accentSoft, border:`1px solid ${diffCount>0?'rgba(245,158,11,0.2)':L.accentBorder}`, marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between', gap:10, flexWrap:'wrap' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                {diffCount > 0 ? <AlertTriangle size={16} color="#F59E0B"/> : <CheckCircle size={16} color={ACCENT}/>}
+                <div style={{ fontSize:13, fontWeight:600, color:diffCount>0?'#F59E0B':ACCENT }}>
+                  {diffCount > 0 ? `${diffCount} difference${diffCount!==1?'s':''} found between the two documents` : 'Documents match on all key fields'}
+                </div>
               </div>
+              {diffCount > 0 && (
+                <button onClick={() => askAndOpen(`I compared two documents. Doc1: vendor=${doc1?.vendor}, amount=${doc1?.total_amount}, date=${doc1?.doc_date}. Doc2: vendor=${doc2?.vendor}, amount=${doc2?.total_amount}, date=${doc2?.doc_date}. There are ${diffCount} differences. What do these differences mean, which is concerning, and what action should I take?`)}
+                  style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:L.radiusSm, background:'#F59E0B', color:'#fff', border:'none', cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font, flexShrink:0 }}>
+                  <Sparkles size={11}/> Explain differences
+                </button>
+              )}
             </div>
 
-            {/* Comparison table */}
             <div style={{ ...card, overflow:'hidden' }}>
               <div style={{ padding:isMobile?'14px 16px':'16px 22px', borderBottom:`1px solid ${L.border}` }}>
                 <div style={{ fontSize:14, fontWeight:700, color:L.text }}>Field Comparison</div>
                 <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>{file1?.name} vs {file2?.name}</div>
               </div>
-
-              {/* Header */}
               {!isMobile && (
                 <div style={{ display:'grid', gridTemplateColumns:'160px 1fr 1fr 120px', padding:'8px 20px', borderBottom:`1px solid ${L.border}`, background:L.pageBg }}>
                   {['FIELD','DOCUMENT 1','DOCUMENT 2','STATUS'].map(h => (
@@ -302,7 +309,6 @@ export default function DocumentComparison() {
                   ))}
                 </div>
               )}
-
               {isMobile ? (
                 differences.map(d => {
                   const isDiff = String(d.val1) !== String(d.val2);
@@ -310,11 +316,10 @@ export default function DocumentComparison() {
                     <div key={d.label} style={{ padding:'12px 16px', borderBottom:`1px solid ${L.border}`, background:isDiff?'rgba(245,158,11,0.04)':'transparent' }}>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
                         <div style={{ fontSize:11, fontWeight:700, color:L.textMuted }}>{d.label}</div>
-                        {isDiff ? (
-                          <span style={{ fontSize:10, fontWeight:600, color:'#F59E0B', display:'flex', alignItems:'center', gap:3 }}><AlertTriangle size={10}/> Changed</span>
-                        ) : (
-                          <span style={{ fontSize:10, fontWeight:600, color:ACCENT, display:'flex', alignItems:'center', gap:3 }}><CheckCircle size={10}/> Match</span>
-                        )}
+                        {isDiff
+                          ? <span style={{ fontSize:10, fontWeight:600, color:'#F59E0B', display:'flex', alignItems:'center', gap:3 }}><AlertTriangle size={10}/> Changed</span>
+                          : <span style={{ fontSize:10, fontWeight:600, color:ACCENT, display:'flex', alignItems:'center', gap:3 }}><CheckCircle size={10}/> Match</span>
+                        }
                       </div>
                       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
                         <div style={{ padding:'6px 8px', borderRadius:6, background:isDiff?'rgba(239,68,68,0.06)':L.pageBg }}>
@@ -352,19 +357,25 @@ export default function DocumentComparison() {
             <div style={{ fontSize:13, color:L.textMuted, marginBottom:20, maxWidth:400, margin:'0 auto 20px' }}>
               Upload two invoices, receipts, or contracts and AI will extract and compare all key fields — vendor, amount, date, category, and more.
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(3,1fr)', gap:10, maxWidth:500, margin:'0 auto' }}>
+            <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(3,1fr)', gap:10, maxWidth:500, margin:'0 auto 24px' }}>
               {[
-                { emoji:'📄', label:'Invoice vs Invoice',  desc:'Spot billing discrepancies' },
-                { emoji:'🧾', label:'Receipt vs Statement', desc:'Verify payment records'     },
-                { emoji:'📋', label:'Contract vs Invoice',  desc:'Check terms vs charges'     },
+                { icon:<FileText size={20} color="#0AB98A"/>,  bg:'rgba(10,185,138,0.08)',  border:'rgba(10,185,138,0.2)',  label:'Invoice vs Invoice',   desc:'Spot billing discrepancies'  },
+                { icon:<CheckCircle size={20} color="#0EA5E9"/>, bg:'rgba(14,165,233,0.08)', border:'rgba(14,165,233,0.2)', label:'Receipt vs Statement',  desc:'Verify payment records'      },
+                { icon:<GitCompare size={20} color="#8B5CF6"/>, bg:'rgba(139,92,246,0.08)', border:'rgba(139,92,246,0.2)', label:'Contract vs Invoice',   desc:'Check terms vs charges'      },
               ].map(u => (
-                <div key={u.label} style={{ padding:'14px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}` }}>
-                  <div style={{ fontSize:24, marginBottom:8 }}>{u.emoji}</div>
+                <div key={u.label} style={{ padding:'16px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}` }}>
+                  <div style={{ width:40, height:40, borderRadius:10, background:u.bg, border:`1px solid ${u.border}`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 10px' }}>
+                    {u.icon}
+                  </div>
                   <div style={{ fontSize:12, fontWeight:600, color:L.text, marginBottom:4 }}>{u.label}</div>
                   <div style={{ fontSize:11, color:L.textMuted }}>{u.desc}</div>
                 </div>
               ))}
             </div>
+            <button onClick={() => askAndOpen('How does Document Comparison work and what can I use it for?')}
+              style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'10px 20px', borderRadius:L.radiusSm, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:L.font }}>
+              <Sparkles size={14}/> Ask AI how this works
+            </button>
           </div>
         )}
       </div>

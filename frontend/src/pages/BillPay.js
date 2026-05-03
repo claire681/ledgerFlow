@@ -109,7 +109,13 @@ export default function BillPay() {
 
   useEffect(() => {
     load();
-    setPageContext('billpay', { page:'billpay' });
+    setPageContext('billpay', {
+  page: 'billpay',
+  total_bills: bills.length,
+  overdue: bills.filter(b => getStatus(b) === 'overdue').length,
+  unpaid: bills.filter(b => getStatus(b) === 'unpaid').length,
+  total_owed: bills.filter(b => b.status !== 'paid').reduce((s,b) => s+(Number(b.amount)||0), 0),
+});
   }, []);
 
   useEffect(() => {

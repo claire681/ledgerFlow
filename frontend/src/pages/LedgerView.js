@@ -63,7 +63,13 @@ export default function LedgerView() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    setPageContext('ledger', { page:'ledger' });
+    setPageContext('ledger', {
+  page: 'ledger',
+  totalEntries: filtered.length,
+  totalDebits: totalDebits,
+  totalCredits: totalCredits,
+  netBalance: netBalance,
+});
     const load = async () => {
       try {
         const res = await getTransactions({});

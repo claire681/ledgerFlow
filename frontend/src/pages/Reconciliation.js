@@ -47,7 +47,13 @@ export default function Reconciliation() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    setPageContext('reconciliation', { page: 'reconciliation' });
+    setPageContext('reconciliation', {
+  page: 'reconciliation',
+  totalTransactions: txns.length,
+  unmatched: txns.filter(t => getStatus(t) === 'unmatched').length,
+  flagged: txns.filter(t => getStatus(t) === 'flagged').length,
+  reconciled: reconciled.size,
+});
     const load = async () => {
       try {
         const res = await getTransactions({});

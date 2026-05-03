@@ -110,7 +110,15 @@ export default function VarianceReports() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    setPageContext('variance', { page:'variance' });
+    setPageContext('variance', {
+  page: 'variance',
+  period: period,
+  totalBudget: totalBudget,
+  totalActual: totalActual,
+  totalVariance: totalVariance,
+  overBudgetCount: overBudget,
+  categoriesOverBudget: allBudgetRows.filter(r=>r.status==='over').map(r=>r.category),
+});
     const load = async () => {
       try {
         const [tRes, bRes] = await Promise.all([getTransactions({}), getBudgets()]);

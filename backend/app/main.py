@@ -43,6 +43,16 @@ app = FastAPI(
     version     = "2.0.0",
     lifespan    = lifespan,
 )
+from fastapi.responses import FileResponse
+
+@app.get("/documents/{filename}")
+async def view_document(filename: str):
+    file_path = f"documents/{filename}"
+    return FileResponse(
+        file_path,
+        media_type="application/pdf",
+        filename=filename
+    )
 
 app.add_middleware(
     CORSMiddleware,

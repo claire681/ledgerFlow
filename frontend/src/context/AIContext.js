@@ -10,62 +10,91 @@ const PAGE_SUGGESTIONS = {
     'Which invoices are overdue?',
   ],
   transactions: [
-    'What is my biggest expense?',
+    'How does the Transactions page work?',
+    'What is my biggest expense this month?',
     'Which transactions are uncategorized?',
-    'Show all software expenses',
   ],
   documents: [
-    'Which documents were processed?',
-    'Which files have no amount?',
+    'How does document upload work?',
+    'Which files have no amount extracted?',
     'Show documents needing review',
   ],
   invoices: [
+    'How does the Invoices page help me?',
     'Which invoices are overdue?',
-    'Who has not paid yet?',
     'What is my outstanding amount?',
   ],
   tax: [
-    'How is my tax calculated?',
+    'How does the Tax calculator work?',
     'What counts as a deduction?',
-    'Can I override the tax rate?',
+    'How is my tax estimate calculated?',
   ],
   team: [
-    'What does Admin do?',
-    'Who has access?',
-    'How do I invite a member?',
+    'How does team access work?',
+    'What can each role do?',
+    'How do I invite a team member?',
   ],
   vendors: [
-    'Who are my top vendors?',
-    'Which vendors repeat monthly?',
-    'How much did I spend by vendor?',
+    'How does Vendor Analytics help me?',
+    'Who are my top vendors by spend?',
+    'Which vendors do I pay monthly?',
   ],
   budgets: [
+    'How do budgets work in Novala?',
     'Which budgets are over limit?',
     'How much is left in my budgets?',
-    'Am I overspending anywhere?',
   ],
   scanner: [
-    'What happens after I upload a receipt?',
-    'What data is extracted from a receipt?',
-    'How do I save a scanned receipt?',
+    'How does the Receipt Scanner work?',
+    'What data gets extracted from a receipt?',
+    'How does AI read my documents?',
   ],
   integrations: [
-    'What does QuickBooks connect to?',
-    'How do I connect Stripe?',
-    'Why is this integration offline?',
+    'How do integrations work?',
+    'How do I connect QuickBooks?',
+    'What does each integration do?',
   ],
   agents: [
+    'How does the AI Compliance Agent work?',
     'What Alberta tax rules apply to me?',
-    'What filings do Alberta businesses need?',
-    'Explain Alberta compliance',
+    'What filings do I need to submit?',
   ],
   currency: [
+    'How does Currency tracking work?',
     'What is the CAD to USD rate?',
-    'How do I record foreign currency?',
-    'Which currencies are supported?',
+    'How do I record foreign transactions?',
+  ],
+  reports: [
+    'How do Financial Reports work?',
+    'What is my net profit this month?',
+    'How do my expenses compare to revenue?',
+  ],
+  reconciliation: [
+    'How does Reconciliation work?',
+    'Which transactions are unmatched?',
+    'How do I reconcile my books?',
+  ],
+  billpay: [
+    'How does Bill Pay work?',
+    'Which bills are overdue right now?',
+    'How much do I owe in total?',
+  ],
+  variance: [
+    'How do Variance Reports work?',
+    'Which categories am I over budget?',
+    'How does this month compare to last?',
+  ],
+  ledger: [
+    'How does the Ledger View work?',
+    'What is my current net balance?',
+    'Are there any unusual entries?',
+  ],
+  comparison: [
+    'How does Document Comparison work?',
+    'What are the key differences between these documents?',
+    'Should I be concerned about these discrepancies?',
   ],
 };
-
 export function AIProvider({ children }) {
   const [isOpen,          setIsOpen]           = useState(false);
   const [loading,         setLoading]          = useState(false);
@@ -104,8 +133,6 @@ export function AIProvider({ children }) {
     setError(null);
 
     try {
-      // Dashboard always sends null session_id to force fresh context
-      // Other pages use their session for conversation continuity
       const sendSessionId = currentPage === 'dashboard' ? null : sessionId;
 
       const res  = await askAI(
@@ -117,7 +144,6 @@ export function AIProvider({ children }) {
       );
       const data = res.data;
 
-      // Only store session for non-dashboard pages
       if (currentPage !== 'dashboard' && data.session_id && !sessionId) {
         setSessionId(data.session_id);
       }
