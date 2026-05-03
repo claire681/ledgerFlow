@@ -103,13 +103,13 @@ function DocViewerModal({ doc, onClose }) {
   useEffect(() => {
     const load = async () => {
       try {
-        const res  = await fetch(`${BASE}/documents/${doc.id}/view-url`, {
-          headers: { Authorization:`Bearer ${getToken()}` },
-        });
-        if (!res.ok) throw new Error('Could not get file URL');
-        const data = await res.json();
-        if (!data.url) throw new Error('No URL returned');
-        setUrl(data.url);
+       const res = await fetch(`${BASE}/documents/${doc.id}/view`, {
+  headers: { Authorization:`Bearer ${getToken()}` },
+});
+if (!res.ok) throw new Error('Could not load file');
+const blob = await res.blob();
+const objectUrl = URL.createObjectURL(blob);
+setUrl(objectUrl);
       } catch (e) { setError(e.message); }
       finally { setLoading(false); }
     };
