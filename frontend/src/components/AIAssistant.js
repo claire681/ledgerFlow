@@ -155,6 +155,72 @@ const PAGE_AI_CONFIG = {
       'Which currencies are supported?',
     ],
   },
+  reports: {
+    name:     'Financial Reports Assistant',
+    pageName: 'Financial Reports',
+    intro:    'I help you understand your P&L, Balance Sheet and Cash Flow. Ask about profit, revenue trends, expenses or how to read your reports.',
+    icon:     <BarChart2 size={20} color="#0AB98A" />,
+    chips: [
+      'How do Financial Reports work?',
+      'What is my net profit this month?',
+      'How do my expenses compare to revenue?',
+    ],
+  },
+  reconciliation: {
+    name:     'Reconciliation Assistant',
+    pageName: 'Reconciliation',
+    intro:    'I help you match and verify transactions against your records. Ask about unmatched transactions, flagged items or how to reconcile faster.',
+    icon:     <TrendingUp size={20} color="#0AB98A" />,
+    chips: [
+      'How does Reconciliation work?',
+      'Which transactions are unmatched?',
+      'How do I reconcile my books?',
+    ],
+  },
+  billpay: {
+    name:     'Bill Pay Assistant',
+    pageName: 'Bill Pay',
+    intro:    'I track your bills and due dates. Ask about overdue bills, total owed, which to pay first, or how bill pay works.',
+    icon:     <Receipt size={20} color="#0AB98A" />,
+    chips: [
+      'How does Bill Pay work?',
+      'Which bills are overdue right now?',
+      'How much do I owe in total?',
+    ],
+  },
+  variance: {
+    name:     'Variance Reports Assistant',
+    pageName: 'Variance Reports',
+    intro:    'I compare your budget vs actual spending and month over month changes. Ask about over-budget categories, spending trends or variance explanations.',
+    icon:     <TrendingUp size={20} color="#0AB98A" />,
+    chips: [
+      'How do Variance Reports work?',
+      'Which categories am I over budget?',
+      'How does this month compare to last?',
+    ],
+  },
+  ledger: {
+    name:     'Ledger Assistant',
+    pageName: 'Ledger View',
+    intro:    'I help you read your general ledger in double-entry accounting format. Ask about debits, credits, running balance or any unusual entries.',
+    icon:     <FileText size={20} color="#0AB98A" />,
+    chips: [
+      'How does the Ledger View work?',
+      'What is my current net balance?',
+      'Are there any unusual entries?',
+    ],
+  },
+  comparison: {
+    name:     'Document Comparison Assistant',
+    pageName: 'Document Comparison',
+    intro:    'I compare two documents side by side and explain the differences. Upload two invoices, receipts or contracts and ask me what changed and why it matters.',
+    icon:     <FileText size={20} color="#0AB98A" />,
+    chips: [
+      'How does Document Comparison work?',
+      'What are the key differences?',
+      'Should I be concerned about these differences?',
+    ],
+  },
 };
 
 const DEFAULT_CONFIG = PAGE_AI_CONFIG.dashboard;
