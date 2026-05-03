@@ -824,6 +824,20 @@ async def view_document_file(
         )
     except Exception:
         raise HTTPException(status_code=404, detail="File not found in storage")
+    
+@router.get("/{doc_id}/view-url")
+async def get_document_view_url(
+    doc_id:      str,
+    current_user=Depends(get_current_user),
+    db:          AsyncSession = Depends(get_db),
+):
+    user_id = str(current_user.id)
+    doc     = await get_document_or_404(db, doc_id, user_id)
+    s3_key  = doc.file_path or build_s3_key(str(doc.id), doc.filename)
+
+    from app.services.s3_service import get_presigned_url
+    url = get_presigned_url(s3_key, expiry=3600)
+    return {"url": url}
 
 
 @router.get("/{doc_id}/download")
