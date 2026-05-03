@@ -206,10 +206,9 @@ export default function Sidebar({ onLogout, onNavigate }) {
   const name    = email.split('@')[0] || 'User';
 
   const bottomItems = [
-    { label:'Settings', icon:Settings,    path:'/settings', onClick: () => { navigate('/settings'); onNavigate && onNavigate(); } },
-    { label:'Help', icon:HelpCircle, path:'/help', onClick: () => { navigate('/help'); onNavigate && onNavigate(); } },
-  ];
-
+  { label:'Settings', icon:Settings,   path:'/settings', onClick: () => { navigate('/settings'); onNavigate && onNavigate(); } },
+  { label:'Help',     icon:HelpCircle, path:'/help',     onClick: () => { navigate('/help'); onNavigate && onNavigate(); } },
+];
   return (
     <>
       <aside style={{ width:244, minWidth:244, height:'100vh', background:BG, display:'flex', flexDirection:'column', overflow:'hidden', position:'relative', fontFamily:FONT }}>
