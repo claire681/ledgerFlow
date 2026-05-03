@@ -6,7 +6,7 @@ import {
   BarChart3, ScanLine, Link2,
   Users, LogOut, ShieldCheck, TrendingUp,
   BarChart2, GitMerge, CreditCard, BookOpen,
-  GitCompare, Settings as SettingsIcon, HelpCircle,
+  GitCompare, Settings as SettingsIcon, HelpCircle, Search,
 } from 'lucide-react';
 
 const ACCENT   = '#0AB98A';

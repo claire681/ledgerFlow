@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAIContext } from '../context/AIContext';
 import {
-  LayoutDashboard, FileText, ArrowLeftRight,
-  PieChart, Receipt, Percent, RefreshCw,
-  BarChart3, ScanLine, Link2,
-  Users, LogOut, ShieldCheck, TrendingUp,
-  BarChart2, GitMerge, CreditCard, BookOpen,
-  GitCompare, Settings as SettingsIcon, HelpCircle, Search,
+  X, Send, Trash2, ChevronDown, Sparkles,
+  Users, Link2, Bot, Camera, Calculator,
+  BarChart2, FileText, Receipt, Target,
+  Globe, TrendingUp, Wifi, HelpCircle,
+  Settings as SettingsIcon, Search,
 } from 'lucide-react';
 const C = {
   bg:          '#FFFFFF',
