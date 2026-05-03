@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  HelpCircle, Send, CheckCircle, AlertCircle,
+  Send, CheckCircle, AlertCircle,
   MessageSquare, Book, Zap, Shield, CreditCard,
   ChevronRight, Mail, Clock,
 } from 'lucide-react';
@@ -13,7 +13,7 @@ const getToken = () => localStorage.getItem('token') || '';
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  React.useEffect(() => {
+  useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', h);
     return () => window.removeEventListener('resize', h);
@@ -26,43 +26,37 @@ const CATEGORIES = ['General', 'Billing', 'Bug Report', 'Feature Request', 'Acco
 const FAQS = [
   {
     icon: <Zap size={18} color="#0AB98A"/>,
-    bg: 'rgba(10,185,138,0.08)',
-    border: 'rgba(10,185,138,0.2)',
+    bg: 'rgba(10,185,138,0.08)', border: 'rgba(10,185,138,0.2)',
     question: 'How does AI document extraction work?',
     answer: 'When you upload a document, our AI reads the file and automatically extracts key information like vendor name, amount, date, and category. It then creates a transaction in your books automatically.',
   },
   {
     icon: <CreditCard size={18} color="#8B5CF6"/>,
-    bg: 'rgba(139,92,246,0.08)',
-    border: 'rgba(139,92,246,0.2)',
+    bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.2)',
     question: 'How does billing work?',
     answer: 'You get a 14-day free trial with full access. After 14 days your card is charged automatically based on the plan you chose. You can cancel anytime from the Billing page.',
   },
   {
     icon: <Shield size={18} color="#0EA5E9"/>,
-    bg: 'rgba(14,165,233,0.08)',
-    border: 'rgba(14,165,233,0.2)',
+    bg: 'rgba(14,165,233,0.08)', border: 'rgba(14,165,233,0.2)',
     question: 'Is my financial data secure?',
     answer: 'Yes. All data is encrypted in transit and at rest. We use AWS for storage, which meets the highest security standards. We never share your data with third parties.',
   },
   {
     icon: <Book size={18} color="#F59E0B"/>,
-    bg: 'rgba(245,158,11,0.08)',
-    border: 'rgba(245,158,11,0.2)',
+    bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)',
     question: 'What file types can I upload?',
     answer: 'You can upload PDF, PNG, JPG, JPEG, CSV, TIFF, and WEBP files. Invoices, receipts, bank statements and contracts are all supported.',
   },
   {
     icon: <MessageSquare size={18} color="#EF4444"/>,
-    bg: 'rgba(239,68,68,0.08)',
-    border: 'rgba(239,68,68,0.2)',
+    bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.2)',
     question: 'How do I reconcile transactions?',
     answer: 'Go to the Reconciliation page, select transactions and click Mark Reconciled. The AI can also help you find unmatched or duplicate transactions automatically.',
   },
   {
     icon: <Zap size={18} color="#0AB98A"/>,
-    bg: 'rgba(10,185,138,0.08)',
-    border: 'rgba(10,185,138,0.2)',
+    bg: 'rgba(10,185,138,0.08)', border: 'rgba(10,185,138,0.2)',
     question: 'How does Bill Pay work?',
     answer: 'Add your bills with vendor, amount and due date. When you mark a bill as paid, Novala automatically creates an expense transaction in your books so your records stay accurate.',
   },
@@ -76,11 +70,11 @@ export default function Help() {
   const [sent,     setSent]     = useState(false);
   const [error,    setError]    = useState('');
   const { askAndOpen, setPageContext } = useAI();
-
-useEffect(() => {
-  setPageContext('help', { page:'help' });
-}, []);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    setPageContext('help', { page:'help' });
+  }, []);
 
   const handleSend = async () => {
     if (!subject.trim() || !message.trim()) return;
@@ -146,7 +140,6 @@ useEffect(() => {
                 </div>
               ) : (
                 <>
-                  {/* Category */}
                   <div style={{ marginBottom:16 }}>
                     <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Category</div>
                     <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
@@ -159,7 +152,6 @@ useEffect(() => {
                     </div>
                   </div>
 
-                  {/* Subject */}
                   <div style={{ marginBottom:16 }}>
                     <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:6 }}>Subject</div>
                     <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Brief description of your issue..."
@@ -168,7 +160,6 @@ useEffect(() => {
                       onBlur={e  => e.target.style.borderColor=L.border}/>
                   </div>
 
-                  {/* Message */}
                   <div style={{ marginBottom:16 }}>
                     <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:6 }}>Message</div>
                     <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Describe your problem in detail. Include steps to reproduce if it's a bug..." rows={6}
@@ -184,14 +175,13 @@ useEffect(() => {
                   )}
 
                   <button onClick={handleSend} disabled={sending||!subject.trim()||!message.trim()}
-                    style={{ width:'100%', padding:'12px', borderRadius:L.radiusSm, background:sending||!subject.trim()||!message.trim()?L.textFaint:'linear-gradient(135deg,#0AB98A,#0EA5E9)', color:'#fff', border:'none', cursor:sending||!subject.trim()||!message.trim()?'not-allowed':'pointer', fontSize:13, fontWeight:600, fontFamily:L.font, display:'flex', alignItems:'center', justifyContent:'center', gap:8, boxShadow:!sending&&subject&&message?'0 4px 14px rgba(10,185,138,0.3)':'none' }}>
+                    style={{ width:'100%', padding:'12px', borderRadius:L.radiusSm, background:sending||!subject.trim()||!message.trim()?L.textFaint:'linear-gradient(135deg,#0AB98A,#0EA5E9)', color:'#fff', border:'none', cursor:sending||!subject.trim()||!message.trim()?'not-allowed':'pointer', fontSize:13, fontWeight:600, fontFamily:L.font, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
                     <Send size={14}/>{sending?'Sending...':'Send Message'}
                   </button>
                 </>
               )}
             </div>
 
-            {/* Contact info */}
             <div style={{ ...card, padding:'20px 24px' }}>
               <div style={{ fontSize:13, fontWeight:700, color:L.text, marginBottom:14 }}>Other ways to reach us</div>
               <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:12 }}>
