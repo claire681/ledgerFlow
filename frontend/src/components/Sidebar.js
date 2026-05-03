@@ -50,6 +50,7 @@ const NAV = [
       { path:'/vendors',    label:'Vendors',     icon:BarChart3, badge:null },
       { path:'/receipts',   label:'Scanner',     icon:ScanLine,  badge:'AI' },
       { path:'/comparison', label:'Doc Compare', icon:GitCompare            },
+      { path:'/search', label:'Smart Search', icon:Search, badge:'AI' },
     ],
   },
   {

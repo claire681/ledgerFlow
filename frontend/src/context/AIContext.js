@@ -94,6 +94,11 @@ const PAGE_SUGGESTIONS = {
     'What are the key differences between these documents?',
     'Should I be concerned about these discrepancies?',
   ],
+  search: [
+  'What documents did I upload this month?',
+  'Find all software expenses',
+  'Do I have any duplicate invoices?',
+],
 };
 export function AIProvider({ children }) {
   const [isOpen,          setIsOpen]           = useState(false);

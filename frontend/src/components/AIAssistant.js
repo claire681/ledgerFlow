@@ -219,6 +219,17 @@ const PAGE_AI_CONFIG = {
       'What are the key differences?',
       'Should I be concerned about these differences?',
     ],
+    search: {
+  name:     'Smart Search Assistant',
+  pageName: 'Smart Search',
+  intro:    'I can search through all your documents and find patterns, duplicates, and insights. Ask me to find specific documents or analyze your spending.',
+  icon:     <Search size={20} color="#0AB98A"/>,
+  chips: [
+    'Find all my AWS invoices',
+    'Do I have any duplicate documents?',
+    'What documents were uploaded this month?',
+  ],
+},
   },
   help: {
     name:     'Novala Support Assistant',

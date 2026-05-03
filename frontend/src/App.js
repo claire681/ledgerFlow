@@ -31,6 +31,7 @@ import DocumentComparison  from './pages/DocumentComparison';
 import Billing             from './pages/Billing';
 import Settings            from './pages/Settings';
 import Help                from './pages/Help';
+import SmartSearch from './pages/SmartSearch';
 import { Menu, X }         from 'lucide-react';
 
 const ACCENT = '#0AB98A';
@@ -101,6 +102,7 @@ function AppLayout({ onLogout }) {
           <Route path="/billing"        element={<Billing/>}          />
           <Route path="/help"           element={<Help/>}             />
           <Route path="/settings"       element={<Settings/>}         />
+          <Route path="/search" element={<SmartSearch/>}/>
           <Route path="*"               element={<Navigate to="/"/>}  />
         </Routes>
       </main>
