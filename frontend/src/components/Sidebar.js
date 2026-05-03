@@ -40,6 +40,7 @@ const NAV = [
       { path:'/budgets',        label:'Budgets',        icon:PieChart               },
       { path:'/invoices',       label:'Invoices',       icon:Receipt                },
       { path:'/tax',            label:'Tax',            icon:Percent                },
+      { path:'/billing', label:'Billing', icon:CreditCard },
       { path:'/currency',       label:'Currency',       icon:RefreshCw              },
     ],
   },
