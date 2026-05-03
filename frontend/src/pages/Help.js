@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
-import React, { useState, useEffect } from 'react';
 
 const BASE     = 'https://api.getnovala.com/api/v1';
 const ACCENT   = '#0AB98A';

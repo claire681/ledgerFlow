@@ -12,11 +12,7 @@ const ACCENT   = '#0AB98A';
 const getToken = () => localStorage.getItem('token') || '';
 
 function useIsMobile() {
-   const { setPageContext } = useAI();
-
-useEffect(() => {
-  setPageContext('settings', { page:'settings' });
-}, []); 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', h);
@@ -43,11 +39,11 @@ const TIMEZONES = [
 ];
 
 const FREQUENCIES = [
-  { value:'daily',     label:'Daily',          desc:'Every day at your chosen time'          },
-  { value:'weekly',    label:'Weekly',          desc:'Once a week on your chosen day'         },
-  { value:'monthly',   label:'Monthly',         desc:'Once a month on your chosen date'       },
-  { value:'quarterly', label:'Every 3 Months',  desc:'4 times a year on your chosen date'     },
-  { value:'biannual',  label:'Every 6 Months',  desc:'Twice a year on your chosen date'       },
+  { value:'daily',     label:'Daily',          desc:'Every day at your chosen time'        },
+  { value:'weekly',    label:'Weekly',          desc:'Once a week on your chosen day'       },
+  { value:'monthly',   label:'Monthly',         desc:'Once a month on your chosen date'     },
+  { value:'quarterly', label:'Every 3 Months',  desc:'4 times a year on your chosen date'   },
+  { value:'biannual',  label:'Every 6 Months',  desc:'Twice a year on your chosen date'     },
 ];
 
 const WEEKDAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -89,6 +85,11 @@ function Alert({ type, message }) {
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('profile');
   const isMobile = useIsMobile();
+  const { setPageContext } = useAI();
+
+  useEffect(() => {
+    setPageContext('settings', { page:'settings' });
+  }, []);
 
   // Profile state
   const [fullName,    setFullName]    = useState('');
@@ -98,23 +99,23 @@ export default function Settings() {
   const [profileMsg,  setProfileMsg]  = useState(null);
 
   // Security state
-  const [currentPw,   setCurrentPw]  = useState('');
-  const [newPw,        setNewPw]      = useState('');
-  const [confirmPw,    setConfirmPw]  = useState('');
-  const [showPw,       setShowPw]     = useState(false);
-  const [savingS,      setSavingS]    = useState(false);
-  const [securityMsg,  setSecurityMsg] = useState(null);
+  const [currentPw,   setCurrentPw]   = useState('');
+  const [newPw,       setNewPw]       = useState('');
+  const [confirmPw,   setConfirmPw]   = useState('');
+  const [showPw,      setShowPw]      = useState(false);
+  const [savingS,     setSavingS]     = useState(false);
+  const [securityMsg, setSecurityMsg] = useState(null);
 
   // Notifications state
-  const [briefEnabled,  setBriefEnabled]  = useState(true);
-  const [frequency,     setFrequency]     = useState('daily');
-  const [briefTime,     setBriefTime]     = useState('08:00');
-  const [briefDay,      setBriefDay]      = useState('Monday');
-  const [briefDate,     setBriefDate]     = useState(1);
-  const [timezone,      setTimezone]      = useState('America/Edmonton');
+  const [briefEnabled, setBriefEnabled] = useState(true);
+  const [frequency,    setFrequency]    = useState('daily');
+  const [briefTime,    setBriefTime]    = useState('08:00');
+  const [briefDay,     setBriefDay]     = useState('Monday');
+  const [briefDate,    setBriefDate]    = useState(1);
   const [specificDate, setSpecificDate] = useState('');
-  const [savingN,       setSavingN]       = useState(false);
-  const [notifMsg,      setNotifMsg]      = useState(null);
+  const [timezone,     setTimezone]     = useState('America/Edmonton');
+  const [savingN,      setSavingN]      = useState(false);
+  const [notifMsg,     setNotifMsg]     = useState(null);
 
   // Billing state
   const [billingStatus, setBillingStatus] = useState(null);
@@ -124,13 +125,11 @@ export default function Settings() {
   const [deleting,      setDeleting]      = useState(false);
 
   useEffect(() => {
-    // Load profile
-    const em = localStorage.getItem('user_email') || '';
-    const nm = localStorage.getItem('user_name')  || '';
+    const em = localStorage.getItem('user_email')   || '';
+    const nm = localStorage.getItem('user_name')    || '';
     const co = localStorage.getItem('company_name') || '';
     setEmail(em); setFullName(nm); setCompany(co);
 
-    // Load briefing settings
     fetch(`${BASE}/briefing/settings`, { headers:{ Authorization:`Bearer ${getToken()}` } })
       .then(r => r.json())
       .then(d => {
@@ -139,7 +138,6 @@ export default function Settings() {
         setTimezone(d.briefing_timezone || 'America/Edmonton');
       }).catch(() => {});
 
-    // Load billing status
     fetch(`${BASE}/billing/status`, { headers:{ Authorization:`Bearer ${getToken()}` } })
       .then(r => r.json())
       .then(d => setBillingStatus(d))
@@ -208,7 +206,11 @@ export default function Settings() {
     return Math.max(0, Math.ceil((new Date(billingStatus.trial_ends_at) - new Date()) / (1000*60*60*24)));
   };
 
-  const selectStyle = { width:'100%', padding:'10px 12px', background:L.pageBg, border:`1px solid ${L.border}`, borderRadius:L.radiusSm, color:L.text, fontSize:13, fontFamily:L.font, outline:'none', marginBottom:16 };
+  const selectStyle = {
+    width:'100%', padding:'10px 12px', background:L.pageBg,
+    border:`1px solid ${L.border}`, borderRadius:L.radiusSm,
+    color:L.text, fontSize:13, fontFamily:L.font, outline:'none', marginBottom:16,
+  };
 
   return (
     <div style={page}>
@@ -228,7 +230,7 @@ export default function Settings() {
             const Icon     = tab.icon;
             return (
               <div key={tab.id} onClick={() => setActiveTab(tab.id)}
-                style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', borderRadius:L.radiusSm, cursor:'pointer', marginBottom:2, background:isActive?L.accentSoft:'transparent', color:isActive?ACCENT:L.textMuted, transition:'all 0.1s' }}
+                style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', borderRadius:L.radiusSm, cursor:'pointer', marginBottom:2, background:isActive?L.accentSoft:'transparent', transition:'all 0.1s' }}
                 onMouseEnter={e => { if (!isActive) e.currentTarget.style.background=L.pageBg; }}
                 onMouseLeave={e => { if (!isActive) e.currentTarget.style.background='transparent'; }}>
                 <Icon size={14} color={isActive?ACCENT:L.textMuted}/>
@@ -247,7 +249,7 @@ export default function Settings() {
             <Section title="Profile" desc="Update your personal and business information">
               {profileMsg && <Alert type={profileMsg.type} message={profileMsg.text}/>}
               <Field label="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Your full name"/>
-              <Field label="Email Address" value={email} disabled placeholder="your@email.com" style={{ opacity:0.6, cursor:'not-allowed' }}/>
+              <Field label="Email Address" value={email} disabled placeholder="your@email.com"/>
               <div style={{ fontSize:11, color:L.textMuted, marginTop:-12, marginBottom:16 }}>Email cannot be changed. Contact support to update.</div>
               <Field label="Company Name" value={company} onChange={e => setCompany(e.target.value)} placeholder="Your company name"/>
               <button onClick={saveProfile} disabled={savingP}
@@ -290,7 +292,6 @@ export default function Settings() {
             <Section title="Notifications" desc="Control when and how often you receive your financial briefing">
               {notifMsg && <Alert type={notifMsg.type} message={notifMsg.text}/>}
 
-              {/* Toggle */}
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 16px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}`, marginBottom:20 }}>
                 <div>
                   <div style={{ fontSize:13, fontWeight:600, color:L.text }}>Morning Briefing</div>
@@ -303,7 +304,6 @@ export default function Settings() {
 
               {briefEnabled && (
                 <>
-                  {/* Frequency */}
                   <div style={{ marginBottom:16 }}>
                     <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Frequency</div>
                     <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
@@ -322,7 +322,6 @@ export default function Settings() {
                     </div>
                   </div>
 
-                  {/* Day picker for weekly */}
                   {frequency === 'weekly' && (
                     <div style={{ marginBottom:16 }}>
                       <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Day of Week</div>
@@ -333,27 +332,22 @@ export default function Settings() {
                   )}
 
                   {['monthly','quarterly','biannual'].includes(frequency) && (
-  <div style={{ marginBottom:16 }}>
-    <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>
-      Specific Date — Pick from calendar or choose a day
-    </div>
-    {/* Calendar date picker */}
-    <input
-      type="date"
-      value={specificDate}
-      onChange={e => { setSpecificDate(e.target.value); setBriefDate(new Date(e.target.value).getDate()); }}
-      style={{ width:'100%', padding:'10px 12px', background:L.pageBg, border:`1px solid ${L.border}`, borderRadius:L.radiusSm, color:L.text, fontSize:13, fontFamily:L.font, outline:'none', boxSizing:'border-box', marginBottom:10 }}
-      onFocus={e => e.target.style.borderColor=ACCENT}
-      onBlur={e  => e.target.style.borderColor=L.border}
-    />
-    <div style={{ fontSize:11, color:L.textMuted, marginBottom:8 }}>Or pick a day of the month:</div>
-    <select value={briefDate} onChange={e => { setBriefDate(Number(e.target.value)); setSpecificDate(''); }} style={selectStyle}>
-      {DAYS.map(d => <option key={d} value={d}>{d}{d===1?'st':d===2?'nd':d===3?'rd':'th'} of the month</option>)}
-    </select>
-  </div>
-)}
+                    <div style={{ marginBottom:16 }}>
+                      <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>
+                        Specific Date — Pick from calendar or choose a day
+                      </div>
+                      <input type="date" value={specificDate}
+                        onChange={e => { setSpecificDate(e.target.value); setBriefDate(new Date(e.target.value).getDate()); }}
+                        style={{ width:'100%', padding:'10px 12px', background:L.pageBg, border:`1px solid ${L.border}`, borderRadius:L.radiusSm, color:L.text, fontSize:13, fontFamily:L.font, outline:'none', boxSizing:'border-box', marginBottom:10 }}
+                        onFocus={e => e.target.style.borderColor=ACCENT}
+                        onBlur={e  => e.target.style.borderColor=L.border}/>
+                      <div style={{ fontSize:11, color:L.textMuted, marginBottom:8 }}>Or pick a day of the month:</div>
+                      <select value={briefDate} onChange={e => { setBriefDate(Number(e.target.value)); setSpecificDate(''); }} style={selectStyle}>
+                        {DAYS.map(d => <option key={d} value={d}>{d}{d===1?'st':d===2?'nd':d===3?'rd':'th'} of the month</option>)}
+                      </select>
+                    </div>
+                  )}
 
-                  {/* Time */}
                   <div style={{ marginBottom:16 }}>
                     <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Time</div>
                     <select value={briefTime} onChange={e => setBriefTime(e.target.value)} style={selectStyle}>
@@ -367,7 +361,6 @@ export default function Settings() {
                     </select>
                   </div>
 
-                  {/* Timezone */}
                   <div style={{ marginBottom:20 }}>
                     <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Timezone</div>
                     <select value={timezone} onChange={e => setTimezone(e.target.value)} style={selectStyle}>
@@ -393,8 +386,8 @@ export default function Settings() {
                   {billingStatus?.plan || 'Trial'} Plan
                 </div>
                 <div style={{ fontSize:12, color:L.textMuted }}>
-                  {billingStatus?.subscription_status === 'active' ? 'Active subscription — renews monthly' :
-                   billingStatus?.subscription_status === 'trialing' ? 'In trial period' :
+                  {billingStatus?.subscription_status === 'active'   ? 'Active subscription — renews monthly' :
+                   billingStatus?.subscription_status === 'trialing'  ? 'In trial period' :
                    `${trialDaysLeft()} days left in free trial`}
                 </div>
               </div>
@@ -424,7 +417,6 @@ export default function Settings() {
                 <div style={{ fontSize:15, fontWeight:700, color:'#EF4444' }}>Danger Zone</div>
                 <div style={{ fontSize:12, color:L.textMuted, marginTop:4 }}>These actions are permanent and cannot be undone</div>
               </div>
-
               <div style={{ padding:'16px', borderRadius:L.radiusSm, background:'rgba(239,68,68,0.06)', border:'1px solid rgba(239,68,68,0.15)', marginBottom:20 }}>
                 <div style={{ fontSize:13, fontWeight:700, color:L.text, marginBottom:4 }}>Delete Account</div>
                 <div style={{ fontSize:12, color:L.textMuted, marginBottom:16 }}>
@@ -437,7 +429,7 @@ export default function Settings() {
                 </div>
                 <button
                   disabled={deleteConfirm !== 'DELETE' || deleting}
-                  onClick={() => { if (deleteConfirm === 'DELETE') alert('Account deletion coming soon. Please contact support@novala.com'); }}
+                  onClick={() => { if (deleteConfirm === 'DELETE') alert('Account deletion coming soon. Please contact novala.support@gmail.com'); }}
                   style={{ padding:'10px 20px', borderRadius:L.radiusSm, background:deleteConfirm==='DELETE'?'#EF4444':'#CBD5E1', color:'#fff', border:'none', cursor:deleteConfirm==='DELETE'?'pointer':'not-allowed', fontSize:13, fontWeight:600, fontFamily:L.font }}>
                   {deleting ? 'Deleting...' : 'Delete My Account'}
                 </button>
