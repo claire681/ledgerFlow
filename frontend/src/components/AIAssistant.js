@@ -221,6 +221,28 @@ const PAGE_AI_CONFIG = {
       'Should I be concerned about these differences?',
     ],
   },
+  help: {
+    name:     'Novala Support Assistant',
+    pageName: 'Help & Support',
+    intro:    'I can answer any question about how Novala works. Ask me about features, billing, document upload, AI extraction, or anything else.',
+    icon:     <HelpCircle size={20} color="#0AB98A" />,
+    chips: [
+      'How does Novala work?',
+      'How do I upload a document?',
+      'How does billing work?',
+    ],
+  },
+  settings: {
+    name:     'Settings Assistant',
+    pageName: 'Settings',
+    intro:    'I can help you with your account settings. Ask me about changing your password, updating your profile, managing notifications, or billing.',
+    icon:     <SettingsIcon size={20} color="#0AB98A" />,
+    chips: [
+      'How do I change my password?',
+      'How do I update my notification schedule?',
+      'How do I manage my subscription?',
+    ],
+  },
 };
 
 const DEFAULT_CONFIG = PAGE_AI_CONFIG.dashboard;
