@@ -90,8 +90,6 @@ def determine_payment_status(
     return "paid"
 
 
-# ── Client name extraction ────────────────────────────────────
-
 def extract_client_name_from_text(raw_text: str) -> Optional[str]:
     if not raw_text:
         return None
@@ -146,8 +144,6 @@ def extract_client_name_from_text(raw_text: str) -> Optional[str]:
     return None
 
 
-# ── Invoice link helper ───────────────────────────────────────
-
 async def find_invoice_for_document(
     db: AsyncSession,
     user_id: str,
@@ -167,8 +163,7 @@ async def find_invoice_for_document(
 async def doc_to_dict(db: AsyncSession, d: Document) -> dict:
     linked_invoice = await find_invoice_for_document(db, d.user_id, d)
 
-    # Check if file exists in S3
-    s3_key   = build_s3_key(str(d.id), d.filename)
+    s3_key   = d.file_path or build_s3_key(str(d.id), d.filename)
     has_file = file_exists_in_s3(s3_key)
 
     raw_payment_status = getattr(d, "payment_status", None) or "paid"
@@ -215,8 +210,6 @@ async def doc_to_dict(db: AsyncSession, d: Document) -> dict:
         "linked_invoice_view_url": f"/invoices/{linked_invoice.id}/view" if linked_invoice else None,
     }
 
-
-# ── Smart categorization ──────────────────────────────────────
 
 CATEGORY_RULES = [
     (["brightcare", "caregiver", "home health", "homecare", "care worker",
@@ -522,17 +515,16 @@ async def process_document_upload_job(
             db.add(doc)
             await db.flush()
 
-            # ── Upload to S3 instead of local storage ────────
-            s3_key = build_s3_key(str(doc.id), filename)
+            # ── Upload to S3 and save the REAL key returned ────────
             content_type = guess_media_type(filename)
-            upload_file_to_s3(
+            actual_s3_key = upload_file_to_s3(
                 file_bytes   = file_bytes,
                 filename     = filename,
                 folder       = "documents",
                 content_type = content_type,
             )
-            # Store s3_key in file_path column
-            doc.file_path = s3_key 
+            doc.file_path = actual_s3_key
+
             has_openai = (
                 bool(settings.openai_api_key)
                 and settings.openai_api_key.startswith("sk-")
@@ -897,7 +889,6 @@ async def delete_document(
     user_id = str(current_user.id)
     doc     = await get_document_or_404(db, doc_id, user_id)
 
-    # Delete from S3
     s3_key = doc.file_path or build_s3_key(str(doc.id), doc.filename)
     delete_file_from_s3(s3_key)
 
