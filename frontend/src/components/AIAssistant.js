@@ -4,9 +4,8 @@ import {
   X, Send, Trash2, ChevronDown, Sparkles,
   Users, Link2, Bot, Camera, Calculator,
   BarChart2, FileText, Receipt, Target,
-  Globe, TrendingUp, Wifi,
+  Globe, TrendingUp, Wifi, HelpCircle, Settings as SettingsIcon,
 } from 'lucide-react';
-
 const C = {
   bg:          '#FFFFFF',
   pageBg:      '#F8FAFC',
