@@ -207,7 +207,7 @@ export default function Sidebar({ onLogout, onNavigate }) {
 
   const bottomItems = [
     { label:'Settings', icon:Settings,    path:'/settings', onClick: () => { navigate('/settings'); onNavigate && onNavigate(); } },
-    { label:'Help',     icon:HelpCircle,  path:null,        onClick: () => setHelp(true) },
+    { label:'Help', icon:HelpCircle, path:'/help', onClick: () => { navigate('/help'); onNavigate && onNavigate(); } },
   ];
 
   return (

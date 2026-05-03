@@ -107,6 +107,7 @@ export default function Settings() {
   const [briefDay,      setBriefDay]      = useState('Monday');
   const [briefDate,     setBriefDate]     = useState(1);
   const [timezone,      setTimezone]      = useState('America/Edmonton');
+  const [specificDate, setSpecificDate] = useState('');
   const [savingN,       setSavingN]       = useState(false);
   const [notifMsg,      setNotifMsg]      = useState(null);
 
@@ -326,15 +327,26 @@ export default function Settings() {
                     </div>
                   )}
 
-                  {/* Date picker for monthly/quarterly/biannual */}
                   {['monthly','quarterly','biannual'].includes(frequency) && (
-                    <div style={{ marginBottom:16 }}>
-                      <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Day of Month</div>
-                      <select value={briefDate} onChange={e => setBriefDate(Number(e.target.value))} style={selectStyle}>
-                        {DAYS.map(d => <option key={d} value={d}>{d}{d===1?'st':d===2?'nd':d===3?'rd':'th'} of the month</option>)}
-                      </select>
-                    </div>
-                  )}
+  <div style={{ marginBottom:16 }}>
+    <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>
+      Specific Date — Pick from calendar or choose a day
+    </div>
+    {/* Calendar date picker */}
+    <input
+      type="date"
+      value={specificDate}
+      onChange={e => { setSpecificDate(e.target.value); setBriefDate(new Date(e.target.value).getDate()); }}
+      style={{ width:'100%', padding:'10px 12px', background:L.pageBg, border:`1px solid ${L.border}`, borderRadius:L.radiusSm, color:L.text, fontSize:13, fontFamily:L.font, outline:'none', boxSizing:'border-box', marginBottom:10 }}
+      onFocus={e => e.target.style.borderColor=ACCENT}
+      onBlur={e  => e.target.style.borderColor=L.border}
+    />
+    <div style={{ fontSize:11, color:L.textMuted, marginBottom:8 }}>Or pick a day of the month:</div>
+    <select value={briefDate} onChange={e => { setBriefDate(Number(e.target.value)); setSpecificDate(''); }} style={selectStyle}>
+      {DAYS.map(d => <option key={d} value={d}>{d}{d===1?'st':d===2?'nd':d===3?'rd':'th'} of the month</option>)}
+    </select>
+  </div>
+)}
 
                   {/* Time */}
                   <div style={{ marginBottom:16 }}>
