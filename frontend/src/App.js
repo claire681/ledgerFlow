@@ -26,10 +26,11 @@ import FinancialReports    from './pages/FinancialReports';
 import Reconciliation      from './pages/Reconciliation';
 import BillPay             from './pages/BillPay';
 import VarianceReports     from './pages/VarianceReports';
-import LedgerView         from './pages/LedgerView';
-import DocumentComparison from './pages/DocumentComparison';
-import Billing from './pages/Billing';
-import Settings from './pages/Settings';
+import LedgerView          from './pages/LedgerView';
+import DocumentComparison  from './pages/DocumentComparison';
+import Billing             from './pages/Billing';
+import Settings            from './pages/Settings';
+import Help                from './pages/Help';
 import { Menu, X }         from 'lucide-react';
 
 const ACCENT = '#0AB98A';
@@ -95,10 +96,11 @@ function AppLayout({ onLogout }) {
           <Route path="/reconciliation" element={<Reconciliation/>}   />
           <Route path="/billpay"        element={<BillPay/>}          />
           <Route path="/variance"       element={<VarianceReports/>}  />
-          <Route path="/ledger"     element={<LedgerView/>}        />
-          <Route path="/comparison" element={<DocumentComparison/>}/>  
-          <Route path="/billing" element={<Billing/>}/>
-          <Route path="/settings" element={<Settings/>}/>
+          <Route path="/ledger"         element={<LedgerView/>}       />
+          <Route path="/comparison"     element={<DocumentComparison/>}/>
+          <Route path="/billing"        element={<Billing/>}          />
+          <Route path="/help"           element={<Help/>}             />
+          <Route path="/settings"       element={<Settings/>}         />
           <Route path="*"               element={<Navigate to="/"/>}  />
         </Routes>
       </main>
@@ -126,14 +128,40 @@ export default function App() {
       setOnboardingDone(false);
       return;
     }
+
+    // Check localStorage first — fast path
+    const cached = localStorage.getItem('onboarding_completed');
+    if (cached === 'true') {
+      setOnboardingDone(true);
+      setCheckingOnboarding(false);
+      return;
+    }
+
     setCheckingOnboarding(true);
+
+    // Timeout after 3 seconds — assume done if API is slow
+    const timeout = setTimeout(() => {
+      setOnboardingDone(true);
+      setCheckingOnboarding(false);
+    }, 3000);
+
     fetch('https://api.getnovala.com/api/v1/onboarding/status', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.json())
-      .then(d => setOnboardingDone(d.onboarding_completed || false))
-      .catch(() => setOnboardingDone(true))
-      .finally(() => setCheckingOnboarding(false));
+      .then(d => {
+        const done = d.onboarding_completed || false;
+        setOnboardingDone(done);
+        if (done) localStorage.setItem('onboarding_completed', 'true');
+      })
+      .catch(() => {
+        setOnboardingDone(true);
+        localStorage.setItem('onboarding_completed', 'true');
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        setCheckingOnboarding(false);
+      });
   }, [token]);
 
   const handleLogin = (t, email) => {
@@ -150,6 +178,7 @@ export default function App() {
 
   const handleOnboardingComplete = () => {
     localStorage.setItem('novala_just_onboarded', 'true');
+    localStorage.setItem('onboarding_completed', 'true');
     setOnboardingDone(true);
   };
 
