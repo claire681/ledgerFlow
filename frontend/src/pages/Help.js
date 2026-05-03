@@ -73,9 +73,11 @@ export default function Help() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    setPageContext('help', { page:'help' });
-  }, []);
-
+  setPageContext('help', {
+    page: 'help',
+    systemInstruction: 'You are Novala Support Assistant. Only answer questions about how Novala works. Do not mention financial data, invoices or transactions unless the user specifically asks.',
+  });
+}, []);
   const handleSend = async () => {
     if (!subject.trim() || !message.trim()) return;
     setSending(true); setError('');

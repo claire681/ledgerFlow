@@ -88,8 +88,11 @@ export default function Settings() {
   const { setPageContext } = useAI();
 
   useEffect(() => {
-    setPageContext('settings', { page:'settings' });
-  }, []);
+  setPageContext('settings', {
+    page: 'settings',
+    systemInstruction: 'You are Novala Settings Assistant. Only help with account settings: password, profile, notifications, billing. Do not discuss financial data.',
+  });
+}, []);
 
   // Profile state
   const [fullName,    setFullName]    = useState('');
