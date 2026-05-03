@@ -309,7 +309,7 @@ export default function AIAssistant() {
   const isMobile                     = useIsMobile();
 
   const config       = PAGE_AI_CONFIG[currentPage] || DEFAULT_CONFIG;
-  const displayChips = suggestions.length > 0 ? suggestions : config.chips;
+  const displayChips = config.chips;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior:'smooth' });
