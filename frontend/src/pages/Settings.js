@@ -11,7 +11,11 @@ const ACCENT   = '#0AB98A';
 const getToken = () => localStorage.getItem('token') || '';
 
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+   const { setPageContext } = useAI();
+
+useEffect(() => {
+  setPageContext('settings', { page:'settings' });
+}, []); 
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', h);

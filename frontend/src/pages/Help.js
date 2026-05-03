@@ -75,7 +75,11 @@ export default function Help() {
   const [sending,  setSending]  = useState(false);
   const [sent,     setSent]     = useState(false);
   const [error,    setError]    = useState('');
-  const { askAndOpen } = useAI();
+  const { askAndOpen, setPageContext } = useAI();
+
+useEffect(() => {
+  setPageContext('help', { page:'help' });
+}, []);
   const isMobile = useIsMobile();
 
   const handleSend = async () => {
