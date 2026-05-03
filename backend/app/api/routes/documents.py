@@ -532,8 +532,7 @@ async def process_document_upload_job(
                 content_type = content_type,
             )
             # Store s3_key in file_path column
-            doc.file_path = s3_key
-
+            doc.file_path = s3_key 
             has_openai = (
                 bool(settings.openai_api_key)
                 and settings.openai_api_key.startswith("sk-")
