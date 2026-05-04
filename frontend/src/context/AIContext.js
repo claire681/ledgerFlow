@@ -126,7 +126,7 @@ export function AIProvider({ children }) {
     setSuggestions(PAGE_SUGGESTIONS[page] || PAGE_SUGGESTIONS.dashboard);
   }, []);
 
-  const ask = useCallback(async (question) => {
+   const ask = useCallback(async (question, ragAnswer = null) => {
     if (!question?.trim()) return;
 
     setMessages(prev => [...prev, {
@@ -138,6 +138,16 @@ export function AIProvider({ children }) {
     setError(null);
 
     try {
+      // If RAG answer provided use it directly
+      if (ragAnswer) {
+        setMessages(prev => [...prev, {
+          role:      'assistant',
+          content:   ragAnswer,
+          timestamp: new Date().toISOString(),
+        }]);
+        return ragAnswer;
+      }
+
       const sendSessionId = currentPage === 'dashboard' ? null : sessionId;
 
       const res  = await askAI(

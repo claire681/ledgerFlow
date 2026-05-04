@@ -210,7 +210,7 @@ const PAGE_AI_CONFIG = {
       'Are there any unusual entries?',
     ],
   },
-  comparison: {
+ comparison: {
     name:     'Document Comparison Assistant',
     pageName: 'Document Comparison',
     intro:    'I compare two documents side by side and explain the differences. Upload two invoices, receipts or contracts and ask me what changed and why it matters.',
@@ -219,6 +219,18 @@ const PAGE_AI_CONFIG = {
       'How does Document Comparison work?',
       'What are the key differences?',
       'Should I be concerned about these differences?',
+    ],
+  },
+  search: {
+    name:     'Smart Search Assistant',
+    pageName: 'Smart Search',
+    intro:    'Ask me anything about your documents. I search your actual files to answer — vendor names, amounts, dates, payment status.',
+    icon:     <Search size={20} color="#0AB98A"/>,
+    chips: [
+      'What are my unpaid invoices?',
+      'How much did I spend last month?',
+      'Do I have any duplicate documents?',
+      'Show me all paid invoices',
     ],
     search: {
   name:     'Smart Search Assistant',
@@ -333,13 +345,30 @@ export default function AIAssistant() {
     }
   }, [isOpen, isMinimized]);
 
-  const handleSend = async () => {
+ const handleSend = async () => {
     const q = input.trim();
     if (!q || loading) return;
     setInput('');
+
+    // Use RAG for Smart Search page
+    if (currentPage === 'search') {
+      try {
+        const token = localStorage.getItem('token') || '';
+        const res   = await fetch('https://api.getnovala.com/api/v1/rag/ask', {
+          method:  'POST',
+          headers: { Authorization:`Bearer ${token}`, 'Content-Type':'application/json' },
+          body:    JSON.stringify({ question: q }),
+        });
+        const data = await res.json();
+        await ask(q, data.answer);
+      } catch (e) {
+        await ask(q);
+      }
+      return;
+    }
+
     await ask(q);
   };
-
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
