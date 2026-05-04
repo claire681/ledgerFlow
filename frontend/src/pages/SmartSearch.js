@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search, Sparkles, FileText, AlertTriangle,
-  CheckCircle, ArrowRight, Brain, RefreshCw,
-  Send, User, Bot,
+  CheckCircle, Brain, RefreshCw,
 } from 'lucide-react';
 import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
@@ -33,18 +32,13 @@ export default function SmartSearch() {
   const [error,      setError]      = useState('');
   const [tab,        setTab]        = useState('search');
 
-  
-  const { setPageContext } = useAI();
+  const { setPageContext, askAndOpen } = useAI();
   const isMobile = useIsMobile();
 
   useEffect(() => {
     setPageContext('search', { page:'search' });
     loadDuplicates();
   }, []);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages]);
 
   const embedAll = async () => {
     setEmbedding(true); setError('');
@@ -71,29 +65,6 @@ export default function SmartSearch() {
       if (!data.results?.length) setError('No matching documents found.');
     } catch (e) { setError('Search failed. Please try again.'); }
     finally { setSearching(false); }
-  };
-
-  const handleChatSend = async () => {
-    if (!chatInput.trim() || chatLoading) return;
-    const question = chatInput.trim();
-    setChatInput('');
-    setChatMessages(prev => [...prev, { role: 'user', content: question }]);
-    setChatLoading(true);
-    try {
-      const res  = await fetch(`${BASE}/rag/ask`, {
-        method:  'POST',
-        headers: { Authorization:`Bearer ${getToken()}`, 'Content-Type':'application/json' },
-        body:    JSON.stringify({ question }),
-      });
-      const data = await res.json();
-      setChatMessages(prev => [...prev, {
-        role:      'assistant',
-        content:   data.answer,
-        documents: data.documents,
-      }]);
-    } catch (e) {
-      setChatMessages(prev => [...prev, { role:'assistant', content:'Sorry I could not answer that. Please try again.' }]);
-    } finally { setChatLoading(false); }
   };
 
   const loadDuplicates = async () => {
@@ -182,8 +153,7 @@ export default function SmartSearch() {
                   <div style={{ fontSize:14, fontWeight:700, color:L.text }}>{results.length} results for "{query}"</div>
                 </div>
                 {results.map((r, i) => {
-                  const meta       = r.metadata || {};
-                  const similarity = Math.round((r.similarity || 0) * 100);
+                  const meta = r.metadata || {};
                   return (
                     <div key={i} style={{ padding:isMobile?'14px 16px':'14px 22px', borderBottom:i<results.length-1?`1px solid ${L.border}`:'none', display:'flex', alignItems:'flex-start', gap:12 }}
                       onMouseEnter={e => e.currentTarget.style.background=L.pageBg}
@@ -203,7 +173,7 @@ export default function SmartSearch() {
                           {meta.payment_status && <span style={{ fontSize:10, color:meta.payment_status==='paid'?ACCENT:'#F59E0B', background:meta.payment_status==='paid'?L.accentSoft:'rgba(245,158,11,0.08)', padding:'2px 8px', borderRadius:20, border:`1px solid ${meta.payment_status==='paid'?L.accentBorder:'rgba(245,158,11,0.2)'}` }}>{meta.payment_status}</span>}
                         </div>
                       </div>
-                      <button onClick={() => { setTab('ai'); setChatInput(`Tell me more about ${meta.filename}`); }}
+                      <button onClick={() => askAndOpen(`Tell me about this document: ${meta.filename} — vendor: ${meta.vendor}, amount: ${meta.amount}, date: ${meta.doc_date}`)}
                         style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11, fontFamily:L.font, flexShrink:0 }}>
                         <Sparkles size={11}/> Ask AI
                       </button>
@@ -220,14 +190,13 @@ export default function SmartSearch() {
                 </div>
                 <div style={{ fontSize:15, fontWeight:600, color:L.text, marginBottom:6 }}>Search Your Documents</div>
                 <div style={{ fontSize:13, color:L.textMuted, maxWidth:400, margin:'0 auto' }}>
-                  Search by vendor name, date, amount, or payment status. Use the AI tab to ask questions in plain English.
+                  Search by vendor name, date, amount, or payment status. Click the AI button to ask questions about any document.
                 </div>
               </div>
             )}
           </>
         )}
 
-      
         {/* Duplicates tab */}
         {tab === 'duplicates' && (
           <div style={{ ...card, overflow:'hidden' }}>
@@ -258,7 +227,7 @@ export default function SmartSearch() {
                       <div style={{ fontSize:12, color:L.text }}>{d.doc2_content}</div>
                     </div>
                   </div>
-                  <button onClick={() => { setTab('ai'); setChatInput(`Are these two documents duplicates? "${d.doc1_content}" and "${d.doc2_content}"`); }}
+                  <button onClick={() => askAndOpen(`Are these two documents duplicates? "${d.doc1_content}" and "${d.doc2_content}"`)}
                     style={{ marginTop:10, display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:L.radiusSm, background:'rgba(245,158,11,0.1)', border:'1px solid rgba(245,158,11,0.3)', color:'#F59E0B', cursor:'pointer', fontSize:11, fontFamily:L.font }}>
                     <Sparkles size={11}/> Ask AI about this
                   </button>
