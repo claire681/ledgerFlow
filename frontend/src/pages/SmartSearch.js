@@ -33,14 +33,7 @@ export default function SmartSearch() {
   const [error,      setError]      = useState('');
   const [tab,        setTab]        = useState('search');
 
-  // RAG Chat state
-  const [chatMessages, setChatMessages] = useState([
-    { role: 'assistant', content: 'Hi! I can answer questions about your documents. Ask me anything like "Did I pay BrightCare in February?" or "What is my largest unpaid invoice?"' }
-  ]);
-  const [chatInput,  setChatInput]  = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
-  const chatEndRef = useRef(null);
-
+  
   const { setPageContext } = useAI();
   const isMobile = useIsMobile();
 
@@ -132,7 +125,6 @@ export default function SmartSearch() {
         <div style={{ display:'flex', gap:0, marginBottom:20, background:L.pageBg, borderRadius:L.radius, padding:4, border:`1px solid ${L.border}`, width:'fit-content' }}>
           {[
             { id:'search',     label:'Search Documents' },
-            { id:'ai',         label:'Ask AI' },
             { id:'duplicates', label:`Duplicates${duplicates.length>0?` (${duplicates.length})`:''}`},
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
@@ -235,94 +227,7 @@ export default function SmartSearch() {
           </>
         )}
 
-        {/* AI Chat tab */}
-        {tab === 'ai' && (
-          <div style={{ ...card, overflow:'hidden', display:'flex', flexDirection:'column', height:isMobile?'70vh':'65vh' }}>
-            <div style={{ padding:'16px 20px', borderBottom:`1px solid ${L.border}`, display:'flex', alignItems:'center', gap:10 }}>
-              <div style={{ width:36, height:36, borderRadius:10, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <Brain size={18} color="#fff"/>
-              </div>
-              <div>
-                <div style={{ fontSize:14, fontWeight:700, color:L.text }}>Document AI</div>
-                <div style={{ fontSize:11, color:L.textMuted }}>Answers based on your actual documents</div>
-              </div>
-            </div>
-
-            {/* Messages */}
-            <div style={{ flex:1, overflowY:'auto', padding:'16px 20px', display:'flex', flexDirection:'column', gap:12 }}>
-              {chatMessages.map((msg, i) => (
-                <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start', flexDirection:msg.role==='user'?'row-reverse':'row' }}>
-                  <div style={{ width:32, height:32, borderRadius:10, background:msg.role==='user'?'linear-gradient(135deg,#0AB98A,#0EA5E9)':'#F1F5F9', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    {msg.role==='user' ? <User size={15} color="#fff"/> : <Bot size={15} color="#64748B"/>}
-                  </div>
-                  <div style={{ maxWidth:'75%' }}>
-                    <div style={{ padding:'12px 14px', borderRadius:12, background:msg.role==='user'?'linear-gradient(135deg,#0AB98A,#0EA5E9)':'#F8FAFC', border:msg.role==='user'?'none':`1px solid ${L.border}`, color:msg.role==='user'?'#fff':L.text, fontSize:13, lineHeight:1.6 }}>
-                      {msg.content}
-                    </div>
-                    {msg.documents && msg.documents.length > 0 && (
-                      <div style={{ marginTop:8, display:'flex', flexWrap:'wrap', gap:6 }}>
-                        {msg.documents.slice(0,3).map((doc, di) => (
-                          <span key={di} style={{ fontSize:10, color:ACCENT, background:L.accentSoft, padding:'2px 10px', borderRadius:20, border:`1px solid ${L.accentBorder}` }}>
-                            📄 {doc.metadata?.filename || 'Document'}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {chatLoading && (
-                <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
-                  <div style={{ width:32, height:32, borderRadius:10, background:'#F1F5F9', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    <Bot size={15} color="#64748B"/>
-                  </div>
-                  <div style={{ padding:'12px 14px', borderRadius:12, background:'#F8FAFC', border:`1px solid ${L.border}` }}>
-                    <div style={{ display:'flex', gap:4 }}>
-                      {[0,1,2].map(i => (
-                        <div key={i} style={{ width:6, height:6, borderRadius:'50%', background:ACCENT, animation:`pulse 1s infinite ${i*0.2}s` }}/>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={chatEndRef}/>
-            </div>
-
-            {/* Quick questions */}
-            <div style={{ padding:'8px 20px', borderTop:`1px solid ${L.border}`, display:'flex', gap:6, flexWrap:'wrap' }}>
-              {[
-                'What are my unpaid invoices?',
-                'How much did I spend in total?',
-                'Do I have duplicate documents?',
-              ].map(q => (
-                <button key={q} onClick={() => setChatInput(q)}
-                  style={{ padding:'4px 12px', borderRadius:20, cursor:'pointer', fontSize:11, border:`1px solid ${L.border}`, background:'#fff', color:L.textSub, fontFamily:L.font }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor=ACCENT; e.currentTarget.style.color=ACCENT; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor=L.border; e.currentTarget.style.color=L.textSub; }}>
-                  {q}
-                </button>
-              ))}
-            </div>
-
-            {/* Input */}
-            <div style={{ padding:'12px 16px', borderTop:`1px solid ${L.border}`, display:'flex', gap:10 }}>
-              <input
-                value={chatInput}
-                onChange={e => setChatInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleChatSend()}
-                placeholder="Ask anything about your documents..."
-                style={{ flex:1, padding:'10px 14px', borderRadius:L.radiusSm, border:`1px solid ${L.border}`, outline:'none', fontSize:13, fontFamily:L.font, color:L.text, background:L.pageBg }}
-                onFocus={e => e.target.style.borderColor=ACCENT}
-                onBlur={e  => e.target.style.borderColor=L.border}
-              />
-              <button onClick={handleChatSend} disabled={chatLoading||!chatInput.trim()}
-                style={{ padding:'10px 16px', borderRadius:L.radiusSm, background:chatLoading||!chatInput.trim()?L.textFaint:'linear-gradient(135deg,#0AB98A,#0EA5E9)', color:'#fff', border:'none', cursor:chatLoading||!chatInput.trim()?'not-allowed':'pointer', display:'flex', alignItems:'center', gap:6, fontSize:13, fontWeight:600, fontFamily:L.font }}>
-                <Send size={14}/>
-              </button>
-            </div>
-          </div>
-        )}
-
+      
         {/* Duplicates tab */}
         {tab === 'duplicates' && (
           <div style={{ ...card, overflow:'hidden' }}>
