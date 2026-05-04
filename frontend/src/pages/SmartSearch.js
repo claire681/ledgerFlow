@@ -173,10 +173,23 @@ export default function SmartSearch() {
                           {meta.payment_status && <span style={{ fontSize:10, color:meta.payment_status==='paid'?ACCENT:'#F59E0B', background:meta.payment_status==='paid'?L.accentSoft:'rgba(245,158,11,0.08)', padding:'2px 8px', borderRadius:20, border:`1px solid ${meta.payment_status==='paid'?L.accentBorder:'rgba(245,158,11,0.2)'}` }}>{meta.payment_status}</span>}
                         </div>
                       </div>
-                      <button onClick={() => askAndOpen(`Tell me about this document: ${meta.filename} — vendor: ${meta.vendor}, amount: ${meta.amount}, date: ${meta.doc_date}`)}
-                        style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11, fontFamily:L.font, flexShrink:0 }}>
-                        <Sparkles size={11}/> Ask AI
-                      </button>
+                      <div style={{ display:'flex', gap:6, flexShrink:0 }}>
+                        <button onClick={async () => {
+                          try {
+                            const res  = await fetch(`${BASE}/documents/${r.document_id}/view-url`, { headers:{ Authorization:`Bearer ${getToken()}` } });
+                            const data = await res.json();
+                            if (data.url) window.open(data.url, '_blank');
+                            else alert('Could not load document.');
+                          } catch (e) { alert('Could not load document.'); }
+                        }}
+                          style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:ACCENT, cursor:'pointer', fontSize:11, fontFamily:L.font }}>
+                          <FileText size={11}/> View
+                        </button>
+                        <button onClick={() => askAndOpen(`Tell me about this document: ${meta.filename} — vendor: ${meta.vendor}, amount: ${meta.amount}, date: ${meta.doc_date}`)}
+                          style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11, fontFamily:L.font }}>
+                          <Sparkles size={11}/> Ask AI
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
