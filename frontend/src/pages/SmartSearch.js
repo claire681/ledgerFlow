@@ -165,12 +165,15 @@ export default function SmartSearch() {
                 <div style={{ fontSize:11, color:L.textMuted, marginBottom:8 }}>Quick searches:</div>
                 <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
                   {[
-                    'All invoices from this month',
-                    'Receipts over $500',
-                    'AWS or cloud expenses',
-                    'Unpaid invoices',
-                    'Software subscriptions',
-                  ].map(q => (
+  'invoices',
+  'paid',
+  'overdue',
+  'this month',
+  'last month',
+  '2026',
+  'receipts',
+  'over $500',
+].map(q => (
                     <button key={q} onClick={() => { setQuery(q); }}
                       style={{ padding:'5px 12px', borderRadius:20, cursor:'pointer', fontSize:11, fontWeight:500, border:`1px solid ${L.border}`, background:'#fff', color:L.textSub, fontFamily:L.font }}
                       onMouseEnter={e => { e.currentTarget.style.borderColor=ACCENT; e.currentTarget.style.color=ACCENT; }}

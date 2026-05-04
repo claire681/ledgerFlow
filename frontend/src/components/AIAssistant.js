@@ -223,12 +223,12 @@ const PAGE_AI_CONFIG = {
     search: {
   name:     'Smart Search Assistant',
   pageName: 'Smart Search',
-  intro:    'I can search through all your documents and find patterns, duplicates, and insights. Ask me to find specific documents or analyze your spending.',
+  intro:    'Search your documents using keywords, dates, amounts or vendor names. I can help you find anything.',
   icon:     <Search size={20} color="#0AB98A"/>,
   chips: [
-    'Find all my AWS invoices',
-    'Do I have any duplicate documents?',
-    'What documents were uploaded this month?',
+    'Show all overdue invoices',
+    'Receipts from last month',
+    'Documents over $500',
   ],
 },
   },
