@@ -214,22 +214,19 @@ export default function SmartSearch() {
                         <div style={{ fontSize:13, fontWeight:600, color:L.text, marginBottom:4, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                           {meta.filename || 'Document'}
                         </div>
-                        <div style={{ fontSize:12, color:L.textMuted, marginBottom:6 }}>{r.content}</div>
-                        <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                          {meta.vendor && (
-                            <span style={{ fontSize:10, color:L.textSub, background:L.pageBg, padding:'2px 8px', borderRadius:20, border:`1px solid ${L.border}` }}>
-                              {meta.vendor}
-                            </span>
-                          )}
-                          {meta.amount && (
-                            <span style={{ fontSize:10, color:ACCENT, background:L.accentSoft, padding:'2px 8px', borderRadius:20, border:`1px solid ${L.accentBorder}` }}>
-                              {fmt(meta.amount)}
-                            </span>
-                          )}
-                          <span style={{ fontSize:10, color:similarity>80?ACCENT:'#F59E0B', background:similarity>80?L.accentSoft:'rgba(245,158,11,0.08)', padding:'2px 8px', borderRadius:20, border:`1px solid ${similarity>80?L.accentBorder:'rgba(245,158,11,0.2)'}` }}>
-                            {similarity}% match
-                          </span>
-                        </div>
+                       <div style={{ fontSize:12, color:L.textMuted, marginBottom:6 }}>{r.content}</div>
+<div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+  {meta.vendor && <span style={{ fontSize:10, color:L.textSub, background:L.pageBg, padding:'2px 8px', borderRadius:20, border:`1px solid ${L.border}` }}>📦 {meta.vendor}</span>}
+  {meta.client_name && <span style={{ fontSize:10, color:'#0EA5E9', background:'rgba(14,165,233,0.08)', padding:'2px 8px', borderRadius:20, border:'1px solid rgba(14,165,233,0.2)' }}>👤 {meta.client_name}</span>}
+  {meta.amount && <span style={{ fontSize:10, color:ACCENT, background:L.accentSoft, padding:'2px 8px', borderRadius:20, border:`1px solid ${L.accentBorder}` }}>💰 {fmt(meta.amount)}</span>}
+  {meta.doc_date && <span style={{ fontSize:10, color:L.textSub, background:L.pageBg, padding:'2px 8px', borderRadius:20, border:`1px solid ${L.border}` }}>📅 {meta.doc_date}</span>}
+  {meta.category && <span style={{ fontSize:10, color:'#8B5CF6', background:'rgba(139,92,246,0.08)', padding:'2px 8px', borderRadius:20, border:'1px solid rgba(139,92,246,0.2)' }}>🏷 {meta.category}</span>}
+  {meta.doc_type && <span style={{ fontSize:10, color:L.textSub, background:L.pageBg, padding:'2px 8px', borderRadius:20, border:`1px solid ${L.border}` }}>📄 {meta.doc_type}</span>}
+  {meta.payment_status && <span style={{ fontSize:10, color:meta.payment_status==='paid'?ACCENT:'#F59E0B', background:meta.payment_status==='paid'?L.accentSoft:'rgba(245,158,11,0.08)', padding:'2px 8px', borderRadius:20, border:`1px solid ${meta.payment_status==='paid'?L.accentBorder:'rgba(245,158,11,0.2)'}` }}>{meta.payment_status}</span>}
+  <span style={{ fontSize:10, color:similarity>80?ACCENT:'#F59E0B', background:similarity>80?L.accentSoft:'rgba(245,158,11,0.08)', padding:'2px 8px', borderRadius:20, border:`1px solid ${similarity>80?L.accentBorder:'rgba(245,158,11,0.2)'}` }}>
+    {similarity}% match
+  </span>
+</div>
                       </div>
                       <button onClick={() => askAndOpen(`Tell me more about this document: ${r.content}`)}
                         style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11, fontFamily:L.font, flexShrink:0 }}>
