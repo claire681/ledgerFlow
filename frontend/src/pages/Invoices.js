@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Plus, Download, CheckCircle, Clock, AlertCircle,
-  Trash2, X, FileText, Eye, Edit2, Save, Printer, Mail,
+  Trash2, X, FileText, Eye, Edit2, Save, Printer, Mail, Bell,HHHH
 } from 'lucide-react';
 import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
@@ -245,6 +245,14 @@ export default function Invoices() {
     items:[emptyItem()],
   });
 
+  const [followUpModal,   setFollowUpModal]   = useState(false);
+  const [followUpInvoice, setFollowUpInvoice] = useState(null);
+  const [followUpEmail,   setFollowUpEmail]   = useState('');
+  const [followUpDate,    setFollowUpDate]    = useState('');
+  const [followUpTime,    setFollowUpTime]    = useState('09:00');
+  const [followUpSaving,  setFollowUpSaving]  = useState(false);
+  const [followUpSuccess, setFollowUpSuccess] = useState('');
+
   const { setPageContext } = useAI();
   const getHeaders = (extra={}) => ({ Authorization:`Bearer ${localStorage.getItem('token')}`, ...extra });
   const safeJson   = async (res) => { try { return await res.json(); } catch { return null; } };
@@ -425,6 +433,42 @@ export default function Invoices() {
     win.document.write(`<html><head><title>Invoice</title><style>body{margin:0;padding:0;font-family:'Georgia',serif;}@media print{body{margin:0;}}</style></head><body>${el.innerHTML}</body></html>`);
     win.document.close(); win.focus();
     setTimeout(()=>{ win.print(); win.close(); }, 300);
+  };
+
+  const handleFollowUp = (inv) => {
+    setFollowUpInvoice(inv);
+    setFollowUpEmail(inv.to_email || '');
+    setFollowUpDate('');
+    setFollowUpTime('09:00');
+    setFollowUpSuccess('');
+    setFollowUpModal(true);
+  };
+
+  const submitFollowUp = async () => {
+    if (!followUpEmail || !followUpDate) { window.alert('Please enter email and date.'); return; }
+    setFollowUpSaving(true);
+    try {
+      const scheduledAt = new Date(`${followUpDate}T${followUpTime}:00`).toISOString();
+      const res = await fetch('https://api.getnovala.com/api/v1/followup/schedule', {
+        method:  'POST',
+        headers: getHeaders({ 'Content-Type':'application/json' }),
+        body:    JSON.stringify({
+          invoice_id:     followUpInvoice.id,
+          to_email:       followUpEmail,
+          to_name:        followUpInvoice.to_name,
+          amount:         followUpInvoice.total,
+          invoice_number: followUpInvoice.invoice_number,
+          due_date:       followUpInvoice.due_date,
+          scheduled_at:   scheduledAt,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFollowUpSuccess(`Follow-up email scheduled for ${new Date(scheduledAt).toLocaleString()}`);
+        setTimeout(() => setFollowUpModal(false), 3000);
+      }
+    } catch (e) { window.alert('Could not schedule follow-up.'); }
+    finally { setFollowUpSaving(false); }
   };
 
   const totalRevenue = invoices.filter(i=>i.status==='paid').reduce((s,i)=>s+(Number(i.total)||0),0);
@@ -655,6 +699,12 @@ export default function Invoices() {
                       style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}>
                       <Download size={11}/>
                     </button>
+                    {inv.status !== 'paid' && (
+                      <button onClick={() => handleFollowUp(inv)}
+                        style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', color:'#8B5CF6', cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
+                        <Bell size={10}/> Follow Up
+                      </button>
+                    )}
                     <button onClick={() => handleDelete(inv.id)}
                       style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}>
                       <Trash2 size={11}/>
@@ -705,6 +755,12 @@ export default function Invoices() {
                     onMouseLeave={e=>{e.currentTarget.style.borderColor=L.border;e.currentTarget.style.color=L.textMuted;}}>
                     <Download size={11}/>
                   </button>
+                  {inv.status !== 'paid' && (
+                    <button onClick={e=>{e.stopPropagation();handleFollowUp(inv);}}
+                      style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 8px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', color:'#8B5CF6', cursor:'pointer', fontSize:11 }}>
+                      <Bell size={11}/> Follow Up
+                    </button>
+                  )}
                   <button onClick={e=>{e.stopPropagation();handleDelete(inv.id);}}
                     style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 8px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}
                     onMouseEnter={e=>{e.currentTarget.style.borderColor=L.redBorder;e.currentTarget.style.color=L.red;}}
@@ -767,6 +823,57 @@ export default function Invoices() {
               <InvoicePreview inv={selected}/>
             </div>
           </div>
+        </Modal>
+      )}
+      {followUpModal && followUpInvoice && (
+        <Modal title={`Follow Up — ${followUpInvoice.invoice_number}`} onClose={() => setFollowUpModal(false)}>
+          {followUpSuccess ? (
+            <div style={{ textAlign:'center', padding:'20px 0' }}>
+              <div style={{ width:56, height:56, borderRadius:16, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
+                <CheckCircle size={26} color={L.accent}/>
+              </div>
+              <div style={{ fontSize:15, fontWeight:700, color:L.text, marginBottom:8 }}>Follow-up Scheduled!</div>
+              <div style={{ fontSize:13, color:L.textMuted }}>{followUpSuccess}</div>
+            </div>
+          ) : (
+            <>
+              <div style={{ padding:'12px 16px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.06)', border:'1px solid rgba(139,92,246,0.2)', marginBottom:20 }}>
+                <div style={{ fontSize:13, fontWeight:700, color:'#8B5CF6', marginBottom:4 }}>
+                  {followUpInvoice.invoice_number} — {followUpInvoice.to_name}
+                </div>
+                <div style={{ fontSize:12, color:L.textMuted }}>
+                  Amount: ${Number(followUpInvoice.total||0).toFixed(2)} · Due: {fmtDate(followUpInvoice.due_date)}
+                </div>
+              </div>
+              <Field label="Client Email *">
+                <input style={inp} type="email" placeholder="client@email.com" value={followUpEmail} onChange={e => setFollowUpEmail(e.target.value)}/>
+                {!followUpInvoice.to_email && (
+                  <div style={{ fontSize:11, color:'#F59E0B', marginTop:4 }}>No email on invoice — please enter the client email manually</div>
+                )}
+              </Field>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <Field label="Date to Send *">
+                  <input style={inp} type="date" value={followUpDate} min={new Date().toISOString().slice(0,10)} onChange={e => setFollowUpDate(e.target.value)}/>
+                </Field>
+                <Field label="Time to Send">
+                  <input style={inp} type="time" value={followUpTime} onChange={e => setFollowUpTime(e.target.value)}/>
+                </Field>
+              </div>
+              <div style={{ padding:'12px 14px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}`, fontSize:12, color:L.textMuted, marginBottom:20 }}>
+                📧 A professional follow-up email will be sent to <strong>{followUpEmail || 'the client'}</strong> on the scheduled date reminding them about the outstanding invoice.
+              </div>
+              <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+                <button onClick={() => setFollowUpModal(false)}
+                  style={{ padding:'9px 18px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:13, fontFamily:L.font }}>
+                  Cancel
+                </button>
+                <button onClick={submitFollowUp} disabled={followUpSaving||!followUpEmail||!followUpDate}
+                  style={{ display:'flex', alignItems:'center', gap:7, padding:'9px 22px', borderRadius:L.radiusSm, background:followUpSaving||!followUpEmail||!followUpDate?L.textFaint:'#8B5CF6', color:'#fff', border:'none', cursor:followUpSaving||!followUpEmail||!followUpDate?'not-allowed':'pointer', fontSize:13, fontWeight:600, fontFamily:L.font }}>
+                  <Bell size={13}/>{followUpSaving ? 'Scheduling...' : 'Schedule Follow-up'}
+                </button>
+              </div>
+            </>
+          )}
         </Modal>
       )}
     </div>
