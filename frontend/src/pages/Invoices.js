@@ -853,7 +853,7 @@ export default function Invoices() {
               </Field>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                 <Field label="Date to Send *">
-                  <input style={inp} type="date" value={followUpDate} min={new Date().toISOString().slice(0,10)} onChange={e => setFollowUpDate(e.target.value)}/>
+                  <input style={inp} type="date" value={followUpDate} onChange={e => setFollowUpDate(e.target.value)}/>
                 </Field>
                 <Field label="Time to Send">
                   <input style={inp} type="time" value={followUpTime} onChange={e => setFollowUpTime(e.target.value)}/>
