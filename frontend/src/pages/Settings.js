@@ -198,6 +198,7 @@ export default function Settings() {
         }),
       });
       if (!res.ok) throw new Error('Failed');
+      localStorage.setItem('user_timezone', timezone);
       setNotifMsg({ type:'success', text:'Notification settings saved' });
     } catch (e) {
       setNotifMsg({ type:'error', text:'Could not save settings. Please try again.' });
