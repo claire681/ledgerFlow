@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Plus, Download, CheckCircle, Clock, AlertCircle,
-  Trash2, X, FileText, Eye, Edit2, Save, Printer, Mail, Bell,HHHH
+  Trash2, X, FileText, Eye, Edit2, Save, Printer, Mail, Bell,
 } from 'lucide-react';
 import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
@@ -27,10 +27,10 @@ const fmtDate = (s) => {
   catch { return s; }
 };
 
-const loadInvoiceMeta  = () => { try { const r = localStorage.getItem(INVOICE_META_KEY); return r ? JSON.parse(r) : {}; } catch { return {}; } };
-const saveInvoiceMeta  = (m) => { try { localStorage.setItem(INVOICE_META_KEY, JSON.stringify(m)); } catch {} };
-const buildMetaKey     = (inv) => inv?.id || inv?.invoice_number || '';
-const getInvoiceExtras = (inv) => ({ terms:inv?.terms||'Net 30', logo_url:inv?.logo_url||'', from_phone:inv?.from_phone||'', from_bn:inv?.from_bn||'', discount:inv?.discount??0 });
+const loadInvoiceMeta      = () => { try { const r = localStorage.getItem(INVOICE_META_KEY); return r ? JSON.parse(r) : {}; } catch { return {}; } };
+const saveInvoiceMeta      = (m) => { try { localStorage.setItem(INVOICE_META_KEY, JSON.stringify(m)); } catch {} };
+const buildMetaKey         = (inv) => inv?.id || inv?.invoice_number || '';
+const getInvoiceExtras     = (inv) => ({ terms:inv?.terms||'Net 30', logo_url:inv?.logo_url||'', from_phone:inv?.from_phone||'', from_bn:inv?.from_bn||'', discount:inv?.discount??0 });
 const mergeInvoiceWithMeta = (inv, mm) => { const k = buildMetaKey(inv); return { ...inv, ...(k ? mm[k]||{} : {}) }; };
 
 function useIsMobile() {
@@ -86,8 +86,6 @@ function InvoicePreview({ inv }) {
 
   return (
     <div style={{ fontFamily:"'Georgia','Times New Roman',serif", background:'#fff', color:'#1a1a2e', lineHeight:1.6, padding: isMobile ? '24px 16px' : '48px 52px', position:'relative' }}>
-
-      {/* Header — stack on mobile */}
       <div style={{ display:'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent:'space-between', alignItems:'flex-start', marginBottom: isMobile ? 20 : 40, gap: isMobile ? 12 : 0 }}>
         <div>
           <div style={{ fontSize: isMobile ? 28 : 38, fontWeight:700, color:'#52b788', letterSpacing:'0.02em', marginBottom:12 }}>INVOICE</div>
@@ -97,12 +95,9 @@ function InvoicePreview({ inv }) {
           {inv.from_email   && <div style={{ fontSize:13, color:'#444', marginBottom:2 }}>{inv.from_email}</div>}
           {inv.from_phone   && <div style={{ fontSize:13, color:'#444' }}>{inv.from_phone}</div>}
         </div>
-        {inv.logo_url && (
-          <img src={inv.logo_url} alt="logo" style={{ maxHeight: isMobile ? 48 : 80, maxWidth: isMobile ? 140 : 220, objectFit:'contain', display:'block' }}/>
-        )}
+        {inv.logo_url && <img src={inv.logo_url} alt="logo" style={{ maxHeight: isMobile ? 48 : 80, maxWidth: isMobile ? 140 : 220, objectFit:'contain', display:'block' }}/>}
       </div>
 
-      {/* Bill to + Invoice details — stack on mobile */}
       <div style={{ background:'#eaf7f0', padding: isMobile ? '16px' : '24px 28px', display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 16 : 40, marginBottom:0 }}>
         <div>
           <div style={{ fontSize:13, fontWeight:700, color:'#1a1a2e', marginBottom:6 }}>Bill to</div>
@@ -112,12 +107,7 @@ function InvoicePreview({ inv }) {
         </div>
         <div>
           <div style={{ fontSize:13, fontWeight:700, color:'#1a1a2e', marginBottom:6 }}>Invoice details</div>
-          {[
-            ['Invoice no.:',  inv.invoice_number||'—'],
-            ['Terms:',        inv.terms||'Net 30'],
-            ['Invoice date:', fmtDate(inv.date)],
-            ['Due date:',     fmtDate(inv.due_date)],
-          ].map(([l,v]) => (
+          {[['Invoice no.:',inv.invoice_number||'—'],['Terms:',inv.terms||'Net 30'],['Invoice date:',fmtDate(inv.date)],['Due date:',fmtDate(inv.due_date)]].map(([l,v]) => (
             <div key={l} style={{ display:'flex', gap:8, fontSize:13, color:'#1a1a2e', marginBottom:3, flexWrap:'wrap' }}>
               <span style={{ minWidth: isMobile ? 90 : 100, fontWeight:600 }}>{l}</span>
               <span>{v}</span>
@@ -126,7 +116,6 @@ function InvoicePreview({ inv }) {
         </div>
       </div>
 
-      {/* Line items table — scrollable on mobile */}
       <div style={{ overflowX: isMobile ? 'auto' : 'visible', marginTop:0 }}>
         <table style={{ width: isMobile ? 'max-content' : '100%', minWidth: isMobile ? 480 : 'auto', borderCollapse:'collapse', fontSize:13 }}>
           <thead>
@@ -156,7 +145,6 @@ function InvoicePreview({ inv }) {
         </table>
       </div>
 
-      {/* Totals */}
       <div style={{ display:'flex', justifyContent:'flex-end', marginTop:20, marginBottom:32 }}>
         <div style={{ width: isMobile ? '100%' : 300 }}>
           <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid #ddd' }}>
@@ -175,7 +163,6 @@ function InvoicePreview({ inv }) {
         </div>
       </div>
 
-      {/* Notes */}
       {inv.notes && (
         <div style={{ borderTop:'1px solid #e2e8f0', paddingTop:20 }}>
           <div style={{ fontSize:11, fontWeight:700, color:'#94a3b8', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Notes</div>
@@ -192,9 +179,7 @@ function LineItemRow({ item, index, onChange, onRemove, isMobile }) {
     <div style={{ background:L.pageBg, border:`1px solid ${L.border}`, borderRadius:L.radiusSm, padding:'12px', marginBottom:8 }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
         <div style={{ fontSize:11, fontWeight:700, color:L.textMuted }}>Item {index+1}</div>
-        <button onClick={() => onRemove(index)} style={{ background:'transparent', border:'none', cursor:'pointer', color:L.textMuted, display:'flex' }}>
-          <X size={14}/>
-        </button>
+        <button onClick={() => onRemove(index)} style={{ background:'transparent', border:'none', cursor:'pointer', color:L.textMuted, display:'flex' }}><X size={14}/></button>
       </div>
       <input style={{ ...inp, marginBottom:8 }} placeholder="Description" value={item.description} onChange={e => onChange(index,'description',e.target.value)}/>
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
@@ -207,18 +192,14 @@ function LineItemRow({ item, index, onChange, onRemove, isMobile }) {
           <input style={{ ...inp, textAlign:'right' }} type="number" placeholder="0.00" value={item.rate} onChange={e => onChange(index,'rate',e.target.value)}/>
         </div>
       </div>
-      <div style={{ textAlign:'right', fontSize:13, fontWeight:700, color:L.text, marginTop:8 }}>
-        Amount: ${amount.toFixed(2)}
-      </div>
+      <div style={{ textAlign:'right', fontSize:13, fontWeight:700, color:L.text, marginTop:8 }}>Amount: ${amount.toFixed(2)}</div>
     </div>
   ) : (
     <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1fr 1fr 28px', gap:8, marginBottom:8 }}>
       <input style={inp} placeholder="Product / service description" value={item.description} onChange={e => onChange(index,'description',e.target.value)}/>
       <input style={{ ...inp, textAlign:'center' }} type="number" min="0" value={item.qty} onChange={e => onChange(index,'qty',e.target.value)}/>
       <input style={{ ...inp, textAlign:'right' }} type="number" placeholder="0.00" value={item.rate} onChange={e => onChange(index,'rate',e.target.value)}/>
-      <div style={{ padding:'9px 10px', background:L.pageBg, border:`1px solid ${L.border}`, borderRadius:L.radiusSm, fontSize:13, fontWeight:700, color:L.text, textAlign:'right' }}>
-        ${amount.toFixed(2)}
-      </div>
+      <div style={{ padding:'9px 10px', background:L.pageBg, border:`1px solid ${L.border}`, borderRadius:L.radiusSm, fontSize:13, fontWeight:700, color:L.text, textAlign:'right' }}>${amount.toFixed(2)}</div>
       <button onClick={() => onRemove(index)}
         style={{ background:'transparent', border:`1px solid ${L.border}`, borderRadius:L.radiusSm, cursor:'pointer', color:L.textMuted, display:'flex', alignItems:'center', justifyContent:'center' }}
         onMouseEnter={e => { e.currentTarget.style.borderColor=L.redBorder; e.currentTarget.style.color=L.red; }}
@@ -250,8 +231,10 @@ export default function Invoices() {
   const [followUpEmail,   setFollowUpEmail]   = useState('');
   const [followUpDate,    setFollowUpDate]    = useState('');
   const [followUpTime,    setFollowUpTime]    = useState('09:00');
+  const [followUpMessage, setFollowUpMessage] = useState('');
   const [followUpSaving,  setFollowUpSaving]  = useState(false);
   const [followUpSuccess, setFollowUpSuccess] = useState('');
+  const [followUpStatus,  setFollowUpStatus]  = useState({});
 
   const { setPageContext } = useAI();
   const getHeaders = (extra={}) => ({ Authorization:`Bearer ${localStorage.getItem('token')}`, ...extra });
@@ -282,7 +265,16 @@ export default function Invoices() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); }, []);
+  const loadFollowUpStatus = async () => {
+    try {
+      const res  = await fetch('https://api.getnovala.com/api/v1/followup/status', { headers:getHeaders() });
+      const data = await res.json();
+      setFollowUpStatus(data.status_map || {});
+    } catch {}
+  };
+
+  useEffect(() => { load(); loadFollowUpStatus(); }, []);
+
   useEffect(() => {
     setPageContext('invoices', {
       page:'invoices', total:invoices.length,
@@ -382,13 +374,94 @@ export default function Invoices() {
     if (res.ok||res.status===204) { if (inv) removeInvoiceMeta(inv); setModal(null); await load(); }
   };
 
+  const handleFollowUp = (inv) => {
+    setFollowUpInvoice(inv);
+    setFollowUpEmail(inv.to_email || '');
+    setFollowUpDate('');
+    setFollowUpTime('09:00');
+    setFollowUpSuccess('');
+    setFollowUpMessage(`Dear ${inv.to_name || 'Valued Client'},
+
+I hope this message finds you well. This is a friendly reminder regarding your outstanding invoice.
+
+Invoice Details:
+- Invoice Number: ${inv.invoice_number || 'N/A'}
+- Amount Due: $${Number(inv.total || 0).toFixed(2)}
+- Due Date: ${fmtDate(inv.due_date)}
+
+Please find the invoice attached to this email for your reference.
+
+Kindly process the payment at your earliest convenience. If you have already sent payment, please disregard this message.
+
+Thank you for your continued business.`);
+    setFollowUpModal(true);
+  };
+
+  const submitFollowUp = async () => {
+    if (!followUpEmail || !followUpDate) { window.alert('Please enter email and date.'); return; }
+    setFollowUpSaving(true);
+    try {
+      let pdfBase64 = null;
+      let pdfFilename = null;
+      try {
+        const doc = new jsPDF({ unit:'mm', format:'a4' });
+        const inv = followUpInvoice;
+        const lineItems = inv.line_items || inv.items || [];
+        const tot = Number(inv.total || 0);
+        doc.setFontSize(30); doc.setFont('helvetica','bold'); doc.setTextColor(82,183,136);
+        doc.text('INVOICE', 14, 24);
+        if (inv.from_name) { doc.setFontSize(13); doc.setFont('helvetica','bold'); doc.setTextColor(26,26,46); doc.text(inv.from_name, 14, 34); }
+        doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(68,68,68);
+        let y = 40;
+        if (inv.from_email) { doc.text(inv.from_email, 14, y); y += 5; }
+        const boxY = 55;
+        doc.setFillColor(234,247,240); doc.rect(0,boxY,210,36,'F');
+        doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(26,26,46);
+        doc.text('Bill to', 14, boxY+8);
+        doc.setFontSize(11); doc.setFont('helvetica','normal'); doc.text(inv.to_name||'—', 14, boxY+16);
+        if (inv.to_email) { doc.setFontSize(9); doc.text(inv.to_email, 14, boxY+22); }
+        doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.text('Invoice details', 110, boxY+8);
+        doc.setFontSize(9); doc.setFont('helvetica','normal');
+        [['Invoice no.:',inv.invoice_number||'—'],['Due date:',fmtDate(inv.due_date)],['Total:',`$${tot.toFixed(2)}`]].forEach(([l,v],idx) => { doc.text(l,110,boxY+16+idx*6); doc.text(v,150,boxY+16+idx*6); });
+        const rows = lineItems.map((it,idx) => { const q=Number(it.quantity??it.qty??1),p=Number(it.price??it.rate??0); return [`${idx+1}.`,it.description||'',String(q),`$${p.toFixed(2)}`,`$${(q*p).toFixed(2)}`]; });
+        autoTable(doc,{ startY:boxY+42, head:[['#','Description','Qty','Rate','Amount']], body:rows.length?rows:[['1.','No items','','','']], styles:{fontSize:9}, headStyles:{fillColor:[255,255,255],textColor:[26,26,46],fontStyle:'bold'} });
+        pdfBase64   = doc.output('datauristring').split(',')[1];
+        pdfFilename = `Invoice_${inv.invoice_number||'invoice'}.pdf`;
+      } catch (e) { console.error('PDF error:', e); }
+
+      const scheduledAt = new Date(`${followUpDate}T${followUpTime}:00`).toISOString();
+      const res = await fetch('https://api.getnovala.com/api/v1/followup/schedule', {
+        method:  'POST',
+        headers: getHeaders({ 'Content-Type':'application/json' }),
+        body:    JSON.stringify({
+          invoice_id:     followUpInvoice.id,
+          to_email:       followUpEmail,
+          to_name:        followUpInvoice.to_name,
+          amount:         followUpInvoice.total,
+          invoice_number: followUpInvoice.invoice_number,
+          due_date:       followUpInvoice.due_date,
+          scheduled_at:   scheduledAt,
+          message:        followUpMessage,
+          pdf_base64:     pdfBase64,
+          pdf_filename:   pdfFilename,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFollowUpSuccess(`Follow-up email scheduled for ${new Date(scheduledAt).toLocaleString()}`);
+        await loadFollowUpStatus();
+        setTimeout(() => setFollowUpModal(false), 3000);
+      }
+    } catch (e) { window.alert('Could not schedule follow-up.'); }
+    finally { setFollowUpSaving(false); }
+  };
+
   const exportPDF = (inv) => {
     try {
       const doc       = new jsPDF({ unit:'mm', format:'a4' });
       const lineItems = inv.line_items||inv.items||[];
       const tot       = Number(inv.total||0);
       const paid      = inv.status==='paid';
-
       doc.setFontSize(30); doc.setFont('helvetica','bold'); doc.setTextColor(82,183,136);
       doc.text('INVOICE', 14, 24);
       if (inv.from_name) { doc.setFontSize(13); doc.setFont('helvetica','bold'); doc.setTextColor(26,26,46); doc.text(inv.from_name, 14, 34); }
@@ -399,7 +472,6 @@ export default function Invoices() {
       if (inv.from_email)   { doc.text(inv.from_email, 14, y); y+=5; }
       if (inv.from_phone)   { doc.text(inv.from_phone, 14, y); }
       if (inv.logo_url) { try { doc.addImage(inv.logo_url,'JPEG',150,10,46,24); } catch { try { doc.addImage(inv.logo_url,'PNG',150,10,46,24); } catch {} } }
-
       const boxY=68;
       doc.setFillColor(234,247,240); doc.rect(0,boxY,210,36,'F');
       doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(26,26,46);
@@ -410,10 +482,8 @@ export default function Invoices() {
       doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.text('Invoice details', 110, boxY+8);
       doc.setFontSize(9); doc.setFont('helvetica','normal');
       [['Invoice no.:',inv.invoice_number||'—'],['Terms:',inv.terms||'Net 30'],['Invoice date:',fmtDate(inv.date)],['Due date:',fmtDate(inv.due_date)]].forEach(([l,v],i) => { doc.text(l,110,boxY+16+i*6); doc.text(v,150,boxY+16+i*6); });
-
       const rows=lineItems.map((it,idx)=>{ const q=Number(it.quantity??it.qty??1),p=Number(it.price??it.rate??0); return [`${idx+1}.`,it.service||it.description||'',it.service?it.description||'':'',String(q),`$${p.toFixed(2)}`,`$${(q*p).toFixed(2)}`]; });
       autoTable(doc,{ startY:boxY+42, head:[['#','Product or service','Description','Qty','Rate','Amount']], body:rows.length?rows:[['1.','No items','','','','']], styles:{fontSize:9,cellPadding:{top:5,bottom:5,left:4,right:4},textColor:[26,26,46]}, headStyles:{fillColor:[255,255,255],textColor:[26,26,46],fontStyle:'bold',fontSize:9,lineColor:[187,187,187],lineWidth:0.3}, columnStyles:{0:{cellWidth:10},1:{fontStyle:'bold',cellWidth:42},2:{cellWidth:68},3:{halign:'right',cellWidth:16},4:{halign:'right',cellWidth:28},5:{halign:'right',cellWidth:28,fontStyle:'bold'}}, tableLineColor:[238,238,238], tableLineWidth:0.2 });
-
       const tableEnd=(doc.lastAutoTable?.finalY||160)+10;
       const totalsX=130; let ty=tableEnd;
       const addRow=(label,value,bold)=>{ doc.setFont('helvetica',bold?'bold':'normal'); doc.setFontSize(10); doc.setTextColor(26,26,46); doc.text(label,totalsX,ty); doc.text(value,196,ty,{align:'right'}); doc.setDrawColor(221,221,221); doc.line(totalsX,ty+2,196,ty+2); ty+=9; };
@@ -435,65 +505,19 @@ export default function Invoices() {
     setTimeout(()=>{ win.print(); win.close(); }, 300);
   };
 
-  const handleFollowUp = (inv) => {
-    setFollowUpInvoice(inv);
-    setFollowUpEmail(inv.to_email || '');
-    setFollowUpDate('');
-    setFollowUpTime('09:00');
-    setFollowUpSuccess('');
-    setFollowUpModal(true);
-  };
-
-  const submitFollowUp = async () => {
-    if (!followUpEmail || !followUpDate) { window.alert('Please enter email and date.'); return; }
-    setFollowUpSaving(true);
-    try {
-      const scheduledAt = new Date(`${followUpDate}T${followUpTime}:00`).toISOString();
-      const res = await fetch('https://api.getnovala.com/api/v1/followup/schedule', {
-        method:  'POST',
-        headers: getHeaders({ 'Content-Type':'application/json' }),
-        body:    JSON.stringify({
-          invoice_id:     followUpInvoice.id,
-          to_email:       followUpEmail,
-          to_name:        followUpInvoice.to_name,
-          amount:         followUpInvoice.total,
-          invoice_number: followUpInvoice.invoice_number,
-          due_date:       followUpInvoice.due_date,
-          scheduled_at:   scheduledAt,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setFollowUpSuccess(`Follow-up email scheduled for ${new Date(scheduledAt).toLocaleString()}`);
-        setTimeout(() => setFollowUpModal(false), 3000);
-      }
-    } catch (e) { window.alert('Could not schedule follow-up.'); }
-    finally { setFollowUpSaving(false); }
-  };
-
   const totalRevenue = invoices.filter(i=>i.status==='paid').reduce((s,i)=>s+(Number(i.total)||0),0);
   const totalDue     = invoices.filter(i=>['due','overdue'].includes(i.status)).reduce((s,i)=>s+(Number(i.total)||0),0);
   const totalDraft   = invoices.filter(i=>i.status==='draft').reduce((s,i)=>s+(Number(i.total)||0),0);
 
   const renderForm = (isEdit) => (
     <>
-      {/* Header fields — 2 cols on mobile, 4 on desktop */}
       <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr 1fr', gap:12, marginBottom:16 }}>
-        <Field label="Invoice #">
-          <input style={{ ...inp, background:'#f7fafc', color:L.textMuted }} value={form.invoice_number} readOnly/>
-        </Field>
-        <Field label="Terms">
-          <input style={inp} placeholder="Net 30" value={form.terms} onChange={e=>sf('terms',e.target.value)}/>
-        </Field>
-        <Field label="Invoice Date" required>
-          <input style={inp} type="date" value={form.date} onChange={e=>sf('date',e.target.value)}/>
-        </Field>
-        <Field label="Due Date">
-          <input style={inp} type="date" value={form.due_date} onChange={e=>sf('due_date',e.target.value)}/>
-        </Field>
+        <Field label="Invoice #"><input style={{ ...inp, background:'#f7fafc', color:L.textMuted }} value={form.invoice_number} readOnly/></Field>
+        <Field label="Terms"><input style={inp} placeholder="Net 30" value={form.terms} onChange={e=>sf('terms',e.target.value)}/></Field>
+        <Field label="Invoice Date" required><input style={inp} type="date" value={form.date} onChange={e=>sf('date',e.target.value)}/></Field>
+        <Field label="Due Date"><input style={inp} type="date" value={form.due_date} onChange={e=>sf('due_date',e.target.value)}/></Field>
       </div>
 
-      {/* From / To — stack on mobile */}
       <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:16, marginBottom:16 }}>
         <div style={{ padding:14, background:L.pageBg, borderRadius:10, border:`1px solid ${L.border}` }}>
           <div style={{ fontSize:10, fontWeight:700, color:L.accent, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>From (Your Business)</div>
@@ -509,7 +533,6 @@ export default function Invoices() {
             </div>
           )}
         </div>
-
         <div style={{ padding:14, background:L.pageBg, borderRadius:10, border:`1px solid ${L.border}` }}>
           <div style={{ fontSize:10, fontWeight:700, color:L.blue, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>Bill To (Client) *</div>
           {[{p:'Client name *',k:'to_name'},{p:'Client email',k:'to_email'},{p:'Client address (optional)',k:'to_address'}].map(({p,k}) => (
@@ -518,7 +541,6 @@ export default function Invoices() {
         </div>
       </div>
 
-      {/* Line items */}
       <div style={{ marginBottom:16 }}>
         <div style={{ fontSize:12, fontWeight:700, color:L.text, marginBottom:10 }}>Line Items</div>
         {!isMobile && (
@@ -528,25 +550,17 @@ export default function Invoices() {
             ))}
           </div>
         )}
-        {form.items.map((item,i) => (
-          <LineItemRow key={i} item={item} index={i} onChange={handleItemChange} onRemove={handleItemRemove} isMobile={isMobile}/>
-        ))}
+        {form.items.map((item,i) => <LineItemRow key={i} item={item} index={i} onChange={handleItemChange} onRemove={handleItemRemove} isMobile={isMobile}/>)}
         <button onClick={handleItemAdd} style={{ display:'flex', alignItems:'center', gap:5, padding:'7px 14px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
           <Plus size={11}/> Add Line Item
         </button>
       </div>
 
-      {/* Tax / Discount */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
-        <Field label="Tax Rate (%)">
-          <input style={inp} type="number" min="0" max="100" placeholder="0" value={form.tax_rate} onChange={e=>sf('tax_rate',e.target.value)}/>
-        </Field>
-        <Field label="Discount (%)">
-          <input style={inp} type="number" min="0" max="100" placeholder="0" value={form.discount} onChange={e=>sf('discount',e.target.value)}/>
-        </Field>
+        <Field label="Tax Rate (%)"><input style={inp} type="number" min="0" max="100" placeholder="0" value={form.tax_rate} onChange={e=>sf('tax_rate',e.target.value)}/></Field>
+        <Field label="Discount (%)"><input style={inp} type="number" min="0" max="100" placeholder="0" value={form.discount} onChange={e=>sf('discount',e.target.value)}/></Field>
       </div>
 
-      {/* Totals */}
       <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:16 }}>
         <div style={{ width: isMobile ? '100%' : 260, background:L.pageBg, borderRadius:10, padding:'14px 16px', border:`1px solid ${L.border}` }}>
           {[{label:'Subtotal',value:`$${subtotal.toFixed(2)}`},{label:`Discount (${form.discount}%)`,value:`−$${discAmt.toFixed(2)}`},{label:`Tax (${form.tax_rate}%)`,value:`$${tax.toFixed(2)}`}].map(row => (
@@ -583,33 +597,23 @@ export default function Invoices() {
 
   return (
     <div style={page}>
-      {/* Top bar */}
-      <div style={{
-        ...topBar,
-        flexDirection: isMobile ? 'column' : 'row',
-        alignItems:    isMobile ? 'flex-start' : 'center',
-        gap:           isMobile ? 10 : 0,
-        padding:       isMobile ? '16px' : undefined,
-      }}>
+      <div style={{ ...topBar, flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 10 : 0, padding: isMobile ? '16px' : undefined }}>
         <div>
           <div style={{ fontSize: isMobile ? 18 : 20, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>Invoices</div>
           <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>Create, manage and track client invoices</div>
         </div>
-        <button onClick={openCreate}
-          style={{ display:'flex', alignItems:'center', gap:7, padding:'9px 18px', borderRadius:L.radiusSm, background:L.accent, color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:L.font, alignSelf: isMobile ? 'stretch' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
+        <button onClick={openCreate} style={{ display:'flex', alignItems:'center', gap:7, padding:'9px 18px', borderRadius:L.radiusSm, background:L.accent, color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:L.font, alignSelf: isMobile ? 'stretch' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
           <Plus size={14}/> New Invoice
         </button>
       </div>
 
       <div style={{ padding: pad }}>
-
-        {/* Summary cards — 2x2 on mobile, 4 across on desktop */}
         <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: isMobile ? 10 : 14, marginBottom: isMobile ? 14 : 20 }}>
           {[
-            { label:'Total Invoices', value:invoices.length,             color:L.text,   icon:<FileText size={16}/> },
-            { label:'Paid Revenue',   value:`$${totalRevenue.toFixed(2)}`, color:L.accent, icon:<CheckCircle size={16}/> },
-            { label:'Outstanding',    value:`$${totalDue.toFixed(2)}`,    color:L.red,    icon:<AlertCircle size={16}/> },
-            { label:'In Draft',       value:`$${totalDraft.toFixed(2)}`,  color:'#F59E0B',icon:<Clock size={16}/> },
+            { label:'Total Invoices', value:invoices.length,               color:L.text,    icon:<FileText size={16}/> },
+            { label:'Paid Revenue',   value:`$${totalRevenue.toFixed(2)}`, color:L.accent,  icon:<CheckCircle size={16}/> },
+            { label:'Outstanding',    value:`$${totalDue.toFixed(2)}`,     color:L.red,     icon:<AlertCircle size={16}/> },
+            { label:'In Draft',       value:`$${totalDraft.toFixed(2)}`,   color:'#F59E0B', icon:<Clock size={16}/> },
           ].map(item => (
             <div key={item.label} style={{ ...card, padding: isMobile ? '12px 14px' : '18px 20px' }}>
               <div style={{ display:'flex', justifyContent:'space-between', marginBottom: isMobile ? 6 : 10 }}>
@@ -621,15 +625,13 @@ export default function Invoices() {
           ))}
         </div>
 
-        {/* Invoice list */}
         <div style={{ ...card, overflow:'hidden' }}>
           <div style={{ padding: isMobile ? '14px 16px' : '16px 20px', borderBottom:`1px solid ${L.border}` }}>
             <div style={{ fontSize:14, fontWeight:700, color:L.text }}>All Invoices</div>
           </div>
 
-          {/* Desktop table header */}
           {invoices.length > 0 && !isMobile && (
-            <div style={{ display:'grid', gridTemplateColumns:'130px 1fr 1fr 110px 120px 1fr', padding:'8px 20px', background:L.pageBg, borderBottom:`1px solid ${L.border}` }}>
+            <div style={{ display:'grid', gridTemplateColumns:'130px 1fr 1fr 110px 140px 1fr', padding:'8px 20px', background:L.pageBg, borderBottom:`1px solid ${L.border}` }}>
               {['NUMBER','CLIENT','FROM','TOTAL','STATUS','ACTIONS'].map(h => (
                 <div key={h} style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em' }}>{h}</div>
               ))}
@@ -654,12 +656,11 @@ export default function Invoices() {
           {invoices.map((inv, i) => {
             const sc   = STATUS[inv.status] || STATUS.draft;
             const Icon = sc.icon;
+            const fuStatus = followUpStatus[`invoice_${inv.id}`];
 
-            // ── Mobile card layout ──
             if (isMobile) {
               return (
                 <div key={inv.id} style={{ padding:'14px 16px', borderBottom: i < invoices.length-1 ? `1px solid ${L.border}` : 'none' }}>
-                  {/* Row 1: invoice number + total */}
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:5 }}>
                       <FileText size={12} color={L.blue}/>
@@ -667,46 +668,43 @@ export default function Invoices() {
                     </div>
                     <div style={{ fontSize:14, fontWeight:700, color:inv.status==='paid'?L.accent:L.text }}>${Number(inv.total||0).toFixed(2)}</div>
                   </div>
-
-                  {/* Row 2: client + status */}
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
                     <div>
                       <div style={{ fontSize:13, fontWeight:600, color:L.text }}>{inv.to_name||'—'}</div>
                       {inv.from_name && <div style={{ fontSize:11, color:L.textMuted }}>From: {inv.from_name}</div>}
                     </div>
-                    <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:20, fontSize:11, fontWeight:600, color:sc.color, background:sc.bg, border:`1px solid ${sc.border}` }}>
-                      <Icon size={10}/>{sc.label}
-                    </span>
+                    <div style={{ display:'flex', flexDirection:'column', gap:4, alignItems:'flex-end' }}>
+                      <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:20, fontSize:11, fontWeight:600, color:sc.color, background:sc.bg, border:`1px solid ${sc.border}` }}>
+                        <Icon size={10}/>{sc.label}
+                      </span>
+                      {fuStatus && (
+                        <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:10, fontWeight:600, color: fuStatus.status==='sent'?L.accent:'#8B5CF6', background: fuStatus.status==='sent'?L.accentSoft:'rgba(139,92,246,0.08)', border:`1px solid ${fuStatus.status==='sent'?L.accentBorder:'rgba(139,92,246,0.2)'}` }}>
+                          <Bell size={9}/>{fuStatus.status==='sent'?'Follow-up Sent':'Follow-up Scheduled'}
+                        </span>
+                      )}
+                    </div>
                   </div>
-
-                  {/* Row 3: actions */}
                   <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-                    <button onClick={() => openView(inv)}
-                      style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:L.blueSoft, border:`1px solid ${L.blueBorder}`, color:L.blue, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
+                    <button onClick={() => openView(inv)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:L.blueSoft, border:`1px solid ${L.blueBorder}`, color:L.blue, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
                       <Eye size={10}/> View
                     </button>
-                    <button onClick={() => openEdit(inv)}
-                      style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
+                    <button onClick={() => openEdit(inv)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
                       <Edit2 size={10}/> Edit
                     </button>
                     {inv.status !== 'paid' && (
-                      <button onClick={() => handleStatus(inv.id,'paid')}
-                        style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.06)', border:'1px solid rgba(10,185,138,0.2)', color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
+                      <button onClick={() => handleStatus(inv.id,'paid')} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.06)', border:'1px solid rgba(10,185,138,0.2)', color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
                         <CheckCircle size={10}/> Paid
                       </button>
                     )}
-                    <button onClick={() => exportPDF(inv)}
-                      style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}>
+                    <button onClick={() => exportPDF(inv)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}>
                       <Download size={11}/>
                     </button>
                     {inv.status !== 'paid' && (
-                      <button onClick={() => handleFollowUp(inv)}
-                        style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', color:'#8B5CF6', cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
+                      <button onClick={() => handleFollowUp(inv)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', color:'#8B5CF6', cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
                         <Bell size={10}/> Follow Up
                       </button>
                     )}
-                    <button onClick={() => handleDelete(inv.id)}
-                      style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}>
+                    <button onClick={() => handleDelete(inv.id)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}>
                       <Trash2 size={11}/>
                     </button>
                   </div>
@@ -714,10 +712,9 @@ export default function Invoices() {
               );
             }
 
-            // ── Desktop row layout ──
             return (
               <div key={inv.id}
-                style={{ display:'grid', gridTemplateColumns:'130px 1fr 1fr 110px 120px 1fr', padding:'14px 20px', alignItems:'center', borderBottom: i < invoices.length-1 ? `1px solid ${L.border}` : 'none', transition:'background 0.1s' }}
+                style={{ display:'grid', gridTemplateColumns:'130px 1fr 1fr 110px 140px 1fr', padding:'14px 20px', alignItems:'center', borderBottom: i < invoices.length-1 ? `1px solid ${L.border}` : 'none', transition:'background 0.1s' }}
                 onMouseEnter={e => e.currentTarget.style.background='#f8fafc'}
                 onMouseLeave={e => e.currentTarget.style.background='transparent'}>
                 <div style={{ fontSize:13, fontWeight:700, color:L.blue, display:'flex', alignItems:'center', gap:5 }}>
@@ -729,40 +726,39 @@ export default function Invoices() {
                 </div>
                 <div style={{ fontSize:12, color:L.textMuted }}>{inv.from_name||'—'}</div>
                 <div style={{ fontSize:14, fontWeight:700, color:inv.status==='paid'?L.accent:L.text }}>${Number(inv.total||0).toFixed(2)}</div>
-                <div>
+                <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
                   <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:20, fontSize:11, fontWeight:600, color:sc.color, background:sc.bg, border:`1px solid ${sc.border}` }}>
                     <Icon size={10}/>{sc.label}
                   </span>
+                  {fuStatus && (
+                    <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:10, fontWeight:600, color: fuStatus.status==='sent'?L.accent:'#8B5CF6', background: fuStatus.status==='sent'?L.accentSoft:'rgba(139,92,246,0.08)', border:`1px solid ${fuStatus.status==='sent'?L.accentBorder:'rgba(139,92,246,0.2)'}` }}>
+                      <Bell size={9}/>{fuStatus.status==='sent'?'Follow-up Sent':'Follow-up Scheduled'}
+                    </span>
+                  )}
                 </div>
                 <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
-                  <button onClick={e=>{e.stopPropagation();openView(inv);}}
-                    style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:L.blueSoft, border:`1px solid ${L.blueBorder}`, color:L.blue, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
+                  <button onClick={e=>{e.stopPropagation();openView(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:L.blueSoft, border:`1px solid ${L.blueBorder}`, color:L.blue, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
                     <Eye size={10}/> View
                   </button>
-                  <button onClick={e=>{e.stopPropagation();openEdit(inv);}}
-                    style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
+                  <button onClick={e=>{e.stopPropagation();openEdit(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
                     <Edit2 size={10}/> Edit
                   </button>
                   {inv.status !== 'paid' && (
-                    <button onClick={e=>{e.stopPropagation();handleStatus(inv.id,'paid');}}
-                      style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.06)', border:'1px solid rgba(10,185,138,0.2)', color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
+                    <button onClick={e=>{e.stopPropagation();handleStatus(inv.id,'paid');}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.06)', border:'1px solid rgba(10,185,138,0.2)', color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
                       <CheckCircle size={10}/> Paid
                     </button>
                   )}
-                  <button onClick={e=>{e.stopPropagation();exportPDF(inv);}}
-                    style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 8px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}
+                  <button onClick={e=>{e.stopPropagation();exportPDF(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 8px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}
                     onMouseEnter={e=>{e.currentTarget.style.borderColor=L.accentBorder;e.currentTarget.style.color=L.accent;}}
                     onMouseLeave={e=>{e.currentTarget.style.borderColor=L.border;e.currentTarget.style.color=L.textMuted;}}>
                     <Download size={11}/>
                   </button>
                   {inv.status !== 'paid' && (
-                    <button onClick={e=>{e.stopPropagation();handleFollowUp(inv);}}
-                      style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 8px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', color:'#8B5CF6', cursor:'pointer', fontSize:11 }}>
+                    <button onClick={e=>{e.stopPropagation();handleFollowUp(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 8px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', color:'#8B5CF6', cursor:'pointer', fontSize:11 }}>
                       <Bell size={11}/> Follow Up
                     </button>
                   )}
-                  <button onClick={e=>{e.stopPropagation();handleDelete(inv.id);}}
-                    style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 8px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}
+                  <button onClick={e=>{e.stopPropagation();handleDelete(inv.id);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 8px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}
                     onMouseEnter={e=>{e.currentTarget.style.borderColor=L.redBorder;e.currentTarget.style.color=L.red;}}
                     onMouseLeave={e=>{e.currentTarget.style.borderColor=L.border;e.currentTarget.style.color=L.textMuted;}}>
                     <Trash2 size={11}/>
@@ -774,50 +770,36 @@ export default function Invoices() {
         </div>
       </div>
 
-      {/* Create modal */}
-      {modal === 'create' && (
-        <Modal title="New Invoice" onClose={()=>setModal(null)} wide>{renderForm(false)}</Modal>
-      )}
+      {modal === 'create' && <Modal title="New Invoice" onClose={()=>setModal(null)} wide>{renderForm(false)}</Modal>}
+      {modal === 'edit' && selected && <Modal title={`Edit — ${selected.invoice_number}`} onClose={()=>setModal(null)} wide>{renderForm(true)}</Modal>}
 
-      {/* Edit modal */}
-      {modal === 'edit' && selected && (
-        <Modal title={`Edit — ${selected.invoice_number}`} onClose={()=>setModal(null)} wide>{renderForm(true)}</Modal>
-      )}
-
-      {/* View modal */}
       {modal === 'view' && selected && (
         <Modal title={`Invoice ${selected.invoice_number}`} onClose={()=>setModal(null)} wide>
           <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', justifyContent: isMobile ? 'stretch' : 'flex-end' }}>
-            <button onClick={()=>{setModal(null);openEdit(selected);}}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font, flex: isMobile ? 1 : 'auto', justifyContent:'center' }}>
+            <button onClick={()=>{setModal(null);openEdit(selected);}} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font, flex: isMobile ? 1 : 'auto', justifyContent:'center' }}>
               <Edit2 size={12}/> Edit
             </button>
             {selected.status !== 'paid' && (
-              <button onClick={()=>handleStatus(selected.id,'paid')}
-                style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:L.accent, border:'none', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font, flex: isMobile ? 1 : 'auto', justifyContent:'center' }}>
+              <button onClick={()=>handleStatus(selected.id,'paid')} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:L.accent, border:'none', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font, flex: isMobile ? 1 : 'auto', justifyContent:'center' }}>
                 <CheckCircle size={12}/> Mark Paid
               </button>
             )}
             {!isMobile && (
-              <button onClick={printInvoice}
-                style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:L.font }}
+              <button onClick={printInvoice} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:L.font }}
                 onMouseEnter={e=>{e.currentTarget.style.borderColor=L.accentBorder;e.currentTarget.style.color=L.accent;}}
                 onMouseLeave={e=>{e.currentTarget.style.borderColor=L.border;e.currentTarget.style.color=L.textMuted;}}>
                 <Printer size={12}/> Print
               </button>
             )}
-            <button onClick={()=>exportPDF(selected)}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:L.font, flex: isMobile ? 1 : 'auto', justifyContent:'center' }}
+            <button onClick={()=>exportPDF(selected)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:L.font, flex: isMobile ? 1 : 'auto', justifyContent:'center' }}
               onMouseEnter={e=>{e.currentTarget.style.borderColor=L.accentBorder;e.currentTarget.style.color=L.accent;}}
               onMouseLeave={e=>{e.currentTarget.style.borderColor=L.border;e.currentTarget.style.color=L.textMuted;}}>
               <Download size={12}/> PDF
             </button>
-            <button onClick={()=>handleDelete(selected.id)}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.redBorder}`, color:L.red, cursor:'pointer', fontSize:12, fontFamily:L.font, flex: isMobile ? 1 : 'auto', justifyContent:'center' }}>
+            <button onClick={()=>handleDelete(selected.id)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.redBorder}`, color:L.red, cursor:'pointer', fontSize:12, fontFamily:L.font, flex: isMobile ? 1 : 'auto', justifyContent:'center' }}>
               <Trash2 size={12}/> Delete
             </button>
           </div>
-
           <div style={{ background:'#f1f5f9', borderRadius:12, padding: isMobile ? 8 : 20, overflowX: isMobile ? 'auto' : 'visible' }}>
             <div ref={printRef} style={{ boxShadow:'0 4px 24px rgba(0,0,0,0.10)', borderRadius:8, overflow:'hidden' }}>
               <InvoicePreview inv={selected}/>
@@ -825,6 +807,7 @@ export default function Invoices() {
           </div>
         </Modal>
       )}
+
       {followUpModal && followUpInvoice && (
         <Modal title={`Follow Up — ${followUpInvoice.invoice_number}`} onClose={() => setFollowUpModal(false)}>
           {followUpSuccess ? (
@@ -838,19 +821,15 @@ export default function Invoices() {
           ) : (
             <>
               <div style={{ padding:'12px 16px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.06)', border:'1px solid rgba(139,92,246,0.2)', marginBottom:20 }}>
-                <div style={{ fontSize:13, fontWeight:700, color:'#8B5CF6', marginBottom:4 }}>
-                  {followUpInvoice.invoice_number} — {followUpInvoice.to_name}
-                </div>
-                <div style={{ fontSize:12, color:L.textMuted }}>
-                  Amount: ${Number(followUpInvoice.total||0).toFixed(2)} · Due: {fmtDate(followUpInvoice.due_date)}
-                </div>
+                <div style={{ fontSize:13, fontWeight:700, color:'#8B5CF6', marginBottom:4 }}>{followUpInvoice.invoice_number} — {followUpInvoice.to_name}</div>
+                <div style={{ fontSize:12, color:L.textMuted }}>Amount: ${Number(followUpInvoice.total||0).toFixed(2)} · Due: {fmtDate(followUpInvoice.due_date)}</div>
               </div>
+
               <Field label="Client Email *">
                 <input style={inp} type="email" placeholder="client@email.com" value={followUpEmail} onChange={e => setFollowUpEmail(e.target.value)}/>
-                {!followUpInvoice.to_email && (
-                  <div style={{ fontSize:11, color:'#F59E0B', marginTop:4 }}>No email on invoice — please enter the client email manually</div>
-                )}
+                {!followUpInvoice.to_email && <div style={{ fontSize:11, color:'#F59E0B', marginTop:4 }}>No email on invoice — please enter the client email manually</div>}
               </Field>
+
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                 <Field label="Date to Send *">
                   <input style={inp} type="date" value={followUpDate} onChange={e => setFollowUpDate(e.target.value)}/>
@@ -859,12 +838,17 @@ export default function Invoices() {
                   <input style={inp} type="time" value={followUpTime} onChange={e => setFollowUpTime(e.target.value)}/>
                 </Field>
               </div>
-              <div style={{ padding:'12px 14px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}`, fontSize:12, color:L.textMuted, marginBottom:20 }}>
-                📧 A professional follow-up email will be sent to <strong>{followUpEmail || 'the client'}</strong> on the scheduled date reminding them about the outstanding invoice.
+
+              <Field label="Email Message (editable)">
+                <textarea value={followUpMessage} onChange={e => setFollowUpMessage(e.target.value)} rows={10} style={{ ...inp, resize:'vertical', lineHeight:1.6 }}/>
+              </Field>
+
+              <div style={{ padding:'10px 14px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, fontSize:12, color:L.accent, marginBottom:16, display:'flex', alignItems:'center', gap:8 }}>
+                📎 The invoice PDF will be automatically attached to this email
               </div>
+
               <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
-                <button onClick={() => setFollowUpModal(false)}
-                  style={{ padding:'9px 18px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:13, fontFamily:L.font }}>
+                <button onClick={() => setFollowUpModal(false)} style={{ padding:'9px 18px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:13, fontFamily:L.font }}>
                   Cancel
                 </button>
                 <button onClick={submitFollowUp} disabled={followUpSaving||!followUpEmail||!followUpDate}
