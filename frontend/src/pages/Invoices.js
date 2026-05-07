@@ -839,9 +839,9 @@ Thank you for your continued business.`);
                         setFollowUpTime(`${h}:${followUpTime.split(':')[1] || '00'}`);
                       }}
                       style={{ ...inp, width:'auto', flex:1 }}>
-                      {[...Array(12)].map((_,i) => (
-                        <option key={i+1} value={String(i+1).padStart(2,'0')}>{i+1}</option>
-                      ))}
+                     {[...Array(12)].map((_,i) => (
+        <option key={i+1} value={String(i+1).padStart(2,'0')}>{String(i+1).padStart(2,'0')}</option>
+      ))}
                     </select>
                     <select
                       value={followUpTime.split(':')[1]?.slice(0,2) || '00'}
