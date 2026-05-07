@@ -374,7 +374,7 @@ export default function Invoices() {
     if (res.ok||res.status===204) { if (inv) removeInvoiceMeta(inv); setModal(null); await load(); }
   };
 
-  const handleFollowUp = (inv) => {
+ const handleFollowUp = (inv) => {
     setFollowUpInvoice(inv);
     setFollowUpEmail(inv.to_email || '');
     setFollowUpDate('');
@@ -383,11 +383,6 @@ export default function Invoices() {
     setFollowUpMessage(`Dear ${inv.to_name || 'Valued Client'},
 
 I hope this message finds you well. This is a friendly reminder regarding your outstanding invoice.
-
-Invoice Details:
-- Invoice Number: ${inv.invoice_number || 'N/A'}
-- Amount Due: $${Number(inv.total || 0).toFixed(2)}
-- Due Date: ${fmtDate(inv.due_date)}
 
 Please find the invoice attached to this email for your reference.
 
