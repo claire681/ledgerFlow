@@ -830,7 +830,44 @@ Thank you for your continued business.`);
                   <input style={inp} type="date" value={followUpDate} onChange={e => setFollowUpDate(e.target.value)}/>
                 </Field>
                 <Field label="Time to Send">
-                  <input style={inp} type="time" value={followUpTime} onChange={e => setFollowUpTime(e.target.value)}/>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <select
+                      value={followUpTime.split(':')[0]}
+                      onChange={e => {
+                        const [, min, period] = followUpTime.match(/(\d+):(\d+)\s*(AM|PM)?/) || ['','00','AM'];
+                        const h = e.target.value;
+                        setFollowUpTime(`${h}:${followUpTime.split(':')[1] || '00'}`);
+                      }}
+                      style={{ ...inp, width:'auto', flex:1 }}>
+                      {[...Array(12)].map((_,i) => (
+                        <option key={i+1} value={String(i+1).padStart(2,'0')}>{i+1}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={followUpTime.split(':')[1]?.slice(0,2) || '00'}
+                      onChange={e => {
+                        const h = followUpTime.split(':')[0] || '09';
+                        setFollowUpTime(`${h}:${e.target.value}`);
+                      }}
+                      style={{ ...inp, width:'auto', flex:1 }}>
+                      {['00','05','10','15','20','25','30','35','40','45','50','55'].map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={parseInt(followUpTime.split(':')[0]) >= 12 ? 'PM' : 'AM'}
+                      onChange={e => {
+                        let h = parseInt(followUpTime.split(':')[0]) || 9;
+                        const min = followUpTime.split(':')[1] || '00';
+                        if (e.target.value === 'PM' && h < 12) h += 12;
+                        if (e.target.value === 'AM' && h >= 12) h -= 12;
+                        setFollowUpTime(`${String(h).padStart(2,'0')}:${min}`);
+                      }}
+                      style={{ ...inp, width:'auto', flex:1 }}>
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                  </div>
                 </Field>
               </div>
 
