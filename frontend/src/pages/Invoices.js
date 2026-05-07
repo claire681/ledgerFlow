@@ -832,16 +832,19 @@ Thank you for your continued business.`);
                 <Field label="Time to Send">
                   <div style={{ display:'flex', gap:8 }}>
                     <select
-                      value={followUpTime.split(':')[0]}
+                      value={parseInt(followUpTime.split(':')[0]) > 12 ? parseInt(followUpTime.split(':')[0]) - 12 : parseInt(followUpTime.split(':')[0]) || 9}
                       onChange={e => {
-                        const [, min, period] = followUpTime.match(/(\d+):(\d+)\s*(AM|PM)?/) || ['','00','AM'];
-                        const h = e.target.value;
-                        setFollowUpTime(`${h}:${followUpTime.split(':')[1] || '00'}`);
+                        const min = followUpTime.split(':')[1] || '00';
+                        const isPM = parseInt(followUpTime.split(':')[0]) >= 12;
+                        let h = parseInt(e.target.value);
+                        if (isPM && h !== 12) h += 12;
+                        if (!isPM && h === 12) h = 0;
+                        setFollowUpTime(`${String(h).padStart(2,'0')}:${min}`);
                       }}
                       style={{ ...inp, width:'auto', flex:1 }}>
-                     {[...Array(12)].map((_,i) => (
-        <option key={i+1} value={String(i+1).padStart(2,'0')}>{String(i+1).padStart(2,'0')}</option>
-      ))}
+                      {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
                     </select>
                     <select
                       value={followUpTime.split(':')[1]?.slice(0,2) || '00'}
