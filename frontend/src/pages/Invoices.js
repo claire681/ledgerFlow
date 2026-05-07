@@ -237,7 +237,7 @@ export default function Invoices() {
   const [followUpStatus,  setFollowUpStatus]  = useState({});
 
   const { setPageContext } = useAI();
-  const getHeaders = (extra={}) => ({ Authorization:`Bearer ${localStorage.getItem('token')}`, ...extra });
+  const getHeaders = (extra={}) => ({ Authorization:`Bearer ${localStorage.getItem('token') || localStorage.getItem('access_token')}`, ...extra });
   const safeJson   = async (res) => { try { return await res.json(); } catch { return null; } };
 
   const mergeInvoices = useCallback((serverInvoices) => {
