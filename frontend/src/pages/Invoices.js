@@ -424,6 +424,7 @@ Thank you for your continued business.`);
         pdfFilename = `Invoice_${inv.invoice_number||'invoice'}.pdf`;
       } catch (e) { console.error('PDF error:', e); }
 
+     
       const scheduledAt = new Date(`${followUpDate}T${followUpTime}:00`).toISOString();
       const res = await fetch('https://api.getnovala.com/api/v1/followup/schedule', {
         method:  'POST',
@@ -832,38 +833,32 @@ Thank you for your continued business.`);
                 <Field label="Time to Send">
                   <div style={{ display:'flex', gap:8 }}>
                     <select
-                      value={parseInt(followUpTime.split(':')[0]) > 12 ? parseInt(followUpTime.split(':')[0]) - 12 : parseInt(followUpTime.split(':')[0]) || 9}
+                      value={(() => { const h = parseInt(followUpTime.split(':')[0]) || 9; return h === 0 ? 12 : h > 12 ? h - 12 : h; })()}
                       onChange={e => {
                         const min = followUpTime.split(':')[1] || '00';
                         const isPM = parseInt(followUpTime.split(':')[0]) >= 12;
-                        let h = parseInt(e.target.value);
-                        if (isPM && h !== 12) h += 12;
-                        if (!isPM && h === 12) h = 0;
-                        setFollowUpTime(`${String(h).padStart(2,'0')}:${min}`);
+                        let newH = parseInt(e.target.value);
+                        if (isPM && newH !== 12) newH += 12;
+                        if (!isPM && newH === 12) newH = 0;
+                        setFollowUpTime(`${String(newH).padStart(2,'0')}:${min}`);
                       }}
                       style={{ ...inp, width:'auto', flex:1 }}>
-                      {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
-                        <option key={h} value={h}>{h}</option>
-                      ))}
+                      {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => <option key={h} value={h}>{h}</option>)}
                     </select>
                     <select
                       value={followUpTime.split(':')[1]?.slice(0,2) || '00'}
-                      onChange={e => {
-                        const h = followUpTime.split(':')[0] || '09';
-                        setFollowUpTime(`${h}:${e.target.value}`);
-                      }}
+                      onChange={e => setFollowUpTime(`${followUpTime.split(':')[0] || '09'}:${e.target.value}`)}
                       style={{ ...inp, width:'auto', flex:1 }}>
-                      {['00','05','10','15','20','25','30','35','40','45','50','55'].map(m => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
+                      {['00','05','10','15','20','25','30','35','40','45','50','55'].map(m => <option key={m} value={m}>{m}</option>)}
                     </select>
                     <select
                       value={parseInt(followUpTime.split(':')[0]) >= 12 ? 'PM' : 'AM'}
                       onChange={e => {
-                        let h = parseInt(followUpTime.split(':')[0]) || 9;
                         const min = followUpTime.split(':')[1] || '00';
-                        if (e.target.value === 'PM' && h < 12) h += 12;
-                        if (e.target.value === 'AM' && h >= 12) h -= 12;
+                        let h = parseInt(followUpTime.split(':')[0]) || 9;
+                        const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+                        if (e.target.value === 'PM' && h < 12) h = h12 === 12 ? 12 : h12 + 12;
+                        if (e.target.value === 'AM' && h >= 12) h = h12 === 12 ? 0 : h12;
                         setFollowUpTime(`${String(h).padStart(2,'0')}:${min}`);
                       }}
                       style={{ ...inp, width:'auto', flex:1 }}>
