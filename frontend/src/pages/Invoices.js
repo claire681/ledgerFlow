@@ -699,11 +699,7 @@ Thank you for your continued business.`);
                     <button onClick={() => exportPDF(inv)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}>
                       <Download size={11}/>
                     </button>
-                    {inv.status !== 'paid' && (
-                      <button onClick={() => handleFollowUp(inv)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', color:'#8B5CF6', cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
-                        <Bell size={10}/> Follow Up
-                      </button>
-                    )}
+                    
                     <button onClick={() => handleDelete(inv.id)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}>
                       <Trash2 size={11}/>
                     </button>
