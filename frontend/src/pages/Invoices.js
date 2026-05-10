@@ -13,7 +13,7 @@ const STATUS = {
   sent:    { label:'Sent',    color:L.blue,    bg:L.blueSoft,               border:L.blueBorder,            icon:Mail         },
   due:     { label:'Due',     color:L.red,     bg:L.redSoft,                border:L.redBorder,             icon:AlertCircle  },
   paid:    { label:'Paid',    color:L.accent,  bg:L.accentSoft,             border:L.accentBorder,          icon:CheckCircle  },
-  overdue: { label:'Overdue', color:'#F59E0B', bg:'rgba(245,158,11,0.08)', border:'rgba(245,158,11,0.2)',  icon:AlertCircle  },
+  overdue: { label:'Overdue', color:'#F59E0B', bg:'rgba(245,158,11,0.08)',  border:'rgba(245,158,11,0.2)',  icon:AlertCircle  },
 };
 
 const INVOICE_META_KEY = 'ledgerflow_invoice_meta_v1';
@@ -46,13 +46,13 @@ function useIsMobile() {
 function Modal({ title, onClose, children, wide }) {
   const isMobile = useIsMobile();
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(15,23,42,0.55)', display:'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent:'center', zIndex:1000, backdropFilter:'blur(4px)' }}>
-      <div style={{ ...card, width: isMobile ? '100%' : wide ? 820 : 640, maxWidth: isMobile ? '100%' : '96vw', maxHeight: isMobile ? '95vh' : '94vh', overflowY:'auto', boxShadow:'0 24px 60px rgba(0,0,0,0.18)', borderRadius: isMobile ? '20px 20px 0 0' : undefined }}>
+    <div style={{ position:'fixed', inset:0, background:'rgba(15,23,42,0.55)', display:'flex', alignItems:isMobile?'flex-end':'center', justifyContent:'center', zIndex:1000, backdropFilter:'blur(4px)' }}>
+      <div style={{ ...card, width:isMobile?'100%':wide?820:640, maxWidth:isMobile?'100%':'96vw', maxHeight:isMobile?'95vh':'94vh', overflowY:'auto', boxShadow:'0 24px 60px rgba(0,0,0,0.18)', borderRadius:isMobile?'20px 20px 0 0':undefined }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'18px 20px', borderBottom:`1px solid ${L.border}`, position:'sticky', top:0, background:'#fff', zIndex:10 }}>
           <div style={{ fontSize:15, fontWeight:700, color:L.text }}>{title}</div>
           <button onClick={onClose} style={{ background:'transparent', border:'none', cursor:'pointer', color:L.textMuted, padding:4, borderRadius:6, display:'flex' }}><X size={18}/></button>
         </div>
-        <div style={{ padding: isMobile ? '16px' : '24px' }}>{children}</div>
+        <div style={{ padding:isMobile?'16px':'24px' }}>{children}</div>
       </div>
     </div>
   );
@@ -85,20 +85,27 @@ function InvoicePreview({ inv }) {
   const paid      = inv.status === 'paid';
 
   return (
-    <div style={{ fontFamily:"'Georgia','Times New Roman',serif", background:'#fff', color:'#1a1a2e', lineHeight:1.6, padding: isMobile ? '24px 16px' : '48px 52px', position:'relative' }}>
-      <div style={{ display:'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent:'space-between', alignItems:'flex-start', marginBottom: isMobile ? 20 : 40, gap: isMobile ? 12 : 0 }}>
+    <div style={{ fontFamily:"'Georgia','Times New Roman',serif", background:'#fff', color:'#1a1a2e', lineHeight:1.6, padding:isMobile?'24px 16px':'48px 52px', position:'relative' }}>
+      <div style={{ display:'flex', flexDirection:isMobile?'column':'row', justifyContent:'space-between', alignItems:'flex-start', marginBottom:isMobile?20:40, gap:isMobile?12:0 }}>
         <div>
-          <div style={{ fontSize: isMobile ? 28 : 38, fontWeight:700, color:'#52b788', letterSpacing:'0.02em', marginBottom:12 }}>INVOICE</div>
+          <div style={{ fontSize:isMobile?28:38, fontWeight:700, color:'#52b788', letterSpacing:'0.02em', marginBottom:12 }}>INVOICE</div>
           {inv.from_name    && <div style={{ fontSize:14, fontWeight:700, color:'#1a1a2e', marginBottom:2 }}>{inv.from_name}</div>}
           {inv.from_bn      && <div style={{ fontSize:13, color:'#444', marginBottom:2 }}>BN {inv.from_bn}</div>}
           {inv.from_address && <div style={{ fontSize:13, color:'#444', whiteSpace:'pre-line', marginBottom:2 }}>{inv.from_address}</div>}
           {inv.from_email   && <div style={{ fontSize:13, color:'#444', marginBottom:2 }}>{inv.from_email}</div>}
           {inv.from_phone   && <div style={{ fontSize:13, color:'#444' }}>{inv.from_phone}</div>}
         </div>
-        {inv.logo_url && <img src={inv.logo_url} alt="logo" style={{ maxHeight: isMobile ? 48 : 80, maxWidth: isMobile ? 140 : 220, objectFit:'contain', display:'block' }}/>}
+        {inv.logo_url && (
+          <img
+            src={inv.logo_url}
+            alt="Company Logo"
+            style={{ maxHeight:isMobile?60:90, maxWidth:isMobile?160:240, objectFit:'contain', display:'block', borderRadius:4 }}
+            onError={e => { e.target.style.display = 'none'; }}
+          />
+        )}
       </div>
 
-      <div style={{ background:'#eaf7f0', padding: isMobile ? '16px' : '24px 28px', display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 16 : 40, marginBottom:0 }}>
+      <div style={{ background:'#eaf7f0', padding:isMobile?'16px':'24px 28px', display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 1fr', gap:isMobile?16:40, marginBottom:0 }}>
         <div>
           <div style={{ fontSize:13, fontWeight:700, color:'#1a1a2e', marginBottom:6 }}>Bill to</div>
           <div style={{ fontSize:14, color:'#1a1a2e' }}>{inv.to_name||'—'}</div>
@@ -109,15 +116,15 @@ function InvoicePreview({ inv }) {
           <div style={{ fontSize:13, fontWeight:700, color:'#1a1a2e', marginBottom:6 }}>Invoice details</div>
           {[['Invoice no.:',inv.invoice_number||'—'],['Terms:',inv.terms||'Net 30'],['Invoice date:',fmtDate(inv.date)],['Due date:',fmtDate(inv.due_date)]].map(([l,v]) => (
             <div key={l} style={{ display:'flex', gap:8, fontSize:13, color:'#1a1a2e', marginBottom:3, flexWrap:'wrap' }}>
-              <span style={{ minWidth: isMobile ? 90 : 100, fontWeight:600 }}>{l}</span>
+              <span style={{ minWidth:isMobile?90:100, fontWeight:600 }}>{l}</span>
               <span>{v}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div style={{ overflowX: isMobile ? 'auto' : 'visible', marginTop:0 }}>
-        <table style={{ width: isMobile ? 'max-content' : '100%', minWidth: isMobile ? 480 : 'auto', borderCollapse:'collapse', fontSize:13 }}>
+      <div style={{ overflowX:isMobile?'auto':'visible', marginTop:0 }}>
+        <table style={{ width:isMobile?'max-content':'100%', minWidth:isMobile?480:'auto', borderCollapse:'collapse', fontSize:13 }}>
           <thead>
             <tr>
               {[{label:'#',align:'left',w:30},{label:'Description',align:'left',w:160},{label:'',align:'left',w:''},{label:'Qty',align:'right',w:50},{label:'Rate',align:'right',w:90},{label:'Amount',align:'right',w:90}].map(col => (
@@ -146,7 +153,7 @@ function InvoicePreview({ inv }) {
       </div>
 
       <div style={{ display:'flex', justifyContent:'flex-end', marginTop:20, marginBottom:32 }}>
-        <div style={{ width: isMobile ? '100%' : 300 }}>
+        <div style={{ width:isMobile?'100%':300 }}>
           <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid #ddd' }}>
             <span style={{ fontSize:13, color:'#444' }}>Total</span>
             <span style={{ fontSize:13, color:'#1a1a2e', fontWeight:600 }}>${totalAmt.toFixed(2)}</span>
@@ -235,7 +242,7 @@ export default function Invoices() {
   const [followUpSaving,  setFollowUpSaving]  = useState(false);
   const [followUpSuccess, setFollowUpSuccess] = useState('');
   const [followUpStatus,  setFollowUpStatus]  = useState({});
-  const [isResend, setIsResend] = useState(false);
+  const [isResend,        setIsResend]        = useState(false);
 
   const { setPageContext } = useAI();
   const getHeaders = (extra={}) => ({ Authorization:`Bearer ${localStorage.getItem('token') || localStorage.getItem('access_token')}`, ...extra });
@@ -291,7 +298,9 @@ export default function Invoices() {
   const handleItemAdd    = useCallback(() => setFormState(p=>({...p,items:[...p.items,emptyItem()]})), []);
   const handleLogoUpload = useCallback((e) => {
     const file=e.target.files?.[0]; if (!file) return;
-    const r=new FileReader(); r.onload=()=>sf('logo_url',r.result); r.readAsDataURL(file);
+    const r=new FileReader();
+    r.onload=()=>sf('logo_url',r.result);
+    r.readAsDataURL(file);
   }, [sf]);
 
   const calcTotals = (items,taxRate,discountPct) => {
@@ -375,9 +384,9 @@ export default function Invoices() {
     if (res.ok||res.status===204) { if (inv) removeInvoiceMeta(inv); setModal(null); await load(); }
   };
 
- const handleFollowUp = (inv) => {
-    const fuStatus = followUpStatus[`invoice_${inv.id}`];
-    setIsResend(!!fuStatus);
+  const handleFollowUp = (inv) => {
+    const fu = followUpStatus[`invoice_${inv.id}`];
+    setIsResend(!!fu);
     setFollowUpInvoice(inv);
     setFollowUpEmail(inv.to_email || '');
     setFollowUpDate('');
@@ -394,6 +403,7 @@ Kindly process the payment at your earliest convenience. If you have already sen
 Thank you for your continued business.`);
     setFollowUpModal(true);
   };
+
   const submitFollowUp = async () => {
     if (!followUpEmail || !followUpDate) { window.alert('Please enter email and date.'); return; }
     setFollowUpSaving(true);
@@ -411,6 +421,10 @@ Thank you for your continued business.`);
         doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(68,68,68);
         let y = 40;
         if (inv.from_email) { doc.text(inv.from_email, 14, y); y += 5; }
+        if (inv.logo_url) {
+          try { doc.addImage(inv.logo_url, 'JPEG', 150, 10, 46, 24); }
+          catch { try { doc.addImage(inv.logo_url, 'PNG', 150, 10, 46, 24); } catch {} }
+        }
         const boxY = 55;
         doc.setFillColor(234,247,240); doc.rect(0,boxY,210,36,'F');
         doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(26,26,46);
@@ -424,9 +438,8 @@ Thank you for your continued business.`);
         autoTable(doc,{ startY:boxY+42, head:[['#','Description','Qty','Rate','Amount']], body:rows.length?rows:[['1.','No items','','','']], styles:{fontSize:9}, headStyles:{fillColor:[255,255,255],textColor:[26,26,46],fontStyle:'bold'} });
         pdfBase64   = doc.output('datauristring').split(',')[1];
         pdfFilename = `Invoice_${inv.invoice_number||'invoice'}.pdf`;
-      } catch (e) { console.error('PDF error:', e); }
+      } catch(e) { console.error('PDF error:', e); }
 
-     
       const scheduledAt = new Date(`${followUpDate}T${followUpTime}:00`).toISOString();
       const res = await fetch('https://api.getnovala.com/api/v1/followup/schedule', {
         method:  'POST',
@@ -450,7 +463,7 @@ Thank you for your continued business.`);
         await loadFollowUpStatus();
         setTimeout(() => setFollowUpModal(false), 3000);
       }
-    } catch (e) { window.alert('Could not schedule follow-up.'); }
+    } catch(e) { window.alert('Could not schedule follow-up.'); }
     finally { setFollowUpSaving(false); }
   };
 
@@ -469,7 +482,10 @@ Thank you for your continued business.`);
       if (inv.from_address) { doc.text(inv.from_address, 14, y); y+=5; }
       if (inv.from_email)   { doc.text(inv.from_email, 14, y); y+=5; }
       if (inv.from_phone)   { doc.text(inv.from_phone, 14, y); }
-      if (inv.logo_url) { try { doc.addImage(inv.logo_url,'JPEG',150,10,46,24); } catch { try { doc.addImage(inv.logo_url,'PNG',150,10,46,24); } catch {} } }
+      if (inv.logo_url) {
+        try { doc.addImage(inv.logo_url,'JPEG',150,10,46,24); }
+        catch { try { doc.addImage(inv.logo_url,'PNG',150,10,46,24); } catch {} }
+      }
       const boxY=68;
       doc.setFillColor(234,247,240); doc.rect(0,boxY,210,36,'F');
       doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(26,26,46);
@@ -492,7 +508,7 @@ Thank you for your continued business.`);
       if (paid) { ty+=10; doc.setFontSize(12); doc.setTextColor(82,183,136); doc.text('Paid in Full',196,ty,{align:'right'}); }
       if (inv.notes) { const ny=tableEnd+60; doc.setDrawColor(226,232,240); doc.line(14,ny,196,ny); doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(148,163,184); doc.text('NOTES',14,ny+6); doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(100,116,139); doc.text(doc.splitTextToSize(inv.notes,170),14,ny+13); }
       doc.save(`Invoice_${inv.invoice_number||'invoice'}.pdf`);
-    } catch (e) { console.error('PDF error:',e); window.alert('Could not generate PDF.'); }
+    } catch(e) { console.error('PDF error:',e); window.alert('Could not generate PDF.'); }
   };
 
   const printInvoice = () => {
@@ -509,14 +525,14 @@ Thank you for your continued business.`);
 
   const renderForm = (isEdit) => (
     <>
-      <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr 1fr', gap:12, marginBottom:16 }}>
+      <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr 1fr':'1fr 1fr 1fr 1fr', gap:12, marginBottom:16 }}>
         <Field label="Invoice #"><input style={{ ...inp, background:'#f7fafc', color:L.textMuted }} value={form.invoice_number} readOnly/></Field>
         <Field label="Terms"><input style={inp} placeholder="Net 30" value={form.terms} onChange={e=>sf('terms',e.target.value)}/></Field>
         <Field label="Invoice Date" required><input style={inp} type="date" value={form.date} onChange={e=>sf('date',e.target.value)}/></Field>
         <Field label="Due Date"><input style={inp} type="date" value={form.due_date} onChange={e=>sf('due_date',e.target.value)}/></Field>
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:16, marginBottom:16 }}>
+      <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 1fr', gap:16, marginBottom:16 }}>
         <div style={{ padding:14, background:L.pageBg, borderRadius:10, border:`1px solid ${L.border}` }}>
           <div style={{ fontSize:10, fontWeight:700, color:L.accent, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>From (Your Business)</div>
           {[{p:'Company / Your name',k:'from_name'},{p:'Email',k:'from_email'},{p:'Address',k:'from_address'},{p:'Phone (optional)',k:'from_phone'},{p:'Business Number / BN',k:'from_bn'}].map(({p,k}) => (
@@ -526,7 +542,7 @@ Thank you for your continued business.`);
           <input type="file" accept="image/*" onChange={handleLogoUpload} style={{ fontSize:12, color:L.textMuted, width:'100%' }}/>
           {form.logo_url && (
             <div style={{ marginTop:10, display:'flex', alignItems:'center', gap:10 }}>
-              <img src={form.logo_url} alt="Logo" style={{ maxHeight:48, maxWidth:140, objectFit:'contain', borderRadius:6, border:`1px solid ${L.border}` }}/>
+              <img src={form.logo_url} alt="Logo Preview" style={{ maxHeight:60, maxWidth:160, objectFit:'contain', borderRadius:6, border:`1px solid ${L.border}`, display:'block' }}/>
               <button onClick={()=>sf('logo_url','')} style={{ fontSize:11, color:L.red, background:'transparent', border:'none', cursor:'pointer' }}>Remove</button>
             </div>
           )}
@@ -560,7 +576,7 @@ Thank you for your continued business.`);
       </div>
 
       <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:16 }}>
-        <div style={{ width: isMobile ? '100%' : 260, background:L.pageBg, borderRadius:10, padding:'14px 16px', border:`1px solid ${L.border}` }}>
+        <div style={{ width:isMobile?'100%':260, background:L.pageBg, borderRadius:10, padding:'14px 16px', border:`1px solid ${L.border}` }}>
           {[{label:'Subtotal',value:`$${subtotal.toFixed(2)}`},{label:`Discount (${form.discount}%)`,value:`−$${discAmt.toFixed(2)}`},{label:`Tax (${form.tax_rate}%)`,value:`$${tax.toFixed(2)}`}].map(row => (
             <div key={row.label} style={{ display:'flex', justifyContent:'space-between', padding:'5px 0', borderBottom:`1px solid ${L.border}` }}>
               <span style={{ fontSize:12, color:L.textMuted }}>{row.label}</span>
@@ -578,12 +594,12 @@ Thank you for your continued business.`);
         <textarea style={{ ...inp, height:72, resize:'vertical' }} placeholder="Payment due within 30 days. Thank you for your business." value={form.notes} onChange={e=>sf('notes',e.target.value)}/>
       </Field>
 
-      <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:16, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
-        <button onClick={()=>setModal(null)} style={{ padding:'9px 18px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:13, fontFamily:L.font, display:'flex', alignItems:'center', gap:6, flex: isMobile ? 1 : 'auto', justifyContent:'center' }}>
+      <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:16, flexWrap:isMobile?'wrap':'nowrap' }}>
+        <button onClick={()=>setModal(null)} style={{ padding:'9px 18px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:13, fontFamily:L.font, display:'flex', alignItems:'center', gap:6, flex:isMobile?1:'auto', justifyContent:'center' }}>
           <X size={13}/> Cancel
         </button>
         <button onClick={()=>handleSave(isEdit)} disabled={saving}
-          style={{ display:'flex', alignItems:'center', gap:7, padding:'9px 22px', borderRadius:L.radiusSm, background:saving?L.textFaint:L.accent, color:'#fff', border:'none', cursor:saving?'not-allowed':'pointer', fontSize:13, fontWeight:600, fontFamily:L.font, flex: isMobile ? 1 : 'auto', justifyContent:'center' }}>
+          style={{ display:'flex', alignItems:'center', gap:7, padding:'9px 22px', borderRadius:L.radiusSm, background:saving?L.textFaint:L.accent, color:'#fff', border:'none', cursor:saving?'not-allowed':'pointer', fontSize:13, fontWeight:600, fontFamily:L.font, flex:isMobile?1:'auto', justifyContent:'center' }}>
           {isEdit?<Save size={13}/>:<Plus size={13}/>}
           {saving?'Saving…':isEdit?'Save Changes':'Create Invoice'}
         </button>
@@ -595,41 +611,41 @@ Thank you for your continued business.`);
 
   return (
     <div style={page}>
-      <div style={{ ...topBar, flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 10 : 0, padding: isMobile ? '16px' : undefined }}>
+      <div style={{ ...topBar, flexDirection:isMobile?'column':'row', alignItems:isMobile?'flex-start':'center', gap:isMobile?10:0, padding:isMobile?'16px':undefined }}>
         <div>
-          <div style={{ fontSize: isMobile ? 18 : 20, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>Invoices</div>
+          <div style={{ fontSize:isMobile?18:20, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>Invoices</div>
           <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>Create, manage and track client invoices</div>
         </div>
-        <button onClick={openCreate} style={{ display:'flex', alignItems:'center', gap:7, padding:'9px 18px', borderRadius:L.radiusSm, background:L.accent, color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:L.font, alignSelf: isMobile ? 'stretch' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
+        <button onClick={openCreate} style={{ display:'flex', alignItems:'center', gap:7, padding:'9px 18px', borderRadius:L.radiusSm, background:L.accent, color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:L.font, alignSelf:isMobile?'stretch':'auto', justifyContent:isMobile?'center':'flex-start' }}>
           <Plus size={14}/> New Invoice
         </button>
       </div>
 
-      <div style={{ padding: pad }}>
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: isMobile ? 10 : 14, marginBottom: isMobile ? 14 : 20 }}>
+      <div style={{ padding:pad }}>
+        <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(4,1fr)', gap:isMobile?10:14, marginBottom:isMobile?14:20 }}>
           {[
             { label:'Total Invoices', value:invoices.length,               color:L.text,    icon:<FileText size={16}/> },
             { label:'Paid Revenue',   value:`$${totalRevenue.toFixed(2)}`, color:L.accent,  icon:<CheckCircle size={16}/> },
             { label:'Outstanding',    value:`$${totalDue.toFixed(2)}`,     color:L.red,     icon:<AlertCircle size={16}/> },
             { label:'In Draft',       value:`$${totalDraft.toFixed(2)}`,   color:'#F59E0B', icon:<Clock size={16}/> },
           ].map(item => (
-            <div key={item.label} style={{ ...card, padding: isMobile ? '12px 14px' : '18px 20px' }}>
-              <div style={{ display:'flex', justifyContent:'space-between', marginBottom: isMobile ? 6 : 10 }}>
+            <div key={item.label} style={{ ...card, padding:isMobile?'12px 14px':'18px 20px' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:isMobile?6:10 }}>
                 <div style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em', textTransform:'uppercase' }}>{item.label}</div>
                 <span style={{ color:item.color, opacity:0.6 }}>{item.icon}</span>
               </div>
-              <div style={{ fontSize: isMobile ? 16 : 22, fontWeight:700, color:item.color, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.value}</div>
+              <div style={{ fontSize:isMobile?16:22, fontWeight:700, color:item.color, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.value}</div>
             </div>
           ))}
         </div>
 
         <div style={{ ...card, overflow:'hidden' }}>
-          <div style={{ padding: isMobile ? '14px 16px' : '16px 20px', borderBottom:`1px solid ${L.border}` }}>
+          <div style={{ padding:isMobile?'14px 16px':'16px 20px', borderBottom:`1px solid ${L.border}` }}>
             <div style={{ fontSize:14, fontWeight:700, color:L.text }}>All Invoices</div>
           </div>
 
           {invoices.length > 0 && !isMobile && (
-            <div style={{ display:'grid', gridTemplateColumns:'130px 1fr 1fr 110px 140px 1fr', padding:'8px 20px', background:L.pageBg, borderBottom:`1px solid ${L.border}` }}>
+            <div style={{ display:'grid', gridTemplateColumns:'130px 1fr 1fr 110px 160px 1fr', padding:'8px 20px', background:L.pageBg, borderBottom:`1px solid ${L.border}` }}>
               {['NUMBER','CLIENT','FROM','TOTAL','STATUS','ACTIONS'].map(h => (
                 <div key={h} style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em' }}>{h}</div>
               ))}
@@ -639,7 +655,7 @@ Thank you for your continued business.`);
           {loading && <div style={{ padding:40, textAlign:'center', color:L.textMuted }}>Loading invoices…</div>}
 
           {!loading && invoices.length === 0 && (
-            <div style={{ padding: isMobile ? 40 : 60, textAlign:'center' }}>
+            <div style={{ padding:isMobile?40:60, textAlign:'center' }}>
               <div style={{ width:60, height:60, borderRadius:16, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
                 <FileText size={26} color={L.accent}/>
               </div>
@@ -652,13 +668,13 @@ Thank you for your continued business.`);
           )}
 
           {invoices.map((inv, i) => {
-            const sc   = STATUS[inv.status] || STATUS.draft;
-            const Icon = sc.icon;
+            const sc       = STATUS[inv.status] || STATUS.draft;
+            const Icon     = sc.icon;
             const fuStatus = followUpStatus[`invoice_${inv.id}`];
 
             if (isMobile) {
               return (
-                <div key={inv.id} style={{ padding:'14px 16px', borderBottom: i < invoices.length-1 ? `1px solid ${L.border}` : 'none' }}>
+                <div key={inv.id} style={{ padding:'14px 16px', borderBottom:i<invoices.length-1?`1px solid ${L.border}`:'none' }}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:5 }}>
                       <FileText size={12} color={L.blue}/>
@@ -676,12 +692,12 @@ Thank you for your continued business.`);
                         <Icon size={10}/>{sc.label}
                       </span>
                       {fuStatus && (
-                    <span
-                     onClick={e => { e.stopPropagation(); if (inv.status !== 'paid') handleFollowUp(inv); }}
-                      style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:10, fontWeight:600, color: fuStatus.status==='sent'?L.accent:'#8B5CF6', background: fuStatus.status==='sent'?L.accentSoft:'rgba(139,92,246,0.08)', border:`1px solid ${fuStatus.status==='sent'?L.accentBorder:'rgba(139,92,246,0.2)'}`, cursor: inv.status !== 'paid' ? 'pointer' : 'default' }}>
-                      <Bell size={9}/>{fuStatus.status==='sent'?'✓ Sent — Click to resend':'Scheduled'}
-                    </span>
-                  )}
+                        <span
+                          onClick={e => { e.stopPropagation(); if (inv.status !== 'paid') handleFollowUp(inv); }}
+                          style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:10, fontWeight:600, color:fuStatus.status==='sent'?L.accent:'#8B5CF6', background:fuStatus.status==='sent'?L.accentSoft:'rgba(139,92,246,0.08)', border:`1px solid ${fuStatus.status==='sent'?L.accentBorder:'rgba(139,92,246,0.2)'}`, cursor:inv.status!=='paid'?'pointer':'default' }}>
+                          <Bell size={9}/>{fuStatus.status==='sent'?'✓ Sent — Tap to resend':'Scheduled'}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
@@ -699,7 +715,11 @@ Thank you for your continued business.`);
                     <button onClick={() => exportPDF(inv)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}>
                       <Download size={11}/>
                     </button>
-                    
+                    {inv.status !== 'paid' && !fuStatus && (
+                      <button onClick={() => handleFollowUp(inv)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', color:'#8B5CF6', cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
+                        <Bell size={10}/> Follow Up
+                      </button>
+                    )}
                     <button onClick={() => handleDelete(inv.id)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}>
                       <Trash2 size={11}/>
                     </button>
@@ -710,7 +730,7 @@ Thank you for your continued business.`);
 
             return (
               <div key={inv.id}
-                style={{ display:'grid', gridTemplateColumns:'130px 1fr 1fr 110px 140px 1fr', padding:'14px 20px', alignItems:'center', borderBottom: i < invoices.length-1 ? `1px solid ${L.border}` : 'none', transition:'background 0.1s' }}
+                style={{ display:'grid', gridTemplateColumns:'130px 1fr 1fr 110px 160px 1fr', padding:'14px 20px', alignItems:'center', borderBottom:i<invoices.length-1?`1px solid ${L.border}`:'none', transition:'background 0.1s' }}
                 onMouseEnter={e => e.currentTarget.style.background='#f8fafc'}
                 onMouseLeave={e => e.currentTarget.style.background='transparent'}>
                 <div style={{ fontSize:13, fontWeight:700, color:L.blue, display:'flex', alignItems:'center', gap:5 }}>
@@ -723,16 +743,16 @@ Thank you for your continued business.`);
                 <div style={{ fontSize:12, color:L.textMuted }}>{inv.from_name||'—'}</div>
                 <div style={{ fontSize:14, fontWeight:700, color:inv.status==='paid'?L.accent:L.text }}>${Number(inv.total||0).toFixed(2)}</div>
                 <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
-                  <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:20, fontSize:11, fontWeight:600, color:sc.color, background:sc.bg, border:`1px solid ${sc.border}` }}>
+                  <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:20, fontSize:11, fontWeight:600, color:sc.color, background:sc.bg, border:`1px solid ${sc.border}`, width:'fit-content' }}>
                     <Icon size={10}/>{sc.label}
                   </span>
-                 {fuStatus && (
-                        <span
-                         onClick={e => { e.stopPropagation(); if (inv.status !== 'paid') handleFollowUp(inv); }}
-                          style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:10, fontWeight:600, color: fuStatus.status==='sent'?L.accent:'#8B5CF6', background: fuStatus.status==='sent'?L.accentSoft:'rgba(139,92,246,0.08)', border:`1px solid ${fuStatus.status==='sent'?L.accentBorder:'rgba(139,92,246,0.2)'}`, cursor: inv.status !== 'paid' ? 'pointer' : 'default' }}>
-                          <Bell size={9}/>{fuStatus.status==='sent'?'✓ Sent — Tap to resend':'Scheduled'}
-                        </span>
-                      )}
+                  {fuStatus && (
+                    <span
+                      onClick={e => { e.stopPropagation(); if (inv.status !== 'paid') handleFollowUp(inv); }}
+                      style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:10, fontWeight:600, color:fuStatus.status==='sent'?L.accent:'#8B5CF6', background:fuStatus.status==='sent'?L.accentSoft:'rgba(139,92,246,0.08)', border:`1px solid ${fuStatus.status==='sent'?L.accentBorder:'rgba(139,92,246,0.2)'}`, cursor:inv.status!=='paid'?'pointer':'default', width:'fit-content' }}>
+                      <Bell size={9}/>{fuStatus.status==='sent'?'✓ Sent — Tap to resend':'Scheduled'}
+                    </span>
+                  )}
                 </div>
                 <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
                   <button onClick={e=>{e.stopPropagation();openView(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:L.blueSoft, border:`1px solid ${L.blueBorder}`, color:L.blue, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
@@ -741,11 +761,11 @@ Thank you for your continued business.`);
                   <button onClick={e=>{e.stopPropagation();openEdit(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
                     <Edit2 size={10}/> Edit
                   </button>
-                 {inv.status !== 'paid' && !fuStatus && (
-                      <button onClick={() => handleFollowUp(inv)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', color:'#8B5CF6', cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
-                        <Bell size={10}/> Follow Up
-                      </button>
-                    )}
+                  {inv.status !== 'paid' && (
+                    <button onClick={e=>{e.stopPropagation();handleStatus(inv.id,'paid');}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.06)', border:'1px solid rgba(10,185,138,0.2)', color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
+                      <CheckCircle size={10}/> Paid
+                    </button>
+                  )}
                   <button onClick={e=>{e.stopPropagation();exportPDF(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 8px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}
                     onMouseEnter={e=>{e.currentTarget.style.borderColor=L.accentBorder;e.currentTarget.style.color=L.accent;}}
                     onMouseLeave={e=>{e.currentTarget.style.borderColor=L.border;e.currentTarget.style.color=L.textMuted;}}>
@@ -773,12 +793,12 @@ Thank you for your continued business.`);
 
       {modal === 'view' && selected && (
         <Modal title={`Invoice ${selected.invoice_number}`} onClose={()=>setModal(null)} wide>
-          <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', justifyContent: isMobile ? 'stretch' : 'flex-end' }}>
-            <button onClick={()=>{setModal(null);openEdit(selected);}} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font, flex: isMobile ? 1 : 'auto', justifyContent:'center' }}>
+          <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', justifyContent:isMobile?'stretch':'flex-end' }}>
+            <button onClick={()=>{setModal(null);openEdit(selected);}} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font, flex:isMobile?1:'auto', justifyContent:'center' }}>
               <Edit2 size={12}/> Edit
             </button>
             {selected.status !== 'paid' && (
-              <button onClick={()=>handleStatus(selected.id,'paid')} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:L.accent, border:'none', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font, flex: isMobile ? 1 : 'auto', justifyContent:'center' }}>
+              <button onClick={()=>handleStatus(selected.id,'paid')} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:L.accent, border:'none', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font, flex:isMobile?1:'auto', justifyContent:'center' }}>
                 <CheckCircle size={12}/> Mark Paid
               </button>
             )}
@@ -789,16 +809,16 @@ Thank you for your continued business.`);
                 <Printer size={12}/> Print
               </button>
             )}
-            <button onClick={()=>exportPDF(selected)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:L.font, flex: isMobile ? 1 : 'auto', justifyContent:'center' }}
+            <button onClick={()=>exportPDF(selected)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:L.font, flex:isMobile?1:'auto', justifyContent:'center' }}
               onMouseEnter={e=>{e.currentTarget.style.borderColor=L.accentBorder;e.currentTarget.style.color=L.accent;}}
               onMouseLeave={e=>{e.currentTarget.style.borderColor=L.border;e.currentTarget.style.color=L.textMuted;}}>
               <Download size={12}/> PDF
             </button>
-            <button onClick={()=>handleDelete(selected.id)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.redBorder}`, color:L.red, cursor:'pointer', fontSize:12, fontFamily:L.font, flex: isMobile ? 1 : 'auto', justifyContent:'center' }}>
+            <button onClick={()=>handleDelete(selected.id)} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.redBorder}`, color:L.red, cursor:'pointer', fontSize:12, fontFamily:L.font, flex:isMobile?1:'auto', justifyContent:'center' }}>
               <Trash2 size={12}/> Delete
             </button>
           </div>
-          <div style={{ background:'#f1f5f9', borderRadius:12, padding: isMobile ? 8 : 20, overflowX: isMobile ? 'auto' : 'visible' }}>
+          <div style={{ background:'#f1f5f9', borderRadius:12, padding:isMobile?8:20, overflowX:isMobile?'auto':'visible' }}>
             <div ref={printRef} style={{ boxShadow:'0 4px 24px rgba(0,0,0,0.10)', borderRadius:8, overflow:'hidden' }}>
               <InvoicePreview inv={selected}/>
             </div>
@@ -807,13 +827,15 @@ Thank you for your continued business.`);
       )}
 
       {followUpModal && followUpInvoice && (
-        <Modal title={`Follow Up — ${followUpInvoice.invoice_number}`} onClose={() => setFollowUpModal(false)}>
+        <Modal title={isResend?`Resend Follow Up — ${followUpInvoice.invoice_number}`:`Follow Up — ${followUpInvoice.invoice_number}`} onClose={() => setFollowUpModal(false)}>
           {followUpSuccess ? (
             <div style={{ textAlign:'center', padding:'20px 0' }}>
               <div style={{ width:56, height:56, borderRadius:16, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
                 <CheckCircle size={26} color={L.accent}/>
               </div>
-              <div style={{ fontSize:15, fontWeight:700, color:L.text, marginBottom:8 }}>Follow-up Scheduled!</div>
+              <div style={{ fontSize:15, fontWeight:700, color:L.text, marginBottom:8 }}>
+                {isResend?'Follow-up Rescheduled!':'Follow-up Scheduled!'}
+              </div>
               <div style={{ fontSize:13, color:L.textMuted }}>{followUpSuccess}</div>
             </div>
           ) : (
@@ -835,32 +857,32 @@ Thank you for your continued business.`);
                 <Field label="Time to Send">
                   <div style={{ display:'flex', gap:8 }}>
                     <select
-                      value={(() => { const h = parseInt(followUpTime.split(':')[0]) || 9; return h === 0 ? 12 : h > 12 ? h - 12 : h; })()}
+                      value={(() => { const h=parseInt(followUpTime.split(':')[0])||9; return h===0?12:h>12?h-12:h; })()}
                       onChange={e => {
-                        const min = followUpTime.split(':')[1] || '00';
-                        const isPM = parseInt(followUpTime.split(':')[0]) >= 12;
-                        let newH = parseInt(e.target.value);
-                        if (isPM && newH !== 12) newH += 12;
-                        if (!isPM && newH === 12) newH = 0;
+                        const min=followUpTime.split(':')[1]||'00';
+                        const isPM=parseInt(followUpTime.split(':')[0])>=12;
+                        let newH=parseInt(e.target.value);
+                        if (isPM && newH!==12) newH+=12;
+                        if (!isPM && newH===12) newH=0;
                         setFollowUpTime(`${String(newH).padStart(2,'0')}:${min}`);
                       }}
                       style={{ ...inp, width:'auto', flex:1 }}>
                       {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => <option key={h} value={h}>{h}</option>)}
                     </select>
                     <select
-                      value={followUpTime.split(':')[1]?.slice(0,2) || '00'}
-                      onChange={e => setFollowUpTime(`${followUpTime.split(':')[0] || '09'}:${e.target.value}`)}
+                      value={followUpTime.split(':')[1]?.slice(0,2)||'00'}
+                      onChange={e => setFollowUpTime(`${followUpTime.split(':')[0]||'09'}:${e.target.value}`)}
                       style={{ ...inp, width:'auto', flex:1 }}>
                       {['00','05','10','15','20','25','30','35','40','45','50','55'].map(m => <option key={m} value={m}>{m}</option>)}
                     </select>
                     <select
-                      value={parseInt(followUpTime.split(':')[0]) >= 12 ? 'PM' : 'AM'}
+                      value={parseInt(followUpTime.split(':')[0])>=12?'PM':'AM'}
                       onChange={e => {
-                        const min = followUpTime.split(':')[1] || '00';
-                        let h = parseInt(followUpTime.split(':')[0]) || 9;
-                        const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-                        if (e.target.value === 'PM' && h < 12) h = h12 === 12 ? 12 : h12 + 12;
-                        if (e.target.value === 'AM' && h >= 12) h = h12 === 12 ? 0 : h12;
+                        const min=followUpTime.split(':')[1]||'00';
+                        let h=parseInt(followUpTime.split(':')[0])||9;
+                        const h12=h===0?12:h>12?h-12:h;
+                        if (e.target.value==='PM' && h<12) h=h12===12?12:h12+12;
+                        if (e.target.value==='AM' && h>=12) h=h12===12?0:h12;
                         setFollowUpTime(`${String(h).padStart(2,'0')}:${min}`);
                       }}
                       style={{ ...inp, width:'auto', flex:1 }}>
@@ -883,10 +905,10 @@ Thank you for your continued business.`);
                 <button onClick={() => setFollowUpModal(false)} style={{ padding:'9px 18px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:13, fontFamily:L.font }}>
                   Cancel
                 </button>
-               <button onClick={submitFollowUp} disabled={followUpSaving||!followUpEmail||!followUpDate}
-                    style={{ display:'flex', alignItems:'center', gap:7, padding:'9px 22px', borderRadius:L.radiusSm, background:followUpSaving||!followUpEmail||!followUpDate?L.textFaint:'#8B5CF6', color:'#fff', border:'none', cursor:followUpSaving||!followUpEmail||!followUpDate?'not-allowed':'pointer', fontSize:13, fontWeight:600, fontFamily:L.font }}>
-                    <Bell size={13}/>{followUpSaving ? 'Sending...' : isResend ? 'Resend Follow-up' : 'Schedule Follow-up'}
-                  </button>
+                <button onClick={submitFollowUp} disabled={followUpSaving||!followUpEmail||!followUpDate}
+                  style={{ display:'flex', alignItems:'center', gap:7, padding:'9px 22px', borderRadius:L.radiusSm, background:followUpSaving||!followUpEmail||!followUpDate?L.textFaint:'#8B5CF6', color:'#fff', border:'none', cursor:followUpSaving||!followUpEmail||!followUpDate?'not-allowed':'pointer', fontSize:13, fontWeight:600, fontFamily:L.font }}>
+                  <Bell size={13}/>{followUpSaving?'Sending...':isResend?'Resend Follow-up':'Schedule Follow-up'}
+                </button>
               </div>
             </>
           )}
