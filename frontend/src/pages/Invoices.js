@@ -675,7 +675,7 @@ Thank you for your continued business.`);
                       </span>
                       {fuStatus && (
                     <span
-                      onClick={() => inv.status !== 'paid' && handleFollowUp(inv)}
+                     onClick={e => { e.stopPropagation(); if (inv.status !== 'paid') handleFollowUp(inv); }}
                       style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:10, fontWeight:600, color: fuStatus.status==='sent'?L.accent:'#8B5CF6', background: fuStatus.status==='sent'?L.accentSoft:'rgba(139,92,246,0.08)', border:`1px solid ${fuStatus.status==='sent'?L.accentBorder:'rgba(139,92,246,0.2)'}`, cursor: inv.status !== 'paid' ? 'pointer' : 'default' }}>
                       <Bell size={9}/>{fuStatus.status==='sent'?'✓ Sent — Click to resend':'Scheduled'}
                     </span>
@@ -730,7 +730,7 @@ Thank you for your continued business.`);
                   </span>
                  {fuStatus && (
                         <span
-                          onClick={() => inv.status !== 'paid' && handleFollowUp(inv)}
+                         onClick={e => { e.stopPropagation(); if (inv.status !== 'paid') handleFollowUp(inv); }}
                           style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:10, fontWeight:600, color: fuStatus.status==='sent'?L.accent:'#8B5CF6', background: fuStatus.status==='sent'?L.accentSoft:'rgba(139,92,246,0.08)', border:`1px solid ${fuStatus.status==='sent'?L.accentBorder:'rgba(139,92,246,0.2)'}`, cursor: inv.status !== 'paid' ? 'pointer' : 'default' }}>
                           <Bell size={9}/>{fuStatus.status==='sent'?'✓ Sent — Tap to resend':'Scheduled'}
                         </span>
