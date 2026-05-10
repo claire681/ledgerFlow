@@ -235,6 +235,7 @@ export default function Invoices() {
   const [followUpSaving,  setFollowUpSaving]  = useState(false);
   const [followUpSuccess, setFollowUpSuccess] = useState('');
   const [followUpStatus,  setFollowUpStatus]  = useState({});
+  const [isResend, setIsResend] = useState(false);
 
   const { setPageContext } = useAI();
   const getHeaders = (extra={}) => ({ Authorization:`Bearer ${localStorage.getItem('token') || localStorage.getItem('access_token')}`, ...extra });
@@ -375,6 +376,8 @@ export default function Invoices() {
   };
 
  const handleFollowUp = (inv) => {
+    const fuStatus = followUpStatus[`invoice_${inv.id}`];
+    setIsResend(!!fuStatus);
     setFollowUpInvoice(inv);
     setFollowUpEmail(inv.to_email || '');
     setFollowUpDate('');
@@ -391,7 +394,6 @@ Kindly process the payment at your earliest convenience. If you have already sen
 Thank you for your continued business.`);
     setFollowUpModal(true);
   };
-
   const submitFollowUp = async () => {
     if (!followUpEmail || !followUpDate) { window.alert('Please enter email and date.'); return; }
     setFollowUpSaving(true);
@@ -743,17 +745,17 @@ Thank you for your continued business.`);
                   <button onClick={e=>{e.stopPropagation();openEdit(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
                     <Edit2 size={10}/> Edit
                   </button>
-                  {inv.status !== 'paid' && (
-                    <button onClick={e=>{e.stopPropagation();handleStatus(inv.id,'paid');}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.06)', border:'1px solid rgba(10,185,138,0.2)', color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
-                      <CheckCircle size={10}/> Paid
-                    </button>
-                  )}
+                 {inv.status !== 'paid' && !fuStatus && (
+                      <button onClick={() => handleFollowUp(inv)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', color:'#8B5CF6', cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
+                        <Bell size={10}/> Follow Up
+                      </button>
+                    )}
                   <button onClick={e=>{e.stopPropagation();exportPDF(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 8px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}
                     onMouseEnter={e=>{e.currentTarget.style.borderColor=L.accentBorder;e.currentTarget.style.color=L.accent;}}
                     onMouseLeave={e=>{e.currentTarget.style.borderColor=L.border;e.currentTarget.style.color=L.textMuted;}}>
                     <Download size={11}/>
                   </button>
-                  {inv.status !== 'paid' && (
+                  {inv.status !== 'paid' && !fuStatus && (
                     <button onClick={e=>{e.stopPropagation();handleFollowUp(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 8px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', color:'#8B5CF6', cursor:'pointer', fontSize:11 }}>
                       <Bell size={11}/> Follow Up
                     </button>
@@ -885,10 +887,10 @@ Thank you for your continued business.`);
                 <button onClick={() => setFollowUpModal(false)} style={{ padding:'9px 18px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:13, fontFamily:L.font }}>
                   Cancel
                 </button>
-                <button onClick={submitFollowUp} disabled={followUpSaving||!followUpEmail||!followUpDate}
-                  style={{ display:'flex', alignItems:'center', gap:7, padding:'9px 22px', borderRadius:L.radiusSm, background:followUpSaving||!followUpEmail||!followUpDate?L.textFaint:'#8B5CF6', color:'#fff', border:'none', cursor:followUpSaving||!followUpEmail||!followUpDate?'not-allowed':'pointer', fontSize:13, fontWeight:600, fontFamily:L.font }}>
-                  <Bell size={13}/>{followUpSaving ? 'Scheduling...' : 'Schedule Follow-up'}
-                </button>
+               <button onClick={submitFollowUp} disabled={followUpSaving||!followUpEmail||!followUpDate}
+                    style={{ display:'flex', alignItems:'center', gap:7, padding:'9px 22px', borderRadius:L.radiusSm, background:followUpSaving||!followUpEmail||!followUpDate?L.textFaint:'#8B5CF6', color:'#fff', border:'none', cursor:followUpSaving||!followUpEmail||!followUpDate?'not-allowed':'pointer', fontSize:13, fontWeight:600, fontFamily:L.font }}>
+                    <Bell size={13}/>{followUpSaving ? 'Sending...' : isResend ? 'Resend Follow-up' : 'Schedule Follow-up'}
+                  </button>
               </div>
             </>
           )}
