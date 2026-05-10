@@ -674,10 +674,12 @@ Thank you for your continued business.`);
                         <Icon size={10}/>{sc.label}
                       </span>
                       {fuStatus && (
-                        <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:10, fontWeight:600, color: fuStatus.status==='sent'?L.accent:'#8B5CF6', background: fuStatus.status==='sent'?L.accentSoft:'rgba(139,92,246,0.08)', border:`1px solid ${fuStatus.status==='sent'?L.accentBorder:'rgba(139,92,246,0.2)'}` }}>
-                          <Bell size={9}/>{fuStatus.status==='sent'?'Follow-up Sent':'Follow-up Scheduled'}
-                        </span>
-                      )}
+                    <span
+                      onClick={() => inv.status !== 'paid' && handleFollowUp(inv)}
+                      style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:10, fontWeight:600, color: fuStatus.status==='sent'?L.accent:'#8B5CF6', background: fuStatus.status==='sent'?L.accentSoft:'rgba(139,92,246,0.08)', border:`1px solid ${fuStatus.status==='sent'?L.accentBorder:'rgba(139,92,246,0.2)'}`, cursor: inv.status !== 'paid' ? 'pointer' : 'default' }}>
+                      <Bell size={9}/>{fuStatus.status==='sent'?'✓ Sent — Click to resend':'Scheduled'}
+                    </span>
+                  )}
                     </div>
                   </div>
                   <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
@@ -726,11 +728,13 @@ Thank you for your continued business.`);
                   <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:20, fontSize:11, fontWeight:600, color:sc.color, background:sc.bg, border:`1px solid ${sc.border}` }}>
                     <Icon size={10}/>{sc.label}
                   </span>
-                  {fuStatus && (
-                    <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:10, fontWeight:600, color: fuStatus.status==='sent'?L.accent:'#8B5CF6', background: fuStatus.status==='sent'?L.accentSoft:'rgba(139,92,246,0.08)', border:`1px solid ${fuStatus.status==='sent'?L.accentBorder:'rgba(139,92,246,0.2)'}` }}>
-                      <Bell size={9}/>{fuStatus.status==='sent'?'Follow-up Sent':'Follow-up Scheduled'}
-                    </span>
-                  )}
+                 {fuStatus && (
+                        <span
+                          onClick={() => inv.status !== 'paid' && handleFollowUp(inv)}
+                          style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:10, fontWeight:600, color: fuStatus.status==='sent'?L.accent:'#8B5CF6', background: fuStatus.status==='sent'?L.accentSoft:'rgba(139,92,246,0.08)', border:`1px solid ${fuStatus.status==='sent'?L.accentBorder:'rgba(139,92,246,0.2)'}`, cursor: inv.status !== 'paid' ? 'pointer' : 'default' }}>
+                          <Bell size={9}/>{fuStatus.status==='sent'?'✓ Sent — Tap to resend':'Scheduled'}
+                        </span>
+                      )}
                 </div>
                 <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
                   <button onClick={e=>{e.stopPropagation();openView(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:L.blueSoft, border:`1px solid ${L.blueBorder}`, color:L.blue, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
