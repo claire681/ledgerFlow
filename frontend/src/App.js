@@ -39,35 +39,33 @@ import Businesses          from './pages/Businesses';
 import { Menu, X }         from 'lucide-react';
 
 const ACCENT = '#0AB98A';
-const BG     = '#0F172A';
 
 function AppLayout({ onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Close sidebar when clicking outside on any screen size
   const handleOverlayClick = () => setSidebarOpen(false);
   const handleNavigate     = () => setSidebarOpen(false);
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#F8FAFC', fontFamily: "'Inter', -apple-system, sans-serif", position: 'relative' }}>
 
-      {/* Overlay — shown on all screen sizes when sidebar is open */}
+      {/* Overlay */}
       {sidebarOpen && (
         <div
           onClick={handleOverlayClick}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 40, backdropFilter: 'blur(2px)', transition: 'opacity 0.25s' }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 40, backdropFilter: 'blur(2px)' }}
         />
       )}
 
-      {/* Sidebar — always fixed, slides in/out on ALL screen sizes */}
+      {/* Sidebar — slides in/out on ALL screen sizes */}
       <div style={{ position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 50, transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)' }}>
         <Sidebar onLogout={onLogout} onNavigate={handleNavigate} />
       </div>
 
-      {/* Main content — full width always, no sidebar pushing content */}
+      {/* Main content */}
       <main style={{ flex: 1, overflowY: 'auto', position: 'relative', width: '100%' }}>
 
-        {/* Top nav bar — visible on ALL screen sizes */}
+        {/* Top nav bar */}
         <div style={{ position: 'sticky', top: 0, zIndex: 30, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: 56, borderBottom: '1px solid #E8EDF3', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
           <button
             onClick={() => setSidebarOpen(o => !o)}
@@ -82,39 +80,38 @@ function AppLayout({ onLogout }) {
             No<span style={{ color: ACCENT }}>vala</span>
           </div>
 
-          {/* Right side — spacer to balance the menu button */}
           <div style={{ width: 34 }} />
         </div>
 
         <Routes>
-          <Route path="/"               element={<Dashboard />}         />
-          <Route path="/documents"      element={<Documents />}         />
-          <Route path="/transactions"   element={<Transactions />}      />
-          <Route path="/budgets"        element={<Budgets />}           />
-          <Route path="/invoices"       element={<Invoices />}          />
-          <Route path="/tax"            element={<TaxCalculator />}     />
-          <Route path="/vendors"        element={<VendorAnalytics />}   />
-          <Route path="/currency"       element={<Currency />}          />
-          <Route path="/receipts"       element={<ReceiptScanner />}    />
-          <Route path="/agents"         element={<Agents />}            />
-          <Route path="/team"           element={<Team />}              />
-          <Route path="/integrations"   element={<Integrations />}      />
-          <Route path="/reports"        element={<FinancialReports />}  />
-          <Route path="/reconciliation" element={<Reconciliation />}    />
-          <Route path="/billpay"        element={<BillPay />}           />
-          <Route path="/variance"       element={<VarianceReports />}   />
-          <Route path="/ledger"         element={<LedgerView />}        />
-          <Route path="/comparison"     element={<DocumentComparison />}/>
-          <Route path="/billing"        element={<Billing />}           />
-          <Route path="/help"           element={<Help />}              />
-          <Route path="/settings"       element={<Settings />}          />
-          <Route path="/landing"        element={<Landing />}           />
-          <Route path="/customers"      element={<Customers />}         />
-          <Route path="/inventory"      element={<Inventory />}         />
-          <Route path="/api-access"     element={<APIAccess />}         />
-          <Route path="/businesses"     element={<Businesses />}        />
-          <Route path="/search"         element={<SmartSearch />}       />
-          <Route path="*"               element={<Navigate to="/" />}   />
+          <Route path="/"               element={<Dashboard />}          />
+          <Route path="/documents"      element={<Documents />}          />
+          <Route path="/transactions"   element={<Transactions />}       />
+          <Route path="/budgets"        element={<Budgets />}            />
+          <Route path="/invoices"       element={<Invoices />}           />
+          <Route path="/tax"            element={<TaxCalculator />}      />
+          <Route path="/vendors"        element={<VendorAnalytics />}    />
+          <Route path="/currency"       element={<Currency />}           />
+          <Route path="/receipts"       element={<ReceiptScanner />}     />
+          <Route path="/agents"         element={<Agents />}             />
+          <Route path="/team"           element={<Team />}               />
+          <Route path="/integrations"   element={<Integrations />}       />
+          <Route path="/reports"        element={<FinancialReports />}   />
+          <Route path="/reconciliation" element={<Reconciliation />}     />
+          <Route path="/billpay"        element={<BillPay />}            />
+          <Route path="/variance"       element={<VarianceReports />}    />
+          <Route path="/ledger"         element={<LedgerView />}         />
+          <Route path="/comparison"     element={<DocumentComparison />} />
+          <Route path="/billing"        element={<Billing />}            />
+          <Route path="/help"           element={<Help />}               />
+          <Route path="/settings"       element={<Settings />}           />
+          <Route path="/landing"        element={<Landing />}            />
+          <Route path="/customers"      element={<Customers />}          />
+          <Route path="/inventory"      element={<Inventory />}          />
+          <Route path="/api-access"     element={<APIAccess />}          />
+          <Route path="/businesses"     element={<Businesses />}         />
+          <Route path="/search"         element={<SmartSearch />}        />
+          <Route path="*"               element={<Navigate to="/" />}    />
         </Routes>
       </main>
 
@@ -206,22 +203,23 @@ export default function App() {
     );
   }
 
+  // ── Router is now the OUTERMOST wrapper ──
   return (
-    <AIProvider>
-      <Router>
+    <Router>
+      <AIProvider>
         {!token ? (
           <Routes>
-            <Route path="/"         element={<Landing />}                    />
-            <Route path="/login"    element={<Login onLogin={handleLogin} />}/>
-            <Route path="/register" element={<Login onLogin={handleLogin} />}/>
-            <Route path="*"         element={<Navigate to="/" />}            />
+            <Route path="/"         element={<Landing />}                     />
+            <Route path="/login"    element={<Login onLogin={handleLogin} />} />
+            <Route path="/register" element={<Login onLogin={handleLogin} />} />
+            <Route path="*"         element={<Navigate to="/" />}             />
           </Routes>
         ) : !onboardingDone ? (
           <Onboarding onComplete={handleOnboardingComplete} />
         ) : (
           <AppLayout onLogout={handleLogout} />
         )}
-      </Router>
-    </AIProvider>
+      </AIProvider>
+    </Router>
   );
 }
