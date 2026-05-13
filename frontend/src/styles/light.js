@@ -80,7 +80,7 @@ export const page = {
   background: '#F8FAFC',
   fontFamily: "'Inter', -apple-system, sans-serif",
   minHeight:  '100vh',
-  marginLeft: typeof window !== 'undefined' && window.innerWidth >= 768 ? 72 : 0,
+  
 };
 
 // ── Top bar ───────────────────────────────────────────────────

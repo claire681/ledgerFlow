@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Home, BarChart2, Grid, Plus, Bookmark,
+  Home, BarChart2, Grid, Plus,
   LayoutDashboard, FileText, ArrowLeftRight,
   PieChart, Receipt, Percent, RefreshCw,
   BarChart3, ScanLine, Link2, Users,
@@ -15,7 +15,6 @@ import {
 const ACCENT = '#0AB98A';
 const FONT   = "'Inter', -apple-system, sans-serif";
 
-// ── All apps grouped for flyout ─────────────────────────────
 const APP_GROUPS = [
   {
     label: 'Core',
@@ -66,34 +65,32 @@ const APP_GROUPS = [
   },
 ];
 
-// ── Quick create items ───────────────────────────────────────
 const CREATE_ITEMS = [
-  { label: 'New Invoice',     path: '/invoices',    color: '#0AB98A' },
-  { label: 'New Transaction', path: '/transactions',color: '#3B82F6' },
-  { label: 'Upload Document', path: '/documents',   color: '#8B5CF6' },
-  { label: 'Scan Receipt',    path: '/receipts',    color: '#F59E0B' },
-  { label: 'Add Bill',        path: '/billpay',     color: '#EF4444' },
-  { label: 'New Budget',      path: '/budgets',     color: '#06B6D4' },
+  { label: 'New Invoice',     path: '/invoices',     color: '#0AB98A' },
+  { label: 'New Transaction', path: '/transactions', color: '#3B82F6' },
+  { label: 'Upload Document', path: '/documents',    color: '#8B5CF6' },
+  { label: 'Scan Receipt',    path: '/receipts',     color: '#F59E0B' },
+  { label: 'Add Bill',        path: '/billpay',      color: '#EF4444' },
+  { label: 'New Budget',      path: '/budgets',      color: '#06B6D4' },
 ];
 
-// ── Slim sidebar icons ────────────────────────────────────────
 const SLIM_ITEMS = [
-  { id: 'home',     icon: Home,     label: 'Home',     path: '/'        },
-  { id: 'create',   icon: Plus,     label: 'Create',   flyout: 'create' },
-  { id: 'reports',  icon: BarChart2,label: 'Reports',  flyout: 'reports'},
-  { id: 'allapps',  icon: Grid,     label: 'All Apps', flyout: 'apps'   },
-  { id: 'settings', icon: SettingsIcon, label: 'Settings', path: '/settings' },
-  { id: 'help',     icon: HelpCircle,   label: 'Help',     path: '/help'     },
+  { id: 'home',     icon: Home,        label: 'Home',     path: '/'         },
+  { id: 'create',   icon: Plus,        label: 'Create',   flyout: 'create'  },
+  { id: 'reports',  icon: BarChart2,   label: 'Reports',  flyout: 'reports' },
+  { id: 'allapps',  icon: Grid,        label: 'All Apps', flyout: 'apps'    },
+  { id: 'settings', icon: SettingsIcon,label: 'Settings', path: '/settings' },
+  { id: 'help',     icon: HelpCircle,  label: 'Help',     path: '/help'     },
 ];
 
 function FlyoutPanel({ title, onClose, children }) {
   return (
-    <div style={{ position: 'fixed', top: 0, left: 72, height: '100vh', width: 280, background: '#fff', boxShadow: '4px 0 24px rgba(0,0,0,0.1)', zIndex: 45, display: 'flex', flexDirection: 'column', borderRight: '1px solid #F1F5F9', animation: 'slideIn 0.2s ease' }}>
+    <div style={{ position: 'fixed', top: 56, left: 72, height: 'calc(100vh - 56px)', width: 280, background: '#fff', boxShadow: '4px 0 24px rgba(0,0,0,0.1)', zIndex: 45, display: 'flex', flexDirection: 'column', borderRight: '1px solid #F1F5F9', animation: 'slideIn 0.2s ease' }}>
       <style>{`@keyframes slideIn { from { opacity:0; transform:translateX(-10px) } to { opacity:1; transform:translateX(0) } }`}</style>
       <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', letterSpacing: '0.01em' }}>{title}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>{title}</div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex', padding: 2 }}>
-          <X size={16}/>
+          <X size={16} />
         </button>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', scrollbarWidth: 'none' }}>
@@ -104,11 +101,19 @@ function FlyoutPanel({ title, onClose, children }) {
 }
 
 export default function Sidebar({ onLogout, mobileOpen, onMobileClose }) {
-  const navigate      = useNavigate();
-  const location      = useLocation();
-  const [flyout, setFlyout] = useState(null);
-  const [hovItem, setHovItem] = useState(null);
+  const navigate   = useNavigate();
+  const location   = useLocation();
+  const [flyout,   setFlyout]   = useState(null);
+  const [hovItem,  setHovItem]  = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const sidebarRef = useRef(null);
+
+  // Reactive mobile detection
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   // Close flyout when clicking outside
   useEffect(() => {
@@ -137,179 +142,109 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose }) {
     onMobileClose && onMobileClose();
   };
 
- const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-useEffect(() => {
-  const handler = () => setIsMobile(window.innerWidth < 768);
-  window.addEventListener('resize', handler);
-  return () => window.removeEventListener('resize', handler);
-}, []);
-
   return (
     <div ref={sidebarRef}>
 
-      {/* ── Slim vertical sidebar ─────────────────────────── */}
-      <aside style={{
-        position:      'fixed',
-        top:           56,
-        left:          0,
-        width:         72,
-        height:        'calc(100vh - 56px)',
-        background:    '#fff',
-        borderRight:   '1px solid #E8EDF3',
-        display:       isMobile ? 'none' : 'flex',
-        flexDirection: 'column',
-        alignItems:    'center',
-        paddingTop:    12,
-        paddingBottom: 16,
-        zIndex:        44,
-        fontFamily:    FONT,
-        boxShadow:     '1px 0 0 #E8EDF3',
-      }}>
+      {/* ── Desktop slim sidebar ── */}
+      {!isMobile && (
+        <aside style={{ position: 'fixed', top: 56, left: 0, width: 72, height: 'calc(100vh - 56px)', background: '#fff', borderRight: '1px solid #E8EDF3', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 12, paddingBottom: 16, zIndex: 44, fontFamily: FONT }}>
 
-        {SLIM_ITEMS.map(item => {
-          const Icon     = item.icon;
-          const isActive = item.path
-            ? (location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path)))
-            : flyout === item.flyout;
-          const isHov    = hovItem === item.id;
+          {SLIM_ITEMS.map(item => {
+            const Icon     = item.icon;
+            const isActive = item.path
+              ? (location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path)))
+              : flyout === item.flyout;
+            const isHov    = hovItem === item.id;
 
-          return (
-            <div
-              key={item.id}
-              onClick={() => handleItemClick(item)}
-              onMouseEnter={() => setHovItem(item.id)}
-              onMouseLeave={() => setHovItem(null)}
-              style={{
-                display:        'flex',
-                flexDirection:  'column',
-                alignItems:     'center',
-                gap:            4,
-                padding:        '10px 8px',
-                borderRadius:   10,
-                cursor:         'pointer',
-                width:          56,
-                marginBottom:   2,
-                background:     isActive ? 'rgba(10,185,138,0.08)' : isHov ? '#F8FAFC' : 'transparent',
-                transition:     'all 0.15s ease',
-              }}
-            >
-              <div style={{
-                width:          36,
-                height:         36,
-                borderRadius:   10,
-                display:        'flex',
-                alignItems:     'center',
-                justifyContent: 'center',
-                background:     isActive ? 'rgba(10,185,138,0.12)' : 'transparent',
-              }}>
-                <Icon
-                  size={20}
-                  color={isActive ? ACCENT : isHov ? '#334155' : '#64748B'}
-                  strokeWidth={isActive ? 2.5 : 1.8}
-                />
+            return (
+              <div
+                key={item.id}
+                onClick={() => handleItemClick(item)}
+                onMouseEnter={() => setHovItem(item.id)}
+                onMouseLeave={() => setHovItem(null)}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '10px 8px', borderRadius: 10, cursor: 'pointer', width: 56, marginBottom: 2, background: isActive ? 'rgba(10,185,138,0.08)' : isHov ? '#F8FAFC' : 'transparent', transition: 'all 0.15s ease' }}
+              >
+                <div style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isActive ? 'rgba(10,185,138,0.12)' : 'transparent' }}>
+                  <Icon size={20} color={isActive ? ACCENT : isHov ? '#334155' : '#64748B'} strokeWidth={isActive ? 2.5 : 1.8} />
+                </div>
+                <span style={{ fontSize: 9, fontWeight: isActive ? 700 : 500, color: isActive ? ACCENT : isHov ? '#334155' : '#94A3B8', letterSpacing: '0.04em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.2 }}>
+                  {item.label}
+                </span>
               </div>
-              <span style={{
-                fontSize:   9,
-                fontWeight: isActive ? 700 : 500,
-                color:      isActive ? ACCENT : isHov ? '#334155' : '#94A3B8',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                textAlign:  'center',
-                lineHeight: 1.2,
-              }}>
-                {item.label}
-              </span>
-            </div>
-          );
-        })}
+            );
+          })}
 
-        {/* Divider */}
-        <div style={{ width: 40, height: 1, background: '#F1F5F9', margin: '8px 0' }}/>
+          <div style={{ width: 40, height: 1, background: '#F1F5F9', margin: '8px 0' }} />
 
-        {/* Sign out */}
-        <div
-          onClick={onLogout}
-          onMouseEnter={() => setHovItem('logout')}
-          onMouseLeave={() => setHovItem(null)}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '10px 8px', borderRadius: 10, cursor: 'pointer', width: 56, marginTop: 'auto', background: hovItem === 'logout' ? 'rgba(239,68,68,0.06)' : 'transparent', transition: 'all 0.15s' }}
-        >
-          <LogOut size={20} color={hovItem === 'logout' ? '#EF4444' : '#94A3B8'} strokeWidth={1.8}/>
-          <span style={{ fontSize: 9, fontWeight: 500, color: hovItem === 'logout' ? '#EF4444' : '#94A3B8', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Out</span>
-        </div>
-      </aside>
-
-      {/* ── Mobile full drawer ────────────────────────────── */}
-      <div style={{
-        position:   'fixed',
-        top:        0,
-        left:       0,
-        width:      280,
-        height:     '100vh',
-        background: 'linear-gradient(180deg,#0F172A 0%,#0D1526 100%)',
-        zIndex:     50,
-        transform:  mobileOpen ? 'translateX(0)' : 'translateX(-100%)',
-        transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
-        display:    isMobile ? 'flex' : 'none',
-        flexDirection: 'column',
-        fontFamily: FONT,
-        boxShadow:  '4px 0 32px rgba(0,0,0,0.3)',
-      }}>
-        {/* Mobile header */}
-        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 17, fontWeight: 800, color: '#F1F5F9', letterSpacing: '-0.02em' }}>
-            No<span style={{ color: ACCENT }}>vala</span>
-          </div>
-          <button onClick={onMobileClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex' }}>
-            <X size={20}/>
-          </button>
-        </div>
-
-        {/* Mobile nav */}
-        <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 12px', scrollbarWidth: 'none' }}>
-          {APP_GROUPS.map(group => (
-            <div key={group.label} style={{ marginBottom: 4 }}>
-              <div style={{ fontSize: 9, fontWeight: 700, color: '#475569', letterSpacing: '0.18em', textTransform: 'uppercase', padding: '12px 10px 6px' }}>
-                {group.label}
-              </div>
-              {group.items.map(item => {
-                const Icon     = item.icon;
-                const isActive = location.pathname === item.path ||
-                  (item.path !== '/' && location.pathname.startsWith(item.path));
-                return (
-                  <div
-                    key={item.path}
-                    onClick={() => goTo(item.path)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, cursor: 'pointer', marginBottom: 2, background: isActive ? 'rgba(10,185,138,0.12)' : 'transparent', borderLeft: `3px solid ${isActive ? ACCENT : 'transparent'}`, transition: 'all 0.15s' }}
-                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-                  >
-                    <Icon size={18} color={isActive ? ACCENT : '#64748B'} strokeWidth={isActive ? 2.5 : 1.8}/>
-                    <span style={{ fontSize: 13.5, fontWeight: isActive ? 600 : 400, color: isActive ? ACCENT : '#94A3B8' }}>
-                      {item.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
-
-        {/* Mobile sign out */}
-        <div style={{ padding: '12px 16px 28px' }}>
-          <button
+          <div
             onClick={onLogout}
-            style={{ width: '100%', padding: '10px', borderRadius: 10, background: 'transparent', border: '1px solid rgba(255,255,255,0.07)', color: '#64748B', cursor: 'pointer', fontSize: 13, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#EF4444'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748B'; }}
+            onMouseEnter={() => setHovItem('logout')}
+            onMouseLeave={() => setHovItem(null)}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '10px 8px', borderRadius: 10, cursor: 'pointer', width: 56, marginTop: 'auto', background: hovItem === 'logout' ? 'rgba(239,68,68,0.06)' : 'transparent', transition: 'all 0.15s' }}
           >
-            <LogOut size={15}/> Sign out
-          </button>
-        </div>
-      </div>
+            <LogOut size={20} color={hovItem === 'logout' ? '#EF4444' : '#94A3B8'} strokeWidth={1.8} />
+            <span style={{ fontSize: 9, fontWeight: 500, color: hovItem === 'logout' ? '#EF4444' : '#94A3B8', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Out</span>
+          </div>
+        </aside>
+      )}
 
-      {/* ── Flyout panels (desktop only) ─────────────────── */}
-      {flyout === 'create' && (
+      {/* ── Mobile drawer ── */}
+      {isMobile && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: 280, height: '100vh', background: 'linear-gradient(180deg,#0F172A 0%,#0D1526 100%)', zIndex: 50, transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)', display: 'flex', flexDirection: 'column', fontFamily: FONT, boxShadow: '4px 0 32px rgba(0,0,0,0.3)' }}>
+
+          <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#F1F5F9', letterSpacing: '-0.02em' }}>
+              No<span style={{ color: ACCENT }}>vala</span>
+            </div>
+            <button onClick={onMobileClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex' }}>
+              <X size={20} />
+            </button>
+          </div>
+
+          <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 12px', scrollbarWidth: 'none' }}>
+            {APP_GROUPS.map(group => (
+              <div key={group.label} style={{ marginBottom: 4 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: '#475569', letterSpacing: '0.18em', textTransform: 'uppercase', padding: '12px 10px 6px' }}>
+                  {group.label}
+                </div>
+                {group.items.map(item => {
+                  const Icon     = item.icon;
+                  const isActive = location.pathname === item.path ||
+                    (item.path !== '/' && location.pathname.startsWith(item.path));
+                  return (
+                    <div
+                      key={item.path}
+                      onClick={() => goTo(item.path)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, cursor: 'pointer', marginBottom: 2, background: isActive ? 'rgba(10,185,138,0.12)' : 'transparent', borderLeft: `3px solid ${isActive ? ACCENT : 'transparent'}`, transition: 'all 0.15s' }}
+                      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                      onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <Icon size={18} color={isActive ? ACCENT : '#64748B'} strokeWidth={isActive ? 2.5 : 1.8} />
+                      <span style={{ fontSize: 13.5, fontWeight: isActive ? 600 : 400, color: isActive ? ACCENT : '#94A3B8' }}>
+                        {item.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </nav>
+
+          <div style={{ padding: '12px 16px 28px' }}>
+            <button
+              onClick={onLogout}
+              style={{ width: '100%', padding: '10px', borderRadius: 10, background: 'transparent', border: '1px solid rgba(255,255,255,0.07)', color: '#64748B', cursor: 'pointer', fontSize: 13, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#EF4444'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748B'; }}
+            >
+              <LogOut size={15} /> Sign out
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Flyout panels (desktop only) ── */}
+      {!isMobile && flyout === 'create' && (
         <FlyoutPanel title="Quick Create" onClose={() => setFlyout(null)}>
           <div style={{ padding: '12px 16px' }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Create New</div>
@@ -321,24 +256,24 @@ useEffect(() => {
                 onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, flexShrink: 0 }}/>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, flexShrink: 0 }} />
                 <span style={{ fontSize: 13, color: '#334155', fontWeight: 500 }}>{item.label}</span>
-                <ChevronRight size={13} color="#CBD5E1" style={{ marginLeft: 'auto' }}/>
+                <ChevronRight size={13} color="#CBD5E1" style={{ marginLeft: 'auto' }} />
               </div>
             ))}
           </div>
         </FlyoutPanel>
       )}
 
-      {flyout === 'reports' && (
+      {!isMobile && flyout === 'reports' && (
         <FlyoutPanel title="Reports" onClose={() => setFlyout(null)}>
           <div style={{ padding: '12px 16px' }}>
             {[
-              { label: 'Financial Reports',  path: '/reports'        },
-              { label: 'Variance Reports',   path: '/variance'       },
-              { label: 'Ledger View',        path: '/ledger'         },
-              { label: 'Reconciliation',     path: '/reconciliation' },
-              { label: 'Smart Search',       path: '/search'         },
+              { label: 'Financial Reports', path: '/reports'        },
+              { label: 'Variance Reports',  path: '/variance'       },
+              { label: 'Ledger View',       path: '/ledger'         },
+              { label: 'Reconciliation',    path: '/reconciliation' },
+              { label: 'Smart Search',      path: '/search'         },
             ].map(item => (
               <div
                 key={item.label}
@@ -348,14 +283,14 @@ useEffect(() => {
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
                 <span style={{ fontSize: 13, color: '#334155', fontWeight: 500, flex: 1 }}>{item.label}</span>
-                <ChevronRight size={13} color="#CBD5E1"/>
+                <ChevronRight size={13} color="#CBD5E1" />
               </div>
             ))}
           </div>
         </FlyoutPanel>
       )}
 
-      {flyout === 'apps' && (
+      {!isMobile && flyout === 'apps' && (
         <FlyoutPanel title="All Apps" onClose={() => setFlyout(null)}>
           <div style={{ padding: '8px 12px' }}>
             {APP_GROUPS.map(group => (
@@ -376,12 +311,12 @@ useEffect(() => {
                       onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                     >
                       <div style={{ width: 28, height: 28, borderRadius: 7, background: `${group.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Icon size={14} color={isActive ? ACCENT : group.color}/>
+                        <Icon size={14} color={isActive ? ACCENT : group.color} />
                       </div>
                       <span style={{ fontSize: 13, color: isActive ? ACCENT : '#334155', fontWeight: isActive ? 600 : 400, flex: 1 }}>
                         {item.label}
                       </span>
-                      {isActive && <div style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT }}/>}
+                      {isActive && <div style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT }} />}
                     </div>
                   );
                 })}

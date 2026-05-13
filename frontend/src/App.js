@@ -42,32 +42,61 @@ const ACCENT = '#0AB98A';
 
 function AppLayout({ onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#F8FAFC', fontFamily: "'Inter', -apple-system, sans-serif" }}>
+    <div style={{
+      display:    'flex',
+      flexDirection: 'column',
+      height:     '100vh',
+      overflow:   'hidden',
+      background: '#F8FAFC',
+      fontFamily: "'Inter', -apple-system, sans-serif",
+    }}>
 
       {/* Top header bar */}
-      <TopBar onLogout={onLogout} onMobileMenu={() => setMobileMenuOpen(o => !o)} />
+      <TopBar
+        onLogout={onLogout}
+        onMobileMenu={() => setMobileMenuOpen(o => !o)}
+      />
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
         {/* Sidebar */}
-        <Sidebar
+       <Sidebar
           onLogout={onLogout}
           mobileOpen={mobileMenuOpen}
           onMobileClose={() => setMobileMenuOpen(false)}
         />
 
         {/* Mobile overlay */}
-        {mobileMenuOpen && (
+        {mobileMenuOpen && isMobile && (
           <div
             onClick={() => setMobileMenuOpen(false)}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 39, backdropFilter: 'blur(2px)' }}
+            style={{
+              position:   'fixed',
+              inset:      0,
+              background: 'rgba(0,0,0,0.4)',
+              zIndex:     39,
+              backdropFilter: 'blur(2px)',
+            }}
           />
         )}
 
-        {/* Page content */}
-        <main style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
+        {/* Page content — marginLeft only on desktop */}
+        <main style={{
+          flex:       1,
+          overflowY:  'auto',
+          position:   'relative',
+          marginLeft: isMobile ? 0 : 72,
+          minWidth:   0,
+        }}>
           <Routes>
             <Route path="/"               element={<Dashboard />}          />
             <Route path="/documents"      element={<Documents />}          />
