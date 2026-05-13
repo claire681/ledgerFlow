@@ -5,9 +5,9 @@ import {
 } from 'recharts';
 import {
   ArrowUp, ArrowDown, FileText, AlertTriangle,
-  Download, RefreshCw, ArrowRight, Sparkles,
-  Upload, Receipt, TrendingUp, Brain,
-  Mail, Clock, CheckCircle, Settings, X,
+  Download, RefreshCw, ArrowRight, MessageCircle,
+  Upload, Receipt, TrendingUp,
+  Mail, Clock, CheckCircle, Settings, X, Zap,
 } from 'lucide-react';
 import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
@@ -58,6 +58,11 @@ const TIMEZONES = [
 
 const BRIEFING_HOURS = ["05:00","06:00","07:00","08:00","09:00","10:00","11:00","12:00"];
 
+const HOUR_LABELS = {
+  "05:00":"5:00 AM","06:00":"6:00 AM","07:00":"7:00 AM","08:00":"8:00 AM",
+  "09:00":"9:00 AM","10:00":"10:00 AM","11:00":"11:00 AM","12:00":"12:00 PM",
+};
+
 // ── Briefing Settings Modal ───────────────────────────────────
 function BriefingSettingsModal({ settings, onClose, onSave }) {
   const [enabled,  setEnabled]  = useState(settings?.briefing_enabled  ?? true);
@@ -70,7 +75,8 @@ function BriefingSettingsModal({ settings, onClose, onSave }) {
     setSaving(true); setError('');
     try {
       const res  = await fetch(`${BASE}/briefing/settings`, {
-        method:'POST', headers:{ Authorization:`Bearer ${getToken()}`, 'Content-Type':'application/json' },
+        method:'POST',
+        headers:{ Authorization:`Bearer ${getToken()}`, 'Content-Type':'application/json' },
         body:JSON.stringify({ briefing_enabled:enabled, briefing_time:time, briefing_timezone:timezone }),
       });
       const data = await res.json();
@@ -80,7 +86,7 @@ function BriefingSettingsModal({ settings, onClose, onSave }) {
     finally { setSaving(false); }
   };
 
-  const selectStyle = { width:'100%', padding:'9px 12px', background:L.pageBg, border:`1px solid ${L.border}`, borderRadius:L.radiusSm, color:L.text, fontSize:13, fontFamily:L.font, outline:'none', boxSizing:'border-box' };
+  const sel = { width:'100%', padding:'9px 12px', background:L.pageBg, border:`1px solid ${L.border}`, borderRadius:L.radiusSm, color:L.text, fontSize:13, fontFamily:L.font, outline:'none', boxSizing:'border-box' };
 
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(15,23,42,0.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2000, backdropFilter:'blur(4px)', padding:'16px' }}>
@@ -97,7 +103,7 @@ function BriefingSettingsModal({ settings, onClose, onSave }) {
         <div style={{ padding:24, display:'flex', flexDirection:'column', gap:18 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 16px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}` }}>
             <div>
-              <div style={{ fontSize:13, fontWeight:600, color:L.text }}>Daily AI Briefing</div>
+              <div style={{ fontSize:13, fontWeight:600, color:L.text }}>Daily Financial Briefing</div>
               <div style={{ fontSize:11, color:L.textMuted, marginTop:2 }}>Receive a morning summary of your finances</div>
             </div>
             <div onClick={() => setEnabled(e => !e)} style={{ width:44, height:24, borderRadius:12, background:enabled?ACCENT:'#E2E8F0', position:'relative', cursor:'pointer', transition:'background 0.2s', flexShrink:0 }}>
@@ -106,20 +112,20 @@ function BriefingSettingsModal({ settings, onClose, onSave }) {
           </div>
           <div>
             <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Delivery Time</div>
-            <select value={time} onChange={e => setTime(e.target.value)} style={selectStyle}>
-              {BRIEFING_HOURS.map(h => <option key={h} value={h}>{h === "05:00" ? "5:00 AM" : h === "06:00" ? "6:00 AM" : h === "07:00" ? "7:00 AM" : h === "08:00" ? "8:00 AM" : h === "09:00" ? "9:00 AM" : h === "10:00" ? "10:00 AM" : h === "11:00" ? "11:00 AM" : "12:00 PM"}</option>)}
+            <select value={time} onChange={e => setTime(e.target.value)} style={sel}>
+              {BRIEFING_HOURS.map(h => <option key={h} value={h}>{HOUR_LABELS[h]}</option>)}
             </select>
           </div>
           <div>
             <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Your Time Zone</div>
-            <select value={timezone} onChange={e => setTimezone(e.target.value)} style={selectStyle}>
+            <select value={timezone} onChange={e => setTimezone(e.target.value)} style={sel}>
               {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz.replace('_',' ')}</option>)}
             </select>
           </div>
           {error && <div style={{ padding:'10px 14px', borderRadius:L.radiusSm, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', color:'#EF4444', fontSize:12 }}>{error}</div>}
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={onClose} style={{ flex:1, padding:'10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:13, fontFamily:L.font }}>Cancel</button>
-            <button onClick={handleSave} disabled={saving} style={{ flex:1, padding:'10px', borderRadius:L.radiusSm, background:saving?L.textFaint:ACCENT, color:'#fff', border:'none', cursor:saving?'not-allowed':'pointer', fontSize:13, fontWeight:600, fontFamily:L.font, boxShadow:saving?'none':'0 4px 12px rgba(10,185,138,0.3)' }}>
+            <button onClick={handleSave} disabled={saving} style={{ flex:1, padding:'10px', borderRadius:L.radiusSm, background:saving?L.textFaint:ACCENT, color:'#fff', border:'none', cursor:saving?'not-allowed':'pointer', fontSize:13, fontWeight:600, fontFamily:L.font }}>
               {saving ? 'Saving...' : 'Save Settings'}
             </button>
           </div>
@@ -165,7 +171,7 @@ function BriefingCard({ onAskWithData }) {
 
   return (
     <>
-      <div style={{ ...card, padding:isMobile?'16px':'20px 24px', marginBottom:20, border:`1px solid rgba(10,185,138,0.2)`, background:'linear-gradient(135deg, rgba(10,185,138,0.04) 0%, rgba(14,165,233,0.04) 100%)' }}>
+      <div style={{ ...card, padding:isMobile?'16px':'20px 24px', marginBottom:20, border:`1px solid rgba(10,185,138,0.2)`, background:'linear-gradient(135deg,rgba(10,185,138,0.04) 0%,rgba(14,165,233,0.04) 100%)' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:16 }}>
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
             <div style={{ width:42, height:42, borderRadius:12, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 12px rgba(10,185,138,0.3)', flexShrink:0 }}>
@@ -173,7 +179,7 @@ function BriefingCard({ onAskWithData }) {
             </div>
             <div>
               <div style={{ fontSize:15, fontWeight:700, color:L.text }}>Morning Briefing</div>
-              <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>AI sends a daily financial summary</div>
+              <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>Daily financial summary delivered to your inbox</div>
             </div>
           </div>
           <button onClick={() => setShowSettings(true)} style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11, fontFamily:L.font }}>
@@ -202,10 +208,10 @@ function BriefingCard({ onAskWithData }) {
 
         <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr 1fr':'repeat(auto-fill, minmax(160px,1fr))', gap:8, marginBottom:16 }}>
           {[
-            { emoji:'🚨', label:'Overdue invoices' },
-            { emoji:'💰', label:'30-day cash flow' },
-            { emoji:'📊', label:'Spending summary' },
-            { emoji:'📋', label:'Documents to review' },
+            { emoji:'🚨', label:'Overdue invoices'     },
+            { emoji:'💰', label:'30-day cash flow'     },
+            { emoji:'📊', label:'Spending summary'     },
+            { emoji:'📋', label:'Documents to review'  },
           ].map(item => (
             <div key={item.label} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 10px', borderRadius:L.radiusSm, background:'#fff', border:`1px solid ${L.border}`, fontSize:11, color:L.textSub }}>
               <span>{item.emoji}</span> {item.label}
@@ -226,13 +232,13 @@ function BriefingCard({ onAskWithData }) {
           </button>
           <button onClick={() => onAskWithData('Give me a complete financial briefing. What problems do you see and what should I do today?')}
             style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'10px 16px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.08)', border:'1px solid rgba(10,185,138,0.2)', color:ACCENT, cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:L.font }}>
-            <Sparkles size={13}/> Preview in AI
+            <MessageCircle size={13}/> Ask Novala Assistant
           </button>
         </div>
       </div>
 
       {showSettings && (
-        <BriefingSettingsModal settings={bSettings} onClose={() => setShowSettings(false)} onSave={(data) => { setBSettings(prev => ({ ...prev, ...data })); }}/>
+        <BriefingSettingsModal settings={bSettings} onClose={() => setShowSettings(false)} onSave={(data) => setBSettings(prev => ({ ...prev, ...data }))}/>
       )}
     </>
   );
@@ -252,7 +258,7 @@ function EmptyState({ icon: Icon, title, description, action, onAction, onAsk, a
         )}
         {onAsk && (
           <button onClick={onAsk} style={{ padding:'7px 16px', borderRadius:L.radiusSm, background:L.accentSoft, color:L.accent, border:`1px solid ${L.accentBorder}`, cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font, display:'flex', alignItems:'center', gap:5 }}>
-            <Sparkles size={11}/>{askLabel || 'Ask AI'}
+            <MessageCircle size={11}/>{askLabel || 'Ask Novala Assistant'}
           </button>
         )}
       </div>
@@ -262,7 +268,9 @@ function EmptyState({ icon: Icon, title, description, action, onAction, onAsk, a
 
 function MetricCard({ label, value, sub, color, icon: Icon, loading, onClick, isEmpty, emptyText }) {
   return (
-    <div onClick={onClick} style={{ ...card, padding:'16px', cursor:onClick?'pointer':'default', transition:'all 0.2s', position:'relative', overflow:'hidden' }}>
+    <div onClick={onClick} style={{ ...card, padding:'16px', cursor:onClick?'pointer':'default', transition:'all 0.2s', position:'relative', overflow:'hidden' }}
+      onMouseEnter={e => { if(onClick) e.currentTarget.style.boxShadow='0 4px 20px rgba(10,185,138,0.1)'; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow=''; }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
         <div style={{ flex:1, minWidth:0 }}>
           <div style={{ fontSize:9, fontWeight:700, color:L.textMuted, letterSpacing:'0.12em', textTransform:'uppercase', marginBottom:8 }}>{label}</div>
@@ -284,7 +292,7 @@ function MetricCard({ label, value, sub, color, icon: Icon, loading, onClick, is
       </div>
       {onClick && (
         <div style={{ fontSize:9, color:L.accent, marginTop:10, display:'flex', alignItems:'center', gap:4, borderTop:`1px solid ${L.pageBg}`, paddingTop:8 }}>
-          <Sparkles size={9}/>Ask AI
+          <MessageCircle size={9}/> Ask Novala Assistant
         </div>
       )}
     </div>
@@ -297,24 +305,21 @@ export default function Dashboard() {
   const [insights,    setInsights]    = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [companyName, setCompanyName] = useState('');
+  const [userName,    setUserName]    = useState('');
   const [userEmail,   setUserEmail]   = useState('');
   const [success,     setSuccess]     = useState('');
   const [briefing,    setBriefing]    = useState(null);
   const [trialInfo,   setTrialInfo]   = useState(null);
-
-  // ── Welcome banner state ──────────────────────────────────
   const [showWelcome, setShowWelcome] = useState(false);
 
   const { setPageContext, askAndOpen } = useAI();
   const statsRef = useRef(null);
   const isMobile = useIsMobile();
 
-  // ── Check for post-onboarding welcome flag ────────────────
   useEffect(() => {
     if (localStorage.getItem('novala_just_onboarded') === 'true') {
       setShowWelcome(true);
       localStorage.removeItem('novala_just_onboarded');
-      // Auto-hide after 10 seconds
       setTimeout(() => setShowWelcome(false), 10000);
     }
   }, []);
@@ -328,36 +333,51 @@ export default function Dashboard() {
       const sData  = s.data || {};
       const tData  = Array.isArray(t.data) ? t.data : [];
       setStats(sData);
-      setTxns(tData.slice(0, 8));
+      setTxns(tData.slice(0,8));
       statsRef.current = sData;
 
-      let fetchedName = '';
-      try { const profile = await getCompanyProfile(); fetchedName = profile.data?.company_name || ''; setCompanyName(fetchedName); }
-      catch { setCompanyName(''); }
-
-      const email = localStorage.getItem('user_email') || '';
+      // ── Get user's real name ──────────────────────────────
+      const email     = localStorage.getItem('user_email') || '';
+      const storedName = localStorage.getItem('user_name') || '';
       setUserEmail(email);
+
+      let fetchedName  = '';
+      let fetchedCompany = '';
+      try {
+        const profile  = await getCompanyProfile();
+        fetchedCompany = profile.data?.company_name || '';
+        // Try full_name first, then first_name, then company name
+        fetchedName    = profile.data?.full_name || profile.data?.first_name || storedName || '';
+        setCompanyName(fetchedCompany);
+        setUserName(fetchedName);
+        // Cache for future use
+        if (fetchedName) localStorage.setItem('user_name', fetchedName);
+      } catch {
+        setCompanyName('');
+        setUserName(storedName);
+      }
 
       try { const ins = await getAIInsights(); setInsights(ins.data?.insights || []); }
       catch { setInsights([]); }
 
-     try {
+      try {
         const tr = await fetch(`${BASE}/billing/status`, { headers:{ Authorization:`Bearer ${getToken()}` } });
         if (tr.ok) {
-          const trData = await tr.json();
+          const trData  = await tr.json();
           const daysLeft = trData.trial_ends_at
             ? Math.max(0, Math.ceil((new Date(trData.trial_ends_at) - new Date()) / (1000*60*60*24)))
             : 14;
           setTrialInfo({ ...trData, daysLeft });
         }
       } catch {}
+
       const revenue  = sData?.total_revenue  || 0;
       const expenses = sData?.total_expenses || 0;
       const net      = revenue - expenses;
       const docs     = sData?.docs_processed || 0;
 
       setPageContext('dashboard', {
-        page:'dashboard', company_name:fetchedName,
+        page:'dashboard', company_name:fetchedCompany,
         total_revenue:revenue, total_expenses:expenses, net_profit:net,
         docs_processed:docs, uncategorized:sData?.uncategorized||0,
         recent_txns:tData.slice(0,5),
@@ -379,7 +399,7 @@ export default function Dashboard() {
       const expenses = s.total_expenses || 0;
       const net      = revenue - expenses;
       const docs     = s.docs_processed || 0;
-      const enriched = `${question}\n\nDASHBOARD DATA:\n- Revenue: $${revenue.toFixed(2)}\n- Expenses: $${expenses.toFixed(2)}\n- Net profit: $${net.toFixed(2)}\n- Documents: ${docs}\n- Estimated tax (15%): $${(net * 0.15).toFixed(2)}`;
+      const enriched = `${question}\n\nDASHBOARD DATA:\n- Revenue: $${revenue.toFixed(2)}\n- Expenses: $${expenses.toFixed(2)}\n- Net profit: $${net.toFixed(2)}\n- Documents: ${docs}\n- Estimated tax (15%): $${(net*0.15).toFixed(2)}`;
       return askAndOpen(enriched);
     }
     return askAndOpen(question);
@@ -410,80 +430,72 @@ export default function Dashboard() {
 
   const pieData = (stats?.expense_breakdown || []).slice(0,6).map(b => ({ name:b.category, value:b.total }));
 
-  const hour        = new Date().getHours();
-  const greeting    = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const firstName   = companyName || (userEmail ? userEmail.split('@')[0].split('.')[0] : '');
-  const displayName = firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1) : '';
-  const padding     = isMobile ? '16px' : '24px 28px';
+  const hour    = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+  // ── Display name logic ────────────────────────────────────
+  // Priority: full name > company name > first part of email
+  const displayName = userName
+    ? userName.charAt(0).toUpperCase() + userName.slice(1)
+    : companyName
+    ? companyName
+    : '';
+
+  const padding = isMobile ? '16px' : '24px 28px';
 
   return (
     <div style={page}>
       <style>{`
         @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.7;transform:scale(0.98)} }
         @keyframes welcomeIn { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes welcomeOut { from{opacity:1;transform:translateY(0)} to{opacity:0;transform:translateY(-12px)} }
       `}</style>
 
       {/* ── Welcome Banner ── */}
       {showWelcome && (
-        <div style={{
-          margin:      isMobile ? '12px 16px 0' : '16px 28px 0',
-          padding:     '16px 20px',
-          borderRadius: 14,
-          background:  'linear-gradient(135deg, rgba(10,185,138,0.1) 0%, rgba(14,165,233,0.08) 100%)',
-          border:      '1px solid rgba(10,185,138,0.25)',
-          display:     'flex',
-          alignItems:  'center',
-          justifyContent: 'space-between',
-          gap:         12,
-          animation:   'welcomeIn 0.5s ease',
-          boxShadow:   '0 4px 20px rgba(10,185,138,0.12)',
-        }}>
+        <div style={{ margin:isMobile?'12px 16px 0':'16px 28px 0', padding:'16px 20px', borderRadius:14, background:'linear-gradient(135deg,rgba(10,185,138,0.1) 0%,rgba(14,165,233,0.08) 100%)', border:'1px solid rgba(10,185,138,0.25)', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, animation:'welcomeIn 0.5s ease', boxShadow:'0 4px 20px rgba(10,185,138,0.12)' }}>
           <div style={{ display:'flex', alignItems:'center', gap:14 }}>
             <span style={{ fontSize:32, flexShrink:0 }}>🎉</span>
             <div>
-              <div style={{ fontSize: isMobile ? 14 : 16, fontWeight:700, color:L.text, marginBottom:3 }}>
-                Welcome to Novala{companyName ? `, ${companyName}` : ''}!
+              <div style={{ fontSize:isMobile?14:16, fontWeight:700, color:L.text, marginBottom:3 }}>
+                Welcome to Novala{displayName ? `, ${displayName}` : ''}!
               </div>
-              <div style={{ fontSize: isMobile ? 12 : 13, color:L.textMuted, lineHeight:1.5 }}>
+              <div style={{ fontSize:isMobile?12:13, color:L.textMuted, lineHeight:1.5 }}>
                 Your account is ready. Upload your first document to start tracking finances automatically.
               </div>
               {!isMobile && (
                 <div style={{ display:'flex', gap:8, marginTop:10 }}>
-                  <button onClick={() => window.location.href = '/documents'}
-                    style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 14px', borderRadius:L.radiusSm, background:ACCENT, color:'#fff', border:'none', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font, boxShadow:'0 2px 8px rgba(10,185,138,0.3)' }}>
+                  <button onClick={() => window.location.href='/documents'}
+                    style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 14px', borderRadius:L.radiusSm, background:ACCENT, color:'#fff', border:'none', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font }}>
                     <Upload size={12}/> Upload Document
                   </button>
                   <button onClick={() => askAndOpen('I just finished setting up Novala. What should I do first to get the most out of it?')}
                     style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 14px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.08)', border:'1px solid rgba(10,185,138,0.2)', color:ACCENT, cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font }}>
-                    <Sparkles size={12}/> Ask AI what to do first
+                    <MessageCircle size={12}/> Ask Novala Assistant
                   </button>
                 </div>
               )}
             </div>
           </div>
-          <button onClick={() => setShowWelcome(false)}
-            style={{ background:'none', border:'none', cursor:'pointer', color:L.textMuted, display:'flex', padding:4, flexShrink:0 }}>
+          <button onClick={() => setShowWelcome(false)} style={{ background:'none', border:'none', cursor:'pointer', color:L.textMuted, display:'flex', padding:4, flexShrink:0 }}>
             <X size={16}/>
           </button>
         </div>
       )}
 
-      {/* Mobile welcome action buttons */}
       {showWelcome && isMobile && (
         <div style={{ display:'flex', gap:8, margin:'10px 16px 0', flexWrap:'wrap' }}>
-          <button onClick={() => window.location.href = '/documents'}
+          <button onClick={() => window.location.href='/documents'}
             style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'8px', borderRadius:L.radiusSm, background:ACCENT, color:'#fff', border:'none', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font }}>
             <Upload size={12}/> Upload Document
           </button>
           <button onClick={() => askAndOpen('I just finished setting up Novala. What should I do first?')}
             style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'8px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.08)', border:'1px solid rgba(10,185,138,0.2)', color:ACCENT, cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font }}>
-            <Sparkles size={12}/> Ask AI
+            <MessageCircle size={12}/> Ask Assistant
           </button>
         </div>
       )}
 
-      {/* ── Top bar ── */}
+      {/* ── Desktop Top Bar ── */}
       {!isMobile && (
         <div style={topBar}>
           <div>
@@ -498,16 +510,23 @@ export default function Dashboard() {
             </div>
           </div>
           <div style={{ display:'flex', gap:8 }}>
-            <button onClick={load} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:L.font }}>
+            <button onClick={load}
+              style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:L.font }}>
               <RefreshCw size={13}/> Refresh
             </button>
-            <button onClick={async () => { try { const t = await getTransactions({}); if (!t.data||t.data.length===0) { alert('No transactions to export yet.'); return; } generateReport(stats, t.data, companyName||'Novala'); } catch (err) { alert('Could not generate report: '+err.message); } }}
+            <button onClick={async () => {
+              try {
+                const t = await getTransactions({});
+                if (!t.data||t.data.length===0) { alert('No transactions to export yet.'); return; }
+                generateReport(stats, t.data, companyName||'Novala');
+              } catch (err) { alert('Could not generate report: '+err.message); }
+            }}
               style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:12, fontFamily:L.font, fontWeight:500 }}>
               <Download size={13}/> Export PDF
             </button>
             <button onClick={() => askWithData('Give me a complete summary of my business finances with revenue, expenses, net profit, and 3 specific recommendations.')}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:L.radiusSm, background:'linear-gradient(135deg, #0AB98A 0%, #0EA5E9 100%)', border:'none', color:'#FFFFFF', cursor:'pointer', fontSize:12, fontFamily:L.font, fontWeight:600, boxShadow:'0 2px 8px rgba(10,185,138,0.3)' }}>
-              <Sparkles size={13}/> Ask AI
+              style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:L.radiusSm, background:'linear-gradient(135deg,#0AB98A 0%,#0EA5E9 100%)', border:'none', color:'#FFFFFF', cursor:'pointer', fontSize:12, fontFamily:L.font, fontWeight:600, boxShadow:'0 2px 8px rgba(10,185,138,0.3)' }}>
+              <MessageCircle size={13}/> Ask Novala Assistant
             </button>
           </div>
         </div>
@@ -515,37 +534,26 @@ export default function Dashboard() {
 
       {/* ── Trial Banner ── */}
       {trialInfo && trialInfo.subscription_status !== 'active' && (
-        <div style={{
-          margin:      isMobile ? '12px 16px 0' : '16px 28px 0',
-          padding:     '12px 20px',
-          borderRadius: 12,
-          background:  trialInfo.daysLeft <= 3 ? 'rgba(239,68,68,0.08)' : 'linear-gradient(135deg,rgba(10,185,138,0.08),rgba(14,165,233,0.08))',
-          border:      `1px solid ${trialInfo.daysLeft <= 3 ? 'rgba(239,68,68,0.25)' : 'rgba(10,185,138,0.25)'}`,
-          display:     'flex',
-          alignItems:  'center',
-          justifyContent: 'space-between',
-          gap:         12,
-          flexWrap:    'wrap',
-        }}>
+        <div style={{ margin:isMobile?'12px 16px 0':'16px 28px 0', padding:'12px 20px', borderRadius:12, background:trialInfo.daysLeft<=3?'rgba(239,68,68,0.08)':'linear-gradient(135deg,rgba(10,185,138,0.08),rgba(14,165,233,0.08))', border:`1px solid ${trialInfo.daysLeft<=3?'rgba(239,68,68,0.25)':'rgba(10,185,138,0.25)'}`, display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, flexWrap:'wrap' }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <span style={{ fontSize:20 }}>{trialInfo.daysLeft <= 0 ? '🔒' : trialInfo.daysLeft <= 3 ? '⚠️' : '⏳'}</span>
+            <span style={{ fontSize:20 }}>{trialInfo.daysLeft<=0?'🔒':trialInfo.daysLeft<=3?'⚠️':'⏳'}</span>
             <div>
-              <div style={{ fontSize:13, fontWeight:700, color: trialInfo.daysLeft <= 3 ? '#EF4444' : L.text }}>
-                {trialInfo.daysLeft <= 0 ? 'Your free trial has ended' : `${trialInfo.daysLeft} day${trialInfo.daysLeft !== 1 ? 's' : ''} left in your free trial`}
+              <div style={{ fontSize:13, fontWeight:700, color:trialInfo.daysLeft<=3?'#EF4444':L.text }}>
+                {trialInfo.daysLeft<=0?'Your free trial has ended':`${trialInfo.daysLeft} day${trialInfo.daysLeft!==1?'s':''} left in your free trial`}
               </div>
               <div style={{ fontSize:11, color:L.textMuted, marginTop:2 }}>
-                {trialInfo.daysLeft <= 0 ? 'Upgrade now to continue using Novala' : 'Upgrade before your trial ends to keep full access'}
+                {trialInfo.daysLeft<=0?'Upgrade now to continue using Novala':'Upgrade before your trial ends to keep full access'}
               </div>
             </div>
           </div>
-          <button onClick={() => window.location.href = '/billing'}
-            style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:10, background: trialInfo.daysLeft <= 3 ? '#EF4444' : ACCENT, color:'#fff', border:'none', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font, flexShrink:0, boxShadow:`0 4px 12px ${trialInfo.daysLeft <= 3 ? 'rgba(239,68,68,0.3)' : 'rgba(10,185,138,0.3)'}` }}>
-            <Sparkles size={12}/> Upgrade Now
+          <button onClick={() => window.location.href='/billing'}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:10, background:trialInfo.daysLeft<=3?'#EF4444':ACCENT, color:'#fff', border:'none', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font, flexShrink:0 }}>
+            Upgrade Now
           </button>
         </div>
       )}
 
-      {/* ── Mobile header ── */}
+      {/* ── Mobile Header ── */}
       {isMobile && (
         <div style={{ padding:'16px', borderBottom:`1px solid ${L.border}`, background:'#fff' }}>
           <div style={{ fontSize:18, fontWeight:700, color:L.text, marginBottom:4 }}>
@@ -555,12 +563,13 @@ export default function Dashboard() {
             {hasData ? 'Your financial summary' : 'Welcome to Novala'}
           </div>
           <div style={{ display:'flex', gap:8 }}>
-            <button onClick={load} style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'8px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:L.font }}>
+            <button onClick={load}
+              style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'8px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:L.font }}>
               <RefreshCw size={13}/> Refresh
             </button>
             <button onClick={() => askWithData('Give me a complete summary of my business finances.')}
-              style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'8px', borderRadius:L.radiusSm, background:'linear-gradient(135deg, #0AB98A 0%, #0EA5E9 100%)', border:'none', color:'#FFFFFF', cursor:'pointer', fontSize:12, fontFamily:L.font, fontWeight:600 }}>
-              <Sparkles size={13}/> Ask AI
+              style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'8px', borderRadius:L.radiusSm, background:'linear-gradient(135deg,#0AB98A 0%,#0EA5E9 100%)', border:'none', color:'#FFFFFF', cursor:'pointer', fontSize:12, fontFamily:L.font, fontWeight:600 }}>
+              <MessageCircle size={13}/> Ask Assistant
             </button>
           </div>
         </div>
@@ -568,7 +577,7 @@ export default function Dashboard() {
 
       {success && (
         <div style={{ margin:isMobile?'12px 16px':'0 28px 16px', padding:'12px 16px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, fontSize:13, fontWeight:500, display:'flex', alignItems:'center', gap:8 }}>
-          <Sparkles size={14}/>{success}
+          <CheckCircle size={14}/>{success}
         </div>
       )}
 
@@ -576,67 +585,19 @@ export default function Dashboard() {
 
         <BriefingCard onAskWithData={askWithData}/>
 
-        {/* Money Brain */}
-        {briefing && (briefing.observations?.length > 0 || briefing.actions?.length > 0) && (
-          <div style={{ ...card, padding:isMobile?'16px':'20px 24px', marginBottom:20, border:`1px solid rgba(10,185,138,0.2)`, background:'linear-gradient(135deg, rgba(10,185,138,0.04) 0%, rgba(14,165,233,0.04) 100%)' }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                <div style={{ width:36, height:36, borderRadius:10, background:'linear-gradient(135deg, #0AB98A 0%, #0EA5E9 100%)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 8px rgba(10,185,138,0.3)', flexShrink:0 }}>
-                  <Brain size={18} color="#FFFFFF"/>
-                </div>
-                <div>
-                  <div style={{ fontSize:14, fontWeight:700, color:L.text }}>Novala Money Brain</div>
-                  <div style={{ fontSize:11, color:L.textMuted }}>Proactive financial intelligence</div>
-                </div>
-              </div>
-              <button onClick={() => askWithData('Give me a full financial briefing. What problems do you see and what should I do today?')}
-                style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:20, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
-                <Sparkles size={10}/> Briefing
-              </button>
-            </div>
-            {briefing.observations?.length > 0 && (
-              <div style={{ marginBottom:12 }}>
-                <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>What I noticed</div>
-                <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-                  {briefing.observations.map((obs,i) => (
-                    <div key={i} onClick={() => askWithData(`Tell me more about this: ${obs}`)}
-                      style={{ display:'flex', alignItems:'flex-start', gap:8, padding:'8px 12px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.06)', border:'1px solid rgba(10,185,138,0.12)', cursor:'pointer' }}>
-                      <div style={{ width:6, height:6, borderRadius:'50%', background:L.accent, flexShrink:0, marginTop:5 }}/>
-                      <span style={{ fontSize:12, color:L.textSub, lineHeight:1.5 }}>{obs}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {briefing.actions?.length > 0 && (
-              <div>
-                <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Recommended actions</div>
-                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                  {briefing.actions.map((action,i) => (
-                    <button key={i} onClick={() => askWithData(`Help me: ${action}`)}
-                      style={{ padding:'6px 14px', borderRadius:20, background:L.accent, color:'#FFFFFF', border:'none', cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font, display:'flex', alignItems:'center', gap:5, boxShadow:'0 2px 6px rgba(10,185,138,0.3)' }}>
-                      <ArrowRight size={10}/>{action}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Getting started */}
         {!loading && !hasData && (
-          <div style={{ ...card, padding:isMobile?'16px':'20px 24px', marginBottom:20, background:'linear-gradient(135deg, rgba(10,185,138,0.06) 0%, rgba(14,165,233,0.06) 100%)', border:`1px solid ${L.accentBorder}` }}>
+          <div style={{ ...card, padding:isMobile?'16px':'20px 24px', marginBottom:20, background:'linear-gradient(135deg,rgba(10,185,138,0.06) 0%,rgba(14,165,233,0.06) 100%)', border:`1px solid ${L.accentBorder}` }}>
             <div style={{ fontSize:15, fontWeight:700, color:L.text, marginBottom:6 }}>🚀 Get started with Novala</div>
             <div style={{ fontSize:13, color:L.textMuted, marginBottom:16, lineHeight:1.6 }}>Upload your first document to start tracking expenses, revenue, and taxes automatically.</div>
-            <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr 1fr':'repeat(auto-fill, minmax(180px,1fr))', gap:10 }}>
+            <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr 1fr':'repeat(auto-fill,minmax(180px,1fr))', gap:10 }}>
               {[
-                { icon:Upload,     label:'Upload document', sub:'Invoice or receipt',    path:'/documents', color:L.accent  },
-                { icon:Receipt,    label:'Scan receipt',    sub:'AI reads it instantly', path:'/receipts',  color:L.blue    },
-                { icon:TrendingUp, label:'Set budget',      sub:'Track spending',        path:'/budgets',   color:'#8B5CF6' },
-                { icon:Sparkles,   label:'Ask AI',          sub:'Financial advisor',     onClick:() => askAndOpen('I just joined Novala. What should I do first?'), color:'#F59E0B' },
+                { icon:Upload,         label:'Upload document',  sub:'Invoice or receipt',       path:'/documents',  color:L.accent  },
+                { icon:Receipt,        label:'Scan receipt',     sub:'Reads it instantly',       path:'/receipts',   color:L.blue    },
+                { icon:TrendingUp,     label:'Set budget',       sub:'Track spending',           path:'/budgets',    color:'#8B5CF6' },
+                { icon:MessageCircle,  label:'Ask Assistant',    sub:'Get financial guidance',   onClick:() => askAndOpen('I just joined Novala. What should I do first?'), color:'#F59E0B' },
               ].map(item => (
-                <button key={item.label} onClick={item.onClick||(() => window.location.href = item.path)}
+                <button key={item.label} onClick={item.onClick||(() => window.location.href=item.path)}
                   style={{ display:'flex', alignItems:'center', gap:10, padding:'12px', borderRadius:L.radiusSm, background:'#FFFFFF', border:`1px solid ${L.border}`, cursor:'pointer', fontFamily:L.font }}>
                   <div style={{ width:32, height:32, borderRadius:8, background:`${item.color}15`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                     <item.icon size={15} color={item.color}/>
@@ -653,19 +614,19 @@ export default function Dashboard() {
 
         {/* Metric cards */}
         <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(4,1fr)', gap:12, marginBottom:20 }}>
-          <MetricCard label="Documents" value={stats?.docs_processed??0} sub="Total uploaded" color={L.accent} icon={FileText} loading={loading} isEmpty={!loading&&!stats?.docs_processed} emptyText="Upload first doc" onClick={() => askWithData('How many documents have I uploaded and what was extracted?')}/>
-          <MetricCard label="Expenses" value={fmt(stats?.total_expenses)} sub="This period" color={L.red} icon={ArrowDown} loading={loading} isEmpty={!loading&&!stats?.total_expenses} emptyText="No expenses yet" onClick={() => askWithData('Break down my total expenses by category. Which costs the most?')}/>
-          <MetricCard label="Revenue" value={fmt(stats?.total_revenue)} sub="This period" color={L.accent} icon={ArrowUp} loading={loading} isEmpty={!loading&&!stats?.total_revenue} emptyText="No revenue yet" onClick={() => askWithData('Summarize my total revenue. Where is it coming from?')}/>
-          <MetricCard label="Net Position" value={fmt(net)} sub="Revenue minus expenses" color={net>=0?L.accent:L.red} icon={net>=0?ArrowUp:ArrowDown} loading={loading} isEmpty={!loading&&!hasData} emptyText="Add data to see" onClick={() => askWithData('What is my net financial position and how can I improve it?')}/>
+          <MetricCard label="Documents"    value={stats?.docs_processed??0}   sub="Total uploaded"        color={L.accent}              icon={FileText}                    loading={loading} isEmpty={!loading&&!stats?.docs_processed} emptyText="Upload first doc"   onClick={() => askWithData('How many documents have I uploaded and what was extracted?')}/>
+          <MetricCard label="Expenses"     value={fmt(stats?.total_expenses)} sub="This period"           color={L.red}                 icon={ArrowDown}                   loading={loading} isEmpty={!loading&&!stats?.total_expenses} emptyText="No expenses yet"    onClick={() => askWithData('Break down my total expenses by category. Which costs the most?')}/>
+          <MetricCard label="Revenue"      value={fmt(stats?.total_revenue)}  sub="This period"           color={L.accent}              icon={ArrowUp}                     loading={loading} isEmpty={!loading&&!stats?.total_revenue} emptyText="No revenue yet"      onClick={() => askWithData('Summarize my total revenue. Where is it coming from?')}/>
+          <MetricCard label="Net Position" value={fmt(net)}                   sub="Revenue minus expenses" color={net>=0?L.accent:L.red} icon={net>=0?ArrowUp:ArrowDown}   loading={loading} isEmpty={!loading&&!hasData} emptyText="Add data to see"              onClick={() => askWithData('What is my net financial position and how can I improve it?')}/>
         </div>
 
-        {/* AI Insights */}
+        {/* Smart Insights */}
         {insights.length > 0 && (
           <div style={{ marginBottom:20 }}>
             <div style={{ fontSize:13, fontWeight:700, color:L.text, marginBottom:10, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div style={{ display:'flex', alignItems:'center', gap:7 }}>
-                <Sparkles size={14} color={L.accent}/>
-                AI Insights
+                <Zap size={14} color={L.accent}/>
+                Smart Insights
                 {companyName && !isMobile && <span style={{ color:L.textMuted, fontWeight:400 }}>— for {companyName}</span>}
               </div>
               <button onClick={() => askWithData('Generate fresh financial insights for my business')}
@@ -673,12 +634,14 @@ export default function Dashboard() {
                 <RefreshCw size={10}/> Refresh
               </button>
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(auto-fill, minmax(260px,1fr))', gap:10 }}>
+            <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(auto-fill,minmax(260px,1fr))', gap:10 }}>
               {insights.map((ins,i) => {
                 const s = INSIGHT_STYLES[ins.type] || INSIGHT_STYLES.info;
                 return (
                   <div key={i} onClick={() => askWithData(ins.action||ins.title)}
-                    style={{ padding:'12px 14px', borderRadius:L.radiusSm, background:s.bg, border:`1px solid ${s.border}`, cursor:'pointer' }}>
+                    style={{ padding:'12px 14px', borderRadius:L.radiusSm, background:s.bg, border:`1px solid ${s.border}`, cursor:'pointer', transition:'transform 0.15s ease' }}
+                    onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
+                    onMouseLeave={e => e.currentTarget.style.transform='none'}>
                     <div style={{ fontSize:12, fontWeight:700, color:s.color, marginBottom:5 }}>{ins.title}</div>
                     <div style={{ fontSize:11, color:L.textMuted, lineHeight:1.6, marginBottom:6 }}>{ins.description}</div>
                     <div style={{ fontSize:10, color:s.color, fontWeight:600, display:'flex', alignItems:'center', gap:4 }}><ArrowRight size={10}/>{ins.action}</div>
@@ -699,7 +662,7 @@ export default function Dashboard() {
               </div>
               <button onClick={() => askWithData('Analyze my cash flow. Is my business growing or shrinking?')}
                 style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 10px', borderRadius:20, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:10, fontWeight:600, fontFamily:L.font }}>
-                <Sparkles size={9}/> Analyze
+                <MessageCircle size={9}/> Analyze
               </button>
             </div>
             {!hasData && (
@@ -722,7 +685,7 @@ export default function Dashboard() {
               </AreaChart>
             </ResponsiveContainer>
             <div style={{ display:'flex', gap:20, marginTop:12 }}>
-              {[{color:L.accent,label:'Income'},{color:L.red,label:'Expenses'}].map(l => (
+              {[{ color:L.accent, label:'Income' },{ color:L.red, label:'Expenses' }].map(l => (
                 <div key={l.label} style={{ display:'flex', alignItems:'center', gap:6 }}>
                   <div style={{ width:14, height:2, borderRadius:1, background:l.color }}/><span style={{ fontSize:11, color:L.textMuted }}>{l.label}</span>
                 </div>
@@ -739,12 +702,12 @@ export default function Dashboard() {
               {hasPie && (
                 <button onClick={() => askWithData('Which expense category costs me the most? How can I reduce it?')}
                   style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 10px', borderRadius:20, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:10, fontWeight:600, fontFamily:L.font }}>
-                  <Sparkles size={9}/> Analyze
+                  <MessageCircle size={9}/> Analyze
                 </button>
               )}
             </div>
             {!hasPie ? (
-              <EmptyState icon={Receipt} title="No expense categories yet" description="Upload receipts and invoices to see your spending breakdown" action="Upload document" onAction={() => window.location.href='/documents'} onAsk={() => askWithData('What expense categories should I be tracking?')} askLabel="Ask AI"/>
+              <EmptyState icon={Receipt} title="No expense categories yet" description="Upload receipts and invoices to see your spending breakdown" action="Upload document" onAction={() => window.location.href='/documents'} onAsk={() => askWithData('What expense categories should I be tracking?')}/>
             ) : (
               <>
                 <ResponsiveContainer width="100%" height={160}>
@@ -758,7 +721,9 @@ export default function Dashboard() {
                 <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:10 }}>
                   {pieData.slice(0,4).map((d,i) => (
                     <div key={d.name} onClick={() => askWithData(`Tell me about my ${d.name} expenses. How can I reduce this?`)}
-                      style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', padding:'4px 6px', borderRadius:6 }}>
+                      style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', padding:'4px 6px', borderRadius:6 }}
+                      onMouseEnter={e => e.currentTarget.style.background=L.pageBg}
+                      onMouseLeave={e => e.currentTarget.style.background='transparent'}>
                       <div style={{ width:9, height:9, borderRadius:2, flexShrink:0, background:PIE_COLORS[i%PIE_COLORS.length] }}/>
                       <span style={{ fontSize:11, color:L.textSub, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{d.name}</span>
                       <span style={{ fontSize:11, fontWeight:600, color:L.text, fontFamily:L.fontMono }}>{fmt(d.value)}</span>
@@ -782,7 +747,7 @@ export default function Dashboard() {
                 {hasTxns && !isMobile && (
                   <button onClick={() => askWithData('Analyze my recent transactions. Any unusual expenses?')}
                     style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:20, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
-                    <Sparkles size={10}/> Analyze
+                    <MessageCircle size={10}/> Analyze
                   </button>
                 )}
                 <button onClick={() => window.location.href='/transactions'}
@@ -803,7 +768,7 @@ export default function Dashboard() {
             {loading ? (
               <div style={{ padding:40, textAlign:'center', color:L.textMuted, fontSize:13 }}>Loading transactions...</div>
             ) : !hasTxns ? (
-              <EmptyState icon={TrendingUp} title="No transactions yet" description="Upload an invoice or receipt and AI will automatically create transactions" action="Upload document" onAction={() => window.location.href='/documents'} onAsk={() => askAndOpen('How do I add transactions to Novala?')} askLabel="How do I add transactions?"/>
+              <EmptyState icon={TrendingUp} title="No transactions yet" description="Upload an invoice or receipt and Novala will automatically create transactions" action="Upload document" onAction={() => window.location.href='/documents'} onAsk={() => askAndOpen('How do I add transactions to Novala?')} askLabel="How do I add transactions?"/>
             ) : isMobile ? (
               txns.map((t,i) => (
                 <div key={t.id} onClick={() => askWithData(`Tell me about: ${t.vendor} $${Math.abs(t.amount)} on ${t.txn_date}. Is it deductible?`)}
@@ -820,7 +785,7 @@ export default function Dashboard() {
             ) : (
               txns.map((t,i) => (
                 <div key={t.id} onClick={() => askWithData(`Tell me about: ${t.vendor} $${Math.abs(t.amount)} on ${t.txn_date}. Is it deductible?`)}
-                  style={{ display:'grid', gridTemplateColumns:'1fr 110px 130px 90px', padding:'12px 22px', borderBottom:i<txns.length-1?`1px solid ${L.pageBg}`:'none', alignItems:'center', cursor:'pointer' }}
+                  style={{ display:'grid', gridTemplateColumns:'1fr 110px 130px 90px', padding:'12px 22px', borderBottom:i<txns.length-1?`1px solid ${L.pageBg}`:'none', alignItems:'center', cursor:'pointer', transition:'background 0.1s' }}
                   onMouseEnter={e => e.currentTarget.style.background=L.pageBg}
                   onMouseLeave={e => e.currentTarget.style.background='transparent'}>
                   <div>
@@ -850,12 +815,12 @@ export default function Dashboard() {
           <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
             <div style={{ ...card, padding:'18px' }}>
               <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
-                <div style={{ width:34, height:34, borderRadius:10, background:'linear-gradient(135deg, #0AB98A 0%, #0EA5E9 100%)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, boxShadow:'0 2px 8px rgba(10,185,138,0.25)' }}>
-                  <Sparkles size={16} color="#FFFFFF"/>
+                <div style={{ width:34, height:34, borderRadius:10, background:'linear-gradient(135deg,#0AB98A 0%,#0EA5E9 100%)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, boxShadow:'0 2px 8px rgba(10,185,138,0.25)' }}>
+                  <MessageCircle size={16} color="#FFFFFF"/>
                 </div>
                 <div>
-                  <div style={{ fontSize:13, fontWeight:700, color:L.text }}>Talk to your finances</div>
-                  <div style={{ fontSize:11, color:L.textMuted }}>Ask anything in plain English</div>
+                  <div style={{ fontSize:13, fontWeight:700, color:L.text }}>Ask Novala Assistant</div>
+                  <div style={{ fontSize:11, color:L.textMuted }}>Ask anything about your finances</div>
                 </div>
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
@@ -868,7 +833,7 @@ export default function Dashboard() {
                   { q:'What should I focus on this week?',   icon:'🎯' },
                 ].map(item => (
                   <button key={item.q} onClick={() => askWithData(item.q)}
-                    style={{ padding:'8px 12px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}`, color:L.textSub, cursor:'pointer', fontSize:12, fontFamily:L.font, textAlign:'left', display:'flex', alignItems:'center', gap:8 }}
+                    style={{ padding:'8px 12px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}`, color:L.textSub, cursor:'pointer', fontSize:12, fontFamily:L.font, textAlign:'left', display:'flex', alignItems:'center', gap:8, transition:'all 0.15s' }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor=L.accentBorder; e.currentTarget.style.color=L.accent; e.currentTarget.style.background=L.accentSoft; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor=L.border; e.currentTarget.style.color=L.textSub; e.currentTarget.style.background=L.pageBg; }}>
                     <span style={{ fontSize:14 }}>{item.icon}</span>
@@ -885,7 +850,7 @@ export default function Dashboard() {
                 <AlertTriangle size={16} color="#F59E0B"/>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:12, fontWeight:700, color:'#F59E0B' }}>{stats.uncategorized} transactions need review</div>
-                  <div style={{ fontSize:11, color:L.textMuted, marginTop:2 }}>Click to ask AI for help</div>
+                  <div style={{ fontSize:11, color:L.textMuted, marginTop:2 }}>Click to ask for help categorizing</div>
                 </div>
                 <ArrowRight size={12} color="#F59E0B"/>
               </div>
@@ -895,19 +860,20 @@ export default function Dashboard() {
               <div style={{ ...card, padding:'14px 16px' }}>
                 <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>Business Profile</div>
                 <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                  <div style={{ width:36, height:36, borderRadius:10, background:'linear-gradient(135deg, #0AB98A 0%, #0EA5E9 100%)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:14, fontWeight:700, color:'#FFFFFF' }}>
-                    {(companyName||userEmail)[0].toUpperCase()}
+                  <div style={{ width:36, height:36, borderRadius:10, background:'linear-gradient(135deg,#0AB98A 0%,#0EA5E9 100%)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:14, fontWeight:700, color:'#FFFFFF' }}>
+                    {(userName||companyName||userEmail)[0].toUpperCase()}
                   </div>
                   <div>
-                    {companyName && <div style={{ fontSize:13, fontWeight:700, color:L.text }}>{companyName}</div>}
+                    {userName    && <div style={{ fontSize:13, fontWeight:700, color:L.text }}>{userName}</div>}
+                    {companyName && <div style={{ fontSize:12, color:L.textMuted }}>{companyName}</div>}
                     <div style={{ fontSize:11, color:L.textMuted }}>{userEmail}</div>
                   </div>
                 </div>
-                <button onClick={() => window.location.href='/company-profile'}
+                <button onClick={() => window.location.href='/settings'}
                   style={{ marginTop:10, width:'100%', padding:'7px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11, fontFamily:L.font }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor=L.accentBorder; e.currentTarget.style.color=L.accent; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor=L.border; e.currentTarget.style.color=L.textMuted; }}>
-                  Edit company profile →
+                  Edit profile →
                 </button>
               </div>
             )}
