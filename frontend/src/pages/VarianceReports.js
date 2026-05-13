@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   TrendingUp, TrendingDown, AlertTriangle,
-  CheckCircle, Download, Sparkles, ArrowRight,
-  BarChart2, RefreshCw, Target,
+  CheckCircle, Download, ArrowRight,
+  BarChart2, RefreshCw, Target, MessageCircle,
 } from 'lucide-react';
 import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
@@ -22,10 +22,7 @@ function useIsMobile() {
   return isMobile;
 }
 
-const fmt = (n) => new Intl.NumberFormat('en-US', {
-  style:'currency', currency:'USD', minimumFractionDigits:2,
-}).format(Number(n) || 0);
-
+const fmt    = (n) => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', minimumFractionDigits:2 }).format(Number(n)||0);
 const fmtPct = (n) => `${n > 0 ? '+' : ''}${Number(n).toFixed(1)}%`;
 
 const PERIODS = [
@@ -45,10 +42,7 @@ function getDateRange(period) {
     case '3months': start.setMonth(now.getMonth()-3); break;
     default:        start.setDate(1);
   }
-  return {
-    start: start.toISOString().split('T')[0],
-    end:   now.toISOString().split('T')[0],
-  };
+  return { start: start.toISOString().split('T')[0], end: now.toISOString().split('T')[0] };
 }
 
 function getPrevDateRange(period) {
@@ -77,14 +71,11 @@ function getPrevDateRange(period) {
       start.setMonth(now.getMonth()-1, 1);
       end.setDate(0);
   }
-  return {
-    start: start.toISOString().split('T')[0],
-    end:   end.toISOString().split('T')[0],
-  };
+  return { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] };
 }
 
 function VarianceBar({ actual, budget, color }) {
-  const pct = budget > 0 ? Math.min((actual/budget)*100, 150) : 0;
+  const pct  = budget > 0 ? Math.min((actual/budget)*100, 150) : 0;
   const over = pct > 100;
   return (
     <div style={{ marginTop:6 }}>
@@ -110,53 +101,40 @@ export default function VarianceReports() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    setPageContext('variance', {
-  page: 'variance',
-  period: period,
-  totalBudget: totalBudget,
-  totalActual: totalActual,
-  totalVariance: totalVariance,
-  overBudgetCount: overBudget,
-  categoriesOverBudget: allBudgetRows.filter(r=>r.status==='over').map(r=>r.category),
-});
     const load = async () => {
       try {
         const [tRes, bRes] = await Promise.all([getTransactions({}), getBudgets()]);
-        setTxns(Array.isArray(tRes.data)  ? tRes.data  : []);
-        setBudgets(Array.isArray(bRes.data) ? bRes.data : []);
+        setTxns(Array.isArray(tRes.data)    ? tRes.data    : []);
+        setBudgets(Array.isArray(bRes.data) ? bRes.data    : []);
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     };
     load();
   }, []);
 
-  const { start, end }         = getDateRange(period);
-  const { start:ps, end:pe }   = getPrevDateRange(period);
-  const periodLabel            = PERIODS.find(p => p.value === period)?.label || '';
+  useEffect(() => {
+    setPageContext('variance', {
+      page: 'variance', period,
+      totalBudget, totalActual, totalVariance,
+      overBudgetCount: overBudget,
+    });
+  }, [txns, budgets, period]);
 
-  // Current period transactions
+  const { start, end }       = getDateRange(period);
+  const { start:ps, end:pe } = getPrevDateRange(period);
+  const periodLabel          = PERIODS.find(p => p.value === period)?.label || '';
+
   const currentTxns = txns.filter(t => t.txn_date >= start && t.txn_date <= end);
   const prevTxns    = txns.filter(t => t.txn_date >= ps    && t.txn_date <= pe);
 
-  // Expense by category — current period
   const currentExpByCategory = currentTxns
     .filter(t => t.txn_type === 'expense')
-    .reduce((acc,t) => {
-      const cat = t.category || 'Uncategorized';
-      acc[cat]  = (acc[cat]||0) + Math.abs(t.amount||0);
-      return acc;
-    }, {});
+    .reduce((acc,t) => { const cat = t.category||'Uncategorized'; acc[cat]=(acc[cat]||0)+Math.abs(t.amount||0); return acc; }, {});
 
-  // Expense by category — previous period
   const prevExpByCategory = prevTxns
     .filter(t => t.txn_type === 'expense')
-    .reduce((acc,t) => {
-      const cat = t.category || 'Uncategorized';
-      acc[cat]  = (acc[cat]||0) + Math.abs(t.amount||0);
-      return acc;
-    }, {});
+    .reduce((acc,t) => { const cat = t.category||'Uncategorized'; acc[cat]=(acc[cat]||0)+Math.abs(t.amount||0); return acc; }, {});
 
-  // ── Budget vs Actual ──────────────────────────────────────
   const budgetVariance = budgets.map(b => {
     const actual   = currentExpByCategory[b.category] || 0;
     const budget   = b.amount || 0;
@@ -166,20 +144,14 @@ export default function VarianceReports() {
     return { category:b.category, budget, actual, variance, pct, status };
   }).sort((a,b) => b.variance - a.variance);
 
-  // Categories with spending but no budget
   const unbudgeted = Object.entries(currentExpByCategory)
     .filter(([cat]) => !budgets.find(b => b.category === cat))
     .map(([category, actual]) => ({ category, budget:0, actual, variance:actual, pct:100, status:'over' }));
 
   const allBudgetRows = [...budgetVariance, ...unbudgeted];
 
-  // ── Month over Month ──────────────────────────────────────
-  const allCategories = new Set([
-    ...Object.keys(currentExpByCategory),
-    ...Object.keys(prevExpByCategory),
-  ]);
-
-  const momVariance = Array.from(allCategories).map(cat => {
+  const allCategories = new Set([...Object.keys(currentExpByCategory), ...Object.keys(prevExpByCategory)]);
+  const momVariance   = Array.from(allCategories).map(cat => {
     const current  = currentExpByCategory[cat] || 0;
     const previous = prevExpByCategory[cat]    || 0;
     const variance = current - previous;
@@ -187,13 +159,12 @@ export default function VarianceReports() {
     return { category:cat, current, previous, variance, pct };
   }).sort((a,b) => Math.abs(b.variance) - Math.abs(a.variance));
 
-  // ── Summary stats ─────────────────────────────────────────
-  const totalBudget   = budgets.reduce((s,b) => s+(b.amount||0), 0);
-  const totalActual   = Object.values(currentExpByCategory).reduce((s,v) => s+v, 0);
-  const totalVariance = totalActual - totalBudget;
-  const overBudget    = allBudgetRows.filter(r => r.status === 'over').length;
-  const currentIncome = currentTxns.filter(t => t.txn_type==='income').reduce((s,t) => s+Math.abs(t.amount||0), 0);
-  const prevIncome    = prevTxns.filter(t => t.txn_type==='income').reduce((s,t) => s+Math.abs(t.amount||0), 0);
+  const totalBudget    = budgets.reduce((s,b) => s+(b.amount||0), 0);
+  const totalActual    = Object.values(currentExpByCategory).reduce((s,v) => s+v, 0);
+  const totalVariance  = totalActual - totalBudget;
+  const overBudget     = allBudgetRows.filter(r => r.status === 'over').length;
+  const currentIncome  = currentTxns.filter(t => t.txn_type==='income').reduce((s,t) => s+Math.abs(t.amount||0), 0);
+  const prevIncome     = prevTxns.filter(t => t.txn_type==='income').reduce((s,t) => s+Math.abs(t.amount||0), 0);
   const incomeVariance = currentIncome - prevIncome;
 
   const exportPDF = () => {
@@ -204,31 +175,20 @@ export default function VarianceReports() {
     doc.text('Variance Report', 14, 26);
     doc.setFontSize(10);
     doc.text(`Period: ${periodLabel} · Generated: ${new Date().toLocaleDateString()}`, 14, 34);
-
     if (tab === 'budget') {
       autoTable(doc, {
         startY:42,
         head:[['Category','Budget','Actual','Variance','Status']],
-        body:allBudgetRows.map(r => [
-          r.category, fmt(r.budget), fmt(r.actual),
-          `${r.variance>0?'+':''}${fmt(r.variance)}`,
-          r.status==='over'?'Over Budget':r.status==='warning'?'Near Limit':'On Track',
-        ]),
-        styles:{ fontSize:9 },
-        headStyles:{ fillColor:[10,185,138], textColor:255 },
+        body:allBudgetRows.map(r => [r.category, fmt(r.budget), fmt(r.actual), `${r.variance>0?'+':''}${fmt(r.variance)}`, r.status==='over'?'Over Budget':r.status==='warning'?'Near Limit':'On Track']),
+        styles:{ fontSize:9 }, headStyles:{ fillColor:[10,185,138], textColor:255 },
         columnStyles:{ 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'} },
       });
     } else {
       autoTable(doc, {
         startY:42,
         head:[['Category','Previous','Current','Variance','Change']],
-        body:momVariance.map(r => [
-          r.category, fmt(r.previous), fmt(r.current),
-          `${r.variance>0?'+':''}${fmt(r.variance)}`,
-          fmtPct(r.pct),
-        ]),
-        styles:{ fontSize:9 },
-        headStyles:{ fillColor:[10,185,138], textColor:255 },
+        body:momVariance.map(r => [r.category, fmt(r.previous), fmt(r.current), `${r.variance>0?'+':''}${fmt(r.variance)}`, fmtPct(r.pct)]),
+        styles:{ fontSize:9 }, headStyles:{ fillColor:[10,185,138], textColor:255 },
         columnStyles:{ 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'}, 4:{halign:'right'} },
       });
     }
@@ -239,8 +199,6 @@ export default function VarianceReports() {
 
   return (
     <div style={page}>
-
-      {/* Top bar */}
       <div style={{ ...topBar, flexDirection:isMobile?'column':'row', alignItems:isMobile?'flex-start':'center', gap:isMobile?10:0, padding:isMobile?'16px':undefined }}>
         <div>
           <div style={{ fontSize:isMobile?18:20, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>Variance Reports</div>
@@ -253,14 +211,12 @@ export default function VarianceReports() {
           </button>
           <button onClick={() => askAndOpen(`Analyze my variance report for ${periodLabel}. Budget: ${fmt(totalBudget)}, Actual: ${fmt(totalActual)}, Variance: ${fmt(totalVariance)}. I have ${overBudget} categories over budget. What should I do?`)}
             style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', border:'none', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font }}>
-            <Sparkles size={13}/> Ask AI
+            <MessageCircle size={13}/> Ask Novala Assistant
           </button>
         </div>
       </div>
 
       <div style={{ padding: pad }}>
-
-        {/* Period selector */}
         <div style={{ display:'flex', gap:6, marginBottom:20, overflowX:'auto', scrollbarWidth:'none' }}>
           {PERIODS.map(p => (
             <button key={p.value} onClick={() => setPeriod(p.value)}
@@ -273,10 +229,10 @@ export default function VarianceReports() {
         {/* Summary cards */}
         <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(4,1fr)', gap:isMobile?10:14, marginBottom:20 }}>
           {[
-            { label:'Total Budget',    value:fmt(totalBudget),   color:L.blue,                                    icon:<Target size={16}/> },
-            { label:'Total Actual',    value:fmt(totalActual),   color:totalActual>totalBudget?L.red:ACCENT,      icon:<BarChart2 size={16}/> },
-            { label:'Variance',        value:fmt(Math.abs(totalVariance)), color:totalVariance>0?L.red:ACCENT,   icon:totalVariance>0?<TrendingUp size={16}/>:<TrendingDown size={16}/> },
-            { label:'Over Budget',     value:`${overBudget} cat${overBudget!==1?'s':''}`, color:overBudget>0?L.red:ACCENT, icon:<AlertTriangle size={16}/> },
+            { label:'Total Budget',  value:fmt(totalBudget),                        color:L.blue,                               icon:<Target size={16}/> },
+            { label:'Total Actual',  value:fmt(totalActual),                        color:totalActual>totalBudget?L.red:ACCENT, icon:<BarChart2 size={16}/> },
+            { label:'Variance',      value:fmt(Math.abs(totalVariance)),            color:totalVariance>0?L.red:ACCENT,         icon:totalVariance>0?<TrendingUp size={16}/>:<TrendingDown size={16}/> },
+            { label:'Over Budget',   value:`${overBudget} cat${overBudget!==1?'s':''}`, color:overBudget>0?L.red:ACCENT,      icon:<AlertTriangle size={16}/> },
           ].map(c => (
             <div key={c.label} style={{ ...card, padding:isMobile?'12px 14px':'18px 20px' }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 }}>
@@ -305,7 +261,7 @@ export default function VarianceReports() {
             </div>
             <button onClick={() => askAndOpen(`My revenue changed from ${fmt(prevIncome)} to ${fmt(currentIncome)} — a variance of ${fmt(incomeVariance)}. Is this normal and what should I do?`)}
               style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:ACCENT, cursor:'pointer', fontSize:11, fontFamily:L.font }}>
-              <Sparkles size={11}/> Analyze
+              <MessageCircle size={11}/> Ask Novala Assistant
             </button>
           </div>
         )}
@@ -335,7 +291,7 @@ export default function VarianceReports() {
           </div>
         )}
 
-        {/* ── Budget vs Actual ── */}
+        {/* Budget vs Actual */}
         {!loading && tab === 'budget' && txns.length > 0 && (
           <div style={{ ...card, overflow:'hidden' }}>
             <div style={{ padding:isMobile?'14px 16px':'16px 22px', borderBottom:`1px solid ${L.border}`, display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
@@ -359,7 +315,6 @@ export default function VarianceReports() {
               </div>
             )}
 
-            {/* Desktop header */}
             {!isMobile && allBudgetRows.length > 0 && (
               <div style={{ display:'grid', gridTemplateColumns:'1fr 130px 130px 130px 100px 180px', padding:'8px 22px', borderBottom:`1px solid ${L.border}`, background:L.pageBg }}>
                 {['CATEGORY','BUDGET','ACTUAL','VARIANCE','STATUS','PROGRESS'].map(h => (
@@ -372,7 +327,6 @@ export default function VarianceReports() {
               const isOver    = row.status === 'over';
               const isWarning = row.status === 'warning';
               const color     = isOver ? L.red : isWarning ? '#F59E0B' : ACCENT;
-
               if (isMobile) {
                 return (
                   <div key={row.category} style={{ padding:'14px 16px', borderBottom:`1px solid ${L.border}` }}>
@@ -383,24 +337,17 @@ export default function VarianceReports() {
                       </span>
                     </div>
                     <div style={{ display:'flex', gap:16, marginBottom:6 }}>
-                      <div>
-                        <div style={{ fontSize:9, color:L.textFaint, textTransform:'uppercase', letterSpacing:'0.08em' }}>Budget</div>
-                        <div style={{ fontSize:13, fontWeight:600, color:L.textSub, fontFamily:L.fontMono }}>{fmt(row.budget)}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize:9, color:L.textFaint, textTransform:'uppercase', letterSpacing:'0.08em' }}>Actual</div>
-                        <div style={{ fontSize:13, fontWeight:600, color, fontFamily:L.fontMono }}>{fmt(row.actual)}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize:9, color:L.textFaint, textTransform:'uppercase', letterSpacing:'0.08em' }}>Variance</div>
-                        <div style={{ fontSize:13, fontWeight:600, color, fontFamily:L.fontMono }}>{row.variance>0?'+':''}{fmt(row.variance)}</div>
-                      </div>
+                      {[{ l:'Budget', v:fmt(row.budget) },{ l:'Actual', v:fmt(row.actual), c:color },{ l:'Variance', v:`${row.variance>0?'+':''}${fmt(row.variance)}`, c:color }].map(item => (
+                        <div key={item.l}>
+                          <div style={{ fontSize:9, color:L.textFaint, textTransform:'uppercase', letterSpacing:'0.08em' }}>{item.l}</div>
+                          <div style={{ fontSize:13, fontWeight:600, color:item.c||L.textSub, fontFamily:L.fontMono }}>{item.v}</div>
+                        </div>
+                      ))}
                     </div>
                     <VarianceBar actual={row.actual} budget={row.budget} color={color}/>
                   </div>
                 );
               }
-
               return (
                 <div key={row.category}
                   style={{ display:'grid', gridTemplateColumns:'1fr 130px 130px 130px 100px 180px', padding:'13px 22px', borderBottom:`1px solid ${L.border}`, alignItems:'center', transition:'background 0.1s' }}
@@ -410,40 +357,33 @@ export default function VarianceReports() {
                   <div style={{ fontSize:13, fontFamily:L.fontMono, color:L.textSub }}>{fmt(row.budget)}</div>
                   <div style={{ fontSize:13, fontFamily:L.fontMono, color, fontWeight:600 }}>{fmt(row.actual)}</div>
                   <div style={{ fontSize:13, fontFamily:L.fontMono, color, fontWeight:700 }}>{row.variance>0?'+':''}{fmt(row.variance)}</div>
-                  <div>
-                    <span style={{ fontSize:10, fontWeight:700, color, background:`${color}12`, padding:'3px 8px', borderRadius:20, border:`1px solid ${color}25` }}>
-                      {isOver?'Over':isWarning?'Near':'OK'}
-                    </span>
-                  </div>
-                  <div style={{ paddingRight:8 }}>
-                    <VarianceBar actual={row.actual} budget={row.budget} color={color}/>
-                  </div>
+                  <span style={{ fontSize:10, fontWeight:700, color, background:`${color}12`, padding:'3px 8px', borderRadius:20, border:`1px solid ${color}25`, width:'fit-content' }}>
+                    {isOver?'Over':isWarning?'Near':'OK'}
+                  </span>
+                  <div style={{ paddingRight:8 }}><VarianceBar actual={row.actual} budget={row.budget} color={color}/></div>
                 </div>
               );
             })}
 
-            {/* Total row */}
             {allBudgetRows.length > 0 && (
               <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr 1fr':'1fr 130px 130px 130px 100px 180px', padding:isMobile?'14px 16px':'14px 22px', background:L.pageBg, borderTop:`2px solid ${L.border}` }}>
                 <div style={{ fontSize:13, fontWeight:700, color:L.text }}>Total</div>
                 {!isMobile && <div style={{ fontSize:13, fontWeight:700, fontFamily:L.fontMono, color:L.text }}>{fmt(totalBudget)}</div>}
                 <div style={{ fontSize:13, fontWeight:700, fontFamily:L.fontMono, color:totalActual>totalBudget?L.red:ACCENT }}>{fmt(totalActual)}</div>
                 <div style={{ fontSize:13, fontWeight:700, fontFamily:L.fontMono, color:totalVariance>0?L.red:ACCENT }}>{totalVariance>0?'+':''}{fmt(totalVariance)}</div>
-                {!isMobile && <div/>}
-                {!isMobile && <div/>}
+                {!isMobile && <div/>}{!isMobile && <div/>}
               </div>
             )}
           </div>
         )}
 
-        {/* ── Month over Month ── */}
+        {/* Month over Month */}
         {!loading && tab === 'mom' && txns.length > 0 && (
           <div style={{ ...card, overflow:'hidden' }}>
             <div style={{ padding:isMobile?'14px 16px':'16px 22px', borderBottom:`1px solid ${L.border}` }}>
               <div style={{ fontSize:14, fontWeight:700, color:L.text }}>Month over Month Spending</div>
               <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>Current period vs previous period by category</div>
             </div>
-
             {!isMobile && momVariance.length > 0 && (
               <div style={{ display:'grid', gridTemplateColumns:'1fr 130px 130px 130px 120px', padding:'8px 22px', borderBottom:`1px solid ${L.border}`, background:L.pageBg }}>
                 {['CATEGORY','PREVIOUS','CURRENT','CHANGE','% CHANGE'].map(h => (
@@ -451,15 +391,10 @@ export default function VarianceReports() {
                 ))}
               </div>
             )}
-
-            {momVariance.length === 0 && (
-              <div style={{ padding:40, textAlign:'center', color:L.textMuted }}>No data for comparison period</div>
-            )}
-
+            {momVariance.length === 0 && <div style={{ padding:40, textAlign:'center', color:L.textMuted }}>No data for comparison period</div>}
             {momVariance.map(row => {
               const improved = row.variance <= 0;
               const color    = improved ? ACCENT : L.red;
-
               if (isMobile) {
                 return (
                   <div key={row.category} style={{ padding:'14px 16px', borderBottom:`1px solid ${L.border}` }}>
@@ -471,23 +406,16 @@ export default function VarianceReports() {
                       </div>
                     </div>
                     <div style={{ display:'flex', gap:16 }}>
-                      <div>
-                        <div style={{ fontSize:9, color:L.textFaint, textTransform:'uppercase' }}>Previous</div>
-                        <div style={{ fontSize:12, color:L.textSub, fontFamily:L.fontMono }}>{fmt(row.previous)}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize:9, color:L.textFaint, textTransform:'uppercase' }}>Current</div>
-                        <div style={{ fontSize:12, color, fontFamily:L.fontMono, fontWeight:600 }}>{fmt(row.current)}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize:9, color:L.textFaint, textTransform:'uppercase' }}>Change</div>
-                        <div style={{ fontSize:12, color, fontFamily:L.fontMono, fontWeight:600 }}>{row.variance>0?'+':''}{fmt(row.variance)}</div>
-                      </div>
+                      {[{ l:'Previous', v:fmt(row.previous) },{ l:'Current', v:fmt(row.current), c:color },{ l:'Change', v:`${row.variance>0?'+':''}${fmt(row.variance)}`, c:color }].map(item => (
+                        <div key={item.l}>
+                          <div style={{ fontSize:9, color:L.textFaint, textTransform:'uppercase' }}>{item.l}</div>
+                          <div style={{ fontSize:12, color:item.c||L.textSub, fontFamily:L.fontMono, fontWeight:600 }}>{item.v}</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );
               }
-
               return (
                 <div key={row.category}
                   style={{ display:'grid', gridTemplateColumns:'1fr 130px 130px 130px 120px', padding:'13px 22px', borderBottom:`1px solid ${L.border}`, alignItems:'center', transition:'background 0.1s' }}
@@ -507,23 +435,23 @@ export default function VarianceReports() {
           </div>
         )}
 
-        {/* AI Help */}
+        {/* Smart Insights panel */}
         {!loading && txns.length > 0 && (
           <div style={{ ...card, padding:isMobile?'16px':'20px 24px', marginTop:20 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
               <div style={{ width:36, height:36, borderRadius:10, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <Sparkles size={18} color="#fff"/>
+                <MessageCircle size={18} color="#fff"/>
               </div>
               <div>
-                <div style={{ fontSize:14, fontWeight:700, color:L.text }}>AI Variance Analysis</div>
-                <div style={{ fontSize:11, color:L.textMuted }}>Get smart insights on your spending patterns</div>
+                <div style={{ fontSize:14, fontWeight:700, color:L.text }}>Smart Insights</div>
+                <div style={{ fontSize:11, color:L.textMuted }}>Ask Novala Assistant about your spending patterns</div>
               </div>
             </div>
             <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(3,1fr)', gap:8 }}>
               {[
-                { q:'Which categories am I most over budget and why?',          icon:'🎯' },
-                { q:'Where has my spending increased the most vs last month?',  icon:'📈' },
-                { q:'How can I reduce my biggest variance categories?',          icon:'💡' },
+                { q:'Which categories am I most over budget and why?',         icon:'🎯' },
+                { q:'Where has my spending increased the most vs last month?', icon:'📈' },
+                { q:'How can I reduce my biggest variance categories?',         icon:'💡' },
               ].map(item => (
                 <button key={item.q} onClick={() => askAndOpen(item.q)}
                   style={{ display:'flex', alignItems:'center', gap:10, padding:'12px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}`, cursor:'pointer', fontFamily:L.font, textAlign:'left' }}
