@@ -75,12 +75,12 @@ const CREATE_ITEMS = [
 ];
 
 const SLIM_ITEMS = [
-  { id: 'home',     icon: Home,        label: 'Home',     path: '/'         },
-  { id: 'create',   icon: Plus,        label: 'Create',   flyout: 'create'  },
-  { id: 'reports',  icon: BarChart2,   label: 'Reports',  flyout: 'reports' },
-  { id: 'allapps',  icon: Grid,        label: 'All Apps', flyout: 'apps'    },
-  { id: 'settings', icon: SettingsIcon,label: 'Settings', path: '/settings' },
-  { id: 'help',     icon: HelpCircle,  label: 'Help',     path: '/help'     },
+  { id: 'home',     icon: Home,         label: 'Home',     path: '/'         },
+  { id: 'create',   icon: Plus,         label: 'Create',   flyout: 'create'  },
+  { id: 'reports',  icon: BarChart2,    label: 'Reports',  flyout: 'reports' },
+  { id: 'allapps',  icon: Grid,         label: 'All Apps', flyout: 'apps'    },
+  { id: 'settings', icon: SettingsIcon, label: 'Settings', path: '/settings' },
+  { id: 'help',     icon: HelpCircle,   label: 'Help',     path: '/help'     },
 ];
 
 function FlyoutPanel({ title, onClose, children }) {
@@ -101,21 +101,19 @@ function FlyoutPanel({ title, onClose, children }) {
 }
 
 export default function Sidebar({ onLogout, mobileOpen, onMobileClose }) {
-  const navigate   = useNavigate();
-  const location   = useLocation();
+  const navigate              = useNavigate();
+  const location              = useLocation();
   const [flyout,   setFlyout]   = useState(null);
   const [hovItem,  setHovItem]  = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const sidebarRef = useRef(null);
+  const sidebarRef             = useRef(null);
 
-  // Reactive mobile detection
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
   }, []);
 
-  // Close flyout when clicking outside
   useEffect(() => {
     const handler = (e) => {
       if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
@@ -145,105 +143,143 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose }) {
   return (
     <div ref={sidebarRef}>
 
-      {/* ── Desktop slim sidebar ── */}
-      {!isMobile && (
-        <aside style={{ position: 'fixed', top: 56, left: 0, width: 72, height: 'calc(100vh - 56px)', background: '#fff', borderRight: '1px solid #E8EDF3', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 12, paddingBottom: 16, zIndex: 44, fontFamily: FONT }}>
+      {/* ── Desktop slim sidebar ── only on desktop ── */}
+      <aside style={{
+        position:       'fixed',
+        top:            56,
+        left:           0,
+        width:          72,
+        height:         'calc(100vh - 56px)',
+        background:     '#fff',
+        borderRight:    '1px solid #E8EDF3',
+        display:        isMobile ? 'none' : 'flex',
+        flexDirection:  'column',
+        alignItems:     'center',
+        paddingTop:     12,
+        paddingBottom:  16,
+        zIndex:         44,
+        fontFamily:     FONT,
+        boxShadow:      '1px 0 0 #E8EDF3',
+        overflowY:      'auto',
+        scrollbarWidth: 'none',
+      }}>
+        {SLIM_ITEMS.map(item => {
+          const Icon     = item.icon;
+          const isActive = item.path
+            ? (location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path)))
+            : flyout === item.flyout;
+          const isHov    = hovItem === item.id;
 
-          {SLIM_ITEMS.map(item => {
-            const Icon     = item.icon;
-            const isActive = item.path
-              ? (location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path)))
-              : flyout === item.flyout;
-            const isHov    = hovItem === item.id;
-
-            return (
-              <div
-                key={item.id}
-                onClick={() => handleItemClick(item)}
-                onMouseEnter={() => setHovItem(item.id)}
-                onMouseLeave={() => setHovItem(null)}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '10px 8px', borderRadius: 10, cursor: 'pointer', width: 56, marginBottom: 2, background: isActive ? 'rgba(10,185,138,0.08)' : isHov ? '#F8FAFC' : 'transparent', transition: 'all 0.15s ease' }}
-              >
-                <div style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isActive ? 'rgba(10,185,138,0.12)' : 'transparent' }}>
-                  <Icon size={20} color={isActive ? ACCENT : isHov ? '#334155' : '#64748B'} strokeWidth={isActive ? 2.5 : 1.8} />
-                </div>
-                <span style={{ fontSize: 9, fontWeight: isActive ? 700 : 500, color: isActive ? ACCENT : isHov ? '#334155' : '#94A3B8', letterSpacing: '0.04em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.2 }}>
-                  {item.label}
-                </span>
-              </div>
-            );
-          })}
-
-          <div style={{ width: 40, height: 1, background: '#F1F5F9', margin: '8px 0' }} />
-
-          <div
-            onClick={onLogout}
-            onMouseEnter={() => setHovItem('logout')}
-            onMouseLeave={() => setHovItem(null)}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '10px 8px', borderRadius: 10, cursor: 'pointer', width: 56, marginTop: 'auto', background: hovItem === 'logout' ? 'rgba(239,68,68,0.06)' : 'transparent', transition: 'all 0.15s' }}
-          >
-            <LogOut size={20} color={hovItem === 'logout' ? '#EF4444' : '#94A3B8'} strokeWidth={1.8} />
-            <span style={{ fontSize: 9, fontWeight: 500, color: hovItem === 'logout' ? '#EF4444' : '#94A3B8', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Out</span>
-          </div>
-        </aside>
-      )}
-
-      {/* ── Mobile drawer ── */}
-      {isMobile && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: 280, height: '100vh', background: 'linear-gradient(180deg,#0F172A 0%,#0D1526 100%)', zIndex: 50, transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)', display: 'flex', flexDirection: 'column', fontFamily: FONT, boxShadow: '4px 0 32px rgba(0,0,0,0.3)' }}>
-
-          <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ fontSize: 17, fontWeight: 800, color: '#F1F5F9', letterSpacing: '-0.02em' }}>
-              No<span style={{ color: ACCENT }}>vala</span>
-            </div>
-            <button onClick={onMobileClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex' }}>
-              <X size={20} />
-            </button>
-          </div>
-
-          <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 12px', scrollbarWidth: 'none' }}>
-            {APP_GROUPS.map(group => (
-              <div key={group.label} style={{ marginBottom: 4 }}>
-                <div style={{ fontSize: 9, fontWeight: 700, color: '#475569', letterSpacing: '0.18em', textTransform: 'uppercase', padding: '12px 10px 6px' }}>
-                  {group.label}
-                </div>
-                {group.items.map(item => {
-                  const Icon     = item.icon;
-                  const isActive = location.pathname === item.path ||
-                    (item.path !== '/' && location.pathname.startsWith(item.path));
-                  return (
-                    <div
-                      key={item.path}
-                      onClick={() => goTo(item.path)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, cursor: 'pointer', marginBottom: 2, background: isActive ? 'rgba(10,185,138,0.12)' : 'transparent', borderLeft: `3px solid ${isActive ? ACCENT : 'transparent'}`, transition: 'all 0.15s' }}
-                      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-                      onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-                    >
-                      <Icon size={18} color={isActive ? ACCENT : '#64748B'} strokeWidth={isActive ? 2.5 : 1.8} />
-                      <span style={{ fontSize: 13.5, fontWeight: isActive ? 600 : 400, color: isActive ? ACCENT : '#94A3B8' }}>
-                        {item.label}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </nav>
-
-          <div style={{ padding: '12px 16px 28px' }}>
-            <button
-              onClick={onLogout}
-              style={{ width: '100%', padding: '10px', borderRadius: 10, background: 'transparent', border: '1px solid rgba(255,255,255,0.07)', color: '#64748B', cursor: 'pointer', fontSize: 13, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#EF4444'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748B'; }}
+          return (
+            <div
+              key={item.id}
+              onClick={() => handleItemClick(item)}
+              onMouseEnter={() => setHovItem(item.id)}
+              onMouseLeave={() => setHovItem(null)}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '10px 6px', borderRadius: 10, cursor: 'pointer', width: 60, marginBottom: 2, background: isActive ? 'rgba(10,185,138,0.08)' : isHov ? '#F8FAFC' : 'transparent', transition: 'all 0.15s ease' }}
             >
-              <LogOut size={15} /> Sign out
-            </button>
-          </div>
-        </div>
-      )}
+              <div style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isActive ? 'rgba(10,185,138,0.12)' : 'transparent' }}>
+                <Icon size={20} color={isActive ? ACCENT : isHov ? '#334155' : '#64748B'} strokeWidth={isActive ? 2.5 : 1.8} />
+              </div>
+              <span style={{ fontSize: 9, fontWeight: isActive ? 700 : 500, color: isActive ? ACCENT : isHov ? '#334155' : '#94A3B8', letterSpacing: '0.04em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.2 }}>
+                {item.label}
+              </span>
+            </div>
+          );
+        })}
 
-      {/* ── Flyout panels (desktop only) ── */}
+        <div style={{ width: 40, height: 1, background: '#F1F5F9', margin: '8px 0', flexShrink: 0 }} />
+
+        {/* Sign Out — full label */}
+        <div
+          onClick={onLogout}
+          onMouseEnter={() => setHovItem('logout')}
+          onMouseLeave={() => setHovItem(null)}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '10px 6px', borderRadius: 10, cursor: 'pointer', width: 60, marginTop: 'auto', background: hovItem === 'logout' ? 'rgba(239,68,68,0.06)' : 'transparent', transition: 'all 0.15s', flexShrink: 0 }}
+        >
+          <LogOut size={20} color={hovItem === 'logout' ? '#EF4444' : '#94A3B8'} strokeWidth={1.8} />
+          <span style={{ fontSize: 9, fontWeight: 500, color: hovItem === 'logout' ? '#EF4444' : '#94A3B8', letterSpacing: '0.04em', textTransform: 'uppercase', textAlign: 'center' }}>
+            Sign Out
+          </span>
+        </div>
+      </aside>
+
+      {/* ── Mobile drawer ── only on mobile ── */}
+      <div style={{
+        position:   'fixed',
+        top:        0,
+        left:       0,
+        width:      300,
+        height:     '100vh',
+        background: 'linear-gradient(180deg,#0F172A 0%,#0D1526 100%)',
+        zIndex:     50,
+        transform:  mobileOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
+        display:    isMobile ? 'flex' : 'none',
+        flexDirection: 'column',
+        fontFamily: FONT,
+        boxShadow:  '4px 0 32px rgba(0,0,0,0.3)',
+      }}>
+        {/* Mobile header */}
+        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#F1F5F9', letterSpacing: '-0.02em' }}>
+            No<span style={{ color: ACCENT }}>vala</span>
+          </div>
+          <button
+            onClick={onMobileClose}
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, cursor: 'pointer', color: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34 }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Mobile nav */}
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 12px', scrollbarWidth: 'none' }}>
+          {APP_GROUPS.map(group => (
+            <div key={group.label} style={{ marginBottom: 4 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: '#475569', letterSpacing: '0.18em', textTransform: 'uppercase', padding: '14px 10px 6px' }}>
+                {group.label}
+              </div>
+              {group.items.map(item => {
+                const Icon     = item.icon;
+                const isActive = location.pathname === item.path ||
+                  (item.path !== '/' && location.pathname.startsWith(item.path));
+                return (
+                  <div
+                    key={item.path}
+                    onClick={() => goTo(item.path)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 14px', borderRadius: 10, cursor: 'pointer', marginBottom: 2, background: isActive ? 'rgba(10,185,138,0.12)' : 'transparent', borderLeft: `3px solid ${isActive ? ACCENT : 'transparent'}`, transition: 'all 0.15s' }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: isActive ? `${group.color}20` : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Icon size={16} color={isActive ? ACCENT : '#64748B'} strokeWidth={isActive ? 2.5 : 1.8} />
+                    </div>
+                    <span style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, color: isActive ? '#F1F5F9' : '#94A3B8', letterSpacing: '0.01em' }}>
+                      {item.label}
+                    </span>
+                    {isActive && <div style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: ACCENT, flexShrink: 0 }} />}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        {/* Mobile bottom */}
+        <div style={{ padding: '12px 16px 32px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+          <button
+            onClick={onLogout}
+            style={{ width: '100%', padding: '12px', borderRadius: 10, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#64748B', cursor: 'pointer', fontSize: 14, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.2)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748B'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+          >
+            <LogOut size={16} /> Sign Out
+          </button>
+        </div>
+      </div>
+
+      {/* ── Flyout panels desktop only ── */}
       {!isMobile && flyout === 'create' && (
         <FlyoutPanel title="Quick Create" onClose={() => setFlyout(null)}>
           <div style={{ padding: '12px 16px' }}>
@@ -252,13 +288,13 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose }) {
               <div
                 key={item.label}
                 onClick={() => goTo(item.path)}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 4 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 4, transition: 'all 0.15s' }}
                 onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: '#334155', fontWeight: 500 }}>{item.label}</span>
-                <ChevronRight size={13} color="#CBD5E1" style={{ marginLeft: 'auto' }} />
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: item.color, flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: '#334155', fontWeight: 500, flex: 1 }}>{item.label}</span>
+                <ChevronRight size={13} color="#CBD5E1" />
               </div>
             ))}
           </div>
@@ -278,7 +314,7 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose }) {
               <div
                 key={item.label}
                 onClick={() => goTo(item.path)}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 2 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 2, transition: 'all 0.15s' }}
                 onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
@@ -306,17 +342,17 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose }) {
                     <div
                       key={item.path}
                       onClick={() => goTo(item.path)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 10px', borderRadius: 8, cursor: 'pointer', marginBottom: 2, background: isActive ? 'rgba(10,185,138,0.06)' : 'transparent' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 10px', borderRadius: 8, cursor: 'pointer', marginBottom: 2, background: isActive ? 'rgba(10,185,138,0.06)' : 'transparent', transition: 'all 0.15s' }}
                       onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#F8FAFC'; }}
                       onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                     >
-                      <div style={{ width: 28, height: 28, borderRadius: 7, background: `${group.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Icon size={14} color={isActive ? ACCENT : group.color} />
+                      <div style={{ width: 30, height: 30, borderRadius: 8, background: `${group.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon size={15} color={isActive ? ACCENT : group.color} />
                       </div>
                       <span style={{ fontSize: 13, color: isActive ? ACCENT : '#334155', fontWeight: isActive ? 600 : 400, flex: 1 }}>
                         {item.label}
                       </span>
-                      {isActive && <div style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT }} />}
+                      {isActive && <div style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT, flexShrink: 0 }} />}
                     </div>
                   );
                 })}
