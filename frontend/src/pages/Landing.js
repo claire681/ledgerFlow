@@ -289,9 +289,8 @@ export default function NovalaLanding() {
           {/* Desktop CTAs */}
           <div className="desktop-only" style={{ gap:8 }}>
             <button className="cta-secondary" style={{ padding:"9px 18px", fontSize:13 }} onClick={goToApp}>Sign In</button>
-            <button className="cta-secondary" style={{ padding:"9px 18px", fontSize:13, borderColor:"rgba(10,185,138,0.4)", color:"#0ab98a", fontWeight:700 }} onClick={goToSignUp}>Create Account</button>
+            <button className="cta-primary" style={{ padding:"9px 20px", fontSize:13 }} onClick={goToSignUp}>Register Free →</button>
           </div>
-
           {/* Mobile hamburger */}
           <button className="mobile-only" onClick={() => setMenuOpen(o => !o)}
             style={{ background:"none", border:"none", cursor:"pointer", color:"#0f172a", alignItems:"center", justifyContent:"center", padding:6, borderRadius:8 }}>
@@ -366,8 +365,8 @@ export default function NovalaLanding() {
 
             <Reveal delay={0.3}>
               <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap", marginBottom:36 }}>
-                <button className="cta-primary"   onClick={goToSignUp} style={{ fontSize:15, padding:"16px 36px" }}>Start Free — No Card Needed</button>
-                <button className="cta-secondary" onClick={goToApp}    style={{ fontSize:15, padding:"16px 36px" }}>Sign In to Dashboard →</button>
+                <button className="cta-primary"   onClick={goToSignUp} style={{ fontSize:15, padding:"16px 36px" }}>Create Free Account →</button>
+                <button className="cta-secondary" onClick={goToApp}    style={{ fontSize:15, padding:"16px 36px" }}>Sign In</button>
               </div>
             </Reveal>
 
