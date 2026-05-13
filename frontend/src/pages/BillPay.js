@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Plus, Check, Clock, AlertTriangle, Download,
-  Trash2, X, Sparkles, ArrowRight, FileText,
+  Trash2, X, MessageCircle, ArrowRight, FileText,
   CheckCircle, Calendar,
 } from 'lucide-react';
 import { L, card, page, topBar } from '../styles/light';
@@ -107,16 +107,7 @@ export default function BillPay() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    load();
-    setPageContext('billpay', {
-  page: 'billpay',
-  total_bills: bills.length,
-  overdue: bills.filter(b => getStatus(b) === 'overdue').length,
-  unpaid: bills.filter(b => getStatus(b) === 'unpaid').length,
-  total_owed: bills.filter(b => b.status !== 'paid').reduce((s,b) => s+(Number(b.amount)||0), 0),
-});
-  }, []);
+  useEffect(() => { load(); }, []);
 
   useEffect(() => {
     const overdue   = bills.filter(b => getStatus(b) === 'overdue').length;
@@ -209,7 +200,6 @@ export default function BillPay() {
   return (
     <div style={page}>
 
-      {/* Top bar */}
       <div style={{ ...topBar, flexDirection:isMobile?'column':'row', alignItems:isMobile?'flex-start':'center', gap:isMobile?10:0, padding:isMobile?'16px':undefined }}>
         <div>
           <div style={{ fontSize:isMobile?18:20, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>Bill Pay</div>
@@ -222,7 +212,7 @@ export default function BillPay() {
           </button>
           <button onClick={() => askAndOpen(`I have ${bills.length} bills. ${overdueCount} are overdue totaling ${fmt(totalOverdue)}. Total owed: ${fmt(totalOwed)}. Help me prioritize what to pay first.`)}
             style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', border:'none', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font }}>
-            <Sparkles size={13}/> Ask AI
+            <MessageCircle size={13}/> Ask Novala Assistant
           </button>
           <button onClick={() => { resetForm(); setModal('add'); }}
             style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:L.radiusSm, background:ACCENT, color:'#fff', border:'none', cursor:'pointer', fontSize:12, fontWeight:600, fontFamily:L.font, flex:isMobile?1:'none', justifyContent:'center' }}>
@@ -257,10 +247,10 @@ export default function BillPay() {
         {/* Summary cards */}
         <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(4,1fr)', gap:isMobile?10:14, marginBottom:20 }}>
           {[
-            { label:'Total Bills',     value:bills.length,    color:L.text,    sub:'All bills'           },
-            { label:'Total Owed',      value:fmt(totalOwed),  color:'#F59E0B', sub:'Outstanding balance' },
-            { label:'Overdue',         value:fmt(totalOverdue), color:'#EF4444', sub:`${overdueCount} bills` },
-            { label:'Paid',            value:fmt(totalPaid),  color:ACCENT,    sub:'Completed payments'  },
+            { label:'Total Bills',   value:bills.length,      color:L.text,    sub:'All bills'           },
+            { label:'Total Owed',    value:fmt(totalOwed),    color:'#F59E0B', sub:'Outstanding balance' },
+            { label:'Overdue',       value:fmt(totalOverdue), color:'#EF4444', sub:`${overdueCount} bills` },
+            { label:'Paid',          value:fmt(totalPaid),    color:ACCENT,    sub:'Completed payments'  },
           ].map(c => (
             <div key={c.label} style={{ ...card, padding:isMobile?'12px 14px':'18px 20px' }}>
               <div style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em', textTransform:'uppercase', marginBottom:8 }}>{c.label}</div>
@@ -273,10 +263,10 @@ export default function BillPay() {
         {/* Filter tabs */}
         <div style={{ display:'flex', gap:6, marginBottom:16, overflowX:'auto', scrollbarWidth:'none' }}>
           {[
-            { value:'all',     label:`All (${bills.length})`                                         },
-            { value:'overdue', label:`Overdue (${bills.filter(b=>getStatus(b)==='overdue').length})`  },
-            { value:'unpaid',  label:`Unpaid (${bills.filter(b=>getStatus(b)==='unpaid').length})`    },
-            { value:'paid',    label:`Paid (${bills.filter(b=>b.status==='paid').length})`            },
+            { value:'all',     label:`All (${bills.length})`                                        },
+            { value:'overdue', label:`Overdue (${bills.filter(b=>getStatus(b)==='overdue').length})` },
+            { value:'unpaid',  label:`Unpaid (${bills.filter(b=>getStatus(b)==='unpaid').length})`   },
+            { value:'paid',    label:`Paid (${bills.filter(b=>b.status==='paid').length})`           },
           ].map(f => (
             <button key={f.value} onClick={() => setFilter(f.value)}
               style={{ padding:'7px 14px', borderRadius:20, cursor:'pointer', fontSize:12, fontWeight:600, border:'1px solid', whiteSpace:'nowrap', flexShrink:0, fontFamily:L.font, borderColor:filter===f.value?L.accentBorder:L.border, background:filter===f.value?L.accentSoft:'#fff', color:filter===f.value?L.accent:L.textMuted }}>
@@ -297,7 +287,6 @@ export default function BillPay() {
             </button>
           </div>
 
-          {/* Desktop header */}
           {!isMobile && filtered.length > 0 && (
             <div style={{ display:'grid', gridTemplateColumns:'1fr 120px 130px 160px 110px 180px', padding:'8px 22px', borderBottom:`1px solid ${L.border}`, background:L.pageBg }}>
               {['VENDOR','AMOUNT','DUE DATE','CATEGORY','STATUS','ACTIONS'].map(h => (
@@ -415,26 +404,26 @@ export default function BillPay() {
           })}
         </div>
 
-        {/* AI Help */}
+        {/* Smart Insights */}
         {bills.length > 0 && (
           <div style={{ ...card, padding:isMobile?'16px':'20px 24px', marginTop:20 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
               <div style={{ width:36, height:36, borderRadius:10, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <Sparkles size={18} color="#fff"/>
+                <MessageCircle size={18} color="#fff"/>
               </div>
               <div>
-                <div style={{ fontSize:14, fontWeight:700, color:L.text }}>AI Bill Advisor</div>
-                <div style={{ fontSize:11, color:L.textMuted }}>Get help managing your payables</div>
+                <div style={{ fontSize:14, fontWeight:700, color:L.text }}>Smart Insights</div>
+                <div style={{ fontSize:11, color:L.textMuted }}>Ask Novala Assistant about your bills</div>
               </div>
             </div>
             <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(3,1fr)', gap:8 }}>
               {[
-                { q:'Which bills should I pay first this week?',         icon:'⚡' },
+                { q:'Which bills should I pay first this week?',          icon:'⚡' },
                 { q:'How much cash do I need to clear all overdue bills?', icon:'💰' },
-                { q:'Are any of my bills unusually high this month?',    icon:'📊' },
+                { q:'Are any of my bills unusually high this month?',     icon:'📊' },
               ].map(item => (
                 <button key={item.q} onClick={() => askAndOpen(item.q)}
-                  style={{ display:'flex', alignItems:'center', gap:10, padding:'12px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}`, cursor:'pointer', fontFamily:L.font, textAlign:'left' }}
+                  style={{ display:'flex', alignItems:'center', gap:10, padding:'12px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}`, cursor:'pointer', fontFamily:L.font, textAlign:'left', transition:'all 0.15s' }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor=L.accentBorder; e.currentTarget.style.background=L.accentSoft; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor=L.border; e.currentTarget.style.background=L.pageBg; }}>
                   <span style={{ fontSize:20 }}>{item.icon}</span>
