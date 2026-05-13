@@ -7,8 +7,8 @@ import {
   Users, LogOut, ShieldCheck, TrendingUp,
   BarChart2, GitMerge, CreditCard, BookOpen,
   GitCompare, Settings as SettingsIcon, HelpCircle, Search,
+  Users2, Package, Building2, Key, Sparkles, Wallet,
 } from 'lucide-react';
-import { Users2, Package, Building2, Key } from 'lucide-react';
 
 const ACCENT   = '#0AB98A';
 const BG       = '#0F172A';
@@ -25,9 +25,9 @@ const NAV = [
   {
     section: 'Core',
     items: [
-      { path:'/',             label:'Dashboard',    icon:LayoutDashboard },
-      { path:'/documents',    label:'Documents',    icon:FileText        },
-      { path:'/transactions', label:'Transactions', icon:ArrowLeftRight  },
+      { path:'/',             label:'Dashboard',      icon:LayoutDashboard },
+      { path:'/documents',    label:'Documents',      icon:FileText        },
+      { path:'/transactions', label:'Transactions',   icon:ArrowLeftRight  },
     ],
   },
   {
@@ -37,32 +37,38 @@ const NAV = [
       { path:'/reconciliation', label:'Reconciliation', icon:GitMerge               },
       { path:'/ledger',         label:'Ledger View',    icon:BookOpen               },
       { path:'/variance',       label:'Variance',       icon:TrendingUp             },
-      { path:'/billpay',        label:'Bill Pay',       icon:CreditCard             },
+      { path:'/billpay',        label:'Bill Pay',       icon:Wallet                 },
       { path:'/budgets',        label:'Budgets',        icon:PieChart               },
       { path:'/invoices',       label:'Invoices',       icon:Receipt                },
       { path:'/tax',            label:'Tax',            icon:Percent                },
       { path:'/billing',        label:'Billing',        icon:CreditCard             },
       { path:'/currency',       label:'Currency',       icon:RefreshCw              },
-      { path:'/customers',  label:'Customers',   icon:Users2      },
-{ path:'/inventory',  label:'Inventory',   icon:Package     },
-{ path:'/businesses', label:'Businesses',  icon:Building2   },
-{ path:'/api-access', label:'API Access',  icon:Key         },
+    ],
+  },
+  {
+    section: 'Business',
+    items: [
+      { path:'/customers',  label:'Customers',    icon:Users2    },
+      { path:'/inventory',  label:'Inventory',    icon:Package   },
+      { path:'/businesses', label:'Businesses',   icon:Building2 },
+      { path:'/vendors',    label:'Vendors',      icon:BarChart3 },
+      { path:'/team',       label:'Team',         icon:Users     },
+      { path:'/integrations', label:'Integrations', icon:Link2   },
+    ],
+  },
+  {
+    section: 'Tools',
+    items: [
+      { path:'/search',     label:'Smart Search',   icon:Search,    badge:'SMART' },
+      { path:'/receipts',   label:'Scanner',        icon:ScanLine                 },
+      { path:'/comparison', label:'Doc Compare',    icon:GitCompare               },
+      { path:'/api-access', label:'API Access',     icon:Key                      },
     ],
   },
   {
     section: 'Intelligence',
     items: [
-      { path:'/vendors',    label:'Vendors',     icon:BarChart3, badge:null },
-      { path:'/receipts',   label:'Scanner',     icon:ScanLine,  badge:'AI' },
-      { path:'/comparison', label:'Doc Compare', icon:GitCompare            },
-      { path:'/search', label:'Smart Search', icon:Search, badge:'AI' },
-    ],
-  },
-  {
-    section: 'Organization',
-    items: [
-      { path:'/team',         label:'Team',         icon:Users },
-      { path:'/integrations', label:'Integrations', icon:Link2 },
+      { path:'/agents', label:'AI Assistant', icon:Sparkles, badge:'AI' },
     ],
   },
 ];
@@ -114,7 +120,7 @@ export default function Sidebar({ onLogout, onNavigate }) {
               No<span style={{ color:ACCENT }}>vala</span>
             </div>
             <div style={{ fontSize:9, color:TEXT_DIM, letterSpacing:'0.16em', marginTop:4, fontWeight:500, textTransform:'uppercase' }}>
-              AI Finance Platform
+              Financial Intelligence
             </div>
           </div>
         </div>
@@ -155,13 +161,25 @@ export default function Sidebar({ onLogout, onNavigate }) {
                   onClick={() => { navigate(item.path); onNavigate && onNavigate(); }}
                   onMouseEnter={() => setHov(item.path)}
                   onMouseLeave={() => setHov(null)}
-                  style={{ display:'flex', alignItems:'center', gap:10, padding:'8.5px 10px', borderRadius:8, cursor:'pointer', marginBottom:1, background:isActive?ACTIVE:isHov?HOVER:'transparent', borderLeft:`2px solid ${isActive?ACCENT:'transparent'}`, transition:'all 0.12s ease' }}>
-                  <Icon size={15} color={isActive?ACCENT:isHov?TEXT_SUB:TEXT_DIM} strokeWidth={isActive?2.5:1.8} style={{ flexShrink:0 }}/>
-                  <span style={{ fontSize:12.5, fontWeight:isActive?500:400, color:isActive?ACCENT:isHov?TEXT_SUB:TEXT_DIM, flex:1, letterSpacing:'0.01em' }}>
+                  style={{
+                    display:'flex', alignItems:'center', gap:10, padding:'8.5px 10px',
+                    borderRadius:8, cursor:'pointer', marginBottom:1,
+                    background: isActive ? ACTIVE : isHov ? HOVER : 'transparent',
+                    borderLeft:`2px solid ${isActive ? ACCENT : 'transparent'}`,
+                    transition:'all 0.12s ease',
+                  }}>
+                  <Icon size={15} color={isActive ? ACCENT : isHov ? TEXT_SUB : TEXT_DIM} strokeWidth={isActive ? 2.5 : 1.8} style={{ flexShrink:0 }}/>
+                  <span style={{ fontSize:12.5, fontWeight:isActive ? 500 : 400, color:isActive ? ACCENT : isHov ? TEXT_SUB : TEXT_DIM, flex:1, letterSpacing:'0.01em' }}>
                     {item.label}
                   </span>
                   {item.badge && (
-                    <span style={{ fontSize:8, fontWeight:700, color:item.badge==='NEW'?'#fff':ACCENT, background:item.badge==='NEW'?ACCENT:ACTIVE, border:`1px solid ${item.badge==='NEW'?ACCENT:ACCENT+'35'}`, padding:'1px 6px', borderRadius:20, letterSpacing:'0.05em' }}>
+                    <span style={{
+                      fontSize:8, fontWeight:700,
+                      color: item.badge==='AI' ? '#fff' : item.badge==='NEW' ? '#fff' : ACCENT,
+                      background: item.badge==='AI' ? 'linear-gradient(135deg,#0AB98A,#0EA5E9)' : item.badge==='NEW' ? ACCENT : ACTIVE,
+                      border:`1px solid ${item.badge==='SMART' ? ACCENT+'35' : 'transparent'}`,
+                      padding:'1px 6px', borderRadius:20, letterSpacing:'0.05em',
+                    }}>
                       {item.badge}
                     </span>
                   )}
@@ -177,13 +195,12 @@ export default function Sidebar({ onLogout, onNavigate }) {
         <div style={{ display:'flex', alignItems:'center', gap:8, padding:'9px 12px', borderRadius:8, background:'rgba(255,255,255,0.02)', border:`1px solid ${BORDER}`, marginBottom:8 }}>
           <TrendingUp size={13} color={ACCENT}/>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:10, fontWeight:500, color:TEXT_SUB }}>Novala AI Online</div>
-            <div style={{ fontSize:9, color:TEXT_DIM, marginTop:1 }}>GPT-4o · Gemini 1.5</div>
+            <div style={{ fontSize:10, fontWeight:500, color:TEXT_SUB }}>Smart Automation Active</div>
+            <div style={{ fontSize:9, color:TEXT_DIM, marginTop:1 }}>Powered by Novala Intelligence</div>
           </div>
           <div style={{ width:6, height:6, borderRadius:'50%', background:ACCENT, boxShadow:`0 0 6px ${ACCENT}` }}/>
         </div>
 
-        {/* Settings and Help */}
         {bottomItems.map(item => {
           const isActive = location.pathname === item.path;
           const isHov    = hov === item.label;
