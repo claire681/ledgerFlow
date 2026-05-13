@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { L, card, page, topBar } from '../styles/light';
 import {
-  CheckCircle, Sparkles, ArrowRight, Crown,
-  Zap, Shield, Star, AlertTriangle,
+  CheckCircle, ArrowRight, Crown,
+  Zap, Shield, Star, AlertTriangle, Clock,
 } from 'lucide-react';
 
 const BASE     = 'https://api.getnovala.com/api/v1';
@@ -30,7 +30,7 @@ const PLANS = [
     border:   'rgba(10,185,138,0.2)',
     features: [
       'Up to 100 transactions/month',
-      'Document upload & AI extraction',
+      'Document upload & smart extraction',
       'Basic financial reports',
       'Invoice tracking',
       'Tax calculator',
@@ -53,7 +53,7 @@ const PLANS = [
       'Variance Reports',
       'Bill Pay tracking',
       'Document Comparison',
-      'Advanced AI analysis',
+      'Advanced financial analysis',
       'Priority support',
     ],
   },
@@ -107,10 +107,10 @@ export default function Billing() {
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   };
 
-  const isActive  = status?.subscription_status === 'active';
-  const isTrial   = !isActive;
-  const daysLeft  = trialDaysLeft();
-  const pad       = isMobile ? '12px' : '24px 28px';
+  const isActive = status?.subscription_status === 'active';
+  const isTrial  = !isActive;
+  const daysLeft = trialDaysLeft();
+  const pad      = isMobile ? '12px' : '24px 28px';
 
   return (
     <div style={page}>
@@ -141,7 +141,7 @@ export default function Billing() {
         {!loading && isTrial && (
           <div style={{ padding:'16px 20px', borderRadius:L.radius, background:'linear-gradient(135deg,rgba(10,185,138,0.08),rgba(14,165,233,0.08))', border:`1px solid ${L.accentBorder}`, marginBottom:24, display:'flex', alignItems:'center', gap:14, flexWrap:'wrap' }}>
             <div style={{ width:44, height:44, borderRadius:12, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-              <Sparkles size={20} color="#fff"/>
+              <Clock size={20} color="#fff"/>
             </div>
             <div style={{ flex:1 }}>
               <div style={{ fontSize:14, fontWeight:700, color:L.text }}>
@@ -232,9 +232,9 @@ export default function Billing() {
           </div>
           <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(3,1fr)', gap:12 }}>
             {[
-              { icon:<Shield size={18} color={ACCENT}/>,   title:'Save money',      desc:'One caught overcharge or duplicate payment pays for months of subscription' },
-              { icon:<Sparkles size={18} color="#8B5CF6"/>, title:'Save time',       desc:'AI does the bookkeeping work that used to take hours every week'           },
-              { icon:<Zap size={18} color="#0EA5E9"/>,      title:'Stay compliant',  desc:'Never miss a bill, reconciliation issue, or budget overrun again'          },
+              { icon:<Shield size={18} color={ACCENT}/>,        title:'Save money',     desc:'One caught overcharge or duplicate payment pays for months of subscription'          },
+              { icon:<Zap size={18} color="#8B5CF6"/>,          title:'Save time',      desc:'Automation does the bookkeeping work that used to take hours every week'             },
+              { icon:<CheckCircle size={18} color="#0EA5E9"/>,  title:'Stay compliant', desc:'Never miss a bill, reconciliation issue, or budget overrun again'                   },
             ].map(i => (
               <div key={i.title} style={{ padding:'14px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}` }}>
                 <div style={{ marginBottom:8 }}>{i.icon}</div>

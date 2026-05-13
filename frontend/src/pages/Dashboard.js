@@ -7,7 +7,7 @@ import {
   ArrowUp, ArrowDown, FileText, AlertTriangle,
   Download, RefreshCw, ArrowRight, MessageCircle,
   Upload, Receipt, TrendingUp,
-  Mail, Clock, CheckCircle, Settings, X, Zap,
+  Mail, Clock, CheckCircle, Settings, X, Zap, Lock, Sunrise,
 } from 'lucide-react';
 import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
@@ -16,6 +16,7 @@ import {
   getAIInsights, getCompanyProfile, getDailyBriefing,
 } from '../services/api';
 import { generateReport } from '../services/pdfGenerator';
+import { Sunrise } from 'lucide-react';
 
 const BASE     = 'https://api.getnovala.com/api/v1';
 const ACCENT   = '#0AB98A';
@@ -103,8 +104,10 @@ function BriefingSettingsModal({ settings, onClose, onSave }) {
         <div style={{ padding:24, display:'flex', flexDirection:'column', gap:18 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 16px', borderRadius:L.radiusSm, background:L.pageBg, border:`1px solid ${L.border}` }}>
             <div>
-              <div style={{ fontSize:13, fontWeight:600, color:L.text }}>Daily Financial Briefing</div>
-              <div style={{ fontSize:11, color:L.textMuted, marginTop:2 }}>Receive a morning summary of your finances</div>
+             <div style={{ fontSize:13, fontWeight:600, color:L.text }}>Daily Financial Briefing</div>
+              <div style={{ fontSize:11, color:enabled?L.textMuted:'#EF4444', marginTop:2, fontWeight:enabled?400:600 }}>
+                {enabled ? 'Receive a morning summary of your finances' : 'Briefing is paused — toggle to re-enable'}
+              </div>
             </div>
             <div onClick={() => setEnabled(e => !e)} style={{ width:44, height:24, borderRadius:12, background:enabled?ACCENT:'#E2E8F0', position:'relative', cursor:'pointer', transition:'background 0.2s', flexShrink:0 }}>
               <div style={{ position:'absolute', top:4, left:enabled?22:4, width:16, height:16, borderRadius:'50%', background:'#fff', transition:'left 0.2s', boxShadow:'0 1px 3px rgba(0,0,0,0.2)' }}/>
@@ -123,6 +126,18 @@ function BriefingSettingsModal({ settings, onClose, onSave }) {
             </select>
           </div>
           {error && <div style={{ padding:'10px 14px', borderRadius:L.radiusSm, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', color:'#EF4444', fontSize:12 }}>{error}</div>}
+         {enabled && (
+            <button onClick={() => setEnabled(false)}
+              style={{ width:'100%', padding:'10px', borderRadius:L.radiusSm, background:'rgba(239,68,68,0.06)', border:'1px solid rgba(239,68,68,0.2)', color:'#EF4444', cursor:'pointer', fontSize:13, fontFamily:L.font, marginBottom:10 }}>
+              Pause Morning Briefing
+            </button>
+          )}
+          {!enabled && (
+            <button onClick={() => setEnabled(true)}
+              style={{ width:'100%', padding:'10px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:ACCENT, cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:L.font, marginBottom:10 }}>
+              Resume Morning Briefing
+            </button>
+          )}
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={onClose} style={{ flex:1, padding:'10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:13, fontFamily:L.font }}>Cancel</button>
             <button onClick={handleSave} disabled={saving} style={{ flex:1, padding:'10px', borderRadius:L.radiusSm, background:saving?L.textFaint:ACCENT, color:'#fff', border:'none', cursor:saving?'not-allowed':'pointer', fontSize:13, fontWeight:600, fontFamily:L.font }}>
@@ -503,7 +518,7 @@ export default function Dashboard() {
               {new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}
             </div>
             <div style={{ fontSize:22, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>
-              {greeting}{displayName ? `, ${displayName}` : ''} 👋🏽
+              {greeting}{displayName ? `, ${displayName}` : ''}
             </div>
             <div style={{ fontSize:12, color:L.textMuted, marginTop:3 }}>
               {hasData ? 'Here is your business financial summary' : 'Welcome to Novala — let us get your finances set up'}
@@ -536,7 +551,13 @@ export default function Dashboard() {
       {trialInfo && trialInfo.subscription_status !== 'active' && (
         <div style={{ margin:isMobile?'12px 16px 0':'16px 28px 0', padding:'12px 20px', borderRadius:12, background:trialInfo.daysLeft<=3?'rgba(239,68,68,0.08)':'linear-gradient(135deg,rgba(10,185,138,0.08),rgba(14,165,233,0.08))', border:`1px solid ${trialInfo.daysLeft<=3?'rgba(239,68,68,0.25)':'rgba(10,185,138,0.25)'}`, display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, flexWrap:'wrap' }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <span style={{ fontSize:20 }}>{trialInfo.daysLeft<=0?'🔒':trialInfo.daysLeft<=3?'⚠️':'⏳'}</span>
+            <div style={{ width:36, height:36, borderRadius:10, background:trialInfo.daysLeft<=3?'rgba(239,68,68,0.1)':'rgba(10,185,138,0.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              {trialInfo.daysLeft<=0
+                ? <Lock size={16} color="#EF4444"/>
+                : trialInfo.daysLeft<=3
+                ? <AlertTriangle size={16} color="#EF4444"/>
+                : <Clock size={16} color={ACCENT}/>}
+            </div>
             <div>
               <div style={{ fontSize:13, fontWeight:700, color:trialInfo.daysLeft<=3?'#EF4444':L.text }}>
                 {trialInfo.daysLeft<=0?'Your free trial has ended':`${trialInfo.daysLeft} day${trialInfo.daysLeft!==1?'s':''} left in your free trial`}
@@ -554,27 +575,34 @@ export default function Dashboard() {
       )}
 
       {/* ── Mobile Header ── */}
-      {isMobile && (
-        <div style={{ padding:'16px', borderBottom:`1px solid ${L.border}`, background:'#fff' }}>
-          <div style={{ fontSize:18, fontWeight:700, color:L.text, marginBottom:4 }}>
-            {greeting}{displayName ? `, ${displayName}` : ''} 👋🏽
+    {isMobile && (
+        <div style={{ padding:'20px 16px 16px', borderBottom:`1px solid ${L.border}`, background:'#fff' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+            <div style={{ width:38, height:38, borderRadius:11, background:'linear-gradient(135deg,rgba(10,185,138,0.12),rgba(14,165,233,0.12))', border:'1px solid rgba(10,185,138,0.18)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <Sunrise size={18} color={ACCENT}/>
+            </div>
+            <div>
+              <div style={{ fontSize:11, color:L.textMuted, fontWeight:500 }}>{new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' })}</div>
+              <div style={{ fontSize:18, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>
+                {greeting}{displayName ? `, ${displayName}` : ''}
+              </div>
+            </div>
           </div>
-          <div style={{ fontSize:11, color:L.textMuted, marginBottom:12 }}>
-            {hasData ? 'Your financial summary' : 'Welcome to Novala'}
+          <div style={{ fontSize:12, color:L.textMuted, marginBottom:14, marginLeft:48 }}>
+            {hasData ? 'Your financial summary' : 'Welcome to Novala — get started below'}
           </div>
           <div style={{ display:'flex', gap:8 }}>
             <button onClick={load}
-              style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'8px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:L.font }}>
-              <RefreshCw size={13}/> Refresh
+              style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'9px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:L.font }}>
+              <RefreshCw size={13}/>
             </button>
             <button onClick={() => askWithData('Give me a complete summary of my business finances.')}
-              style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'8px', borderRadius:L.radiusSm, background:'linear-gradient(135deg,#0AB98A 0%,#0EA5E9 100%)', border:'none', color:'#FFFFFF', cursor:'pointer', fontSize:12, fontFamily:L.font, fontWeight:600 }}>
-              <MessageCircle size={13}/> Ask Assistant
+              style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'9px', borderRadius:L.radiusSm, background:'linear-gradient(135deg,#0AB98A 0%,#0EA5E9 100%)', border:'none', color:'#FFFFFF', cursor:'pointer', fontSize:12, fontFamily:L.font, fontWeight:600 }}>
+              <MessageCircle size={13}/> Ask Novala Assistant
             </button>
           </div>
         </div>
       )}
-
       {success && (
         <div style={{ margin:isMobile?'12px 16px':'0 28px 16px', padding:'12px 16px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, fontSize:13, fontWeight:500, display:'flex', alignItems:'center', gap:8 }}>
           <CheckCircle size={14}/>{success}
