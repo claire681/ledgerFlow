@@ -68,8 +68,8 @@ const NAV = [
   {
     section: 'Intelligence',
     items: [
-      { path:'/agents', label:'AI Assistant', icon:Sparkles, badge:'AI' },
-    ],
+      { path:'/agents', label:'Novala Assistant', icon:Sparkles, badge:'NEW' },
+    ]
   },
 ];
 
@@ -195,7 +195,7 @@ export default function Sidebar({ onLogout, onNavigate }) {
         <div style={{ display:'flex', alignItems:'center', gap:8, padding:'9px 12px', borderRadius:8, background:'rgba(255,255,255,0.02)', border:`1px solid ${BORDER}`, marginBottom:8 }}>
           <TrendingUp size={13} color={ACCENT}/>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:10, fontWeight:500, color:TEXT_SUB }}>Smart Automation Active</div>
+            <div style={{ fontSize:10, fontWeight:500, color:TEXT_SUB }}>Novala Assistant Active</div>
             <div style={{ fontSize:9, color:TEXT_DIM, marginTop:1 }}>Powered by Novala Intelligence</div>
           </div>
           <div style={{ width:6, height:6, borderRadius:'50%', background:ACCENT, boxShadow:`0 0 6px ${ACCENT}` }}/>
