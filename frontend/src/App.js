@@ -42,37 +42,47 @@ const ACCENT = '#0AB98A';
 
 function AppLayout({ onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile,       setIsMobile]       = useState(window.innerWidth < 768);
+  const [isTablet,       setIsTablet]       = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
 
   useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
+    const handler = () => {
+      const w = window.innerWidth;
+      setIsMobile(w < 768);
+      setIsTablet(w >= 768 && w < 1024);
+    };
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
   }, []);
 
+  const isDesktop = !isMobile && !isTablet;
+
   return (
     <div style={{
-      display:    'flex',
+      display:       'flex',
       flexDirection: 'column',
-      height:     '100vh',
-      overflow:   'hidden',
-      background: '#F8FAFC',
-      fontFamily: "'Inter', -apple-system, sans-serif",
+      height:        '100vh',
+      overflow:      'hidden',
+      background:    '#F8FAFC',
+      fontFamily:    "'Inter', -apple-system, sans-serif",
     }}>
-
-      {/* Top header bar */}
+      {/* Top header — full width, always visible */}
       <TopBar
         onLogout={onLogout}
         onMobileMenu={() => setMobileMenuOpen(o => !o)}
+        isMobile={isMobile}
       />
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
 
         {/* Sidebar */}
-       <Sidebar
+        <Sidebar
           onLogout={onLogout}
           mobileOpen={mobileMenuOpen}
           onMobileClose={() => setMobileMenuOpen(false)}
+          isMobile={isMobile}
+          isTablet={isTablet}
+          isDesktop={isDesktop}
         />
 
         {/* Mobile overlay */}
@@ -80,23 +90,22 @@ function AppLayout({ onLogout }) {
           <div
             onClick={() => setMobileMenuOpen(false)}
             style={{
-              position:   'fixed',
-              inset:      0,
-              background: 'rgba(0,0,0,0.4)',
-              zIndex:     39,
+              position:       'fixed',
+              inset:          0,
+              background:     'rgba(0,0,0,0.5)',
+              zIndex:         39,
               backdropFilter: 'blur(2px)',
             }}
           />
         )}
 
-        {/* Page content — marginLeft only on desktop */}
-       <main style={{
-          flex:       1,
-          overflowY:  'auto',
-          position:   'relative',
-          marginLeft: isMobile ? 0 : 72,
-          minWidth:   0,
-          paddingTop: 0,
+        {/* Main content */}
+        <main style={{
+          flex:      1,
+          overflowY: 'auto',
+          position:  'relative',
+          minWidth:  0,
+          marginLeft: isMobile ? 0 : 80,
         }}>
           <Routes>
             <Route path="/"               element={<Dashboard />}          />
