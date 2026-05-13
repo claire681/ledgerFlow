@@ -65,12 +65,7 @@ const NAV = [
       { path:'/api-access', label:'API Access',     icon:Key                      },
     ],
   },
-  {
-    section: 'Intelligence',
-    items: [
-      { path:'/agents', label:'Novala Assistant', icon:Sparkles, badge:'NEW' },
-    ]
-  },
+  
 ];
 
 const ROLES = {
