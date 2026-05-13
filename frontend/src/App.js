@@ -5,6 +5,7 @@ import {
 } from 'react-router-dom';
 import { AIProvider }      from './context/AIContext';
 import Sidebar             from './components/Sidebar';
+import TopBar              from './components/TopBar';
 import AIAssistant         from './components/AIAssistant';
 
 import Login               from './pages/Login';
@@ -36,84 +37,69 @@ import Customers           from './pages/Customers';
 import Inventory           from './pages/Inventory';
 import APIAccess           from './pages/APIAccess';
 import Businesses          from './pages/Businesses';
-import { Menu, X }         from 'lucide-react';
 
 const ACCENT = '#0AB98A';
 
 function AppLayout({ onLogout }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const handleOverlayClick = () => setSidebarOpen(false);
-  const handleNavigate     = () => setSidebarOpen(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#F8FAFC', fontFamily: "'Inter', -apple-system, sans-serif", position: 'relative' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#F8FAFC', fontFamily: "'Inter', -apple-system, sans-serif" }}>
 
-      {/* Overlay */}
-      {sidebarOpen && (
-        <div
-          onClick={handleOverlayClick}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 40, backdropFilter: 'blur(2px)' }}
+      {/* Top header bar */}
+      <TopBar onLogout={onLogout} onMobileMenu={() => setMobileMenuOpen(o => !o)} />
+
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+
+        {/* Sidebar */}
+        <Sidebar
+          onLogout={onLogout}
+          mobileOpen={mobileMenuOpen}
+          onMobileClose={() => setMobileMenuOpen(false)}
         />
-      )}
 
-      {/* Sidebar — slides in/out on ALL screen sizes */}
-      <div style={{ position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 50, transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)' }}>
-        <Sidebar onLogout={onLogout} onNavigate={handleNavigate} />
+        {/* Mobile overlay */}
+        {mobileMenuOpen && (
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 39, backdropFilter: 'blur(2px)' }}
+          />
+        )}
+
+        {/* Page content */}
+        <main style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
+          <Routes>
+            <Route path="/"               element={<Dashboard />}          />
+            <Route path="/documents"      element={<Documents />}          />
+            <Route path="/transactions"   element={<Transactions />}       />
+            <Route path="/budgets"        element={<Budgets />}            />
+            <Route path="/invoices"       element={<Invoices />}           />
+            <Route path="/tax"            element={<TaxCalculator />}      />
+            <Route path="/vendors"        element={<VendorAnalytics />}    />
+            <Route path="/currency"       element={<Currency />}           />
+            <Route path="/receipts"       element={<ReceiptScanner />}     />
+            <Route path="/agents"         element={<Agents />}             />
+            <Route path="/team"           element={<Team />}               />
+            <Route path="/integrations"   element={<Integrations />}       />
+            <Route path="/reports"        element={<FinancialReports />}   />
+            <Route path="/reconciliation" element={<Reconciliation />}     />
+            <Route path="/billpay"        element={<BillPay />}            />
+            <Route path="/variance"       element={<VarianceReports />}    />
+            <Route path="/ledger"         element={<LedgerView />}         />
+            <Route path="/comparison"     element={<DocumentComparison />} />
+            <Route path="/billing"        element={<Billing />}            />
+            <Route path="/help"           element={<Help />}               />
+            <Route path="/settings"       element={<Settings />}           />
+            <Route path="/landing"        element={<Landing />}            />
+            <Route path="/customers"      element={<Customers />}          />
+            <Route path="/inventory"      element={<Inventory />}          />
+            <Route path="/api-access"     element={<APIAccess />}          />
+            <Route path="/businesses"     element={<Businesses />}         />
+            <Route path="/search"         element={<SmartSearch />}        />
+            <Route path="*"               element={<Navigate to="/" />}    />
+          </Routes>
+        </main>
       </div>
-
-      {/* Main content */}
-      <main style={{ flex: 1, overflowY: 'auto', position: 'relative', width: '100%' }}>
-
-        {/* Top nav bar */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 30, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: 56, borderBottom: '1px solid #E8EDF3', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
-          <button
-            onClick={() => setSidebarOpen(o => !o)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', display: 'flex', alignItems: 'center', padding: 6, borderRadius: 8, transition: 'all 0.15s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(10,185,138,0.08)'; e.currentTarget.style.color = ACCENT; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#475569'; }}
-          >
-            {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
-            No<span style={{ color: ACCENT }}>vala</span>
-          </div>
-
-          <div style={{ width: 34 }} />
-        </div>
-
-        <Routes>
-          <Route path="/"               element={<Dashboard />}          />
-          <Route path="/documents"      element={<Documents />}          />
-          <Route path="/transactions"   element={<Transactions />}       />
-          <Route path="/budgets"        element={<Budgets />}            />
-          <Route path="/invoices"       element={<Invoices />}           />
-          <Route path="/tax"            element={<TaxCalculator />}      />
-          <Route path="/vendors"        element={<VendorAnalytics />}    />
-          <Route path="/currency"       element={<Currency />}           />
-          <Route path="/receipts"       element={<ReceiptScanner />}     />
-          <Route path="/agents"         element={<Agents />}             />
-          <Route path="/team"           element={<Team />}               />
-          <Route path="/integrations"   element={<Integrations />}       />
-          <Route path="/reports"        element={<FinancialReports />}   />
-          <Route path="/reconciliation" element={<Reconciliation />}     />
-          <Route path="/billpay"        element={<BillPay />}            />
-          <Route path="/variance"       element={<VarianceReports />}    />
-          <Route path="/ledger"         element={<LedgerView />}         />
-          <Route path="/comparison"     element={<DocumentComparison />} />
-          <Route path="/billing"        element={<Billing />}            />
-          <Route path="/help"           element={<Help />}               />
-          <Route path="/settings"       element={<Settings />}           />
-          <Route path="/landing"        element={<Landing />}            />
-          <Route path="/customers"      element={<Customers />}          />
-          <Route path="/inventory"      element={<Inventory />}          />
-          <Route path="/api-access"     element={<APIAccess />}          />
-          <Route path="/businesses"     element={<Businesses />}         />
-          <Route path="/search"         element={<SmartSearch />}        />
-          <Route path="*"               element={<Navigate to="/" />}    />
-        </Routes>
-      </main>
 
       <AIAssistant />
     </div>
@@ -138,21 +124,17 @@ export default function App() {
       setOnboardingDone(false);
       return;
     }
-
     const cached = localStorage.getItem('onboarding_completed');
     if (cached === 'true') {
       setOnboardingDone(true);
       setCheckingOnboarding(false);
       return;
     }
-
     setCheckingOnboarding(true);
-
     const timeout = setTimeout(() => {
       setOnboardingDone(true);
       setCheckingOnboarding(false);
     }, 3000);
-
     fetch('https://api.getnovala.com/api/v1/onboarding/status', {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -192,7 +174,7 @@ export default function App() {
 
   if (loading || (token && checkingOnboarding)) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F8FAFC', fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F8FAFC' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', marginBottom: 8 }}>
             No<span style={{ color: ACCENT }}>vala</span>
@@ -203,7 +185,6 @@ export default function App() {
     );
   }
 
-  // ── Router is now the OUTERMOST wrapper ──
   return (
     <Router>
       <AIProvider>

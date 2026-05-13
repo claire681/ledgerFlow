@@ -78,6 +78,7 @@ export const page = {
   background: '#F8FAFC',
   fontFamily: "'Inter', -apple-system, sans-serif",
   minHeight:  '100vh',
+  marginLeft: 72,
 };
 
 // Reusable top bar style
