@@ -204,9 +204,10 @@ export default function App() {
       <Router>
         {!token ? (
           <Routes>
+            <Route path="/"         element={<Landing/>}/>
             <Route path="/login"    element={<Login onLogin={handleLogin}/>}/>
             <Route path="/register" element={<Login onLogin={handleLogin}/>}/>
-            <Route path="*"         element={<Navigate to="/login"/>}/>
+            <Route path="*"         element={<Navigate to="/"/>}/>
           </Routes>
         ) : !onboardingDone ? (
           <Onboarding onComplete={handleOnboardingComplete}/>
