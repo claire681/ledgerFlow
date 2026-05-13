@@ -90,12 +90,13 @@ function AppLayout({ onLogout }) {
         )}
 
         {/* Page content — marginLeft only on desktop */}
-        <main style={{
+       <main style={{
           flex:       1,
           overflowY:  'auto',
           position:   'relative',
           marginLeft: isMobile ? 0 : 72,
           minWidth:   0,
+          paddingTop: 0,
         }}>
           <Routes>
             <Route path="/"               element={<Dashboard />}          />
