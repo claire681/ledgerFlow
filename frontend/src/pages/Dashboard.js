@@ -196,26 +196,39 @@ function BriefingSettingsModal({ settings, onClose, onSave }) {
             </div>
           )}
 
-          {frequency === 'monthly' && (
+       {frequency === 'monthly' && (
             <div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Day of the Month</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 6 }}>
-                {DAYS_OF_MONTH.map(d => (
-                  <button
-                    key={d}
-                    onClick={() => setDayOfMonth(d)}
-                    style={{ padding: '8px 4px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600, border: '1px solid', fontFamily: L.font, borderColor: dayOfMonth === d ? ACCENT : L.border, background: dayOfMonth === d ? 'rgba(10,185,138,0.08)' : '#fff', color: dayOfMonth === d ? ACCENT : L.textSub, textAlign: 'center', transition: 'all 0.15s' }}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-              <div style={{ fontSize: 11, color: L.textMuted, marginTop: 8 }}>
-                Briefing sent on the <strong>{ordinal(dayOfMonth)}</strong> of every month
+              <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Pick Day of Month</div>
+              <div style={{ border: `1px solid ${L.border}`, borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ background: 'linear-gradient(135deg,#0AB98A,#0EA5E9)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>Every month on the {ordinal(dayOfMonth)}</div>
+                </div>
+                <div style={{ padding: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4, marginBottom: 4 }}>
+                    {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => (
+                      <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: L.textMuted, padding: '4px 0' }}>{d}</div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4 }}>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                      <button
+                        key={d}
+                        onClick={() => setDayOfMonth(d)}
+                        style={{ padding: '7px 2px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: dayOfMonth === d ? 700 : 400, border: 'none', background: dayOfMonth === d ? ACCENT : 'transparent', color: dayOfMonth === d ? '#fff' : L.textSub, textAlign: 'center', transition: 'all 0.15s', fontFamily: L.font }}
+                        onMouseEnter={e => { if (dayOfMonth !== d) { e.currentTarget.style.background = 'rgba(10,185,138,0.08)'; e.currentTarget.style.color = ACCENT; } }}
+                        onMouseLeave={e => { if (dayOfMonth !== d) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = L.textSub; } }}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ padding: '10px 16px', background: L.pageBg, borderTop: `1px solid ${L.border}`, fontSize: 12, color: L.textMuted, textAlign: 'center' }}>
+                  Briefing will be sent on the <strong style={{ color: ACCENT }}>{ordinal(dayOfMonth)}</strong> of every month
+                </div>
               </div>
             </div>
           )}
-
           {frequency === 'weekly' && (
             <div>
               <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Day of the Week</div>
