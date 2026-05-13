@@ -16,7 +16,7 @@ import {
   getAIInsights, getCompanyProfile, getDailyBriefing,
 } from '../services/api';
 import { generateReport } from '../services/pdfGenerator';
-import { Sunrise } from 'lucide-react';
+
 
 const BASE     = 'https://api.getnovala.com/api/v1';
 const ACCENT   = '#0AB98A';
