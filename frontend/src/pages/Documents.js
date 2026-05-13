@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { L, card, page, topBar } from '../styles/light';
 import {
   Upload, FileText, Trash2, RefreshCw, CheckCircle,
-  AlertCircle, Sparkles, Eye, Download, Clock,
-  FileSearch, Brain, Database, LayoutDashboard,
+  AlertCircle, Eye, Download, Clock,
+  FileSearch, Database, LayoutDashboard,
   ArrowUpFromLine, ShieldCheck, Zap, X, Image, Users,
-  DollarSign, ZoomIn, ZoomOut, RotateCw,
+  DollarSign, ZoomIn, ZoomOut, RotateCw, ScanLine,
 } from 'lucide-react';
 import { useAI } from '../hooks/useAI';
 
@@ -14,13 +14,13 @@ const ACCENT = '#0AB98A';
 const GRAD   = 'linear-gradient(135deg, #0AB98A 0%, #0EA5E9 100%)';
 
 const PROCESS_STEPS = [
-  { key:'uploading',            label:'Uploading file',            icon:ArrowUpFromLine, color:'#0AB98A' },
-  { key:'reading_document',     label:'Reading document',          icon:FileSearch,      color:'#0EA5E9' },
-  { key:'extracting_data',      label:'Extracting financial data', icon:Brain,           color:'#8B5CF6' },
-  { key:'classifying',          label:'Classifying document',      icon:ShieldCheck,     color:'#F59E0B' },
-  { key:'saving_document',      label:'Saving to system',          icon:Database,        color:'#10B981' },
-  { key:'creating_records',     label:'Creating records',          icon:Zap,             color:'#3B82F6' },
-  { key:'refreshing_dashboard', label:'Updating dashboard',        icon:LayoutDashboard, color:'#0AB98A' },
+  { key:'uploading',            label:'Uploading file',        icon:ArrowUpFromLine, color:'#0AB98A' },
+  { key:'reading_document',     label:'Reading document',      icon:FileSearch,      color:'#0EA5E9' },
+  { key:'extracting_data',      label:'Extracting data',       icon:ScanLine,        color:'#8B5CF6' },
+  { key:'classifying',          label:'Classifying document',  icon:ShieldCheck,     color:'#F59E0B' },
+  { key:'saving_document',      label:'Saving to system',      icon:Database,        color:'#10B981' },
+  { key:'creating_records',     label:'Creating records',      icon:Zap,             color:'#3B82F6' },
+  { key:'refreshing_dashboard', label:'Updating dashboard',    icon:LayoutDashboard, color:'#0AB98A' },
 ];
 
 const PROC_STATUS = {
@@ -103,29 +103,24 @@ function DocViewerModal({ doc, onClose }) {
   useEffect(() => {
     const load = async () => {
       try {
-       const res = await fetch(`${BASE}/documents/${doc.id}/view`, {
-  headers: { Authorization:`Bearer ${getToken()}` },
-});
-if (!res.ok) throw new Error('Could not load file');
-const blob = await res.blob();
-const objectUrl = URL.createObjectURL(blob);
-setUrl(objectUrl);
+        const res = await fetch(`${BASE}/documents/${doc.id}/view`, {
+          headers: { Authorization:`Bearer ${getToken()}` },
+        });
+        if (!res.ok) throw new Error('Could not load file');
+        const blob      = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        setUrl(objectUrl);
       } catch (e) { setError(e.message); }
       finally { setLoading(false); }
     };
     load();
   }, [doc.id]);
 
-  const handleDownload = () => {
-    if (!url) return;
-    window.open(url, '_blank');
-  };
+  const handleDownload = () => { if (!url) return; window.open(url, '_blank'); };
 
   return (
     <div onClick={e => e.target === e.currentTarget && onClose()}
       style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.88)', zIndex:2000, display:'flex', flexDirection:'column', backdropFilter:'blur(6px)' }}>
-
-      {/* Header */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 20px', background:'rgba(0,0,0,0.5)', borderBottom:'1px solid rgba(255,255,255,0.1)', flexShrink:0 }}>
         <div style={{ fontSize:14, fontWeight:600, color:'#F1F5F9', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{doc.filename}</div>
         <div style={{ display:'flex', gap:8, alignItems:'center', flexShrink:0, marginLeft:12 }}>
@@ -147,7 +142,6 @@ setUrl(objectUrl);
         </div>
       </div>
 
-      {/* Content */}
       <div style={{ flex:1, overflow:'auto', display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
         {loading && <div style={{ color:'#94A3B8', fontSize:14 }}>Loading document...</div>}
         {error && (
@@ -164,8 +158,7 @@ setUrl(objectUrl);
                 style={{ maxWidth:'100%', maxHeight:'80vh', objectFit:'contain', transform:`scale(${zoom}) rotate(${rotate}deg)`, transition:'transform 0.2s ease', borderRadius:8, boxShadow:'0 8px 32px rgba(0,0,0,0.4)' }}/>
             )}
             {isPDF && (
-              <iframe src={url} title={doc.filename}
-                style={{ width:'100%', height:'80vh', border:'none', borderRadius:8 }}/>
+              <iframe src={url} title={doc.filename} style={{ width:'100%', height:'80vh', border:'none', borderRadius:8 }}/>
             )}
             {!isImage && !isPDF && (
               <div style={{ textAlign:'center', color:'#94A3B8' }}>
@@ -181,7 +174,6 @@ setUrl(objectUrl);
         )}
       </div>
 
-      {/* Footer */}
       {(doc.vendor || doc.total_amount || doc.doc_date) && (
         <div style={{ padding:'12px 20px', background:'rgba(0,0,0,0.5)', borderTop:'1px solid rgba(255,255,255,0.1)', display:'flex', gap:20, flexWrap:'wrap', flexShrink:0 }}>
           {doc.vendor        && <div style={{ fontSize:12, color:'#94A3B8' }}>Vendor: <strong style={{ color:'#F1F5F9' }}>{doc.vendor}</strong></div>}
@@ -193,6 +185,7 @@ setUrl(objectUrl);
     </div>
   );
 }
+
 export default function Documents() {
   const [docs,          setDocs]          = useState([]);
   const [loading,       setLoading]       = useState(true);
@@ -240,9 +233,19 @@ export default function Documents() {
 
   const pollUploadStatus = (jobId, fileName) => {
     stopPolling();
+    let attempts = 0;
+    const maxAttempts = 120;
     pollingRef.current = setInterval(async () => {
+      attempts++;
+      if (attempts > maxAttempts) {
+        stopPolling(); setUploading(false);
+        setError('Processing is taking longer than expected. Please refresh.');
+        return;
+      }
       try {
-        const res  = await fetch(`${BASE}/documents/upload-status/${jobId}`, { headers:{ Authorization:`Bearer ${getToken()}` } });
+        const res  = await fetch(`${BASE}/documents/upload-status/${jobId}`, {
+          headers:{ Authorization:`Bearer ${getToken()}` },
+        });
         if (!res.ok) throw new Error(`Status check failed: ${res.status}`);
         const data = await res.json();
         setUploadStatus(data);
@@ -254,10 +257,13 @@ export default function Documents() {
         }
         if (data.status === 'failed') {
           stopPolling(); setUploading(false);
-          setError(data.error_message || 'Upload failed while processing.');
+          setError(data.error_message || 'Processing failed. Please try again.');
         }
-      } catch (e) { stopPolling(); setUploading(false); setError(e.message); }
-    }, 1500);
+      } catch (e) {
+        stopPolling(); setUploading(false);
+        setError('Could not check processing status. Please refresh.');
+      }
+    }, 2000);
   };
 
   const handleUpload = async (file, txnType = 'auto') => {
@@ -267,22 +273,29 @@ export default function Documents() {
     const allowed = ['pdf','csv','png','jpg','jpeg','tiff','webp','txt'];
     const ext     = file.name.split('.').pop().toLowerCase();
     if (!allowed.includes(ext)) { setError(`File type .${ext} is not supported.`); return; }
+    if (file.size > 20 * 1024 * 1024) { setError('File size must be under 20MB.'); return; }
     setUploading(true); setError(''); setSuccess('');
-    setUploadStatus({ status:'uploaded', current_step:'uploading', progress:0, filename:file.name });
+    setUploadStatus({ status:'uploading', current_step:'uploading', progress:5, filename:file.name });
     setShowTypeModal(false); setPendingFile(null);
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res  = await fetch(`${BASE}/documents/upload?txn_type=${txnType}`, {
-        method:'POST', headers:{ Authorization:`Bearer ${token}` }, body:formData,
+      const res = await fetch(`${BASE}/documents/upload?txn_type=${txnType}`, {
+        method:'POST',
+        headers:{ Authorization:`Bearer ${token}` },
+        body:formData,
       });
-      const data = await res.json();
-      if (!res.ok)      throw new Error(data.detail || `Upload failed: ${res.status}`);
-      if (!data.job_id) throw new Error('Backend did not return job_id.');
-      setUploadStatus(data);
+      let data;
+      try { data = await res.json(); }
+      catch { throw new Error(`Server error: ${res.status}`); }
+      if (!res.ok) throw new Error(data.detail || `Upload failed: ${res.status}`);
+      if (!data.job_id) throw new Error('Upload succeeded but no job ID returned.');
+      setUploadStatus(prev => ({ ...prev, ...data }));
       pollUploadStatus(data.job_id, file.name);
     } catch (e) {
-      setUploading(false); setError(`Upload failed: ${e.message}`);
+      setUploading(false);
+      setUploadStatus(null);
+      setError(`Upload failed: ${e.message}`);
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
@@ -369,7 +382,7 @@ export default function Documents() {
       <div style={{ ...topBar, flexDirection:isMobile?'column':'row', alignItems:isMobile?'flex-start':'center', gap:isMobile?10:0, padding:isMobile?'16px':undefined }}>
         <div>
           <div style={{ fontSize:isMobile?18:20, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>Documents</div>
-          <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>Upload invoices and receipts — AI extracts data automatically</div>
+          <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>Upload invoices and receipts — data extracted and organized automatically</div>
         </div>
         <button onClick={load} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:L.font }}>
           <RefreshCw size={13}/> Refresh
@@ -392,24 +405,25 @@ export default function Documents() {
 
         {/* Upload zone */}
         <div
-          onDrop={e => { e.preventDefault(); setDragOver(false); const f=e.dataTransfer.files[0]; if(f){setPendingFile(f);setShowTypeModal(true);} }}
-          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+          onDrop={e => { e.preventDefault(); setDragOver(false); const f=e.dataTransfer.files[0]; if(f&&!uploading){setPendingFile(f);setShowTypeModal(true);} }}
+          onDragOver={e => { e.preventDefault(); if(!uploading) setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onClick={() => !uploading && fileInputRef.current?.click()}
           style={{ border:`2px dashed ${dragOver?ACCENT:uploading?'transparent':'#E2E8F0'}`, borderRadius:16, padding:uploading?(isMobile?'24px 16px':'32px 24px'):(isMobile?'32px 16px':'44px 24px'), textAlign:'center', cursor:uploading?'default':'pointer', background:uploading?'linear-gradient(135deg,rgba(10,185,138,0.03),rgba(14,165,233,0.03))':dragOver?'rgba(10,185,138,0.04)':'#FFFFFF', marginBottom:16, transition:'all 0.25s ease', position:'relative', overflow:'hidden' }}>
           <input ref={fileInputRef} type="file" accept=".pdf,.csv,.png,.jpg,.jpeg,.tiff,.webp,.txt" style={{ display:'none' }}
-            onChange={e => { const f=e.target.files?.[0]; if(f){setPendingFile(f);setShowTypeModal(true);} }}/>
+            onChange={e => { const f=e.target.files?.[0]; if(f&&!uploading){setPendingFile(f);setShowTypeModal(true);} }}/>
+
           {uploading ? (
             <div style={{ animation:'fadeIn 0.4s ease' }}>
               <div style={{ position:'relative', width:isMobile?90:120, height:isMobile?90:120, margin:'0 auto 16px' }}>
                 <ProgressRing progress={progress} size={isMobile?90:120}/>
                 <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
                   <div style={{ width:isMobile?42:56, height:isMobile?42:56, borderRadius:16, background:GRAD, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 20px rgba(10,185,138,0.35)', animation:'pulse-ring 2s infinite' }}>
-                    <Sparkles size={isMobile?18:24} color="#fff"/>
+                    <ScanLine size={isMobile?18:24} color="#fff"/>
                   </div>
                 </div>
               </div>
-              <div style={{ fontSize:isMobile?14:16, fontWeight:700, color:L.text, marginBottom:4 }}>AI is processing your document</div>
+              <div style={{ fontSize:isMobile?14:16, fontWeight:700, color:L.text, marginBottom:4 }}>Processing your document</div>
               <div style={{ fontSize:13, color:L.textMuted, marginBottom:6 }}>{uploadStatus?.filename||''}</div>
               <div style={{ width:isMobile?'100%':320, height:6, background:'#E2E8F0', borderRadius:99, margin:'0 auto 20px', overflow:'hidden' }}>
                 <div style={{ width:`${progress}%`, height:'100%', borderRadius:99, background:'linear-gradient(90deg,#0AB98A,#0EA5E9,#0AB98A)', backgroundSize:'200% 100%', animation:'shimmer 1.5s infinite linear', transition:'width 0.4s ease' }}/>
@@ -448,7 +462,12 @@ export default function Documents() {
               </button>
               {!isMobile && (
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:16, marginTop:16, flexWrap:'wrap' }}>
-                  {[{icon:Brain,label:'AI Extraction'},{icon:ShieldCheck,label:'Auto-categorized'},{icon:Zap,label:'Instant records'},{icon:Users,label:'Client detection'}].map(({icon:Icon,label}) => (
+                  {[
+                    { icon:ScanLine,   label:'Smart Extraction'  },
+                    { icon:ShieldCheck,label:'Auto-categorized'  },
+                    { icon:Zap,        label:'Instant records'   },
+                    { icon:Users,      label:'Client detection'  },
+                  ].map(({icon:Icon,label}) => (
                     <div key={label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:L.textMuted }}>
                       <Icon size={12} color={ACCENT}/> {label}
                     </div>
@@ -498,7 +517,12 @@ export default function Documents() {
             </div>
           )}
 
-          {loading && <div style={{ padding:48, textAlign:'center' }}><Spinner size={28}/><div style={{ fontSize:13, color:L.textMuted, marginTop:12 }}>Loading documents…</div></div>}
+          {loading && (
+            <div style={{ padding:48, textAlign:'center' }}>
+              <Spinner size={28}/>
+              <div style={{ fontSize:13, color:L.textMuted, marginTop:12 }}>Loading documents…</div>
+            </div>
+          )}
 
           {!loading && docs.length === 0 && (
             <div style={{ padding:isMobile?40:64, textAlign:'center' }}>
