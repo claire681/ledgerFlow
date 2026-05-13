@@ -71,17 +71,20 @@ export const input = {
   boxSizing:    'border-box',
 };
 
-// Reusable page wrapper style
+// ── Page wrapper ─────────────────────────────────────────────
+// marginLeft: 72px on desktop to clear slim sidebar
+// marginLeft: 0 on mobile (sidebar is a drawer, not inline)
 export const page = {
   flex:       1,
   overflowY:  'auto',
   background: '#F8FAFC',
   fontFamily: "'Inter', -apple-system, sans-serif",
   minHeight:  '100vh',
-  marginLeft: 72,
+  marginLeft: typeof window !== 'undefined' && window.innerWidth >= 768 ? 72 : 0,
 };
 
-// Reusable top bar style
+// ── Top bar ───────────────────────────────────────────────────
+// Extra left padding on desktop so content never touches sidebar edge
 export const topBar = {
   position:       'sticky',
   top:            0,
@@ -89,10 +92,13 @@ export const topBar = {
   background:     'rgba(248,250,252,0.92)',
   backdropFilter: 'blur(12px)',
   borderBottom:   '1px solid #E5E7EB',
-  padding:        '14px 28px',
+  padding:        typeof window !== 'undefined' && window.innerWidth >= 768
+    ? '16px 32px'
+    : '14px 16px',
   display:        'flex',
   justifyContent: 'space-between',
   alignItems:     'center',
+  gap:            12,
 };
 
 // Reusable section title
