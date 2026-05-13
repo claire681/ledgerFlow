@@ -8,6 +8,7 @@ import {
   BarChart2, GitMerge, CreditCard, BookOpen,
   GitCompare, Settings as SettingsIcon, HelpCircle, Search,
 } from 'lucide-react';
+import { Users2, Package, Building2, Key } from 'lucide-react';
 
 const ACCENT   = '#0AB98A';
 const BG       = '#0F172A';
@@ -42,6 +43,10 @@ const NAV = [
       { path:'/tax',            label:'Tax',            icon:Percent                },
       { path:'/billing',        label:'Billing',        icon:CreditCard             },
       { path:'/currency',       label:'Currency',       icon:RefreshCw              },
+      { path:'/customers',  label:'Customers',   icon:Users2      },
+{ path:'/inventory',  label:'Inventory',   icon:Package     },
+{ path:'/businesses', label:'Businesses',  icon:Building2   },
+{ path:'/api-access', label:'API Access',  icon:Key         },
     ],
   },
   {

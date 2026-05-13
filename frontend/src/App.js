@@ -33,6 +33,10 @@ import Settings            from './pages/Settings';
 import Help                from './pages/Help';
 import SmartSearch from './pages/SmartSearch';
 import Landing from './pages/Landing';
+import Customers  from './pages/Customers';
+import Inventory  from './pages/Inventory';
+import APIAccess  from './pages/APIAccess';
+import Businesses from './pages/Businesses';
 import { Menu, X }         from 'lucide-react';
 
 const ACCENT = '#0AB98A';
@@ -104,6 +108,11 @@ function AppLayout({ onLogout }) {
           <Route path="/help"           element={<Help/>}             />
           <Route path="/settings"       element={<Settings/>}         />
           <Route path="/landing" element={<Landing />} />
+          <Route path="/customers"  element={<Customers/>}  />
+          <Route path="/customers"  element={<Customers/>}  />
+<Route path="/inventory"  element={<Inventory/>}   />
+<Route path="/api-access" element={<APIAccess/>}   />
+<Route path="/businesses" element={<Businesses/>}  />
           <Route path="/search" element={<SmartSearch/>}/>
           <Route path="*"               element={<Navigate to="/"/>}  />
         </Routes>
