@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp, TrendingDown, RefreshCw, DollarSign,
   FileText, ArrowLeftRight, Receipt, PieChart,
-  Users, BarChart2, Sliders, Eye, ChevronRight,
-  Plus, MoreHorizontal, Info, Building2,
-  Zap, ShoppingCart, UserCheck, Briefcase,
+  Users, BarChart2, Sliders, Eye, ChevronRight, ChevronLeft,
+  Plus, MoreHorizontal, Info, X,
+  ShoppingCart, UserCheck, Briefcase, ClipboardList,
 } from 'lucide-react';
 
 const ACCENT = '#0AB98A';
@@ -18,22 +18,64 @@ const fmt = (n) => {
 };
 
 const APP_SHORTCUTS = [
-  { label: 'Transactions',   icon: ArrowLeftRight, color: '#0AB98A', path: '/transactions' },
-  { label: 'Invoices',       icon: FileText,       color: '#3B82F6', path: '/invoices'     },
-  { label: 'Bill Pay',       icon: DollarSign,     color: '#8B5CF6', path: '/billpay'      },
-  { label: 'Reports',        icon: BarChart2,      color: '#F59E0B', path: '/reports'      },
-  { label: 'Customers',      icon: UserCheck,      color: '#06B6D4', path: '/customers'    },
-  { label: 'Vendors',        icon: Briefcase,      color: '#EF4444', path: '/vendors'      },
-  { label: 'Inventory',      icon: ShoppingCart,   color: '#10B981', path: '/inventory'    },
-  { label: 'Team',           icon: Users,          color: '#6366F1', path: '/team'         },
+  { label: 'Transactions',  icon: ArrowLeftRight, color: '#0AB98A', path: '/transactions' },
+  { label: 'Invoices',      icon: FileText,       color: '#3B82F6', path: '/invoices'     },
+  { label: 'Bill Pay',      icon: DollarSign,     color: '#8B5CF6', path: '/billpay'      },
+  { label: 'Reports',       icon: BarChart2,      color: '#F59E0B', path: '/reports'      },
+  { label: 'Customers',     icon: UserCheck,      color: '#06B6D4', path: '/customers'    },
+  { label: 'Vendors',       icon: Briefcase,      color: '#EF4444', path: '/vendors'      },
+  { label: 'Inventory',     icon: ShoppingCart,   color: '#10B981', path: '/inventory'    },
+  { label: 'Team',          icon: Users,          color: '#6366F1', path: '/team'         },
+  { label: 'Documents',     icon: FileText,       color: '#F59E0B', path: '/documents'    },
+  { label: 'Budgets',       icon: PieChart,       color: '#EC4899', path: '/budgets'      },
+  { label: 'Reconciliation',icon: ClipboardList,  color: '#14B8A6', path: '/reconciliation'},
 ];
 
 const CREATE_ACTIONS = [
-  { label: 'Create invoice',   path: '/invoices'     },
-  { label: 'Add transaction',  path: '/transactions' },
-  { label: 'Upload document',  path: '/documents'    },
-  { label: 'Scan receipt',     path: '/receipts'     },
-  { label: 'Record expense',   path: '/transactions' },
+  { label: 'Create invoice',  path: '/invoices'     },
+  { label: 'Add transaction', path: '/transactions' },
+  { label: 'Upload document', path: '/documents'    },
+  { label: 'Scan receipt',    path: '/receipts'     },
+  { label: 'Record expense',  path: '/transactions' },
+];
+
+const ALL_CREATE = [
+  {
+    header: 'Customers',
+    items: [
+      { label: 'Invoice',         path: '/invoices'     },
+      { label: 'Receive payment', path: '/transactions' },
+      { label: 'Estimate',        path: '/invoices'     },
+      { label: 'Sales receipt',   path: '/invoices'     },
+      { label: 'Add customer',    path: '/customers'    },
+    ],
+  },
+  {
+    header: 'Suppliers',
+    items: [
+      { label: 'Expense',      path: '/transactions' },
+      { label: 'Bill',         path: '/billpay'      },
+      { label: 'Pay bills',    path: '/billpay'      },
+      { label: 'Add supplier', path: '/vendors'      },
+    ],
+  },
+  {
+    header: 'Business',
+    items: [
+      { label: 'Upload Document', path: '/documents' },
+      { label: 'Scan Receipt',    path: '/receipts'  },
+      { label: 'New Budget',      path: '/budgets'   },
+    ],
+  },
+  {
+    header: 'Other',
+    items: [
+      { label: 'Bank deposit',  path: '/transactions' },
+      { label: 'Journal entry', path: '/ledger'       },
+      { label: 'Smart Search',  path: '/search'       },
+      { label: 'API Access',    path: '/api-access'   },
+    ],
+  },
 ];
 
 function StatCard({ label, subtitle, value, trend, trendUp, badge, footer, onFooter, loading }) {
@@ -57,10 +99,7 @@ function StatCard({ label, subtitle, value, trend, trendUp, badge, footer, onFoo
       )}
       {trend && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {trendUp
-            ? <TrendingUp size={14} color={ACCENT} />
-            : <TrendingDown size={14} color="#EF4444" />
-          }
+          {trendUp ? <TrendingUp size={14} color={ACCENT} /> : <TrendingDown size={14} color="#EF4444" />}
           <span style={{ fontSize: 12, color: trendUp ? ACCENT : '#EF4444' }}>{trend}</span>
         </div>
       )}
@@ -79,13 +118,13 @@ function StatCard({ label, subtitle, value, trend, trendUp, badge, footer, onFoo
 }
 
 function MiniBar({ income, expenses }) {
-  const total   = income + expenses || 1;
-  const incPct  = (income  / total) * 100;
-  const expPct  = (expenses / total) * 100;
+  const total  = income + expenses || 1;
+  const incPct = (income   / total) * 100;
+  const expPct = (expenses / total) * 100;
   return (
     <div style={{ marginTop: 8 }}>
       <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
-        <div style={{ height: 8, borderRadius: 4, background: ACCENT, width: incPct + '%', minWidth: 4 }} />
+        <div style={{ height: 8, borderRadius: 4, background: ACCENT,    width: incPct + '%', minWidth: 4 }} />
         <div style={{ height: 8, borderRadius: 4, background: '#EF4444', width: expPct + '%', minWidth: 4 }} />
       </div>
       <div style={{ display: 'flex', gap: 16 }}>
@@ -110,10 +149,7 @@ function CashFlowChart({ data }) {
       </div>
     );
   }
-
-  const max    = Math.max(...data.map(d => Math.abs(d.amount)), 1);
-  const width  = 100 / data.length;
-
+  const max = Math.max(...data.map(d => Math.abs(d.amount)), 1);
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 80, padding: '0 4px' }}>
       {data.map((d, i) => {
@@ -121,7 +157,7 @@ function CashFlowChart({ data }) {
         const pos = d.amount >= 0;
         return (
           <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            <div style={{ width: '100%', height: h + '%', background: pos ? 'rgba(10,185,138,0.7)' : 'rgba(239,68,68,0.7)', borderRadius: '3px 3px 0 0', minHeight: 3, transition: 'height 0.3s ease' }} />
+            <div style={{ width: '100%', height: h + '%', background: pos ? 'rgba(10,185,138,0.7)' : 'rgba(239,68,68,0.7)', borderRadius: '3px 3px 0 0', minHeight: 3 }} />
             <div style={{ fontSize: 8, color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%', textAlign: 'center' }}>{d.month}</div>
           </div>
         );
@@ -137,23 +173,35 @@ export default function Dashboard() {
   const name      = rawName.includes('@') ? rawName.split('@')[0] : rawName;
   const company   = localStorage.getItem('company_name') || 'My Business';
 
-  const [stats,    setStats]    = useState(null);
-  const [txns,     setTxns]     = useState([]);
-  const [invoices, setInvoices] = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [refresh,  setRefresh]  = useState(0);
+  const [stats,           setStats]           = useState(null);
+  const [txns,            setTxns]            = useState([]);
+  const [invoices,        setInvoices]        = useState([]);
+  const [loading,         setLoading]         = useState(true);
+  const [refresh,         setRefresh]         = useState(0);
+  const [briefingOn,      setBriefingOn]      = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [canScrollLeft,   setCanScrollLeft]   = useState(false);
+  const [canScrollRight,  setCanScrollRight]  = useState(false);
+  const [isMobile,        setIsMobile]        = useState(window.innerWidth < 768);
 
-  const hour    = new Date().getHours();
+  const scrollRef = useRef(null);
+  const headers   = { Authorization: 'Bearer ' + token };
+
+  const hour     = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-  const headers = { Authorization: 'Bearer ' + token };
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
     Promise.allSettled([
-      fetch(API + '/dashboard/stats',  { headers }).then(r => r.json()),
-      fetch(API + '/transactions/',    { headers }).then(r => r.json()),
-      fetch(API + '/invoices/',        { headers }).then(r => r.json()),
+      fetch(API + '/dashboard/stats', { headers }).then(r => r.json()),
+      fetch(API + '/transactions/',   { headers }).then(r => r.json()),
+      fetch(API + '/invoices/',       { headers }).then(r => r.json()),
     ]).then(([statsRes, txnsRes, invRes]) => {
       if (statsRes.status === 'fulfilled') setStats(statsRes.value);
       if (txnsRes.status  === 'fulfilled') {
@@ -167,12 +215,35 @@ export default function Dashboard() {
     }).finally(() => setLoading(false));
   }, [refresh]);
 
-  // Calculate metrics from data
-  const revenue  = stats?.total_revenue  || stats?.revenue  || stats?.income  ||
-    txns.filter(t => (t.type || t.transaction_type || '').toLowerCase().includes('income') || parseFloat(t.amount || 0) > 0).reduce((s, t) => s + Math.abs(parseFloat(t.amount || 0)), 0);
+  // Check scroll arrows
+  const checkScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const el = scrollRef.current;
+    if (el) el.addEventListener('scroll', checkScroll);
+    window.addEventListener('resize', checkScroll);
+    return () => {
+      if (el) el.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, []);
+
+  const scrollLeft  = () => { scrollRef.current?.scrollBy({ left: -200, behavior: 'smooth' }); };
+  const scrollRight = () => { scrollRef.current?.scrollBy({ left:  200, behavior: 'smooth' }); };
+
+  const revenue  = stats?.total_revenue || stats?.revenue || stats?.income ||
+    txns.filter(t => (t.type || t.transaction_type || '').toLowerCase().includes('income') || parseFloat(t.amount || 0) > 0)
+        .reduce((s, t) => s + Math.abs(parseFloat(t.amount || 0)), 0);
 
   const expenses = stats?.total_expenses || stats?.expenses ||
-    txns.filter(t => (t.type || t.transaction_type || '').toLowerCase().includes('expense') || parseFloat(t.amount || 0) < 0).reduce((s, t) => s + Math.abs(parseFloat(t.amount || 0)), 0);
+    txns.filter(t => (t.type || t.transaction_type || '').toLowerCase().includes('expense') || parseFloat(t.amount || 0) < 0)
+        .reduce((s, t) => s + Math.abs(parseFloat(t.amount || 0)), 0);
 
   const netProfit = stats?.net_profit || stats?.profit || (revenue - expenses);
 
@@ -183,17 +254,13 @@ export default function Dashboard() {
 
   const totalUnpaid = unpaidInvoices.reduce((s, inv) => s + parseFloat(inv.amount || inv.total || 0), 0);
 
-  // Build cash flow by month from transactions
   const cashFlowMap = {};
   txns.forEach(t => {
-    const date  = new Date(t.date || t.created_at || t.transaction_date || Date.now());
-    const key   = date.toLocaleString('default', { month: 'short', year: '2-digit' });
-    const amt   = parseFloat(t.amount || 0);
-    cashFlowMap[key] = (cashFlowMap[key] || 0) + amt;
+    const date = new Date(t.date || t.created_at || t.transaction_date || Date.now());
+    const key  = date.toLocaleString('default', { month: 'short', year: '2-digit' });
+    cashFlowMap[key] = (cashFlowMap[key] || 0) + parseFloat(t.amount || 0);
   });
-  const cashFlowData = Object.entries(cashFlowMap)
-    .slice(-8)
-    .map(([month, amount]) => ({ month, amount }));
+  const cashFlowData = Object.entries(cashFlowMap).slice(-8).map(([month, amount]) => ({ month, amount }));
 
   const profitUp = netProfit >= 0;
 
@@ -203,37 +270,62 @@ export default function Dashboard() {
         @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.5 } }
         .shortcut-pill:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-1px); }
         .action-chip:hover { background: #F1F5F9 !important; }
+        .create-item:hover { background: #F8FAFC; color: #0AB98A; }
       `}</style>
 
       {/* Top bar */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #E5E7EB', padding: '14px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #E5E7EB', padding: isMobile ? '12px 16px' : '12px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10, gap: 12, flexWrap: 'wrap' }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: '#334155' }}>{company}</div>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: isMobile ? 8 : 14, alignItems: 'center', flexWrap: 'wrap' }}>
+
+          {/* Morning Briefing toggle */}
+          <div
+            title="Get a daily summary of your business each morning."
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999, border: '1px solid #E5E7EB', background: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 500, color: '#334155' }}
+            onClick={() => setBriefingOn(p => !p)}
+          >
+            <ClipboardList size={13} color={briefingOn ? ACCENT : '#64748B'} />
+            <span style={{ display: isMobile ? 'none' : 'inline' }}>Morning Briefing</span>
+            <div style={{ padding: '2px 7px', borderRadius: 20, background: briefingOn ? 'rgba(10,185,138,0.12)' : '#F1F5F9', color: briefingOn ? ACCENT : '#94A3B8', fontSize: 10, fontWeight: 700 }}>
+              {briefingOn ? 'ON' : 'OFF'}
+            </div>
+          </div>
+
           <button
             onClick={() => setRefresh(r => r + 1)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', fontSize: 12, fontFamily: FONT }}
           >
-            <RefreshCw size={14} /> Refresh
+            <RefreshCw size={14} /> {!isMobile && 'Refresh'}
           </button>
           <button
             onClick={() => navigate('/settings')}
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', fontSize: 12, fontFamily: FONT }}
           >
-            <Sliders size={14} /> Customize
+            <Sliders size={14} /> {!isMobile && 'Customize'}
           </button>
           <button
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', fontSize: 12, fontFamily: FONT }}
           >
-            <Eye size={14} /> Privacy
+            <Eye size={14} /> {!isMobile && 'Privacy'}
           </button>
         </div>
       </div>
 
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: isMobile ? '20px 16px' : '32px 32px' }}>
+
+        {/* Mobile back arrow — hidden on desktop */}
+        {isMobile && (
+          <button
+            onClick={() => navigate('/')}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', fontSize: 13, fontWeight: 600, marginBottom: 16, padding: 0, fontFamily: FONT }}
+          >
+            <ChevronLeft size={18} /> Dashboard
+          </button>
+        )}
 
         {/* Greeting */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 700, color: '#0F172A', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <h1 style={{ fontSize: isMobile ? 24 : 32, fontWeight: 700, color: '#0F172A', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
             {greeting}, {name.charAt(0).toUpperCase() + name.slice(1)}!
           </h1>
           <div style={{ fontSize: 14, color: '#64748B' }}>
@@ -241,30 +333,47 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* App shortcuts */}
-        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8, marginBottom: 24, scrollbarWidth: 'none' }}>
-          {APP_SHORTCUTS.map(app => {
-            const Icon = app.icon;
-            return (
-              <div
-                key={app.label}
-                className="shortcut-pill"
-                onClick={() => navigate(app.path)}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 999, cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
-              >
-                <div style={{ width: 28, height: 28, borderRadius: 6, background: app.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Icon size={14} color={app.color} strokeWidth={2} />
-                </div>
-                <span style={{ fontSize: 13, fontWeight: 500, color: '#334155', whiteSpace: 'nowrap' }}>{app.label}</span>
-              </div>
-            );
-          })}
+        {/* App shortcuts with scroll arrows */}
+        <div style={{ position: 'relative', marginBottom: 24 }}>
+          {canScrollLeft && (
+            <button
+              onClick={scrollLeft}
+              style={{ position: 'absolute', left: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 2, width: 32, height: 32, borderRadius: '50%', background: '#fff', border: '1px solid #E5E7EB', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+            >
+              <ChevronLeft size={16} color="#334155" />
+            </button>
+          )}
+
           <div
-            onClick={() => navigate('/reports')}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 999, cursor: 'pointer', flexShrink: 0 }}
+            ref={scrollRef}
+            style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}
           >
-            <ChevronRight size={16} color="#64748B" />
+            {APP_SHORTCUTS.map(app => {
+              const Icon = app.icon;
+              return (
+                <div
+                  key={app.label}
+                  className="shortcut-pill"
+                  onClick={() => navigate(app.path)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 999, cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
+                >
+                  <div style={{ width: 28, height: 28, borderRadius: 6, background: app.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon size={14} color={app.color} strokeWidth={2} />
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: '#334155', whiteSpace: 'nowrap' }}>{app.label}</span>
+                </div>
+              );
+            })}
           </div>
+
+          {canScrollRight && (
+            <button
+              onClick={scrollRight}
+              style={{ position: 'absolute', right: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 2, width: 32, height: 32, borderRadius: '50%', background: '#fff', border: '1px solid #E5E7EB', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+            >
+              <ChevronRight size={16} color="#334155" />
+            </button>
+          )}
         </div>
 
         {/* Create actions */}
@@ -281,7 +390,7 @@ export default function Dashboard() {
             </div>
           ))}
           <span
-            onClick={() => navigate('/transactions')}
+            onClick={() => setShowCreateModal(true)}
             style={{ fontSize: 12, color: ACCENT, fontWeight: 600, cursor: 'pointer', marginLeft: 4 }}
             onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
             onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
@@ -290,13 +399,13 @@ export default function Dashboard() {
           </span>
         </div>
 
-        {/* Business at a glance heading */}
+        {/* Business at a glance */}
         <div style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', marginBottom: 16, letterSpacing: '-0.01em' }}>
           Business at a glance
         </div>
 
         {/* Widget grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginBottom: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginBottom: 16 }}>
 
           {/* Profit & Loss */}
           <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '20px 22px' }}>
@@ -332,7 +441,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Expenses */}
           <StatCard
             label="Expenses"
             subtitle="Total spending recorded"
@@ -344,7 +452,6 @@ export default function Dashboard() {
             loading={loading}
           />
 
-          {/* Invoices */}
           <StatCard
             label="Outstanding Invoices"
             subtitle="Unpaid invoices"
@@ -357,7 +464,6 @@ export default function Dashboard() {
             loading={loading}
           />
 
-          {/* Revenue */}
           <StatCard
             label="Revenue"
             subtitle="Total income recorded"
@@ -378,10 +484,7 @@ export default function Dashboard() {
               <div style={{ fontSize: 12, color: '#64748B' }}>Based on recorded transactions</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button
-                onClick={() => setRefresh(r => r + 1)}
-                style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: 11, fontFamily: FONT }}
-              >
+              <button onClick={() => setRefresh(r => r + 1)} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: 11, fontFamily: FONT }}>
                 <RefreshCw size={12} /> Refresh
               </button>
               <MoreHorizontal size={16} color="#CBD5E1" style={{ cursor: 'pointer' }} />
@@ -402,9 +505,7 @@ export default function Dashboard() {
               <span style={{ fontSize: 11, color: '#64748B' }}>Expenses</span>
             </div>
           </div>
-          <div
-            onClick={() => navigate('/transactions')}
-            style={{ fontSize: 12, color: ACCENT, fontWeight: 500, cursor: 'pointer', marginTop: 12, paddingTop: 10, borderTop: '1px solid #F1F5F9' }}
+          <div onClick={() => navigate('/transactions')} style={{ fontSize: 12, color: ACCENT, fontWeight: 500, cursor: 'pointer', marginTop: 12, paddingTop: 10, borderTop: '1px solid #F1F5F9' }}
             onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
             onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
           >
@@ -416,18 +517,13 @@ export default function Dashboard() {
         <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '20px 22px', marginBottom: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Recent Transactions</div>
-            <button
-              onClick={() => navigate('/transactions')}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', color: ACCENT, fontSize: 12, fontWeight: 600, fontFamily: FONT }}
-            >
+            <button onClick={() => navigate('/transactions')} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', color: ACCENT, fontSize: 12, fontWeight: 600, fontFamily: FONT }}>
               View all <ChevronRight size={14} />
             </button>
           </div>
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {[1, 2, 3].map(i => (
-                <div key={i} style={{ height: 40, background: '#F1F5F9', borderRadius: 8 }} />
-              ))}
+              {[1, 2, 3].map(i => <div key={i} style={{ height: 40, background: '#F1F5F9', borderRadius: 8 }} />)}
             </div>
           ) : txns.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 0', color: '#94A3B8', fontSize: 13 }}>
@@ -442,16 +538,10 @@ export default function Dashboard() {
                 const date    = new Date(t.date || t.created_at || t.transaction_date || Date.now());
                 const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 return (
-                  <div
-                    key={t.id || i}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < 5 ? '1px solid #F8FAFC' : 'none' }}
-                  >
+                  <div key={t.id || i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < 5 ? '1px solid #F8FAFC' : 'none' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{ width: 36, height: 36, borderRadius: 9, background: isPos ? 'rgba(10,185,138,0.1)' : 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        {isPos
-                          ? <TrendingUp size={16} color={ACCENT} />
-                          : <TrendingDown size={16} color="#EF4444" />
-                        }
+                        {isPos ? <TrendingUp size={16} color={ACCENT} /> : <TrendingDown size={16} color="#EF4444" />}
                       </div>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 500, color: '#0F172A' }}>{t.description || t.name || t.memo || 'Transaction'}</div>
@@ -468,13 +558,13 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Quick actions row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
+        {/* Quick actions */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
           {[
-            { label: 'New Invoice',    icon: FileText,       path: '/invoices',     color: '#3B82F6' },
-            { label: 'Add Expense',    icon: Receipt,        path: '/transactions', color: '#EF4444' },
-            { label: 'View Reports',   icon: BarChart2,      path: '/reports',      color: '#F59E0B' },
-            { label: 'Scan Receipt',   icon: Receipt,        path: '/receipts',     color: '#8B5CF6' },
+            { label: 'New Invoice',  icon: FileText,  path: '/invoices',     color: '#3B82F6' },
+            { label: 'Add Expense',  icon: Receipt,   path: '/transactions', color: '#EF4444' },
+            { label: 'View Reports', icon: BarChart2, path: '/reports',      color: '#F59E0B' },
+            { label: 'Scan Receipt', icon: Receipt,   path: '/receipts',     color: '#8B5CF6' },
           ].map(item => {
             const Icon = item.icon;
             return (
@@ -508,6 +598,45 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Show All Create Modal */}
+      {showCreateModal && (
+        <div
+          onClick={() => setShowCreateModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, backdropFilter: 'blur(4px)' }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 700, maxHeight: '80vh', overflow: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.15)' }}
+          >
+            <div style={{ padding: '18px 24px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#0F172A' }}>Create</div>
+              <button onClick={() => setShowCreateModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex' }}>
+                <X size={20} />
+              </button>
+            </div>
+            <div style={{ padding: '20px 24px', display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4,1fr)', gap: 24 }}>
+              {ALL_CREATE.map(col => (
+                <div key={col.header}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid #F1F5F9' }}>
+                    {col.header}
+                  </div>
+                  {col.items.map(item => (
+                    <div
+                      key={item.label}
+                      className="create-item"
+                      onClick={() => { navigate(item.path); setShowCreateModal(false); }}
+                      style={{ padding: '9px 8px', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#334155', lineHeight: 1.4, transition: 'all 0.12s' }}
+                    >
+                      {item.label}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
