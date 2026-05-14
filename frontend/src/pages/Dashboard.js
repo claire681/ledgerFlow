@@ -1,928 +1,530 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
-} from 'recharts';
-import {
-  ArrowUp, ArrowDown, FileText, AlertTriangle,
-  Download, RefreshCw, ArrowRight, MessageCircle,
-  Upload, Receipt, TrendingUp,
-  Mail, Clock, CheckCircle, X, Zap, Lock, Sunrise,
+  Home, BarChart2, Grid, Plus,
+  LayoutDashboard, FileText, ArrowLeftRight,
+  PieChart, Receipt, Percent, RefreshCw,
+  BarChart3, ScanLine, Link2, Users,
+  TrendingUp, CreditCard, BookOpen,
+  GitCompare, Search, Users2, Package,
+  Building2, Key, Wallet, GitMerge,
+  Settings as SettingsIcon, HelpCircle,
+  ChevronRight, X, LogOut,
+  Sliders, MoreHorizontal, Bookmark,
+  Sparkles, Keyboard, Bell, ClipboardList,
+  MessageSquare, Zap,
 } from 'lucide-react';
-import { L, card, page, topBar } from '../styles/light';
-import { useAI } from '../hooks/useAI';
-import {
-  getDashboardStats, getTransactions,
-  getAIInsights, getCompanyProfile,
-} from '../services/api';
-import { generateReport } from '../services/pdfGenerator';
 
-const BASE     = 'https://api.getnovala.com/api/v1';
-const ACCENT   = '#0AB98A';
-const getToken = () => localStorage.getItem('token') || localStorage.getItem('access_token') || '';
+const ACCENT  = '#0AB98A';
+const FONT    = "'Inter', -apple-system, sans-serif";
+const DEFAULT = '#334155';
+const MUTED   = '#64748B';
 
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+const SLIDE_IN = `
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-12px) }
+    to   { opacity: 1; transform: translateX(0) }
+  }
+`;
+
+const APP_GROUPS = [
+  {
+    label: 'Core',
+    color: '#0AB98A',
+    items: [
+      { label: 'Dashboard',    path: '/',             icon: LayoutDashboard },
+      { label: 'Documents',    path: '/documents',    icon: FileText        },
+      { label: 'Transactions', path: '/transactions', icon: ArrowLeftRight  },
+    ],
+  },
+  {
+    label: 'Finance',
+    color: '#3B82F6',
+    items: [
+      { label: 'Reports',        path: '/reports',        icon: BarChart2  },
+      { label: 'Reconciliation', path: '/reconciliation', icon: GitMerge   },
+      { label: 'Ledger View',    path: '/ledger',         icon: BookOpen   },
+      { label: 'Variance',       path: '/variance',       icon: TrendingUp },
+      { label: 'Bill Pay',       path: '/billpay',        icon: Wallet     },
+      { label: 'Budgets',        path: '/budgets',        icon: PieChart   },
+      { label: 'Invoices',       path: '/invoices',       icon: Receipt    },
+      { label: 'Tax',            path: '/tax',            icon: Percent    },
+      { label: 'Billing',        path: '/billing',        icon: CreditCard },
+      { label: 'Currency',       path: '/currency',       icon: RefreshCw  },
+    ],
+  },
+  {
+    label: 'Business',
+    color: '#8B5CF6',
+    items: [
+      { label: 'Customers',    path: '/customers',    icon: Users2    },
+      { label: 'Inventory',    path: '/inventory',    icon: Package   },
+      { label: 'Businesses',   path: '/businesses',   icon: Building2 },
+      { label: 'Vendors',      path: '/vendors',      icon: BarChart3 },
+      { label: 'Team',         path: '/team',         icon: Users     },
+      { label: 'Integrations', path: '/integrations', icon: Link2     },
+    ],
+  },
+  {
+    label: 'Tools',
+    color: '#F59E0B',
+    items: [
+      { label: 'Smart Search', path: '/search',     icon: Search     },
+      { label: 'Scanner',      path: '/receipts',   icon: ScanLine   },
+      { label: 'Doc Compare',  path: '/comparison', icon: GitCompare },
+      { label: 'API Access',   path: '/api-access', icon: Key        },
+    ],
+  },
+];
+
+const CREATE_COLUMNS = [
+  {
+    header: 'Customers',
+    items: [
+      { label: 'Invoice',          path: '/invoices'     },
+      { label: 'Receive payment',  path: '/transactions' },
+      { label: 'Estimate',         path: '/invoices'     },
+      { label: 'Sales receipt',    path: '/invoices'     },
+      { label: 'Add customer',     path: '/customers'    },
+    ],
+  },
+  {
+    header: 'Suppliers',
+    items: [
+      { label: 'Expense',      path: '/transactions' },
+      { label: 'Bill',         path: '/billpay'      },
+      { label: 'Pay bills',    path: '/billpay'      },
+      { label: 'Add supplier', path: '/vendors'      },
+    ],
+  },
+  {
+    header: 'Business',
+    items: [
+      { label: 'Upload Document', path: '/documents' },
+      { label: 'Scan Receipt',    path: '/receipts'  },
+      { label: 'New Budget',      path: '/budgets'   },
+    ],
+  },
+  {
+    header: 'Other',
+    items: [
+      { label: 'Bank deposit',  path: '/transactions' },
+      { label: 'Journal entry', path: '/ledger'       },
+      { label: 'Smart Search',  path: '/search'       },
+      { label: 'API Access',    path: '/api-access'   },
+    ],
+  },
+];
+
+// Correct order per spec
+const SLIM_ITEMS = [
+  { id: 'create',    icon: Plus,      label: 'Create',    flyout: 'create'    },
+  { id: 'bookmarks', icon: Bookmark,  label: 'Bookmarks', flyout: 'bookmarks' },
+  { id: 'home',      icon: Home,      label: 'Home',      path: '/'           },
+  { id: 'feed',      icon: Sparkles,  label: 'Feed',      flyout: 'feed'      },
+  { id: 'reports',   icon: BarChart2, label: 'Reports',   flyout: 'reports'   },
+  { id: 'allapps',   icon: Grid,      label: 'All Apps',  flyout: 'apps'      },
+];
+
+const SLIM_BOTTOM = [
+  { id: 'more',      icon: MoreHorizontal, label: 'More',      flyout: 'more'      },
+  { id: 'customize', icon: Sliders,        label: 'Customize', flyout: 'customize' },
+];
+
+const MORE_ITEMS = [
+  { label: 'Bookmarks',          icon: Bookmark,     path: null        },
+  { label: 'Audit Log',          icon: ClipboardList,path: '/reports'  },
+  { label: 'Settings',           icon: SettingsIcon, path: '/settings' },
+  { label: 'Help & Support',     icon: HelpCircle,   path: '/help'     },
+  { label: 'Keyboard Shortcuts', icon: Keyboard,     path: null        },
+  { label: "What's New",         icon: Zap,          path: null        },
+  { label: 'Send Feedback',      icon: MessageSquare,path: null        },
+];
+
+function CreateFlyout({ onClose, onNavigate }) {
+  return (
+    <div style={{ position: 'fixed', top: 56, left: 80, height: 'calc(100vh - 56px)', width: 680, background: '#fff', boxShadow: '4px 0 32px rgba(0,0,0,0.12)', zIndex: 45, display: 'flex', flexDirection: 'column', animation: 'slideIn 0.2s ease', borderRight: '1px solid #F1F5F9' }}>
+      <style>{SLIDE_IN}</style>
+      <div style={{ padding: '16px 24px 12px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Create</div>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, display: 'flex', alignItems: 'center' }}>
+          <X size={18} />
+        </button>
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 24 }}>
+        {CREATE_COLUMNS.map(col => (
+          <div key={col.header}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid #F1F5F9' }}>
+              {col.header}
+            </div>
+            {col.items.map(item => (
+              <div
+                key={item.label}
+                onClick={() => { onNavigate(item.path); onClose(); }}
+                style={{ padding: '9px 8px', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: DEFAULT, lineHeight: 1.4, transition: 'all 0.12s' }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = ACCENT; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = DEFAULT; }}
+              >
+                {item.label}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FlyoutPanel({ title, onClose, children, width }) {
+  const w = width || 280;
+  return (
+    <div style={{ position: 'fixed', top: 56, left: 80, height: 'calc(100vh - 56px)', width: w, background: '#fff', boxShadow: '4px 0 24px rgba(0,0,0,0.1)', zIndex: 45, display: 'flex', flexDirection: 'column', animation: 'slideIn 0.2s ease', borderRight: '1px solid #F1F5F9' }}>
+      <style>{SLIDE_IN}</style>
+      <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>{title}</div>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, display: 'flex', alignItems: 'center' }}>
+          <X size={16} />
+        </button>
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', scrollbarWidth: 'none' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile }) {
+  const navigate                      = useNavigate();
+  const location                      = useLocation();
+  const [flyout,      setFlyout]      = useState(null);
+  const [hovItem,     setHovItem]     = useState(null);
+  const [localMobile, setLocalMobile] = useState(window.innerWidth < 768);
+  const sidebarRef                    = useRef(null);
+
+  const mobile = (isMobile !== undefined) ? isMobile : localMobile;
+
   useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
+    const handler = () => setLocalMobile(window.innerWidth < 768);
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
   }, []);
-  return isMobile;
-}
-
-const fmt = (n) => {
-  if (!n && n !== 0) return '$0';
-  if (Math.abs(n) >= 1000000) return `$${(n/1000000).toFixed(1)}M`;
-  if (Math.abs(n) >= 1000)    return `$${(n/1000).toFixed(1)}K`;
-  return `$${Number(n).toLocaleString('en', { maximumFractionDigits:0 })}`;
-};
-
-const PIE_COLORS = ['#0AB98A','#3B82F6','#8B5CF6','#F59E0B','#EF4444','#06B6D4'];
-
-const INSIGHT_STYLES = {
-  warning:     { bg:'rgba(245,158,11,0.08)',  border:'rgba(245,158,11,0.2)',  color:'#F59E0B' },
-  opportunity: { bg:'rgba(10,185,138,0.08)',  border:'rgba(10,185,138,0.2)',  color:'#0AB98A' },
-  info:        { bg:'rgba(59,130,246,0.08)',  border:'rgba(59,130,246,0.2)',  color:'#3B82F6' },
-  success:     { bg:'rgba(10,185,138,0.08)',  border:'rgba(10,185,138,0.2)',  color:'#0AB98A' },
-};
-
-const TIMEZONES = [
-  'America/Edmonton','America/Vancouver','America/Toronto','America/New_York',
-  'America/Chicago','America/Denver','America/Los_Angeles','America/Phoenix',
-  'America/Halifax','Europe/London','Europe/Paris','Europe/Berlin',
-  'Africa/Lagos','Africa/Nairobi','Africa/Johannesburg','Africa/Cairo',
-  'Asia/Dubai','Asia/Kolkata','Asia/Singapore','Asia/Tokyo','Asia/Shanghai',
-  'Australia/Sydney','Pacific/Auckland','UTC',
-];
-
-const BRIEFING_HOURS = ['05:00','06:00','07:00','08:00','09:00','10:00','11:00','12:00'];
-const HOUR_LABELS = {
-  '05:00':'5:00 AM','06:00':'6:00 AM','07:00':'7:00 AM','08:00':'8:00 AM',
-  '09:00':'9:00 AM','10:00':'10:00 AM','11:00':'11:00 AM','12:00':'12:00 PM',
-};
-
-const DAYS_OF_MONTH = Array.from({ length:31 }, (_,i) => i+1);
-
-function BriefingSettingsModal({ settings, onClose, onSave }) {
-  const [enabled,      setEnabled]      = useState(settings?.briefing_enabled ?? true);
-  const [time,         setTime]         = useState(settings?.briefing_time || '08:00');
-  const [timezone,     setTimezone]     = useState(settings?.briefing_timezone || 'America/Edmonton');
-  const [frequency,    setFrequency]    = useState('daily');
-  const [dayOfMonth,   setDayOfMonth]   = useState(1);
-  const [intervalDays, setIntervalDays] = useState(7);
-  const [saving,       setSaving]       = useState(false);
-  const [error,        setError]        = useState('');
-  const [sendResult,   setSendResult]   = useState(null);
-  const [sending,      setSending]      = useState(false);
-
-  const handleSave = async () => {
-    setSaving(true); setError('');
-    try {
-      const res = await fetch(`${BASE}/briefing/settings`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ briefing_enabled: enabled, briefing_time: time, briefing_timezone: timezone }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Failed to save');
-      onSave(data);
-      onClose();
-    } catch (e) { setError(e.message); }
-    finally { setSaving(false); }
-  };
-
-  const handleSendNow = async () => {
-    setSending(true); setSendResult(null);
-    try {
-      const res  = await fetch(`${BASE}/briefing/send`, { method: 'POST', headers: { Authorization: `Bearer ${getToken()}` } });
-      const data = await res.json();
-      setSendResult(data);
-    } catch (e) { setSendResult({ success: false, message: e.message }); }
-    finally { setSending(false); }
-  };
-
-  const sel = {
-    width: '100%', padding: '9px 12px',
-    background: L.pageBg, border: `1px solid ${L.border}`,
-    borderRadius: L.radiusSm, color: L.text,
-    fontSize: 13, fontFamily: L.font, outline: 'none', boxSizing: 'border-box',
-  };
-
-  const ordinal = (d) => {
-    if (d === 1) return '1st';
-    if (d === 2) return '2nd';
-    if (d === 3) return '3rd';
-    return `${d}th`;
-  };
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, backdropFilter: 'blur(4px)', padding: '16px' }}>
-      <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 60px rgba(0,0,0,0.18)' }}>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: `1px solid ${L.border}`, position: 'sticky', top: 0, background: '#fff', zIndex: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg,#0AB98A,#0EA5E9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Mail size={16} color="#fff" />
-            </div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: L.text }}>Morning Briefing</div>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: L.textMuted, fontSize: 20, lineHeight: 1 }}>×</button>
-        </div>
-
-        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', borderRadius: L.radiusSm, background: L.pageBg, border: `1px solid ${L.border}` }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: L.text }}>Daily Financial Briefing</div>
-              <div style={{ fontSize: 11, color: enabled ? L.textMuted : '#EF4444', marginTop: 2, fontWeight: enabled ? 400 : 600 }}>
-                {enabled ? 'Receive a morning summary of your finances' : 'Briefing is paused — toggle to re-enable'}
-              </div>
-            </div>
-            <div
-              onClick={() => setEnabled(e => !e)}
-              style={{ width: 44, height: 24, borderRadius: 12, background: enabled ? ACCENT : '#E2E8F0', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0 }}
-            >
-              <div style={{ position: 'absolute', top: 4, left: enabled ? 22 : 4, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
-            </div>
-          </div>
-
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Delivery Time</div>
-            <select value={time} onChange={e => setTime(e.target.value)} style={sel}>
-              {BRIEFING_HOURS.map(h => <option key={h} value={h}>{HOUR_LABELS[h]}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Time Zone</div>
-            <select value={timezone} onChange={e => setTimezone(e.target.value)} style={sel}>
-              {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Frequency</div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {[
-                { id: 'daily',    label: 'Daily'        },
-                { id: 'weekly',   label: 'Weekly'       },
-                { id: 'interval', label: 'Every X Days' },
-                { id: 'monthly',  label: 'Monthly Date' },
-              ].map(f => (
-                <button
-                  key={f.id}
-                  onClick={() => setFrequency(f.id)}
-                  style={{ padding: '6px 14px', borderRadius: 20, cursor: 'pointer', fontSize: 12, fontWeight: 600, border: '1px solid', fontFamily: L.font, borderColor: frequency === f.id ? ACCENT : L.border, background: frequency === f.id ? 'rgba(10,185,138,0.08)' : '#fff', color: frequency === f.id ? ACCENT : L.textMuted, transition: 'all 0.15s' }}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {frequency === 'interval' && (
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Every How Many Days</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <input
-                  type="number" min={1} max={365} value={intervalDays}
-                  onChange={e => setIntervalDays(Number(e.target.value))}
-                  style={{ ...sel, width: 80 }}
-                />
-                <span style={{ fontSize: 13, color: L.textMuted }}>days</span>
-              </div>
-              <div style={{ fontSize: 11, color: L.textMuted, marginTop: 6 }}>e.g. every 3 days, every 14 days, every 30 days</div>
-            </div>
-          )}
-
-       {frequency === 'monthly' && (
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Pick Day of Month</div>
-              <div style={{ border: `1px solid ${L.border}`, borderRadius: 12, overflow: 'hidden' }}>
-                <div style={{ background: 'linear-gradient(135deg,#0AB98A,#0EA5E9)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>Every month on the {ordinal(dayOfMonth)}</div>
-                </div>
-                <div style={{ padding: 12 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4, marginBottom: 4 }}>
-                    {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => (
-                      <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: L.textMuted, padding: '4px 0' }}>{d}</div>
-                    ))}
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4 }}>
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                      <button
-                        key={d}
-                        onClick={() => setDayOfMonth(d)}
-                        style={{ padding: '7px 2px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: dayOfMonth === d ? 700 : 400, border: 'none', background: dayOfMonth === d ? ACCENT : 'transparent', color: dayOfMonth === d ? '#fff' : L.textSub, textAlign: 'center', transition: 'all 0.15s', fontFamily: L.font }}
-                        onMouseEnter={e => { if (dayOfMonth !== d) { e.currentTarget.style.background = 'rgba(10,185,138,0.08)'; e.currentTarget.style.color = ACCENT; } }}
-                        onMouseLeave={e => { if (dayOfMonth !== d) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = L.textSub; } }}
-                      >
-                        {d}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div style={{ padding: '10px 16px', background: L.pageBg, borderTop: `1px solid ${L.border}`, fontSize: 12, color: L.textMuted, textAlign: 'center' }}>
-                  Briefing will be sent on the <strong style={{ color: ACCENT }}>{ordinal(dayOfMonth)}</strong> of every month
-                </div>
-              </div>
-            </div>
-          )}
-          {frequency === 'weekly' && (
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Day of the Week</div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => (
-                  <button
-                    key={d}
-                    style={{ padding: '7px 12px', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 600, border: `1px solid ${L.border}`, background: '#fff', color: L.textSub, fontFamily: L.font, transition: 'all 0.15s' }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = ACCENT; e.currentTarget.style.color = ACCENT; e.currentTarget.style.background = 'rgba(10,185,138,0.06)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = L.border; e.currentTarget.style.color = L.textSub; e.currentTarget.style.background = '#fff'; }}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {sendResult && (
-            <div style={{ padding: '10px 14px', borderRadius: L.radiusSm, background: sendResult.success ? 'rgba(10,185,138,0.08)' : 'rgba(239,68,68,0.08)', border: `1px solid ${sendResult.success ? 'rgba(10,185,138,0.2)' : 'rgba(239,68,68,0.2)'}`, fontSize: 12, color: sendResult.success ? ACCENT : '#EF4444', display: 'flex', alignItems: 'center', gap: 8 }}>
-              {sendResult.success ? <CheckCircle size={13} /> : '⚠'} {sendResult.message}
-            </div>
-          )}
-
-          {error && (
-            <div style={{ padding: '10px 14px', borderRadius: L.radiusSm, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#EF4444', fontSize: 12 }}>
-              {error}
-            </div>
-          )}
-
-          <button
-            onClick={handleSendNow}
-            disabled={sending}
-            style={{ width: '100%', padding: '10px', borderRadius: L.radiusSm, background: sending ? L.textFaint : 'rgba(10,185,138,0.08)', border: `1px solid rgba(10,185,138,0.3)`, color: ACCENT, cursor: sending ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, fontFamily: L.font, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
-          >
-            <Mail size={13} />{sending ? 'Sending...' : 'Send Briefing Now'}
-          </button>
-
-          {enabled ? (
-            <button
-              onClick={() => setEnabled(false)}
-              style={{ width: '100%', padding: '10px', borderRadius: L.radiusSm, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', color: '#EF4444', cursor: 'pointer', fontSize: 13, fontFamily: L.font }}
-            >
-              Pause Morning Briefing
-            </button>
-          ) : (
-            <button
-              onClick={() => setEnabled(true)}
-              style={{ width: '100%', padding: '10px', borderRadius: L.radiusSm, background: L.accentSoft, border: `1px solid ${L.accentBorder}`, color: ACCENT, cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: L.font }}
-            >
-              Resume Morning Briefing
-            </button>
-          )}
-
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button
-              onClick={onClose}
-              style={{ flex: 1, padding: '10px', borderRadius: L.radiusSm, background: 'transparent', border: `1px solid ${L.border}`, color: L.textMuted, cursor: 'pointer', fontSize: 13, fontFamily: L.font }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              style={{ flex: 1, padding: '10px', borderRadius: L.radiusSm, background: saving ? L.textFaint : ACCENT, color: '#fff', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, fontFamily: L.font }}
-            >
-              {saving ? 'Saving...' : 'Save Settings'}
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function EmptyState({ icon: Icon, title, description, action, onAction }) {
-  return (
-    <div style={{ padding: '36px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-      <div style={{ width: 52, height: 52, borderRadius: 14, background: L.accentSoft, border: `1px solid ${L.accentBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
-        <Icon size={22} color={L.accent} />
-      </div>
-      <div style={{ fontSize: 14, fontWeight: 700, color: L.text }}>{title}</div>
-      <div style={{ fontSize: 12, color: L.textMuted, lineHeight: 1.6, maxWidth: 240 }}>{description}</div>
-      {action && onAction && (
-        <button onClick={onAction} style={{ padding: '7px 16px', borderRadius: L.radiusSm, background: L.accent, color: '#FFFFFF', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: L.font, marginTop: 4 }}>
-          {action}
-        </button>
-      )}
-    </div>
-  );
-}
-
-function MetricCard({ label, value, sub, color, icon: Icon, loading, isEmpty, emptyText }) {
-  return (
-    <div style={{ ...card, padding: '16px', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 9, fontWeight: 700, color: L.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>{label}</div>
-          {loading ? (
-            <div style={{ height: 24, width: 60, borderRadius: 6, background: L.pageBg, animation: 'pulse 1.5s infinite' }} />
-          ) : isEmpty ? (
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: L.textFaint, fontFamily: L.fontMono }}>$0</div>
-              <div style={{ fontSize: 9, color: L.accent, marginTop: 4, fontWeight: 500 }}>{emptyText}</div>
-            </div>
-          ) : (
-            <div style={{ fontSize: 22, fontWeight: 700, color, letterSpacing: '-0.02em', lineHeight: 1, fontFamily: L.fontMono }}>{value}</div>
-          )}
-          <div style={{ fontSize: 10, color: L.textMuted, marginTop: 4 }}>{sub}</div>
-        </div>
-        <div style={{ width: 34, height: 34, borderRadius: 10, background: `${color}12`, border: `1px solid ${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginLeft: 8 }}>
-          <Icon size={15} color={color} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function Dashboard() {
-  const [stats,            setStats]            = useState(null);
-  const [txns,             setTxns]             = useState([]);
-  const [insights,         setInsights]         = useState([]);
-  const [loading,          setLoading]          = useState(true);
-  const [companyName,      setCompanyName]      = useState('');
-  const [userName,         setUserName]         = useState('');
-  const [userEmail,        setUserEmail]        = useState('');
-  const [success,          setSuccess]          = useState('');
-  const [trialInfo,        setTrialInfo]        = useState(null);
-  const [showWelcome,      setShowWelcome]      = useState(false);
-  const [showBriefing,     setShowBriefing]     = useState(false);
-  const [briefingSettings, setBriefingSettings] = useState(null);
-
-  const { setPageContext, askAndOpen } = useAI();
-  const statsRef = useRef(null);
-  const isMobile = useIsMobile();
 
   useEffect(() => {
-    if (localStorage.getItem('novala_just_onboarded') === 'true') {
-      setShowWelcome(true);
-      localStorage.removeItem('novala_just_onboarded');
-      setTimeout(() => setShowWelcome(false), 10000);
-    }
-  }, []);
-
-  useEffect(() => { setPageContext('dashboard', { page: 'dashboard' }); }, []);
-
-  const loadBriefingSettings = async () => {
-    try {
-      const res  = await fetch(`${BASE}/briefing/settings`, { headers: { Authorization: `Bearer ${getToken()}` } });
-      const data = await res.json();
-      setBriefingSettings(data);
-    } catch {}
-  };
-
-  const load = async () => {
-    setLoading(true);
-    try {
-      const [s, t] = await Promise.all([getDashboardStats(), getTransactions({})]);
-      const sData  = s.data || {};
-      const tData  = Array.isArray(t.data) ? t.data : [];
-      setStats(sData);
-      setTxns(tData.slice(0, 8));
-      statsRef.current = sData;
-
-      const email      = localStorage.getItem('user_email') || '';
-      const storedName = localStorage.getItem('user_name')  || '';
-      setUserEmail(email);
-
-      let fetchedName    = '';
-      let fetchedCompany = '';
-      try {
-        const profile  = await getCompanyProfile();
-        fetchedCompany = profile.data?.company_name || '';
-        fetchedName    = profile.data?.full_name || profile.data?.first_name || storedName || '';
-        setCompanyName(fetchedCompany);
-        setUserName(fetchedName);
-        if (fetchedName) localStorage.setItem('user_name', fetchedName);
-      } catch {
-        setCompanyName('');
-        setUserName(storedName);
+    const handler = (e) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
+        setFlyout(null);
       }
-
-      try { const ins = await getAIInsights(); setInsights(ins.data?.insights || []); }
-      catch { setInsights([]); }
-
-      try {
-        const tr = await fetch(`${BASE}/billing/status`, { headers: { Authorization: `Bearer ${getToken()}` } });
-        if (tr.ok) {
-          const trData   = await tr.json();
-          const daysLeft = trData.trial_ends_at
-            ? Math.max(0, Math.ceil((new Date(trData.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24)))
-            : 14;
-          setTrialInfo({ ...trData, daysLeft });
-        }
-      } catch {}
-
-      const revenue  = sData?.total_revenue  || 0;
-      const expenses = sData?.total_expenses || 0;
-      const net      = revenue - expenses;
-      const docs     = sData?.docs_processed || 0;
-
-      setPageContext('dashboard', {
-        page: 'dashboard', company_name: fetchedCompany,
-        total_revenue: revenue, total_expenses: expenses, net_profit: net,
-        docs_processed: docs, uncategorized: sData?.uncategorized || 0,
-        recent_txns: tData.slice(0, 5),
-        monthly_summary: sData?.monthly_summary || [],
-        expense_breakdown: sData?.expense_breakdown || [],
-        summary_text: `Revenue: $${revenue.toFixed(2)}, Expenses: $${expenses.toFixed(2)}, Net: $${net.toFixed(2)}, Documents: ${docs}`,
-      });
-    } catch (e) { console.error('Dashboard load error:', e); }
-    finally { setLoading(false); }
-  };
-
-  const askWithData = (question) => {
-    const s = statsRef.current;
-    if (s && (s.total_revenue > 0 || s.total_expenses > 0)) {
-      const revenue  = s.total_revenue  || 0;
-      const expenses = s.total_expenses || 0;
-      const net      = revenue - expenses;
-      const docs     = s.docs_processed || 0;
-      const enriched = `${question}\n\nDASHBOARD DATA:\n- Revenue: $${revenue.toFixed(2)}\n- Expenses: $${expenses.toFixed(2)}\n- Net profit: $${net.toFixed(2)}\n- Documents: ${docs}\n- Estimated tax (15%): $${(net * 0.15).toFixed(2)}`;
-      return askAndOpen(enriched);
-    }
-    return askAndOpen(question);
-  };
-
-  useEffect(() => {
-    load();
-    loadBriefingSettings();
-    const handleDocumentUploaded = (event) => {
-      load();
-      const parts = [];
-      if (event.detail?.filename)            parts.push(`${event.detail.filename} processed`);
-      if (event.detail?.transaction_created) parts.push('transaction created');
-      if (event.detail?.invoice_created)     parts.push(`invoice ${event.detail.invoice_number} created`);
-      if (parts.length > 0) { setSuccess(`✅ ${parts.join(' — ')}`); setTimeout(() => setSuccess(''), 6000); }
     };
-    window.addEventListener('ledgerflow:document-uploaded', handleDocumentUploaded);
-    return () => window.removeEventListener('ledgerflow:document-uploaded', handleDocumentUploaded);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const net     = (stats?.total_revenue || 0) - (stats?.total_expenses || 0);
-  const hasData = (stats?.total_revenue || 0) > 0 || (stats?.total_expenses || 0) > 0;
-  const hasTxns = txns.length > 0;
-  const hasPie  = (stats?.expense_breakdown || []).length > 0;
+  const handleItemClick = (item) => {
+    if (item.path) {
+      navigate(item.path);
+      setFlyout(null);
+      if (onMobileClose) onMobileClose();
+    } else if (item.flyout) {
+      setFlyout(flyout === item.flyout ? null : item.flyout);
+    }
+  };
 
-  const chartData = stats?.monthly_summary?.length
-    ? [...stats.monthly_summary].reverse().map(m => ({ month: m.month?.slice(0, 7) || '', expenses: Math.abs(m.total_expenses || 0), income: m.total_income || 0 }))
-    : ['Jan','Feb','Mar','Apr','May','Jun'].map(m => ({ month: m, expenses: 0, income: 0 }));
+  const goTo = (path) => {
+    navigate(path);
+    setFlyout(null);
+    if (onMobileClose) onMobileClose();
+  };
 
-  const pieData = (stats?.expense_breakdown || []).slice(0, 6).map(b => ({ name: b.category, value: b.total }));
+  const renderSlimItem = (item) => {
+    const Icon     = item.icon;
+    const isActive = item.path
+      ? (location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path)))
+      : flyout === item.flyout;
+    const isHov    = hovItem === item.id;
 
-  const hour        = new Date().getHours();
-  const greeting    = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const displayName = userName
-    ? userName.charAt(0).toUpperCase() + userName.slice(1)
-    : companyName || '';
+    const iconColor  = isActive ? ACCENT : isHov ? ACCENT : DEFAULT;
+    const labelColor = isActive ? ACCENT : isHov ? ACCENT : DEFAULT;
+    const bg         = isActive ? '#E2F5F0' : isHov ? '#F1F5F9' : 'transparent';
 
-  const padding = isMobile ? '16px' : '24px 28px';
+    return (
+      <div
+        key={item.id}
+        onClick={() => handleItemClick(item)}
+        onMouseEnter={() => setHovItem(item.id)}
+        onMouseLeave={() => setHovItem(null)}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 6px', borderRadius: 10, cursor: 'pointer', width: 68, marginBottom: 2, background: bg, transition: 'all 0.15s ease', position: 'relative' }}
+      >
+        {isActive && (
+          <div style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 3, height: 24, borderRadius: '0 3px 3px 0', background: ACCENT }} />
+        )}
+        <div style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={22} color={iconColor} strokeWidth={2} />
+        </div>
+        <span style={{ fontSize: 10, fontWeight: 500, color: labelColor, letterSpacing: '0.02em', textAlign: 'center', lineHeight: 1.2 }}>
+          {item.label}
+        </span>
+      </div>
+    );
+  };
 
   return (
-    <div style={page}>
-      <style>{`
-        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.7;transform:scale(0.98)} }
-        @keyframes welcomeIn { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:translateY(0)} }
-      `}</style>
+    <div ref={sidebarRef}>
 
-      {showBriefing && (
-        <BriefingSettingsModal
-          settings={briefingSettings}
-          onClose={() => setShowBriefing(false)}
-          onSave={(data) => setBriefingSettings(prev => ({ ...prev, ...data }))}
-        />
-      )}
+      {/* Desktop slim sidebar */}
+      <aside style={{ position: 'fixed', top: 56, left: 0, width: 80, height: 'calc(100vh - 56px)', background: '#FAFAFA', borderRight: '1px solid #E8EDF3', display: mobile ? 'none' : 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 8, paddingBottom: 8, zIndex: 44, fontFamily: FONT, overflowY: 'auto', scrollbarWidth: 'none' }}>
 
-      {showWelcome && (
-        <div style={{ margin: isMobile ? '12px 16px 0' : '16px 28px 0', padding: '16px 20px', borderRadius: 14, background: 'linear-gradient(135deg,rgba(10,185,138,0.1) 0%,rgba(14,165,233,0.08) 100%)', border: '1px solid rgba(10,185,138,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, animation: 'welcomeIn 0.5s ease', boxShadow: '0 4px 20px rgba(10,185,138,0.12)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <span style={{ fontSize: 32, flexShrink: 0 }}>🎉</span>
-            <div>
-              <div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, color: L.text, marginBottom: 3 }}>
-                Welcome to Novala{displayName ? `, ${displayName}` : ''}!
-              </div>
-              <div style={{ fontSize: isMobile ? 12 : 13, color: L.textMuted, lineHeight: 1.5 }}>
-                Your account is ready. Upload your first document to start tracking finances automatically.
-              </div>
-              {!isMobile && (
-                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                  <button
-                    onClick={() => window.location.href = '/documents'}
-                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: L.radiusSm, background: ACCENT, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: L.font }}
-                  >
-                    <Upload size={12} /> Upload Document
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-          <button onClick={() => setShowWelcome(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: L.textMuted, display: 'flex', padding: 4, flexShrink: 0 }}>
-            <X size={16} />
-          </button>
+        {/* Top items — correct order */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', paddingTop: 4 }}>
+          {SLIM_ITEMS.map(renderSlimItem)}
         </div>
-      )}
 
-      {!isMobile && (
-        <div style={topBar}>
-          <div>
-            <div style={{ fontSize: 12, color: L.textMuted, marginBottom: 3 }}>
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: L.text, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,rgba(10,185,138,0.15),rgba(14,165,233,0.15))', border: '1px solid rgba(10,185,138,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Sunrise size={18} color={ACCENT} />
-              </div>
-              {greeting}{displayName ? `, ${displayName}` : ''}
-            </div>
-            <div style={{ fontSize: 12, color: L.textMuted, marginTop: 3 }}>
-              {hasData ? 'Here is your business financial summary' : 'Welcome to Novala — let us get your finances set up'}
-            </div>
+        {/* PINNED section — desktop only label */}
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '10px 0 4px' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.14em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 6 }}>
+            PINNED
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => setShowBriefing(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: L.radiusSm, background: briefingSettings?.briefing_enabled ? L.accentSoft : 'rgba(148,163,184,0.08)', border: `1px solid ${briefingSettings?.briefing_enabled ? L.accentBorder : 'rgba(148,163,184,0.2)'}`, color: briefingSettings?.briefing_enabled ? L.accent : L.textMuted, cursor: 'pointer', fontSize: 12, fontFamily: L.font, fontWeight: 500 }}
-            >
-              <Mail size={13} />
-              Morning Briefing
-              <span style={{ fontSize: 9, fontWeight: 700, color: briefingSettings?.briefing_enabled ? ACCENT : '#94A3B8', background: briefingSettings?.briefing_enabled ? 'rgba(10,185,138,0.15)' : 'rgba(148,163,184,0.15)', padding: '2px 7px', borderRadius: 20 }}>
-                {briefingSettings?.briefing_enabled ? 'ON' : 'OFF'}
-              </span>
-            </button>
-            <button
-              onClick={load}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: L.radiusSm, background: 'transparent', border: `1px solid ${L.border}`, color: L.textMuted, cursor: 'pointer', fontSize: 12, fontFamily: L.font }}
-            >
-              <RefreshCw size={13} /> Refresh
-            </button>
-            <button
-              onClick={async () => {
-                try {
-                  const t = await getTransactions({});
-                  if (!t.data || t.data.length === 0) { alert('No transactions to export yet.'); return; }
-                  generateReport(stats, t.data, companyName || 'Novala');
-                } catch (err) { alert('Could not generate report: ' + err.message); }
-              }}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: L.radiusSm, background: L.accentSoft, border: `1px solid ${L.accentBorder}`, color: L.accent, cursor: 'pointer', fontSize: 12, fontFamily: L.font, fontWeight: 500 }}
-            >
-              <Download size={13} /> Export PDF
-            </button>
-          </div>
+          {renderSlimItem({ id: 'accounting', icon: LayoutDashboard, label: 'Accounting', path: '/' })}
         </div>
-      )}
 
-      {trialInfo && trialInfo.subscription_status !== 'active' && (
-        <div style={{ margin: isMobile ? '12px 16px 0' : '16px 28px 0', padding: '12px 20px', borderRadius: 12, background: trialInfo.daysLeft <= 3 ? 'rgba(239,68,68,0.08)' : 'linear-gradient(135deg,rgba(10,185,138,0.08),rgba(14,165,233,0.08))', border: `1px solid ${trialInfo.daysLeft <= 3 ? 'rgba(239,68,68,0.25)' : 'rgba(10,185,138,0.25)'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: trialInfo.daysLeft <= 3 ? 'rgba(239,68,68,0.1)' : 'rgba(10,185,138,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              {trialInfo.daysLeft <= 0
-                ? <Lock size={16} color="#EF4444" />
-                : trialInfo.daysLeft <= 3
-                  ? <AlertTriangle size={16} color="#EF4444" />
-                  : <Clock size={16} color={ACCENT} />}
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: trialInfo.daysLeft <= 3 ? '#EF4444' : L.text }}>
-                {trialInfo.daysLeft <= 0 ? 'Your free trial has ended' : `${trialInfo.daysLeft} day${trialInfo.daysLeft !== 1 ? 's' : ''} left in your free trial`}
-              </div>
-              <div style={{ fontSize: 11, color: L.textMuted, marginTop: 2 }}>
-                {trialInfo.daysLeft <= 0 ? 'Upgrade now to continue using Novala' : 'Upgrade before your trial ends to keep full access'}
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={() => window.location.href = '/billing'}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, background: trialInfo.daysLeft <= 3 ? '#EF4444' : ACCENT, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: L.font, flexShrink: 0 }}
+        <div style={{ width: 48, height: 1, background: '#E8EDF3', margin: '8px 0', flexShrink: 0 }} />
+
+        {/* Bottom items */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', marginTop: 'auto' }}>
+          {SLIM_BOTTOM.map(renderSlimItem)}
+          <div style={{ width: 48, height: 1, background: '#E8EDF3', margin: '6px 0', flexShrink: 0 }} />
+          <div
+            onClick={onLogout}
+            onMouseEnter={() => setHovItem('logout')}
+            onMouseLeave={() => setHovItem(null)}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 6px', borderRadius: 10, cursor: 'pointer', width: 68, marginBottom: 4, background: hovItem === 'logout' ? 'rgba(239,68,68,0.06)' : 'transparent', transition: 'all 0.15s' }}
           >
-            Upgrade Now
+            <div style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <LogOut size={22} color={hovItem === 'logout' ? '#EF4444' : DEFAULT} strokeWidth={2} />
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 500, color: hovItem === 'logout' ? '#EF4444' : DEFAULT, textAlign: 'center' }}>
+              Sign Out
+            </span>
+          </div>
+        </div>
+      </aside>
+
+      {/* Mobile dark drawer */}
+      <div style={{ position: 'fixed', top: 0, left: 0, width: 300, height: '100vh', background: 'linear-gradient(180deg,#0F1A2E 0%,#0D1526 100%)', zIndex: 50, transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)', display: mobile ? 'flex' : 'none', flexDirection: 'column', fontFamily: FONT, boxShadow: '4px 0 32px rgba(0,0,0,0.4)' }}>
+
+        <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#F1F5F9', letterSpacing: '-0.02em' }}>
+            No<span style={{ color: ACCENT }}>vala</span>
+          </div>
+          <button onClick={onMobileClose} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, cursor: 'pointer', color: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, flexShrink: 0 }}>
+            <X size={18} />
           </button>
         </div>
-      )}
 
-      {isMobile && (
-        <div style={{ padding: '20px 16px 16px', borderBottom: `1px solid ${L.border}`, background: '#fff' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg,rgba(10,185,138,0.12),rgba(14,165,233,0.12))', border: '1px solid rgba(10,185,138,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Sunrise size={18} color={ACCENT} />
-            </div>
-            <div>
-              <div style={{ fontSize: 11, color: L.textMuted, fontWeight: 500 }}>
-                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 12px', scrollbarWidth: 'none' }}>
+          {APP_GROUPS.map(group => (
+            <div key={group.label} style={{ marginBottom: 4 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: '#475569', letterSpacing: '0.16em', textTransform: 'uppercase', padding: '14px 10px 6px' }}>
+                {group.label}
               </div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: L.text, letterSpacing: '-0.02em' }}>
-                {greeting}{displayName ? `, ${displayName}` : ''}
-              </div>
-            </div>
-          </div>
-          <div style={{ fontSize: 12, color: L.textMuted, marginBottom: 14, marginLeft: 48 }}>
-            {hasData ? 'Your financial summary' : 'Welcome to Novala — get started below'}
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => setShowBriefing(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '9px 12px', borderRadius: L.radiusSm, background: L.accentSoft, border: `1px solid ${L.accentBorder}`, color: L.accent, cursor: 'pointer', fontSize: 11, fontFamily: L.font, fontWeight: 600 }}
-            >
-              <Mail size={13} /> Briefing
-            </button>
-            <button
-              onClick={load}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '9px 14px', borderRadius: L.radiusSm, background: 'transparent', border: `1px solid ${L.border}`, color: L.textMuted, cursor: 'pointer', fontSize: 12, fontFamily: L.font }}
-            >
-              <RefreshCw size={13} />
-            </button>
-            <button
-              onClick={async () => {
-                try {
-                  const t = await getTransactions({});
-                  if (!t.data || t.data.length === 0) { alert('No transactions to export yet.'); return; }
-                  generateReport(stats, t.data, companyName || 'Novala');
-                } catch (err) { alert('Could not export: ' + err.message); }
-              }}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '9px', borderRadius: L.radiusSm, background: L.accentSoft, border: `1px solid ${L.accentBorder}`, color: L.accent, cursor: 'pointer', fontSize: 12, fontFamily: L.font, fontWeight: 600 }}
-            >
-              <Download size={13} /> Export
-            </button>
-          </div>
-        </div>
-      )}
-
-      {success && (
-        <div style={{ margin: isMobile ? '12px 16px' : '0 28px 16px', padding: '12px 16px', borderRadius: L.radiusSm, background: L.accentSoft, border: `1px solid ${L.accentBorder}`, color: L.accent, fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <CheckCircle size={14} />{success}
-        </div>
-      )}
-
-      <div style={{ padding, maxWidth: 1400, margin: '0 auto' }}>
-
-        {!loading && !hasData && (
-          <div style={{ ...card, padding: isMobile ? '16px' : '20px 24px', marginBottom: 20, background: 'linear-gradient(135deg,rgba(10,185,138,0.06) 0%,rgba(14,165,233,0.06) 100%)', border: `1px solid ${L.accentBorder}` }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: L.text, marginBottom: 6 }}>🚀 Get started with Novala</div>
-            <div style={{ fontSize: 13, color: L.textMuted, marginBottom: 16, lineHeight: 1.6 }}>Upload your first document to start tracking expenses, revenue, and taxes automatically.</div>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fill,minmax(180px,1fr))', gap: 10 }}>
-              {[
-                { icon: Upload,    label: 'Upload document', sub: 'Invoice or receipt', path: '/documents', color: L.accent  },
-                { icon: Receipt,   label: 'Scan receipt',    sub: 'Reads it instantly', path: '/receipts',  color: L.blue    },
-                { icon: TrendingUp,label: 'Set budget',      sub: 'Track spending',     path: '/budgets',   color: '#8B5CF6' },
-              ].map(item => (
-                <button
-                  key={item.label}
-                  onClick={() => window.location.href = item.path}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px', borderRadius: L.radiusSm, background: '#FFFFFF', border: `1px solid ${L.border}`, cursor: 'pointer', fontFamily: L.font }}
-                >
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: `${item.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <item.icon size={15} color={item.color} />
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: L.text }}>{item.label}</div>
-                    <div style={{ fontSize: 10, color: L.textMuted }}>{item.sub}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
-          <MetricCard label="Documents"    value={stats?.docs_processed ?? 0}  sub="Total uploaded"         color={L.accent}              icon={FileText}                  loading={loading} isEmpty={!loading && !stats?.docs_processed}  emptyText="Upload first doc"  />
-          <MetricCard label="Expenses"     value={fmt(stats?.total_expenses)}   sub="This period"            color={L.red}                 icon={ArrowDown}                 loading={loading} isEmpty={!loading && !stats?.total_expenses}  emptyText="No expenses yet"   />
-          <MetricCard label="Revenue"      value={fmt(stats?.total_revenue)}    sub="This period"            color={L.accent}              icon={ArrowUp}                   loading={loading} isEmpty={!loading && !stats?.total_revenue}   emptyText="No revenue yet"    />
-          <MetricCard label="Net Position" value={fmt(net)}                     sub="Revenue minus expenses"  color={net >= 0 ? L.accent : L.red} icon={net >= 0 ? ArrowUp : ArrowDown} loading={loading} isEmpty={!loading && !hasData} emptyText="Add data to see"    />
-        </div>
-
-        {insights.length > 0 && (
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: L.text, marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <Zap size={14} color={L.accent} />
-                Smart Insights
-                {companyName && !isMobile && <span style={{ color: L.textMuted, fontWeight: 400 }}>— for {companyName}</span>}
-              </div>
-              <button
-                onClick={() => askWithData('Generate fresh financial insights for my business')}
-                style={{ fontSize: 11, color: L.accent, background: L.accentSoft, border: `1px solid ${L.accentBorder}`, borderRadius: 20, padding: '4px 12px', cursor: 'pointer', fontFamily: L.font, display: 'flex', alignItems: 'center', gap: 5 }}
-              >
-                <RefreshCw size={10} /> Refresh
-              </button>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill,minmax(260px,1fr))', gap: 10 }}>
-              {insights.map((ins, i) => {
-                const s = INSIGHT_STYLES[ins.type] || INSIGHT_STYLES.info;
+              {group.items.map(item => {
+                const Icon     = item.icon;
+                const isActive = location.pathname === item.path ||
+                  (item.path !== '/' && location.pathname.startsWith(item.path));
                 return (
                   <div
-                    key={i}
-                    onClick={() => askWithData(ins.action || ins.title)}
-                    style={{ padding: '12px 14px', borderRadius: L.radiusSm, background: s.bg, border: `1px solid ${s.border}`, cursor: 'pointer', transition: 'transform 0.15s ease' }}
-                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+                    key={item.path}
+                    onClick={() => goTo(item.path)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 12px', borderRadius: 10, cursor: 'pointer', marginBottom: 1, background: isActive ? 'rgba(10,185,138,0.12)' : 'transparent', borderLeft: '3px solid ' + (isActive ? ACCENT : 'transparent'), transition: 'all 0.15s' }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                   >
-                    <div style={{ fontSize: 12, fontWeight: 700, color: s.color, marginBottom: 5 }}>{ins.title}</div>
-                    <div style={{ fontSize: 11, color: L.textMuted, lineHeight: 1.6, marginBottom: 6 }}>{ins.description}</div>
-                    <div style={{ fontSize: 10, color: s.color, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <ArrowRight size={10} />{ins.action}
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: isActive ? group.color + '25' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Icon size={16} color={isActive ? ACCENT : '#94A3B8'} strokeWidth={2} />
                     </div>
+                    <span style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, color: isActive ? '#F1F5F9' : '#94A3B8' }}>
+                      {item.label}
+                    </span>
+                    {isActive && (
+                      <div style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: ACCENT, flexShrink: 0 }} />
+                    )}
                   </div>
                 );
               })}
             </div>
-          </div>
-        )}
+          ))}
+        </nav>
 
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 340px', gap: 14, marginBottom: 20 }}>
-          <div style={{ ...card, padding: isMobile ? '16px' : '22px 24px', position: 'relative' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: L.text, marginBottom: 4 }}>Cash Flow</div>
-            <div style={{ fontSize: 12, color: L.textMuted, marginBottom: 16 }}>Income vs expenses</div>
-            {!hasData && (
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', zIndex: 2, pointerEvents: 'none', width: '80%' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: L.textMuted }}>Upload documents to see trends</div>
-              </div>
-            )}
-            <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
-              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gI" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={L.accent} stopOpacity={0.12} />
-                    <stop offset="100%" stopColor={L.accent} stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gE" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={L.red} stopOpacity={0.08} />
-                    <stop offset="100%" stopColor={L.red} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke={L.border} strokeDasharray="4 4" vertical={false} />
-                <XAxis dataKey="month" tick={{ fill: L.textMuted, fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: L.textMuted, fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
-                <Tooltip contentStyle={{ background: '#FFFFFF', border: `1px solid ${L.border}`, borderRadius: L.radiusSm, fontSize: 12 }} formatter={(v, n) => [fmt(v), n === 'income' ? 'Income' : 'Expenses']} />
-                <Area type="monotone" dataKey="income"   stroke={L.accent} strokeWidth={2.5} fill="url(#gI)" dot={false} />
-                <Area type="monotone" dataKey="expenses" stroke={L.red}    strokeWidth={2.5} fill="url(#gE)" dot={false} />
-              </AreaChart>
-            </ResponsiveContainer>
-            <div style={{ display: 'flex', gap: 20, marginTop: 12 }}>
-              {[{ color: L.accent, label: 'Income' }, { color: L.red, label: 'Expenses' }].map(l => (
-                <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 14, height: 2, borderRadius: 1, background: l.color }} />
-                  <span style={{ fontSize: 11, color: L.textMuted }}>{l.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ ...card, padding: isMobile ? '16px' : '22px 24px' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: L.text, marginBottom: 4 }}>Expense Breakdown</div>
-            <div style={{ fontSize: 12, color: L.textMuted, marginBottom: 12 }}>Spending by category</div>
-            {!hasPie ? (
-              <EmptyState icon={Receipt} title="No expense categories yet" description="Upload receipts and invoices to see your spending breakdown" action="Upload document" onAction={() => window.location.href = '/documents'} />
-            ) : (
-              <>
-                <ResponsiveContainer width="100%" height={160}>
-                  <PieChart>
-                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={52} outerRadius={76} paddingAngle={3} dataKey="value">
-                      {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip contentStyle={{ background: '#FFFFFF', border: `1px solid ${L.border}`, borderRadius: L.radiusSm, fontSize: 11 }} formatter={v => [fmt(v)]} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-                  {pieData.slice(0, 4).map((d, i) => (
-                    <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 6px', borderRadius: 6 }}>
-                      <div style={{ width: 9, height: 9, borderRadius: 2, flexShrink: 0, background: PIE_COLORS[i % PIE_COLORS.length] }} />
-                      <span style={{ fontSize: 11, color: L.textSub, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: L.text, fontFamily: L.fontMono }}>{fmt(d.value)}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 340px', gap: 14 }}>
-          <div style={{ ...card, overflow: 'hidden' }}>
-            <div style={{ padding: isMobile ? '14px 16px' : '16px 22px', borderBottom: `1px solid ${L.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: L.text }}>Recent Transactions</div>
-                <div style={{ fontSize: 12, color: L.textMuted, marginTop: 2 }}>{hasTxns ? `${txns.length} most recent` : 'No transactions yet'}</div>
-              </div>
-              <button
-                onClick={() => window.location.href = '/transactions'}
-                style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', borderRadius: L.radiusSm, background: 'transparent', border: `1px solid ${L.border}`, color: L.textMuted, cursor: 'pointer', fontSize: 11, fontFamily: L.font }}
-              >
-                View all <ArrowRight size={11} />
-              </button>
-            </div>
-
-            {hasTxns && !isMobile && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 130px 90px', padding: '8px 22px', borderBottom: `1px solid ${L.pageBg}`, background: L.pageBg }}>
-                {['VENDOR','AMOUNT','CATEGORY','STATUS'].map(h => (
-                  <div key={h} style={{ fontSize: 9, fontWeight: 700, color: L.textMuted, letterSpacing: '0.12em' }}>{h}</div>
-                ))}
-              </div>
-            )}
-
-            {loading ? (
-              <div style={{ padding: 40, textAlign: 'center', color: L.textMuted, fontSize: 13 }}>Loading transactions...</div>
-            ) : !hasTxns ? (
-              <EmptyState icon={TrendingUp} title="No transactions yet" description="Upload an invoice or receipt and Novala will automatically create transactions" action="Upload document" onAction={() => window.location.href = '/documents'} />
-            ) : isMobile ? (
-              txns.map((t, i) => (
-                <div
-                  key={t.id}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: i < txns.length - 1 ? `1px solid ${L.pageBg}` : 'none' }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: L.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.vendor || '—'}</div>
-                    <div style={{ fontSize: 10, color: L.textMuted, marginTop: 2 }}>{t.txn_date} · {t.category || 'Uncategorized'}</div>
-                  </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, fontFamily: L.fontMono, color: t.txn_type === 'income' ? L.accent : L.red, flexShrink: 0 }}>
-                    {t.txn_type === 'income' ? '+' : '-'}{fmt(Math.abs(t.amount))}
-                  </div>
-                </div>
-              ))
-            ) : (
-              txns.map((t, i) => (
-                <div
-                  key={t.id}
-                  style={{ display: 'grid', gridTemplateColumns: '1fr 110px 130px 90px', padding: '12px 22px', borderBottom: i < txns.length - 1 ? `1px solid ${L.pageBg}` : 'none', alignItems: 'center', transition: 'background 0.1s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = L.pageBg}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: L.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.vendor || '—'}</div>
-                    {t.txn_date && <div style={{ fontSize: 10, color: L.textMuted, marginTop: 2 }}>{t.txn_date}</div>}
-                  </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, fontFamily: L.fontMono, color: t.txn_type === 'income' ? L.accent : L.red }}>
-                    {t.txn_type === 'income' ? '+' : '-'}{fmt(Math.abs(t.amount))}
-                  </div>
-                  <div>
-                    {(t.category || t.ml_category) ? (
-                      <span style={{ fontSize: 10, fontWeight: 500, color: L.blue, background: L.blueSoft, padding: '2px 8px', borderRadius: 20, border: `1px solid ${L.blueBorder}` }}>{t.category || t.ml_category}</span>
-                    ) : (
-                      <span style={{ fontSize: 10, color: L.textMuted, background: L.pageBg, padding: '2px 8px', borderRadius: 20, border: `1px solid ${L.border}` }}>Uncategorized</span>
-                    )}
-                  </div>
-                  <div>
-                    <span style={{ fontSize: 10, fontWeight: 600, color: t.status === 'flagged' ? '#F59E0B' : L.accent, background: t.status === 'flagged' ? 'rgba(245,158,11,0.08)' : L.accentSoft, padding: '2px 8px', borderRadius: 20, border: `1px solid ${t.status === 'flagged' ? 'rgba(245,158,11,0.2)' : L.accentBorder}` }}>
-                      {t.status === 'flagged' ? '⚠ Flagged' : '✓ OK'}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {stats?.uncategorized > 0 && (
-              <div
-                onClick={() => askWithData(`I have ${stats.uncategorized} uncategorized transactions. Help me categorize them.`)}
-                style={{ padding: '12px 14px', borderRadius: L.radiusSm, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
-              >
-                <AlertTriangle size={16} color="#F59E0B" />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#F59E0B' }}>{stats.uncategorized} transactions need review</div>
-                  <div style={{ fontSize: 11, color: L.textMuted, marginTop: 2 }}>Click to get help categorizing</div>
-                </div>
-                <ArrowRight size={12} color="#F59E0B" />
-              </div>
-            )}
-
-            {(companyName || userEmail) && (
-              <div style={{ ...card, padding: '14px 16px' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Business Profile</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#0AB98A 0%,#0EA5E9 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, fontWeight: 700, color: '#FFFFFF' }}>
-                    {(userName || companyName || userEmail)[0].toUpperCase()}
-                  </div>
-                  <div>
-                    {userName    && <div style={{ fontSize: 13, fontWeight: 700, color: L.text }}>{userName}</div>}
-                    {companyName && <div style={{ fontSize: 12, color: L.textMuted }}>{companyName}</div>}
-                    <div style={{ fontSize: 11, color: L.textMuted }}>{userEmail}</div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => window.location.href = '/settings'}
-                  style={{ marginTop: 10, width: '100%', padding: '7px', borderRadius: L.radiusSm, background: L.pageBg, border: `1px solid ${L.border}`, color: L.textMuted, cursor: 'pointer', fontSize: 11, fontFamily: L.font }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = L.accentBorder; e.currentTarget.style.color = L.accent; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = L.border; e.currentTarget.style.color = L.textMuted; }}
-                >
-                  Edit profile →
-                </button>
-              </div>
-            )}
-          </div>
+        <div style={{ padding: '12px 16px 32px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+          <button
+            onClick={onLogout}
+            style={{ width: '100%', padding: '12px', borderRadius: 10, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#64748B', cursor: 'pointer', fontSize: 14, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.2)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748B'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+          >
+            <LogOut size={16} /> Sign Out
+          </button>
         </div>
       </div>
+
+      {/* Flyout panels desktop only */}
+      {!mobile && flyout === 'create' && (
+        <CreateFlyout onClose={() => setFlyout(null)} onNavigate={goTo} />
+      )}
+
+      {!mobile && flyout === 'bookmarks' && (
+        <FlyoutPanel title="Bookmarks" onClose={() => setFlyout(null)}>
+          <div style={{ padding: '24px 20px', textAlign: 'center' }}>
+            <Bookmark size={32} color="#CBD5E1" style={{ marginBottom: 12 }} />
+            <div style={{ fontSize: 14, fontWeight: 600, color: DEFAULT, marginBottom: 6 }}>No bookmarks yet</div>
+            <div style={{ fontSize: 12, color: MUTED, marginBottom: 20 }}>Add a bookmark to get started</div>
+            <button
+              onClick={() => setFlyout(null)}
+              style={{ padding: '8px 16px', borderRadius: 8, background: ACCENT, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: FONT }}
+            >
+              + Bookmark current page
+            </button>
+          </div>
+        </FlyoutPanel>
+      )}
+
+      {!mobile && flyout === 'feed' && (
+        <FlyoutPanel title="Feed" onClose={() => setFlyout(null)}>
+          <div style={{ padding: '24px 20px', textAlign: 'center' }}>
+            <Sparkles size={32} color="#CBD5E1" style={{ marginBottom: 12 }} />
+            <div style={{ fontSize: 14, fontWeight: 600, color: DEFAULT, marginBottom: 6 }}>Your activity feed</div>
+            <div style={{ fontSize: 12, color: MUTED }}>Recent transactions and updates will appear here.</div>
+          </div>
+        </FlyoutPanel>
+      )}
+
+      {!mobile && flyout === 'reports' && (
+        <FlyoutPanel title="Reports and Analytics" onClose={() => setFlyout(null)}>
+          <div style={{ padding: '8px 12px' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '10px 8px 8px' }}>
+              REPORTS AND ANALYTICS
+            </div>
+            {[
+              { label: 'Financial Reports', path: '/reports',        active: true  },
+              { label: 'Variance Reports',  path: '/variance',       active: false },
+              { label: 'Ledger View',       path: '/ledger',         active: false },
+              { label: 'Reconciliation',    path: '/reconciliation', active: false },
+              { label: 'Smart Search',      path: '/search',         active: false },
+            ].map(item => (
+              <div
+                key={item.label}
+                onClick={() => goTo(item.path)}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 2, background: item.active ? 'rgba(10,185,138,0.06)' : 'transparent', transition: 'all 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#F1F5F9'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = item.active ? 'rgba(10,185,138,0.06)' : 'transparent'; }}
+              >
+                <span style={{ fontSize: 13, color: item.active ? ACCENT : DEFAULT, fontWeight: item.active ? 600 : 400, flex: 1 }}>
+                  {item.label}
+                </span>
+                <ChevronRight size={13} color="#CBD5E1" />
+              </div>
+            ))}
+          </div>
+        </FlyoutPanel>
+      )}
+
+      {!mobile && flyout === 'apps' && (
+        <FlyoutPanel title="All Apps" onClose={() => setFlyout(null)} width={300}>
+          <div style={{ padding: '8px 12px' }}>
+            {APP_GROUPS.map(group => (
+              <div key={group.label} style={{ marginBottom: 6 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '10px 8px 6px' }}>
+                  {group.label}
+                </div>
+                {group.items.map(item => {
+                  const Icon     = item.icon;
+                  const isActive = location.pathname === item.path ||
+                    (item.path !== '/' && location.pathname.startsWith(item.path));
+                  return (
+                    <div
+                      key={item.path}
+                      onClick={() => goTo(item.path)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 10px', borderRadius: 8, cursor: 'pointer', marginBottom: 1, background: isActive ? 'rgba(10,185,138,0.06)' : 'transparent', transition: 'all 0.15s' }}
+                      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#F1F5F9'; }}
+                      onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <div style={{ width: 30, height: 30, borderRadius: 8, background: group.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon size={15} color={isActive ? ACCENT : group.color} strokeWidth={2} />
+                      </div>
+                      <span style={{ fontSize: 13, color: isActive ? ACCENT : DEFAULT, fontWeight: isActive ? 600 : 400, flex: 1 }}>
+                        {item.label}
+                      </span>
+                      <ChevronRight size={12} color="#CBD5E1" />
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </FlyoutPanel>
+      )}
+
+      {!mobile && flyout === 'more' && (
+        <FlyoutPanel title="More" onClose={() => setFlyout(null)}>
+          <div style={{ padding: '8px 12px' }}>
+            {MORE_ITEMS.map(item => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.label}
+                  onClick={() => { if (item.path) goTo(item.path); else setFlyout(null); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 2, transition: 'all 0.15s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#F1F5F9'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <div style={{ width: 30, height: 30, borderRadius: 8, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon size={15} color={DEFAULT} strokeWidth={2} />
+                  </div>
+                  <span style={{ fontSize: 13, color: DEFAULT, fontWeight: 400, flex: 1 }}>{item.label}</span>
+                  <ChevronRight size={12} color="#CBD5E1" />
+                </div>
+              );
+            })}
+          </div>
+        </FlyoutPanel>
+      )}
+
+      {!mobile && flyout === 'customize' && (
+        <FlyoutPanel title="Customize Sidebar" onClose={() => setFlyout(null)}>
+          <div style={{ padding: '20px' }}>
+            <div style={{ fontSize: 13, color: MUTED, marginBottom: 16, lineHeight: 1.6 }}>
+              Pin your most-used pages to the sidebar for quick access.
+            </div>
+            {APP_GROUPS.map(group => (
+              <div key={group.label} style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+                  {group.label}
+                </div>
+                {group.items.map(item => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.path}
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, marginBottom: 2 }}
+                    >
+                      <div style={{ width: 26, height: 26, borderRadius: 6, background: group.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon size={13} color={group.color} strokeWidth={2} />
+                      </div>
+                      <span style={{ fontSize: 13, color: DEFAULT, flex: 1 }}>{item.label}</span>
+                      <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid #E8EDF3', cursor: 'pointer', flexShrink: 0 }} />
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+            <button
+              onClick={() => setFlyout(null)}
+              style={{ width: '100%', padding: '10px', borderRadius: 8, background: ACCENT, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: FONT, marginTop: 12 }}
+            >
+              Save
+            </button>
+          </div>
+        </FlyoutPanel>
+      )}
     </div>
   );
-} 
+}
