@@ -258,12 +258,24 @@ function DocViewerModal({ doc, onClose }) {
                 style={{ maxWidth:'100%', maxHeight:'75vh', objectFit:'contain', transform:'scale(' + zoom + ') rotate(' + rotate + 'deg)', transition:'transform 0.2s ease', borderRadius:8, boxShadow:'0 8px 40px rgba(0,0,0,0.5)' }}
               />
             )}
-            {isPDF && (
-              <iframe
-                src={url + '#toolbar=1&navpanes=0&scrollbar=1'}
-                title={filename}
-                style={{ width:'100%', height:'78vh', border:'none', borderRadius:8, background:'#fff' }}
-              />
+          {isPDF && (
+              <div style={{ textAlign:'center', color:'#94A3B8' }}>
+                <div style={{ fontSize:64, marginBottom:16 }}>📄</div>
+                <div style={{ fontSize:15, marginBottom:8, color:'#F1F5F9' }}>{filename}</div>
+                <div style={{ fontSize:13, marginBottom:24, color:'#94A3B8' }}>Click below to open the PDF</div>
+                <button
+                  onClick={() => window.open(url, '_blank')}
+                  style={{ padding:'12px 28px', borderRadius:10, background:ACCENT, color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:FONT, marginRight:12 }}
+                >
+                  Open PDF
+                </button>
+                <button
+                  onClick={handleDownload}
+                  style={{ padding:'12px 28px', borderRadius:10, background:'transparent', color:ACCENT, border:'1px solid ' + ACCENT, cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:FONT }}
+                >
+                  Download
+                </button>
+              </div>
             )}
             {!isImage && !isPDF && (
               <div style={{ textAlign:'center', color:'#94A3B8' }}>
