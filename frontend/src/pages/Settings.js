@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   User, Lock, Bell, CreditCard, Trash2,
   CheckCircle, AlertCircle, Save, Eye, EyeOff,
   ArrowRight, Shield, Settings as SettingsIcon,
-  ChevronLeft, X, Play, Info,
-  List, Package, RefreshCw, Paperclip,
-  Sliders, Download, Upload, BarChart2,
-  FileText, Users, HelpCircle, Gift, Shield as ShieldIcon,
+  ChevronLeft, Play, Info,
 } from 'lucide-react';
 import { L, card, page, topBar } from '../styles/light';
 
@@ -26,55 +24,57 @@ function useIsMobile() {
 }
 
 const TABS = [
-  { id: 'profile',       label: 'Profile',      icon: User       },
-  { id: 'security',      label: 'Security',      icon: Lock       },
-  { id: 'notifications', label: 'Notifications', icon: Bell       },
-  { id: 'billing',       label: 'Billing',       icon: CreditCard },
-  { id: 'danger',        label: 'Danger Zone',   icon: Trash2     },
+  { id: 'profile',       label: 'Profile',       icon: User       },
+  { id: 'security',      label: 'Security',       icon: Lock       },
+  { id: 'notifications', label: 'Notifications',  icon: Bell       },
+  { id: 'billing',       label: 'Billing',        icon: CreditCard },
+  { id: 'danger',        label: 'Danger Zone',    icon: Trash2     },
 ];
+
+const VALID_TABS = TABS.map(t => t.id);
 
 const SETTINGS_MENU = [
   {
     header: 'YOUR COMPANY',
     items: [
-      { label: 'Account and settings',  path: '/settings'              },
-      { label: 'Manage users',          path: '/team'                  },
-      { label: 'Custom form styles',    path: '/settings/form-styles'  },
-      { label: 'Chart of accounts',     path: '/ledger'                },
-      { label: 'Payroll settings',      path: '/settings/payroll'      },
-      { label: 'Additional info',       path: '/settings/company-info' },
+      { label: 'Account and settings',   path: '/settings'                      },
+      { label: 'Manage users',           path: '/team'                          },
+      { label: 'Custom form styles',     path: '/settings/form-styles'          },
+      { label: 'Chart of accounts',      path: '/accounting/chart-of-accounts'  },
+      { label: 'Payroll settings',       path: '/settings/payroll'              },
+      { label: 'Additional info',        path: '/settings/company-info'         },
     ],
   },
   {
     header: 'LISTS',
     items: [
-      { label: 'All lists',             path: '/settings/lists'        },
-      { label: 'Products and services', path: '/inventory'             },
-      { label: 'Recurring transactions',path: '/settings/recurring'    },
-      { label: 'Attachments',           path: '/documents'             },
-      { label: 'Custom fields',         path: '/settings/fields'       },
-      { label: 'Rules',                 path: '/settings/rules'        },
+      { label: 'All lists',              path: '/lists/all'                     },
+      { label: 'Products and services',  path: '/inventory'                     },
+      { label: 'Recurring transactions', path: '/accounting/recurring'          },
+      { label: 'Attachments',            path: '/documents'                     },
+      { label: 'Custom fields',          path: '/lists/custom-fields'           },
+      { label: 'Rules',                  path: '/accounting/rules'              },
     ],
   },
   {
     header: 'TOOLS',
     items: [
-      { label: 'Import data',           path: '/settings/import'       },
-      { label: 'Export data',           path: '/settings/export'       },
-      { label: 'Reconcile',             path: '/reconciliation'        },
-      { label: 'Budgeting',             path: '/budgets'               },
-      { label: 'Audit log',             path: '/settings/audit'        },
-      { label: 'Resolution centre',     path: '/settings/resolution'   },
+      { label: 'Import data',            path: '/tools/import'                  },
+      { label: 'Export data',            path: '/tools/export'                  },
+      { label: 'Reconcile',              path: '/reconciliation'                },
+      { label: 'Budgeting',              path: '/budgets'                       },
+      { label: 'Audit log',              path: '/tools/audit-log'               },
+      { label: 'Resolution centre',      path: '/tools/resolution-centre'       },
     ],
   },
   {
     header: 'PROFILE',
     items: [
-      { label: 'Subscriptions & billing', path: '/billing'            },
-      { label: "What's new",              path: '/settings/whats-new' },
-      { label: 'Feedback',                path: '/settings/feedback'  },
-      { label: 'Refer a friend',          path: '/settings/refer'     },
-      { label: 'Privacy',                 path: '/settings/privacy'   },
+      { label: 'Subscriptions & billing',path: '/settings?tab=billing'          },
+      { label: "What's new",             path: '/profile/whats-new'             },
+      { label: 'Feedback',               path: '/profile/feedback'              },
+      { label: 'Refer a friend',         path: '/profile/refer'                 },
+      { label: 'Privacy',                path: '/profile/privacy'               },
     ],
   },
 ];
@@ -89,11 +89,11 @@ const TIMEZONES = [
 ];
 
 const FREQUENCIES = [
-  { value: 'daily',     label: 'Daily',         desc: 'Every day at your chosen time'      },
-  { value: 'weekly',    label: 'Weekly',         desc: 'Once a week on your chosen day'     },
-  { value: 'monthly',   label: 'Monthly',        desc: 'Once a month on your chosen date'   },
-  { value: 'quarterly', label: 'Every 3 Months', desc: '4 times a year on your chosen date' },
-  { value: 'biannual',  label: 'Every 6 Months', desc: 'Twice a year on your chosen date'   },
+  { value: 'daily',     label: 'Daily',          desc: 'Every day at your chosen time'      },
+  { value: 'weekly',    label: 'Weekly',          desc: 'Once a week on your chosen day'     },
+  { value: 'monthly',   label: 'Monthly',         desc: 'Once a month on your chosen date'   },
+  { value: 'quarterly', label: 'Every 3 Months',  desc: '4 times a year on your chosen date' },
+  { value: 'biannual',  label: 'Every 6 Months',  desc: 'Twice a year on your chosen date'   },
 ];
 
 const WEEKDAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -136,17 +136,36 @@ function Alert({ type, message }) {
 }
 
 export default function Settings() {
-  const [activeTab,    setActiveTab]    = useState('profile');
-  const [showMenu,     setShowMenu]     = useState(false);
-  const isMobile = useIsMobile();
-  const menuRef  = useRef(null);
+  const navigate        = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isMobile        = useIsMobile();
+  const menuRef         = useRef(null);
 
+  // ── Read tab from URL param ──────────────────────────────────
+  const tabFromUrl  = searchParams.get('tab');
+  const initialTab  = VALID_TABS.includes(tabFromUrl) ? tabFromUrl : 'profile';
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [showMenu,  setShowMenu]  = useState(false);
+
+  // Sync tab when URL changes (e.g. browser back/forward)
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (VALID_TABS.includes(t)) setActiveTab(t);
+  }, [searchParams]);
+
+  const handleTabClick = (tabId) => {
+    setActiveTab(tabId);
+    setSearchParams({ tab: tabId });
+  };
+
+  // ── Profile ─────────────────────────────────────────────────
   const [fullName,   setFullName]   = useState('');
   const [email,      setEmail]      = useState('');
   const [company,    setCompany]    = useState('');
   const [savingP,    setSavingP]    = useState(false);
   const [profileMsg, setProfileMsg] = useState(null);
 
+  // ── Security ─────────────────────────────────────────────────
   const [currentPw,   setCurrentPw]   = useState('');
   const [newPw,       setNewPw]       = useState('');
   const [confirmPw,   setConfirmPw]   = useState('');
@@ -154,16 +173,17 @@ export default function Settings() {
   const [savingS,     setSavingS]     = useState(false);
   const [securityMsg, setSecurityMsg] = useState(null);
 
+  // ── Notifications ─────────────────────────────────────────────
   const [briefEnabled, setBriefEnabled] = useState(true);
   const [frequency,    setFrequency]    = useState('daily');
   const [briefTime,    setBriefTime]    = useState('08:00');
   const [briefDay,     setBriefDay]     = useState('Monday');
   const [briefDate,    setBriefDate]    = useState(1);
-  const [specificDate, setSpecificDate] = useState('');
   const [timezone,     setTimezone]     = useState('America/Edmonton');
   const [savingN,      setSavingN]      = useState(false);
   const [notifMsg,     setNotifMsg]     = useState(null);
 
+  // ── Billing / Danger ─────────────────────────────────────────
   const [billingStatus, setBillingStatus] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState('');
 
@@ -196,6 +216,7 @@ export default function Settings() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // ── Save handlers ─────────────────────────────────────────────
   const saveProfile = async () => {
     setSavingP(true); setProfileMsg(null);
     try {
@@ -204,11 +225,11 @@ export default function Settings() {
         headers: { Authorization: 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ full_name: fullName, company }),
       });
-      if (!res.ok) throw new Error('Failed');
+      if (!res.ok) throw new Error();
       localStorage.setItem('user_name', fullName);
       localStorage.setItem('company_name', company);
       setProfileMsg({ type: 'success', text: 'Profile saved successfully' });
-    } catch (e) {
+    } catch {
       setProfileMsg({ type: 'error', text: 'Could not save profile. Please try again.' });
     } finally { setSavingP(false); }
   };
@@ -223,10 +244,10 @@ export default function Settings() {
         headers: { Authorization: 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ current_password: currentPw, new_password: newPw }),
       });
-      if (!res.ok) throw new Error('Failed');
+      if (!res.ok) throw new Error();
       setCurrentPw(''); setNewPw(''); setConfirmPw('');
       setSecurityMsg({ type: 'success', text: 'Password changed successfully' });
-    } catch (e) {
+    } catch {
       setSecurityMsg({ type: 'error', text: 'Could not change password. Check your current password.' });
     } finally { setSavingS(false); }
   };
@@ -246,10 +267,10 @@ export default function Settings() {
           briefing_date:      briefDate,
         }),
       });
-      if (!res.ok) throw new Error('Failed');
+      if (!res.ok) throw new Error();
       localStorage.setItem('user_timezone', timezone);
       setNotifMsg({ type: 'success', text: 'Notification settings saved' });
-    } catch (e) {
+    } catch {
       setNotifMsg({ type: 'error', text: 'Could not save settings. Please try again.' });
     } finally { setSavingN(false); }
   };
@@ -266,14 +287,19 @@ export default function Settings() {
     fontSize: 13, fontFamily: L.font, outline: 'none', marginBottom: 16,
   };
 
+  const goTo = (path) => {
+    setShowMenu(false);
+    navigate(path);
+  };
+
   return (
     <div style={page}>
-      <div style={{ ...topBar, padding: isMobile ? '16px' : '16px 32px', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 10 : 0 }}>
+      <div style={{ ...topBar, flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 10 : 0 }}>
 
         {/* Mobile back arrow */}
         {isMobile && (
           <button
-            onClick={() => window.location.href = '/'}
+            onClick={() => navigate('/')}
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: L.textMuted, fontSize: 13, fontWeight: 600, padding: 0, fontFamily: FONT, marginBottom: 4 }}
           >
             <ChevronLeft size={18} /> Dashboard
@@ -303,7 +329,7 @@ export default function Settings() {
                     {col.items.map(item => (
                       <div
                         key={item.label}
-                        onClick={() => { window.location.href = item.path; setShowMenu(false); }}
+                        onClick={() => goTo(item.path)}
                         style={{ fontSize: 13, color: '#0A2540', padding: '9px 6px', borderRadius: 6, cursor: 'pointer', transition: 'all 0.12s' }}
                         onMouseEnter={e => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.paddingLeft = '10px'; }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.paddingLeft = '6px'; }}
@@ -314,9 +340,11 @@ export default function Settings() {
                   </div>
                 ))}
               </div>
+
+              {/* Footer row */}
               <div style={{ borderTop: '1px solid ' + L.border, padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div
-                  onClick={() => { window.location.href = '/settings/tutorials'; setShowMenu(false); }}
+                  onClick={() => goTo('/tutorials')}
                   style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: ACCENT, cursor: 'pointer', fontWeight: 500 }}
                   onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
                   onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
@@ -332,7 +360,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <div style={{ padding: isMobile ? '12px' : '24px 32px', display: 'flex', gap: 20, flexDirection: isMobile ? 'column' : 'row', alignItems: 'flex-start' }}>
+      <div style={{ padding: isMobile ? '12px' : '0 0 40px', display: 'flex', gap: 20, flexDirection: isMobile ? 'column' : 'row', alignItems: 'flex-start' }}>
 
         {/* Tab sidebar */}
         <div style={{ ...card, padding: '8px', width: isMobile ? '100%' : 200, flexShrink: 0 }}>
@@ -342,7 +370,7 @@ export default function Settings() {
             return (
               <div
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabClick(tab.id)}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: L.radiusSm, cursor: 'pointer', marginBottom: 2, background: isActive ? L.accentSoft : 'transparent', transition: 'all 0.1s' }}
                 onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = L.pageBg; }}
                 onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
@@ -358,6 +386,7 @@ export default function Settings() {
         {/* Tab content */}
         <div style={{ flex: 1, minWidth: 0 }}>
 
+          {/* ── PROFILE ── */}
           {activeTab === 'profile' && (
             <Section title="Profile" desc="Update your personal and business information">
               {profileMsg && <Alert type={profileMsg.type} message={profileMsg.text} />}
@@ -375,6 +404,7 @@ export default function Settings() {
             </Section>
           )}
 
+          {/* ── SECURITY ── */}
           {activeTab === 'security' && (
             <Section title="Security" desc="Change your password to keep your account secure">
               {securityMsg && <Alert type={securityMsg.type} message={securityMsg.text} />}
@@ -395,7 +425,7 @@ export default function Settings() {
                   </button>
                 </div>
               </div>
-              <Field label="New Password" type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="At least 8 characters" />
+              <Field label="New Password"         type="password" value={newPw}     onChange={e => setNewPw(e.target.value)}     placeholder="At least 8 characters" />
               <Field label="Confirm New Password" type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="Repeat new password" />
               <div style={{ padding: '10px 14px', borderRadius: L.radiusSm, background: L.pageBg, border: '1px solid ' + L.border, fontSize: 12, color: L.textMuted, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Shield size={13} color={ACCENT} /> Use at least 8 characters with a mix of letters and numbers
@@ -410,6 +440,7 @@ export default function Settings() {
             </Section>
           )}
 
+          {/* ── NOTIFICATIONS ── */}
           {activeTab === 'notifications' && (
             <Section title="Notifications" desc="Control when and how often you receive your financial briefing">
               {notifMsg && <Alert type={notifMsg.type} message={notifMsg.text} />}
@@ -417,7 +448,8 @@ export default function Settings() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', borderRadius: L.radiusSm, background: L.pageBg, border: '1px solid ' + L.border, marginBottom: 20 }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: L.text }}>Morning Briefing</div>
-                  <div style={{ fontSize: 11, color: L.textMuted, marginTop: 2 }}>Novala sends a financial summary to your email</div>
+                  {/* ── WORDING FIX ── */}
+                  <div style={{ fontSize: 11, color: L.textMuted, marginTop: 2 }}>A daily financial summary delivered to your email</div>
                 </div>
                 <div
                   onClick={() => setBriefEnabled(p => !p)}
@@ -459,7 +491,7 @@ export default function Settings() {
                     </div>
                   )}
 
-                  {['monthly', 'quarterly', 'biannual'].includes(frequency) && (
+                  {['monthly','quarterly','biannual'].includes(frequency) && (
                     <div style={{ marginBottom: 16 }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Day of Month</div>
                       <select value={briefDate} onChange={e => setBriefDate(Number(e.target.value))} style={selectStyle}>
@@ -499,6 +531,7 @@ export default function Settings() {
             </Section>
           )}
 
+          {/* ── BILLING ── */}
           {activeTab === 'billing' && (
             <Section title="Billing & Plan" desc="Manage your subscription and payment details">
               <div style={{ padding: '16px', borderRadius: L.radiusSm, background: L.pageBg, border: '1px solid ' + L.border, marginBottom: 16 }}>
@@ -516,7 +549,7 @@ export default function Settings() {
               </div>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <button
-                  onClick={() => window.location.href = '/billing'}
+                  onClick={() => navigate('/billing')}
                   style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: L.radiusSm, background: ACCENT, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: L.font }}
                 >
                   <CreditCard size={13} /> Manage Billing
@@ -537,6 +570,7 @@ export default function Settings() {
             </Section>
           )}
 
+          {/* ── DANGER ZONE ── */}
           {activeTab === 'danger' && (
             <div style={{ ...card, padding: '24px', marginBottom: 16, border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.02)' }}>
               <div style={{ marginBottom: 20 }}>
