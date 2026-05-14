@@ -7,6 +7,7 @@ import {
   ChevronLeft, Play, Info,
 } from 'lucide-react';
 import { L, card, page, topBar } from '../styles/light';
+import { getFirstName } from '../utils/userDisplay';
 
 const BASE     = 'https://api.getnovala.com/api/v1';
 const ACCENT   = '#0AB98A';
@@ -70,11 +71,11 @@ const SETTINGS_MENU = [
   {
     header: 'PROFILE',
     items: [
-      { label: 'Subscriptions & billing',path: '/settings?tab=billing'          },
-      { label: "What's new",             path: '/profile/whats-new'             },
-      { label: 'Feedback',               path: '/profile/feedback'              },
-      { label: 'Refer a friend',         path: '/profile/refer'                 },
-      { label: 'Privacy',                path: '/profile/privacy'               },
+      { label: 'Subscriptions & billing', path: '/settings?tab=billing'         },
+      { label: "What's new",              path: '/profile/whats-new'            },
+      { label: 'Feedback',                path: '/profile/feedback'             },
+      { label: 'Refer a friend',          path: '/profile/refer'                },
+      { label: 'Privacy',                 path: '/profile/privacy'              },
     ],
   },
 ];
@@ -136,18 +137,16 @@ function Alert({ type, message }) {
 }
 
 export default function Settings() {
-  const navigate        = useNavigate();
+  const navigate                        = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isMobile        = useIsMobile();
-  const menuRef         = useRef(null);
+  const isMobile                        = useIsMobile();
+  const menuRef                         = useRef(null);
 
-  // ── Read tab from URL param ──────────────────────────────────
   const tabFromUrl  = searchParams.get('tab');
   const initialTab  = VALID_TABS.includes(tabFromUrl) ? tabFromUrl : 'profile';
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showMenu,  setShowMenu]  = useState(false);
 
-  // Sync tab when URL changes (e.g. browser back/forward)
   useEffect(() => {
     const t = searchParams.get('tab');
     if (VALID_TABS.includes(t)) setActiveTab(t);
@@ -158,7 +157,8 @@ export default function Settings() {
     setSearchParams({ tab: tabId });
   };
 
-  // ── Profile ─────────────────────────────────────────────────
+  // ── Profile ──────────────────────────────────────────────────
+  const [firstName,  setFirstName]  = useState('');
   const [fullName,   setFullName]   = useState('');
   const [email,      setEmail]      = useState('');
   const [company,    setCompany]    = useState('');
@@ -188,10 +188,14 @@ export default function Settings() {
   const [deleteConfirm, setDeleteConfirm] = useState('');
 
   useEffect(() => {
-    const em = localStorage.getItem('user_email')   || '';
-    const nm = localStorage.getItem('user_name')    || '';
-    const co = localStorage.getItem('company_name') || '';
-    setEmail(em); setFullName(nm); setCompany(co);
+    const em  = localStorage.getItem('user_email')   || '';
+    const nm  = localStorage.getItem('user_name')    || '';
+    const co  = localStorage.getItem('company_name') || '';
+    const fn  = localStorage.getItem('first_name')   || getFirstName(nm || em);
+    setEmail(em);
+    setFullName(nm);
+    setCompany(co);
+    setFirstName(fn);
 
     fetch(BASE + '/briefing/settings', { headers: { Authorization: 'Bearer ' + getToken() } })
       .then(r => r.json())
@@ -207,7 +211,6 @@ export default function Settings() {
       .catch(() => {});
   }, []);
 
-  // Close menu on outside click
   useEffect(() => {
     const handler = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) setShowMenu(false);
@@ -223,11 +226,12 @@ export default function Settings() {
       const res = await fetch(BASE + '/auth/profile', {
         method: 'PATCH',
         headers: { Authorization: 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_name: fullName, company }),
+        body: JSON.stringify({ full_name: fullName, company, first_name: firstName }),
       });
       if (!res.ok) throw new Error();
-      localStorage.setItem('user_name', fullName);
+      localStorage.setItem('user_name',    fullName);
       localStorage.setItem('company_name', company);
+      localStorage.setItem('first_name',   firstName);
       setProfileMsg({ type: 'success', text: 'Profile saved successfully' });
     } catch {
       setProfileMsg({ type: 'error', text: 'Could not save profile. Please try again.' });
@@ -296,7 +300,6 @@ export default function Settings() {
     <div style={page}>
       <div style={{ ...topBar, flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 10 : 0 }}>
 
-        {/* Mobile back arrow */}
         {isMobile && (
           <button
             onClick={() => navigate('/')}
@@ -311,7 +314,6 @@ export default function Settings() {
           <div style={{ fontSize: 12, color: L.textMuted, marginTop: 2 }}>Manage your account and preferences</div>
         </div>
 
-        {/* Settings dropdown trigger */}
         <div ref={menuRef} style={{ position: 'relative', marginLeft: isMobile ? 0 : 'auto' }}>
           <button
             onClick={() => setShowMenu(p => !p)}
@@ -340,8 +342,6 @@ export default function Settings() {
                   </div>
                 ))}
               </div>
-
-              {/* Footer row */}
               <div style={{ borderTop: '1px solid ' + L.border, padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div
                   onClick={() => goTo('/tutorials')}
@@ -390,10 +390,25 @@ export default function Settings() {
           {activeTab === 'profile' && (
             <Section title="Profile" desc="Update your personal and business information">
               {profileMsg && <Alert type={profileMsg.type} message={profileMsg.text} />}
-              <Field label="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Your full name" />
-              <Field label="Email Address" value={email} disabled placeholder="your@email.com" />
-              <div style={{ fontSize: 11, color: L.textMuted, marginTop: -12, marginBottom: 16 }}>Email cannot be changed. Contact support to update.</div>
-              <Field label="Company Name" value={company} onChange={e => setCompany(e.target.value)} placeholder="Your company name" />
+
+              {/* First Name field — new */}
+              <Field
+                label="First Name"
+                value={firstName}
+                onChange={e => setFirstName(e.target.value)}
+                placeholder="Your first name (e.g. Claire)"
+              />
+              <div style={{ fontSize: 11, color: L.textMuted, marginTop: -12, marginBottom: 16 }}>
+                This is how Novala will greet you across the app.
+              </div>
+
+              <Field label="Full Name"     value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Your full name" />
+              <Field label="Email Address" value={email}    disabled placeholder="your@email.com" />
+              <div style={{ fontSize: 11, color: L.textMuted, marginTop: -12, marginBottom: 16 }}>
+                Email cannot be changed. Contact support to update.
+              </div>
+              <Field label="Company Name"  value={company}  onChange={e => setCompany(e.target.value)} placeholder="Your company name" />
+
               <button
                 onClick={saveProfile}
                 disabled={savingP}
@@ -448,7 +463,6 @@ export default function Settings() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', borderRadius: L.radiusSm, background: L.pageBg, border: '1px solid ' + L.border, marginBottom: 20 }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: L.text }}>Morning Briefing</div>
-                  {/* ── WORDING FIX ── */}
                   <div style={{ fontSize: 11, color: L.textMuted, marginTop: 2 }}>A daily financial summary delivered to your email</div>
                 </div>
                 <div
@@ -601,6 +615,7 @@ export default function Settings() {
               </div>
             </div>
           )}
+
         </div>
       </div>
     </div>
