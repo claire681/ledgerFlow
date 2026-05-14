@@ -213,8 +213,10 @@ function DocViewerModal({ doc, onClose }) {
                 </div>
                 <div style={{ fontSize:14, fontWeight:600, color:'#F1F5F9', marginBottom:6, maxWidth:280, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{filename}</div>
                 <div style={{ fontSize:12, color:'#475569', marginBottom:24 }}>Click below to open or download</div>
-                <button onClick={() => window.open(url, '_blank')} style={{ padding:'12px 28px', borderRadius:10, background:ACCENT, color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:FONT, marginRight:12 }}>Open PDF</button>
-                <button onClick={handleDownload} style={{ padding:'12px 28px', borderRadius:10, background:'transparent', color:ACCENT, border:'1px solid ' + ACCENT, cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:FONT }}>Download</button>
+               <div style={{ display:'flex', flexDirection:'column', gap:12, alignItems:'center' }}>
+                  <button onClick={() => window.open(url, '_blank')} style={{ padding:'12px 48px', borderRadius:10, background:ACCENT, color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:FONT, width:200 }}>Open PDF</button>
+                  <button onClick={handleDownload} style={{ padding:'12px 48px', borderRadius:10, background:'transparent', color:ACCENT, border:'1px solid ' + ACCENT, cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:FONT, width:200 }}>Download</button>
+                </div>
               </div>
             )}
             {!isImage && !isPDF && (
