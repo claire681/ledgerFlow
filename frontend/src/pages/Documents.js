@@ -109,58 +109,43 @@ function DocViewerModal({ doc, onClose }) {
   const isImage = ['png','jpg','jpeg','webp','gif','tiff'].includes(ext);
   const isPDF   = ext === 'pdf';
 
-  useEffect(() => {
+ useEffect(() => {
     let objectUrl = null;
 
     const tryLoad = async () => {
       setLoading(true);
       setError('');
-
-      // Try these endpoints in order until one works
-      const endpoints = [
-        BASE + '/documents/' + doc.id + '/view',
-        BASE + '/documents/' + doc.id + '/download',
-        BASE + '/documents/' + doc.id + '/file',
-      ];
-
-      for (const endpoint of endpoints) {
-        try {
-          const res = await fetch(endpoint, {
-            headers: { Authorization: 'Bearer ' + getToken() },
-          });
-
-          if (!res.ok) continue;
-
-          const contentType = res.headers.get('content-type') || '';
-
-          // If it's JSON it's probably an error or redirect URL
-          if (contentType.includes('application/json')) {
-            const data = await res.json();
-            // Some backends return a signed URL
-            if (data.url || data.file_url || data.download_url || data.signed_url) {
-              const signedUrl = data.url || data.file_url || data.download_url || data.signed_url;
-              setUrl(signedUrl);
-              setLoading(false);
-              return;
-            }
-            continue;
+      try {
+        // Use presigned S3 URL — no CORS issues, works in iframe and img
+        const res = await fetch(BASE + '/documents/' + doc.id + '/view-url', {
+          headers: { Authorization: 'Bearer ' + getToken() },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const presignedUrl = data.url || data.file_url || data.signed_url;
+          if (presignedUrl) {
+            setUrl(presignedUrl);
+            setLoading(false);
+            return;
           }
-
-          // It's a binary file — create object URL
-          const blob = await res.blob();
-          if (blob.size === 0) continue;
-          objectUrl = URL.createObjectURL(blob);
-          setUrl(objectUrl);
-          setLoading(false);
-          return;
-
-        } catch (e) {
-          continue;
         }
+        // Fallback to direct stream
+        const res2 = await fetch(BASE + '/documents/' + doc.id + '/view', {
+          headers: { Authorization: 'Bearer ' + getToken() },
+        });
+        if (res2.ok) {
+          const blob = await res2.blob();
+          if (blob.size > 0) {
+            objectUrl = URL.createObjectURL(blob);
+            setUrl(objectUrl);
+            setLoading(false);
+            return;
+          }
+        }
+        setError('Preview not available. Use the download button to open the file.');
+      } catch (e) {
+        setError('Could not load document. Please try downloading instead.');
       }
-
-      // All endpoints failed — show error with download fallback
-      setError('Preview not available. Use the download button to open the file.');
       setLoading(false);
     };
 
@@ -170,24 +155,42 @@ function DocViewerModal({ doc, onClose }) {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [doc.id]);
-
-  const handleDownload = async () => {
+ const handleDownload = async () => {
     try {
-      const res = await fetch(BASE + '/documents/' + doc.id + '/download', {
+      // Get presigned URL for direct download — works without CORS issues
+      const res = await fetch(BASE + '/documents/' + doc.id + '/view-url', {
         headers: { Authorization: 'Bearer ' + getToken() },
       });
-      if (!res.ok) throw new Error('Download failed');
-      const blob = await res.blob();
+      if (res.ok) {
+        const data = await res.json();
+        const presignedUrl = data.url || data.file_url || data.signed_url;
+        if (presignedUrl) {
+          const a = document.createElement('a');
+          a.href     = presignedUrl;
+          a.download = filename || 'document';
+          a.target   = '_blank';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          return;
+        }
+      }
+      // Fallback to stream download
+      const res2 = await fetch(BASE + '/documents/' + doc.id + '/download', {
+        headers: { Authorization: 'Bearer ' + getToken() },
+      });
+      if (!res2.ok) throw new Error('Download failed');
+      const blob    = await res2.blob();
       const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
+      const a       = document.createElement('a');
+      a.href     = blobUrl;
       a.download = filename || 'document';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     } catch (e) {
-      if (url) window.open(url, '_blank');
+      setError('Download failed. Please try again.');
     }
   };
 
