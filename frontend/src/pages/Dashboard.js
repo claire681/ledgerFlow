@@ -577,88 +577,151 @@ export default function Dashboard() {
 
   return (
     <div style={{ background:'#F4F6F9', minHeight:'100vh', fontFamily:FONT }}>
-      <style>{`
+    <style>{`
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        .nav-pill:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.12) !important; }
         .action-chip:hover { background:#E8F7F3 !important; color:#0AB98A !important; border-color:rgba(10,185,138,0.4) !important; }
+        div::-webkit-scrollbar { display: none; }
       `}</style>
-
       {showBriefing    && <BriefingModal onClose={() => setShowBriefing(false)} onSave={s => { setBriefingSettings(s); setShowBriefing(false); }} initial={briefingSettings}/>}
       {showCreatePanel && <CreatePanel  onClose={() => setShowCreatePanel(false)} onNavigate={navigate}/>}
       {showProfile     && <ProfileDropdown user={{ fullName, email:userEmail, initials }} onClose={() => setShowProfile(false)} onNavigate={navigate} onLogout={handleLogout}/>}
 
       {/* ── TOP BAR + STICKY CATEGORY ROW ── */}
-      <div style={{ background:'#fff', borderBottom:'1px solid #E5E7EB', padding:isMobile?'0 16px':'0 32px', position:'sticky', top:0, zIndex:100, boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>
+      <div style={{ background:'#fff', borderBottom:'1px solid #F1F5F9', position:'sticky', top:0, zIndex:100 }}>
 
         {/* Top bar row */}
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', height:58 }}>
-          <div style={{ fontSize:15, fontWeight:700, color:'#0F172A' }}>{company}</div>
-          <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', height:54, padding:isMobile?'0 16px':'0 28px' }}>
+
+          {/* Left — company name */}
+          <div style={{ fontSize:15, fontWeight:700, color:'#0F172A', letterSpacing:'-0.01em' }}>{company}</div>
+
+          {/* Right — utility icons + ONE profile avatar */}
+          <div style={{ display:'flex', gap:4, alignItems:'center' }}>
 
             {/* Briefing pill */}
-            <div onClick={() => setShowBriefing(true)}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 12px', borderRadius:999, border:'1px solid '+(briefingOn?'rgba(10,185,138,0.3)':briefingPaused?'rgba(245,158,11,0.3)':'#E5E7EB'), background:'#fff', cursor:'pointer', fontSize:12, fontWeight:500, color:'#334155', transition:'all 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)'}
-              onMouseLeave={e => e.currentTarget.style.boxShadow='none'}>
-              <Bell size={13} color={briefingBadgeColor}/>
-              {!isMobile && <span style={{ fontSize:12 }}>Briefing</span>}
-              <div style={{ padding:'2px 7px', borderRadius:20, background:briefingBadgeBg, color:briefingBadgeColor, fontSize:10, fontWeight:700 }}>{briefingLabel}</div>
+            <div
+              onClick={() => setShowBriefing(true)}
+              style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 10px', borderRadius:8, border:'1px solid '+(briefingOn?'rgba(10,185,138,0.25)':briefingPaused?'rgba(245,158,11,0.25)':'transparent'), background:briefingOn?'rgba(10,185,138,0.05)':briefingPaused?'rgba(245,158,11,0.05)':'transparent', cursor:'pointer', fontSize:12, color:'#64748B', transition:'all 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.background='#F8FAFC'}
+              onMouseLeave={e => e.currentTarget.style.background=briefingOn?'rgba(10,185,138,0.05)':briefingPaused?'rgba(245,158,11,0.05)':'transparent'}>
+              <Bell size={15} color={briefingBadgeColor}/>
+              {!isMobile && <span style={{ fontSize:12, fontWeight:500 }}>Briefing</span>}
+              <div style={{ padding:'1px 6px', borderRadius:20, background:briefingBadgeBg, color:briefingBadgeColor, fontSize:10, fontWeight:700 }}>{briefingLabel}</div>
             </div>
 
-            <button onClick={() => setRefresh(r => r+1)}
+            {/* Refresh */}
+            <button
+              onClick={() => setRefresh(r => r+1)}
               style={{ display:'flex', alignItems:'center', gap:5, background:'none', border:'none', cursor:'pointer', color:'#64748B', fontSize:12, fontFamily:FONT, padding:'6px 10px', borderRadius:8, transition:'all 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.background='#F1F5F9'}
+              onMouseEnter={e => e.currentTarget.style.background='#F8FAFC'}
               onMouseLeave={e => e.currentTarget.style.background='none'}>
-              <RefreshCw size={14}/>{!isMobile && 'Refresh'}
+              <RefreshCw size={15}/>
+              {!isMobile && <span>Refresh</span>}
             </button>
 
-            <button onClick={() => navigate('/settings')}
+            {/* Settings */}
+            <button
+              onClick={() => navigate('/settings')}
               style={{ display:'flex', alignItems:'center', gap:5, background:'none', border:'none', cursor:'pointer', color:'#64748B', fontSize:12, fontFamily:FONT, padding:'6px 10px', borderRadius:8, transition:'all 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.background='#F1F5F9'}
+              onMouseEnter={e => e.currentTarget.style.background='#F8FAFC'}
               onMouseLeave={e => e.currentTarget.style.background='none'}>
-              <Settings size={14}/>{!isMobile && 'Settings'}
+              <Settings size={15}/>
+              {!isMobile && <span>Settings</span>}
             </button>
 
-            <button onClick={() => navigate('/help')}
+            {/* Help */}
+            <button
+              onClick={() => navigate('/help')}
               style={{ display:'flex', alignItems:'center', gap:5, background:'none', border:'none', cursor:'pointer', color:'#64748B', fontSize:12, fontFamily:FONT, padding:'6px 10px', borderRadius:8, transition:'all 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.background='#F1F5F9'}
+              onMouseEnter={e => e.currentTarget.style.background='#F8FAFC'}
               onMouseLeave={e => e.currentTarget.style.background='none'}>
-              <HelpCircle size={14}/>{!isMobile && 'Help'}
+              <HelpCircle size={15}/>
+              {!isMobile && <span>Help</span>}
             </button>
 
-            {/* ONE profile avatar */}
-            <div onClick={() => setShowProfile(p => !p)}
-              style={{ width:38, height:38, borderRadius:'50%', background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, boxShadow:'0 2px 10px rgba(10,185,138,0.3)', transition:'all 0.15s', marginLeft:4 }}
-              onMouseEnter={e => e.currentTarget.style.transform='scale(1.08)'}
+            {/* Divider */}
+            <div style={{ width:1, height:24, background:'#E5E7EB', margin:'0 4px' }}/>
+
+            {/* ONE profile avatar — opens dropdown */}
+            <div
+              onClick={() => setShowProfile(p => !p)}
+              style={{ width:36, height:36, borderRadius:'50%', background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, boxShadow:'0 2px 8px rgba(10,185,138,0.25)', transition:'all 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.transform='scale(1.06)'}
               onMouseLeave={e => e.currentTarget.style.transform='none'}>
-              <span style={{ fontSize:14, fontWeight:700, color:'#fff' }}>{initials || displayName.charAt(0)}</span>
+              <span style={{ fontSize:13, fontWeight:700, color:'#fff' }}>{initials || displayName.charAt(0)}</span>
             </div>
           </div>
         </div>
 
-        {/* Sticky category pill row */}
-        <div style={{ borderTop:'1px solid #F1F5F9', padding:'10px 0', overflowX:'auto', scrollbarWidth:'none' }}>
-          <div ref={navScrollRef} style={{ display:'flex', gap:10, width:'max-content', minWidth:'100%' }}>
+        {/* ── CATEGORY NAV ROW — QuickBooks pill style, horizontally scrollable ── */}
+        <div style={{ position:'relative', borderTop:'1px solid #F8FAFC' }}>
+
+          {/* Scroll shadow left */}
+          <div style={{ position:'absolute', left:0, top:0, bottom:0, width:32, background:'linear-gradient(to right, #fff, transparent)', zIndex:2, pointerEvents:'none' }}/>
+
+          {/* Scrollable pill row */}
+          <div
+            ref={navScrollRef}
+            style={{ display:'flex', gap:8, overflowX:'auto', scrollbarWidth:'none', WebkitOverflowScrolling:'touch', padding:'10px 28px 10px 28px', alignItems:'center' }}
+          >
             {NAV_CATS.map(cat => {
-              const Icon = cat.icon;
+              const Icon     = cat.icon;
+              const isActive = window.location.pathname === cat.path;
               return (
                 <div
                   key={cat.label}
                   className="nav-pill"
                   onClick={() => navigate(cat.path)}
-                  style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 18px', background:'#fff', border:'1px solid #E8F0FE', borderRadius:999, cursor:'pointer', flexShrink:0, transition:'all 0.2s', boxShadow:'0 2px 8px rgba(0,0,0,0.05)', whiteSpace:'nowrap' }}
+                  style={{
+                    display:'flex', alignItems:'center', gap:9,
+                    padding:'9px 16px',
+                    background: isActive ? cat.bg : '#fff',
+                    border: '1px solid ' + (isActive ? cat.color+'40' : '#EAECF0'),
+                    borderRadius:999,
+                    cursor:'pointer',
+                    flexShrink:0,
+                    transition:'all 0.18s ease',
+                    whiteSpace:'nowrap',
+                    boxShadow: isActive ? '0 2px 10px '+cat.color+'20' : '0 1px 3px rgba(0,0,0,0.04)',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = cat.bg;
+                    e.currentTarget.style.borderColor = cat.color+'40';
+                    e.currentTarget.style.boxShadow = '0 3px 12px '+cat.color+'20';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={e => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = '#fff';
+                      e.currentTarget.style.borderColor = '#EAECF0';
+                      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
+                    }
+                    e.currentTarget.style.transform = 'none';
+                  }}
                 >
-                  <div style={{ width:32, height:32, borderRadius:'50%', background:cat.bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    <Icon size={15} color={cat.color} strokeWidth={2.2}/>
+                  <div style={{ width:28, height:28, borderRadius:'50%', background:cat.bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <Icon size={14} color={cat.color} strokeWidth={2.2}/>
                   </div>
-                  <span style={{ fontSize:13, fontWeight:600, color:'#334155' }}>{cat.label}</span>
+                  <span style={{ fontSize:13, fontWeight:600, color: isActive ? cat.color : '#374151' }}>{cat.label}</span>
                 </div>
               );
             })}
+
+            {/* Show more chevron pill */}
+            <div
+              onClick={() => navScrollRef.current?.scrollBy({ left:300, behavior:'smooth' })}
+              style={{ display:'flex', alignItems:'center', gap:6, padding:'9px 14px', background:'#F9FAFB', border:'1px solid #EAECF0', borderRadius:999, cursor:'pointer', flexShrink:0, transition:'all 0.15s', whiteSpace:'nowrap' }}
+              onMouseEnter={e => { e.currentTarget.style.background='#F3F4F6'; e.currentTarget.style.borderColor='#D1D5DB'; }}
+              onMouseLeave={e => { e.currentTarget.style.background='#F9FAFB'; e.currentTarget.style.borderColor='#EAECF0'; }}>
+              <span style={{ fontSize:12, fontWeight:600, color:'#6B7280' }}>More</span>
+              <ChevronRight size={14} color="#6B7280"/>
+            </div>
           </div>
+
+          {/* Scroll shadow right */}
+          <div style={{ position:'absolute', right:0, top:0, bottom:0, width:48, background:'linear-gradient(to left, #fff, transparent)', zIndex:2, pointerEvents:'none' }}/>
         </div>
       </div>
-
       {/* ── PAGE CONTENT ── */}
       <div style={{ maxWidth:1240, margin:'0 auto', padding:isMobile?'24px 16px':'28px 32px' }}>
 
