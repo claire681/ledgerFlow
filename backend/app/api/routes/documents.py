@@ -20,6 +20,9 @@ import traceback
 import re
 import mimetypes
 import io
+from app.services.s3_service import get_presigned_url
+
+
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
@@ -854,67 +857,50 @@ async def view_document_file(
 
 @router.get("/{doc_id}/view-url")
 async def get_document_view_url(
-    doc_id:      str,
+    doc_id: str,
     current_user=Depends(get_current_user),
-    db:          AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     user_id = str(current_user.id)
-    doc     = await get_document_or_404(db, doc_id, user_id)
+    doc = await get_document_or_404(db, doc_id, user_id)
 
-    from app.services.s3_service import get_presigned_url, file_exists_in_s3
+    s3_key = doc.file_path or build_s3_key(str(doc.id), doc.filename)
 
-    # Use the real saved file_path from DB first
-    if doc.file_path and file_exists_in_s3(doc.file_path):
-        url = get_presigned_url(doc.file_path, expiry=3600)
-        return {"url": url, "s3_key": doc.file_path}
+    if not file_exists_in_s3(s3_key):
+        raise HTTPException(
+            status_code=404,
+            detail=f"File not found in S3. path={s3_key}"
+        )
 
-    # Fallback — try common key patterns for old documents
-    ext = Path(doc.filename).suffix.lower() if doc.filename else ".pdf"
-    candidates = [
-        f"documents/{doc.id}{ext}",
-        f"documents/{doc.id}.pdf",
-        f"uploads/{doc.id}{ext}",
-        f"uploads/documents/{doc.id}{ext}",
-    ]
-    for candidate in candidates:
-        if file_exists_in_s3(candidate):
-            # Save correct key back to DB for future calls
-            doc.file_path = candidate
-            try:
-                await db.commit()
-            except Exception:
-                pass
-            url = get_presigned_url(candidate, expiry=3600)
-            return {"url": url, "s3_key": candidate}
-
-    raise HTTPException(
-        status_code=404,
-        detail=f"File not found in storage. Original path: {doc.file_path}"
-    )
-
-
+    url = get_presigned_url(s3_key, expiry=3600)
+    return {
+        "url": url,
+        "s3_key": s3_key,
+        "filename": doc.filename,
+    }
 @router.get("/{doc_id}/download")
 async def download_document_file(
-    doc_id:      str,
+    doc_id: str,
     current_user=Depends(get_current_user),
-    db:          AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     user_id = str(current_user.id)
-    doc     = await get_document_or_404(db, doc_id, user_id)
-    s3_key  = doc.file_path or build_s3_key(str(doc.id), doc.filename)
+    doc = await get_document_or_404(db, doc_id, user_id)
 
-    try:
-        file_bytes = download_file_from_s3(s3_key)
-        media_type = guess_media_type(doc.filename)
-        return StreamingResponse(
-            io.BytesIO(file_bytes),
-            media_type=media_type,
-            headers={"Content-Disposition": f'attachment; filename="{doc.filename}"'},
+    s3_key = doc.file_path or build_s3_key(str(doc.id), doc.filename)
+
+    if not file_exists_in_s3(s3_key):
+        raise HTTPException(
+            status_code=404,
+            detail=f"File not found in S3. path={s3_key}"
         )
-    except Exception:
-        raise HTTPException(status_code=404, detail="File not found in storage")
 
-
+    url = get_presigned_url(s3_key, expiry=3600)
+    return {
+        "url": url,
+        "s3_key": s3_key,
+        "filename": doc.filename,
+    }
 @router.patch("/{doc_id}")
 async def update_document(
     doc_id:      str,
