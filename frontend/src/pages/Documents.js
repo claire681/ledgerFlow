@@ -6,21 +6,22 @@ import {
   FileSearch, Database, LayoutDashboard,
   ArrowUpFromLine, ShieldCheck, Zap, X, Image, Users,
   DollarSign, ZoomIn, ZoomOut, RotateCw, ScanLine,
+  Folder, ArrowDownCircle, ArrowUpCircle,
 } from 'lucide-react';
-import { useAI } from '../hooks/useAI';
 
 const BASE   = 'https://api.getnovala.com/api/v1';
 const ACCENT = '#0AB98A';
 const GRAD   = 'linear-gradient(135deg, #0AB98A 0%, #0EA5E9 100%)';
+const FONT   = "'Inter', -apple-system, sans-serif";
 
 const PROCESS_STEPS = [
-  { key:'uploading',            label:'Uploading file',        icon:ArrowUpFromLine, color:'#0AB98A' },
-  { key:'reading_document',     label:'Reading document',      icon:FileSearch,      color:'#0EA5E9' },
-  { key:'extracting_data',      label:'Extracting data',       icon:ScanLine,        color:'#8B5CF6' },
-  { key:'classifying',          label:'Classifying document',  icon:ShieldCheck,     color:'#F59E0B' },
-  { key:'saving_document',      label:'Saving to system',      icon:Database,        color:'#10B981' },
-  { key:'creating_records',     label:'Creating records',      icon:Zap,             color:'#3B82F6' },
-  { key:'refreshing_dashboard', label:'Updating dashboard',    icon:LayoutDashboard, color:'#0AB98A' },
+  { key:'uploading',            label:'Uploading file',       icon:ArrowUpFromLine, color:'#0AB98A' },
+  { key:'reading_document',     label:'Reading document',     icon:FileSearch,      color:'#0EA5E9' },
+  { key:'extracting_data',      label:'Extracting data',      icon:ScanLine,        color:'#8B5CF6' },
+  { key:'classifying',          label:'Classifying document', icon:ShieldCheck,     color:'#F59E0B' },
+  { key:'saving_document',      label:'Saving to system',     icon:Database,        color:'#10B981' },
+  { key:'creating_records',     label:'Creating records',     icon:Zap,             color:'#3B82F6' },
+  { key:'refreshing_dashboard', label:'Updating dashboard',   icon:LayoutDashboard, color:'#0AB98A' },
 ];
 
 const PROC_STATUS = {
@@ -35,6 +36,7 @@ const PAY_STATUS = {
   due:            { color:'#F59E0B', bg:'rgba(245,158,11,0.08)',  border:'rgba(245,158,11,0.2)',  label:'Due'     },
   overdue:        { color:'#EF4444', bg:'rgba(239,68,68,0.08)',   border:'rgba(239,68,68,0.2)',   label:'Overdue' },
   partially_paid: { color:'#8B5CF6', bg:'rgba(139,92,246,0.08)', border:'rgba(139,92,246,0.2)', label:'Partial' },
+  unknown:        { color:'#94A3B8', bg:'rgba(148,163,184,0.08)', border:'rgba(148,163,184,0.2)', label:'Review needed' },
 };
 
 const DOC_TYPE_STYLE = {
@@ -67,7 +69,7 @@ function Spinner({ size = 16, color = ACCENT }) {
     return () => clearInterval(id);
   }, []);
   return (
-    <div style={{ width:size, height:size, border:`2px solid ${color}30`, borderTop:`2px solid ${color}`, borderRadius:'50%', transform:`rotate(${deg}deg)`, flexShrink:0 }}/>
+    <div style={{ width:size, height:size, border:'2px solid ' + color + '30', borderTop:'2px solid ' + color, borderRadius:'50%', transform:'rotate(' + deg + 'deg)', flexShrink:0 }} />
   );
 }
 
@@ -89,6 +91,7 @@ function ProgressRing({ progress, size = 120 }) {
   );
 }
 
+// ── Document Viewer — fixed ──────────────────────────────────
 function DocViewerModal({ doc, onClose }) {
   const [url,     setUrl]     = useState(null);
   const [loading, setLoading] = useState(true);
@@ -96,92 +99,289 @@ function DocViewerModal({ doc, onClose }) {
   const [zoom,    setZoom]    = useState(1);
   const [rotate,  setRotate]  = useState(0);
 
-  const ext     = (doc.file_type || doc.filename?.split('.').pop() || '').toLowerCase();
-  const isImage = ['png','jpg','jpeg','webp','gif'].includes(ext);
-  const isPDF   = ext === 'pdf' || (doc.filename||'').toLowerCase().endsWith('.pdf');
+  const filename = doc.filename || doc.file_name || '';
+  const ext = (
+    doc.file_type ||
+    (filename.includes('.') ? filename.split('.').pop() : '') ||
+    ''
+  ).toLowerCase().replace('.', '');
+
+  const isImage = ['png','jpg','jpeg','webp','gif','tiff'].includes(ext);
+  const isPDF   = ext === 'pdf';
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch(`${BASE}/documents/${doc.id}/view`, {
-          headers: { Authorization:`Bearer ${getToken()}` },
-        });
-        if (!res.ok) throw new Error('Could not load file');
-        const blob      = await res.blob();
-        const objectUrl = URL.createObjectURL(blob);
-        setUrl(objectUrl);
-      } catch (e) { setError(e.message); }
-      finally { setLoading(false); }
+    let objectUrl = null;
+
+    const tryLoad = async () => {
+      setLoading(true);
+      setError('');
+
+      // Try these endpoints in order until one works
+      const endpoints = [
+        BASE + '/documents/' + doc.id + '/view',
+        BASE + '/documents/' + doc.id + '/download',
+        BASE + '/documents/' + doc.id + '/file',
+      ];
+
+      for (const endpoint of endpoints) {
+        try {
+          const res = await fetch(endpoint, {
+            headers: { Authorization: 'Bearer ' + getToken() },
+          });
+
+          if (!res.ok) continue;
+
+          const contentType = res.headers.get('content-type') || '';
+
+          // If it's JSON it's probably an error or redirect URL
+          if (contentType.includes('application/json')) {
+            const data = await res.json();
+            // Some backends return a signed URL
+            if (data.url || data.file_url || data.download_url || data.signed_url) {
+              const signedUrl = data.url || data.file_url || data.download_url || data.signed_url;
+              setUrl(signedUrl);
+              setLoading(false);
+              return;
+            }
+            continue;
+          }
+
+          // It's a binary file — create object URL
+          const blob = await res.blob();
+          if (blob.size === 0) continue;
+          objectUrl = URL.createObjectURL(blob);
+          setUrl(objectUrl);
+          setLoading(false);
+          return;
+
+        } catch (e) {
+          continue;
+        }
+      }
+
+      // All endpoints failed — show error with download fallback
+      setError('Preview not available. Use the download button to open the file.');
+      setLoading(false);
     };
-    load();
+
+    tryLoad();
+
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
   }, [doc.id]);
 
-  const handleDownload = () => { if (!url) return; window.open(url, '_blank'); };
+  const handleDownload = async () => {
+    try {
+      const res = await fetch(BASE + '/documents/' + doc.id + '/download', {
+        headers: { Authorization: 'Bearer ' + getToken() },
+      });
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename || 'document';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch (e) {
+      if (url) window.open(url, '_blank');
+    }
+  };
 
   return (
-    <div onClick={e => e.target === e.currentTarget && onClose()}
-      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.88)', zIndex:2000, display:'flex', flexDirection:'column', backdropFilter:'blur(6px)' }}>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 20px', background:'rgba(0,0,0,0.5)', borderBottom:'1px solid rgba(255,255,255,0.1)', flexShrink:0 }}>
-        <div style={{ fontSize:14, fontWeight:600, color:'#F1F5F9', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{doc.filename}</div>
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.92)', zIndex:2000, display:'flex', flexDirection:'column', backdropFilter:'blur(8px)' }}
+    >
+      {/* Header bar */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 20px', background:'rgba(0,0,0,0.6)', borderBottom:'1px solid rgba(255,255,255,0.1)', flexShrink:0 }}>
+        <div style={{ fontSize:14, fontWeight:600, color:'#F1F5F9', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>
+          {filename}
+        </div>
         <div style={{ display:'flex', gap:8, alignItems:'center', flexShrink:0, marginLeft:12 }}>
-          {isImage && !error && url && (
+          {isImage && url && !error && (
             <>
-              <button onClick={() => setZoom(z => Math.min(z+0.25,3))} style={{ background:'rgba(255,255,255,0.1)', border:'none', borderRadius:8, padding:'6px 8px', cursor:'pointer', color:'#F1F5F9', display:'flex' }}><ZoomIn size={16}/></button>
-              <button onClick={() => setZoom(z => Math.max(z-0.25,0.25))} style={{ background:'rgba(255,255,255,0.1)', border:'none', borderRadius:8, padding:'6px 8px', cursor:'pointer', color:'#F1F5F9', display:'flex' }}><ZoomOut size={16}/></button>
-              <button onClick={() => setRotate(r => r+90)} style={{ background:'rgba(255,255,255,0.1)', border:'none', borderRadius:8, padding:'6px 8px', cursor:'pointer', color:'#F1F5F9', display:'flex' }}><RotateCw size={16}/></button>
+              <button onClick={() => setZoom(z => Math.min(z + 0.25, 4))} style={{ background:'rgba(255,255,255,0.1)', border:'none', borderRadius:8, padding:'6px 8px', cursor:'pointer', color:'#F1F5F9', display:'flex' }}><ZoomIn size={16}/></button>
+              <button onClick={() => setZoom(z => Math.max(z - 0.25, 0.25))} style={{ background:'rgba(255,255,255,0.1)', border:'none', borderRadius:8, padding:'6px 8px', cursor:'pointer', color:'#F1F5F9', display:'flex' }}><ZoomOut size={16}/></button>
+              <button onClick={() => setRotate(r => r + 90)} style={{ background:'rgba(255,255,255,0.1)', border:'none', borderRadius:8, padding:'6px 8px', cursor:'pointer', color:'#F1F5F9', display:'flex' }}><RotateCw size={16}/></button>
             </>
           )}
-          {url && (
-            <button onClick={handleDownload} style={{ background:'rgba(10,185,138,0.2)', border:'1px solid rgba(10,185,138,0.4)', borderRadius:8, padding:'6px 14px', cursor:'pointer', color:'#0AB98A', fontSize:12, fontWeight:600, display:'flex', alignItems:'center', gap:6 }}>
-              <Download size={14}/> Open / Download
-            </button>
-          )}
+          <button
+            onClick={handleDownload}
+            style={{ background:'rgba(10,185,138,0.2)', border:'1px solid rgba(10,185,138,0.4)', borderRadius:8, padding:'6px 14px', cursor:'pointer', color:'#0AB98A', fontSize:12, fontWeight:600, display:'flex', alignItems:'center', gap:6, fontFamily:FONT }}
+          >
+            <Download size={14}/> Download
+          </button>
           <button onClick={onClose} style={{ background:'rgba(255,255,255,0.1)', border:'none', borderRadius:8, padding:'6px 8px', cursor:'pointer', color:'#F1F5F9', display:'flex' }}>
             <X size={18}/>
           </button>
         </div>
       </div>
 
-      <div style={{ flex:1, overflow:'auto', display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
-        {loading && <div style={{ color:'#94A3B8', fontSize:14 }}>Loading document...</div>}
-        {error && (
-          <div style={{ textAlign:'center' }}>
-            <div style={{ fontSize:48, marginBottom:16 }}>📄</div>
-            <div style={{ fontSize:15, marginBottom:8, color:'#F1F5F9' }}>{doc.filename}</div>
-            <div style={{ fontSize:13, marginBottom:24, color:'#94A3B8' }}>Could not load preview</div>
+      {/* Content area */}
+      <div style={{ flex:1, overflow:'auto', display:'flex', alignItems:'center', justifyContent:'center', padding:24, minHeight:0 }}>
+
+        {loading && (
+          <div style={{ textAlign:'center', color:'#94A3B8' }}>
+            <Spinner size={32} color="#0AB98A" />
+            <div style={{ fontSize:14, marginTop:16 }}>Loading document...</div>
           </div>
         )}
+
+        {!loading && error && (
+          <div style={{ textAlign:'center' }}>
+            <div style={{ fontSize:56, marginBottom:16 }}>📄</div>
+            <div style={{ fontSize:15, fontWeight:600, marginBottom:8, color:'#F1F5F9' }}>{filename}</div>
+            <div style={{ fontSize:13, marginBottom:24, color:'#94A3B8' }}>{error}</div>
+            <button
+              onClick={handleDownload}
+              style={{ padding:'12px 28px', borderRadius:10, background:ACCENT, color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:FONT }}
+            >
+              Download File
+            </button>
+          </div>
+        )}
+
         {!loading && !error && url && (
-          <>
+          <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center' }}>
             {isImage && (
-              <img src={url} alt={doc.filename}
-                style={{ maxWidth:'100%', maxHeight:'80vh', objectFit:'contain', transform:`scale(${zoom}) rotate(${rotate}deg)`, transition:'transform 0.2s ease', borderRadius:8, boxShadow:'0 8px 32px rgba(0,0,0,0.4)' }}/>
+              <img
+                src={url}
+                alt={filename}
+                style={{ maxWidth:'100%', maxHeight:'75vh', objectFit:'contain', transform:'scale(' + zoom + ') rotate(' + rotate + 'deg)', transition:'transform 0.2s ease', borderRadius:8, boxShadow:'0 8px 40px rgba(0,0,0,0.5)' }}
+              />
             )}
             {isPDF && (
-              <iframe src={url} title={doc.filename} style={{ width:'100%', height:'80vh', border:'none', borderRadius:8 }}/>
+              <iframe
+                src={url + '#toolbar=1&navpanes=0&scrollbar=1'}
+                title={filename}
+                style={{ width:'100%', height:'78vh', border:'none', borderRadius:8, background:'#fff' }}
+              />
             )}
             {!isImage && !isPDF && (
               <div style={{ textAlign:'center', color:'#94A3B8' }}>
                 <div style={{ fontSize:64, marginBottom:16 }}>📄</div>
-                <div style={{ fontSize:15, marginBottom:8, color:'#F1F5F9' }}>{doc.filename}</div>
+                <div style={{ fontSize:15, marginBottom:8, color:'#F1F5F9' }}>{filename}</div>
                 <div style={{ fontSize:13, marginBottom:24 }}>Preview not available for this file type</div>
-                <button onClick={handleDownload} style={{ padding:'10px 24px', borderRadius:8, background:'#0AB98A', color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600 }}>
-                  Open File
+                <button
+                  onClick={handleDownload}
+                  style={{ padding:'12px 28px', borderRadius:10, background:ACCENT, color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:FONT }}
+                >
+                  Download to View
                 </button>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
 
-      {(doc.vendor || doc.total_amount || doc.doc_date) && (
-        <div style={{ padding:'12px 20px', background:'rgba(0,0,0,0.5)', borderTop:'1px solid rgba(255,255,255,0.1)', display:'flex', gap:20, flexWrap:'wrap', flexShrink:0 }}>
-          {doc.vendor        && <div style={{ fontSize:12, color:'#94A3B8' }}>Vendor: <strong style={{ color:'#F1F5F9' }}>{doc.vendor}</strong></div>}
-          {doc.total_amount  && <div style={{ fontSize:12, color:'#94A3B8' }}>Amount: <strong style={{ color:'#0AB98A' }}>${Number(doc.total_amount).toLocaleString()}</strong></div>}
-          {doc.doc_date      && <div style={{ fontSize:12, color:'#94A3B8' }}>Date: <strong style={{ color:'#F1F5F9' }}>{doc.doc_date}</strong></div>}
-          {doc.suggested_cat && <div style={{ fontSize:12, color:'#94A3B8' }}>Category: <strong style={{ color:'#F1F5F9' }}>{doc.suggested_cat}</strong></div>}
+      {/* Footer metadata */}
+      {(doc.vendor || doc.total_amount || doc.doc_date || doc.suggested_cat) && (
+        <div style={{ padding:'12px 20px', background:'rgba(0,0,0,0.5)', borderTop:'1px solid rgba(255,255,255,0.08)', display:'flex', gap:24, flexWrap:'wrap', flexShrink:0 }}>
+          {doc.vendor       && <div style={{ fontSize:12, color:'#64748B' }}>Vendor: <strong style={{ color:'#F1F5F9' }}>{doc.vendor}</strong></div>}
+          {doc.total_amount && <div style={{ fontSize:12, color:'#64748B' }}>Amount: <strong style={{ color:ACCENT }}>${Number(doc.total_amount).toLocaleString()}</strong></div>}
+          {doc.doc_date     && <div style={{ fontSize:12, color:'#64748B' }}>Date: <strong style={{ color:'#F1F5F9' }}>{doc.doc_date}</strong></div>}
+          {doc.suggested_cat&& <div style={{ fontSize:12, color:'#64748B' }}>Category: <strong style={{ color:'#F1F5F9' }}>{doc.suggested_cat}</strong></div>}
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Upload Type Modal — 3 options ────────────────────────────
+function UploadTypeModal({ file, onChoose, onCancel, isMobile }) {
+  const OPTIONS = [
+    {
+      type:  'expense',
+      Icon:  ArrowDownCircle,
+      color: '#EF4444',
+      bg:    '#FEE2E2',
+      label: 'Expense',
+      desc:  'Money I paid out. Receipts, bills, or invoices I received.',
+    },
+    {
+      type:  'income',
+      Icon:  ArrowUpCircle,
+      color: '#0AB98A',
+      bg:    '#E8F4F0',
+      label: 'Income',
+      desc:  'Money I received. Invoices I sent or payments deposited.',
+    },
+    {
+      type:  'reference',
+      Icon:  Folder,
+      color: '#6B7280',
+      bg:    '#F1F5F9',
+      label: 'Just Save',
+      desc:  'Store for reference only. Do not add to my books.',
+    },
+  ];
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(15,23,42,0.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, backdropFilter:'blur(4px)', padding:16 }}>
+      <div style={{ background:'#fff', borderRadius:20, padding:isMobile ? 24 : 32, width:'100%', maxWidth:440, boxShadow:'0 24px 64px rgba(0,0,0,0.2)' }}>
+
+        {/* Icon */}
+        <div style={{ width:52, height:52, borderRadius:14, background:GRAD, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px', boxShadow:'0 4px 16px rgba(10,185,138,0.3)' }}>
+          <FileText size={22} color="#fff"/>
+        </div>
+
+        {/* Title */}
+        <div style={{ fontSize:18, fontWeight:700, color:L.text, textAlign:'center', marginBottom:6 }}>
+          What is this document?
+        </div>
+        <div style={{ fontSize:12, color:L.textMuted, textAlign:'center', marginBottom:24, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', paddingLeft:16, paddingRight:16 }}>
+          {file.name}
+        </div>
+
+        {/* Options */}
+        <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:20 }}>
+          {OPTIONS.map(function(opt) {
+            return (
+              <button
+                key={opt.type}
+                onClick={function() { onChoose(opt.type); }}
+                style={{ width:'100%', padding:'14px 16px', borderRadius:12, background:'#fff', border:'1px solid #E5E7EB', cursor:'pointer', textAlign:'left', fontFamily:FONT, transition:'all 0.15s ease' }}
+                onMouseEnter={function(e) {
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+                  e.currentTarget.style.borderColor = opt.color;
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={function(e) {
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.borderColor = '#E5E7EB';
+                  e.currentTarget.style.transform = 'none';
+                }}
+                onMouseDown={function(e) { e.currentTarget.style.transform = 'scale(0.99)'; }}
+                onMouseUp={function(e) { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              >
+                <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+                  <div style={{ width:42, height:42, borderRadius:10, background:opt.bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <opt.Icon size={20} color={opt.color}/>
+                  </div>
+                  <div>
+                    <div style={{ fontSize:15, fontWeight:600, color:L.text, marginBottom:2 }}>{opt.label}</div>
+                    <div style={{ fontSize:12, color:L.textMuted }}>{opt.desc}</div>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Cancel */}
+        <button
+          onClick={onCancel}
+          style={{ width:'100%', padding:'10px', borderRadius:10, background:'transparent', border:'none', cursor:'pointer', fontSize:13, color:'#6B7280', fontFamily:FONT }}
+          onMouseEnter={function(e) { e.currentTarget.style.color = '#0F172A'; }}
+          onMouseLeave={function(e) { e.currentTarget.style.color = '#6B7280'; }}
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
@@ -202,8 +402,7 @@ export default function Documents() {
 
   const pollingRef   = useRef(null);
   const fileInputRef = useRef(null);
-  const { setPageContext } = useAI();
-  const isMobile = useIsMobile();
+  const isMobile     = useIsMobile();
 
   const stopPolling = () => {
     if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
@@ -213,20 +412,15 @@ export default function Documents() {
   const load = async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`${BASE}/documents/`, { headers:{ Authorization:`Bearer ${getToken()}` } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const res  = await fetch(BASE + '/documents/', { headers: { Authorization: 'Bearer ' + getToken() } });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       const list = await res.json();
-      const docs = Array.isArray(list) ? list : [];
-      setDocs(docs);
-      setPageContext('documents', {
-        page:'documents', total_documents:docs.length,
-        processed:    docs.filter(d => d.status === 'processed').length,
-        total_value:  docs.reduce((s,d) => s + (d.total_amount||0), 0),
-        with_clients: docs.filter(d => d.client_name).length,
-        unpaid:       docs.filter(d => ['due','overdue','partially_paid'].includes(d.payment_status)).length,
-      });
-    } catch (e) { setError('Could not load documents: ' + e.message); }
-    finally { setLoading(false); }
+      setDocs(Array.isArray(list) ? list : []);
+    } catch (e) {
+      setError('Could not load documents: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -234,24 +428,23 @@ export default function Documents() {
   const pollUploadStatus = (jobId, fileName) => {
     stopPolling();
     let attempts = 0;
-    const maxAttempts = 120;
     pollingRef.current = setInterval(async () => {
       attempts++;
-      if (attempts > maxAttempts) {
+      if (attempts > 120) {
         stopPolling(); setUploading(false);
         setError('Processing is taking longer than expected. Please refresh.');
         return;
       }
       try {
-        const res  = await fetch(`${BASE}/documents/upload-status/${jobId}`, {
-          headers:{ Authorization:`Bearer ${getToken()}` },
+        const res  = await fetch(BASE + '/documents/upload-status/' + jobId, {
+          headers: { Authorization: 'Bearer ' + getToken() },
         });
-        if (!res.ok) throw new Error(`Status check failed: ${res.status}`);
+        if (!res.ok) throw new Error('Status check failed');
         const data = await res.json();
         setUploadStatus(data);
         if (data.status === 'completed') {
           stopPolling(); setUploading(false);
-          setSuccess(`${fileName} processed successfully`);
+          setSuccess(fileName + ' processed successfully');
           await load();
           setTimeout(() => { setSuccess(''); setUploadStatus(null); }, 5000);
         }
@@ -266,36 +459,53 @@ export default function Documents() {
     }, 2000);
   };
 
-  const handleUpload = async (file, txnType = 'auto') => {
+  const handleUpload = async (file, txnType) => {
     if (!file) return;
     const token = getToken();
     if (!token) { setError('Not logged in.'); return; }
     const allowed = ['pdf','csv','png','jpg','jpeg','tiff','webp','txt'];
     const ext     = file.name.split('.').pop().toLowerCase();
-    if (!allowed.includes(ext)) { setError(`File type .${ext} is not supported.`); return; }
+    if (!allowed.includes(ext)) { setError('File type .' + ext + ' is not supported.'); return; }
     if (file.size > 20 * 1024 * 1024) { setError('File size must be under 20MB.'); return; }
+
     setUploading(true); setError(''); setSuccess('');
     setUploadStatus({ status:'uploading', current_step:'uploading', progress:5, filename:file.name });
     setShowTypeModal(false); setPendingFile(null);
+
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch(`${BASE}/documents/upload?txn_type=${txnType}`, {
-        method:'POST',
-        headers:{ Authorization:`Bearer ${token}` },
-        body:formData,
+
+      // Payment status comes from the document content, not from the upload type choice.
+      // txnType only tells the backend the direction (expense/income/reference).
+      const res = await fetch(BASE + '/documents/upload?txn_type=' + txnType, {
+        method:  'POST',
+        headers: { Authorization: 'Bearer ' + token },
+        body:    formData,
       });
+
       let data;
-      try { data = await res.json(); }
-      catch { throw new Error(`Server error: ${res.status}`); }
-      if (!res.ok) throw new Error(data.detail || `Upload failed: ${res.status}`);
+      try { data = await res.json(); } catch { throw new Error('Server error: ' + res.status); }
+      if (!res.ok) throw new Error(data.detail || 'Upload failed: ' + res.status);
+
+      // Just Save — no job polling needed, just reload
+      if (txnType === 'reference') {
+        setUploading(false);
+        setSuccess(file.name + ' saved to your documents.');
+        setUploadStatus(null);
+        await load();
+        setTimeout(() => setSuccess(''), 4000);
+        return;
+      }
+
       if (!data.job_id) throw new Error('Upload succeeded but no job ID returned.');
-      setUploadStatus(prev => ({ ...prev, ...data }));
+      setUploadStatus(prev => Object.assign({}, prev, data));
       pollUploadStatus(data.job_id, file.name);
+
     } catch (e) {
       setUploading(false);
       setUploadStatus(null);
-      setError(`Upload failed: ${e.message}`);
+      setError('Upload failed: ' + e.message);
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
@@ -303,37 +513,46 @@ export default function Documents() {
 
   const handleDownload = async (doc) => {
     try {
-      const res  = await fetch(`${BASE}/documents/${doc.id}/download`, { headers:{ Authorization:`Bearer ${getToken()}` } });
+      const res  = await fetch(BASE + '/documents/' + doc.id + '/download', {
+        headers: { Authorization: 'Bearer ' + getToken() },
+      });
       if (!res.ok) throw new Error('Download failed');
       const blob = await res.blob();
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
       a.href = url; a.download = doc.filename || 'document';
       document.body.appendChild(a); a.click();
-      document.body.removeChild(a); URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) { setError('Download failed: ' + e.message); }
   };
 
   const handleDelete = async (id, filename) => {
-    if (!window.confirm(`Delete "${filename}"?`)) return;
+    if (!window.confirm('Delete "' + filename + '"?')) return;
     try {
-      const res = await fetch(`${BASE}/documents/${id}`, { method:'DELETE', headers:{ Authorization:`Bearer ${getToken()}` } });
+      const res = await fetch(BASE + '/documents/' + id, {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer ' + getToken() },
+      });
       if (res.ok || res.status === 204) {
         setSuccess('Document deleted'); await load();
         setTimeout(() => setSuccess(''), 3000);
-      } else throw new Error(`Delete failed: ${res.status}`);
+      } else throw new Error('Delete failed: ' + res.status);
     } catch (e) { setError('Delete failed: ' + e.message); }
   };
 
   const handleMarkPaid = async (doc) => {
-    if (!window.confirm(`Mark "${doc.filename}" as paid?`)) return;
+    if (!window.confirm('Mark "' + doc.filename + '" as paid?')) return;
     setMarkingPaid(doc.id);
     try {
-      const res  = await fetch(`${BASE}/documents/${doc.id}/mark-paid`, { method:'PATCH', headers:{ Authorization:`Bearer ${getToken()}` } });
+      const res  = await fetch(BASE + '/documents/' + doc.id + '/mark-paid', {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer ' + getToken() },
+      });
       const data = await res.json();
       if (!res.ok) { setError(data?.detail || 'Failed to mark as paid.'); return; }
-      setDocs(prev => prev.map(d => d.id === doc.id ? { ...d, payment_status:'paid', paid_at:data.paid_at } : d));
-      setSuccess(`${doc.filename} marked as paid`);
+      setDocs(prev => prev.map(d => d.id === doc.id ? Object.assign({}, d, { payment_status:'paid', paid_at:data.paid_at }) : d));
+      setSuccess(doc.filename + ' marked as paid');
       setTimeout(() => setSuccess(''), 4000);
     } catch (e) { setError('Failed to mark as paid: ' + e.message); }
     finally { setMarkingPaid(null); }
@@ -350,7 +569,7 @@ export default function Documents() {
     return <FileText size={15} color={ACCENT}/>;
   };
 
-  const filteredDocs = search.trim() === '' ? docs : docs.filter(doc => {
+  const filteredDocs = search.trim() === '' ? docs : docs.filter(function(doc) {
     const q = search.toLowerCase();
     return (
       (doc.filename       || '').toLowerCase().includes(q) ||
@@ -379,25 +598,31 @@ export default function Documents() {
         @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
       `}</style>
 
-      <div style={{ ...topBar, flexDirection:isMobile?'column':'row', alignItems:isMobile?'flex-start':'center', gap:isMobile?10:0, padding:isMobile?'16px':undefined }}>
+      {/* Top bar */}
+      <div style={Object.assign({}, topBar, { flexDirection:isMobile?'column':'row', alignItems:isMobile?'flex-start':'center', gap:isMobile?10:0 })}>
         <div>
           <div style={{ fontSize:isMobile?18:20, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>Documents</div>
           <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>Upload invoices and receipts — data extracted and organized automatically</div>
         </div>
-        <button onClick={load} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:L.font }}>
+        <button
+          onClick={load}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:L.radiusSm, background:'transparent', border:'1px solid ' + L.border, color:L.textMuted, cursor:'pointer', fontSize:12, fontFamily:FONT, marginLeft:isMobile?0:'auto' }}
+        >
           <RefreshCw size={13}/> Refresh
         </button>
       </div>
 
-      <div style={{ padding: pad }}>
+      <div style={{ padding:pad }}>
+
         {success && (
-          <div style={{ padding:'12px 16px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.08)', border:'1px solid rgba(10,185,138,0.2)', color:ACCENT, fontSize:13, marginBottom:12, display:'flex', alignItems:'center', justifyContent:'space-between', animation:'fadeIn 0.3s ease' }}>
+          <div style={{ padding:'12px 16px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.08)', border:'1px solid rgba(10,185,138,0.2)', color:ACCENT, fontSize:13, marginBottom:12, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}><CheckCircle size={15}/>{success}</div>
             <button onClick={() => setSuccess('')} style={{ background:'none', border:'none', cursor:'pointer', color:ACCENT }}><X size={14}/></button>
           </div>
         )}
+
         {error && (
-          <div style={{ padding:'12px 16px', borderRadius:L.radiusSm, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', color:'#EF4444', fontSize:13, marginBottom:12, display:'flex', alignItems:'center', justifyContent:'space-between', animation:'fadeIn 0.3s ease' }}>
+          <div style={{ padding:'12px 16px', borderRadius:L.radiusSm, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', color:'#EF4444', fontSize:13, marginBottom:12, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}><AlertCircle size={15}/>{error}</div>
             <button onClick={() => setError('')} style={{ background:'none', border:'none', cursor:'pointer', color:'#EF4444' }}><X size={14}/></button>
           </div>
@@ -405,16 +630,22 @@ export default function Documents() {
 
         {/* Upload zone */}
         <div
-          onDrop={e => { e.preventDefault(); setDragOver(false); const f=e.dataTransfer.files[0]; if(f&&!uploading){setPendingFile(f);setShowTypeModal(true);} }}
-          onDragOver={e => { e.preventDefault(); if(!uploading) setDragOver(true); }}
+          onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f && !uploading) { setPendingFile(f); setShowTypeModal(true); } }}
+          onDragOver={e => { e.preventDefault(); if (!uploading) setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onClick={() => !uploading && fileInputRef.current?.click()}
-          style={{ border:`2px dashed ${dragOver?ACCENT:uploading?'transparent':'#E2E8F0'}`, borderRadius:16, padding:uploading?(isMobile?'24px 16px':'32px 24px'):(isMobile?'32px 16px':'44px 24px'), textAlign:'center', cursor:uploading?'default':'pointer', background:uploading?'linear-gradient(135deg,rgba(10,185,138,0.03),rgba(14,165,233,0.03))':dragOver?'rgba(10,185,138,0.04)':'#FFFFFF', marginBottom:16, transition:'all 0.25s ease', position:'relative', overflow:'hidden' }}>
-          <input ref={fileInputRef} type="file" accept=".pdf,.csv,.png,.jpg,.jpeg,.tiff,.webp,.txt" style={{ display:'none' }}
-            onChange={e => { const f=e.target.files?.[0]; if(f&&!uploading){setPendingFile(f);setShowTypeModal(true);} }}/>
+          style={{ border:'2px dashed ' + (dragOver ? ACCENT : uploading ? 'transparent' : '#E2E8F0'), borderRadius:16, padding:uploading ? (isMobile?'24px 16px':'32px 24px') : (isMobile?'32px 16px':'44px 24px'), textAlign:'center', cursor:uploading?'default':'pointer', background:uploading?'linear-gradient(135deg,rgba(10,185,138,0.03),rgba(14,165,233,0.03))':dragOver?'rgba(10,185,138,0.04)':'#FFFFFF', marginBottom:16, transition:'all 0.25s ease', position:'relative', overflow:'hidden' }}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.csv,.png,.jpg,.jpeg,.tiff,.webp,.txt"
+            style={{ display:'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (f && !uploading) { setPendingFile(f); setShowTypeModal(true); } }}
+          />
 
           {uploading ? (
-            <div style={{ animation:'fadeIn 0.4s ease' }}>
+            <div>
               <div style={{ position:'relative', width:isMobile?90:120, height:isMobile?90:120, margin:'0 auto 16px' }}>
                 <ProgressRing progress={progress} size={isMobile?90:120}/>
                 <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -424,23 +655,23 @@ export default function Documents() {
                 </div>
               </div>
               <div style={{ fontSize:isMobile?14:16, fontWeight:700, color:L.text, marginBottom:4 }}>Processing your document</div>
-              <div style={{ fontSize:13, color:L.textMuted, marginBottom:6 }}>{uploadStatus?.filename||''}</div>
+              <div style={{ fontSize:13, color:L.textMuted, marginBottom:6 }}>{uploadStatus?.filename || ''}</div>
               <div style={{ width:isMobile?'100%':320, height:6, background:'#E2E8F0', borderRadius:99, margin:'0 auto 20px', overflow:'hidden' }}>
-                <div style={{ width:`${progress}%`, height:'100%', borderRadius:99, background:'linear-gradient(90deg,#0AB98A,#0EA5E9,#0AB98A)', backgroundSize:'200% 100%', animation:'shimmer 1.5s infinite linear', transition:'width 0.4s ease' }}/>
+                <div style={{ width:progress + '%', height:'100%', borderRadius:99, background:'linear-gradient(90deg,#0AB98A,#0EA5E9,#0AB98A)', backgroundSize:'200% 100%', animation:'shimmer 1.5s infinite linear', transition:'width 0.4s ease' }}/>
               </div>
               <div style={{ display:'inline-flex', flexDirection:'column', gap:8, textAlign:'left' }}>
-                {PROCESS_STEPS.map((step, index) => {
+                {PROCESS_STEPS.map(function(step, index) {
                   const done   = index < currentStepIndex || uploadStatus?.status === 'completed';
                   const active = step.key === uploadStatus?.current_step;
                   const Icon   = step.icon;
                   return (
                     <div key={step.key} style={{ display:'flex', alignItems:'center', gap:8, opacity:done||active?1:0.35 }}>
-                      <div style={{ width:26, height:26, borderRadius:8, flexShrink:0, background:done?'rgba(10,185,138,0.12)':active?`${step.color}18`:'#F1F5F9', border:`1px solid ${done?'rgba(10,185,138,0.3)':active?`${step.color}35`:'#E2E8F0'}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                        {done?<CheckCircle size={12} color={ACCENT}/>:active?<Spinner size={12} color={step.color}/>:<Icon size={12} color="#CBD5E1"/>}
+                      <div style={{ width:26, height:26, borderRadius:8, flexShrink:0, background:done?'rgba(10,185,138,0.12)':active?step.color+'18':'#F1F5F9', border:'1px solid ' + (done?'rgba(10,185,138,0.3)':active?step.color+'35':'#E2E8F0'), display:'flex', alignItems:'center', justifyContent:'center' }}>
+                        {done ? <CheckCircle size={12} color={ACCENT}/> : active ? <Spinner size={12} color={step.color}/> : <Icon size={12} color="#CBD5E1"/>}
                       </div>
                       <span style={{ fontSize:isMobile?12:13, fontWeight:active?600:done?500:400, color:done?L.text:active?step.color:L.textMuted }}>{step.label}</span>
-                      {!isMobile&&active&&<div style={{ fontSize:10, fontWeight:700, color:step.color, background:`${step.color}15`, border:`1px solid ${step.color}30`, padding:'1px 7px', borderRadius:20 }}>RUNNING</div>}
-                      {!isMobile&&done&&<div style={{ fontSize:10, fontWeight:700, color:ACCENT, background:'rgba(10,185,138,0.1)', border:'1px solid rgba(10,185,138,0.25)', padding:'1px 7px', borderRadius:20 }}>DONE</div>}
+                      {!isMobile && active && <div style={{ fontSize:10, fontWeight:700, color:step.color, background:step.color+'15', border:'1px solid ' + step.color + '30', padding:'1px 7px', borderRadius:20 }}>RUNNING</div>}
+                      {!isMobile && done  && <div style={{ fontSize:10, fontWeight:700, color:ACCENT, background:'rgba(10,185,138,0.1)', border:'1px solid rgba(10,185,138,0.25)', padding:'1px 7px', borderRadius:20 }}>DONE</div>}
                     </div>
                   );
                 })}
@@ -448,30 +679,34 @@ export default function Documents() {
               <div style={{ fontSize:isMobile?22:28, fontWeight:800, color:L.text, marginTop:16, letterSpacing:'-0.03em' }}>{progress}%</div>
             </div>
           ) : (
-            <div style={{ animation:'fadeIn 0.3s ease' }}>
+            <div>
               <div style={{ width:64, height:64, borderRadius:18, background:'rgba(10,185,138,0.08)', border:'1px solid rgba(10,185,138,0.2)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px', animation:'float 3s ease-in-out infinite' }}>
                 <Upload size={26} color={ACCENT}/>
               </div>
               <div style={{ fontSize:isMobile?15:16, fontWeight:700, color:L.text, marginBottom:6 }}>
-                {dragOver?'Drop to upload':isMobile?'Tap to upload a document':'Drop files here or click to browse'}
+                {dragOver ? 'Drop to upload' : isMobile ? 'Tap to upload a document' : 'Drop files here or click to browse'}
               </div>
               <div style={{ fontSize:13, color:L.textMuted, marginBottom:16 }}>PDF, CSV, PNG, JPG — invoices, receipts, bank statements</div>
-              <button onClick={e => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                style={{ padding:'10px 28px', borderRadius:10, background:GRAD, color:'#FFFFFF', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, boxShadow:'0 4px 14px rgba(10,185,138,0.3)' }}>
+              <button
+                onClick={e => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                style={{ padding:'10px 28px', borderRadius:10, background:GRAD, color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, boxShadow:'0 4px 14px rgba(10,185,138,0.3)' }}
+              >
                 Choose File
               </button>
               {!isMobile && (
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:16, marginTop:16, flexWrap:'wrap' }}>
                   {[
-                    { icon:ScanLine,   label:'Smart Extraction'  },
-                    { icon:ShieldCheck,label:'Auto-categorized'  },
-                    { icon:Zap,        label:'Instant records'   },
-                    { icon:Users,      label:'Client detection'  },
-                  ].map(({icon:Icon,label}) => (
-                    <div key={label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:L.textMuted }}>
-                      <Icon size={12} color={ACCENT}/> {label}
-                    </div>
-                  ))}
+                    { icon:ScanLine,   label:'Smart Extraction' },
+                    { icon:ShieldCheck,label:'Auto-categorized' },
+                    { icon:Zap,        label:'Instant records'  },
+                    { icon:Users,      label:'Client detection' },
+                  ].map(function(item) {
+                    return (
+                      <div key={item.label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:L.textMuted }}>
+                        <item.icon size={12} color={ACCENT}/> {item.label}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -479,27 +714,32 @@ export default function Documents() {
         </div>
 
         {/* Document list */}
-        <div style={{ ...card, overflow:'hidden' }}>
-          <div style={{ padding:isMobile?'14px 16px':'16px 20px', borderBottom:`1px solid ${L.border}`, display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
+        <div style={Object.assign({}, card, { overflow:'hidden' })}>
+          <div style={{ padding:isMobile?'14px 16px':'16px 20px', borderBottom:'1px solid ' + L.border, display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
             <div>
               <div style={{ fontSize:14, fontWeight:700, color:L.text }}>Uploaded Documents</div>
-              <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>{loading?'Loading…':`${docs.length} document${docs.length!==1?'s':''}`}</div>
+              <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>{loading ? 'Loading...' : docs.length + ' document' + (docs.length !== 1 ? 's' : '')}</div>
             </div>
             {docs.length > 0 && (
               <div style={{ fontSize:11, color:L.textMuted }}>
-                Total: <strong style={{ color:L.text }}>${docs.reduce((s,d)=>s+(d.total_amount||0),0).toLocaleString()}</strong>
+                Total: <strong style={{ color:L.text }}>${docs.reduce(function(s, d) { return s + (d.total_amount || 0); }, 0).toLocaleString()}</strong>
               </div>
             )}
           </div>
 
           {docs.length > 0 && (
-            <div style={{ padding:isMobile?'10px 12px':'12px 20px', borderBottom:`1px solid ${L.border}` }}>
+            <div style={{ padding:isMobile?'10px 12px':'12px 20px', borderBottom:'1px solid ' + L.border }}>
               <div style={{ position:'relative' }}>
                 <FileSearch size={14} color={L.textMuted} style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}/>
-                <input type="text" placeholder="Search documents..." value={search} onChange={e => setSearch(e.target.value)}
-                  style={{ width:'100%', padding:'8px 32px', background:L.pageBg, border:`1px solid ${L.border}`, borderRadius:L.radiusSm, color:L.text, fontSize:13, fontFamily:L.font, outline:'none', boxSizing:'border-box' }}
-                  onFocus={e => e.currentTarget.style.borderColor=ACCENT}
-                  onBlur={e  => e.currentTarget.style.borderColor=L.border}/>
+                <input
+                  type="text"
+                  placeholder="Search documents..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  style={{ width:'100%', padding:'8px 32px', background:L.pageBg, border:'1px solid ' + L.border, borderRadius:L.radiusSm, color:L.text, fontSize:13, fontFamily:FONT, outline:'none', boxSizing:'border-box' }}
+                  onFocus={e => e.currentTarget.style.borderColor = ACCENT}
+                  onBlur={e  => e.currentTarget.style.borderColor = L.border}
+                />
                 {search && (
                   <button onClick={() => setSearch('')} style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', background:'transparent', border:'none', cursor:'pointer', color:L.textMuted, display:'flex', padding:2 }}>
                     <X size={13}/>
@@ -510,17 +750,17 @@ export default function Documents() {
           )}
 
           {docs.length > 0 && !isMobile && (
-            <div style={{ display:'grid', gridTemplateColumns:'2fr 110px 120px 120px 100px 150px 200px', padding:'8px 20px', background:L.pageBg, borderBottom:`1px solid ${L.border}` }}>
-              {['FILE NAME','TYPE','VENDOR','CLIENT','AMOUNT','STATUS','ACTIONS'].map(h => (
-                <div key={h} style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em' }}>{h}</div>
-              ))}
+            <div style={{ display:'grid', gridTemplateColumns:'2fr 110px 120px 120px 100px 150px 200px', padding:'8px 20px', background:L.pageBg, borderBottom:'1px solid ' + L.border }}>
+              {['FILE NAME','TYPE','VENDOR','CLIENT','AMOUNT','STATUS','ACTIONS'].map(function(h) {
+                return <div key={h} style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em' }}>{h}</div>;
+              })}
             </div>
           )}
 
           {loading && (
             <div style={{ padding:48, textAlign:'center' }}>
               <Spinner size={28}/>
-              <div style={{ fontSize:13, color:L.textMuted, marginTop:12 }}>Loading documents…</div>
+              <div style={{ fontSize:13, color:L.textMuted, marginTop:12 }}>Loading documents...</div>
             </div>
           )}
 
@@ -538,12 +778,14 @@ export default function Documents() {
             <div style={{ padding:'40px 20px', textAlign:'center' }}>
               <FileSearch size={28} color={L.textMuted} style={{ marginBottom:10 }}/>
               <div style={{ fontSize:14, fontWeight:600, color:L.text, marginBottom:4 }}>No documents found</div>
-              <div style={{ fontSize:13, color:L.textMuted, marginBottom:14 }}>No results for "<strong>{search}</strong>"</div>
-              <button onClick={() => setSearch('')} style={{ fontSize:12, color:ACCENT, background:'transparent', border:`1px solid rgba(10,185,138,0.3)`, borderRadius:L.radiusSm, padding:'6px 14px', cursor:'pointer', fontFamily:L.font }}>Clear search</button>
+              <div style={{ fontSize:13, color:L.textMuted, marginBottom:14 }}>No results for "{search}"</div>
+              <button onClick={() => setSearch('')} style={{ fontSize:12, color:ACCENT, background:'transparent', border:'1px solid rgba(10,185,138,0.3)', borderRadius:L.radiusSm, padding:'6px 14px', cursor:'pointer', fontFamily:FONT }}>
+                Clear search
+              </button>
             </div>
           )}
 
-          {filteredDocs.map((doc, i) => {
+          {filteredDocs.map(function(doc, i) {
             const ps       = PROC_STATUS[doc.status]        || PROC_STATUS.pending;
             const pay      = PAY_STATUS[doc.payment_status] || null;
             const dts      = DOC_TYPE_STYLE[doc.doc_type]   || DOC_TYPE_STYLE.other;
@@ -551,7 +793,7 @@ export default function Documents() {
 
             if (isMobile) {
               return (
-                <div key={doc.id} style={{ padding:'14px 16px', borderBottom:i<filteredDocs.length-1?`1px solid ${L.border}`:'none', animation:'fadeIn 0.3s ease' }}>
+                <div key={doc.id} style={{ padding:'14px 16px', borderBottom:i < filteredDocs.length-1 ? '1px solid ' + L.border : 'none' }}>
                   <div style={{ display:'flex', alignItems:'flex-start', gap:10, marginBottom:10 }}>
                     <div style={{ width:36, height:36, borderRadius:9, background:'rgba(10,185,138,0.08)', border:'1px solid rgba(10,185,138,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                       {getDocIcon(doc)}
@@ -559,42 +801,51 @@ export default function Documents() {
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ fontSize:13, fontWeight:600, color:L.text, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{doc.filename}</div>
                       <div style={{ fontSize:11, color:L.textMuted, marginTop:2 }}>
-                        {doc.doc_date&&`${doc.doc_date} · `}<span style={{ color:dts.color, fontWeight:600 }}>{dts.label}</span>
+                        {doc.doc_date && doc.doc_date + ' · '}<span style={{ color:dts.color, fontWeight:600 }}>{dts.label}</span>
                       </div>
                     </div>
                     <div style={{ fontSize:14, fontWeight:700, color:doc.total_amount?ACCENT:L.textMuted, flexShrink:0 }}>
-                      {doc.total_amount?`$${Number(doc.total_amount).toLocaleString()}`:'—'}
+                      {doc.total_amount ? '$' + Number(doc.total_amount).toLocaleString() : '—'}
                     </div>
                   </div>
-                  {(doc.vendor||doc.client_name) && (
+                  {(doc.vendor || doc.client_name) && (
                     <div style={{ display:'flex', gap:12, marginBottom:8, fontSize:12, color:L.textSub }}>
-                      {doc.vendor&&<span>📦 {doc.vendor}</span>}
-                      {doc.client_name&&<span>👤 {doc.client_name}</span>}
+                      {doc.vendor      && <span>📦 {doc.vendor}</span>}
+                      {doc.client_name && <span>👤 {doc.client_name}</span>}
                     </div>
                   )}
                   <div style={{ display:'flex', gap:6, marginBottom:10, flexWrap:'wrap' }}>
-                    <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color:ps.color, background:ps.bg, border:`1px solid ${ps.border}` }}>
+                    <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color:ps.color, background:ps.bg, border:'1px solid ' + ps.border }}>
                       {doc.status==='processed'?<CheckCircle size={8}/>:doc.status==='review'?<AlertCircle size={8}/>:<Clock size={8}/>}{ps.label}
                     </span>
-                    {pay&&<span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color:pay.color, background:pay.bg, border:`1px solid ${pay.border}` }}><DollarSign size={8}/>{pay.label}</span>}
+                    {pay && <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color:pay.color, background:pay.bg, border:'1px solid ' + pay.border }}><DollarSign size={8}/>{pay.label}</span>}
                   </div>
                   <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-                    <button onClick={() => setViewingDoc(doc)}
-                      style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(14,165,233,0.08)', border:'1px solid rgba(14,165,233,0.2)', color:'#0EA5E9', cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
+                    <button
+                      onClick={() => setViewingDoc(doc)}
+                      style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(14,165,233,0.08)', border:'1px solid rgba(14,165,233,0.2)', color:'#0EA5E9', cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:FONT }}
+                    >
                       <Eye size={11}/> View
                     </button>
-                    {needsMarkPaid(doc)&&(
-                      <button onClick={() => handleMarkPaid(doc)} disabled={isPaying}
-                        style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.08)', border:'1px solid rgba(10,185,138,0.3)', color:ACCENT, cursor:isPaying?'not-allowed':'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
-                        {isPaying?<Spinner size={10} color={ACCENT}/>:<CheckCircle size={10}/>}{isPaying?'…':'Mark Paid'}
+                    {needsMarkPaid(doc) && (
+                      <button
+                        onClick={() => handleMarkPaid(doc)}
+                        disabled={isPaying}
+                        style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.08)', border:'1px solid rgba(10,185,138,0.3)', color:ACCENT, cursor:isPaying?'not-allowed':'pointer', fontSize:11, fontWeight:600, fontFamily:FONT }}
+                      >
+                        {isPaying ? <Spinner size={10} color={ACCENT}/> : <CheckCircle size={10}/>}{isPaying ? '...' : 'Mark Paid'}
                       </button>
                     )}
-                    <button onClick={() => handleDownload(doc)}
-                      style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}>
+                    <button
+                      onClick={() => handleDownload(doc)}
+                      style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:'1px solid ' + L.border, color:L.textMuted, cursor:'pointer', fontSize:11 }}
+                    >
                       <Download size={11}/>
                     </button>
-                    <button onClick={() => handleDelete(doc.id, doc.filename)}
-                      style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}>
+                    <button
+                      onClick={() => handleDelete(doc.id, doc.filename)}
+                      style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:'1px solid ' + L.border, color:L.textMuted, cursor:'pointer', fontSize:11 }}
+                    >
                       <Trash2 size={11}/>
                     </button>
                   </div>
@@ -603,63 +854,89 @@ export default function Documents() {
             }
 
             return (
-              <div key={doc.id}
-                style={{ display:'grid', gridTemplateColumns:'2fr 110px 120px 120px 100px 150px 200px', padding:'13px 20px', borderBottom:i<filteredDocs.length-1?`1px solid ${L.border}`:'none', alignItems:'center', transition:'background 0.1s' }}
-                onMouseEnter={e => e.currentTarget.style.background=L.pageBg}
-                onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+              <div
+                key={doc.id}
+                style={{ display:'grid', gridTemplateColumns:'2fr 110px 120px 120px 100px 150px 200px', padding:'13px 20px', borderBottom:i<filteredDocs.length-1?'1px solid ' + L.border:'none', alignItems:'center', transition:'background 0.1s' }}
+                onMouseEnter={e => e.currentTarget.style.background = L.pageBg}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
                 <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                   <div style={{ width:34, height:34, borderRadius:9, background:'rgba(10,185,138,0.08)', border:'1px solid rgba(10,185,138,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                     {getDocIcon(doc)}
                   </div>
                   <div style={{ minWidth:0 }}>
                     <div style={{ fontSize:13, fontWeight:600, color:L.text, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:190 }}>{doc.filename}</div>
-                    {doc.doc_date&&<div style={{ fontSize:11, color:L.textMuted, marginTop:1 }}>{doc.doc_date}</div>}
+                    {doc.doc_date && <div style={{ fontSize:11, color:L.textMuted, marginTop:1 }}>{doc.doc_date}</div>}
                   </div>
                 </div>
-                <div><span style={{ fontSize:10, fontWeight:700, color:dts.color, background:`${dts.color}12`, padding:'3px 8px', borderRadius:20, border:`1px solid ${dts.color}25` }}>{dts.label}</span></div>
-                <div style={{ fontSize:13, color:L.textSub, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{doc.vendor||'—'}</div>
+
+                <div>
+                  <span style={{ fontSize:10, fontWeight:700, color:dts.color, background:dts.color+'12', padding:'3px 8px', borderRadius:20, border:'1px solid ' + dts.color+'25' }}>{dts.label}</span>
+                </div>
+
+                <div style={{ fontSize:13, color:L.textSub, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{doc.vendor || '—'}</div>
+
                 <div style={{ minWidth:0 }}>
-                  {doc.client_name?(
+                  {doc.client_name ? (
                     <div style={{ display:'flex', alignItems:'center', gap:5 }}>
                       <Users size={11} color="#0EA5E9" style={{ flexShrink:0 }}/>
                       <span style={{ fontSize:12, color:'#0EA5E9', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:90 }}>{doc.client_name}</span>
                     </div>
-                  ):<span style={{ fontSize:12, color:L.textFaint }}>—</span>}
+                  ) : <span style={{ fontSize:12, color:L.textFaint }}>—</span>}
                 </div>
+
                 <div style={{ fontSize:14, fontWeight:700, color:doc.total_amount?ACCENT:L.textMuted }}>
-                  {doc.total_amount?`$${Number(doc.total_amount).toLocaleString()}`:'—'}
+                  {doc.total_amount ? '$' + Number(doc.total_amount).toLocaleString() : '—'}
                 </div>
+
                 <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
-                  <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color:ps.color, background:ps.bg, border:`1px solid ${ps.border}`, width:'fit-content' }}>
+                  <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color:ps.color, background:ps.bg, border:'1px solid ' + ps.border, width:'fit-content' }}>
                     {doc.status==='processed'?<CheckCircle size={8}/>:doc.status==='review'?<AlertCircle size={8}/>:<Clock size={8}/>}{ps.label}
                   </span>
-                  {pay&&<span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color:pay.color, background:pay.bg, border:`1px solid ${pay.border}`, width:'fit-content' }}><DollarSign size={8}/>{pay.label}</span>}
+                  {pay && (
+                    <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color:pay.color, background:pay.bg, border:'1px solid ' + pay.border, width:'fit-content' }}>
+                      <DollarSign size={8}/>{pay.label}
+                    </span>
+                  )}
                 </div>
+
                 <div style={{ display:'flex', gap:4, alignItems:'center', flexWrap:'wrap' }}>
-                  <button onClick={() => setViewingDoc(doc)}
-                    style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:'rgba(14,165,233,0.08)', border:'1px solid rgba(14,165,233,0.2)', color:'#0EA5E9', cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}
+                  <button
+                    onClick={() => setViewingDoc(doc)}
+                    style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:'rgba(14,165,233,0.08)', border:'1px solid rgba(14,165,233,0.2)', color:'#0EA5E9', cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:FONT }}
                     onMouseEnter={e => e.currentTarget.style.background='rgba(14,165,233,0.15)'}
-                    onMouseLeave={e => e.currentTarget.style.background='rgba(14,165,233,0.08)'}>
+                    onMouseLeave={e => e.currentTarget.style.background='rgba(14,165,233,0.08)'}
+                  >
                     <Eye size={11}/> View
                   </button>
-                  {needsMarkPaid(doc)&&(
-                    <button onClick={() => handleMarkPaid(doc)} disabled={isPaying}
-                      style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:isPaying?L.pageBg:'rgba(10,185,138,0.08)', border:'1px solid rgba(10,185,138,0.3)', color:ACCENT, cursor:isPaying?'not-allowed':'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}
-                      onMouseEnter={e => { if(!isPaying) e.currentTarget.style.background='rgba(10,185,138,0.16)'; }}
-                      onMouseLeave={e => { if(!isPaying) e.currentTarget.style.background='rgba(10,185,138,0.08)'; }}>
-                      {isPaying?<Spinner size={10} color={ACCENT}/>:<CheckCircle size={10}/>}{isPaying?'…':'Paid'}
+
+                  {needsMarkPaid(doc) && (
+                    <button
+                      onClick={() => handleMarkPaid(doc)}
+                      disabled={isPaying}
+                      style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:isPaying?L.pageBg:'rgba(10,185,138,0.08)', border:'1px solid rgba(10,185,138,0.3)', color:ACCENT, cursor:isPaying?'not-allowed':'pointer', fontSize:11, fontWeight:600, fontFamily:FONT }}
+                      onMouseEnter={e => { if (!isPaying) e.currentTarget.style.background='rgba(10,185,138,0.16)'; }}
+                      onMouseLeave={e => { if (!isPaying) e.currentTarget.style.background='rgba(10,185,138,0.08)'; }}
+                    >
+                      {isPaying ? <Spinner size={10} color={ACCENT}/> : <CheckCircle size={10}/>}{isPaying ? '...' : 'Paid'}
                     </button>
                   )}
-                  <button onClick={() => handleDownload(doc)}
-                    style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 7px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}
+
+                  <button
+                    onClick={() => handleDownload(doc)}
+                    style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 7px', borderRadius:L.radiusSm, background:'transparent', border:'1px solid ' + L.border, color:L.textMuted, cursor:'pointer', fontSize:11 }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(10,185,138,0.4)'; e.currentTarget.style.color=ACCENT; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor=L.border; e.currentTarget.style.color=L.textMuted; }}>
+                    onMouseLeave={e => { e.currentTarget.style.borderColor=L.border; e.currentTarget.style.color=L.textMuted; }}
+                  >
                     <Download size={11}/>
                   </button>
-                  <button onClick={() => handleDelete(doc.id, doc.filename)}
-                    style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 7px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}
+
+                  <button
+                    onClick={() => handleDelete(doc.id, doc.filename)}
+                    style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 7px', borderRadius:L.radiusSm, background:'transparent', border:'1px solid ' + L.border, color:L.textMuted, cursor:'pointer', fontSize:11 }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor='#FCA5A5'; e.currentTarget.style.color='#EF4444'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor=L.border; e.currentTarget.style.color=L.textMuted; }}>
+                    onMouseLeave={e => { e.currentTarget.style.borderColor=L.border; e.currentTarget.style.color=L.textMuted; }}
+                  >
                     <Trash2 size={11}/>
                   </button>
                 </div>
@@ -669,42 +946,23 @@ export default function Documents() {
         </div>
       </div>
 
-      {/* Document type modal */}
+      {/* Upload type modal */}
       {showTypeModal && pendingFile && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(15,23,42,0.55)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, backdropFilter:'blur(4px)', padding:'16px' }}>
-          <div style={{ background:'#FFFFFF', borderRadius:20, padding:isMobile?24:32, width:'100%', maxWidth:420, boxShadow:'0 24px 60px rgba(0,0,0,0.18)', animation:'fadeIn 0.25s ease' }}>
-            <div style={{ width:52, height:52, borderRadius:14, background:GRAD, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px', boxShadow:'0 4px 16px rgba(10,185,138,0.3)' }}>
-              <FileText size={22} color="#fff"/>
-            </div>
-            <div style={{ fontSize:18, fontWeight:700, color:L.text, textAlign:'center', marginBottom:6 }}>What is this document?</div>
-            <div style={{ fontSize:13, color:L.textMuted, textAlign:'center', marginBottom:24, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{pendingFile.name}</div>
-            <button onClick={() => handleUpload(pendingFile,'expense')}
-              style={{ width:'100%', padding:'16px 20px', borderRadius:12, background:'rgba(239,68,68,0.05)', border:'2px solid rgba(239,68,68,0.2)', cursor:'pointer', marginBottom:10, textAlign:'left', fontFamily:L.font }}
-              onMouseEnter={e => { e.currentTarget.style.background='rgba(239,68,68,0.09)'; e.currentTarget.style.borderColor='rgba(239,68,68,0.4)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background='rgba(239,68,68,0.05)'; e.currentTarget.style.borderColor='rgba(239,68,68,0.2)'; }}>
-              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                <div style={{ width:38, height:38, borderRadius:10, background:'rgba(239,68,68,0.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><AlertCircle size={18} color="#EF4444"/></div>
-                <div><div style={{ fontSize:14, fontWeight:700, color:L.text }}>Expense</div><div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>I paid this — receipt, bill, invoice received</div></div>
-              </div>
-            </button>
-            <button onClick={() => handleUpload(pendingFile,'income')}
-              style={{ width:'100%', padding:'16px 20px', borderRadius:12, background:'rgba(10,185,138,0.05)', border:'2px solid rgba(10,185,138,0.2)', cursor:'pointer', marginBottom:16, textAlign:'left', fontFamily:L.font }}
-              onMouseEnter={e => { e.currentTarget.style.background='rgba(10,185,138,0.10)'; e.currentTarget.style.borderColor='rgba(10,185,138,0.4)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background='rgba(10,185,138,0.05)'; e.currentTarget.style.borderColor='rgba(10,185,138,0.2)'; }}>
-              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                <div style={{ width:38, height:38, borderRadius:10, background:'rgba(10,185,138,0.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><CheckCircle size={18} color={ACCENT}/></div>
-                <div><div style={{ fontSize:14, fontWeight:700, color:L.text }}>Income</div><div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>I received this — invoice sent, payment received</div></div>
-              </div>
-            </button>
-            <button onClick={() => { setPendingFile(null); setShowTypeModal(false); }}
-              style={{ width:'100%', padding:'10px', borderRadius:10, background:'transparent', border:`1px solid ${L.border}`, cursor:'pointer', fontSize:13, color:L.textMuted, fontFamily:L.font }}>
-              Cancel
-            </button>
-          </div>
-        </div>
+        <UploadTypeModal
+          file={pendingFile}
+          isMobile={isMobile}
+          onChoose={function(type) { handleUpload(pendingFile, type); }}
+          onCancel={function() { setPendingFile(null); setShowTypeModal(false); }}
+        />
       )}
 
-      {viewingDoc && <DocViewerModal doc={viewingDoc} onClose={() => setViewingDoc(null)}/>}
+      {/* Document viewer */}
+      {viewingDoc && (
+        <DocViewerModal
+          doc={viewingDoc}
+          onClose={function() { setViewingDoc(null); }}
+        />
+      )}
     </div>
   );
 }
