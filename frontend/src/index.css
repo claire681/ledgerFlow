@@ -31,3 +31,20 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
 }
+/* ── Global page content spacing ── */
+/* Pushes all page content away from the sidebar edge on desktop */
+
+@media (min-width: 768px) {
+  /* Every direct child div of main gets left padding */
+  main > div {
+    padding-left: 24px;
+    padding-right: 32px;
+  }
+}
+
+@media (max-width: 767px) {
+  main > div {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
