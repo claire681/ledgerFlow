@@ -23,12 +23,13 @@ const PROCESS_STEPS = [
   { key:'creating_records',     label:'Creating records',     icon:Zap,             color:'#3B82F6' },
   { key:'refreshing_dashboard', label:'Updating dashboard',   icon:LayoutDashboard, color:'#0AB98A' },
 ];
-
 const PROC_STATUS = {
   processed: { color:'#0AB98A', bg:'rgba(10,185,138,0.08)',  border:'rgba(10,185,138,0.2)',  label:'Processed' },
   review:    { color:'#F59E0B', bg:'rgba(245,158,11,0.08)',  border:'rgba(245,158,11,0.2)',  label:'Review'    },
   pending:   { color:'#94A3B8', bg:'rgba(148,163,184,0.08)', border:'rgba(148,163,184,0.2)', label:'Pending'   },
   failed:    { color:'#EF4444', bg:'rgba(239,68,68,0.08)',   border:'rgba(239,68,68,0.2)',   label:'Failed'    },
+  saved:     { color:'#6B7280', bg:'rgba(107,114,128,0.08)', border:'rgba(107,114,128,0.2)', label:'Saved'     },
+  reference: { color:'#6B7280', bg:'rgba(107,114,128,0.08)', border:'rgba(107,114,128,0.2)', label:'Saved'     },
 };
 
 const PAY_STATUS = {
@@ -401,7 +402,8 @@ export default function Documents() {
   const [uploadStatus,  setUploadStatus]  = useState(null);
   const [viewingDoc,    setViewingDoc]    = useState(null);
   const [search,        setSearch]        = useState('');
-  const [markingPaid,   setMarkingPaid]   = useState(null);
+ const [markingPaid,   setMarkingPaid]   = useState(null);
+const [activeTab,     setActiveTab]     = useState('all');
 
   const pollingRef   = useRef(null);
   const fileInputRef = useRef(null);
@@ -572,7 +574,15 @@ export default function Documents() {
     return <FileText size={15} color={ACCENT}/>;
   };
 
-  const filteredDocs = search.trim() === '' ? docs : docs.filter(function(doc) {
+ const isReference = (doc) => doc.txn_type === 'reference' || doc.doc_category === 'reference' || (!doc.total_amount && !doc.payment_status && doc.status === 'processed' && !doc.vendor);
+
+const tabDocs = docs.filter(function(doc) {
+  if (activeTab === 'financial') return !isReference(doc);
+  if (activeTab === 'saved')     return isReference(doc);
+  return true;
+});
+
+const filteredDocs = search.trim() === '' ? tabDocs : tabDocs.filter(function(doc) {
     const q = search.toLowerCase();
     return (
       (doc.filename       || '').toLowerCase().includes(q) ||
@@ -716,7 +726,7 @@ export default function Documents() {
           )}
         </div>
 
-        {/* Document list */}
+       {/* Document list */}
         <div style={Object.assign({}, card, { overflow:'hidden' })}>
           <div style={{ padding:isMobile?'14px 16px':'16px 20px', borderBottom:'1px solid ' + L.border, display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
             <div>
@@ -725,9 +735,28 @@ export default function Documents() {
             </div>
             {docs.length > 0 && (
               <div style={{ fontSize:11, color:L.textMuted }}>
-                Total: <strong style={{ color:L.text }}>${docs.reduce(function(s, d) { return s + (d.total_amount || 0); }, 0).toLocaleString()}</strong>
+                Total: <strong style={{ color:L.text }}>${docs.filter(function(d) { return !isReference(d); }).reduce(function(s, d) { return s + (d.total_amount || 0); }, 0).toLocaleString()}</strong>
               </div>
             )}
+          </div>
+
+          {/* Tabs — All / Financial / Saved */}
+          <div style={{ padding:'10px 20px', borderBottom:'1px solid ' + L.border, display:'flex', gap:6 }}>
+            {[
+              { id:'all',       label:'All',       count: docs.length },
+              { id:'financial', label:'Financial', count: docs.filter(function(d) { return !isReference(d); }).length },
+              { id:'saved',     label:'Saved',     count: docs.filter(function(d) { return isReference(d); }).length },
+            ].map(function(tab) {
+              return (
+                <button
+                  key={tab.id}
+                  onClick={function() { setActiveTab(tab.id); }}
+                  style={{ padding:'5px 14px', borderRadius:20, cursor:'pointer', fontSize:12, fontWeight:600, border:'1px solid', fontFamily:FONT, transition:'all 0.15s', borderColor: activeTab === tab.id ? ACCENT : L.border, background: activeTab === tab.id ? 'rgba(10,185,138,0.08)' : '#fff', color: activeTab === tab.id ? ACCENT : L.textMuted }}
+                >
+                  {tab.label} ({tab.count})
+                </button>
+              );
+            })}
           </div>
 
           {docs.length > 0 && (
@@ -818,10 +847,10 @@ export default function Documents() {
                     </div>
                   )}
                   <div style={{ display:'flex', gap:6, marginBottom:10, flexWrap:'wrap' }}>
-                    <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color:ps.color, background:ps.bg, border:'1px solid ' + ps.border }}>
-                      {doc.status==='processed'?<CheckCircle size={8}/>:doc.status==='review'?<AlertCircle size={8}/>:<Clock size={8}/>}{ps.label}
+                  <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color: isReference(doc) ? '#6B7280' : ps.color, background: isReference(doc) ? 'rgba(107,114,128,0.08)' : ps.bg, border:'1px solid ' + (isReference(doc) ? 'rgba(107,114,128,0.2)' : ps.border) }}>
+                      {isReference(doc) ? <Folder size={8}/> : doc.status==='processed'?<CheckCircle size={8}/>:doc.status==='review'?<AlertCircle size={8}/>:<Clock size={8}/>}{isReference(doc) ? 'Saved' : ps.label}
                     </span>
-                    {pay && <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color:pay.color, background:pay.bg, border:'1px solid ' + pay.border }}><DollarSign size={8}/>{pay.label}</span>}
+                   {pay && !isReference(doc) && <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color:pay.color, background:pay.bg, border:'1px solid ' + pay.border }}><DollarSign size={8}/>{pay.label}</span>}
                   </div>
                   <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
                     <button
@@ -892,11 +921,11 @@ export default function Documents() {
                   {doc.total_amount ? '$' + Number(doc.total_amount).toLocaleString() : '—'}
                 </div>
 
-                <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
-                  <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color:ps.color, background:ps.bg, border:'1px solid ' + ps.border, width:'fit-content' }}>
-                    {doc.status==='processed'?<CheckCircle size={8}/>:doc.status==='review'?<AlertCircle size={8}/>:<Clock size={8}/>}{ps.label}
+               <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                  <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color: isReference(doc) ? '#6B7280' : ps.color, background: isReference(doc) ? 'rgba(107,114,128,0.08)' : ps.bg, border:'1px solid ' + (isReference(doc) ? 'rgba(107,114,128,0.2)' : ps.border), width:'fit-content' }}>
+                    {isReference(doc) ? <Folder size={8}/> : doc.status==='processed' ? <CheckCircle size={8}/> : doc.status==='review' ? <AlertCircle size={8}/> : <Clock size={8}/>}{isReference(doc) ? 'Saved' : ps.label}
                   </span>
-                  {pay && (
+                  {pay && !isReference(doc) && (
                     <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 8px', borderRadius:20, fontSize:9, fontWeight:700, color:pay.color, background:pay.bg, border:'1px solid ' + pay.border, width:'fit-content' }}>
                       <DollarSign size={8}/>{pay.label}
                     </span>
