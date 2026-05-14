@@ -10,29 +10,32 @@ import {
   Building2, CreditCard, Percent, Package,
   ChevronDown, Settings, HelpCircle, LogOut,
   Landmark, Wallet, BarChart3, Tag, Zap,
-  BookOpen, GitMerge, ScanLine, Link2,
+  BookOpen, GitMerge, ScanLine, Link2, Coffee,
+  SlidersHorizontal,
 } from 'lucide-react';
 
-const ACCENT = '#0AB98A';
-const FONT   = "'Inter', -apple-system, sans-serif";
-const API    = 'https://api.getnovala.com/api/v1';
+const ACCENT  = '#0AB98A';
+const FONT    = "'Inter', -apple-system, sans-serif";
+const API     = 'https://api.getnovala.com/api/v1';
 
 const fmt = (n) => {
   const num = parseFloat(n) || 0;
   return (num < 0 ? '-$' : '$') + Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 };
 
+// ── Nav categories ────────────────────────────────────────────
 const NAV_CATS = [
-  { label: 'Accounting',       icon: BookOpen,  color: '#0AB98A', bg: '#E6F7F2', path: '/reconciliation' },
-  { label: 'Expenses & Pay',   icon: Receipt,   color: '#EF4444', bg: '#FEE2E2', path: '/transactions'   },
-  { label: 'Sales & Get Paid', icon: TrendingUp, color: '#3B82F6', bg: '#DBEAFE', path: '/invoices'      },
-  { label: 'Customer Hub',     icon: UserCheck, color: '#06B6D4', bg: '#CFFAFE', path: '/customers'      },
-  { label: 'Payroll',          icon: Wallet,    color: '#8B5CF6', bg: '#EDE9FE', path: '/team'           },
-  { label: 'Team',             icon: Users,     color: '#6366F1', bg: '#E0E7FF', path: '/team'           },
-  { label: 'Sales Tax',        icon: Percent,   color: '#F59E0B', bg: '#FEF3C7', path: '/tax'            },
-  { label: 'Marketing',        icon: Tag,       color: '#EC4899', bg: '#FCE7F3', path: '/marketing'      },
+  { label: 'Accounting',       icon: BookOpen,   color: '#0AB98A', bg: '#E6F7F2', path: '/reconciliation' },
+  { label: 'Expenses & Pay',   icon: Receipt,    color: '#EF4444', bg: '#FEE2E2', path: '/transactions'   },
+  { label: 'Sales & Get Paid', icon: TrendingUp, color: '#3B82F6', bg: '#DBEAFE', path: '/invoices'       },
+  { label: 'Customer Hub',     icon: UserCheck,  color: '#06B6D4', bg: '#CFFAFE', path: '/customers'      },
+  { label: 'Payroll',          icon: Wallet,     color: '#8B5CF6', bg: '#EDE9FE', path: '/team'           },
+  { label: 'Team',             icon: Users,      color: '#6366F1', bg: '#E0E7FF', path: '/team'           },
+  { label: 'Sales Tax',        icon: Percent,    color: '#F59E0B', bg: '#FEF3C7', path: '/tax'            },
+  { label: 'Marketing',        icon: Tag,        color: '#EC4899', bg: '#FCE7F3', path: '/marketing'      },
 ];
 
+// ── Create actions ────────────────────────────────────────────
 const ALL_CREATE_ACTIONS = [
   { label: 'Create invoice',         path: '/invoices',     cat: 'Customers', fav: true  },
   { label: 'Create sales receipt',   path: '/invoices',     cat: 'Customers', fav: true  },
@@ -55,7 +58,13 @@ const ALL_CREATE_ACTIONS = [
   { label: 'Download tax summary',   path: '/tax',          cat: 'Tax',       fav: false },
 ];
 
-const QUICK_CREATE = ALL_CREATE_ACTIONS.filter(a => a.fav).slice(0, 5);
+const QUICK_CREATE = [
+  { label: 'Create invoice',       path: '/invoices'     },
+  { label: 'Create sales receipt', path: '/invoices'     },
+  { label: 'Run payroll',          path: '/team'         },
+  { label: 'Get paid online',      path: '/invoices'     },
+  { label: 'Record expense',       path: '/transactions' },
+];
 
 const FREQUENCIES = [
   { value: 'daily',   label: 'Daily',         desc: 'Every day'                    },
@@ -108,7 +117,7 @@ function BriefingModal({ onClose, onSave, initial }) {
     setTimeout(() => { setSaved(false); onSave(settings); }, 800);
   };
 
-  const sel = { width: '100%', padding: '9px 12px', background: '#F8FAFC', border: '1px solid #E5E7EB', borderRadius: 8, color: '#0F172A', fontSize: 13, fontFamily: FONT, outline: 'none' };
+  const sel = { width:'100%', padding:'9px 12px', background:'#F8FAFC', border:'1px solid #E5E7EB', borderRadius:8, color:'#0F172A', fontSize:13, fontFamily:FONT, outline:'none' };
 
   return (
     <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:300, display:'flex', alignItems:'center', justifyContent:'center', padding:20, backdropFilter:'blur(4px)' }}>
@@ -221,7 +230,7 @@ function CreatePanel({ onClose, onNavigate }) {
   return (
     <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:200, backdropFilter:'blur(4px)' }}>
       <div onClick={e => e.stopPropagation()} style={{ position:'absolute', top:0, right:0, width:380, height:'100vh', background:'#fff', boxShadow:'-8px 0 40px rgba(0,0,0,0.15)', display:'flex', flexDirection:'column', animation:'slideFromRight 0.25s ease' }}>
-        <style>{`@keyframes slideFromRight { from { transform: translateX(100%) } to { transform: translateX(0) } }`}</style>
+       <style>{`@keyframes slideFromRight { from { transform: translateX(100%) } to { transform: translateX(0) } }`}</style>
         <div style={{ padding:'20px 20px 16px', borderBottom:'1px solid #F1F5F9', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)' }}>
           <div style={{ fontSize:16, fontWeight:700, color:'#fff' }}>Create actions</div>
           <button onClick={onClose} style={{ background:'rgba(255,255,255,0.2)', border:'none', cursor:'pointer', color:'#fff', display:'flex', borderRadius:8, padding:6 }}><X size={18}/></button>
@@ -263,49 +272,6 @@ function CreateItem({ item, isFav, onToggleFav, onNavigate, onClose }) {
   );
 }
 
-// ── Profile Dropdown ──────────────────────────────────────────
-function ProfileDropdown({ user, onClose, onNavigate, onLogout }) {
-  return (
-    <div onClick={onClose} style={{ position:'fixed', inset:0, zIndex:200 }}>
-      <div onClick={e => e.stopPropagation()} style={{ position:'absolute', top:62, right:20, width:260, background:'#fff', borderRadius:16, boxShadow:'0 12px 48px rgba(0,0,0,0.16)', border:'1px solid #E5E7EB', overflow:'hidden' }}>
-        <div style={{ padding:'18px 20px', background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', marginBottom:4 }}>
-          <div style={{ width:44, height:44, borderRadius:'50%', background:'rgba(255,255,255,0.25)', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:10 }}>
-            <span style={{ fontSize:16, fontWeight:700, color:'#fff' }}>{user.initials}</span>
-          </div>
-          <div style={{ fontSize:15, fontWeight:700, color:'#fff', marginBottom:2 }}>{user.fullName}</div>
-          <div style={{ fontSize:12, color:'rgba(255,255,255,0.8)' }}>{user.email}</div>
-        </div>
-        {[
-          { label:'Manage account', icon:Settings,   path:'/settings' },
-          { label:'Billing',        icon:CreditCard, path:'/billing'  },
-          { label:'Help',           icon:HelpCircle, path:'/help'     },
-        ].map(item => {
-          const Icon = item.icon;
-          return (
-            <div key={item.label} onClick={() => { onNavigate(item.path); onClose(); }} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 20px', cursor:'pointer', fontSize:13, color:'#334155', transition:'all 0.12s' }}
-              onMouseEnter={e => { e.currentTarget.style.background='#F0FDF9'; e.currentTarget.style.color=ACCENT; }}
-              onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#334155'; }}>
-              <div style={{ width:30, height:30, borderRadius:8, background:'#F1F5F9', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <Icon size={14} color="#64748B"/>
-              </div>
-              {item.label}
-            </div>
-          );
-        })}
-        <div style={{ height:1, background:'#F1F5F9', margin:'4px 0' }}/>
-        <div onClick={() => { onLogout(); onClose(); }} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 20px', cursor:'pointer', fontSize:13, color:'#EF4444', transition:'all 0.12s' }}
-          onMouseEnter={e => e.currentTarget.style.background='rgba(239,68,68,0.05)'}
-          onMouseLeave={e => e.currentTarget.style.background='transparent'}>
-          <div style={{ width:30, height:30, borderRadius:8, background:'rgba(239,68,68,0.08)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-            <LogOut size={14} color="#EF4444"/>
-          </div>
-          Sign out
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Mini Bar ──────────────────────────────────────────────────
 function MiniBar({ income, expenses }) {
   const total  = income + expenses || 1;
@@ -334,11 +300,7 @@ function MiniBar({ income, expenses }) {
 // ── Cash Flow Bars ────────────────────────────────────────────
 function CashFlowBars({ data, tab }) {
   if (!data || data.length === 0) {
-    return (
-      <div style={{ height:100, display:'flex', alignItems:'center', justifyContent:'center', color:'#94A3B8', fontSize:13 }}>
-        No cash flow data available
-      </div>
-    );
+    return <div style={{ height:100, display:'flex', alignItems:'center', justifyContent:'center', color:'#94A3B8', fontSize:13 }}>No cash flow data available</div>;
   }
   const values = data.map(d => {
     if (tab === 'money-in')  return Math.max(d.amount, 0);
@@ -349,9 +311,7 @@ function CashFlowBars({ data, tab }) {
   return (
     <div style={{ position:'relative' }}>
       <div style={{ position:'absolute', top:0, left:0, right:0, bottom:20, display:'flex', flexDirection:'column', justifyContent:'space-between', pointerEvents:'none' }}>
-        {[100,75,50,25,0].map(pct => (
-          <div key={pct} style={{ borderTop:'1px dashed #F1F5F9', width:'100%' }}/>
-        ))}
+        {[100,75,50,25,0].map(pct => <div key={pct} style={{ borderTop:'1px dashed #F1F5F9', width:'100%' }}/>)}
       </div>
       <div style={{ display:'flex', alignItems:'flex-end', gap:6, height:100, padding:'0 2px', position:'relative' }}>
         {data.map((d, i) => {
@@ -360,8 +320,7 @@ function CashFlowBars({ data, tab }) {
           const pos = tab === 'money-out' ? false : d.amount >= 0;
           return (
             <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-              <div
-                style={{ width:'100%', height:h+'%', background:pos?'linear-gradient(180deg,#0DD9A3,#0AB98A)':'linear-gradient(180deg,#60A5FA,#3B82F6)', borderRadius:'4px 4px 0 0', minHeight:4, cursor:'pointer', transition:'opacity 0.15s', boxShadow:pos?'0 2px 8px rgba(10,185,138,0.3)':'0 2px 8px rgba(59,130,246,0.3)' }}
+              <div style={{ width:'100%', height:h+'%', background:pos?'linear-gradient(180deg,#0DD9A3,#0AB98A)':'linear-gradient(180deg,#60A5FA,#3B82F6)', borderRadius:'4px 4px 0 0', minHeight:4, cursor:'pointer', transition:'opacity 0.15s', boxShadow:pos?'0 2px 8px rgba(10,185,138,0.3)':'0 2px 8px rgba(59,130,246,0.3)' }}
                 onMouseEnter={e => e.currentTarget.style.opacity='0.8'}
                 onMouseLeave={e => e.currentTarget.style.opacity='1'}
               />
@@ -378,26 +337,20 @@ function CashFlowBars({ data, tab }) {
 function CashFlowCard({ data, balance, loading, onView, title, subtitle }) {
   const [tab,   setTab]   = useState('balance');
   const [range, setRange] = useState('6M');
-
   const moneyIn  = data.filter(d => d.amount > 0).reduce((s,d) => s + d.amount, 0);
   const moneyOut = data.filter(d => d.amount < 0).reduce((s,d) => s + Math.abs(d.amount), 0);
-
   return (
     <div style={{ background:'#fff', border:'1px solid #E8F0FE', borderRadius:16, padding:'24px 26px', marginBottom:24, boxShadow:'0 4px 24px rgba(0,0,0,0.06)' }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
         <div>
           <div style={{ fontSize:16, fontWeight:700, color:'#0F172A', marginBottom:4 }}>{title || 'Cash Flow'}</div>
           {subtitle && <div style={{ fontSize:12, color:'#64748B' }}>{subtitle}</div>}
-          <div style={{ fontSize:30, fontWeight:800, color:'#0F172A', letterSpacing:'-0.03em', marginTop:8 }}>
-            {loading ? '—' : fmt(balance)}
-          </div>
+          <div style={{ fontSize:30, fontWeight:800, color:'#0F172A', letterSpacing:'-0.03em', marginTop:8 }}>{loading ? '—' : fmt(balance)}</div>
           <div style={{ fontSize:12, color:'#64748B', marginTop:2 }}>Today's cash balance</div>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
           {['1M','3M','6M','1Y'].map(r => (
-            <button key={r} onClick={() => setRange(r)} style={{ padding:'4px 10px', borderRadius:6, fontSize:11, fontWeight:600, cursor:'pointer', border:'1px solid '+(range===r?ACCENT:'#E5E7EB'), background:range===r?'rgba(10,185,138,0.08)':'transparent', color:range===r?ACCENT:'#94A3B8', fontFamily:FONT, transition:'all 0.15s' }}>
-              {r}
-            </button>
+            <button key={r} onClick={() => setRange(r)} style={{ padding:'4px 10px', borderRadius:6, fontSize:11, fontWeight:600, cursor:'pointer', border:'1px solid '+(range===r?ACCENT:'#E5E7EB'), background:range===r?'rgba(10,185,138,0.08)':'transparent', color:range===r?ACCENT:'#94A3B8', fontFamily:FONT, transition:'all 0.15s' }}>{r}</button>
           ))}
           <MoreHorizontal size={16} color="#CBD5E1" style={{ cursor:'pointer', marginLeft:4 }}/>
         </div>
@@ -428,12 +381,10 @@ function CashFlowCard({ data, balance, loading, onView, title, subtitle }) {
       {loading ? <div style={{ height:100, background:'linear-gradient(90deg,#F1F5F9,#E2E8F0)', borderRadius:8, animation:'pulse 1.5s infinite' }}/> : <CashFlowBars data={data} tab={tab}/>}
       <div style={{ display:'flex', gap:20, marginTop:16, paddingTop:16, borderTop:'1px solid #F1F5F9', alignItems:'center' }}>
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-          <div style={{ width:12, height:12, borderRadius:3, background:'linear-gradient(135deg,#0AB98A,#0DD9A3)' }}/>
-          <span style={{ fontSize:12, color:'#64748B' }}>Income</span>
+          <div style={{ width:12, height:12, borderRadius:3, background:'linear-gradient(135deg,#0AB98A,#0DD9A3)' }}/><span style={{ fontSize:12, color:'#64748B' }}>Income</span>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-          <div style={{ width:12, height:12, borderRadius:3, background:'linear-gradient(135deg,#3B82F6,#60A5FA)' }}/>
-          <span style={{ fontSize:12, color:'#64748B' }}>Expenses</span>
+          <div style={{ width:12, height:12, borderRadius:3, background:'linear-gradient(135deg,#3B82F6,#60A5FA)' }}/><span style={{ fontSize:12, color:'#64748B' }}>Expenses</span>
         </div>
         <div style={{ marginLeft:'auto' }}>
           <span onClick={onView} style={{ fontSize:13, color:ACCENT, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:4 }}
@@ -447,17 +398,24 @@ function CashFlowCard({ data, balance, loading, onView, title, subtitle }) {
   );
 }
 
-// ── Add Widget ────────────────────────────────────────────────
+// ── Add Widget Card ───────────────────────────────────────────
 function AddWidgetCard({ onAdd }) {
   const [hov, setHov] = useState(false);
   return (
     <div onClick={onAdd} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{ background:hov?'#F0FDF9':'#fff', border:'2px dashed '+(hov?ACCENT:'#D1FAE5'), borderRadius:16, padding:'24px 20px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:10, cursor:'pointer', transition:'all 0.2s', minHeight:160 }}>
-      <div style={{ width:44, height:44, borderRadius:12, background:hov?'rgba(10,185,138,0.15)':'#F1F5F9', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s', boxShadow:hov?'0 4px 16px rgba(10,185,138,0.2)':'none' }}>
-        <Plus size={20} color={hov?ACCENT:'#94A3B8'}/>
+      style={{ background:'#fff', border:'1px dashed '+(hov?ACCENT:'#CBD5E1'), borderRadius:16, padding:'24px 20px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, cursor:'pointer', transition:'all 0.2s', minHeight:200 }}>
+      <div style={{ fontSize:14, fontWeight:600, color:hov?ACCENT:'#374151' }}>Add widgets</div>
+      <div style={{ width:44, height:44, borderRadius:'50%', background:hov?'rgba(10,185,138,0.1)':'#F3F4F6', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s' }}>
+        <Plus size={22} color={hov?ACCENT:'#9CA3AF'}/>
       </div>
-      <div style={{ fontSize:14, fontWeight:600, color:hov?ACCENT:'#94A3B8', transition:'color 0.2s' }}>Add Widget</div>
-      <div style={{ fontSize:11, color:'#CBD5E1', textAlign:'center', lineHeight:1.5 }}>Add more metrics to your dashboard</div>
+      <div style={{ width:'60%', height:1, background:'#E5E7EB' }}/>
+      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+        <span style={{ fontSize:12, color:'#9CA3AF' }}>✨ Smart suggestions</span>
+      </div>
+      <div style={{ fontSize:11, color:'#CBD5E1', textAlign:'center', lineHeight:1.6, maxWidth:160 }}>
+        Nothing new here yet. Check back later for new suggestions.
+      </div>
+      <Coffee size={16} color="#D1D5DB"/>
     </div>
   );
 }
@@ -468,15 +426,18 @@ function DashCard({ label, subtitle, value, valueColor, trend, trendUp, children
   return (
     <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{ background:'#fff', border:'1px solid #E8F0FE', borderRadius:16, padding:'22px 24px', display:'flex', flexDirection:'column', minWidth:0, transition:'all 0.2s', boxShadow:hov?'0 8px 32px rgba(0,0,0,0.1)':'0 2px 12px rgba(0,0,0,0.04)', transform:hov?'translateY(-2px)':'none', borderTop:topBorder?'3px solid '+topBorder:'1px solid #E8F0FE' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 }}>
-        <div style={{ fontSize:13, fontWeight:600, color:'#64748B' }}>{label}</div>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
+        <div style={{ fontSize:11, fontWeight:700, color:'#94A3B8', letterSpacing:'0.08em', textTransform:'uppercase' }}>{label}</div>
         <MoreHorizontal size={16} color="#CBD5E1" style={{ cursor:'pointer', flexShrink:0 }}/>
       </div>
-      {subtitle && <div style={{ fontSize:12, color:'#94A3B8', marginBottom:10 }}>{subtitle}</div>}
+      {subtitle && <div style={{ fontSize:12, color:'#94A3B8', marginBottom:8 }}>{subtitle}</div>}
       {loading
         ? <div style={{ height:40, background:'linear-gradient(90deg,#F1F5F9,#E2E8F0)', borderRadius:8, animation:'pulse 1.5s infinite', marginBottom:10 }}/>
         : value !== undefined && (
-          <div style={{ fontSize:32, fontWeight:800, color:valueColor||'#0F172A', letterSpacing:'-0.03em', marginBottom:8, lineHeight:1 }}>{value}</div>
+          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+            <div style={{ fontSize:32, fontWeight:800, color:valueColor||'#0F172A', letterSpacing:'-0.03em', lineHeight:1 }}>{value}</div>
+            <Info size={13} color="#CBD5E1"/>
+          </div>
         )
       }
       {trend && (
@@ -519,7 +480,7 @@ export default function Dashboard() {
   const [showBriefing,     setShowBriefing]     = useState(false);
   const [briefingSettings, setBriefingSettings] = useState(null);
   const [showCreatePanel,  setShowCreatePanel]  = useState(false);
-  const [showProfile,      setShowProfile]      = useState(false);
+  const [showBanner,       setShowBanner]       = useState(() => localStorage.getItem('nova_banner_dismissed') !== 'true');
   const [isMobile,         setIsMobile]         = useState(window.innerWidth < 768);
   const navScrollRef = useRef(null);
   const headers      = { Authorization: 'Bearer ' + token };
@@ -569,168 +530,76 @@ export default function Dashboard() {
   });
   const cashFlowData = Object.entries(cashFlowMap).slice(-8).map(([month,amount]) => ({ month, amount }));
 
-  const handleLogout = () => { localStorage.clear(); navigate('/login'); };
+  const dismissBanner = () => {
+    localStorage.setItem('nova_banner_dismissed', 'true');
+    setShowBanner(false);
+  };
 
   const briefingBadgeColor = briefingPaused?'#F59E0B':briefingOn?ACCENT:'#94A3B8';
   const briefingBadgeBg    = briefingPaused?'rgba(245,158,11,0.1)':briefingOn?'rgba(10,185,138,0.1)':'#F1F5F9';
   const briefingLabel      = briefingPaused?'PAUSED':briefingOn?'ON':'OFF';
 
   return (
-    <div style={{ background:'#F4F6F9', minHeight:'100vh', fontFamily:FONT }}>
-    <style>{`
+    <div style={{ background:'#F8FAFC', minHeight:'100vh', fontFamily:FONT }}>
+      <style>{`
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        .action-chip:hover { background:#E8F7F3 !important; color:#0AB98A !important; border-color:rgba(10,185,138,0.4) !important; }
-        div::-webkit-scrollbar { display: none; }
+        .action-chip:hover { background:#E8F7F3 !important; color:#0AB98A !important; border-color:rgba(10,185,138,0.3) !important; }
+        div::-webkit-scrollbar { display:none; }
       `}</style>
+
+      {/* Modals */}
       {showBriefing    && <BriefingModal onClose={() => setShowBriefing(false)} onSave={s => { setBriefingSettings(s); setShowBriefing(false); }} initial={briefingSettings}/>}
       {showCreatePanel && <CreatePanel  onClose={() => setShowCreatePanel(false)} onNavigate={navigate}/>}
-      {showProfile     && <ProfileDropdown user={{ fullName, email:userEmail, initials }} onClose={() => setShowProfile(false)} onNavigate={navigate} onLogout={handleLogout}/>}
 
-      {/* ── TOP BAR + STICKY CATEGORY ROW ── */}
-      <div style={{ background:'#fff', borderBottom:'1px solid #F1F5F9', position:'sticky', top:0, zIndex:100 }}>
-
-        {/* Top bar row */}
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', height:54, padding:isMobile?'0 16px':'0 28px' }}>
-
-          {/* Left — company name */}
-          <div style={{ fontSize:15, fontWeight:700, color:'#0F172A', letterSpacing:'-0.01em' }}>{company}</div>
-
-          {/* Right — utility icons + ONE profile avatar */}
-          <div style={{ display:'flex', gap:4, alignItems:'center' }}>
-
-            {/* Briefing pill */}
-            <div
-              onClick={() => setShowBriefing(true)}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 10px', borderRadius:8, border:'1px solid '+(briefingOn?'rgba(10,185,138,0.25)':briefingPaused?'rgba(245,158,11,0.25)':'transparent'), background:briefingOn?'rgba(10,185,138,0.05)':briefingPaused?'rgba(245,158,11,0.05)':'transparent', cursor:'pointer', fontSize:12, color:'#64748B', transition:'all 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.background='#F8FAFC'}
-              onMouseLeave={e => e.currentTarget.style.background=briefingOn?'rgba(10,185,138,0.05)':briefingPaused?'rgba(245,158,11,0.05)':'transparent'}>
-              <Bell size={15} color={briefingBadgeColor}/>
-              {!isMobile && <span style={{ fontSize:12, fontWeight:500 }}>Briefing</span>}
-              <div style={{ padding:'1px 6px', borderRadius:20, background:briefingBadgeBg, color:briefingBadgeColor, fontSize:10, fontWeight:700 }}>{briefingLabel}</div>
-            </div>
-
-            {/* Refresh */}
-            <button
-              onClick={() => setRefresh(r => r+1)}
-              style={{ display:'flex', alignItems:'center', gap:5, background:'none', border:'none', cursor:'pointer', color:'#64748B', fontSize:12, fontFamily:FONT, padding:'6px 10px', borderRadius:8, transition:'all 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.background='#F8FAFC'}
-              onMouseLeave={e => e.currentTarget.style.background='none'}>
-              <RefreshCw size={15}/>
-              {!isMobile && <span>Refresh</span>}
-            </button>
-
-            {/* Settings */}
-            <button
-              onClick={() => navigate('/settings')}
-              style={{ display:'flex', alignItems:'center', gap:5, background:'none', border:'none', cursor:'pointer', color:'#64748B', fontSize:12, fontFamily:FONT, padding:'6px 10px', borderRadius:8, transition:'all 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.background='#F8FAFC'}
-              onMouseLeave={e => e.currentTarget.style.background='none'}>
-              <Settings size={15}/>
-              {!isMobile && <span>Settings</span>}
-            </button>
-
-            {/* Help */}
-            <button
+      {/* ── NOVA PROMO BANNER ── */}
+      {showBanner && (
+        <div style={{ background:'linear-gradient(90deg,#0AB98A,#00B88F)', padding:'0 20px', height:40, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', flexShrink:0 }}>
+          <div style={{ fontSize:13, color:'#fff', display:'flex', alignItems:'center', gap:6 }}>
+            Meet Nova — Instant, smart answers inside Novala.
+            <span
               onClick={() => navigate('/help')}
-              style={{ display:'flex', alignItems:'center', gap:5, background:'none', border:'none', cursor:'pointer', color:'#64748B', fontSize:12, fontFamily:FONT, padding:'6px 10px', borderRadius:8, transition:'all 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.background='#F8FAFC'}
-              onMouseLeave={e => e.currentTarget.style.background='none'}>
-              <HelpCircle size={15}/>
-              {!isMobile && <span>Help</span>}
-            </button>
-
-            {/* Divider */}
-            <div style={{ width:1, height:24, background:'#E5E7EB', margin:'0 4px' }}/>
-
-            {/* ONE profile avatar — opens dropdown */}
-            <div
-              onClick={() => setShowProfile(p => !p)}
-              style={{ width:36, height:36, borderRadius:'50%', background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0, boxShadow:'0 2px 8px rgba(10,185,138,0.25)', transition:'all 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.transform='scale(1.06)'}
-              onMouseLeave={e => e.currentTarget.style.transform='none'}>
-              <span style={{ fontSize:13, fontWeight:700, color:'#fff' }}>{initials || displayName.charAt(0)}</span>
-            </div>
+              style={{ color:'#fff', fontWeight:700, textDecoration:'underline', cursor:'pointer' }}>
+              Try Nova
+            </span>
           </div>
+          <button
+            onClick={dismissBanner}
+            style={{ position:'absolute', right:16, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.8)', display:'flex', alignItems:'center', padding:4 }}>
+            <X size={16}/>
+          </button>
         </div>
+      )}
 
-        {/* ── CATEGORY NAV ROW — QuickBooks pill style, horizontally scrollable ── */}
-        <div style={{ position:'relative', borderTop:'1px solid #F8FAFC' }}>
-
-          {/* Scroll shadow left */}
-          <div style={{ position:'absolute', left:0, top:0, bottom:0, width:32, background:'linear-gradient(to right, #fff, transparent)', zIndex:2, pointerEvents:'none' }}/>
-
-          {/* Scrollable pill row */}
-          <div
-            ref={navScrollRef}
-            style={{ display:'flex', gap:8, overflowX:'auto', scrollbarWidth:'none', WebkitOverflowScrolling:'touch', padding:'10px 28px 10px 28px', alignItems:'center' }}
-          >
-            {NAV_CATS.map(cat => {
-              const Icon     = cat.icon;
-              const isActive = window.location.pathname === cat.path;
-              return (
-                <div
-                  key={cat.label}
-                  className="nav-pill"
-                  onClick={() => navigate(cat.path)}
-                  style={{
-                    display:'flex', alignItems:'center', gap:9,
-                    padding:'9px 16px',
-                    background: isActive ? cat.bg : '#fff',
-                    border: '1px solid ' + (isActive ? cat.color+'40' : '#EAECF0'),
-                    borderRadius:999,
-                    cursor:'pointer',
-                    flexShrink:0,
-                    transition:'all 0.18s ease',
-                    whiteSpace:'nowrap',
-                    boxShadow: isActive ? '0 2px 10px '+cat.color+'20' : '0 1px 3px rgba(0,0,0,0.04)',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = cat.bg;
-                    e.currentTarget.style.borderColor = cat.color+'40';
-                    e.currentTarget.style.boxShadow = '0 3px 12px '+cat.color+'20';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={e => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = '#fff';
-                      e.currentTarget.style.borderColor = '#EAECF0';
-                      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
-                    }
-                    e.currentTarget.style.transform = 'none';
-                  }}
-                >
-                  <div style={{ width:28, height:28, borderRadius:'50%', background:cat.bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    <Icon size={14} color={cat.color} strokeWidth={2.2}/>
-                  </div>
-                  <span style={{ fontSize:13, fontWeight:600, color: isActive ? cat.color : '#374151' }}>{cat.label}</span>
-                </div>
-              );
-            })}
-
-            {/* Show more chevron pill */}
-            <div
-              onClick={() => navScrollRef.current?.scrollBy({ left:300, behavior:'smooth' })}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'9px 14px', background:'#F9FAFB', border:'1px solid #EAECF0', borderRadius:999, cursor:'pointer', flexShrink:0, transition:'all 0.15s', whiteSpace:'nowrap' }}
-              onMouseEnter={e => { e.currentTarget.style.background='#F3F4F6'; e.currentTarget.style.borderColor='#D1D5DB'; }}
-              onMouseLeave={e => { e.currentTarget.style.background='#F9FAFB'; e.currentTarget.style.borderColor='#EAECF0'; }}>
-              <span style={{ fontSize:12, fontWeight:600, color:'#6B7280' }}>More</span>
-              <ChevronRight size={14} color="#6B7280"/>
-            </div>
-          </div>
-
-          {/* Scroll shadow right */}
-          <div style={{ position:'absolute', right:0, top:0, bottom:0, width:48, background:'linear-gradient(to left, #fff, transparent)', zIndex:2, pointerEvents:'none' }}/>
-        </div>
-      </div>
       {/* ── PAGE CONTENT ── */}
-      <div style={{ maxWidth:1240, margin:'0 auto', padding:isMobile?'24px 16px':'28px 32px' }}>
+      <div style={{ maxWidth:1200, margin:'0 auto', padding:isMobile?'32px 16px':'48px 32px 32px' }}>
 
-        {/* Greeting */}
-        <div style={{ marginBottom:24 }}>
-          <h1 style={{ fontSize:isMobile?24:30, fontWeight:800, color:'#0F172A', margin:'0 0 6px', letterSpacing:'-0.03em' }}>
-            {greeting}, {displayName}! 👋
+        {/* ── GREETING BLOCK ── */}
+        <div style={{ position:'relative', textAlign:'center', marginBottom:32 }}>
+
+          {/* Customize + Privacy links — top right */}
+          {!isMobile && (
+            <div style={{ position:'absolute', right:0, top:'50%', transform:'translateY(-50%)', display:'flex', alignItems:'center', gap:24 }}>
+              <button
+                onClick={() => navigate('/settings')}
+                style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', color:'#6B7280', fontSize:13, fontFamily:FONT, transition:'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.color='#0F172A'}
+                onMouseLeave={e => e.currentTarget.style.color='#6B7280'}>
+                <SlidersHorizontal size={15}/> Customize
+              </button>
+              <button
+                onClick={() => {}}
+                style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', color:'#6B7280', fontSize:13, fontFamily:FONT, transition:'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.color='#0F172A'}
+                onMouseLeave={e => e.currentTarget.style.color='#6B7280'}>
+                <Eye size={15}/> Privacy
+              </button>
+            </div>
+          )}
+
+          <h1 style={{ fontSize:isMobile?24:32, fontWeight:600, color:'#0F172A', margin:0, letterSpacing:'-0.02em' }}>
+            {greeting}, {displayName}
           </h1>
-          <div style={{ fontSize:14, color:'#64748B' }}>Here is what is happening with {company} today.</div>
+
           {briefingPaused && (
             <div style={{ display:'inline-flex', alignItems:'center', gap:6, marginTop:10, padding:'6px 14px', borderRadius:20, background:'rgba(245,158,11,0.08)', border:'1px solid rgba(245,158,11,0.2)', fontSize:12, color:'#F59E0B' }}>
               Morning Briefing is paused.
@@ -739,57 +608,102 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Create actions */}
-        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:32, flexWrap:'wrap' }}>
-          <span style={{ fontSize:13, fontWeight:700, color:'#334155', marginRight:4 }}>Create</span>
+        {/* ── APP PILL NAV ROW — below greeting ── */}
+        <div style={{ position:'relative', marginBottom:32 }}>
+          <div style={{ position:'absolute', left:0, top:0, bottom:0, width:24, background:'linear-gradient(to right,#F8FAFC,transparent)', zIndex:2, pointerEvents:'none' }}/>
+          <div
+            ref={navScrollRef}
+            style={{ display:'flex', gap:10, overflowX:'auto', scrollbarWidth:'none', WebkitOverflowScrolling:'touch', padding:'4px 2px', alignItems:'center', justifyContent:isMobile?'flex-start':'center', flexWrap:isMobile?'nowrap':'wrap' }}
+          >
+            {NAV_CATS.map(cat => {
+              const Icon     = cat.icon;
+              const isActive = window.location.pathname === cat.path;
+              return (
+                <div
+                  key={cat.label}
+                  onClick={() => navigate(cat.path)}
+                  style={{ display:'flex', alignItems:'center', gap:9, padding:'10px 18px', background:isActive?cat.bg:'#fff', border:'1px solid '+(isActive?cat.color+'40':'#E5E7EB'), borderRadius:999, cursor:'pointer', flexShrink:0, transition:'all 0.18s ease', whiteSpace:'nowrap', boxShadow:isActive?'0 2px 10px '+cat.color+'20':'0 1px 4px rgba(0,0,0,0.06)' }}
+                  onMouseEnter={e => { e.currentTarget.style.background=cat.bg; e.currentTarget.style.borderColor=cat.color+'40'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 14px '+cat.color+'25'; }}
+                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#E5E7EB'; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.06)'; } e.currentTarget.style.transform='none'; }}
+                >
+                  <div style={{ width:30, height:30, borderRadius:'50%', background:cat.bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <Icon size={15} color={cat.color} strokeWidth={2.2}/>
+                  </div>
+                  <span style={{ fontSize:13, fontWeight:600, color:isActive?cat.color:'#374151' }}>{cat.label}</span>
+                </div>
+              );
+            })}
+            {/* Scroll chevron — mobile only */}
+            {isMobile && (
+              <div
+                onClick={() => navScrollRef.current?.scrollBy({ left:200, behavior:'smooth' })}
+                style={{ display:'flex', alignItems:'center', gap:4, padding:'10px 14px', background:'#F9FAFB', border:'1px solid #E5E7EB', borderRadius:999, cursor:'pointer', flexShrink:0 }}
+              >
+                <ChevronRight size={15} color="#6B7280"/>
+              </div>
+            )}
+          </div>
+          <div style={{ position:'absolute', right:0, top:0, bottom:0, width:24, background:'linear-gradient(to left,#F8FAFC,transparent)', zIndex:2, pointerEvents:'none' }}/>
+        </div>
+
+        {/* ── CREATE ACTIONS ROW ── */}
+        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:24, flexWrap:'wrap' }}>
+          <span style={{ fontSize:13, fontWeight:600, color:'#374151', marginRight:4 }}>Create</span>
           {QUICK_CREATE.map(action => (
-            <div key={action.label} className="action-chip" onClick={() => navigate(action.path)}
-              style={{ padding:'8px 16px', background:'#fff', border:'1px solid #E5E7EB', borderRadius:999, cursor:'pointer', fontSize:12, fontWeight:600, color:'#475569', transition:'all 0.15s', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
+            <div
+              key={action.label}
+              className="action-chip"
+              onClick={() => navigate(action.path)}
+              style={{ padding:'7px 16px', background:'#fff', border:'1px solid #E5E7EB', borderRadius:999, cursor:'pointer', fontSize:12, fontWeight:500, color:'#475569', transition:'all 0.15s', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
               {action.label}
             </div>
           ))}
-          <div onClick={() => setShowCreatePanel(true)}
-            style={{ padding:'8px 16px', background:'linear-gradient(135deg,#0AB98A,#0EA5E9)', border:'none', borderRadius:999, cursor:'pointer', fontSize:12, fontWeight:700, color:'#fff', transition:'all 0.15s', boxShadow:'0 4px 16px rgba(10,185,138,0.35)' }}
-            onMouseEnter={e => e.currentTarget.style.transform='translateY(-1px)'}
-            onMouseLeave={e => e.currentTarget.style.transform='none'}>
+          <span
+            onClick={() => setShowCreatePanel(true)}
+            style={{ fontSize:12, color:ACCENT, fontWeight:600, cursor:'pointer', marginLeft:4 }}
+            onMouseEnter={e => e.currentTarget.style.textDecoration='underline'}
+            onMouseLeave={e => e.currentTarget.style.textDecoration='none'}>
             Show all
-          </div>
+          </span>
         </div>
 
-        {/* ══ SECTION A — Business at a Glance ══ */}
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18 }}>
-          <div>
-            <div style={{ fontSize:20, fontWeight:800, color:'#0F172A', letterSpacing:'-0.02em' }}>Business at a Glance</div>
-            <div style={{ fontSize:13, color:'#64748B', marginTop:3 }}>Your documents, invoices, and transactions</div>
-          </div>
-          <button onClick={() => navigate('/reports')}
-            style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', background:'rgba(10,185,138,0.08)', border:'1px solid rgba(10,185,138,0.2)', borderRadius:999, cursor:'pointer', color:ACCENT, fontSize:13, fontWeight:600, fontFamily:FONT, transition:'all 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.background='rgba(10,185,138,0.15)'}
-            onMouseLeave={e => e.currentTarget.style.background='rgba(10,185,138,0.08)'}>
-            Full report <ChevronRight size={14}/>
-          </button>
+        {/* ══ SECTION A — Business at a glance ══ */}
+        <div style={{ marginBottom:16 }}>
+          <div style={{ fontSize:20, fontWeight:700, color:'#0F172A', letterSpacing:'-0.02em' }}>Business at a glance</div>
         </div>
 
-        <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(auto-fit,minmax(230px,1fr))', gap:16, marginBottom:20 }}>
+        <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':' repeat(4,1fr)', gap:16, marginBottom:20 }}>
 
+          {/* Card 1 — Profit & Loss */}
           <DashCard
-            label="Profit & Loss" subtitle="Net profit this month"
-            value={loading?null:fmt(netProfit)} valueColor={profitUp?'#0AB98A':'#EF4444'}
-            trend={profitUp?'+18.4% vs last month':'-12% vs last month'} trendUp={profitUp}
-            footer="View full report" onFooter={() => navigate('/reports')}
-            loading={loading} topBorder="#0AB98A">
+            label="Profit & Loss"
+            subtitle="Net profit this month"
+            value={loading?null:fmt(netProfit)}
+            valueColor={profitUp?'#0AB98A':'#EF4444'}
+            trend={profitUp?'Up vs prior month':'Down vs prior month'}
+            trendUp={profitUp}
+            footer="View full report"
+            onFooter={() => navigate('/reports')}
+            loading={loading}
+            topBorder="#0AB98A">
             {!loading && <MiniBar income={revenue} expenses={expenses}/>}
           </DashCard>
 
+          {/* Card 2 — Expenses */}
           <DashCard
-            label="Expenses" subtitle="Total spending recorded"
-            value={loading?null:fmt(expenses)} valueColor="#3B82F6"
-            trend={expenses>0?'Recorded this period':'No expenses yet'} trendUp={false}
-            footer="View all expenses" onFooter={() => navigate('/transactions')}
-            loading={loading} topBorder="#3B82F6">
+            label="Expenses"
+            subtitle="Spending for last 30 days"
+            value={loading?null:fmt(expenses)}
+            valueColor="#3B82F6"
+            trend={expenses>0?'Up from prior 30 days':'No expenses yet'}
+            trendUp={false}
+            footer="View all spending"
+            onFooter={() => navigate('/transactions')}
+            loading={loading}
+            topBorder="#3B82F6">
             {!loading && (
               <div style={{ display:'flex', gap:6, marginTop:8, flexWrap:'wrap' }}>
-                {['Office','Travel','Software','Other'].map((cat,i) => (
+                {['Payroll','Office','Software','Other'].map((cat,i) => (
                   <div key={cat} style={{ padding:'3px 10px', borderRadius:20, background:['rgba(59,130,246,0.1)','rgba(6,182,212,0.1)','rgba(139,92,246,0.1)','rgba(248,113,113,0.1)'][i], fontSize:10, fontWeight:600, color:['#3B82F6','#06B6D4','#8B5CF6','#EF4444'][i] }}>
                     {cat}
                   </div>
@@ -798,23 +712,28 @@ export default function Dashboard() {
             )}
           </DashCard>
 
-          <DashCard
-            label="Outstanding Invoices" subtitle="Unpaid invoices total"
-            value={loading?null:fmt(totalUnpaid)} valueColor={unpaidInv.length>0?'#F59E0B':'#0AB98A'}
-            trend={unpaidInv.length>0?unpaidInv.length+' invoices awaiting payment':'All invoices paid ✓'} trendUp={unpaidInv.length===0}
-            footer="View all invoices" onFooter={() => navigate('/invoices')}
-            loading={loading} topBorder="#F59E0B"
-          />
-
-          <DashCard
-            label="Revenue" subtitle="Total income recorded"
-            value={loading?null:fmt(revenue)} valueColor="#0AB98A"
-            trend={revenue>0?'Income this period':'No income recorded yet'} trendUp={revenue>0}
-            footer="View transactions" onFooter={() => navigate('/transactions')}
-            loading={loading} topBorder="#0EA5E9"
-          />
-
+          {/* Card 3 — Add Widgets */}
           <AddWidgetCard onAdd={() => navigate('/settings')}/>
+
+          {/* Card 4 — Bank Accounts */}
+          <DashCard
+            label="Bank Accounts"
+            subtitle="As of today"
+            value="—"
+            valueColor="#0F172A"
+            footer="Connect bank account"
+            onFooter={() => navigate('/integrations')}
+            topBorder="#06B6D4">
+            <div style={{ marginTop:8 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 12px', borderRadius:10, background:'#F8FAFC', border:'1px solid #E5E7EB' }}>
+                <Landmark size={15} color="#06B6D4"/>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:600, color:'#374151' }}>No bank connected</div>
+                  <div style={{ fontSize:11, color:'#9CA3AF', marginTop:1 }}>Connect to sync transactions</div>
+                </div>
+              </div>
+            </div>
+          </DashCard>
         </div>
 
         {/* Cash Flow A */}
@@ -873,12 +792,9 @@ export default function Dashboard() {
         </div>
 
         {/* ══ SECTION B — Banking & Payroll ══ */}
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18, marginTop:8 }}>
-          <div>
-            <div style={{ fontSize:20, fontWeight:800, color:'#0F172A', letterSpacing:'-0.02em' }}>Banking & Payroll</div>
-            <div style={{ fontSize:13, color:'#64748B', marginTop:3 }}>Connected accounts, payroll, and accounting overview</div>
-          </div>
-          <div style={{ padding:'5px 14px', borderRadius:20, background:'linear-gradient(135deg,rgba(59,130,246,0.1),rgba(139,92,246,0.1))', border:'1px solid rgba(59,130,246,0.2)' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16, marginTop:8 }}>
+          <div style={{ fontSize:20, fontWeight:700, color:'#0F172A', letterSpacing:'-0.02em' }}>Banking & Payroll</div>
+          <div style={{ padding:'4px 12px', borderRadius:20, background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.2)' }}>
             <span style={{ fontSize:11, fontWeight:700, color:'#3B82F6' }}>COMING SOON</span>
           </div>
         </div>
@@ -966,8 +882,8 @@ export default function Dashboard() {
           <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(auto-fit,minmax(220px,1fr))', gap:12 }}>
             {[
               { icon:'📨', title:'Send invoice reminders', desc:unpaidInv.length>0?unpaidInv.length+' invoices overdue':'All invoices up to date', action:() => navigate('/invoices'), btn:'View invoices' },
-              { icon:'🏦', title:'Connect your bank',      desc:'Auto-sync transactions and reconcile faster',        action:() => navigate('/integrations'), btn:'Connect now' },
-              { icon:'📊', title:'Run a financial report', desc:'See your profit & loss for this quarter',            action:() => navigate('/reports'),      btn:'Run report'  },
+              { icon:'🏦', title:'Connect your bank',      desc:'Auto-sync transactions and reconcile faster',     action:() => navigate('/integrations'), btn:'Connect now' },
+              { icon:'📊', title:'Run a financial report', desc:'See your profit & loss for this quarter',         action:() => navigate('/reports'),      btn:'Run report'  },
             ].map(s => (
               <div key={s.title} style={{ background:'rgba(255,255,255,0.15)', borderRadius:12, padding:'16px', backdropFilter:'blur(10px)', border:'1px solid rgba(255,255,255,0.2)' }}>
                 <div style={{ fontSize:24, marginBottom:8 }}>{s.icon}</div>
