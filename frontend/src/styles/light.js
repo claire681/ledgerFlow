@@ -49,6 +49,7 @@ export const L = {
   fontMono:    "'JetBrains Mono', monospace",
 };
 
+// Reusable card style
 export const card = {
   background:   '#FFFFFF',
   border:       '1px solid #E5E7EB',
@@ -56,6 +57,7 @@ export const card = {
   boxShadow:    '0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)',
 };
 
+// Reusable input style
 export const input = {
   width:        '100%',
   padding:      '9px 12px',
@@ -69,28 +71,32 @@ export const input = {
   boxSizing:    'border-box',
 };
 
+// ── Page wrapper ─────────────────────────────────────────────
 export const page = {
-  flex:       1,
-  overflowY:  'auto',
-  background: '#F8FAFC',
-  fontFamily: "'Inter', -apple-system, sans-serif",
-  minHeight:  '100vh',
+  flex:        1,
+  overflowY:   'auto',
+  background:  '#F8FAFC',
+  fontFamily:  "'Inter', -apple-system, sans-serif",
+  minHeight:   '100vh',
+  paddingTop:  48,
+  paddingLeft:  32,
+  paddingRight: 32,
+  paddingBottom: 40,
+  boxSizing:   'border-box',
 };
 
+// ── Top bar ───────────────────────────────────────────────────
 export const topBar = {
-  position:       'sticky',
-  top:            0,
-  zIndex:         10,
-  background:     'rgba(248,250,252,0.92)',
-  backdropFilter: 'blur(12px)',
-  borderBottom:   '1px solid #E5E7EB',
-  padding:        '16px 32px',
-  display:        'flex',
-  justifyContent: 'space-between',
-  alignItems:     'center',
-  gap:            12,
+  display:         'flex',
+  justifyContent:  'space-between',
+  alignItems:      'center',
+  marginBottom:    32,
+  paddingBottom:   20,
+  borderBottom:    '1px solid #E5E7EB',
+  gap:             12,
 };
 
+// Reusable section title
 export const sectionTitle = {
   fontSize:      15,
   fontWeight:    700,
@@ -99,6 +105,7 @@ export const sectionTitle = {
   marginBottom:  4,
 };
 
+// Reusable label style
 export const label = {
   fontSize:      10,
   fontWeight:    600,
@@ -108,6 +115,7 @@ export const label = {
   marginBottom:  6,
 };
 
+// Reusable badge
 export const badge = (color, bg, border) => ({
   display:      'inline-flex',
   alignItems:   'center',
@@ -120,6 +128,7 @@ export const badge = (color, bg, border) => ({
   border:       `1px solid ${border}`,
 });
 
+// Primary button
 export const btnPrimary = {
   display:        'flex',
   alignItems:     'center',
@@ -136,6 +145,7 @@ export const btnPrimary = {
   transition:     'all 0.15s',
 };
 
+// Secondary button
 export const btnSecondary = {
   display:        'flex',
   alignItems:     'center',

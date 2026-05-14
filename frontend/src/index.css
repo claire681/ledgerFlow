@@ -48,3 +48,18 @@ body {
     padding-right: 16px;
   }
 }
+/* ── Global page spacing fix ── */
+@media (max-width: 767px) {
+  /* Reduce page padding on mobile */
+  [class*="page"],
+  main > div {
+    padding-top: 24px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+}
+
+/* Card grid gaps */
+.card-grid {
+  gap: 16px;
+}
