@@ -166,9 +166,10 @@ async def doc_to_dict(db: AsyncSession, d: Document) -> dict:
     s3_key   = d.file_path or build_s3_key(str(d.id), d.filename)
     has_file = file_exists_in_s3(s3_key)
 
-    raw_payment_status = getattr(d, "payment_status", None) or "paid"
+    # ── Payment status — do NOT force to "paid" for reference docs ──
+    raw_payment_status = getattr(d, "payment_status", None)
     if raw_payment_status not in ("paid", "overdue", "due", "partially_paid"):
-        raw_payment_status = "paid"
+        raw_payment_status = None
 
     doc_type = safe_doc_type(getattr(d, "doc_type", None))
     if raw_payment_status == "due" and doc_type in ("invoice_sent", "invoice_received"):
@@ -180,6 +181,15 @@ async def doc_to_dict(db: AsyncSession, d: Document) -> dict:
             except Exception:
                 pass
 
+    # Reference docs (no amount, no vendor) should have no payment status
+    has_amount = (
+        d.total_amount is not None and
+        d.total_amount != 0 and
+        float(d.total_amount) > 0
+    )
+    if not has_amount and not d.vendor:
+        raw_payment_status = None
+
     return {
         "id":               str(d.id),
         "filename":         d.filename,
@@ -187,7 +197,7 @@ async def doc_to_dict(db: AsyncSession, d: Document) -> dict:
         "file_size":        d.file_size,
         "vendor":           d.vendor,
         "client_name":      getattr(d, "client_name", None),
-        "total_amount":     d.total_amount,
+        "total_amount":     d.total_amount if has_amount else None,
         "tax_amount":       d.tax_amount,
         "currency":         d.currency or "USD",
         "doc_date":         d.doc_date,
@@ -201,6 +211,7 @@ async def doc_to_dict(db: AsyncSession, d: Document) -> dict:
         "deduction_pct":    d.deduction_pct,
         "doc_type":         doc_type,
         "recorded_as":      getattr(d, "recorded_as", None) or "expense",
+        "txn_type":         getattr(d, "recorded_as", None),
         "uploaded_at":      d.uploaded_at.isoformat() if d.uploaded_at else None,
         "has_file":         has_file,
         "view_url":         f"/documents/{d.id}/view",
@@ -516,7 +527,7 @@ async def process_document_upload_job(
             await db.flush()
 
             # ── Upload to S3 and save the REAL key returned ────────
-            content_type = guess_media_type(filename)
+            content_type  = guess_media_type(filename)
             actual_s3_key = upload_file_to_s3(
                 file_bytes   = file_bytes,
                 filename     = filename,
@@ -530,6 +541,21 @@ async def process_document_upload_job(
                 and settings.openai_api_key.startswith("sk-")
                 and len(settings.openai_api_key) > 20
             )
+
+            # ── Reference/Just Save — skip extraction ─────────────
+            if txn_type == "reference":
+                doc.status         = "processed"
+                doc.payment_status = None
+                doc.total_amount   = None
+                doc.vendor         = None
+                doc.doc_type       = "other"
+                doc.recorded_as    = "reference"
+                doc.suggested_cat  = "Reference"
+                doc.confidence     = 1.0
+                await db.commit()
+                await db.refresh(doc)
+                await update_upload_job(db, job_id, "completed", 100, status="completed")
+                return
 
             extracted = {}
             if has_openai and raw_text:
@@ -810,13 +836,13 @@ async def view_document_file(
     current_user=Depends(get_current_user),
     db:          AsyncSession = Depends(get_db),
 ):
-    user_id  = str(current_user.id)
-    doc      = await get_document_or_404(db, doc_id, user_id)
-    s3_key   = doc.file_path or build_s3_key(str(doc.id), doc.filename)
+    user_id = str(current_user.id)
+    doc     = await get_document_or_404(db, doc_id, user_id)
+    s3_key  = doc.file_path or build_s3_key(str(doc.id), doc.filename)
 
     try:
-        file_bytes   = download_file_from_s3(s3_key)
-        media_type   = guess_media_type(doc.filename)
+        file_bytes = download_file_from_s3(s3_key)
+        media_type = guess_media_type(doc.filename)
         return StreamingResponse(
             io.BytesIO(file_bytes),
             media_type=media_type,
@@ -824,7 +850,8 @@ async def view_document_file(
         )
     except Exception:
         raise HTTPException(status_code=404, detail="File not found in storage")
-    
+
+
 @router.get("/{doc_id}/view-url")
 async def get_document_view_url(
     doc_id:      str,
@@ -833,11 +860,37 @@ async def get_document_view_url(
 ):
     user_id = str(current_user.id)
     doc     = await get_document_or_404(db, doc_id, user_id)
-    s3_key  = doc.file_path or build_s3_key(str(doc.id), doc.filename)
 
-    from app.services.s3_service import get_presigned_url
-    url = get_presigned_url(s3_key, expiry=3600)
-    return {"url": url}
+    from app.services.s3_service import get_presigned_url, file_exists_in_s3
+
+    # Use the real saved file_path from DB first
+    if doc.file_path and file_exists_in_s3(doc.file_path):
+        url = get_presigned_url(doc.file_path, expiry=3600)
+        return {"url": url, "s3_key": doc.file_path}
+
+    # Fallback — try common key patterns for old documents
+    ext = Path(doc.filename).suffix.lower() if doc.filename else ".pdf"
+    candidates = [
+        f"documents/{doc.id}{ext}",
+        f"documents/{doc.id}.pdf",
+        f"uploads/{doc.id}{ext}",
+        f"uploads/documents/{doc.id}{ext}",
+    ]
+    for candidate in candidates:
+        if file_exists_in_s3(candidate):
+            # Save correct key back to DB for future calls
+            doc.file_path = candidate
+            try:
+                await db.commit()
+            except Exception:
+                pass
+            url = get_presigned_url(candidate, expiry=3600)
+            return {"url": url, "s3_key": candidate}
+
+    raise HTTPException(
+        status_code=404,
+        detail=f"File not found in storage. Original path: {doc.file_path}"
+    )
 
 
 @router.get("/{doc_id}/download")
@@ -846,9 +899,9 @@ async def download_document_file(
     current_user=Depends(get_current_user),
     db:          AsyncSession = Depends(get_db),
 ):
-    user_id  = str(current_user.id)
-    doc      = await get_document_or_404(db, doc_id, user_id)
-    s3_key   = doc.file_path or build_s3_key(str(doc.id), doc.filename)
+    user_id = str(current_user.id)
+    doc     = await get_document_or_404(db, doc_id, user_id)
+    s3_key  = doc.file_path or build_s3_key(str(doc.id), doc.filename)
 
     try:
         file_bytes = download_file_from_s3(s3_key)
