@@ -1,530 +1,513 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Home, BarChart2, Grid, Plus,
-  LayoutDashboard, FileText, ArrowLeftRight,
-  PieChart, Receipt, Percent, RefreshCw,
-  BarChart3, ScanLine, Link2, Users,
-  TrendingUp, CreditCard, BookOpen,
-  GitCompare, Search, Users2, Package,
-  Building2, Key, Wallet, GitMerge,
-  Settings as SettingsIcon, HelpCircle,
-  ChevronRight, X, LogOut,
-  Sliders, MoreHorizontal, Bookmark,
-  Sparkles, Keyboard, Bell, ClipboardList,
-  MessageSquare, Zap,
+  TrendingUp, TrendingDown, RefreshCw, DollarSign,
+  FileText, ArrowLeftRight, Receipt, PieChart,
+  Users, BarChart2, Sliders, Eye, ChevronRight,
+  Plus, MoreHorizontal, Info, Building2,
+  Zap, ShoppingCart, UserCheck, Briefcase,
 } from 'lucide-react';
 
-const ACCENT  = '#0AB98A';
-const FONT    = "'Inter', -apple-system, sans-serif";
-const DEFAULT = '#334155';
-const MUTED   = '#64748B';
+const ACCENT = '#0AB98A';
+const FONT   = "'Inter', -apple-system, sans-serif";
+const API    = 'https://api.getnovala.com/api/v1';
 
-const SLIDE_IN = `
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateX(-12px) }
-    to   { opacity: 1; transform: translateX(0) }
-  }
-`;
+const fmt = (n) => {
+  const num = parseFloat(n) || 0;
+  return (num < 0 ? '-$' : '$') + Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+};
 
-const APP_GROUPS = [
-  {
-    label: 'Core',
-    color: '#0AB98A',
-    items: [
-      { label: 'Dashboard',    path: '/',             icon: LayoutDashboard },
-      { label: 'Documents',    path: '/documents',    icon: FileText        },
-      { label: 'Transactions', path: '/transactions', icon: ArrowLeftRight  },
-    ],
-  },
-  {
-    label: 'Finance',
-    color: '#3B82F6',
-    items: [
-      { label: 'Reports',        path: '/reports',        icon: BarChart2  },
-      { label: 'Reconciliation', path: '/reconciliation', icon: GitMerge   },
-      { label: 'Ledger View',    path: '/ledger',         icon: BookOpen   },
-      { label: 'Variance',       path: '/variance',       icon: TrendingUp },
-      { label: 'Bill Pay',       path: '/billpay',        icon: Wallet     },
-      { label: 'Budgets',        path: '/budgets',        icon: PieChart   },
-      { label: 'Invoices',       path: '/invoices',       icon: Receipt    },
-      { label: 'Tax',            path: '/tax',            icon: Percent    },
-      { label: 'Billing',        path: '/billing',        icon: CreditCard },
-      { label: 'Currency',       path: '/currency',       icon: RefreshCw  },
-    ],
-  },
-  {
-    label: 'Business',
-    color: '#8B5CF6',
-    items: [
-      { label: 'Customers',    path: '/customers',    icon: Users2    },
-      { label: 'Inventory',    path: '/inventory',    icon: Package   },
-      { label: 'Businesses',   path: '/businesses',   icon: Building2 },
-      { label: 'Vendors',      path: '/vendors',      icon: BarChart3 },
-      { label: 'Team',         path: '/team',         icon: Users     },
-      { label: 'Integrations', path: '/integrations', icon: Link2     },
-    ],
-  },
-  {
-    label: 'Tools',
-    color: '#F59E0B',
-    items: [
-      { label: 'Smart Search', path: '/search',     icon: Search     },
-      { label: 'Scanner',      path: '/receipts',   icon: ScanLine   },
-      { label: 'Doc Compare',  path: '/comparison', icon: GitCompare },
-      { label: 'API Access',   path: '/api-access', icon: Key        },
-    ],
-  },
+const APP_SHORTCUTS = [
+  { label: 'Transactions',   icon: ArrowLeftRight, color: '#0AB98A', path: '/transactions' },
+  { label: 'Invoices',       icon: FileText,       color: '#3B82F6', path: '/invoices'     },
+  { label: 'Bill Pay',       icon: DollarSign,     color: '#8B5CF6', path: '/billpay'      },
+  { label: 'Reports',        icon: BarChart2,      color: '#F59E0B', path: '/reports'      },
+  { label: 'Customers',      icon: UserCheck,      color: '#06B6D4', path: '/customers'    },
+  { label: 'Vendors',        icon: Briefcase,      color: '#EF4444', path: '/vendors'      },
+  { label: 'Inventory',      icon: ShoppingCart,   color: '#10B981', path: '/inventory'    },
+  { label: 'Team',           icon: Users,          color: '#6366F1', path: '/team'         },
 ];
 
-const CREATE_COLUMNS = [
-  {
-    header: 'Customers',
-    items: [
-      { label: 'Invoice',          path: '/invoices'     },
-      { label: 'Receive payment',  path: '/transactions' },
-      { label: 'Estimate',         path: '/invoices'     },
-      { label: 'Sales receipt',    path: '/invoices'     },
-      { label: 'Add customer',     path: '/customers'    },
-    ],
-  },
-  {
-    header: 'Suppliers',
-    items: [
-      { label: 'Expense',      path: '/transactions' },
-      { label: 'Bill',         path: '/billpay'      },
-      { label: 'Pay bills',    path: '/billpay'      },
-      { label: 'Add supplier', path: '/vendors'      },
-    ],
-  },
-  {
-    header: 'Business',
-    items: [
-      { label: 'Upload Document', path: '/documents' },
-      { label: 'Scan Receipt',    path: '/receipts'  },
-      { label: 'New Budget',      path: '/budgets'   },
-    ],
-  },
-  {
-    header: 'Other',
-    items: [
-      { label: 'Bank deposit',  path: '/transactions' },
-      { label: 'Journal entry', path: '/ledger'       },
-      { label: 'Smart Search',  path: '/search'       },
-      { label: 'API Access',    path: '/api-access'   },
-    ],
-  },
+const CREATE_ACTIONS = [
+  { label: 'Create invoice',   path: '/invoices'     },
+  { label: 'Add transaction',  path: '/transactions' },
+  { label: 'Upload document',  path: '/documents'    },
+  { label: 'Scan receipt',     path: '/receipts'     },
+  { label: 'Record expense',   path: '/transactions' },
 ];
 
-// Correct order per spec
-const SLIM_ITEMS = [
-  { id: 'create',    icon: Plus,      label: 'Create',    flyout: 'create'    },
-  { id: 'bookmarks', icon: Bookmark,  label: 'Bookmarks', flyout: 'bookmarks' },
-  { id: 'home',      icon: Home,      label: 'Home',      path: '/'           },
-  { id: 'feed',      icon: Sparkles,  label: 'Feed',      flyout: 'feed'      },
-  { id: 'reports',   icon: BarChart2, label: 'Reports',   flyout: 'reports'   },
-  { id: 'allapps',   icon: Grid,      label: 'All Apps',  flyout: 'apps'      },
-];
-
-const SLIM_BOTTOM = [
-  { id: 'more',      icon: MoreHorizontal, label: 'More',      flyout: 'more'      },
-  { id: 'customize', icon: Sliders,        label: 'Customize', flyout: 'customize' },
-];
-
-const MORE_ITEMS = [
-  { label: 'Bookmarks',          icon: Bookmark,     path: null        },
-  { label: 'Audit Log',          icon: ClipboardList,path: '/reports'  },
-  { label: 'Settings',           icon: SettingsIcon, path: '/settings' },
-  { label: 'Help & Support',     icon: HelpCircle,   path: '/help'     },
-  { label: 'Keyboard Shortcuts', icon: Keyboard,     path: null        },
-  { label: "What's New",         icon: Zap,          path: null        },
-  { label: 'Send Feedback',      icon: MessageSquare,path: null        },
-];
-
-function CreateFlyout({ onClose, onNavigate }) {
+function StatCard({ label, subtitle, value, trend, trendUp, badge, footer, onFooter, loading }) {
   return (
-    <div style={{ position: 'fixed', top: 56, left: 80, height: 'calc(100vh - 56px)', width: 680, background: '#fff', boxShadow: '4px 0 32px rgba(0,0,0,0.12)', zIndex: 45, display: 'flex', flexDirection: 'column', animation: 'slideIn 0.2s ease', borderRight: '1px solid #F1F5F9' }}>
-      <style>{SLIDE_IN}</style>
-      <div style={{ padding: '16px 24px 12px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Create</div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, display: 'flex', alignItems: 'center' }}>
-          <X size={18} />
-        </button>
+    <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{label}</div>
+        <MoreHorizontal size={16} color="#CBD5E1" style={{ cursor: 'pointer', flexShrink: 0 }} />
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 24 }}>
-        {CREATE_COLUMNS.map(col => (
-          <div key={col.header}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid #F1F5F9' }}>
-              {col.header}
-            </div>
-            {col.items.map(item => (
-              <div
-                key={item.label}
-                onClick={() => { onNavigate(item.path); onClose(); }}
-                style={{ padding: '9px 8px', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: DEFAULT, lineHeight: 1.4, transition: 'all 0.12s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = ACCENT; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = DEFAULT; }}
-              >
-                {item.label}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function FlyoutPanel({ title, onClose, children, width }) {
-  const w = width || 280;
-  return (
-    <div style={{ position: 'fixed', top: 56, left: 80, height: 'calc(100vh - 56px)', width: w, background: '#fff', boxShadow: '4px 0 24px rgba(0,0,0,0.1)', zIndex: 45, display: 'flex', flexDirection: 'column', animation: 'slideIn 0.2s ease', borderRight: '1px solid #F1F5F9' }}>
-      <style>{SLIDE_IN}</style>
-      <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>{title}</div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, display: 'flex', alignItems: 'center' }}>
-          <X size={16} />
-        </button>
-      </div>
-      <div style={{ flex: 1, overflowY: 'auto', scrollbarWidth: 'none' }}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile }) {
-  const navigate                      = useNavigate();
-  const location                      = useLocation();
-  const [flyout,      setFlyout]      = useState(null);
-  const [hovItem,     setHovItem]     = useState(null);
-  const [localMobile, setLocalMobile] = useState(window.innerWidth < 768);
-  const sidebarRef                    = useRef(null);
-
-  const mobile = (isMobile !== undefined) ? isMobile : localMobile;
-
-  useEffect(() => {
-    const handler = () => setLocalMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
-        setFlyout(null);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  const handleItemClick = (item) => {
-    if (item.path) {
-      navigate(item.path);
-      setFlyout(null);
-      if (onMobileClose) onMobileClose();
-    } else if (item.flyout) {
-      setFlyout(flyout === item.flyout ? null : item.flyout);
-    }
-  };
-
-  const goTo = (path) => {
-    navigate(path);
-    setFlyout(null);
-    if (onMobileClose) onMobileClose();
-  };
-
-  const renderSlimItem = (item) => {
-    const Icon     = item.icon;
-    const isActive = item.path
-      ? (location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path)))
-      : flyout === item.flyout;
-    const isHov    = hovItem === item.id;
-
-    const iconColor  = isActive ? ACCENT : isHov ? ACCENT : DEFAULT;
-    const labelColor = isActive ? ACCENT : isHov ? ACCENT : DEFAULT;
-    const bg         = isActive ? '#E2F5F0' : isHov ? '#F1F5F9' : 'transparent';
-
-    return (
-      <div
-        key={item.id}
-        onClick={() => handleItemClick(item)}
-        onMouseEnter={() => setHovItem(item.id)}
-        onMouseLeave={() => setHovItem(null)}
-        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 6px', borderRadius: 10, cursor: 'pointer', width: 68, marginBottom: 2, background: bg, transition: 'all 0.15s ease', position: 'relative' }}
-      >
-        {isActive && (
-          <div style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 3, height: 24, borderRadius: '0 3px 3px 0', background: ACCENT }} />
-        )}
-        <div style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon size={22} color={iconColor} strokeWidth={2} />
+      {subtitle && <div style={{ fontSize: 12, color: '#64748B' }}>{subtitle}</div>}
+      {loading ? (
+        <div style={{ height: 36, background: '#F1F5F9', borderRadius: 8, animation: 'pulse 1.5s infinite' }} />
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>{value}</div>
+          <Info size={14} color="#CBD5E1" />
+          {badge && (
+            <div style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(10,185,138,0.1)', color: ACCENT }}>{badge}</div>
+          )}
         </div>
-        <span style={{ fontSize: 10, fontWeight: 500, color: labelColor, letterSpacing: '0.02em', textAlign: 'center', lineHeight: 1.2 }}>
-          {item.label}
-        </span>
+      )}
+      {trend && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {trendUp
+            ? <TrendingUp size={14} color={ACCENT} />
+            : <TrendingDown size={14} color="#EF4444" />
+          }
+          <span style={{ fontSize: 12, color: trendUp ? ACCENT : '#EF4444' }}>{trend}</span>
+        </div>
+      )}
+      {footer && (
+        <div
+          onClick={onFooter}
+          style={{ fontSize: 12, color: ACCENT, fontWeight: 500, cursor: 'pointer', marginTop: 4, paddingTop: 10, borderTop: '1px solid #F1F5F9' }}
+          onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+          onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+        >
+          {footer}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MiniBar({ income, expenses }) {
+  const total   = income + expenses || 1;
+  const incPct  = (income  / total) * 100;
+  const expPct  = (expenses / total) * 100;
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+        <div style={{ height: 8, borderRadius: 4, background: ACCENT, width: incPct + '%', minWidth: 4 }} />
+        <div style={{ height: 8, borderRadius: 4, background: '#EF4444', width: expPct + '%', minWidth: 4 }} />
+      </div>
+      <div style={{ display: 'flex', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ width: 8, height: 8, borderRadius: 2, background: ACCENT }} />
+          <span style={{ fontSize: 11, color: '#64748B' }}>Income {fmt(income)}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ width: 8, height: 8, borderRadius: 2, background: '#EF4444' }} />
+          <span style={{ fontSize: 11, color: '#64748B' }}>Expenses {fmt(expenses)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CashFlowChart({ data }) {
+  if (!data || data.length === 0) {
+    return (
+      <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontSize: 13 }}>
+        No cash flow data available
       </div>
     );
-  };
+  }
+
+  const max    = Math.max(...data.map(d => Math.abs(d.amount)), 1);
+  const width  = 100 / data.length;
 
   return (
-    <div ref={sidebarRef}>
-
-      {/* Desktop slim sidebar */}
-      <aside style={{ position: 'fixed', top: 56, left: 0, width: 80, height: 'calc(100vh - 56px)', background: '#FAFAFA', borderRight: '1px solid #E8EDF3', display: mobile ? 'none' : 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 8, paddingBottom: 8, zIndex: 44, fontFamily: FONT, overflowY: 'auto', scrollbarWidth: 'none' }}>
-
-        {/* Top items — correct order */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', paddingTop: 4 }}>
-          {SLIM_ITEMS.map(renderSlimItem)}
-        </div>
-
-        {/* PINNED section — desktop only label */}
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '10px 0 4px' }}>
-          <div style={{ fontSize: 9, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.14em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 6 }}>
-            PINNED
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 80, padding: '0 4px' }}>
+      {data.map((d, i) => {
+        const h   = Math.max((Math.abs(d.amount) / max) * 100, 4);
+        const pos = d.amount >= 0;
+        return (
+          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <div style={{ width: '100%', height: h + '%', background: pos ? 'rgba(10,185,138,0.7)' : 'rgba(239,68,68,0.7)', borderRadius: '3px 3px 0 0', minHeight: 3, transition: 'height 0.3s ease' }} />
+            <div style={{ fontSize: 8, color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%', textAlign: 'center' }}>{d.month}</div>
           </div>
-          {renderSlimItem({ id: 'accounting', icon: LayoutDashboard, label: 'Accounting', path: '/' })}
-        </div>
+        );
+      })}
+    </div>
+  );
+}
 
-        <div style={{ width: 48, height: 1, background: '#E8EDF3', margin: '8px 0', flexShrink: 0 }} />
+export default function Dashboard() {
+  const navigate  = useNavigate();
+  const token     = localStorage.getItem('token');
+  const rawName   = localStorage.getItem('user_name') || localStorage.getItem('full_name') || localStorage.getItem('user_email') || 'there';
+  const name      = rawName.includes('@') ? rawName.split('@')[0] : rawName;
+  const company   = localStorage.getItem('company_name') || 'My Business';
 
-        {/* Bottom items */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', marginTop: 'auto' }}>
-          {SLIM_BOTTOM.map(renderSlimItem)}
-          <div style={{ width: 48, height: 1, background: '#E8EDF3', margin: '6px 0', flexShrink: 0 }} />
-          <div
-            onClick={onLogout}
-            onMouseEnter={() => setHovItem('logout')}
-            onMouseLeave={() => setHovItem(null)}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 6px', borderRadius: 10, cursor: 'pointer', width: 68, marginBottom: 4, background: hovItem === 'logout' ? 'rgba(239,68,68,0.06)' : 'transparent', transition: 'all 0.15s' }}
+  const [stats,    setStats]    = useState(null);
+  const [txns,     setTxns]     = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [refresh,  setRefresh]  = useState(0);
+
+  const hour    = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+  const headers = { Authorization: 'Bearer ' + token };
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.allSettled([
+      fetch(API + '/dashboard/stats',  { headers }).then(r => r.json()),
+      fetch(API + '/transactions/',    { headers }).then(r => r.json()),
+      fetch(API + '/invoices/',        { headers }).then(r => r.json()),
+    ]).then(([statsRes, txnsRes, invRes]) => {
+      if (statsRes.status === 'fulfilled') setStats(statsRes.value);
+      if (txnsRes.status  === 'fulfilled') {
+        const t = txnsRes.value;
+        setTxns(Array.isArray(t) ? t : (t.transactions || t.items || t.data || []));
+      }
+      if (invRes.status === 'fulfilled') {
+        const v = invRes.value;
+        setInvoices(Array.isArray(v) ? v : (v.invoices || v.items || v.data || []));
+      }
+    }).finally(() => setLoading(false));
+  }, [refresh]);
+
+  // Calculate metrics from data
+  const revenue  = stats?.total_revenue  || stats?.revenue  || stats?.income  ||
+    txns.filter(t => (t.type || t.transaction_type || '').toLowerCase().includes('income') || parseFloat(t.amount || 0) > 0).reduce((s, t) => s + Math.abs(parseFloat(t.amount || 0)), 0);
+
+  const expenses = stats?.total_expenses || stats?.expenses ||
+    txns.filter(t => (t.type || t.transaction_type || '').toLowerCase().includes('expense') || parseFloat(t.amount || 0) < 0).reduce((s, t) => s + Math.abs(parseFloat(t.amount || 0)), 0);
+
+  const netProfit = stats?.net_profit || stats?.profit || (revenue - expenses);
+
+  const unpaidInvoices = invoices.filter(inv => {
+    const status = (inv.status || '').toLowerCase();
+    return status === 'unpaid' || status === 'pending' || status === 'sent';
+  });
+
+  const totalUnpaid = unpaidInvoices.reduce((s, inv) => s + parseFloat(inv.amount || inv.total || 0), 0);
+
+  // Build cash flow by month from transactions
+  const cashFlowMap = {};
+  txns.forEach(t => {
+    const date  = new Date(t.date || t.created_at || t.transaction_date || Date.now());
+    const key   = date.toLocaleString('default', { month: 'short', year: '2-digit' });
+    const amt   = parseFloat(t.amount || 0);
+    cashFlowMap[key] = (cashFlowMap[key] || 0) + amt;
+  });
+  const cashFlowData = Object.entries(cashFlowMap)
+    .slice(-8)
+    .map(([month, amount]) => ({ month, amount }));
+
+  const profitUp = netProfit >= 0;
+
+  return (
+    <div style={{ background: '#F8FAFC', minHeight: '100vh', fontFamily: FONT }}>
+      <style>{`
+        @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.5 } }
+        .shortcut-pill:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-1px); }
+        .action-chip:hover { background: #F1F5F9 !important; }
+      `}</style>
+
+      {/* Top bar */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #E5E7EB', padding: '14px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: '#334155' }}>{company}</div>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          <button
+            onClick={() => setRefresh(r => r + 1)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', fontSize: 12, fontFamily: FONT }}
           >
-            <div style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <LogOut size={22} color={hovItem === 'logout' ? '#EF4444' : DEFAULT} strokeWidth={2} />
-            </div>
-            <span style={{ fontSize: 10, fontWeight: 500, color: hovItem === 'logout' ? '#EF4444' : DEFAULT, textAlign: 'center' }}>
-              Sign Out
-            </span>
-          </div>
-        </div>
-      </aside>
-
-      {/* Mobile dark drawer */}
-      <div style={{ position: 'fixed', top: 0, left: 0, width: 300, height: '100vh', background: 'linear-gradient(180deg,#0F1A2E 0%,#0D1526 100%)', zIndex: 50, transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)', display: mobile ? 'flex' : 'none', flexDirection: 'column', fontFamily: FONT, boxShadow: '4px 0 32px rgba(0,0,0,0.4)' }}>
-
-        <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#F1F5F9', letterSpacing: '-0.02em' }}>
-            No<span style={{ color: ACCENT }}>vala</span>
-          </div>
-          <button onClick={onMobileClose} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, cursor: 'pointer', color: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, flexShrink: 0 }}>
-            <X size={18} />
+            <RefreshCw size={14} /> Refresh
+          </button>
+          <button
+            onClick={() => navigate('/settings')}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', fontSize: 12, fontFamily: FONT }}
+          >
+            <Sliders size={14} /> Customize
+          </button>
+          <button
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', fontSize: 12, fontFamily: FONT }}
+          >
+            <Eye size={14} /> Privacy
           </button>
         </div>
+      </div>
 
-        <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 12px', scrollbarWidth: 'none' }}>
-          {APP_GROUPS.map(group => (
-            <div key={group.label} style={{ marginBottom: 4 }}>
-              <div style={{ fontSize: 9, fontWeight: 700, color: '#475569', letterSpacing: '0.16em', textTransform: 'uppercase', padding: '14px 10px 6px' }}>
-                {group.label}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
+
+        {/* Greeting */}
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <h1 style={{ fontSize: 32, fontWeight: 700, color: '#0F172A', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+            {greeting}, {name.charAt(0).toUpperCase() + name.slice(1)}!
+          </h1>
+          <div style={{ fontSize: 14, color: '#64748B' }}>
+            Here is what is happening with your business today.
+          </div>
+        </div>
+
+        {/* App shortcuts */}
+        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8, marginBottom: 24, scrollbarWidth: 'none' }}>
+          {APP_SHORTCUTS.map(app => {
+            const Icon = app.icon;
+            return (
+              <div
+                key={app.label}
+                className="shortcut-pill"
+                onClick={() => navigate(app.path)}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 999, cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s' }}
+              >
+                <div style={{ width: 28, height: 28, borderRadius: 6, background: app.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon size={14} color={app.color} strokeWidth={2} />
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 500, color: '#334155', whiteSpace: 'nowrap' }}>{app.label}</span>
               </div>
-              {group.items.map(item => {
-                const Icon     = item.icon;
-                const isActive = location.pathname === item.path ||
-                  (item.path !== '/' && location.pathname.startsWith(item.path));
+            );
+          })}
+          <div
+            onClick={() => navigate('/reports')}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 999, cursor: 'pointer', flexShrink: 0 }}
+          >
+            <ChevronRight size={16} color="#64748B" />
+          </div>
+        </div>
+
+        {/* Create actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#334155', marginRight: 4 }}>Create actions</span>
+          {CREATE_ACTIONS.map(action => (
+            <div
+              key={action.label}
+              className="action-chip"
+              onClick={() => navigate(action.path)}
+              style={{ padding: '7px 14px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 999, cursor: 'pointer', fontSize: 12, fontWeight: 500, color: '#334155', transition: 'all 0.15s' }}
+            >
+              {action.label}
+            </div>
+          ))}
+          <span
+            onClick={() => navigate('/transactions')}
+            style={{ fontSize: 12, color: ACCENT, fontWeight: 600, cursor: 'pointer', marginLeft: 4 }}
+            onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+            onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+          >
+            Show all
+          </span>
+        </div>
+
+        {/* Business at a glance heading */}
+        <div style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', marginBottom: 16, letterSpacing: '-0.01em' }}>
+          Business at a glance
+        </div>
+
+        {/* Widget grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginBottom: 16 }}>
+
+          {/* Profit & Loss */}
+          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '20px 22px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Profit & Loss</div>
+              <MoreHorizontal size={16} color="#CBD5E1" style={{ cursor: 'pointer' }} />
+            </div>
+            <div style={{ fontSize: 12, color: '#64748B', marginBottom: 8 }}>Net profit this month</div>
+            {loading ? (
+              <div style={{ height: 36, background: '#F1F5F9', borderRadius: 8 }} />
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <div style={{ fontSize: 28, fontWeight: 800, color: profitUp ? '#0F172A' : '#EF4444', letterSpacing: '-0.02em' }}>
+                  {fmt(netProfit)}
+                </div>
+                <Info size={14} color="#CBD5E1" />
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+              {profitUp ? <TrendingUp size={14} color={ACCENT} /> : <TrendingDown size={14} color="#EF4444" />}
+              <span style={{ fontSize: 12, color: profitUp ? ACCENT : '#EF4444' }}>
+                {profitUp ? 'Profitable this period' : 'Loss this period'}
+              </span>
+            </div>
+            <MiniBar income={revenue} expenses={expenses} />
+            <div
+              onClick={() => navigate('/reports')}
+              style={{ fontSize: 12, color: ACCENT, fontWeight: 500, cursor: 'pointer', marginTop: 12, paddingTop: 10, borderTop: '1px solid #F1F5F9' }}
+              onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+              onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+            >
+              View full report
+            </div>
+          </div>
+
+          {/* Expenses */}
+          <StatCard
+            label="Expenses"
+            subtitle="Total spending recorded"
+            value={loading ? '—' : fmt(expenses)}
+            trend={expenses > 0 ? 'Recorded this period' : 'No expenses yet'}
+            trendUp={false}
+            footer="View all expenses"
+            onFooter={() => navigate('/transactions')}
+            loading={loading}
+          />
+
+          {/* Invoices */}
+          <StatCard
+            label="Outstanding Invoices"
+            subtitle="Unpaid invoices"
+            value={loading ? '—' : fmt(totalUnpaid)}
+            badge={unpaidInvoices.length > 0 ? unpaidInvoices.length + ' unpaid' : null}
+            trend={unpaidInvoices.length > 0 ? unpaidInvoices.length + ' invoices awaiting payment' : 'All invoices paid'}
+            trendUp={unpaidInvoices.length === 0}
+            footer="View all invoices"
+            onFooter={() => navigate('/invoices')}
+            loading={loading}
+          />
+
+          {/* Revenue */}
+          <StatCard
+            label="Revenue"
+            subtitle="Total income recorded"
+            value={loading ? '—' : fmt(revenue)}
+            trend={revenue > 0 ? 'Income this period' : 'No income recorded yet'}
+            trendUp={revenue > 0}
+            footer="View transactions"
+            onFooter={() => navigate('/transactions')}
+            loading={loading}
+          />
+        </div>
+
+        {/* Cash Flow */}
+        <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '20px 22px', marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>Cash Flow</div>
+              <div style={{ fontSize: 12, color: '#64748B' }}>Based on recorded transactions</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button
+                onClick={() => setRefresh(r => r + 1)}
+                style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: 11, fontFamily: FONT }}
+              >
+                <RefreshCw size={12} /> Refresh
+              </button>
+              <MoreHorizontal size={16} color="#CBD5E1" style={{ cursor: 'pointer' }} />
+            </div>
+          </div>
+          {loading ? (
+            <div style={{ height: 80, background: '#F1F5F9', borderRadius: 8 }} />
+          ) : (
+            <CashFlowChart data={cashFlowData} />
+          )}
+          <div style={{ display: 'flex', gap: 16, marginTop: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: 'rgba(10,185,138,0.7)' }} />
+              <span style={{ fontSize: 11, color: '#64748B' }}>Income</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: 'rgba(239,68,68,0.7)' }} />
+              <span style={{ fontSize: 11, color: '#64748B' }}>Expenses</span>
+            </div>
+          </div>
+          <div
+            onClick={() => navigate('/transactions')}
+            style={{ fontSize: 12, color: ACCENT, fontWeight: 500, cursor: 'pointer', marginTop: 12, paddingTop: 10, borderTop: '1px solid #F1F5F9' }}
+            onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+            onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+          >
+            View all transactions
+          </div>
+        </div>
+
+        {/* Recent Transactions */}
+        <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '20px 22px', marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Recent Transactions</div>
+            <button
+              onClick={() => navigate('/transactions')}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', color: ACCENT, fontSize: 12, fontWeight: 600, fontFamily: FONT }}
+            >
+              View all <ChevronRight size={14} />
+            </button>
+          </div>
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[1, 2, 3].map(i => (
+                <div key={i} style={{ height: 40, background: '#F1F5F9', borderRadius: 8 }} />
+              ))}
+            </div>
+          ) : txns.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '32px 0', color: '#94A3B8', fontSize: 13 }}>
+              No transactions yet.
+              <span onClick={() => navigate('/transactions')} style={{ color: ACCENT, cursor: 'pointer', marginLeft: 4 }}>Add one</span>
+            </div>
+          ) : (
+            <div>
+              {txns.slice(0, 6).map((t, i) => {
+                const amt     = parseFloat(t.amount || 0);
+                const isPos   = amt >= 0;
+                const date    = new Date(t.date || t.created_at || t.transaction_date || Date.now());
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 return (
                   <div
-                    key={item.path}
-                    onClick={() => goTo(item.path)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 12px', borderRadius: 10, cursor: 'pointer', marginBottom: 1, background: isActive ? 'rgba(10,185,138,0.12)' : 'transparent', borderLeft: '3px solid ' + (isActive ? ACCENT : 'transparent'), transition: 'all 0.15s' }}
-                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                    key={t.id || i}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < 5 ? '1px solid #F8FAFC' : 'none' }}
                   >
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: isActive ? group.color + '25' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Icon size={16} color={isActive ? ACCENT : '#94A3B8'} strokeWidth={2} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 9, background: isPos ? 'rgba(10,185,138,0.1)' : 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {isPos
+                          ? <TrendingUp size={16} color={ACCENT} />
+                          : <TrendingDown size={16} color="#EF4444" />
+                        }
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: '#0F172A' }}>{t.description || t.name || t.memo || 'Transaction'}</div>
+                        <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{dateStr}</div>
+                      </div>
                     </div>
-                    <span style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, color: isActive ? '#F1F5F9' : '#94A3B8' }}>
-                      {item.label}
-                    </span>
-                    {isActive && (
-                      <div style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: ACCENT, flexShrink: 0 }} />
-                    )}
+                    <div style={{ fontSize: 14, fontWeight: 700, color: isPos ? ACCENT : '#EF4444' }}>
+                      {isPos ? '+' : ''}{fmt(amt)}
+                    </div>
                   </div>
                 );
               })}
             </div>
-          ))}
-        </nav>
-
-        <div style={{ padding: '12px 16px 32px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
-          <button
-            onClick={onLogout}
-            style={{ width: '100%', padding: '12px', borderRadius: 10, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#64748B', cursor: 'pointer', fontSize: 14, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.15s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.2)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748B'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
-          >
-            <LogOut size={16} /> Sign Out
-          </button>
+          )}
         </div>
-      </div>
 
-      {/* Flyout panels desktop only */}
-      {!mobile && flyout === 'create' && (
-        <CreateFlyout onClose={() => setFlyout(null)} onNavigate={goTo} />
-      )}
-
-      {!mobile && flyout === 'bookmarks' && (
-        <FlyoutPanel title="Bookmarks" onClose={() => setFlyout(null)}>
-          <div style={{ padding: '24px 20px', textAlign: 'center' }}>
-            <Bookmark size={32} color="#CBD5E1" style={{ marginBottom: 12 }} />
-            <div style={{ fontSize: 14, fontWeight: 600, color: DEFAULT, marginBottom: 6 }}>No bookmarks yet</div>
-            <div style={{ fontSize: 12, color: MUTED, marginBottom: 20 }}>Add a bookmark to get started</div>
-            <button
-              onClick={() => setFlyout(null)}
-              style={{ padding: '8px 16px', borderRadius: 8, background: ACCENT, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: FONT }}
-            >
-              + Bookmark current page
-            </button>
-          </div>
-        </FlyoutPanel>
-      )}
-
-      {!mobile && flyout === 'feed' && (
-        <FlyoutPanel title="Feed" onClose={() => setFlyout(null)}>
-          <div style={{ padding: '24px 20px', textAlign: 'center' }}>
-            <Sparkles size={32} color="#CBD5E1" style={{ marginBottom: 12 }} />
-            <div style={{ fontSize: 14, fontWeight: 600, color: DEFAULT, marginBottom: 6 }}>Your activity feed</div>
-            <div style={{ fontSize: 12, color: MUTED }}>Recent transactions and updates will appear here.</div>
-          </div>
-        </FlyoutPanel>
-      )}
-
-      {!mobile && flyout === 'reports' && (
-        <FlyoutPanel title="Reports and Analytics" onClose={() => setFlyout(null)}>
-          <div style={{ padding: '8px 12px' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '10px 8px 8px' }}>
-              REPORTS AND ANALYTICS
-            </div>
-            {[
-              { label: 'Financial Reports', path: '/reports',        active: true  },
-              { label: 'Variance Reports',  path: '/variance',       active: false },
-              { label: 'Ledger View',       path: '/ledger',         active: false },
-              { label: 'Reconciliation',    path: '/reconciliation', active: false },
-              { label: 'Smart Search',      path: '/search',         active: false },
-            ].map(item => (
+        {/* Quick actions row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
+          {[
+            { label: 'New Invoice',    icon: FileText,       path: '/invoices',     color: '#3B82F6' },
+            { label: 'Add Expense',    icon: Receipt,        path: '/transactions', color: '#EF4444' },
+            { label: 'View Reports',   icon: BarChart2,      path: '/reports',      color: '#F59E0B' },
+            { label: 'Scan Receipt',   icon: Receipt,        path: '/receipts',     color: '#8B5CF6' },
+          ].map(item => {
+            const Icon = item.icon;
+            return (
               <div
                 key={item.label}
-                onClick={() => goTo(item.path)}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 2, background: item.active ? 'rgba(10,185,138,0.06)' : 'transparent', transition: 'all 0.15s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#F1F5F9'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = item.active ? 'rgba(10,185,138,0.06)' : 'transparent'; }}
+                onClick={() => navigate(item.path)}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, cursor: 'pointer', transition: 'all 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
               >
-                <span style={{ fontSize: 13, color: item.active ? ACCENT : DEFAULT, fontWeight: item.active ? 600 : 400, flex: 1 }}>
-                  {item.label}
-                </span>
-                <ChevronRight size={13} color="#CBD5E1" />
-              </div>
-            ))}
-          </div>
-        </FlyoutPanel>
-      )}
-
-      {!mobile && flyout === 'apps' && (
-        <FlyoutPanel title="All Apps" onClose={() => setFlyout(null)} width={300}>
-          <div style={{ padding: '8px 12px' }}>
-            {APP_GROUPS.map(group => (
-              <div key={group.label} style={{ marginBottom: 6 }}>
-                <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '10px 8px 6px' }}>
-                  {group.label}
+                <div style={{ width: 36, height: 36, borderRadius: 9, background: item.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon size={17} color={item.color} strokeWidth={2} />
                 </div>
-                {group.items.map(item => {
-                  const Icon     = item.icon;
-                  const isActive = location.pathname === item.path ||
-                    (item.path !== '/' && location.pathname.startsWith(item.path));
-                  return (
-                    <div
-                      key={item.path}
-                      onClick={() => goTo(item.path)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 10px', borderRadius: 8, cursor: 'pointer', marginBottom: 1, background: isActive ? 'rgba(10,185,138,0.06)' : 'transparent', transition: 'all 0.15s' }}
-                      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#F1F5F9'; }}
-                      onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-                    >
-                      <div style={{ width: 30, height: 30, borderRadius: 8, background: group.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Icon size={15} color={isActive ? ACCENT : group.color} strokeWidth={2} />
-                      </div>
-                      <span style={{ fontSize: 13, color: isActive ? ACCENT : DEFAULT, fontWeight: isActive ? 600 : 400, flex: 1 }}>
-                        {item.label}
-                      </span>
-                      <ChevronRight size={12} color="#CBD5E1" />
-                    </div>
-                  );
-                })}
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>{item.label}</span>
+                <ChevronRight size={14} color="#CBD5E1" style={{ marginLeft: 'auto' }} />
               </div>
-            ))}
-          </div>
-        </FlyoutPanel>
-      )}
+            );
+          })}
+        </div>
 
-      {!mobile && flyout === 'more' && (
-        <FlyoutPanel title="More" onClose={() => setFlyout(null)}>
-          <div style={{ padding: '8px 12px' }}>
-            {MORE_ITEMS.map(item => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.label}
-                  onClick={() => { if (item.path) goTo(item.path); else setFlyout(null); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 2, transition: 'all 0.15s' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#F1F5F9'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <div style={{ width: 30, height: 30, borderRadius: 8, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Icon size={15} color={DEFAULT} strokeWidth={2} />
-                  </div>
-                  <span style={{ fontSize: 13, color: DEFAULT, fontWeight: 400, flex: 1 }}>{item.label}</span>
-                  <ChevronRight size={12} color="#CBD5E1" />
-                </div>
-              );
-            })}
+        {/* Footer */}
+        <div style={{ textAlign: 'center', padding: '24px 0 8px', borderTop: '1px solid #E5E7EB' }}>
+          <div style={{ fontSize: 12, color: '#94A3B8' }}>
+            2026 Novala. All rights reserved.
+            <span style={{ margin: '0 8px', color: '#E5E7EB' }}>|</span>
+            <span style={{ cursor: 'pointer', color: ACCENT }} onClick={() => navigate('/settings')}>Privacy</span>
+            <span style={{ margin: '0 8px', color: '#E5E7EB' }}>|</span>
+            <span style={{ cursor: 'pointer', color: ACCENT }}>Security</span>
+            <span style={{ margin: '0 8px', color: '#E5E7EB' }}>|</span>
+            <span style={{ cursor: 'pointer', color: ACCENT }}>Terms of Service</span>
           </div>
-        </FlyoutPanel>
-      )}
-
-      {!mobile && flyout === 'customize' && (
-        <FlyoutPanel title="Customize Sidebar" onClose={() => setFlyout(null)}>
-          <div style={{ padding: '20px' }}>
-            <div style={{ fontSize: 13, color: MUTED, marginBottom: 16, lineHeight: 1.6 }}>
-              Pin your most-used pages to the sidebar for quick access.
-            </div>
-            {APP_GROUPS.map(group => (
-              <div key={group.label} style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
-                  {group.label}
-                </div>
-                {group.items.map(item => {
-                  const Icon = item.icon;
-                  return (
-                    <div
-                      key={item.path}
-                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, marginBottom: 2 }}
-                    >
-                      <div style={{ width: 26, height: 26, borderRadius: 6, background: group.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Icon size={13} color={group.color} strokeWidth={2} />
-                      </div>
-                      <span style={{ fontSize: 13, color: DEFAULT, flex: 1 }}>{item.label}</span>
-                      <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid #E8EDF3', cursor: 'pointer', flexShrink: 0 }} />
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-            <button
-              onClick={() => setFlyout(null)}
-              style={{ width: '100%', padding: '10px', borderRadius: 8, background: ACCENT, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: FONT, marginTop: 12 }}
-            >
-              Save
-            </button>
-          </div>
-        </FlyoutPanel>
-      )}
+        </div>
+      </div>
     </div>
   );
 }

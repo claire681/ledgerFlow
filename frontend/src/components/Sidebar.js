@@ -11,10 +11,14 @@ import {
   Settings as SettingsIcon, HelpCircle,
   ChevronRight, X, LogOut,
   Sliders, MoreHorizontal, Bookmark,
+  Sparkles, Keyboard, Bell, ClipboardList,
+  MessageSquare, Zap,
 } from 'lucide-react';
 
-const ACCENT = '#0AB98A';
-const FONT   = "'Inter', -apple-system, sans-serif";
+const ACCENT  = '#0AB98A';
+const FONT    = "'Inter', -apple-system, sans-serif";
+const DEFAULT = '#334155';
+const MUTED   = '#64748B';
 
 const SLIDE_IN = `
   @keyframes slideIn {
@@ -77,11 +81,11 @@ const CREATE_COLUMNS = [
   {
     header: 'Customers',
     items: [
-      { label: 'Invoice',         path: '/invoices'     },
-      { label: 'Receive payment', path: '/transactions' },
-      { label: 'Estimate',        path: '/invoices'     },
-      { label: 'Sales receipt',   path: '/invoices'     },
-      { label: 'Add customer',    path: '/customers'    },
+      { label: 'Invoice',          path: '/invoices'     },
+      { label: 'Receive payment',  path: '/transactions' },
+      { label: 'Estimate',         path: '/invoices'     },
+      { label: 'Sales receipt',    path: '/invoices'     },
+      { label: 'Add customer',     path: '/customers'    },
     ],
   },
   {
@@ -112,10 +116,12 @@ const CREATE_COLUMNS = [
   },
 ];
 
+// Correct order per spec
 const SLIM_ITEMS = [
-  { id: 'home',      icon: Home,      label: 'Home',      path: '/'           },
   { id: 'create',    icon: Plus,      label: 'Create',    flyout: 'create'    },
   { id: 'bookmarks', icon: Bookmark,  label: 'Bookmarks', flyout: 'bookmarks' },
+  { id: 'home',      icon: Home,      label: 'Home',      path: '/'           },
+  { id: 'feed',      icon: Sparkles,  label: 'Feed',      flyout: 'feed'      },
   { id: 'reports',   icon: BarChart2, label: 'Reports',   flyout: 'reports'   },
   { id: 'allapps',   icon: Grid,      label: 'All Apps',  flyout: 'apps'      },
 ];
@@ -125,13 +131,23 @@ const SLIM_BOTTOM = [
   { id: 'customize', icon: Sliders,        label: 'Customize', flyout: 'customize' },
 ];
 
+const MORE_ITEMS = [
+  { label: 'Bookmarks',          icon: Bookmark,     path: null        },
+  { label: 'Audit Log',          icon: ClipboardList,path: '/reports'  },
+  { label: 'Settings',           icon: SettingsIcon, path: '/settings' },
+  { label: 'Help & Support',     icon: HelpCircle,   path: '/help'     },
+  { label: 'Keyboard Shortcuts', icon: Keyboard,     path: null        },
+  { label: "What's New",         icon: Zap,          path: null        },
+  { label: 'Send Feedback',      icon: MessageSquare,path: null        },
+];
+
 function CreateFlyout({ onClose, onNavigate }) {
   return (
     <div style={{ position: 'fixed', top: 56, left: 80, height: 'calc(100vh - 56px)', width: 680, background: '#fff', boxShadow: '4px 0 32px rgba(0,0,0,0.12)', zIndex: 45, display: 'flex', flexDirection: 'column', animation: 'slideIn 0.2s ease', borderRight: '1px solid #F1F5F9' }}>
       <style>{SLIDE_IN}</style>
       <div style={{ padding: '16px 24px 12px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Create</div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex', alignItems: 'center' }}>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, display: 'flex', alignItems: 'center' }}>
           <X size={18} />
         </button>
       </div>
@@ -145,9 +161,9 @@ function CreateFlyout({ onClose, onNavigate }) {
               <div
                 key={item.label}
                 onClick={() => { onNavigate(item.path); onClose(); }}
-                style={{ padding: '9px 8px', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#334155', lineHeight: 1.4, transition: 'all 0.12s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.color = ACCENT; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#334155'; }}
+                style={{ padding: '9px 8px', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: DEFAULT, lineHeight: 1.4, transition: 'all 0.12s' }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = ACCENT; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = DEFAULT; }}
               >
                 {item.label}
               </div>
@@ -166,7 +182,7 @@ function FlyoutPanel({ title, onClose, children, width }) {
       <style>{SLIDE_IN}</style>
       <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>{title}</div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex', alignItems: 'center' }}>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, display: 'flex', alignItems: 'center' }}>
           <X size={16} />
         </button>
       </div>
@@ -226,27 +242,25 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
       : flyout === item.flyout;
     const isHov    = hovItem === item.id;
 
+    const iconColor  = isActive ? ACCENT : isHov ? ACCENT : DEFAULT;
+    const labelColor = isActive ? ACCENT : isHov ? ACCENT : DEFAULT;
+    const bg         = isActive ? '#E2F5F0' : isHov ? '#F1F5F9' : 'transparent';
+
     return (
       <div
         key={item.id}
         onClick={() => handleItemClick(item)}
         onMouseEnter={() => setHovItem(item.id)}
         onMouseLeave={() => setHovItem(null)}
-        style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          gap: 5, padding: '10px 6px', borderRadius: 10, cursor: 'pointer',
-          width: 64, marginBottom: 2,
-          background: isActive ? 'rgba(10,185,138,0.08)' : isHov ? '#F5F5F5' : 'transparent',
-          transition: 'all 0.15s ease', position: 'relative',
-        }}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 6px', borderRadius: 10, cursor: 'pointer', width: 68, marginBottom: 2, background: bg, transition: 'all 0.15s ease', position: 'relative' }}
       >
         {isActive && (
           <div style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 3, height: 24, borderRadius: '0 3px 3px 0', background: ACCENT }} />
         )}
-        <div style={{ width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isActive ? 'rgba(10,185,138,0.12)' : isHov ? '#EBEBEB' : 'transparent', transition: 'all 0.15s' }}>
-          <Icon size={21} color={isActive ? ACCENT : isHov ? '#1E293B' : '#64748B'} strokeWidth={isActive ? 2.5 : 1.8} />
+        <div style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={22} color={iconColor} strokeWidth={2} />
         </div>
-        <span style={{ fontSize: 9, fontWeight: isActive ? 700 : 500, color: isActive ? ACCENT : isHov ? '#1E293B' : '#94A3B8', letterSpacing: '0.03em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.2 }}>
+        <span style={{ fontSize: 10, fontWeight: 500, color: labelColor, letterSpacing: '0.02em', textAlign: 'center', lineHeight: 1.2 }}>
           {item.label}
         </span>
       </div>
@@ -259,19 +273,22 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
       {/* Desktop slim sidebar */}
       <aside style={{ position: 'fixed', top: 56, left: 0, width: 80, height: 'calc(100vh - 56px)', background: '#FAFAFA', borderRight: '1px solid #E8EDF3', display: mobile ? 'none' : 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 8, paddingBottom: 8, zIndex: 44, fontFamily: FONT, overflowY: 'auto', scrollbarWidth: 'none' }}>
 
+        {/* Top items — correct order */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', paddingTop: 4 }}>
           {SLIM_ITEMS.map(renderSlimItem)}
         </div>
 
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 0 4px' }}>
-          <div style={{ fontSize: 8, fontWeight: 700, color: '#CBD5E1', letterSpacing: '0.12em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 8 }}>
+        {/* PINNED section — desktop only label */}
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '10px 0 4px' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.14em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 6 }}>
             PINNED
           </div>
-          {renderSlimItem({ id: 'pinned-home', icon: LayoutDashboard, label: 'Core', path: '/' })}
+          {renderSlimItem({ id: 'accounting', icon: LayoutDashboard, label: 'Accounting', path: '/' })}
         </div>
 
         <div style={{ width: 48, height: 1, background: '#E8EDF3', margin: '8px 0', flexShrink: 0 }} />
 
+        {/* Bottom items */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', marginTop: 'auto' }}>
           {SLIM_BOTTOM.map(renderSlimItem)}
           <div style={{ width: 48, height: 1, background: '#E8EDF3', margin: '6px 0', flexShrink: 0 }} />
@@ -279,12 +296,12 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
             onClick={onLogout}
             onMouseEnter={() => setHovItem('logout')}
             onMouseLeave={() => setHovItem(null)}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '10px 6px', borderRadius: 10, cursor: 'pointer', width: 64, marginBottom: 4, background: hovItem === 'logout' ? 'rgba(239,68,68,0.06)' : 'transparent', transition: 'all 0.15s' }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 6px', borderRadius: 10, cursor: 'pointer', width: 68, marginBottom: 4, background: hovItem === 'logout' ? 'rgba(239,68,68,0.06)' : 'transparent', transition: 'all 0.15s' }}
           >
-            <div style={{ width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: hovItem === 'logout' ? 'rgba(239,68,68,0.08)' : 'transparent' }}>
-              <LogOut size={21} color={hovItem === 'logout' ? '#EF4444' : '#94A3B8'} strokeWidth={1.8} />
+            <div style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <LogOut size={22} color={hovItem === 'logout' ? '#EF4444' : DEFAULT} strokeWidth={2} />
             </div>
-            <span style={{ fontSize: 9, fontWeight: 500, color: hovItem === 'logout' ? '#EF4444' : '#94A3B8', letterSpacing: '0.03em', textTransform: 'uppercase', textAlign: 'center' }}>
+            <span style={{ fontSize: 10, fontWeight: 500, color: hovItem === 'logout' ? '#EF4444' : DEFAULT, textAlign: 'center' }}>
               Sign Out
             </span>
           </div>
@@ -298,10 +315,7 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
           <div style={{ fontSize: 18, fontWeight: 800, color: '#F1F5F9', letterSpacing: '-0.02em' }}>
             No<span style={{ color: ACCENT }}>vala</span>
           </div>
-          <button
-            onClick={onMobileClose}
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, cursor: 'pointer', color: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, flexShrink: 0 }}
-          >
+          <button onClick={onMobileClose} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, cursor: 'pointer', color: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, flexShrink: 0 }}>
             <X size={18} />
           </button>
         </div>
@@ -325,7 +339,7 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
                     onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                   >
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: isActive ? group.color + '25' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Icon size={16} color={isActive ? ACCENT : '#64748B'} strokeWidth={isActive ? 2.5 : 1.8} />
+                      <Icon size={16} color={isActive ? ACCENT : '#94A3B8'} strokeWidth={2} />
                     </div>
                     <span style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, color: isActive ? '#F1F5F9' : '#94A3B8' }}>
                       {item.label}
@@ -361,8 +375,8 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
         <FlyoutPanel title="Bookmarks" onClose={() => setFlyout(null)}>
           <div style={{ padding: '24px 20px', textAlign: 'center' }}>
             <Bookmark size={32} color="#CBD5E1" style={{ marginBottom: 12 }} />
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#334155', marginBottom: 6 }}>No bookmarks yet</div>
-            <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 20 }}>Add a bookmark to get started</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: DEFAULT, marginBottom: 6 }}>No bookmarks yet</div>
+            <div style={{ fontSize: 12, color: MUTED, marginBottom: 20 }}>Add a bookmark to get started</div>
             <button
               onClick={() => setFlyout(null)}
               style={{ padding: '8px 16px', borderRadius: 8, background: ACCENT, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: FONT }}
@@ -373,10 +387,20 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
         </FlyoutPanel>
       )}
 
+      {!mobile && flyout === 'feed' && (
+        <FlyoutPanel title="Feed" onClose={() => setFlyout(null)}>
+          <div style={{ padding: '24px 20px', textAlign: 'center' }}>
+            <Sparkles size={32} color="#CBD5E1" style={{ marginBottom: 12 }} />
+            <div style={{ fontSize: 14, fontWeight: 600, color: DEFAULT, marginBottom: 6 }}>Your activity feed</div>
+            <div style={{ fontSize: 12, color: MUTED }}>Recent transactions and updates will appear here.</div>
+          </div>
+        </FlyoutPanel>
+      )}
+
       {!mobile && flyout === 'reports' && (
         <FlyoutPanel title="Reports and Analytics" onClose={() => setFlyout(null)}>
           <div style={{ padding: '8px 12px' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '10px 8px 8px' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '10px 8px 8px' }}>
               REPORTS AND ANALYTICS
             </div>
             {[
@@ -390,10 +414,10 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
                 key={item.label}
                 onClick={() => goTo(item.path)}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 2, background: item.active ? 'rgba(10,185,138,0.06)' : 'transparent', transition: 'all 0.15s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#F8FAFC'; }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#F1F5F9'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = item.active ? 'rgba(10,185,138,0.06)' : 'transparent'; }}
               >
-                <span style={{ fontSize: 13, color: item.active ? ACCENT : '#334155', fontWeight: item.active ? 600 : 400, flex: 1 }}>
+                <span style={{ fontSize: 13, color: item.active ? ACCENT : DEFAULT, fontWeight: item.active ? 600 : 400, flex: 1 }}>
                   {item.label}
                 </span>
                 <ChevronRight size={13} color="#CBD5E1" />
@@ -408,7 +432,7 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
           <div style={{ padding: '8px 12px' }}>
             {APP_GROUPS.map(group => (
               <div key={group.label} style={{ marginBottom: 6 }}>
-                <div style={{ fontSize: 9, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '10px 8px 6px' }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '10px 8px 6px' }}>
                   {group.label}
                 </div>
                 {group.items.map(item => {
@@ -420,13 +444,13 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
                       key={item.path}
                       onClick={() => goTo(item.path)}
                       style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 10px', borderRadius: 8, cursor: 'pointer', marginBottom: 1, background: isActive ? 'rgba(10,185,138,0.06)' : 'transparent', transition: 'all 0.15s' }}
-                      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#F8FAFC'; }}
+                      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#F1F5F9'; }}
                       onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                     >
                       <div style={{ width: 30, height: 30, borderRadius: 8, background: group.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Icon size={15} color={isActive ? ACCENT : group.color} />
+                        <Icon size={15} color={isActive ? ACCENT : group.color} strokeWidth={2} />
                       </div>
-                      <span style={{ fontSize: 13, color: isActive ? ACCENT : '#334155', fontWeight: isActive ? 600 : 400, flex: 1 }}>
+                      <span style={{ fontSize: 13, color: isActive ? ACCENT : DEFAULT, fontWeight: isActive ? 600 : 400, flex: 1 }}>
                         {item.label}
                       </span>
                       <ChevronRight size={12} color="#CBD5E1" />
@@ -442,25 +466,20 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
       {!mobile && flyout === 'more' && (
         <FlyoutPanel title="More" onClose={() => setFlyout(null)}>
           <div style={{ padding: '8px 12px' }}>
-            {[
-              { label: 'Settings',     path: '/settings',     icon: SettingsIcon },
-              { label: 'Help',         path: '/help',         icon: HelpCircle   },
-              { label: 'Billing',      path: '/billing',      icon: CreditCard   },
-              { label: 'Integrations', path: '/integrations', icon: Link2        },
-            ].map(item => {
+            {MORE_ITEMS.map(item => {
               const Icon = item.icon;
               return (
                 <div
                   key={item.label}
-                  onClick={() => goTo(item.path)}
+                  onClick={() => { if (item.path) goTo(item.path); else setFlyout(null); }}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 2, transition: 'all 0.15s' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#F8FAFC'; }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#F1F5F9'; }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <div style={{ width: 30, height: 30, borderRadius: 8, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Icon size={15} color="#64748B" />
+                    <Icon size={15} color={DEFAULT} strokeWidth={2} />
                   </div>
-                  <span style={{ fontSize: 13, color: '#334155', fontWeight: 400, flex: 1 }}>{item.label}</span>
+                  <span style={{ fontSize: 13, color: DEFAULT, fontWeight: 400, flex: 1 }}>{item.label}</span>
                   <ChevronRight size={12} color="#CBD5E1" />
                 </div>
               );
@@ -472,12 +491,12 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
       {!mobile && flyout === 'customize' && (
         <FlyoutPanel title="Customize Sidebar" onClose={() => setFlyout(null)}>
           <div style={{ padding: '20px' }}>
-            <div style={{ fontSize: 13, color: '#64748B', marginBottom: 16, lineHeight: 1.6 }}>
+            <div style={{ fontSize: 13, color: MUTED, marginBottom: 16, lineHeight: 1.6 }}>
               Pin your most-used pages to the sidebar for quick access.
             </div>
             {APP_GROUPS.map(group => (
               <div key={group.label} style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
                   {group.label}
                 </div>
                 {group.items.map(item => {
@@ -488,9 +507,9 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
                       style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, marginBottom: 2 }}
                     >
                       <div style={{ width: 26, height: 26, borderRadius: 6, background: group.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Icon size={13} color={group.color} />
+                        <Icon size={13} color={group.color} strokeWidth={2} />
                       </div>
-                      <span style={{ fontSize: 13, color: '#334155', flex: 1 }}>{item.label}</span>
+                      <span style={{ fontSize: 13, color: DEFAULT, flex: 1 }}>{item.label}</span>
                       <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid #E8EDF3', cursor: 'pointer', flexShrink: 0 }} />
                     </div>
                   );
