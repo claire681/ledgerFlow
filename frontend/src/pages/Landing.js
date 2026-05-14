@@ -5,51 +5,11 @@ import {
   Lock, Cloud, ChevronDown, Zap, Users, Globe,
   CreditCard, Calculator, Building2, Smartphone,
   ArrowRight, Star, Database, RefreshCw, Eye,
-  BookOpen, Receipt, Brain,
+  BookOpen, Receipt, Brain, Repeat, ScanLine,
+  MessageSquare, Folder, GitMerge, Package,
+  HelpCircle, CheckCircle, Layers, Sparkles,
+  DollarSign, PieChart, ArrowUpCircle, Briefcase,
 } from "lucide-react";
-
-// ── Rotating word + icon pairs ───────────────────────────────
-const ROTATING_WORDS = [
-  { word: "Bookkeeping",    Icon: BookOpen  },
-  { word: "Invoicing",      Icon: FileText  },
-  { word: "Reporting",      Icon: BarChart3 },
-  { word: "Reconciliation", Icon: RefreshCw },
-  { word: "Bill Pay",       Icon: CreditCard},
-  { word: "Tax Filing",     Icon: Receipt   },
-];
-
-function RotatingWord() {
-  const [index,   setIndex]   = useState(0);
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setVisible(false);
-      setTimeout(() => {
-        setIndex(i => (i + 1) % ROTATING_WORDS.length);
-        setVisible(true);
-      }, 250);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
-
-  const { word, Icon } = ROTATING_WORDS[index];
-
-  return (
-    <span style={{
-      display:    'inline-flex',
-      alignItems: 'center',
-      gap:        8,
-      color:      '#00D4A4',
-      opacity:    visible ? 1 : 0,
-      transform:  visible ? 'translateY(0)' : 'translateY(-8px)',
-      transition: 'opacity 0.25s ease, transform 0.25s ease',
-    }}>
-      <Icon size={48} color="#00D4A4" strokeWidth={2.2} style={{ verticalAlign: 'middle' }} />
-      {word}
-    </span>
-  );
-}
 
 function useInView(threshold = 0.12) {
   const ref = useRef(null);
@@ -103,7 +63,8 @@ function Reveal({ children, delay = 0, direction = "up", pop = false }) {
   );
 }
 
-function FAQ({ q, a }) {
+// ── Enhanced FAQ with icon ────────────────────────────────────
+function FAQ({ q, a, icon }) {
   const [open, setOpen] = useState(false);
   return (
     <div onClick={() => setOpen(!open)} style={{
@@ -113,17 +74,24 @@ function FAQ({ q, a }) {
       marginBottom: 10, cursor: "pointer", transition: "all 0.3s ease", overflow: "hidden",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 22px", gap: 12 }}>
-        <span style={{ fontWeight: 600, fontSize: 14, color: "#0A2540", lineHeight: 1.4 }}>{q}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+          {icon && (
+            <div style={{ width: 32, height: 32, borderRadius: 9, background: open ? "rgba(0,212,164,0.12)" : "#E8F4F0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.3s ease" }}>
+              {icon}
+            </div>
+          )}
+          <span style={{ fontWeight: 600, fontSize: 14, color: "#0A2540", lineHeight: 1.4 }}>{q}</span>
+        </div>
         <ChevronDown size={17} color="#00D4A4" style={{ flexShrink: 0, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.3s ease" }}/>
       </div>
       <div style={{ maxHeight: open ? 300 : 0, overflow: "hidden", transition: "max-height 0.4s cubic-bezier(0.16,1,0.3,1)" }}>
-        <div style={{ padding: "0 22px 18px", fontSize: 13.5, color: "#475569", lineHeight: 1.75 }}>{a}</div>
+        <div style={{ padding: "0 22px 18px 66px", fontSize: 13.5, color: "#475569", lineHeight: 1.75 }}>{a}</div>
       </div>
     </div>
   );
 }
 
-function FeatureCard({ icon, title, desc, bullets, accent = "#00D4A4", delay = 0 }) {
+function FeatureCard({ icon, title, desc, bullets, accent = "#00D4A4", delay = 0, badge }) {
   const [hov, setHov] = useState(false);
   return (
     <Reveal delay={delay} pop={true}>
@@ -137,10 +105,15 @@ function FeatureCard({ icon, title, desc, bullets, accent = "#00D4A4", delay = 0
           boxShadow: hov ? `0 20px 60px rgba(0,212,164,0.12), 0 4px 16px rgba(0,0,0,0.06)` : "0 2px 12px rgba(0,0,0,0.04)",
           transform: hov ? "translateY(-6px)" : "none",
           transition: "all 0.35s cubic-bezier(0.16,1,0.3,1)",
-          height: "100%", display: "flex", flexDirection: "column",
+          height: "100%", display: "flex", flexDirection: "column", position: "relative",
         }}
       >
-        <div style={{ width: 48, height: 48, borderRadius: 14, background: "#E8F4F0", border: `1px solid ${accent}22`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18, flexShrink: 0, transition: "all 0.35s ease", transform: hov ? "scale(1.1) rotate(-4deg)" : "none" }}>
+        {badge && (
+          <div style={{ position: "absolute", top: 16, right: 16, fontSize: 9, fontWeight: 700, color: "#00D4A4", background: "rgba(0,212,164,0.1)", border: "1px solid rgba(0,212,164,0.3)", padding: "3px 10px", borderRadius: 20, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            {badge}
+          </div>
+        )}
+        <div style={{ width: 48, height: 48, borderRadius: 14, background: `${accent}15`, border: `1px solid ${accent}22`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18, flexShrink: 0, transition: "all 0.35s ease", transform: hov ? "scale(1.1) rotate(-4deg)" : "none" }}>
           {icon}
         </div>
         <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0A2540", marginBottom: 10, letterSpacing: "-0.02em", lineHeight: 1.3 }}>{title}</h3>
@@ -149,8 +122,8 @@ function FeatureCard({ icon, title, desc, bullets, accent = "#00D4A4", delay = 0
           <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
             {bullets.map((b, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#E8F4F0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Check size={9} color="#00D4A4" strokeWidth={3}/>
+                <div style={{ width: 16, height: 16, borderRadius: "50%", background: `${accent}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Check size={9} color={accent} strokeWidth={3}/>
                 </div>
                 <span style={{ fontSize: 12, color: "#475569", fontWeight: 500 }}>{b}</span>
               </div>
@@ -162,7 +135,7 @@ function FeatureCard({ icon, title, desc, bullets, accent = "#00D4A4", delay = 0
   );
 }
 
-function PricingCard({ plan, price, desc, features, cta, popular, onSignUp }) {
+function PricingCard({ plan, price, desc, features, cta, popular, onSignUp, icon, color }) {
   const [hov, setHov] = useState(false);
   return (
     <div
@@ -181,6 +154,10 @@ function PricingCard({ plan, price, desc, features, cta, popular, onSignUp }) {
       {popular && (
         <div style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", background: "#0A2540", color: "#00D4A4", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", padding: "4px 18px", borderRadius: 20, textTransform: "uppercase", whiteSpace: "nowrap", boxShadow: "0 4px 14px rgba(10,37,64,0.3)", border: "1px solid #00D4A4" }}>Most Popular</div>
       )}
+      {/* Plan icon */}
+      <div style={{ width: 44, height: 44, borderRadius: 12, background: popular ? "rgba(0,212,164,0.15)" : `${color}15`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+        {icon}
+      </div>
       <div style={{ fontSize: 11, fontWeight: 700, color: popular ? "rgba(255,255,255,0.6)" : "#0A2540", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{plan}</div>
       <div style={{ fontSize: 40, fontWeight: 800, color: popular ? "#fff" : "#0A2540", marginBottom: 6, letterSpacing: "-0.04em" }}>
         {price === "Custom" ? "Custom" : <>${price}<span style={{ fontSize: 14, fontWeight: 500, opacity: 0.7 }}>/mo</span></>}
@@ -197,11 +174,96 @@ function PricingCard({ plan, price, desc, features, cta, popular, onSignUp }) {
         ))}
       </div>
       <button onClick={onSignUp}
-        style={{ width: "100%", padding: "14px 0", borderRadius: 12, background: popular ? "#fff" : "#0A2540", color: popular ? "#0A2540" : "#fff", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 700, transition: "all 0.25s cubic-bezier(0.16,1,0.3,1)", boxShadow: popular ? "0 4px 16px rgba(0,0,0,0.14)" : "0 4px 16px rgba(10,37,64,0.25)", fontFamily: "inherit" }}
+        style={{ width: "100%", padding: "14px 0", borderRadius: 12, background: popular ? "#00D4A4" : "#0A2540", color: popular ? "#0A2540" : "#fff", border: "none", cursor: "pointer", fontSize: 14, fontWeight: 700, transition: "all 0.25s cubic-bezier(0.16,1,0.3,1)", boxShadow: popular ? "0 4px 16px rgba(0,212,164,0.3)" : "0 4px 16px rgba(10,37,64,0.25)", fontFamily: "inherit" }}
         onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.02)"; }}
         onMouseLeave={e => { e.currentTarget.style.transform = "none"; }}>
         {cta}
       </button>
+    </div>
+  );
+}
+
+// ── Premium Orbital Animation ─────────────────────────────────
+function OrbitalAnimation() {
+  const ORBIT_ICONS = [
+    { Icon: FileText,   color: "#0ea5e9", label: "Invoice"   },
+    { Icon: Receipt,    color: "#00D4A4", label: "Receipt"   },
+    { Icon: BarChart3,  color: "#8b5cf6", label: "Reports"   },
+    { Icon: GitMerge,   color: "#f59e0b", label: "Reconcile" },
+    { Icon: CreditCard, color: "#ef4444", label: "Bill Pay"  },
+    { Icon: Calculator, color: "#06b6d4", label: "Tax"       },
+    { Icon: ScanLine,   color: "#00D4A4", label: "Scanner"   },
+    { Icon: Repeat,     color: "#8b5cf6", label: "Recurring" },
+  ];
+
+  const [angle, setAngle] = useState(0);
+  useEffect(() => {
+    let frame;
+    const animate = () => {
+      setAngle(a => (a + 0.18) % 360);
+      frame = requestAnimationFrame(animate);
+    };
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const R1 = 130;
+  const R2 = 210;
+  const size = 500;
+  const cx = size / 2;
+
+  return (
+    <div style={{ position: "relative", width: size, height: size, margin: "0 auto" }}>
+      <style>{`
+        @keyframes center-pulse {
+          0%, 100% { box-shadow: 0 0 40px rgba(0,212,164,0.25), 0 8px 32px rgba(10,37,64,0.3); }
+          50%       { box-shadow: 0 0 70px rgba(0,212,164,0.45), 0 8px 40px rgba(10,37,64,0.4); }
+        }
+        @keyframes icon-float {
+          0%, 100% { transform: translateY(0px); }
+          50%       { transform: translateY(-4px); }
+        }
+      `}</style>
+
+      <div style={{ position: "absolute", inset: -20, borderRadius: "50%", background: "radial-gradient(circle, rgba(0,212,164,0.06) 0%, transparent 70%)", pointerEvents: "none" }}/>
+      <div style={{ position: "absolute", top: cx - R2, left: cx - R2, width: R2 * 2, height: R2 * 2, borderRadius: "50%", border: "1px solid rgba(0,212,164,0.12)" }}/>
+      <div style={{ position: "absolute", top: cx - R1, left: cx - R1, width: R1 * 2, height: R1 * 2, borderRadius: "50%", border: "1px solid rgba(0,212,164,0.18)" }}/>
+
+      {ORBIT_ICONS.slice(0, 4).map((item, i) => {
+        const deg = angle + (i * 360) / 4;
+        const rad = (deg * Math.PI) / 180;
+        const x = cx + R1 * Math.cos(rad) - 22;
+        const y = cx + R1 * Math.sin(rad) - 22;
+        const Icon = item.Icon;
+        return (
+          <div key={i} style={{ position: "absolute", left: x, top: y, width: 44, height: 44, borderRadius: 12, background: "#fff", border: `1px solid ${item.color}30`, boxShadow: `0 4px 16px rgba(0,0,0,0.1), 0 0 12px ${item.color}20`, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 2, animation: `icon-float ${3 + i * 0.5}s ease-in-out infinite` }}>
+            <Icon size={18} color={item.color} strokeWidth={2}/>
+            <span style={{ fontSize: 7, fontWeight: 700, color: item.color }}>{item.label.toUpperCase()}</span>
+          </div>
+        );
+      })}
+
+      {ORBIT_ICONS.slice(4).map((item, i) => {
+        const deg = -angle * 0.6 + (i * 360) / 4 + 45;
+        const rad = (deg * Math.PI) / 180;
+        const x = cx + R2 * Math.cos(rad) - 26;
+        const y = cx + R2 * Math.sin(rad) - 26;
+        const Icon = item.Icon;
+        return (
+          <div key={i} style={{ position: "absolute", left: x, top: y, width: 52, height: 52, borderRadius: 14, background: "#fff", border: `1px solid ${item.color}25`, boxShadow: `0 6px 20px rgba(0,0,0,0.08), 0 0 16px ${item.color}15`, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 2, animation: `icon-float ${4 + i * 0.7}s ease-in-out infinite` }}>
+            <Icon size={22} color={item.color} strokeWidth={2}/>
+            <span style={{ fontSize: 7, fontWeight: 700, color: item.color }}>{item.label.toUpperCase()}</span>
+          </div>
+        );
+      })}
+
+      <div style={{ position: "absolute", left: cx - 52, top: cx - 52, width: 104, height: 104, borderRadius: 28, background: "linear-gradient(135deg, #0A2540 0%, #0d3060 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", animation: "center-pulse 3s ease-in-out infinite", zIndex: 10 }}>
+        <svg width="32" height="32" viewBox="0 0 22 22" fill="none" style={{ marginBottom: 4 }}>
+          <path d="M3 16 L7 7 L11 12 L15 5 L19 9" stroke="#00D4A4" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
+          <circle cx="19" cy="9" r="2" fill="#00D4A4"/>
+        </svg>
+        <span style={{ fontSize: 14, fontWeight: 800, color: "#fff", letterSpacing: "-0.03em" }}>No<span style={{ color: "#00D4A4" }}>vala</span></span>
+      </div>
     </div>
   );
 }
@@ -229,34 +291,34 @@ export default function NovalaLanding() {
   const px = "clamp(16px, 5vw, 80px)";
 
   const allFeatures = [
-    { icon: <Brain size={22} color="#0A2540"/>,      title: "Smart Financial Intelligence",    desc: "Upload any document — automatically reads, understands, and records every financial detail instantly.", bullets: ["Auto-extract vendor, amount, date", "High-accuracy classification", "Works with PDFs, images, CSVs"], accent: "#00D4A4" },
+    { icon: <Brain size={22} color="#00D4A4"/>,      title: "Smart Financial Intelligence",    desc: "Upload any document — automatically reads, understands, and records every financial detail instantly.", bullets: ["Auto-extract vendor, amount, date", "High-accuracy classification", "Works with PDFs, images, CSVs"], accent: "#00D4A4" },
     { icon: <FileText size={22} color="#0ea5e9"/>,   title: "Professional Invoicing",          desc: "Create stunning branded invoices in seconds. Track, send, and get paid faster.", bullets: ["Custom logo & branding", "PDF generation & download", "Payment status tracking"], accent: "#0ea5e9" },
     { icon: <BarChart3 size={22} color="#8b5cf6"/>,  title: "Live Financial Dashboard",        desc: "Real-time revenue, expenses, and cash flow — always beautifully visualized.", bullets: ["Live revenue tracking", "Expense trend analysis", "Cash flow forecasting"], accent: "#8b5cf6" },
     { icon: <Bell size={22} color="#f59e0b"/>,       title: "Smart Invoice Follow-Up",         desc: "Automatically schedules and sends professional follow-up emails with invoice PDFs attached.", bullets: ["Customizable message editor", "Scheduled email delivery", "PDF invoice attachment"], accent: "#f59e0b" },
     { icon: <Search size={22} color="#0ea5e9"/>,     title: "Semantic Document Search",        desc: "Search your financial history in plain English — Novala understands context and intent.", bullets: ["Natural language queries", "3-layer search engine", "Instant document retrieval"], accent: "#0ea5e9" },
     { icon: <RefreshCw size={22} color="#00D4A4"/>,  title: "Automated Bookkeeping",           desc: "Bank-grade reconciliation, duplicate detection, and auto-categorization — all automatic.", bullets: ["Smart reconciliation", "Duplicate detection", "Auto-categorization"], accent: "#00D4A4" },
+    { icon: <Repeat size={22} color="#8b5cf6"/>,     title: "Recurring Revenue on Autopilot", desc: "Set up automatic billing for your clients. Invoices go out, payments come in, books update — all without lifting a finger.", bullets: ["Auto-send invoices on schedule", "Auto-record payments", "Never chase a client again"], accent: "#8b5cf6", badge: "Coming Soon" },
     { icon: <CreditCard size={22} color="#8b5cf6"/>, title: "Banking Integration",             desc: "Connect your bank accounts and sync transactions in real time via Plaid.", bullets: ["Plaid bank connection", "Auto transaction sync", "Multi-bank support"], accent: "#8b5cf6" },
     { icon: <Calculator size={22} color="#ef4444"/>, title: "Tax Management",                  desc: "Track deductible expenses, calculate tax obligations, and prepare for filing effortlessly.", bullets: ["GST/HST calculation", "Deduction tracking", "Tax report export"], accent: "#ef4444" },
     { icon: <Users size={22} color="#0ea5e9"/>,      title: "Customer Management",             desc: "Manage clients, track outstanding balances, and maintain full relationship history.", bullets: ["Client profiles", "Outstanding balance tracking", "Invoice history"], accent: "#0ea5e9" },
-    { icon: <Smartphone size={22} color="#00D4A4"/>, title: "Cross-Platform Access",           desc: "Full access on desktop, tablet, and mobile — your finances anywhere, anytime.", bullets: ["Responsive web app", "Mobile-optimized UI", "Real-time sync"], accent: "#00D4A4" },
     { icon: <TrendingUp size={22} color="#f59e0b"/>, title: "Dashboard Analytics",             desc: "Deep financial analytics with variance reports, budget tracking, and trend forecasting.", bullets: ["Variance reports", "Budget vs actual", "Trend forecasting"], accent: "#f59e0b" },
     { icon: <Building2 size={22} color="#8b5cf6"/>,  title: "Multi-Business Support",          desc: "Manage multiple companies or client accounts from a single Novala workspace.", bullets: ["Multiple entities", "Role-based access", "Consolidated reporting"], accent: "#8b5cf6" },
   ];
 
   const faqs = [
-    { q: "How does Novala extract data from documents?",            a: "Novala uses advanced large language models combined with computer vision to read and understand financial documents. It extracts vendor names, amounts, dates, line items, and payment status with high accuracy." },
-    { q: "Is my financial data secure?",                            a: "Absolutely. Novala uses bank-grade AES-256 encryption, AWS infrastructure, and never shares your data with third parties. Your documents are stored in encrypted S3 buckets with strict access controls." },
-    { q: "Can I import data from my existing accounting software?", a: "Yes. Novala integrates with QuickBooks, Xero, FreshBooks, and major banks. You can also import CSV files, PDFs, and connect directly via API." },
-    { q: "How does the automated invoice follow-up work?",          a: "Novala detects overdue invoices and suggests follow-up emails. You review, edit the message, pick a date and time, and Novala sends a professional email with the invoice PDF attached automatically." },
-    { q: "Is there a free trial?",                                  a: "Yes — all plans come with a 14-day free trial with full access to all features. No credit card required for the Essentials plan." },
-    { q: "Can I use Novala for my team?",                           a: "Absolutely. Novala supports multi-user teams with role-based permissions, shared dashboards, and collaborative workflows. Enterprise plans include white-label options and dedicated support." },
+    { icon: <Brain size={14} color="#00D4A4"/>,      q: "How does Novala extract data from documents?",            a: "Novala uses advanced large language models combined with computer vision to read and understand financial documents. It extracts vendor names, amounts, dates, line items, and payment status with high accuracy." },
+    { icon: <Shield size={14} color="#0ea5e9"/>,     q: "Is my financial data secure?",                            a: "Absolutely. Novala uses bank-grade AES-256 encryption, AWS infrastructure, and never shares your data with third parties. Your documents are stored in encrypted S3 buckets with strict access controls." },
+    { icon: <RefreshCw size={14} color="#8b5cf6"/>,  q: "Can I import data from my existing accounting software?", a: "Yes. Novala integrates with QuickBooks, Xero, FreshBooks, and major banks. You can also import CSV files, PDFs, and connect directly via API." },
+    { icon: <Bell size={14} color="#f59e0b"/>,       q: "How does the automated invoice follow-up work?",          a: "Novala detects overdue invoices and suggests follow-up emails. You review, edit the message, pick a date and time, and Novala sends a professional email with the invoice PDF attached automatically." },
+    { icon: <CheckCircle size={14} color="#00D4A4"/>,q: "Is there a free trial?",                                  a: "Yes — all plans come with a 14-day free trial with full access to all features. No credit card required for the Essentials plan." },
+    { icon: <Users size={14} color="#0ea5e9"/>,      q: "Can I use Novala for my team?",                           a: "Absolutely. Novala supports multi-user teams with role-based permissions, shared dashboards, and collaborative workflows. Enterprise plans include white-label options and dedicated support." },
   ];
 
   const steps = [
-    { icon: <Upload size={26} color="#00D4A4"/>,     num: "01", title: "Upload Your Documents",       desc: "Drag and drop invoices, receipts, bank statements. Novala processes everything in seconds."         },
-    { icon: <Zap size={26} color="#0ea5e9"/>,        num: "02", title: "Auto-Extracted & Organized",  desc: "Novala reads, categorizes, and records all financial data automatically."                           },
-    { icon: <TrendingUp size={26} color="#8b5cf6"/>, num: "03", title: "Get Financial Insights",      desc: "Real-time dashboards, reports, and smart recommendations surface instantly."                       },
-    { icon: <Rocket size={26} color="#f59e0b"/>,     num: "04", title: "Automate & Scale",            desc: "Set up automated follow-ups, recurring reports, and smart alerts — then grow."                     },
+    { icon: <Upload size={26} color="#00D4A4"/>,     color: "#00D4A4", num: "01", title: "Upload Your Documents",      desc: "Drag and drop invoices, receipts, bank statements. Novala processes everything in seconds." },
+    { icon: <Zap size={26} color="#0ea5e9"/>,        color: "#0ea5e9", num: "02", title: "Auto-Extracted & Organized", desc: "Novala reads, categorizes, and records all financial data automatically." },
+    { icon: <TrendingUp size={26} color="#8b5cf6"/>, color: "#8b5cf6", num: "03", title: "Get Financial Insights",     desc: "Real-time dashboards, reports, and smart recommendations surface instantly." },
+    { icon: <Rocket size={26} color="#f59e0b"/>,     color: "#f59e0b", num: "04", title: "Automate & Scale",           desc: "Set up automated follow-ups, recurring reports, and smart alerts — then grow." },
   ];
 
   return (
@@ -267,7 +329,6 @@ export default function NovalaLanding() {
         html { scroll-behavior:smooth; }
         ::-webkit-scrollbar { width:5px; }
         ::-webkit-scrollbar-thumb { background:#00D4A4; border-radius:99px; }
-
         @keyframes float      { 0%,100%{transform:translateY(0)}           50%{transform:translateY(-12px)} }
         @keyframes floatSlow  { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-8px) rotate(1.5deg)} }
         @keyframes pulse-glow { 0%,100%{box-shadow:0 0 30px rgba(0,212,164,0.2)} 50%{box-shadow:0 0 70px rgba(0,212,164,0.55)} }
@@ -275,14 +336,13 @@ export default function NovalaLanding() {
         @keyframes wave       { 0%,100%{transform:scaleY(0.5)} 50%{transform:scaleY(1.5)} }
         @keyframes slideInRight { from{transform:translateX(100%)} to{transform:translateX(0)} }
         @keyframes fadeIn     { from{opacity:0} to{opacity:1} }
-
         .cta-primary {
-          background:#0A2540; color:#fff; border:none;
+          background:#00D4A4; color:#0A2540; border:none;
           padding:14px 30px; border-radius:13px; font-size:15px; font-weight:700;
-          cursor:pointer; box-shadow:0 6px 24px rgba(10,37,64,0.28);
+          cursor:pointer; box-shadow:0 6px 24px rgba(0,212,164,0.35);
           transition:all 0.25s cubic-bezier(0.16,1,0.3,1); font-family:inherit; white-space:nowrap;
         }
-        .cta-primary:hover  { transform:translateY(-2px) scale(1.02); box-shadow:0 12px 36px rgba(10,37,64,0.38); background:#0d2f50; }
+        .cta-primary:hover  { transform:translateY(-2px) scale(1.02); box-shadow:0 12px 36px rgba(0,212,164,0.45); background:#00B88F; }
         .cta-primary:active { transform:scale(0.97); }
         .cta-secondary {
           background:#fff; color:#0A2540;
@@ -293,7 +353,7 @@ export default function NovalaLanding() {
         .cta-secondary:hover { transform:translateY(-2px); background:#E8F4F0; box-shadow:0 8px 28px rgba(10,37,64,0.12); }
         .step-card { transition:all 0.4s cubic-bezier(0.16,1,0.3,1); cursor:default; }
         .step-card:hover { transform:translateY(-8px) !important; box-shadow:0 20px 50px rgba(0,212,164,0.12); }
-        .step-card:hover .step-icon { transform:scale(1.15) rotate(5deg); background:#E8F4F0 !important; }
+        .step-card:hover .step-icon { transform:scale(1.15) rotate(5deg); }
         .step-icon { transition:all 0.35s cubic-bezier(0.16,1,0.3,1); }
         .stat-item { transition:all 0.3s cubic-bezier(0.16,1,0.3,1); padding:20px 16px; border-radius:18px; cursor:default; }
         .stat-item:hover { transform:translateY(-5px) scale(1.04); background:#E8F4F0; }
@@ -307,9 +367,6 @@ export default function NovalaLanding() {
           .desktop-only { display:none !important; }
           .mobile-only  { display:flex !important; }
           .float-badge  { display:none !important; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .rotating-word { transition: none !important; }
         }
       `}</style>
 
@@ -335,12 +392,10 @@ export default function NovalaLanding() {
                 ))}
               </div>
               <div style={{ background:"#0A2540", borderRadius:20, padding:"clamp(24px,4vw,40px)", textAlign:"center" }}>
-                <h3 style={{ fontSize:"clamp(22px,3vw,32px)", fontWeight:800, color:"#fff", marginBottom:12, letterSpacing:"-0.03em" }}>
-                  Ready to get started?
-                </h3>
+                <h3 style={{ fontSize:"clamp(22px,3vw,32px)", fontWeight:800, color:"#fff", marginBottom:12, letterSpacing:"-0.03em" }}>Ready to get started?</h3>
                 <p style={{ fontSize:15, color:"#94a3b8", marginBottom:28 }}>Join hundreds of businesses already using Novala.</p>
                 <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap" }}>
-                  <button className="cta-primary" onClick={goToSignUp} style={{ fontSize:15, padding:"16px 36px", background:"#00D4A4", color:"#0A2540" }}>Create Free Account →</button>
+                  <button className="cta-primary" onClick={goToSignUp} style={{ fontSize:15, padding:"16px 36px" }}>Create Free Account →</button>
                   <button onClick={() => setShowAllFeatures(false)} style={{ fontSize:15, padding:"16px 28px", borderRadius:13, background:"rgba(255,255,255,0.08)", color:"#fff", border:"1px solid rgba(255,255,255,0.15)", cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>Back to Home</button>
                 </div>
               </div>
@@ -361,7 +416,6 @@ export default function NovalaLanding() {
             </div>
             <span style={{ fontSize:20, fontWeight:800, letterSpacing:"-0.03em", color:"#0A2540" }}>No<span style={{ color:"#00D4A4" }}>vala</span></span>
           </div>
-
           <div className="desktop-only" style={{ alignItems:"center", gap:30 }}>
             {navLinks.map(l => (
               <button key={l} className="nav-pill"
@@ -373,12 +427,10 @@ export default function NovalaLanding() {
               </button>
             ))}
           </div>
-
           <div className="desktop-only" style={{ gap:9 }}>
             <button className="cta-secondary" style={{ padding:"10px 20px", fontSize:13.5 }} onClick={goToApp}>Sign In</button>
-            <button className="cta-primary"   style={{ padding:"10px 22px", fontSize:13.5 }} onClick={goToSignUp}>Register Free →</button>
+            <button className="cta-primary" style={{ padding:"10px 22px", fontSize:13.5 }} onClick={goToSignUp}>Register Free →</button>
           </div>
-
           <button className="mobile-only" onClick={() => setMenuOpen(o => !o)}
             style={{ background:"none", border:"none", cursor:"pointer", color:"#0A2540", alignItems:"center", justifyContent:"center", padding:8, borderRadius:10, transition:"background 0.2s" }}
             onMouseEnter={e => e.currentTarget.style.background="#E8F4F0"}
@@ -386,7 +438,6 @@ export default function NovalaLanding() {
             {menuOpen ? <X size={22}/> : <Menu size={22}/>}
           </button>
         </div>
-
         {/* Mobile Menu */}
         <div style={{ position:"fixed", top:66, left:0, right:0, background:"rgba(255,255,255,0.99)", backdropFilter:"blur(28px)", borderBottom: menuOpen ? "1px solid #E5E7EB" : "none", padding: menuOpen ? "20px 24px 32px" : "0 24px", maxHeight: menuOpen ? "100vh" : 0, overflow:"hidden", transition:"max-height 0.45s cubic-bezier(0.16,1,0.3,1), padding 0.3s ease", zIndex:99, display:"flex", flexDirection:"column" }}>
           <div style={{ display:"flex", flexDirection:"column" }}>
@@ -401,7 +452,7 @@ export default function NovalaLanding() {
             ))}
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:10, marginTop:24 }}>
-            <button className="cta-primary"   style={{ padding:"16px", fontSize:15, width:"100%", textAlign:"center", borderRadius:13 }} onClick={() => { setMenuOpen(false); goToSignUp(); }}>Register Free — No Card Needed →</button>
+            <button className="cta-primary" style={{ padding:"16px", fontSize:15, width:"100%", textAlign:"center", borderRadius:13 }} onClick={() => { setMenuOpen(false); goToSignUp(); }}>Register Free — No Card Needed →</button>
             <button className="cta-secondary" style={{ padding:"16px", fontSize:15, width:"100%", textAlign:"center", borderRadius:13 }} onClick={() => { setMenuOpen(false); goToApp(); }}>Sign In to Dashboard</button>
           </div>
         </div>
@@ -410,117 +461,50 @@ export default function NovalaLanding() {
       {/* HERO */}
       <section style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding:`100px ${px} 60px`, background:"radial-gradient(ellipse 80% 60% at 50% -10%,rgba(0,212,164,0.11) 0%,transparent 70%),linear-gradient(180deg,#E8F4F0 0%,#fff 100%)" }}>
         <div style={{ maxWidth:1200, margin:"0 auto", width:"100%" }}>
-          <div style={{ textAlign:"center", maxWidth:820, margin:"0 auto" }}>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))", gap:60, alignItems:"center" }}>
 
-            <Reveal delay={0}>
-              <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"#E8F4F0", border:"1px solid rgba(0,212,164,0.3)", borderRadius:99, padding:"6px 18px", marginBottom:30 }}>
-                <div style={{ width:7, height:7, borderRadius:"50%", background:"#00D4A4", animation:"pulse-glow 2s infinite" }}/>
-                <span style={{ fontSize:11, fontWeight:700, color:"#0A2540", letterSpacing:"0.1em", textTransform:"uppercase" }}>Effortless Financial Clarity</span>
-              </div>
-            </Reveal>
-
-            <Reveal delay={0.1}>
-              <h1 style={{ fontSize:"clamp(38px,7.5vw,82px)", fontWeight:800, lineHeight:1.06, letterSpacing:"-0.045em", color:"#0A2540", marginBottom:22 }}>
-                Effortless{" "}
-                <span className="rotating-word" style={{ display:"inline-flex", alignItems:"center", gap:8 }}>
-                  <RotatingWord />
-                </span>
-                .
-              </h1>
-            </Reveal>
-
-            <Reveal delay={0.18}>
-              <p style={{ fontSize:"clamp(15px,2.2vw,19px)", color:"#6B7280", lineHeight:1.7, maxWidth:560, margin:"0 auto 38px", fontWeight:400 }}>
-                Novala automates your bookkeeping, invoicing, and reporting — so you can focus on growing your business.
-              </p>
-            </Reveal>
-
-            <Reveal delay={0.26}>
-              <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap", marginBottom:28 }}>
-                <button className="cta-primary"   onClick={goToSignUp} style={{ fontSize:15, padding:"16px 38px" }}>Create Free Account →</button>
-                <button className="cta-secondary" onClick={goToApp}    style={{ fontSize:15, padding:"16px 38px" }}>Sign In to Dashboard</button>
-              </div>
-            </Reveal>
-
-            <Reveal delay={0.32}>
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:"clamp(10px,3vw,24px)", flexWrap:"wrap", marginBottom:28 }}>
-                {["✓ 14-day free trial","✓ No credit card required","✓ Cancel anytime","✓ Bank-grade security"].map(t => (
-                  <span key={t} style={{ fontSize:12.5, color:"#6B7280", fontWeight:500 }}>{t}</span>
-                ))}
-              </div>
-            </Reveal>
-
-            {/* Live ticker */}
-            <Reveal delay={0.4}>
-              <div style={{ display:"flex", justifyContent:"center", marginBottom:56 }}>
-                <div style={{ display:"inline-flex", alignItems:"center", gap:12, background:"rgba(255,255,255,0.95)", backdropFilter:"blur(12px)", border:"1px solid #E5E7EB", borderRadius:99, padding:"8px 20px", boxShadow:"0 4px 20px rgba(10,37,64,0.06)" }}>
-                  <div style={{ display:"flex", gap:3, alignItems:"center" }}>
-                    {[0,1,2,3].map(i => (
-                      <div key={i} style={{ width:3, height:14, borderRadius:99, background:"#00D4A4", animation:`wave 1s ease-in-out infinite`, animationDelay:`${i*0.15}s` }}/>
-                    ))}
-                  </div>
-                  <span style={{ fontSize:12.5, fontWeight:600, color:"#6B7280" }}>
-                    <span style={{ color:"#00D4A4", fontWeight:700 }}>247 businesses</span> processed documents with Novala today
-                  </span>
-                  <div style={{ position:"relative", width:8, height:8, flexShrink:0 }}>
-                    <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:"#00D4A4", animation:"ping 1.5s cubic-bezier(0,0,0.2,1) infinite" }}/>
-                    <div style={{ width:8, height:8, borderRadius:"50%", background:"#00D4A4" }}/>
-                  </div>
+            {/* Left — Text */}
+            <div style={{ textAlign:"left" }}>
+              <Reveal delay={0}>
+                <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"#E8F4F0", border:"1px solid rgba(0,212,164,0.3)", borderRadius:99, padding:"6px 18px", marginBottom:30 }}>
+                  <div style={{ width:7, height:7, borderRadius:"50%", background:"#00D4A4", animation:"pulse-glow 2s infinite" }}/>
+                  <span style={{ fontSize:11, fontWeight:700, color:"#0A2540", letterSpacing:"0.1em", textTransform:"uppercase" }}>Effortless Financial Clarity</span>
                 </div>
-              </div>
+              </Reveal>
+
+              <Reveal delay={0.1}>
+                <h1 style={{ fontSize:"clamp(38px,5.5vw,72px)", fontWeight:800, lineHeight:1.06, letterSpacing:"-0.045em", color:"#0A2540", marginBottom:22 }}>
+                  Effortless <span style={{ color:"#00D4A4" }}>financial clarity.</span>
+                </h1>
+              </Reveal>
+
+              <Reveal delay={0.18}>
+                <p style={{ fontSize:"clamp(15px,2.2vw,19px)", color:"#6B7280", lineHeight:1.7, maxWidth:520, marginBottom:38, fontWeight:400 }}>
+                  Novala automates your bookkeeping, invoicing, and reporting — so you can focus on growing your business.
+                </p>
+              </Reveal>
+
+              <Reveal delay={0.26}>
+                <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:28 }}>
+                  <button className="cta-primary" onClick={goToSignUp} style={{ fontSize:15, padding:"16px 38px" }}>Create Free Account →</button>
+                  <button className="cta-secondary" onClick={goToApp} style={{ fontSize:15, padding:"16px 38px" }}>Sign In to Dashboard</button>
+                </div>
+              </Reveal>
+
+              <Reveal delay={0.32}>
+                <div style={{ display:"flex", alignItems:"center", gap:"clamp(10px,3vw,24px)", flexWrap:"wrap" }}>
+                  {["✓ 14-day free trial","✓ No credit card required","✓ Cancel anytime","✓ Bank-grade security"].map(t => (
+                    <span key={t} style={{ fontSize:12.5, color:"#6B7280", fontWeight:500 }}>{t}</span>
+                  ))}
+                </div>
+              </Reveal>
+            </div>
+
+            {/* Right — Orbital Animation */}
+            <Reveal delay={0.4} direction="right">
+              <OrbitalAnimation/>
             </Reveal>
           </div>
-
-          {/* Dashboard mockup */}
-          <Reveal delay={0.48}>
-            <div style={{ position:"relative", maxWidth:920, margin:"0 auto" }}>
-              <div style={{ position:"absolute", inset:-40, borderRadius:48, background:"radial-gradient(ellipse at center,rgba(0,212,164,0.08) 0%,transparent 70%)", filter:"blur(24px)", pointerEvents:"none" }}/>
-              <div style={{ background:"rgba(255,255,255,0.96)", backdropFilter:"blur(30px)", borderRadius:24, border:"1px solid #E5E7EB", boxShadow:"0 28px 80px rgba(10,37,64,0.1),0 8px 32px rgba(0,0,0,0.05)", overflow:"hidden", position:"relative", animation:"float 7s ease-in-out infinite" }}>
-                <div style={{ background:"#0A2540", padding:"13px 22px", display:"flex", alignItems:"center", gap:12 }}>
-                  <div style={{ display:"flex", gap:5 }}>
-                    {["#ff5f57","#febc2e","#28c840"].map(c => <div key={c} style={{ width:10, height:10, borderRadius:"50%", background:c }}/>)}
-                  </div>
-                  <div style={{ flex:1, background:"rgba(255,255,255,0.1)", borderRadius:7, padding:"5px 14px", fontSize:11.5, color:"rgba(255,255,255,0.8)", fontWeight:500 }}>app.getnovala.com — Financial Dashboard</div>
-                </div>
-                <div style={{ padding:"clamp(14px,3vw,26px)", background:"#E8F4F0" }}>
-                  <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))", gap:10, marginBottom:18 }}>
-                    {[{ label:"Revenue", value:"$124,820", up:true },{ label:"Outstanding", value:"$18,340", up:false },{ label:"Expenses", value:"$42,180", up:false },{ label:"Net Profit", value:"$64,300", up:true }].map((s,i) => (
-                      <div key={i} style={{ background:"#fff", borderRadius:12, padding:"13px 14px", border:"1px solid #E5E7EB", boxShadow:"0 2px 8px rgba(0,0,0,0.03)" }}>
-                        <div style={{ fontSize:9, fontWeight:700, color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:7 }}>{s.label}</div>
-                        <div style={{ fontSize:"clamp(13px,2.5vw,19px)", fontWeight:800, color:"#0A2540", letterSpacing:"-0.02em", marginBottom:4 }}>{s.value}</div>
-                        <div style={{ fontSize:10, fontWeight:700, color: s.up ? "#00D4A4" : "#f59e0b" }}>{s.up ? "↑ +18.4%" : "↓ -2.1%"} this month</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ background:"#fff", borderRadius:12, padding:"16px 18px", border:"1px solid #E5E7EB", boxShadow:"0 2px 8px rgba(0,0,0,0.03)" }}>
-                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
-                      <div style={{ fontSize:12.5, fontWeight:700, color:"#0A2540" }}>Revenue Overview</div>
-                      <div style={{ fontSize:10.5, color:"#00D4A4", fontWeight:700, background:"#E8F4F0", padding:"3px 12px", borderRadius:99 }}>Last 6 months</div>
-                    </div>
-                    <div style={{ display:"flex", alignItems:"flex-end", gap:6, height:56 }}>
-                      {[42,60,52,76,65,90].map((h,i) => (
-                        <div key={i} style={{ flex:1, borderRadius:"5px 5px 0 0", background:i===5?"#0A2540":"#E8F4F0", height:`${h}%`, transition:"height 0.5s ease" }}/>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="float-badge" style={{ position:"absolute", top:56, right:-28, background:"#fff", borderRadius:16, padding:"11px 15px", boxShadow:"0 8px 30px rgba(10,37,64,0.12)", border:"1px solid #E5E7EB", animation:"floatSlow 4s ease-in-out infinite", zIndex:10 }}>
-                <div style={{ fontSize:9, fontWeight:700, color:"#6B7280", marginBottom:3, textTransform:"uppercase", letterSpacing:"0.06em" }}>Processed</div>
-                <div style={{ fontSize:19, fontWeight:800, color:"#00D4A4" }}>247 docs</div>
-                <div style={{ fontSize:10, color:"#6B7280" }}>this month</div>
-              </div>
-
-              <div className="float-badge" style={{ position:"absolute", bottom:44, left:-28, background:"#fff", borderRadius:16, padding:"11px 15px", boxShadow:"0 8px 30px rgba(10,37,64,0.1)", border:"1px solid #E5E7EB", animation:"floatSlow 5s ease-in-out infinite 1s", zIndex:10 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
-                  <div style={{ width:7, height:7, borderRadius:"50%", background:"#00D4A4", animation:"pulse-glow 2s infinite" }}/>
-                  <span style={{ fontSize:10.5, fontWeight:700, color:"#00D4A4" }}>Follow-up sent</span>
-                </div>
-                <div style={{ fontSize:12, color:"#6B7280", fontWeight:500 }}>Invoice #1042 — $8,750</div>
-              </div>
-            </div>
-          </Reveal>
         </div>
       </section>
 
@@ -528,9 +512,15 @@ export default function NovalaLanding() {
       <section style={{ padding:`52px ${px}`, background:"#fff", borderTop:"1px solid #E5E7EB", borderBottom:"1px solid #E5E7EB" }}>
         <div style={{ maxWidth:960, margin:"0 auto" }}>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:"clamp(16px,4vw,40px)" }}>
-            {[{ value:98, suffix:"%", label:"Accuracy Rate" },{ value:10000, suffix:"+", label:"Documents Processed" },{ value:500, suffix:"+", label:"Businesses Served" },{ value:40, suffix:"hrs", label:"Saved Per Month" }].map((s,i) => (
+            {[
+              { value:98,    suffix:"%",   label:"Accuracy Rate",         icon:<Brain size={20} color="#00D4A4"/>       },
+              { value:10000, suffix:"+",   label:"Documents Processed",   icon:<FileText size={20} color="#0ea5e9"/>    },
+              { value:500,   suffix:"+",   label:"Businesses Served",     icon:<Building2 size={20} color="#8b5cf6"/>   },
+              { value:40,    suffix:"hrs", label:"Saved Per Month",        icon:<Zap size={20} color="#f59e0b"/>         },
+            ].map((s,i) => (
               <Reveal key={i} delay={i*0.1} pop={true}>
                 <div className="stat-item" style={{ textAlign:"center" }}>
+                  <div style={{ display:"flex", justifyContent:"center", marginBottom:10 }}>{s.icon}</div>
                   <div style={{ fontSize:"clamp(30px,5vw,50px)", fontWeight:800, letterSpacing:"-0.04em", color:"#0A2540", marginBottom:6 }}>
                     <Counter end={s.value} suffix={s.suffix}/>
                   </div>
@@ -547,7 +537,9 @@ export default function NovalaLanding() {
         <div style={{ maxWidth:1200, margin:"0 auto" }}>
           <Reveal>
             <div style={{ textAlign:"center", marginBottom:56 }}>
-              <div style={{ display:"inline-block", fontSize:11, fontWeight:700, color:"#0A2540", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:14, background:"#E8F4F0", padding:"4px 16px", borderRadius:99 }}>Everything You Need</div>
+              <div style={{ display:"inline-flex", alignItems:"center", gap:8, fontSize:11, fontWeight:700, color:"#0A2540", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:14, background:"#E8F4F0", padding:"6px 16px", borderRadius:99 }}>
+                <Layers size={13} color="#00D4A4"/> Everything You Need
+              </div>
               <h2 style={{ fontSize:"clamp(28px,5vw,52px)", fontWeight:800, letterSpacing:"-0.035em", color:"#0A2540", marginBottom:14, lineHeight:1.08 }}>
                 Software that actually understands<br/>your finances
               </h2>
@@ -562,6 +554,64 @@ export default function NovalaLanding() {
               <FeatureCard key={i} {...f} delay={i*0.07}/>
             ))}
           </div>
+
+          {/* Recurring Revenue highlight card */}
+          <Reveal delay={0.1}>
+            <div style={{ background:"linear-gradient(135deg,#0A2540,#0d3060)", borderRadius:24, padding:"clamp(28px,4vw,48px)", marginBottom:36, display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:32, alignItems:"center" }}>
+              <div>
+                <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(0,212,164,0.15)", border:"1px solid rgba(0,212,164,0.3)", borderRadius:99, padding:"4px 14px", marginBottom:16 }}>
+                  <Repeat size={11} color="#00D4A4"/>
+                  <span style={{ fontSize:10, fontWeight:700, color:"#00D4A4", letterSpacing:"0.1em", textTransform:"uppercase" }}>Coming Soon</span>
+                </div>
+                <h3 style={{ fontSize:"clamp(22px,3vw,34px)", fontWeight:800, color:"#fff", marginBottom:14, letterSpacing:"-0.03em", lineHeight:1.15 }}>
+                  Recurring Revenue<br/><span style={{ color:"#00D4A4" }}>on Autopilot</span>
+                </h3>
+                <p style={{ fontSize:15, color:"#94a3b8", lineHeight:1.7, marginBottom:24, maxWidth:440 }}>
+                  Set up automatic billing for your clients. Invoices go out, payments come in, books update — all without lifting a finger. Predictable income, zero manual work.
+                </p>
+                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                  {[
+                    { icon:<ArrowUpCircle size={14} color="#00D4A4"/>, text:"Auto-send invoices on your schedule" },
+                    { icon:<DollarSign size={14} color="#00D4A4"/>,    text:"Auto-record payments when received"  },
+                    { icon:<RefreshCw size={14} color="#00D4A4"/>,     text:"Never chase a client payment again"  },
+                    { icon:<PieChart size={14} color="#00D4A4"/>,      text:"Predictable monthly revenue reports"  },
+                  ].map((item,i) => (
+                    <div key={i} style={{ display:"flex", alignItems:"center", gap:10 }}>
+                      <div style={{ width:28, height:28, borderRadius:8, background:"rgba(0,212,164,0.1)", border:"1px solid rgba(0,212,164,0.2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{item.icon}</div>
+                      <span style={{ fontSize:13.5, color:"#cbd5e1", fontWeight:500 }}>{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(0,212,164,0.2)", borderRadius:20, padding:28, backdropFilter:"blur(20px)" }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"#00D4A4", marginBottom:16, display:"flex", alignItems:"center", gap:8 }}>
+                  <div style={{ width:7, height:7, borderRadius:"50%", background:"#00D4A4", animation:"pulse-glow 2s infinite" }}/>
+                  Recurring Billing Preview
+                </div>
+                {[
+                  { client:"Brightcare Health",  amount:"$2,400", status:"Sent",      color:"#00D4A4", day:"1st" },
+                  { client:"Acme Corp",          amount:"$1,800", status:"Paid",      color:"#0ea5e9", day:"15th"},
+                  { client:"River Design Co.",   amount:"$950",   status:"Scheduled", color:"#f59e0b", day:"28th"},
+                  { client:"Summit Consulting",  amount:"$3,200", status:"Paid",      color:"#00D4A4", day:"1st" },
+                ].map((item,i) => (
+                  <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0", borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+                    <div>
+                      <div style={{ fontSize:12.5, color:"#e2e8f0", fontWeight:600 }}>{item.client}</div>
+                      <div style={{ fontSize:10, color:"#64748b", marginTop:2 }}>Every month · {item.day}</div>
+                    </div>
+                    <div style={{ textAlign:"right" }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:"#fff" }}>{item.amount}</div>
+                      <div style={{ fontSize:10, fontWeight:600, color:item.color, marginTop:2 }}>{item.status}</div>
+                    </div>
+                  </div>
+                ))}
+                <div style={{ marginTop:16, padding:"10px 14px", borderRadius:10, background:"rgba(0,212,164,0.1)", border:"1px solid rgba(0,212,164,0.2)", display:"flex", justifyContent:"space-between" }}>
+                  <span style={{ fontSize:12, color:"#00D4A4", fontWeight:700 }}>Monthly Recurring</span>
+                  <span style={{ fontSize:13, color:"#00D4A4", fontWeight:800 }}>$8,350</span>
+                </div>
+              </div>
+            </div>
+          </Reveal>
 
           <Reveal delay={0.2}>
             <div style={{ textAlign:"center" }}>
@@ -582,7 +632,9 @@ export default function NovalaLanding() {
         <div style={{ maxWidth:980, margin:"0 auto" }}>
           <Reveal>
             <div style={{ textAlign:"center", marginBottom:52 }}>
-              <div style={{ display:"inline-block", fontSize:11, fontWeight:700, color:"#0A2540", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:14, background:"#E8F4F0", padding:"4px 16px", borderRadius:99 }}>Simple Process</div>
+              <div style={{ display:"inline-flex", alignItems:"center", gap:8, fontSize:11, fontWeight:700, color:"#0A2540", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:14, background:"#E8F4F0", padding:"6px 16px", borderRadius:99 }}>
+                <Zap size={13} color="#00D4A4"/> Simple Process
+              </div>
               <h2 style={{ fontSize:"clamp(28px,5vw,50px)", fontWeight:800, letterSpacing:"-0.035em", color:"#0A2540", lineHeight:1.08 }}>
                 From upload to insight<br/>in seconds
               </h2>
@@ -591,11 +643,11 @@ export default function NovalaLanding() {
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))", gap:18 }}>
             {steps.map((s,i) => (
               <Reveal key={i} delay={i*0.1} pop={true}>
-                <div className="step-card" style={{ textAlign:"center", padding:"28px 18px", borderRadius:20, border:"1px solid #E5E7EB", background:"#fff" }}>
-                  <div className="step-icon" style={{ width:62, height:62, borderRadius:17, margin:"0 auto 18px", background:"#E8F4F0", border:"1px solid #E5E7EB", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <div className="step-card" style={{ textAlign:"center", padding:"28px 18px", borderRadius:20, border:`1px solid ${s.color}20`, background:"#fff" }}>
+                  <div className="step-icon" style={{ width:62, height:62, borderRadius:17, margin:"0 auto 18px", background:`${s.color}12`, border:`1px solid ${s.color}25`, display:"flex", alignItems:"center", justifyContent:"center" }}>
                     {s.icon}
                   </div>
-                  <div style={{ fontSize:10, fontWeight:800, color:"#00D4A4", letterSpacing:"0.12em", marginBottom:9 }}>{s.num}</div>
+                  <div style={{ fontSize:10, fontWeight:800, color:s.color, letterSpacing:"0.12em", marginBottom:9 }}>{s.num}</div>
                   <h3 style={{ fontSize:15.5, fontWeight:700, color:"#0A2540", marginBottom:9, letterSpacing:"-0.02em" }}>{s.title}</h3>
                   <p style={{ fontSize:13, color:"#6B7280", lineHeight:1.65 }}>{s.desc}</p>
                 </div>
@@ -609,7 +661,6 @@ export default function NovalaLanding() {
       <section id="how-it-works-engine" style={{ padding:`88px ${px}`, background:"linear-gradient(140deg,#0A2540 0%,#0c2418 60%,#0A2540 100%)", position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", top:"15%", left:"8%", width:360, height:360, borderRadius:"50%", background:"radial-gradient(circle,rgba(0,212,164,0.09),transparent)", filter:"blur(60px)", pointerEvents:"none" }}/>
         <div style={{ position:"absolute", bottom:"15%", right:"8%", width:280, height:280, borderRadius:"50%", background:"radial-gradient(circle,rgba(0,212,164,0.06),transparent)", filter:"blur(50px)", pointerEvents:"none" }}/>
-
         <div style={{ maxWidth:1100, margin:"0 auto", position:"relative" }}>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(290px,1fr))", gap:"clamp(32px,6vw,72px)", alignItems:"center" }}>
             <Reveal direction="left">
@@ -635,12 +686,11 @@ export default function NovalaLanding() {
                     <span style={{ fontSize:13.5, color:"#cbd5e1", fontWeight:500 }}>{f.text}</span>
                   </div>
                 ))}
-                <button className="cta-primary" onClick={goToSignUp} style={{ marginTop:28, padding:"14px 30px", fontSize:14, background:"#00D4A4", color:"#0A2540" }}>
+                <button className="cta-primary" onClick={goToSignUp} style={{ marginTop:28, padding:"14px 30px", fontSize:14 }}>
                   Start Free Today →
                 </button>
               </div>
             </Reveal>
-
             <Reveal direction="right">
               <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
                 <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(0,212,164,0.18)", borderRadius:20, padding:"clamp(18px,3vw,26px)", backdropFilter:"blur(20px)", animation:"float 5s ease-in-out infinite" }}>
@@ -689,7 +739,9 @@ export default function NovalaLanding() {
         <div style={{ maxWidth:1100, margin:"0 auto" }}>
           <Reveal>
             <div style={{ textAlign:"center", marginBottom:56 }}>
-              <div style={{ display:"inline-block", fontSize:11, fontWeight:700, color:"#0A2540", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:14, background:"#E8F4F0", padding:"4px 16px", borderRadius:99 }}>Simple Pricing</div>
+              <div style={{ display:"inline-flex", alignItems:"center", gap:8, fontSize:11, fontWeight:700, color:"#0A2540", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:14, background:"#E8F4F0", padding:"6px 16px", borderRadius:99 }}>
+                <CreditCard size={13} color="#00D4A4"/> Simple Pricing
+              </div>
               <h2 style={{ fontSize:"clamp(28px,5vw,52px)", fontWeight:800, letterSpacing:"-0.035em", color:"#0A2540", lineHeight:1.08, marginBottom:14 }}>
                 Start free. Scale with confidence.
               </h2>
@@ -698,9 +750,9 @@ export default function NovalaLanding() {
           </Reveal>
           <div style={{ display:"flex", gap:18, justifyContent:"center", flexWrap:"wrap", alignItems:"flex-start" }}>
             {[
-              { plan:"Essentials", price:"20",     desc:"Perfect for freelancers and solo businesses.",      features:["Up to 100 documents/month","Automatic data extraction","Basic invoicing","Financial dashboard","Email support","14-day free trial"],                                              cta:"Start Free Trial", popular:false },
-              { plan:"Premium",    price:"30",     desc:"For growing businesses that need full automation.", features:["Unlimited documents","Automated follow-up emails","Smart Search (RAG)","Advanced reports","Bill pay & reconciliation","Tax tools","Priority support"],                            cta:"Start Free Trial", popular:true  },
-              { plan:"Enterprise", price:"Custom", desc:"For teams needing scale, compliance, and control.", features:["Everything in Premium","Multi-user & roles","White-label option","API access","Custom integrations","Accountant portal","Dedicated success manager"],                            cta:"Contact Sales",    popular:false },
+              { plan:"Essentials", price:"20",     color:"#00D4A4", icon:<Zap size={20} color="#00D4A4"/>,         desc:"Perfect for freelancers and solo businesses.",      features:["Up to 100 documents/month","Automatic data extraction","Basic invoicing","Financial dashboard","Email support","14-day free trial"],                                                            cta:"Start Free Trial", popular:false },
+              { plan:"Premium",    price:"30",     color:"#0ea5e9", icon:<Sparkles size={20} color="#0ea5e9"/>,    desc:"For growing businesses that need full automation.", features:["Unlimited documents","Automated follow-up emails","Smart Search (RAG)","Advanced reports","Bill pay & reconciliation","Tax tools","Priority support"],                                          cta:"Start Free Trial", popular:true  },
+              { plan:"Enterprise", price:"Custom", color:"#8b5cf6", icon:<Briefcase size={20} color="#8b5cf6"/>,  desc:"For teams needing scale, compliance, and control.", features:["Everything in Premium","Multi-user & roles","White-label option","API access","Custom integrations","Accountant portal","Dedicated success manager"],                                          cta:"Contact Sales",    popular:false },
             ].map((p,i) => (
               <Reveal key={i} delay={i*0.1} pop={true}>
                 <PricingCard {...p} onSignUp={p.price==="Custom" ? () => window.location.href="mailto:support@getnovala.com" : goToSignUp}/>
@@ -715,12 +767,14 @@ export default function NovalaLanding() {
         <div style={{ maxWidth:700, margin:"0 auto" }}>
           <Reveal>
             <div style={{ textAlign:"center", marginBottom:52 }}>
-              <div style={{ display:"inline-block", fontSize:11, fontWeight:700, color:"#0A2540", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:14, background:"#E8F4F0", padding:"4px 16px", borderRadius:99 }}>FAQ</div>
+              <div style={{ display:"inline-flex", alignItems:"center", gap:8, fontSize:11, fontWeight:700, color:"#0A2540", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:14, background:"#E8F4F0", padding:"6px 16px", borderRadius:99 }}>
+                <HelpCircle size={13} color="#00D4A4"/> FAQ
+              </div>
               <h2 style={{ fontSize:"clamp(26px,5vw,44px)", fontWeight:800, letterSpacing:"-0.035em", color:"#0A2540", lineHeight:1.12 }}>Common questions</h2>
             </div>
           </Reveal>
           <Reveal delay={0.1}>
-            {faqs.map((f,i) => <FAQ key={i} q={f.q} a={f.a}/>)}
+            {faqs.map((f,i) => <FAQ key={i} q={f.q} a={f.a} icon={f.icon}/>)}
           </Reveal>
         </div>
       </section>
@@ -743,7 +797,7 @@ export default function NovalaLanding() {
               Join hundreds of businesses already saving hours every week with Novala's effortless financial intelligence platform.
             </p>
             <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap", marginBottom:24 }}>
-              <button className="cta-primary" onClick={goToSignUp} style={{ fontSize:15, padding:"16px 38px", background:"#00D4A4", color:"#0A2540" }}>Create Free Account →</button>
+              <button className="cta-primary" onClick={goToSignUp} style={{ fontSize:15, padding:"16px 38px" }}>Create Free Account →</button>
               <button onClick={goToApp} style={{ fontSize:15, padding:"16px 32px", borderRadius:13, background:"rgba(255,255,255,0.07)", color:"#fff", border:"1px solid rgba(255,255,255,0.14)", cursor:"pointer", fontFamily:"inherit", fontWeight:600, transition:"all 0.25s ease" }}
                 onMouseEnter={e => { e.currentTarget.style.background="rgba(255,255,255,0.12)"; e.currentTarget.style.transform="translateY(-2px)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background="rgba(255,255,255,0.07)"; e.currentTarget.style.transform="none"; }}>
@@ -760,11 +814,11 @@ export default function NovalaLanding() {
         <div style={{ maxWidth:1200, margin:"0 auto" }}>
           <div style={{ display:"flex", gap:12, flexWrap:"wrap", justifyContent:"center", marginBottom:48, paddingBottom:36, borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
             {[
-              { icon:<Lock size={13}/>,     label:"Bank-grade Security",      sub:"AES-256 Encrypted"   },
-              { icon:<Cloud size={13}/>,    label:"AWS Hosted",               sub:"us-east-2 Region"    },
+              { icon:<Lock size={13}/>,     label:"Bank-grade Security",      sub:"AES-256 Encrypted"    },
+              { icon:<Cloud size={13}/>,    label:"AWS Hosted",               sub:"us-east-2 Region"     },
               { icon:<Shield size={13}/>,   label:"SOC 2 Ready",              sub:"Enterprise Compliant" },
-              { icon:<Database size={13}/>, label:"Encrypted Infrastructure", sub:"Zero Data Sharing"   },
-              { icon:<Star size={13}/>,     label:"99.9% Uptime",             sub:"SLA Guaranteed"      },
+              { icon:<Database size={13}/>, label:"Encrypted Infrastructure", sub:"Zero Data Sharing"    },
+              { icon:<Star size={13}/>,     label:"99.9% Uptime",             sub:"SLA Guaranteed"       },
             ].map(b => (
               <div key={b.label} style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:"10px 16px", transition:"all 0.2s ease" }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor="rgba(0,212,164,0.2)"; e.currentTarget.style.background="rgba(0,212,164,0.04)"; }}
@@ -777,7 +831,6 @@ export default function NovalaLanding() {
               </div>
             ))}
           </div>
-
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:"clamp(24px,4vw,44px)", marginBottom:44 }}>
             <div style={{ gridColumn:"span 1" }}>
               <div style={{ display:"flex", alignItems:"center", gap:9, marginBottom:16 }}>
@@ -799,7 +852,6 @@ export default function NovalaLanding() {
                 ))}
               </div>
             </div>
-
             {[
               { title:"Product",   links:["Features","Pricing","How It Works","Integrations","API"] },
               { title:"Company",   links:["About","Blog","Careers","Press","Contact"]               },
@@ -816,7 +868,6 @@ export default function NovalaLanding() {
               </div>
             ))}
           </div>
-
           <div style={{ borderTop:"1px solid rgba(255,255,255,0.05)", paddingTop:22, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12 }}>
             <span style={{ fontSize:12.5, color:"#334155" }}>2026 Novala Technologies Inc. All rights reserved.</span>
             <div style={{ display:"flex", gap:16, flexWrap:"wrap", alignItems:"center" }}>
