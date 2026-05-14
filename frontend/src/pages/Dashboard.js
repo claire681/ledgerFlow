@@ -8,11 +8,12 @@ import {
   ShoppingCart, UserCheck, Briefcase, ClipboardList,
   Calendar, Clock, Pause, Play, Save, Bell,
   Building2, CreditCard, Percent, Package,
-  ChevronDown, Settings, HelpCircle, LogOut,
+  ChevronDown, 
   Landmark, Wallet, BarChart3, Tag, Zap,
   BookOpen, GitMerge, ScanLine, Link2, Coffee,
   SlidersHorizontal,
 } from 'lucide-react';
+import { getFirstName } from '../utils/userDisplay';
 
 const ACCENT  = '#0AB98A';
 const FONT    = "'Inter', -apple-system, sans-serif";
@@ -464,14 +465,11 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const token    = localStorage.getItem('token');
 
-  const rawName     = localStorage.getItem('user_name') || localStorage.getItem('full_name') || localStorage.getItem('user_email') || 'there';
-  const fullName    = rawName.includes('@') ? rawName.split('@')[0] : rawName;
-  const firstName   = fullName.split(/[\s._@]/)[0];
-  const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+ const rawName     = localStorage.getItem('user_name') || localStorage.getItem('full_name') || localStorage.getItem('user_email') || '';
   const userEmail   = localStorage.getItem('user_email') || '';
   const company     = localStorage.getItem('company_name') || 'My Business';
-  const initials    = displayName.charAt(0).toUpperCase() + (fullName.split(' ')[1]?.charAt(0)?.toUpperCase() || '');
-
+  const savedFirst  = localStorage.getItem('first_name') || '';
+  const displayName = savedFirst || getFirstName(rawName || userEmail);
   const [stats,            setStats]            = useState(null);
   const [txns,             setTxns]             = useState([]);
   const [invoices,         setInvoices]         = useState([]);
@@ -530,10 +528,6 @@ export default function Dashboard() {
   });
   const cashFlowData = Object.entries(cashFlowMap).slice(-8).map(([month,amount]) => ({ month, amount }));
 
-  const dismissBanner = () => {
-    localStorage.setItem('nova_banner_dismissed', 'true');
-    setShowBanner(false);
-  };
 
   const briefingBadgeColor = briefingPaused?'#F59E0B':briefingOn?ACCENT:'#94A3B8';
   const briefingBadgeBg    = briefingPaused?'rgba(245,158,11,0.1)':briefingOn?'rgba(10,185,138,0.1)':'#F1F5F9';
@@ -551,25 +545,7 @@ export default function Dashboard() {
       {showBriefing    && <BriefingModal onClose={() => setShowBriefing(false)} onSave={s => { setBriefingSettings(s); setShowBriefing(false); }} initial={briefingSettings}/>}
       {showCreatePanel && <CreatePanel  onClose={() => setShowCreatePanel(false)} onNavigate={navigate}/>}
 
-      {/* ── NOVA PROMO BANNER ── */}
-      {showBanner && (
-        <div style={{ background:'linear-gradient(90deg,#0AB98A,#00B88F)', padding:'0 20px', height:40, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', flexShrink:0 }}>
-          <div style={{ fontSize:13, color:'#fff', display:'flex', alignItems:'center', gap:6 }}>
-            Meet Nova — Instant, smart answers inside Novala.
-            <span
-              onClick={() => navigate('/help')}
-              style={{ color:'#fff', fontWeight:700, textDecoration:'underline', cursor:'pointer' }}>
-              Try Nova
-            </span>
-          </div>
-          <button
-            onClick={dismissBanner}
-            style={{ position:'absolute', right:16, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.8)', display:'flex', alignItems:'center', padding:4 }}>
-            <X size={16}/>
-          </button>
-        </div>
-      )}
-
+    
       {/* ── PAGE CONTENT ── */}
       <div style={{ maxWidth:1200, margin:'0 auto', padding:isMobile?'32px 16px':'48px 32px 32px' }}>
 

@@ -39,7 +39,33 @@ import APIAccess           from './pages/APIAccess';
 import Businesses          from './pages/Businesses';
 
 const ACCENT = '#0AB98A';
-
+function PromoBanner() {
+  const [show, setShow] = React.useState(
+    () => localStorage.getItem('nova_banner_dismissed') !== 'true'
+  );
+  if (!show) return null;
+  return (
+    <div style={{ width:'100%', height:40, background:'#0F5959', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', flexShrink:0, zIndex:101 }}>
+      <div style={{ fontSize:13, color:'#fff', display:'flex', alignItems:'center', gap:6 }}>
+        Meet Nova — Instant, smart answers inside Novala.
+        <span
+          style={{ color:'#fff', fontWeight:700, textDecoration:'underline', cursor:'pointer' }}
+          onClick={() => {/* open Nova panel */}}
+        >
+          Try Nova
+        </span>
+      </div>
+      <button
+        onClick={() => { localStorage.setItem('nova_banner_dismissed','true'); setShow(false); }}
+        style={{ position:'absolute', right:16, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.7)', display:'flex', alignItems:'center', padding:4 }}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+      </button>
+    </div>
+  );
+}
 function AppLayout({ onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile,       setIsMobile]       = useState(window.innerWidth < 768);
@@ -66,6 +92,9 @@ function AppLayout({ onLogout }) {
       background:    '#F8FAFC',
       fontFamily:    "'Inter', -apple-system, sans-serif",
     }}>
+     {/* Promo banner — full width above header */}
+      <PromoBanner/>
+
       {/* Top header — full width, always visible */}
       <TopBar
         onLogout={onLogout}
