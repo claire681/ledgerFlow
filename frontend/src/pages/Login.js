@@ -227,12 +227,13 @@ export default function Login({ onLogin, defaultRegister }) {
 
     setLoading(true);
     try {
-      if (isRegister) {
+   if (isRegister) {
         const res = await register(email, password, name, company);
-        onLogin(res.data.access_token, email);
+        if (name) localStorage.setItem('user_name', name);
+        onLogin(res.data.access_token, email, true);
       } else {
         const res = await login(email, password);
-        onLogin(res.data.access_token, email);
+        onLogin(res.data.access_token, email, false);
       }
     } catch (err) {
       const detail = err.response && err.response.data && err.response.data.detail;

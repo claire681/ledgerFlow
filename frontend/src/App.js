@@ -214,12 +214,14 @@ export default function App() {
       });
   }, [token]);
 
-  const handleLogin = (t, email) => {
+ const handleLogin = (t, email, isNewUser = false) => {
     setToken(t);
     localStorage.setItem('token', t);
     if (email) localStorage.setItem('user_email', email);
+    if (!isNewUser) {
+      localStorage.setItem('onboarding_completed', 'true');
+    }
   };
-
   const handleLogout = () => {
     localStorage.clear();
     setToken(null);
