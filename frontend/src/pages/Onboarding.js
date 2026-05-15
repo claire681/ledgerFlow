@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight, ArrowLeft, CheckCircle, TrendingUp,
-  Building2, Users, FileText, Receipt, Percent,
+  Users, FileText, Receipt, Percent,
   RefreshCw, Package, Briefcase, Shield,
+  Eye, EyeOff,
 } from 'lucide-react';
+import { register } from '../services/api';
 
-const BASE    = 'https://api.getnovala.com/api/v1';
 const DARK    = '#08090D';
 const CARD    = '#111318';
 const BORDER  = '#1E2128';
@@ -14,8 +16,6 @@ const MINTDIM = 'rgba(0,255,178,0.12)';
 const WHITE   = '#F1F5F9';
 const MUTED   = '#64748B';
 const FONT    = "'Inter', -apple-system, sans-serif";
-
-const getToken = () => localStorage.getItem('token') || localStorage.getItem('access_token') || '';
 
 const BUSINESS_TYPES = [
   { value: 'freelancer',      label: 'Freelancer',      icon: '🧑‍💻' },
@@ -33,21 +33,21 @@ const INDUSTRIES = [
 ];
 
 const FEATURES = [
-  { id: 'invoicing',   label: 'Invoicing',           icon: FileText,   desc: 'Create and send invoices',        soon: false },
-  { id: 'bookkeeping', label: 'Bookkeeping',          icon: TrendingUp, desc: 'Automated transaction recording', soon: false },
-  { id: 'expenses',    label: 'Expense Tracking',     icon: Receipt,    desc: 'Track and categorize expenses',   soon: false },
-  { id: 'payroll',     label: 'Payroll',              icon: Users,      desc: 'Manage employee payments',        soon: false },
-  { id: 'tax',         label: 'Tax Management',       icon: Percent,    desc: 'Track taxes and file returns',    soon: false },
-  { id: 'recurring',   label: 'Recurring Revenue',    icon: RefreshCw,  desc: 'Automate recurring billing',      soon: true  },
-  { id: 'documents',   label: 'Document Management',  icon: Package,    desc: 'Upload and extract documents',    soon: false },
-  { id: 'team',        label: 'Team Collaboration',   icon: Briefcase,  desc: 'Invite and manage team members',  soon: false },
+  { id: 'invoicing',   label: 'Invoicing',          icon: FileText,   desc: 'Create and send invoices',        soon: false },
+  { id: 'bookkeeping', label: 'Bookkeeping',         icon: TrendingUp, desc: 'Automated transaction recording', soon: false },
+  { id: 'expenses',    label: 'Expense Tracking',    icon: Receipt,    desc: 'Track and categorize expenses',   soon: false },
+  { id: 'payroll',     label: 'Payroll',             icon: Users,      desc: 'Manage employee payments',        soon: false },
+  { id: 'tax',         label: 'Tax Management',      icon: Percent,    desc: 'Track taxes and file returns',    soon: false },
+  { id: 'recurring',   label: 'Recurring Revenue',   icon: RefreshCw,  desc: 'Automate recurring billing',      soon: true  },
+  { id: 'documents',   label: 'Document Management', icon: Package,    desc: 'Upload and extract documents',    soon: false },
+  { id: 'team',        label: 'Team Collaboration',  icon: Briefcase,  desc: 'Invite and manage team members',  soon: false },
 ];
 
 const TEAM_SIZES = [
-  { value: '1',    label: 'Just me', sub: 'Solo founder'  },
-  { value: '2-5',  label: '2 – 5',   sub: 'Small team'    },
-  { value: '6-20', label: '6 – 20',  sub: 'Growing team'  },
-  { value: '20+',  label: '20+',     sub: 'Large team'    },
+  { value: '1',    label: 'Just me', sub: 'Solo founder' },
+  { value: '2-5',  label: '2 – 5',   sub: 'Small team'   },
+  { value: '6-20', label: '6 – 20',  sub: 'Growing team' },
+  { value: '20+',  label: '20+',     sub: 'Large team'   },
 ];
 
 function ProgressBar({ step, total }) {
@@ -132,71 +132,43 @@ function ErrorMsg({ msg }) {
 }
 
 export default function Onboarding({ onComplete }) {
+  const navigate = useNavigate();
   const [step,        setStep]        = useState(1);
   const [companyName, setCompanyName] = useState('');
   const [bizType,     setBizType]     = useState('');
   const [industry,    setIndustry]    = useState('');
   const [features,    setFeatures]    = useState([]);
   const [teamSize,    setTeamSize]    = useState('');
-  const [saving,      setSaving]      = useState(false);
   const [error,       setError]       = useState('');
+  const [saving,      setSaving]      = useState(false);
 
-  const firstName = localStorage.getItem('first_name') ||
-    (() => {
-      const raw    = localStorage.getItem('user_name') || localStorage.getItem('user_email') || '';
-      const base   = raw.includes('@') ? raw.split('@')[0] : raw;
-      const strip  = base.replace(/\d+$/, '');
-      const cap    = strip.charAt(0).toUpperCase() + strip.slice(1);
-      const match  = cap.match(/^[A-Z][a-z]+/);
-      return match ? match[0] : cap || 'there';
-    })();
+  // Register fields — step 6
+  const [fullName,     setFullName]     = useState('');
+  const [email,        setEmail]        = useState('');
+  const [password,     setPassword]     = useState('');
+  const [confirmPass,  setConfirmPass]  = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm,  setShowConfirm]  = useState(false);
 
-  useEffect(() => {
-    const check = async () => {
-      try {
-        const res  = await fetch(BASE + '/onboarding/status', { headers: { Authorization: 'Bearer ' + getToken() } });
-        const data = await res.json();
-        if (data.onboarding_completed) { onComplete(); return; }
-        if (data.company_name) setCompanyName(data.company_name);
-      } catch (e) {}
-    };
-    check();
-  }, []);
-
-  const save = async (s, completed = false, extra = {}) => {
-    try {
-      await fetch(BASE + '/onboarding/update', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ step: s, completed, company_name: companyName, ...extra }),
-      });
-    } catch (e) {}
-  };
+  const clearError = () => { if (error) setError(''); };
 
   const toggleFeature = (id) => {
     setFeatures(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
   };
 
   // Step 1 — company name required
-  const handleStep1 = async () => {
+  const handleStep1 = () => {
     if (!companyName.trim()) {
       setError('Please enter your company name to continue.');
       return;
     }
     setError('');
-    setSaving(true);
     localStorage.setItem('company_name', companyName);
-    await save(2, false, { company_name: companyName });
-    setSaving(false);
     setStep(2);
   };
 
   // Step 2 — business type AND industry required
-  const handleStep2 = async () => {
-    if (!bizType && !industry) {
-      setError('Please select your business type and industry to continue.');
-      return;
-    }
+  const handleStep2 = () => {
     if (!bizType) {
       setError('Please select your business type to continue.');
       return;
@@ -206,56 +178,87 @@ export default function Onboarding({ onComplete }) {
       return;
     }
     setError('');
-    setSaving(true);
-    await save(3, false, { business_type: bizType, industry });
-    setSaving(false);
     setStep(3);
   };
 
-  // Step 3 — features required to Continue, Skip bypasses
-  const handleStep3Continue = async () => {
+  // Step 3 — features, skip or continue
+  const handleStep3Continue = () => {
     if (features.length === 0) {
-      setError('Please select at least one feature to continue, or press Skip.');
+      setError('Please select at least one feature, or press Skip.');
       return;
     }
     setError('');
-    setSaving(true);
-    await save(4, false, { features_selected: features });
-    setSaving(false);
     setStep(4);
   };
 
-  const handleStep3Skip = async () => {
-    setError('');
-    await save(4);
-    setStep(4);
-  };
-
-  // Step 4 — team size, Skip allowed
-  const handleStep4Continue = async () => {
+  // Step 4 — team size, skip or continue
+  const handleStep4Continue = () => {
     if (!teamSize) {
-      setError('Please select your team size to continue, or press Skip.');
+      setError('Please select your team size, or press Skip.');
+      return;
+    }
+    setError('');
+    setStep(5);
+  };
+
+  // Step 6 — create account
+  const handleRegister = async () => {
+    if (!fullName.trim()) {
+      setError('Please enter your full name.');
+      return;
+    }
+    if (!email.trim() || !email.includes('@')) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (password !== confirmPass) {
+      setError('Passwords do not match.');
       return;
     }
     setError('');
     setSaving(true);
-    await save(5, false, { team_size: teamSize });
-    setSaving(false);
-    setStep(5);
-  };
-
-  const handleStep4Skip = async () => {
-    setError('');
-    await save(5);
-    setStep(5);
-  };
-
-  const handleComplete = async () => {
-    setSaving(true);
-    await save(6, true);
-    localStorage.setItem('onboarding_completed', 'true');
-    setSaving(false);
-    onComplete();
+    try {
+      const res = await register(email, password, fullName, companyName);
+      const token = res.data.access_token;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user_email', email);
+      localStorage.setItem('user_name', fullName);
+      localStorage.setItem('company_name', companyName);
+      // Save onboarding data to backend
+      try {
+        await fetch('https://api.getnovala.com/api/v1/onboarding/update', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            step: 6,
+            completed: true,
+            company_name: companyName,
+            business_type: bizType,
+            industry,
+            features_selected: features,
+            team_size: teamSize,
+          }),
+        });
+      } catch (e) {}
+      onComplete();
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'string') {
+        if (detail.toLowerCase().includes('exist') || detail.toLowerCase().includes('already')) {
+          setError('An account with this email already exists. Sign in instead.');
+        } else {
+          setError(detail);
+        }
+      } else {
+        setError('Could not create account. Please try again.');
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const inputStyle = {
@@ -271,9 +274,6 @@ export default function Onboarding({ onComplete }) {
     boxSizing:'border-box',
     transition:'border-color 0.15s',
   };
-
-  // Clear error when user makes a change
-  const clearError = () => { if (error) setError(''); };
 
   return (
     <div style={{ minHeight:'100vh', background:DARK, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:FONT, padding:'24px' }}>
@@ -296,16 +296,15 @@ export default function Onboarding({ onComplete }) {
 
           <ProgressBar step={step} total={6}/>
 
-          {/* ── STEP 1 — Welcome + Company Name ── */}
+          {/* ── STEP 1 — Company Name ── */}
           {step === 1 && (
             <div>
               <StepLabel current={1} total={6} label="Welcome"/>
               <div style={{ fontSize:26, fontWeight:800, color:'#fff', marginBottom:8, letterSpacing:'-0.03em', lineHeight:1.2 }}>
-                Welcome to Novala,<br/>
-                <span style={{ color:MINT }}>{firstName}!</span>
+                Welcome to Novala! 👋
               </div>
               <div style={{ fontSize:14, color:MUTED, marginBottom:28, lineHeight:1.7 }}>
-                Let's get your workspace set up — it takes less than 2 minutes.
+                Let's get your workspace ready — it takes less than 2 minutes.
               </div>
 
               <div style={{ marginBottom:8 }}>
@@ -319,20 +318,19 @@ export default function Onboarding({ onComplete }) {
                   value={companyName}
                   onChange={e => { setCompanyName(e.target.value); clearError(); }}
                   onKeyDown={e => e.key === 'Enter' && handleStep1()}
-                  style={{ ...inputStyle, borderColor: error ? '#EF4444' : BORDER }}
-                  onFocus={e => e.target.style.borderColor = error ? '#EF4444' : MINT}
-                  onBlur={e => e.target.style.borderColor = error ? '#EF4444' : BORDER}
+                  style={inputStyle}
+                  onFocus={e => e.target.style.borderColor = MINT}
+                  onBlur={e => e.target.style.borderColor = BORDER}
                 />
               </div>
 
               <ErrorMsg msg={error}/>
 
-              {/* Feature preview */}
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:28 }}>
                 {[
                   { icon:'📊', text:'Live financial dashboard'     },
                   { icon:'🤖', text:'AI document extraction'       },
-                  { icon:'💸', text:'Invoicing & bill pay'         },
+                  { icon:'💸', text:'Invoicing and bill pay'       },
                   { icon:'🔒', text:'Bank-grade security'          },
                   { icon:'📈', text:'P&L and cash flow reports'    },
                   { icon:'🔁', text:'Recurring revenue automation' },
@@ -344,9 +342,14 @@ export default function Onboarding({ onComplete }) {
                 ))}
               </div>
 
-              <PrimaryBtn onClick={handleStep1} disabled={saving} fullWidth>
-                {saving ? 'Saving...' : 'Get started'} <ArrowRight size={16}/>
+              <PrimaryBtn onClick={handleStep1} fullWidth>
+                Get started <ArrowRight size={16}/>
               </PrimaryBtn>
+
+              <div style={{ textAlign:'center', marginTop:16, fontSize:13, color:MUTED }}>
+                Already have an account?{' '}
+                <span onClick={() => navigate('/login')} style={{ color:MINT, cursor:'pointer', fontWeight:600 }}>Sign in</span>
+              </div>
             </div>
           )}
 
@@ -397,7 +400,7 @@ export default function Onboarding({ onComplete }) {
                   <ArrowLeft size={15}/> Back
                 </GhostBtn>
                 <PrimaryBtn onClick={handleStep2} disabled={saving}>
-                  {saving ? 'Saving...' : 'Continue'} <ArrowRight size={15}/>
+                  Continue <ArrowRight size={15}/>
                 </PrimaryBtn>
               </div>
             </div>
@@ -441,11 +444,11 @@ export default function Onboarding({ onComplete }) {
                 <GhostBtn onClick={() => { setError(''); setStep(2); }}>
                   <ArrowLeft size={15}/> Back
                 </GhostBtn>
-                <GhostBtn onClick={handleStep3Skip}>
+                <GhostBtn onClick={() => { setError(''); setStep(4); }}>
                   Skip
                 </GhostBtn>
-                <PrimaryBtn onClick={handleStep3Continue} disabled={saving}>
-                  {saving ? 'Saving...' : 'Continue'} <ArrowRight size={15}/>
+                <PrimaryBtn onClick={handleStep3Continue}>
+                  Continue <ArrowRight size={15}/>
                 </PrimaryBtn>
               </div>
             </div>
@@ -479,17 +482,17 @@ export default function Onboarding({ onComplete }) {
                 <GhostBtn onClick={() => { setError(''); setStep(3); }}>
                   <ArrowLeft size={15}/> Back
                 </GhostBtn>
-                <GhostBtn onClick={handleStep4Skip}>
+                <GhostBtn onClick={() => { setError(''); setStep(5); }}>
                   Skip
                 </GhostBtn>
-                <PrimaryBtn onClick={handleStep4Continue} disabled={saving}>
-                  {saving ? 'Saving...' : 'Continue'} <ArrowRight size={15}/>
+                <PrimaryBtn onClick={handleStep4Continue}>
+                  Continue <ArrowRight size={15}/>
                 </PrimaryBtn>
               </div>
             </div>
           )}
 
-          {/* ── STEP 5 — Connect Bank ── */}
+          {/* ── STEP 5 — Bank ── */}
           {step === 5 && (
             <div>
               <StepLabel current={5} total={6} label="Bank Connection"/>
@@ -497,14 +500,14 @@ export default function Onboarding({ onComplete }) {
                 Connect your bank account
               </div>
               <div style={{ fontSize:14, color:MUTED, marginBottom:24, lineHeight:1.6 }}>
-                Sync your transactions automatically. We use 256-bit encryption — your credentials are never stored.
+                Sync transactions automatically. We use 256-bit encryption — your credentials are never stored.
               </div>
 
               <div style={{ padding:'28px 24px', borderRadius:14, border:'1px dashed '+BORDER, background:'#0D0F14', textAlign:'center', marginBottom:20 }}>
                 <div style={{ fontSize:44, marginBottom:14 }}>🏦</div>
                 <div style={{ fontSize:15, fontWeight:700, color:WHITE, marginBottom:8 }}>Bank connection coming soon</div>
                 <div style={{ fontSize:13, color:MUTED, marginBottom:16, lineHeight:1.6 }}>
-                  We are integrating with Plaid to support 10,000+ banks. You can connect your bank from Settings once available.
+                  We are integrating with Plaid to support 10,000+ banks. Connect from Settings once available.
                 </div>
                 <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:20, background:MINTDIM, border:'1px solid rgba(0,255,178,0.2)' }}>
                   <Shield size={12} color={MINT}/>
@@ -513,7 +516,7 @@ export default function Onboarding({ onComplete }) {
               </div>
 
               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-                <PrimaryBtn onClick={() => { save(6); setStep(6); }} fullWidth>
+                <PrimaryBtn onClick={() => { setError(''); setStep(6); }} fullWidth>
                   Continue — I'll connect my bank later <ArrowRight size={15}/>
                 </PrimaryBtn>
                 <GhostBtn onClick={() => { setError(''); setStep(4); }}>
@@ -523,58 +526,129 @@ export default function Onboarding({ onComplete }) {
             </div>
           )}
 
-          {/* ── STEP 6 — Done ── */}
+          {/* ── STEP 6 — Create Account ── */}
           {step === 6 && (
-            <div style={{ textAlign:'center' }}>
-              <StepLabel current={6} total={6} label="All Done"/>
-
-              <div style={{ width:80, height:80, borderRadius:'50%', background:MINTDIM, border:'2px solid '+MINT, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 24px', boxShadow:'0 0 40px rgba(0,255,178,0.2)' }}>
-                <CheckCircle size={40} color={MINT}/>
+            <div>
+              <StepLabel current={6} total={6} label="Create Account"/>
+              <div style={{ fontSize:24, fontWeight:800, color:'#fff', marginBottom:8, letterSpacing:'-0.02em' }}>
+                Almost there! Create your account
+              </div>
+              <div style={{ fontSize:14, color:MUTED, marginBottom:24, lineHeight:1.6 }}>
+                Your workspace for <span style={{ color:MINT, fontWeight:600 }}>{companyName}</span> is ready. Just set up your login details.
               </div>
 
-              <div style={{ fontSize:26, fontWeight:800, color:'#fff', marginBottom:10, letterSpacing:'-0.03em' }}>
-                You are all set,{' '}
-                <span style={{ color:MINT }}>{companyName || firstName}!</span>
-              </div>
-              <div style={{ fontSize:14, color:MUTED, marginBottom:28, lineHeight:1.7 }}>
-                Your Novala workspace is ready. Your dashboard is waiting for you.
+              {/* Full name */}
+              <div style={{ marginBottom:14 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:MUTED, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>
+                  Full Name <span style={{ color:'#EF4444' }}>*</span>
+                </div>
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Your full name"
+                  value={fullName}
+                  onChange={e => { setFullName(e.target.value); clearError(); }}
+                  style={inputStyle}
+                  onFocus={e => e.target.style.borderColor = MINT}
+                  onBlur={e => e.target.style.borderColor = BORDER}
+                />
               </div>
 
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:32, textAlign:'left' }}>
-                {[
-                  { icon:'📊', label:'Live Dashboard',        desc:'Real-time financial overview'      },
-                  { icon:'🤖', label:'AI Document Extraction',desc:'Upload receipts and invoices'       },
-                  { icon:'💸', label:'Invoicing',             desc:'Create and send invoices'           },
-                  { icon:'📈', label:'Financial Reports',     desc:'P&L, Balance Sheet, Cash Flow'     },
-                  { icon:'🔁', label:'Recurring Revenue',     desc:'Coming soon — on your wishlist'    },
-                  { icon:'👥', label:'Team Access',           desc:'Add your team from Settings'       },
-                ].map(f => (
-                  <div key={f.label} style={{ padding:'12px 14px', borderRadius:10, background:'#0D0F14', border:'1px solid '+BORDER, display:'flex', alignItems:'flex-start', gap:10 }}>
-                    <span style={{ fontSize:18 }}>{f.icon}</span>
-                    <div>
-                      <div style={{ fontSize:12, fontWeight:700, color:WHITE, marginBottom:2 }}>{f.label}</div>
-                      <div style={{ fontSize:10, color:MUTED }}>{f.desc}</div>
+              {/* Email */}
+              <div style={{ marginBottom:14 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:MUTED, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>
+                  Email Address <span style={{ color:'#EF4444' }}>*</span>
+                </div>
+                <input
+                  type="email"
+                  placeholder="you@company.com"
+                  value={email}
+                  onChange={e => { setEmail(e.target.value); clearError(); }}
+                  style={inputStyle}
+                  onFocus={e => e.target.style.borderColor = MINT}
+                  onBlur={e => e.target.style.borderColor = BORDER}
+                />
+              </div>
+
+              {/* Password */}
+              <div style={{ marginBottom:14 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:MUTED, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>
+                  Password <span style={{ color:'#EF4444' }}>*</span>
+                </div>
+                <div style={{ position:'relative' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Min 8 characters"
+                    value={password}
+                    onChange={e => { setPassword(e.target.value); clearError(); }}
+                    style={{ ...inputStyle, paddingRight:44 }}
+                    onFocus={e => e.target.style.borderColor = MINT}
+                    onBlur={e => e.target.style.borderColor = BORDER}
+                  />
+                  <button type="button" onClick={() => setShowPassword(s => !s)}
+                    style={{ position:'absolute', right:14, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:MUTED, display:'flex' }}>
+                    {showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm password */}
+              <div style={{ marginBottom:16 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:MUTED, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>
+                  Confirm Password <span style={{ color:'#EF4444' }}>*</span>
+                </div>
+                <div style={{ position:'relative' }}>
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    placeholder="Re-enter your password"
+                    value={confirmPass}
+                    onChange={e => { setConfirmPass(e.target.value); clearError(); }}
+                    style={{ ...inputStyle, paddingRight:44, borderColor: confirmPass && confirmPass !== password ? '#EF4444' : BORDER }}
+                    onFocus={e => e.target.style.borderColor = MINT}
+                    onBlur={e => e.target.style.borderColor = confirmPass && confirmPass !== password ? '#EF4444' : BORDER}
+                  />
+                  <button type="button" onClick={() => setShowConfirm(s => !s)}
+                    style={{ position:'absolute', right:14, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:MUTED, display:'flex' }}>
+                    {showConfirm ? <EyeOff size={16}/> : <Eye size={16}/>}
+                  </button>
+                  {confirmPass && confirmPass === password && (
+                    <div style={{ position:'absolute', right:40, top:'50%', transform:'translateY(-50%)' }}>
+                      <CheckCircle size={14} color={MINT}/>
                     </div>
-                  </div>
-                ))}
+                  )}
+                </div>
               </div>
 
-              <PrimaryBtn onClick={handleComplete} disabled={saving} fullWidth>
-                <TrendingUp size={17}/>
-                {saving ? 'Loading your dashboard...' : 'Go to my dashboard'}
+              <ErrorMsg msg={error}/>
+
+              <PrimaryBtn onClick={handleRegister} disabled={saving} fullWidth>
+                <TrendingUp size={16}/>
+                {saving ? 'Creating your account...' : 'Create account and go to dashboard'}
               </PrimaryBtn>
+
+              <div style={{ textAlign:'center', marginTop:16, fontSize:12, color:MUTED }}>
+                By creating an account you agree to our{' '}
+                <span style={{ color:MINT, cursor:'pointer' }}>Terms of Service</span>{' '}
+                and{' '}
+                <span style={{ color:MINT, cursor:'pointer' }}>Privacy Policy</span>
+              </div>
+
+              <div style={{ textAlign:'center', marginTop:12 }}>
+                <GhostBtn onClick={() => { setError(''); setStep(5); }}>
+                  <ArrowLeft size={15}/> Back
+                </GhostBtn>
+              </div>
             </div>
           )}
 
         </div>
 
         <div style={{ textAlign:'center', marginTop:20, fontSize:12, color:'#334155' }}>
-          Step {step} of 6 · Progress saved automatically
+          Step {step} of 6 · Your progress is saved locally
         </div>
       </div>
 
       <style>{`
-        @keyframes fadeIn { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
         * { box-sizing: border-box; }
         input::placeholder { color: #334155; }
       `}</style>

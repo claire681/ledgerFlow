@@ -8,7 +8,7 @@ import Sidebar             from './components/Sidebar';
 import TopBar              from './components/TopBar';
 import AIAssistant         from './components/AIAssistant';
 
-import Login               from './pages/Login';
+import LoginPage           from './pages/Login';
 import Dashboard           from './pages/Dashboard';
 import Documents           from './pages/Documents';
 import Transactions        from './pages/Transactions';
@@ -169,8 +169,7 @@ function AppLayout({ onLogout }) {
 export default function App() {
   const [token,              setToken]              = useState(null);
   const [loading,            setLoading]            = useState(true);
-  const [onboardingDone,     setOnboardingDone]     = useState(false);
-  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+ 
 
   useEffect(() => {
     const stored = localStorage.getItem('token');
@@ -178,49 +177,11 @@ export default function App() {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    if (!token) {
-      setCheckingOnboarding(false);
-      setOnboardingDone(false);
-      return;
-    }
-    const cached = localStorage.getItem('onboarding_completed');
-    if (cached === 'true') {
-      setOnboardingDone(true);
-      setCheckingOnboarding(false);
-      return;
-    }
-    setCheckingOnboarding(true);
-    const timeout = setTimeout(() => {
-      setOnboardingDone(true);
-      setCheckingOnboarding(false);
-    }, 3000);
-    fetch('https://api.getnovala.com/api/v1/onboarding/status', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => r.json())
-      .then(d => {
-        const done = d.onboarding_completed || false;
-        setOnboardingDone(done);
-        if (done) localStorage.setItem('onboarding_completed', 'true');
-      })
-      .catch(() => {
-        setOnboardingDone(true);
-        localStorage.setItem('onboarding_completed', 'true');
-      })
-      .finally(() => {
-        clearTimeout(timeout);
-        setCheckingOnboarding(false);
-      });
-  }, [token]);
 
- const handleLogin = (t, email, isNewUser = false) => {
+const handleLogin = (t, email) => {
     setToken(t);
     localStorage.setItem('token', t);
     if (email) localStorage.setItem('user_email', email);
-    if (!isNewUser) {
-      localStorage.setItem('onboarding_completed', 'true');
-    }
   };
   const handleLogout = () => {
     localStorage.clear();
@@ -228,13 +189,11 @@ export default function App() {
     setOnboardingDone(false);
   };
 
-  const handleOnboardingComplete = () => {
-    localStorage.setItem('novala_just_onboarded', 'true');
-    localStorage.setItem('onboarding_completed', 'true');
-    setOnboardingDone(true);
+ const handleOnboardingComplete = () => {
+    window.location.href = '/';
   };
 
-  if (loading || (token && checkingOnboarding)) {
+  if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F8FAFC' }}>
         <div style={{ textAlign: 'center' }}>
@@ -247,18 +206,16 @@ export default function App() {
     );
   }
 
-  return (
+ return (
     <Router>
       <AIProvider>
         {!token ? (
           <Routes>
-            <Route path="/"         element={<Landing />}                     />
-            <Route path="/login"    element={<Login onLogin={handleLogin} />} />
-            <Route path="/register" element={<Login onLogin={handleLogin} defaultRegister={true} />} />
-            <Route path="*"         element={<Navigate to="/" />}             />
+            <Route path="/"         element={<Landing />}                                          />
+            <Route path="/login"    element={<LoginPage onLogin={handleLogin} />}                  />
+            <Route path="/register" element={<Onboarding onComplete={handleOnboardingComplete} />} />
+            <Route path="*"         element={<Navigate to="/" />}                                  />
           </Routes>
-        ) : !onboardingDone ? (
-          <Onboarding onComplete={handleOnboardingComplete} />
         ) : (
           <AppLayout onLogout={handleLogout} />
         )}
