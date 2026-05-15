@@ -531,33 +531,35 @@ function PillsRow({ navigate, isMobile }) {
 
   const HEADER_H = isMobile ? 56 : 64;
 
-  return (
+ return (
     <>
-      {/* Sentinel — sits just above the pills row to detect when it scrolls off screen */}
-      <div ref={sentinelRef} style={{ height:1, marginBottom:-1 }}/>
+      {/* Sentinel */}
+      <div ref={sentinelRef} style={{ height:1, marginBottom:-1, pointerEvents:'none' }}/>
 
       <div style={{
         position:'sticky',
         top: HEADER_H,
-        zIndex:50,
-        background:'#F8FAFC',
-        borderBottom: isStuck ? '1px solid #E5E7EB' : '1px solid transparent',
-        boxShadow: isStuck ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-        transition:'box-shadow 0.2s, border-color 0.2s',
+        zIndex:30,
+        background:'#fff',
+        borderBottom:'1px solid #E5E7EB',
+        boxShadow: isStuck ? '0 4px 12px rgba(0,0,0,0.08)' : 'none',
+        transition:'box-shadow 0.2s',
         marginBottom:32,
         marginLeft: isMobile ? -16 : -32,
         marginRight: isMobile ? -16 : -32,
         paddingLeft: isMobile ? 16 : 32,
         paddingRight: isMobile ? 16 : 32,
-        paddingTop:8,
-        paddingBottom:8,
+        paddingTop:12,
+        paddingBottom:12,
+        width:'100%',
+        boxSizing:'border-box',
       }}>
-        <div style={{ position:'relative' }}>
+        <div style={{ position:'relative', display:'flex', alignItems:'center' }}>
 
-          {/* Left fade + chevron */}
+          {/* Left chevron + fade */}
           {showLeft && (
             <>
-              <div style={{ position:'absolute', left:32, top:0, bottom:0, width:40, background:'linear-gradient(to right,#F8FAFC,transparent)', zIndex:9, pointerEvents:'none' }}/>
+              <div style={{ position:'absolute', left:32, top:0, bottom:0, width:48, background:'linear-gradient(to right,#fff,transparent)', zIndex:9, pointerEvents:'none' }}/>
               {chevronBtn(
                 () => navScrollRef.current?.scrollBy({ left:-240, behavior:'smooth' }),
                 <ChevronLeft size={15} color="#374151"/>,
@@ -566,10 +568,10 @@ function PillsRow({ navigate, isMobile }) {
             </>
           )}
 
-          {/* Right fade + chevron */}
+          {/* Right chevron + fade */}
           {showRight && (
             <>
-              <div style={{ position:'absolute', right:32, top:0, bottom:0, width:40, background:'linear-gradient(to left,#F8FAFC,transparent)', zIndex:9, pointerEvents:'none' }}/>
+              <div style={{ position:'absolute', right:32, top:0, bottom:0, width:48, background:'linear-gradient(to left,#fff,transparent)', zIndex:9, pointerEvents:'none' }}/>
               {chevronBtn(
                 () => navScrollRef.current?.scrollBy({ left:240, behavior:'smooth' }),
                 <ChevronRight size={15} color="#374151"/>,
@@ -578,7 +580,7 @@ function PillsRow({ navigate, isMobile }) {
             </>
           )}
 
-          {/* Scrollable pills */}
+          {/* Pills */}
           <div
             ref={navScrollRef}
             onScroll={updateChevrons}
@@ -587,10 +589,12 @@ function PillsRow({ navigate, isMobile }) {
               gap:10,
               overflowX:'auto',
               scrollbarWidth:'none',
+              msOverflowStyle:'none',
               WebkitOverflowScrolling:'touch',
               padding:'4px 2px',
               alignItems:'center',
               flexWrap:'nowrap',
+              width:'100%',
             }}
           >
             {NAV_CATS.map(cat => {
@@ -600,9 +604,9 @@ function PillsRow({ navigate, isMobile }) {
                 <div
                   key={cat.label}
                   onClick={() => navigate(cat.path)}
-                  style={{ display:'flex', alignItems:'center', gap:9, padding:'10px 18px', background:isActive?cat.bg:'#fff', border:'1px solid '+(isActive?cat.color+'40':'#E5E7EB'), borderRadius:999, cursor:'pointer', flexShrink:0, transition:'all 0.18s ease', whiteSpace:'nowrap', boxShadow:isActive?'0 2px 10px '+cat.color+'20':'0 1px 4px rgba(0,0,0,0.06)' }}
+                  style={{ display:'flex', alignItems:'center', gap:9, padding:'10px 18px', background:isActive?cat.bg:'#F8FAFC', border:'1px solid '+(isActive?cat.color+'40':'#E5E7EB'), borderRadius:999, cursor:'pointer', flexShrink:0, transition:'all 0.18s ease', whiteSpace:'nowrap', boxShadow:isActive?'0 2px 10px '+cat.color+'20':'0 1px 4px rgba(0,0,0,0.06)' }}
                   onMouseEnter={e => { e.currentTarget.style.background=cat.bg; e.currentTarget.style.borderColor=cat.color+'40'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 14px '+cat.color+'25'; }}
-                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#E5E7EB'; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.06)'; } e.currentTarget.style.transform='none'; }}
+                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background='#F8FAFC'; e.currentTarget.style.borderColor='#E5E7EB'; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.06)'; } e.currentTarget.style.transform='none'; }}
                 >
                   <div style={{ width:30, height:30, borderRadius:'50%', background:cat.bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                     <Icon size={15} color={cat.color} strokeWidth={2.2}/>
@@ -703,7 +707,7 @@ export default function Dashboard() {
 
     
       {/* ── PAGE CONTENT ── */}
-      <div style={{ maxWidth:1200, margin:'0 auto', padding:isMobile?'32px 16px':'48px 32px 32px' }}>
+     <div style={{ maxWidth:1200, margin:'0 auto', padding:isMobile?'32px 16px':'48px 32px 32px', overflow:'visible' }}>
 
         {/* ── GREETING BLOCK ── */}
         <div style={{ position:'relative', textAlign:'center', marginBottom:32 }}>
