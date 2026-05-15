@@ -37,6 +37,22 @@ import Customers           from './pages/Customers';
 import Inventory           from './pages/Inventory';
 import APIAccess           from './pages/APIAccess';
 import Businesses          from './pages/Businesses';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useRef } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+import { BookOpen, Receipt, TrendingUp, UserCheck, Wallet, Users, Percent, Megaphone } from 'lucide-react';
+
+const NAV_CATS = [
+  { label: 'Accounting',          icon: BookOpen,   color: '#0AB98A', bg: '#E6F7F2', path: '/reconciliation' },
+  { label: 'Expenses & Pay Bills',icon: Receipt,    color: '#EF4444', bg: '#FEE2E2', path: '/transactions'   },
+  { label: 'Sales & Get Paid',    icon: TrendingUp, color: '#3B82F6', bg: '#DBEAFE', path: '/invoices'       },
+  { label: 'Customer Hub',        icon: UserCheck,  color: '#0AB98A', bg: '#E6F7F2', path: '/customers'      },
+  { label: 'Payroll',             icon: Wallet,     color: '#8B5CF6', bg: '#EDE9FE', path: '/team'           },
+  { label: 'Team',                icon: Users,      color: '#6366F1', bg: '#E0E7FF', path: '/team'           },
+  { label: 'Sales Tax',           icon: Percent,    color: '#F59E0B', bg: '#FEF3C7', path: '/tax'            },
+  { label: 'Marketing',           icon: Megaphone,  color: '#F97316', bg: '#FFF7ED', path: '/marketing'      },
+];
 
 const ACCENT = '#0AB98A';
 
@@ -72,6 +88,11 @@ function AppLayout({ onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile,       setIsMobile]       = useState(window.innerWidth < 768);
   const [isTablet,       setIsTablet]       = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
+  const navigate     = useNavigate();
+  const location     = useLocation();
+  const navScrollRef = useRef(null);
+  const [showLeft,   setShowLeft]  = useState(false);
+  const [showRight,  setShowRight] = useState(true);
 
   useEffect(() => {
     const handler = () => {
@@ -83,30 +104,133 @@ function AppLayout({ onLogout }) {
     return () => window.removeEventListener('resize', handler);
   }, []);
 
+  const updateChevrons = () => {
+    const el = navScrollRef.current;
+    if (!el) return;
+    setShowLeft(el.scrollLeft > 4);
+    setShowRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  };
+
+  useEffect(() => {
+    const el = navScrollRef.current;
+    if (!el) return;
+    updateChevrons();
+    el.addEventListener('scroll', updateChevrons, { passive: true });
+    window.addEventListener('resize', updateChevrons);
+    return () => {
+      el.removeEventListener('scroll', updateChevrons);
+      window.removeEventListener('resize', updateChevrons);
+    };
+  }, []);
+
   const isDesktop = !isMobile && !isTablet;
+
+  const isDashboard = location.pathname === '/';
+
+  const chevronBtn = (onClick, icon, side) => (
+    <div onClick={onClick} style={{
+      position:'absolute', [side]:0, top:'50%', transform:'translateY(-50%)',
+      zIndex:10, display:'flex', alignItems:'center', justifyContent:'center',
+      width:32, height:32, background:'#fff', border:'1px solid #E5E7EB',
+      borderRadius:'50%', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.10)',
+      transition:'all 0.15s', flexShrink:0,
+    }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor='#0AB98A'; e.currentTarget.style.boxShadow='0 2px 12px rgba(10,185,138,0.2)'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E7EB'; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.10)'; }}
+    >
+      {icon}
+    </div>
+  );
 
   return (
     <div style={{
-      display:       'flex',
-      flexDirection: 'column',
-      height:        '100vh',
-      overflow:      'hidden',
-      background:    '#F8FAFC',
-      fontFamily:    "'Inter', -apple-system, sans-serif",
+      display:'flex', flexDirection:'column', height:'100vh',
+      overflow:'hidden', background:'#F8FAFC',
+      fontFamily:"'Inter', -apple-system, sans-serif",
     }}>
-      {/* Promo banner — full width above header */}
+      {/* Promo banner */}
       <PromoBanner/>
 
-      {/* Top header — full width, always visible */}
+      {/* Main header */}
       <TopBar
         onLogout={onLogout}
         onMobileMenu={() => setMobileMenuOpen(o => !o)}
         isMobile={isMobile}
       />
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+      {/* Pills row — only on dashboard, always pinned below header */}
+      {isDashboard && (
+        <div style={{
+          background:'#fff',
+          borderBottom:'1px solid #E5E7EB',
+          boxShadow:'0 2px 8px rgba(0,0,0,0.05)',
+          flexShrink:0,
+          zIndex:40,
+          paddingTop:10,
+          paddingBottom:10,
+          paddingLeft: isMobile ? 16 : 32,
+          paddingRight: isMobile ? 16 : 32,
+        }}>
+          <div style={{ position:'relative', display:'flex', alignItems:'center', maxWidth:1200, margin:'0 auto' }}>
 
-        {/* Sidebar */}
+            {showLeft && (
+              <>
+                <div style={{ position:'absolute', left:32, top:0, bottom:0, width:48, background:'linear-gradient(to right,#fff,transparent)', zIndex:9, pointerEvents:'none' }}/>
+                {chevronBtn(
+                  () => navScrollRef.current?.scrollBy({ left:-240, behavior:'smooth' }),
+                  <ChevronLeft size={15} color="#374151"/>,
+                  'left'
+                )}
+              </>
+            )}
+
+            {showRight && (
+              <>
+                <div style={{ position:'absolute', right:32, top:0, bottom:0, width:48, background:'linear-gradient(to left,#fff,transparent)', zIndex:9, pointerEvents:'none' }}/>
+                {chevronBtn(
+                  () => navScrollRef.current?.scrollBy({ left:240, behavior:'smooth' }),
+                  <ChevronRight size={15} color="#374151"/>,
+                  'right'
+                )}
+              </>
+            )}
+
+            <div
+              ref={navScrollRef}
+              onScroll={updateChevrons}
+              style={{
+                display:'flex', gap:10, overflowX:'auto',
+                scrollbarWidth:'none', msOverflowStyle:'none',
+                WebkitOverflowScrolling:'touch',
+                padding:'4px 2px', alignItems:'center',
+                flexWrap:'nowrap', width:'100%',
+              }}
+            >
+              {NAV_CATS.map(cat => {
+                const Icon     = cat.icon;
+                const isActive = location.pathname === cat.path;
+                return (
+                  <div
+                    key={cat.label}
+                    onClick={() => navigate(cat.path)}
+                    style={{ display:'flex', alignItems:'center', gap:9, padding:'10px 18px', background:isActive?cat.bg:'#F8FAFC', border:'1px solid '+(isActive?cat.color+'40':'#E5E7EB'), borderRadius:999, cursor:'pointer', flexShrink:0, transition:'all 0.18s ease', whiteSpace:'nowrap', boxShadow:isActive?'0 2px 10px '+cat.color+'20':'0 1px 4px rgba(0,0,0,0.06)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background=cat.bg; e.currentTarget.style.borderColor=cat.color+'40'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 14px '+cat.color+'25'; }}
+                    onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background='#F8FAFC'; e.currentTarget.style.borderColor='#E5E7EB'; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.06)'; } e.currentTarget.style.transform='none'; }}
+                  >
+                    <div style={{ width:30, height:30, borderRadius:'50%', background:cat.bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <Icon size={15} color={cat.color} strokeWidth={2.2}/>
+                    </div>
+                    <span style={{ fontSize:13, fontWeight:600, color:isActive?cat.color:'#374151' }}>{cat.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display:'flex', flex:1, overflow:'hidden', position:'relative' }}>
+
         <Sidebar
           onLogout={onLogout}
           mobileOpen={mobileMenuOpen}
@@ -116,28 +240,11 @@ function AppLayout({ onLogout }) {
           isDesktop={isDesktop}
         />
 
-        {/* Mobile overlay */}
         {mobileMenuOpen && isMobile && (
-          <div
-            onClick={() => setMobileMenuOpen(false)}
-            style={{
-              position:       'fixed',
-              inset:          0,
-              background:     'rgba(0,0,0,0.5)',
-              zIndex:         39,
-              backdropFilter: 'blur(2px)',
-            }}
-          />
+          <div onClick={() => setMobileMenuOpen(false)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:39, backdropFilter:'blur(2px)' }}/>
         )}
 
-        {/* Main content */}
-        <main style={{
-          flex:      1,
-          overflowY: 'auto',
-          position:  'relative',
-          minWidth:  0,
-          marginLeft: isMobile ? 0 : 80,
-        }}>
+        <main style={{ flex:1, overflowY:'auto', position:'relative', minWidth:0, marginLeft: isMobile ? 0 : 80 }}>
           <Routes>
             <Route path="/"               element={<Dashboard />}          />
             <Route path="/documents"      element={<Documents />}          />
@@ -171,12 +278,10 @@ function AppLayout({ onLogout }) {
         </main>
       </div>
 
-      {/* Nova floating assistant — visible on all pages */}
       <AIAssistant />
     </div>
   );
 }
-
 export default function App() {
   const [token,              setToken]              = useState(null);
   const [loading,            setLoading]            = useState(true);
