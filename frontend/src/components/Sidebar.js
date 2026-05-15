@@ -18,7 +18,7 @@ import {
 const ACCENT  = '#0AB98A';
 const FONT    = "'Inter', -apple-system, sans-serif";
 const DEFAULT = '#0F172A';
-const MUTED   = '#475569';
+const MUTED   = '#334155';
 
 const SLIDE_IN = `
   @keyframes slideIn {
@@ -761,7 +761,7 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
       )}
 
       {/* Desktop slim sidebar */}
-      <aside style={{ position:'fixed', top:56, left:0, width:80, height:'calc(100vh - 56px)', background:'#FAFAFA', borderRight:'1px solid #E8EDF3', display:mobile?'none':'flex', flexDirection:'column', alignItems:'center', paddingTop:8, paddingBottom:8, zIndex:44, fontFamily:FONT, overflowY:'auto', scrollbarWidth:'none' }}>
+     <aside style={{ position:'fixed', top:56, left:0, width:80, height:'calc(100vh - 56px)', background:'#FAFAFA', borderRight:'1px solid #E8EDF3', display:mobile?'none':'flex', flexDirection:'column', alignItems:'center', paddingTop:16, paddingBottom:8, zIndex:44, fontFamily:FONT, overflowY:'auto', scrollbarWidth:'none' }}>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', width:'100%', paddingTop:4 }}>
           {SLIM_ITEMS.map(function(item) { return renderSlimItem(item); })}
         </div>

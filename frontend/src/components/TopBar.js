@@ -42,9 +42,9 @@ export default function TopBar({ onLogout, onMobileMenu, isMobile }) {
     <div style={{ height:64, background:'#fff', borderBottom:'1px solid #E8EDF3', display:'flex', alignItems:'center', padding:'0 16px', gap:10, zIndex:100, boxShadow:'0 1px 6px rgba(0,0,0,0.04)', flexShrink:0, fontFamily:FONT }}>
 
       {/* Hamburger — mobile only */}
-      <button
+     <button
         onClick={onMobileMenu}
-        style={{ background:'none', border:'none', cursor:'pointer', color:'#475569', display:'flex', alignItems:'center', justifyContent:'center', padding:6, borderRadius:8, flexShrink:0, width:36, height:36, transition:'all 0.15s' }}
+        style={{ background:'none', border:'none', cursor:'pointer', color:'#475569', display: isMobile ? 'flex' : 'none', alignItems:'center', justifyContent:'center', padding:6, borderRadius:8, flexShrink:0, width:36, height:36, transition:'all 0.15s' }}
         onMouseEnter={e => { e.currentTarget.style.background='rgba(10,185,138,0.08)'; e.currentTarget.style.color=ACCENT; }}
         onMouseLeave={e => { e.currentTarget.style.background='none'; e.currentTarget.style.color='#475569'; }}
       >
