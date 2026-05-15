@@ -1,60 +1,81 @@
-import React, { useState } from 'react';
+ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight, ArrowLeft, CheckCircle, TrendingUp,
-  Users, FileText, Receipt, Percent,
-  RefreshCw, Package, Briefcase, Shield,
-  Eye, EyeOff,
+  Users, FileText, Receipt, Percent, Shield,
+  RefreshCw, FolderOpen, Users2, BarChart3,
+  BookOpen, Briefcase, Store, Building2, Landmark,
+  Rocket, Eye, EyeOff, Phone,
 } from 'lucide-react';
 import { register } from '../services/api';
 
-const DARK    = '#08090D';
-const CARD    = '#111318';
-const BORDER  = '#1E2128';
-const MINT    = '#00FFB2';
-const MINTDIM = 'rgba(0,255,178,0.12)';
-const WHITE   = '#F1F5F9';
-const MUTED   = '#64748B';
-const FONT    = "'Inter', -apple-system, sans-serif";
+const DARK     = '#0F1729';
+const DARK2    = '#1A2540';
+const CARD     = '#162035';
+const BORDER   = '#1E2D4A';
+const MINT     = '#00D4A4';
+const MINTDIM  = 'rgba(0,212,164,0.12)';
+const MINTGLOW = '0 0 0 3px rgba(0,212,164,0.15)';
+const WHITE    = '#F1F5F9';
+const MUTED    = '#64748B';
+const FONT     = "'Inter', -apple-system, sans-serif";
 
 const BUSINESS_TYPES = [
-  { value: 'freelancer',      label: 'Freelancer',      icon: '🧑‍💻' },
-  { value: 'sole_proprietor', label: 'Sole Proprietor', icon: '🏪' },
-  { value: 'llc',             label: 'LLC',             icon: '🏢' },
-  { value: 'corporation',     label: 'Corporation',     icon: '🏦' },
-  { value: 'partnership',     label: 'Partnership',     icon: '🤝' },
-  { value: 'startup',         label: 'Startup',         icon: '🚀' },
+  { value: 'freelancer',      label: 'Freelancer',      icon: Briefcase  },
+  { value: 'sole_proprietor', label: 'Sole Proprietor', icon: Store      },
+  { value: 'llc',             label: 'LLC',             icon: Building2  },
+  { value: 'corporation',     label: 'Corporation',     icon: Landmark   },
+  { value: 'partnership',     label: 'Partnership',     icon: Users      },
+  { value: 'startup',         label: 'Startup',         icon: Rocket     },
 ];
 
 const INDUSTRIES = [
   'Technology', 'Retail', 'Healthcare', 'Construction',
-  'Food & Beverage', 'Professional Services',
-  'Real Estate', 'Education', 'Non-profit', 'Other',
+  'Food and Beverage', 'Professional Services',
+  'Real Estate', 'Education', 'Nonprofit', 'Other',
 ];
 
 const FEATURES = [
-  { id: 'invoicing',   label: 'Invoicing',          icon: FileText,   desc: 'Create and send invoices',        soon: false },
-  { id: 'bookkeeping', label: 'Bookkeeping',         icon: TrendingUp, desc: 'Automated transaction recording', soon: false },
-  { id: 'expenses',    label: 'Expense Tracking',    icon: Receipt,    desc: 'Track and categorize expenses',   soon: false },
-  { id: 'payroll',     label: 'Payroll',             icon: Users,      desc: 'Manage employee payments',        soon: false },
-  { id: 'tax',         label: 'Tax Management',      icon: Percent,    desc: 'Track taxes and file returns',    soon: false },
-  { id: 'recurring',   label: 'Recurring Revenue',   icon: RefreshCw,  desc: 'Automate recurring billing',      soon: true  },
-  { id: 'documents',   label: 'Document Management', icon: Package,    desc: 'Upload and extract documents',    soon: false },
-  { id: 'team',        label: 'Team Collaboration',  icon: Briefcase,  desc: 'Invite and manage team members',  soon: false },
+  { id: 'invoicing',   label: 'Invoicing',          icon: FileText,   desc: 'Create and send invoices',       soon: false },
+  { id: 'bookkeeping', label: 'Bookkeeping',         icon: BookOpen,   desc: 'Automated transaction recording', soon: false },
+  { id: 'expenses',    label: 'Expense Tracking',    icon: Receipt,    desc: 'Track and categorize expenses',  soon: false },
+  { id: 'payroll',     label: 'Payroll',             icon: Users,      desc: 'Manage employee payments',       soon: false },
+  { id: 'tax',         label: 'Tax Management',      icon: Percent,    desc: 'Track taxes and file returns',   soon: false },
+  { id: 'recurring',   label: 'Recurring Revenue',   icon: RefreshCw,  desc: 'Automate recurring billing',     soon: true  },
+  { id: 'documents',   label: 'Document Management', icon: FolderOpen, desc: 'Upload and extract documents',   soon: false },
+  { id: 'team',        label: 'Team Collaboration',  icon: Users2,     desc: 'Invite and manage team members', soon: false },
 ];
 
 const TEAM_SIZES = [
   { value: '1',    label: 'Just me', sub: 'Solo founder' },
-  { value: '2-5',  label: '2 – 5',   sub: 'Small team'   },
-  { value: '6-20', label: '6 – 20',  sub: 'Growing team' },
-  { value: '20+',  label: '20+',     sub: 'Large team'   },
+  { value: '2-5',  label: '2 to 5',  sub: 'Small team'   },
+  { value: '6-20', label: '6 to 20', sub: 'Growing team' },
+  { value: '20+',  label: '20 plus', sub: 'Large team'   },
+];
+
+const COUNTRY_CODES = [
+  { code: '+1',   label: 'US/CA' },
+  { code: '+44',  label: 'UK'    },
+  { code: '+234', label: 'NG'    },
+  { code: '+254', label: 'KE'    },
+  { code: '+27',  label: 'ZA'    },
+  { code: '+49',  label: 'DE'    },
+  { code: '+33',  label: 'FR'    },
+  { code: '+91',  label: 'IN'    },
+  { code: '+61',  label: 'AU'    },
+  { code: '+64',  label: 'NZ'    },
 ];
 
 function ProgressBar({ step, total }) {
   return (
     <div style={{ display:'flex', gap:6, marginBottom:36 }}>
       {Array.from({ length: total }).map((_, i) => (
-        <div key={i} style={{ flex:1, height:3, borderRadius:99, background: i < step ? MINT : BORDER, transition:'background 0.4s ease' }}/>
+        <div key={i} style={{
+          flex:1, height:3, borderRadius:99,
+          background: i < step ? MINT : BORDER,
+          transition:'background 0.4s ease',
+          boxShadow: i < step ? '0 0 8px rgba(0,212,164,0.4)' : 'none',
+        }}/>
       ))}
     </div>
   );
@@ -75,8 +96,8 @@ function PrimaryBtn({ onClick, disabled, children, fullWidth }) {
       width: fullWidth ? '100%' : 'auto',
       padding:'13px 24px',
       borderRadius:12,
-      background: disabled ? '#1E2128' : MINT,
-      color: disabled ? MUTED : DARK,
+      background: disabled ? '#1E2D4A' : MINT,
+      color: disabled ? MUTED : '#0F1729',
       border:'none',
       cursor: disabled ? 'not-allowed' : 'pointer',
       fontSize:14,
@@ -86,10 +107,13 @@ function PrimaryBtn({ onClick, disabled, children, fullWidth }) {
       alignItems:'center',
       justifyContent:'center',
       gap:8,
-      transition:'all 0.15s',
-      boxShadow: disabled ? 'none' : '0 4px 20px rgba(0,255,178,0.25)',
+      transition:'all 0.2s',
+      boxShadow: disabled ? 'none' : '0 4px 20px rgba(0,212,164,0.3)',
       flexShrink:0,
-    }}>
+    }}
+      onMouseEnter={e => { if (!disabled) e.currentTarget.style.boxShadow='0 8px 32px rgba(0,212,164,0.45)'; }}
+      onMouseLeave={e => { if (!disabled) e.currentTarget.style.boxShadow='0 4px 20px rgba(0,212,164,0.3)'; }}
+    >
       {children}
     </button>
   );
@@ -111,7 +135,7 @@ function GhostBtn({ onClick, children }) {
       alignItems:'center',
       justifyContent:'center',
       gap:8,
-      transition:'all 0.15s',
+      transition:'all 0.2s',
       flexShrink:0,
     }}
       onMouseEnter={e => { e.currentTarget.style.borderColor='#334155'; e.currentTarget.style.color=WHITE; }}
@@ -126,25 +150,27 @@ function ErrorMsg({ msg }) {
   if (!msg) return null;
   return (
     <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', borderRadius:10, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', marginBottom:16 }}>
-      <span style={{ fontSize:13, color:'#EF4444' }}>{msg}</span>
+      <span style={{ fontSize:13, color:'#EF4444' }}>⚠ {msg}</span>
     </div>
   );
 }
 
 export default function Onboarding({ onComplete }) {
   const navigate = useNavigate();
-  const [step,        setStep]        = useState(1);
-  const [companyName, setCompanyName] = useState('');
-  const [bizType,     setBizType]     = useState('');
-  const [industry,    setIndustry]    = useState('');
-  const [features,    setFeatures]    = useState([]);
-  const [teamSize,    setTeamSize]    = useState('');
-  const [error,       setError]       = useState('');
-  const [saving,      setSaving]      = useState(false);
+  const [step,         setStep]         = useState(1);
+  const [companyName,  setCompanyName]  = useState('');
+  const [bizType,      setBizType]      = useState('');
+  const [industry,     setIndustry]     = useState('');
+  const [otherIndustry,setOtherIndustry]= useState('');
+  const [features,     setFeatures]     = useState([]);
+  const [teamSize,     setTeamSize]     = useState('');
+  const [error,        setError]        = useState('');
+  const [saving,       setSaving]       = useState(false);
 
-  // Register fields — step 6
   const [fullName,     setFullName]     = useState('');
   const [email,        setEmail]        = useState('');
+  const [countryCode,  setCountryCode]  = useState('+1');
+  const [phone,        setPhone]        = useState('');
   const [password,     setPassword]     = useState('');
   const [confirmPass,  setConfirmPass]  = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -156,7 +182,8 @@ export default function Onboarding({ onComplete }) {
     setFeatures(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
   };
 
-  // Step 1 — company name required
+  const effectiveIndustry = industry === 'Other' ? otherIndustry : industry;
+
   const handleStep1 = () => {
     if (!companyName.trim()) {
       setError('Please enter your company name to continue.');
@@ -167,7 +194,6 @@ export default function Onboarding({ onComplete }) {
     setStep(2);
   };
 
-  // Step 2 — business type AND industry required
   const handleStep2 = () => {
     if (!bizType) {
       setError('Please select your business type to continue.');
@@ -177,11 +203,14 @@ export default function Onboarding({ onComplete }) {
       setError('Please select your industry to continue.');
       return;
     }
+    if (industry === 'Other' && !otherIndustry.trim()) {
+      setError('Please describe your industry to continue.');
+      return;
+    }
     setError('');
     setStep(3);
   };
 
-  // Step 3 — features, skip or continue
   const handleStep3Continue = () => {
     if (features.length === 0) {
       setError('Please select at least one feature, or press Skip.');
@@ -191,7 +220,6 @@ export default function Onboarding({ onComplete }) {
     setStep(4);
   };
 
-  // Step 4 — team size, skip or continue
   const handleStep4Continue = () => {
     if (!teamSize) {
       setError('Please select your team size, or press Skip.');
@@ -201,7 +229,6 @@ export default function Onboarding({ onComplete }) {
     setStep(5);
   };
 
-  // Step 6 — create account
   const handleRegister = async () => {
     if (!fullName.trim()) {
       setError('Please enter your full name.');
@@ -209,6 +236,10 @@ export default function Onboarding({ onComplete }) {
     }
     if (!email.trim() || !email.includes('@')) {
       setError('Please enter a valid email address.');
+      return;
+    }
+    if (!phone.trim()) {
+      setError('Please enter your phone number.');
       return;
     }
     if (password.length < 8) {
@@ -228,7 +259,7 @@ export default function Onboarding({ onComplete }) {
       localStorage.setItem('user_email', email);
       localStorage.setItem('user_name', fullName);
       localStorage.setItem('company_name', companyName);
-      // Save onboarding data to backend
+      localStorage.setItem('saved_account_email', email);
       try {
         await fetch('https://api.getnovala.com/api/v1/onboarding/update', {
           method: 'POST',
@@ -238,9 +269,10 @@ export default function Onboarding({ onComplete }) {
             completed: true,
             company_name: companyName,
             business_type: bizType,
-            industry,
+            industry: effectiveIndustry,
             features_selected: features,
             team_size: teamSize,
+            phone: countryCode + phone,
           }),
         });
       } catch (e) {}
@@ -254,7 +286,7 @@ export default function Onboarding({ onComplete }) {
           setError(detail);
         }
       } else {
-        setError('Could not create account. Please try again.');
+        setError('Could not create your account. Please try again.');
       }
     } finally {
       setSaving(false);
@@ -266,24 +298,34 @@ export default function Onboarding({ onComplete }) {
     padding:'13px 16px',
     borderRadius:10,
     border:'1px solid ' + BORDER,
-    background:'#0D0F14',
+    background:'#0D1526',
     color:WHITE,
     fontSize:14,
     fontFamily:FONT,
     outline:'none',
     boxSizing:'border-box',
-    transition:'border-color 0.15s',
+    transition:'border-color 0.2s, box-shadow 0.2s',
+  };
+
+  const pageStyle = {
+    minHeight:'100vh',
+    background:`linear-gradient(160deg, ${DARK} 0%, ${DARK2} 100%)`,
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'center',
+    fontFamily:FONT,
+    padding:'24px',
   };
 
   return (
-    <div style={{ minHeight:'100vh', background:DARK, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:FONT, padding:'24px' }}>
-      <div style={{ width:'100%', maxWidth:560 }}>
+    <div style={pageStyle}>
+      <div style={{ width:'100%', maxWidth:580 }}>
 
         {/* Logo */}
         <div style={{ textAlign:'center', marginBottom:36 }}>
           <div style={{ display:'inline-flex', alignItems:'center', gap:10 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:MINT, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <TrendingUp size={18} color={DARK}/>
+            <div style={{ width:36, height:36, borderRadius:10, background:MINT, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 16px rgba(0,212,164,0.3)' }}>
+              <TrendingUp size={18} color="#0F1729"/>
             </div>
             <span style={{ fontSize:22, fontWeight:800, color:'#fff', letterSpacing:'-0.02em' }}>
               No<span style={{ color:MINT }}>vala</span>
@@ -292,19 +334,19 @@ export default function Onboarding({ onComplete }) {
         </div>
 
         {/* Card */}
-        <div style={{ background:CARD, borderRadius:20, padding:'36px', border:'1px solid '+BORDER, boxShadow:'0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div style={{ background:CARD, borderRadius:20, padding:'36px', border:'1px solid '+BORDER, boxShadow:'0 24px 64px rgba(0,0,0,0.4)' }}>
 
           <ProgressBar step={step} total={6}/>
 
-          {/* ── STEP 1 — Company Name ── */}
+          {/* ── STEP 1 ── */}
           {step === 1 && (
-            <div>
+            <div style={{ animation:'fadeUp 0.2s ease' }}>
               <StepLabel current={1} total={6} label="Welcome"/>
               <div style={{ fontSize:26, fontWeight:800, color:'#fff', marginBottom:8, letterSpacing:'-0.03em', lineHeight:1.2 }}>
-                Welcome to Novala! 👋
+                Welcome to Novala!
               </div>
               <div style={{ fontSize:14, color:MUTED, marginBottom:28, lineHeight:1.7 }}>
-                Let's get your workspace ready — it takes less than 2 minutes.
+                Let's get your workspace ready in under 2 minutes.
               </div>
 
               <div style={{ marginBottom:8 }}>
@@ -319,8 +361,8 @@ export default function Onboarding({ onComplete }) {
                   onChange={e => { setCompanyName(e.target.value); clearError(); }}
                   onKeyDown={e => e.key === 'Enter' && handleStep1()}
                   style={inputStyle}
-                  onFocus={e => e.target.style.borderColor = MINT}
-                  onBlur={e => e.target.style.borderColor = BORDER}
+                  onFocus={e => { e.target.style.borderColor = MINT; e.target.style.boxShadow = MINTGLOW; }}
+                  onBlur={e => { e.target.style.borderColor = BORDER; e.target.style.boxShadow = 'none'; }}
                 />
               </div>
 
@@ -328,18 +370,21 @@ export default function Onboarding({ onComplete }) {
 
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:28 }}>
                 {[
-                  { icon:'📊', text:'Live financial dashboard'     },
-                  { icon:'🤖', text:'AI document extraction'       },
-                  { icon:'💸', text:'Invoicing and bill pay'       },
-                  { icon:'🔒', text:'Bank-grade security'          },
-                  { icon:'📈', text:'P&L and cash flow reports'    },
-                  { icon:'🔁', text:'Recurring revenue automation' },
-                ].map(f => (
-                  <div key={f.text} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 13px', background:'#0D0F14', borderRadius:10, border:'1px solid '+BORDER }}>
-                    <span style={{ fontSize:15 }}>{f.icon}</span>
-                    <span style={{ fontSize:12, color:'#94A3B8' }}>{f.text}</span>
-                  </div>
-                ))}
+                  { icon: BarChart3,  text: 'Live financial dashboard'     },
+                  { icon: FileText,   text: 'Smart document extraction'    },
+                  { icon: Receipt,    text: 'Invoicing and bill pay'       },
+                  { icon: Shield,     text: 'Bank level security'          },
+                  { icon: TrendingUp, text: 'P&L and cash flow reports'    },
+                  { icon: RefreshCw,  text: 'Recurring revenue automation' },
+                ].map(f => {
+                  const Icon = f.icon;
+                  return (
+                    <div key={f.text} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 13px', background:'#0D1526', borderRadius:12, border:'1px solid '+BORDER }}>
+                      <Icon size={15} color={MINT}/>
+                      <span style={{ fontSize:12, color:'#94A3B8' }}>{f.text}</span>
+                    </div>
+                  );
+                })}
               </div>
 
               <PrimaryBtn onClick={handleStep1} fullWidth>
@@ -353,9 +398,9 @@ export default function Onboarding({ onComplete }) {
             </div>
           )}
 
-          {/* ── STEP 2 — Business Profile ── */}
+          {/* ── STEP 2 ── */}
           {step === 2 && (
-            <div>
+            <div style={{ animation:'fadeUp 0.2s ease' }}>
               <StepLabel current={2} total={6} label="Business Profile"/>
               <div style={{ fontSize:24, fontWeight:800, color:'#fff', marginBottom:8, letterSpacing:'-0.02em' }}>
                 Tell us about your business
@@ -369,13 +414,17 @@ export default function Onboarding({ onComplete }) {
                   Business Type <span style={{ color:'#EF4444' }}>*</span>
                 </div>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8 }}>
-                  {BUSINESS_TYPES.map(t => (
-                    <div key={t.value} onClick={() => { setBizType(t.value); clearError(); }}
-                      style={{ padding:'12px 10px', borderRadius:10, border:'1px solid '+(bizType===t.value?MINT:BORDER), background:bizType===t.value?MINTDIM:'#0D0F14', cursor:'pointer', textAlign:'center', transition:'all 0.15s' }}>
-                      <div style={{ fontSize:20, marginBottom:6 }}>{t.icon}</div>
-                      <div style={{ fontSize:12, fontWeight:600, color:bizType===t.value?MINT:WHITE }}>{t.label}</div>
-                    </div>
-                  ))}
+                  {BUSINESS_TYPES.map(t => {
+                    const Icon = t.icon;
+                    const sel  = bizType === t.value;
+                    return (
+                      <div key={t.value} onClick={() => { setBizType(t.value); clearError(); }}
+                        style={{ padding:'14px 10px', borderRadius:12, border:'1px solid '+(sel?MINT:BORDER), background:sel?MINTDIM:'#0D1526', cursor:'pointer', textAlign:'center', transition:'all 0.2s', boxShadow:sel?MINTGLOW:'none' }}>
+                        <Icon size={24} color={sel?MINT:MUTED} style={{ marginBottom:8 }}/>
+                        <div style={{ fontSize:12, fontWeight:600, color:sel?MINT:WHITE }}>{t.label}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -384,13 +433,31 @@ export default function Onboarding({ onComplete }) {
                   Industry <span style={{ color:'#EF4444' }}>*</span>
                 </div>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-                  {INDUSTRIES.map(ind => (
-                    <div key={ind} onClick={() => { setIndustry(ind); clearError(); }}
-                      style={{ padding:'8px 14px', borderRadius:999, border:'1px solid '+(industry===ind?MINT:BORDER), background:industry===ind?MINTDIM:'transparent', cursor:'pointer', fontSize:12, fontWeight:industry===ind?600:400, color:industry===ind?MINT:MUTED, transition:'all 0.15s' }}>
-                      {ind}
-                    </div>
-                  ))}
+                  {INDUSTRIES.map(ind => {
+                    const sel = industry === ind;
+                    return (
+                      <div key={ind} onClick={() => { setIndustry(ind); clearError(); }}
+                        style={{ padding:'8px 16px', borderRadius:999, border:'1px solid '+(sel?MINT:BORDER), background:sel?MINTDIM:'transparent', cursor:'pointer', fontSize:12, fontWeight:sel?600:400, color:sel?MINT:MUTED, transition:'all 0.2s', boxShadow:sel?MINTGLOW:'none' }}>
+                        {ind}
+                      </div>
+                    );
+                  })}
                 </div>
+
+                {industry === 'Other' && (
+                  <div style={{ marginTop:12 }}>
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="Please describe your industry"
+                      value={otherIndustry}
+                      onChange={e => { setOtherIndustry(e.target.value); clearError(); }}
+                      style={inputStyle}
+                      onFocus={e => { e.target.style.borderColor = MINT; e.target.style.boxShadow = MINTGLOW; }}
+                      onBlur={e => { e.target.style.borderColor = BORDER; e.target.style.boxShadow = 'none'; }}
+                    />
+                  </div>
+                )}
               </div>
 
               <ErrorMsg msg={error}/>
@@ -399,16 +466,16 @@ export default function Onboarding({ onComplete }) {
                 <GhostBtn onClick={() => { setError(''); setStep(1); }}>
                   <ArrowLeft size={15}/> Back
                 </GhostBtn>
-                <PrimaryBtn onClick={handleStep2} disabled={saving}>
+                <PrimaryBtn onClick={handleStep2}>
                   Continue <ArrowRight size={15}/>
                 </PrimaryBtn>
               </div>
             </div>
           )}
 
-          {/* ── STEP 3 — Features ── */}
+          {/* ── STEP 3 ── */}
           {step === 3 && (
-            <div>
+            <div style={{ animation:'fadeUp 0.2s ease' }}>
               <StepLabel current={3} total={6} label="Your Goals"/>
               <div style={{ fontSize:24, fontWeight:800, color:'#fff', marginBottom:8, letterSpacing:'-0.02em' }}>
                 What do you want to do with Novala?
@@ -424,12 +491,12 @@ export default function Onboarding({ onComplete }) {
                   return (
                     <div key={f.id}
                       onClick={() => { if (!f.soon) { toggleFeature(f.id); clearError(); } }}
-                      style={{ padding:'14px', borderRadius:12, border:'1px solid '+(selected?MINT:BORDER), background:selected?MINTDIM:'#0D0F14', cursor:f.soon?'default':'pointer', transition:'all 0.15s', position:'relative', opacity:f.soon?0.5:1 }}>
+                      style={{ padding:'14px', borderRadius:12, border:'1px solid '+(selected?MINT:BORDER), background:selected?MINTDIM:'#0D1526', cursor:f.soon?'default':'pointer', transition:'all 0.2s', position:'relative', opacity:f.soon?0.5:1, boxShadow:selected?MINTGLOW:'none' }}>
                       {f.soon && (
-                        <div style={{ position:'absolute', top:8, right:8, fontSize:9, fontWeight:700, color:DARK, background:MINT, padding:'2px 6px', borderRadius:20 }}>SOON</div>
+                        <div style={{ position:'absolute', top:8, right:8, fontSize:9, fontWeight:700, color:'#0F1729', background:MINT, padding:'2px 7px', borderRadius:20 }}>SOON</div>
                       )}
-                      <div style={{ width:30, height:30, borderRadius:8, background:selected?'rgba(0,255,178,0.15)':'#1E2128', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:8 }}>
-                        <Icon size={14} color={selected?MINT:'#64748B'}/>
+                      <div style={{ width:32, height:32, borderRadius:8, background:selected?'rgba(0,212,164,0.15)':'#1E2D4A', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:8 }}>
+                        <Icon size={16} color={selected?MINT:MUTED}/>
                       </div>
                       <div style={{ fontSize:12, fontWeight:600, color:selected?MINT:WHITE, marginBottom:3 }}>{f.label}</div>
                       <div style={{ fontSize:11, color:MUTED, lineHeight:1.4 }}>{f.desc}</div>
@@ -454,9 +521,9 @@ export default function Onboarding({ onComplete }) {
             </div>
           )}
 
-          {/* ── STEP 4 — Team Size ── */}
+          {/* ── STEP 4 ── */}
           {step === 4 && (
-            <div>
+            <div style={{ animation:'fadeUp 0.2s ease' }}>
               <StepLabel current={4} total={6} label="Your Team"/>
               <div style={{ fontSize:24, fontWeight:800, color:'#fff', marginBottom:8, letterSpacing:'-0.02em' }}>
                 How big is your team?
@@ -466,14 +533,17 @@ export default function Onboarding({ onComplete }) {
               </div>
 
               <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:10, marginBottom:16 }}>
-                {TEAM_SIZES.map(t => (
-                  <div key={t.value}
-                    onClick={() => { setTeamSize(t.value); clearError(); }}
-                    style={{ padding:'20px', borderRadius:12, border:'1px solid '+(teamSize===t.value?MINT:BORDER), background:teamSize===t.value?MINTDIM:'#0D0F14', cursor:'pointer', textAlign:'center', transition:'all 0.15s' }}>
-                    <div style={{ fontSize:22, fontWeight:800, color:teamSize===t.value?MINT:WHITE, marginBottom:4 }}>{t.label}</div>
-                    <div style={{ fontSize:11, color:MUTED }}>{t.sub}</div>
-                  </div>
-                ))}
+                {TEAM_SIZES.map(t => {
+                  const sel = teamSize === t.value;
+                  return (
+                    <div key={t.value}
+                      onClick={() => { setTeamSize(t.value); clearError(); }}
+                      style={{ padding:'20px', borderRadius:12, border:'1px solid '+(sel?MINT:BORDER), background:sel?MINTDIM:'#0D1526', cursor:'pointer', textAlign:'center', transition:'all 0.2s', boxShadow:sel?MINTGLOW:'none' }}>
+                      <div style={{ fontSize:22, fontWeight:800, color:sel?MINT:WHITE, marginBottom:4 }}>{t.label}</div>
+                      <div style={{ fontSize:11, color:MUTED }}>{t.sub}</div>
+                    </div>
+                  );
+                })}
               </div>
 
               <ErrorMsg msg={error}/>
@@ -492,32 +562,34 @@ export default function Onboarding({ onComplete }) {
             </div>
           )}
 
-          {/* ── STEP 5 — Bank ── */}
+          {/* ── STEP 5 ── */}
           {step === 5 && (
-            <div>
+            <div style={{ animation:'fadeUp 0.2s ease' }}>
               <StepLabel current={5} total={6} label="Bank Connection"/>
               <div style={{ fontSize:24, fontWeight:800, color:'#fff', marginBottom:8, letterSpacing:'-0.02em' }}>
                 Connect your bank account
               </div>
               <div style={{ fontSize:14, color:MUTED, marginBottom:24, lineHeight:1.6 }}>
-                Sync transactions automatically. We use 256-bit encryption — your credentials are never stored.
+                Sync transactions automatically. We use 256 bit encryption. Your credentials are never stored.
               </div>
 
-              <div style={{ padding:'28px 24px', borderRadius:14, border:'1px dashed '+BORDER, background:'#0D0F14', textAlign:'center', marginBottom:20 }}>
-                <div style={{ fontSize:44, marginBottom:14 }}>🏦</div>
+              <div style={{ padding:'28px 24px', borderRadius:16, border:'1px dashed '+BORDER, background:'#0D1526', textAlign:'center', marginBottom:20 }}>
+                <div style={{ width:56, height:56, borderRadius:14, background:MINTDIM, border:'1px solid rgba(0,212,164,0.2)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px' }}>
+                  <Landmark size={28} color={MINT}/>
+                </div>
                 <div style={{ fontSize:15, fontWeight:700, color:WHITE, marginBottom:8 }}>Bank connection coming soon</div>
                 <div style={{ fontSize:13, color:MUTED, marginBottom:16, lineHeight:1.6 }}>
-                  We are integrating with Plaid to support 10,000+ banks. Connect from Settings once available.
+                  We are integrating with Plaid to support 10,000 plus banks. Connect from Settings once available.
                 </div>
-                <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:20, background:MINTDIM, border:'1px solid rgba(0,255,178,0.2)' }}>
+                <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:20, background:MINTDIM, border:'1px solid rgba(0,212,164,0.2)' }}>
                   <Shield size={12} color={MINT}/>
-                  <span style={{ fontSize:11, fontWeight:600, color:MINT }}>256-bit encrypted · Read-only access</span>
+                  <span style={{ fontSize:11, fontWeight:600, color:MINT }}>256 bit encrypted · Read only access</span>
                 </div>
               </div>
 
               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                 <PrimaryBtn onClick={() => { setError(''); setStep(6); }} fullWidth>
-                  Continue — I'll connect my bank later <ArrowRight size={15}/>
+                  Continue, I'll connect my bank later <ArrowRight size={15}/>
                 </PrimaryBtn>
                 <GhostBtn onClick={() => { setError(''); setStep(4); }}>
                   <ArrowLeft size={15}/> Back
@@ -528,13 +600,13 @@ export default function Onboarding({ onComplete }) {
 
           {/* ── STEP 6 — Create Account ── */}
           {step === 6 && (
-            <div>
+            <div style={{ animation:'fadeUp 0.2s ease' }}>
               <StepLabel current={6} total={6} label="Create Account"/>
               <div style={{ fontSize:24, fontWeight:800, color:'#fff', marginBottom:8, letterSpacing:'-0.02em' }}>
                 Almost there! Create your account
               </div>
               <div style={{ fontSize:14, color:MUTED, marginBottom:24, lineHeight:1.6 }}>
-                Your workspace for <span style={{ color:MINT, fontWeight:600 }}>{companyName}</span> is ready. Just set up your login details.
+                Your workspace for <span style={{ color:MINT, fontWeight:600 }}>{companyName}</span> is ready. Set up your login details below.
               </div>
 
               {/* Full name */}
@@ -542,32 +614,49 @@ export default function Onboarding({ onComplete }) {
                 <div style={{ fontSize:11, fontWeight:700, color:MUTED, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>
                   Full Name <span style={{ color:'#EF4444' }}>*</span>
                 </div>
-                <input
-                  autoFocus
-                  type="text"
-                  placeholder="Your full name"
-                  value={fullName}
+                <input autoFocus type="text" placeholder="Your full name" value={fullName}
                   onChange={e => { setFullName(e.target.value); clearError(); }}
                   style={inputStyle}
-                  onFocus={e => e.target.style.borderColor = MINT}
-                  onBlur={e => e.target.style.borderColor = BORDER}
+                  onFocus={e => { e.target.style.borderColor=MINT; e.target.style.boxShadow=MINTGLOW; }}
+                  onBlur={e => { e.target.style.borderColor=BORDER; e.target.style.boxShadow='none'; }}
                 />
               </div>
 
               {/* Email */}
               <div style={{ marginBottom:14 }}>
                 <div style={{ fontSize:11, fontWeight:700, color:MUTED, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>
-                  Email Address <span style={{ color:'#EF4444' }}>*</span>
+                  Business Email <span style={{ color:'#EF4444' }}>*</span>
                 </div>
-                <input
-                  type="email"
-                  placeholder="you@company.com"
-                  value={email}
+                <input type="email" placeholder="you@company.com" value={email}
                   onChange={e => { setEmail(e.target.value); clearError(); }}
                   style={inputStyle}
-                  onFocus={e => e.target.style.borderColor = MINT}
-                  onBlur={e => e.target.style.borderColor = BORDER}
+                  onFocus={e => { e.target.style.borderColor=MINT; e.target.style.boxShadow=MINTGLOW; }}
+                  onBlur={e => { e.target.style.borderColor=BORDER; e.target.style.boxShadow='none'; }}
                 />
+              </div>
+
+              {/* Phone */}
+              <div style={{ marginBottom:14 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:MUTED, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>
+                  Phone Number <span style={{ color:'#EF4444' }}>*</span>
+                </div>
+                <div style={{ display:'flex', gap:8 }}>
+                  <select value={countryCode} onChange={e => setCountryCode(e.target.value)}
+                    style={{ ...inputStyle, width:100, flexShrink:0, paddingLeft:10, paddingRight:10, cursor:'pointer' }}>
+                    {COUNTRY_CODES.map(c => (
+                      <option key={c.code} value={c.code}>{c.code} {c.label}</option>
+                    ))}
+                  </select>
+                  <div style={{ position:'relative', flex:1 }}>
+                    <Phone size={15} color={MUTED} style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}/>
+                    <input type="tel" placeholder="Phone number" value={phone}
+                      onChange={e => { setPhone(e.target.value); clearError(); }}
+                      style={{ ...inputStyle, paddingLeft:40 }}
+                      onFocus={e => { e.target.style.borderColor=MINT; e.target.style.boxShadow=MINTGLOW; }}
+                      onBlur={e => { e.target.style.borderColor=BORDER; e.target.style.boxShadow='none'; }}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Password */}
@@ -576,14 +665,11 @@ export default function Onboarding({ onComplete }) {
                   Password <span style={{ color:'#EF4444' }}>*</span>
                 </div>
                 <div style={{ position:'relative' }}>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Min 8 characters"
-                    value={password}
+                  <input type={showPassword?'text':'password'} placeholder="Min 8 characters" value={password}
                     onChange={e => { setPassword(e.target.value); clearError(); }}
                     style={{ ...inputStyle, paddingRight:44 }}
-                    onFocus={e => e.target.style.borderColor = MINT}
-                    onBlur={e => e.target.style.borderColor = BORDER}
+                    onFocus={e => { e.target.style.borderColor=MINT; e.target.style.boxShadow=MINTGLOW; }}
+                    onBlur={e => { e.target.style.borderColor=BORDER; e.target.style.boxShadow='none'; }}
                   />
                   <button type="button" onClick={() => setShowPassword(s => !s)}
                     style={{ position:'absolute', right:14, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:MUTED, display:'flex' }}>
@@ -598,14 +684,11 @@ export default function Onboarding({ onComplete }) {
                   Confirm Password <span style={{ color:'#EF4444' }}>*</span>
                 </div>
                 <div style={{ position:'relative' }}>
-                  <input
-                    type={showConfirm ? 'text' : 'password'}
-                    placeholder="Re-enter your password"
-                    value={confirmPass}
+                  <input type={showConfirm?'text':'password'} placeholder="Re-enter your password" value={confirmPass}
                     onChange={e => { setConfirmPass(e.target.value); clearError(); }}
                     style={{ ...inputStyle, paddingRight:44, borderColor: confirmPass && confirmPass !== password ? '#EF4444' : BORDER }}
-                    onFocus={e => e.target.style.borderColor = MINT}
-                    onBlur={e => e.target.style.borderColor = confirmPass && confirmPass !== password ? '#EF4444' : BORDER}
+                    onFocus={e => { e.target.style.borderColor=MINT; e.target.style.boxShadow=MINTGLOW; }}
+                    onBlur={e => { e.target.style.borderColor=confirmPass && confirmPass !== password ? '#EF4444' : BORDER; e.target.style.boxShadow='none'; }}
                   />
                   <button type="button" onClick={() => setShowConfirm(s => !s)}
                     style={{ position:'absolute', right:14, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:MUTED, display:'flex' }}>
@@ -626,14 +709,14 @@ export default function Onboarding({ onComplete }) {
                 {saving ? 'Creating your account...' : 'Create account and go to dashboard'}
               </PrimaryBtn>
 
-              <div style={{ textAlign:'center', marginTop:16, fontSize:12, color:MUTED }}>
+              <div style={{ textAlign:'center', marginTop:14, fontSize:12, color:MUTED }}>
                 By creating an account you agree to our{' '}
                 <span style={{ color:MINT, cursor:'pointer' }}>Terms of Service</span>{' '}
                 and{' '}
                 <span style={{ color:MINT, cursor:'pointer' }}>Privacy Policy</span>
               </div>
 
-              <div style={{ textAlign:'center', marginTop:12 }}>
+              <div style={{ display:'flex', justifyContent:'center', marginTop:12 }}>
                 <GhostBtn onClick={() => { setError(''); setStep(5); }}>
                   <ArrowLeft size={15}/> Back
                 </GhostBtn>
@@ -649,8 +732,14 @@ export default function Onboarding({ onComplete }) {
       </div>
 
       <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0);    }
+        }
         * { box-sizing: border-box; }
         input::placeholder { color: #334155; }
+        select { appearance: none; }
+        select option { background: #162035; color: #F1F5F9; }
       `}</style>
     </div>
   );
