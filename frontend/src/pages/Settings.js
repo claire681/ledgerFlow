@@ -157,7 +157,6 @@ export default function Settings() {
     setSearchParams({ tab: tabId });
   };
 
-  // ── Profile ──────────────────────────────────────────────────
   const [firstName,  setFirstName]  = useState('');
   const [fullName,   setFullName]   = useState('');
   const [email,      setEmail]      = useState('');
@@ -165,7 +164,6 @@ export default function Settings() {
   const [savingP,    setSavingP]    = useState(false);
   const [profileMsg, setProfileMsg] = useState(null);
 
-  // ── Security ─────────────────────────────────────────────────
   const [currentPw,   setCurrentPw]   = useState('');
   const [newPw,       setNewPw]       = useState('');
   const [confirmPw,   setConfirmPw]   = useState('');
@@ -173,7 +171,6 @@ export default function Settings() {
   const [savingS,     setSavingS]     = useState(false);
   const [securityMsg, setSecurityMsg] = useState(null);
 
-  // ── Notifications ─────────────────────────────────────────────
   const [briefEnabled, setBriefEnabled] = useState(true);
   const [frequency,    setFrequency]    = useState('daily');
   const [briefTime,    setBriefTime]    = useState('08:00');
@@ -183,19 +180,29 @@ export default function Settings() {
   const [savingN,      setSavingN]      = useState(false);
   const [notifMsg,     setNotifMsg]     = useState(null);
 
-  // ── Billing / Danger ─────────────────────────────────────────
   const [billingStatus, setBillingStatus] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState('');
 
   useEffect(() => {
-    const em  = localStorage.getItem('user_email')   || '';
-    const nm  = localStorage.getItem('user_name')    || '';
-    const co  = localStorage.getItem('company_name') || '';
-    const fn  = localStorage.getItem('first_name')   || getFirstName(nm || em);
+    const em = localStorage.getItem('user_email')   || '';
+    const nm = localStorage.getItem('user_name')    || '';
+    const co = localStorage.getItem('company_name') || '';
+    const fn = localStorage.getItem('first_name')   || getFirstName(nm || em);
     setEmail(em);
     setFullName(nm);
     setCompany(co);
     setFirstName(fn);
+
+    fetch(BASE + '/auth/profile', { headers: { Authorization: 'Bearer ' + getToken() } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d) return;
+        if (d.full_name)  { setFullName(d.full_name);   localStorage.setItem('user_name',    d.full_name);  }
+        if (d.company)    { setCompany(d.company);       localStorage.setItem('company_name', d.company);   }
+        if (d.first_name) { setFirstName(d.first_name); localStorage.setItem('first_name',   d.first_name);}
+        if (d.email)      { setEmail(d.email); }
+      })
+      .catch(() => {});
 
     fetch(BASE + '/briefing/settings', { headers: { Authorization: 'Bearer ' + getToken() } })
       .then(r => r.json())
@@ -203,7 +210,8 @@ export default function Settings() {
         setBriefEnabled(d.briefing_enabled ?? true);
         setBriefTime(d.briefing_time || '08:00');
         setTimezone(d.briefing_timezone || 'America/Edmonton');
-      }).catch(() => {});
+      })
+      .catch(() => {});
 
     fetch(BASE + '/billing/status', { headers: { Authorization: 'Bearer ' + getToken() } })
       .then(r => r.json())
@@ -219,7 +227,6 @@ export default function Settings() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // ── Save handlers ─────────────────────────────────────────────
   const saveProfile = async () => {
     setSavingP(true); setProfileMsg(null);
     try {
@@ -291,20 +298,14 @@ export default function Settings() {
     fontSize: 13, fontFamily: L.font, outline: 'none', marginBottom: 16,
   };
 
-  const goTo = (path) => {
-    setShowMenu(false);
-    navigate(path);
-  };
+  const goTo = (path) => { setShowMenu(false); navigate(path); };
 
   return (
     <div style={page}>
       <div style={{ ...topBar, flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 10 : 0 }}>
 
         {isMobile && (
-          <button
-            onClick={() => navigate('/')}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: L.textMuted, fontSize: 13, fontWeight: 600, padding: 0, fontFamily: FONT, marginBottom: 4 }}
-          >
+          <button onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: L.textMuted, fontSize: 13, fontWeight: 600, padding: 0, fontFamily: FONT, marginBottom: 4 }}>
             <ChevronLeft size={18} /> Dashboard
           </button>
         )}
@@ -329,13 +330,10 @@ export default function Settings() {
                   <div key={col.header} style={{ padding: '20px 18px', borderRight: ci < 3 ? '1px solid ' + L.borderLight : 'none' }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: '#6B7280', letterSpacing: '0.1em', marginBottom: 12 }}>{col.header}</div>
                     {col.items.map(item => (
-                      <div
-                        key={item.label}
-                        onClick={() => goTo(item.path)}
+                      <div key={item.label} onClick={() => goTo(item.path)}
                         style={{ fontSize: 13, color: '#0A2540', padding: '9px 6px', borderRadius: 6, cursor: 'pointer', transition: 'all 0.12s' }}
                         onMouseEnter={e => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.paddingLeft = '10px'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.paddingLeft = '6px'; }}
-                      >
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.paddingLeft = '6px'; }}>
                         {item.label}
                       </div>
                     ))}
@@ -343,12 +341,9 @@ export default function Settings() {
                 ))}
               </div>
               <div style={{ borderTop: '1px solid ' + L.border, padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div
-                  onClick={() => goTo('/tutorials')}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: ACCENT, cursor: 'pointer', fontWeight: 500 }}
+                <div onClick={() => goTo('/tutorials')} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: ACCENT, cursor: 'pointer', fontWeight: 500 }}
                   onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
-                  onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
-                >
+                  onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
                   <Play size={12} /> Video tutorials
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: L.textMuted, cursor: 'pointer' }}>
@@ -362,19 +357,15 @@ export default function Settings() {
 
       <div style={{ padding: isMobile ? '12px' : '0 0 40px', display: 'flex', gap: 20, flexDirection: isMobile ? 'column' : 'row', alignItems: 'flex-start' }}>
 
-        {/* Tab sidebar */}
         <div style={{ ...card, padding: '8px', width: isMobile ? '100%' : 200, flexShrink: 0 }}>
           {TABS.map(tab => {
             const isActive = activeTab === tab.id;
             const Icon     = tab.icon;
             return (
-              <div
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
+              <div key={tab.id} onClick={() => handleTabClick(tab.id)}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: L.radiusSm, cursor: 'pointer', marginBottom: 2, background: isActive ? L.accentSoft : 'transparent', transition: 'all 0.1s' }}
                 onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = L.pageBg; }}
-                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-              >
+                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}>
                 <Icon size={14} color={isActive ? ACCENT : L.textMuted} />
                 <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, color: isActive ? ACCENT : L.textMuted }}>{tab.label}</span>
                 {tab.id === 'danger' && <span style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: '#EF4444' }} />}
@@ -383,58 +374,37 @@ export default function Settings() {
           })}
         </div>
 
-        {/* Tab content */}
         <div style={{ flex: 1, minWidth: 0 }}>
 
-          {/* ── PROFILE ── */}
           {activeTab === 'profile' && (
             <Section title="Profile" desc="Update your personal and business information">
               {profileMsg && <Alert type={profileMsg.type} message={profileMsg.text} />}
-
-              {/* First Name field — new */}
-              <Field
-                label="First Name"
-                value={firstName}
-                onChange={e => setFirstName(e.target.value)}
-                placeholder="Your first name (e.g. Claire)"
-              />
+              <Field label="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Your first name (e.g. Claire)" />
               <div style={{ fontSize: 11, color: L.textMuted, marginTop: -12, marginBottom: 16 }}>
                 This is how Novala will greet you across the app.
               </div>
-
               <Field label="Full Name"     value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Your full name" />
               <Field label="Email Address" value={email}    disabled placeholder="your@email.com" />
               <div style={{ fontSize: 11, color: L.textMuted, marginTop: -12, marginBottom: 16 }}>
                 Email cannot be changed. Contact support to update.
               </div>
-              <Field label="Company Name"  value={company}  onChange={e => setCompany(e.target.value)} placeholder="Your company name" />
-
-              <button
-                onClick={saveProfile}
-                disabled={savingP}
-                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: L.radiusSm, background: savingP ? L.textFaint : ACCENT, color: '#fff', border: 'none', cursor: savingP ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, fontFamily: L.font }}
-              >
+              <Field label="Company Name" value={company} onChange={e => setCompany(e.target.value)} placeholder="Your company name" />
+              <button onClick={saveProfile} disabled={savingP}
+                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: L.radiusSm, background: savingP ? L.textFaint : ACCENT, color: '#fff', border: 'none', cursor: savingP ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, fontFamily: L.font }}>
                 <Save size={13} />{savingP ? 'Saving...' : 'Save Profile'}
               </button>
             </Section>
           )}
 
-          {/* ── SECURITY ── */}
           {activeTab === 'security' && (
             <Section title="Security" desc="Change your password to keep your account secure">
               {securityMsg && <Alert type={securityMsg.type} message={securityMsg.text} />}
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Current Password</div>
                 <div style={{ position: 'relative' }}>
-                  <input
-                    type={showPw ? 'text' : 'password'}
-                    value={currentPw}
-                    onChange={e => setCurrentPw(e.target.value)}
-                    placeholder="Enter current password"
+                  <input type={showPw ? 'text' : 'password'} value={currentPw} onChange={e => setCurrentPw(e.target.value)} placeholder="Enter current password"
                     style={{ width: '100%', padding: '10px 40px 10px 12px', background: L.pageBg, border: '1px solid ' + L.border, borderRadius: L.radiusSm, color: L.text, fontSize: 13, fontFamily: L.font, outline: 'none', boxSizing: 'border-box' }}
-                    onFocus={e => e.target.style.borderColor = ACCENT}
-                    onBlur={e  => e.target.style.borderColor = L.border}
-                  />
+                    onFocus={e => e.target.style.borderColor = ACCENT} onBlur={e => e.target.style.borderColor = L.border}/>
                   <button onClick={() => setShowPw(p => !p)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: L.textMuted, display: 'flex' }}>
                     {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
@@ -445,45 +415,34 @@ export default function Settings() {
               <div style={{ padding: '10px 14px', borderRadius: L.radiusSm, background: L.pageBg, border: '1px solid ' + L.border, fontSize: 12, color: L.textMuted, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Shield size={13} color={ACCENT} /> Use at least 8 characters with a mix of letters and numbers
               </div>
-              <button
-                onClick={savePassword}
-                disabled={savingS || !currentPw || !newPw || !confirmPw}
-                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: L.radiusSm, background: savingS || !currentPw || !newPw || !confirmPw ? L.textFaint : ACCENT, color: '#fff', border: 'none', cursor: savingS || !currentPw || !newPw || !confirmPw ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, fontFamily: L.font }}
-              >
+              <button onClick={savePassword} disabled={savingS || !currentPw || !newPw || !confirmPw}
+                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: L.radiusSm, background: savingS || !currentPw || !newPw || !confirmPw ? L.textFaint : ACCENT, color: '#fff', border: 'none', cursor: savingS || !currentPw || !newPw || !confirmPw ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, fontFamily: L.font }}>
                 <Lock size={13} />{savingS ? 'Changing...' : 'Change Password'}
               </button>
             </Section>
           )}
 
-          {/* ── NOTIFICATIONS ── */}
           {activeTab === 'notifications' && (
             <Section title="Notifications" desc="Control when and how often you receive your financial briefing">
               {notifMsg && <Alert type={notifMsg.type} message={notifMsg.text} />}
-
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', borderRadius: L.radiusSm, background: L.pageBg, border: '1px solid ' + L.border, marginBottom: 20 }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: L.text }}>Morning Briefing</div>
                   <div style={{ fontSize: 11, color: L.textMuted, marginTop: 2 }}>A daily financial summary delivered to your email</div>
                 </div>
-                <div
-                  onClick={() => setBriefEnabled(p => !p)}
-                  style={{ width: 44, height: 24, borderRadius: 12, background: briefEnabled ? ACCENT : '#E2E8F0', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0 }}
-                >
+                <div onClick={() => setBriefEnabled(p => !p)}
+                  style={{ width: 44, height: 24, borderRadius: 12, background: briefEnabled ? ACCENT : '#E2E8F0', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0 }}>
                   <div style={{ position: 'absolute', top: 4, left: briefEnabled ? 22 : 4, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                 </div>
               </div>
-
               {briefEnabled && (
                 <div>
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Frequency</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {FREQUENCIES.map(f => (
-                        <div
-                          key={f.value}
-                          onClick={() => setFrequency(f.value)}
-                          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: L.radiusSm, border: '2px solid ' + (frequency === f.value ? ACCENT : L.border), background: frequency === f.value ? L.accentSoft : '#fff', cursor: 'pointer', transition: 'all 0.15s' }}
-                        >
+                        <div key={f.value} onClick={() => setFrequency(f.value)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: L.radiusSm, border: '2px solid ' + (frequency === f.value ? ACCENT : L.border), background: frequency === f.value ? L.accentSoft : '#fff', cursor: 'pointer', transition: 'all 0.15s' }}>
                           <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid ' + (frequency === f.value ? ACCENT : L.border), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             {frequency === f.value && <div style={{ width: 8, height: 8, borderRadius: '50%', background: ACCENT }} />}
                           </div>
@@ -495,7 +454,6 @@ export default function Settings() {
                       ))}
                     </div>
                   </div>
-
                   {frequency === 'weekly' && (
                     <div style={{ marginBottom: 16 }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Day of Week</div>
@@ -504,7 +462,6 @@ export default function Settings() {
                       </select>
                     </div>
                   )}
-
                   {['monthly','quarterly','biannual'].includes(frequency) && (
                     <div style={{ marginBottom: 16 }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Day of Month</div>
@@ -513,7 +470,6 @@ export default function Settings() {
                       </select>
                     </div>
                   )}
-
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Time</div>
                     <select value={briefTime} onChange={e => setBriefTime(e.target.value)} style={selectStyle}>
@@ -525,7 +481,6 @@ export default function Settings() {
                       })}
                     </select>
                   </div>
-
                   <div style={{ marginBottom: 20 }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: L.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Timezone</div>
                     <select value={timezone} onChange={e => setTimezone(e.target.value)} style={selectStyle}>
@@ -534,18 +489,13 @@ export default function Settings() {
                   </div>
                 </div>
               )}
-
-              <button
-                onClick={saveNotifications}
-                disabled={savingN}
-                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: L.radiusSm, background: savingN ? L.textFaint : ACCENT, color: '#fff', border: 'none', cursor: savingN ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, fontFamily: L.font }}
-              >
+              <button onClick={saveNotifications} disabled={savingN}
+                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: L.radiusSm, background: savingN ? L.textFaint : ACCENT, color: '#fff', border: 'none', cursor: savingN ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, fontFamily: L.font }}>
                 <Save size={13} />{savingN ? 'Saving...' : 'Save Notifications'}
               </button>
             </Section>
           )}
 
-          {/* ── BILLING ── */}
           {activeTab === 'billing' && (
             <Section title="Billing & Plan" desc="Manage your subscription and payment details">
               <div style={{ padding: '16px', borderRadius: L.radiusSm, background: L.pageBg, border: '1px solid ' + L.border, marginBottom: 16 }}>
@@ -554,29 +504,22 @@ export default function Settings() {
                   {billingStatus?.plan || 'Trial'} Plan
                 </div>
                 <div style={{ fontSize: 12, color: L.textMuted }}>
-                  {billingStatus?.subscription_status === 'active'
-                    ? 'Active subscription — renews monthly'
-                    : billingStatus?.subscription_status === 'trialing'
-                    ? 'In trial period'
+                  {billingStatus?.subscription_status === 'active' ? 'Active subscription — renews monthly'
+                    : billingStatus?.subscription_status === 'trialing' ? 'In trial period'
                     : trialDaysLeft() + ' days left in free trial'}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => navigate('/billing')}
-                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: L.radiusSm, background: ACCENT, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: L.font }}
-                >
+                <button onClick={() => navigate('/billing')}
+                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: L.radiusSm, background: ACCENT, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: L.font }}>
                   <CreditCard size={13} /> Manage Billing
                 </button>
                 {billingStatus?.subscription_status === 'active' && (
-                  <button
-                    onClick={async () => {
-                      const res  = await fetch(BASE + '/billing/portal', { method: 'POST', headers: { Authorization: 'Bearer ' + getToken() } });
-                      const data = await res.json();
-                      if (data.url) window.location.href = data.url;
-                    }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: L.radiusSm, background: 'transparent', border: '1px solid ' + L.border, color: L.textMuted, cursor: 'pointer', fontSize: 13, fontFamily: L.font }}
-                  >
+                  <button onClick={async () => {
+                    const res  = await fetch(BASE + '/billing/portal', { method: 'POST', headers: { Authorization: 'Bearer ' + getToken() } });
+                    const data = await res.json();
+                    if (data.url) window.location.href = data.url;
+                  }} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: L.radiusSm, background: 'transparent', border: '1px solid ' + L.border, color: L.textMuted, cursor: 'pointer', fontSize: 13, fontFamily: L.font }}>
                     <ArrowRight size={13} /> Manage Subscription
                   </button>
                 )}
@@ -584,7 +527,6 @@ export default function Settings() {
             </Section>
           )}
 
-          {/* ── DANGER ZONE ── */}
           {activeTab === 'danger' && (
             <div style={{ ...card, padding: '24px', marginBottom: 16, border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.02)' }}>
               <div style={{ marginBottom: 20 }}>
@@ -598,24 +540,17 @@ export default function Settings() {
                 </div>
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ fontSize: 11, color: L.textMuted, marginBottom: 6 }}>Type <strong>DELETE</strong> to confirm</div>
-                  <input
-                    value={deleteConfirm}
-                    onChange={e => setDeleteConfirm(e.target.value)}
-                    placeholder="Type DELETE here"
-                    style={{ width: '100%', padding: '10px 12px', background: '#fff', border: '1px solid rgba(239,68,68,0.3)', borderRadius: L.radiusSm, color: L.text, fontSize: 13, fontFamily: L.font, outline: 'none', boxSizing: 'border-box' }}
-                  />
+                  <input value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder="Type DELETE here"
+                    style={{ width: '100%', padding: '10px 12px', background: '#fff', border: '1px solid rgba(239,68,68,0.3)', borderRadius: L.radiusSm, color: L.text, fontSize: 13, fontFamily: L.font, outline: 'none', boxSizing: 'border-box' }}/>
                 </div>
-                <button
-                  disabled={deleteConfirm !== 'DELETE'}
+                <button disabled={deleteConfirm !== 'DELETE'}
                   onClick={() => { if (deleteConfirm === 'DELETE') alert('Account deletion coming soon. Please contact novala.support@gmail.com'); }}
-                  style={{ padding: '10px 20px', borderRadius: L.radiusSm, background: deleteConfirm === 'DELETE' ? '#EF4444' : '#CBD5E1', color: '#fff', border: 'none', cursor: deleteConfirm === 'DELETE' ? 'pointer' : 'not-allowed', fontSize: 13, fontWeight: 600, fontFamily: L.font }}
-                >
+                  style={{ padding: '10px 20px', borderRadius: L.radiusSm, background: deleteConfirm === 'DELETE' ? '#EF4444' : '#CBD5E1', color: '#fff', border: 'none', cursor: deleteConfirm === 'DELETE' ? 'pointer' : 'not-allowed', fontSize: 13, fontWeight: 600, fontFamily: L.font }}>
                   Delete My Account
                 </button>
               </div>
             </div>
           )}
-
         </div>
       </div>
     </div>
