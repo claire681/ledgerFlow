@@ -24,7 +24,6 @@ const fmt = (n) => {
   return (num < 0 ? '-$' : '$') + Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 };
 
-// ── Nav categories ────────────────────────────────────────────
 const NAV_CATS = [
   { label: 'Accounting',          icon: BookOpen,   color: '#0AB98A', bg: '#E6F7F2', path: '/reconciliation' },
   { label: 'Expenses & Pay Bills',icon: Receipt,    color: '#EF4444', bg: '#FEE2E2', path: '/transactions'   },
@@ -36,7 +35,6 @@ const NAV_CATS = [
   { label: 'Marketing',           icon: Megaphone,  color: '#F97316', bg: '#FFF7ED', path: '/marketing'      },
 ];
 
-// ── Create actions ────────────────────────────────────────────
 const ALL_CREATE_ACTIONS = [
   { label: 'Create invoice',         path: '/invoices',     cat: 'Customers', fav: true  },
   { label: 'Create sales receipt',   path: '/invoices',     cat: 'Customers', fav: true  },
@@ -92,7 +90,6 @@ const TIMEZONES = [
   'Australia/Sydney','Pacific/Auckland','UTC',
 ];
 
-// ── Briefing Modal ────────────────────────────────────────────
 function BriefingModal({ onClose, onSave, initial }) {
   const [enabled,    setEnabled]    = useState(initial?.enabled    ?? true);
   const [paused,     setPaused]     = useState(initial?.paused     ?? false);
@@ -218,20 +215,17 @@ function BriefingModal({ onClose, onSave, initial }) {
   );
 }
 
-// ── Create Panel ──────────────────────────────────────────────
 function CreatePanel({ onClose, onNavigate }) {
   const [search,    setSearch]    = useState('');
   const [favorites, setFavorites] = useState(ALL_CREATE_ACTIONS.filter(a => a.fav).map(a => a.label));
-
   const toggleFav = (label) => setFavorites(prev => prev.includes(label) ? prev.filter(f => f !== label) : [...prev, label]);
   const filtered  = search.trim() ? ALL_CREATE_ACTIONS.filter(a => a.label.toLowerCase().includes(search.toLowerCase())) : ALL_CREATE_ACTIONS;
   const cats      = [...new Set(filtered.map(a => a.cat))];
   const favItems  = filtered.filter(a => favorites.includes(a.label));
-
   return (
     <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:200, backdropFilter:'blur(4px)' }}>
       <div onClick={e => e.stopPropagation()} style={{ position:'absolute', top:0, right:0, width:380, height:'100vh', background:'#fff', boxShadow:'-8px 0 40px rgba(0,0,0,0.15)', display:'flex', flexDirection:'column', animation:'slideFromRight 0.25s ease' }}>
-       <style>{`@keyframes slideFromRight { from { transform: translateX(100%) } to { transform: translateX(0) } }`}</style>
+        <style>{`@keyframes slideFromRight { from { transform: translateX(100%) } to { transform: translateX(0) } }`}</style>
         <div style={{ padding:'20px 20px 16px', borderBottom:'1px solid #F1F5F9', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0, background:'linear-gradient(135deg,#0AB98A,#0EA5E9)' }}>
           <div style={{ fontSize:16, fontWeight:700, color:'#fff' }}>Create actions</div>
           <button onClick={onClose} style={{ background:'rgba(255,255,255,0.2)', border:'none', cursor:'pointer', color:'#fff', display:'flex', borderRadius:8, padding:6 }}><X size={18}/></button>
@@ -273,10 +267,9 @@ function CreateItem({ item, isFav, onToggleFav, onNavigate, onClose }) {
   );
 }
 
-// ── Mini Bar ──────────────────────────────────────────────────
 function MiniBar({ income, expenses }) {
   const total  = income + expenses || 1;
-  const incPct = (income   / total) * 100;
+  const incPct = (income / total) * 100;
   const expPct = (expenses / total) * 100;
   return (
     <div style={{ marginTop:10 }}>
@@ -298,7 +291,6 @@ function MiniBar({ income, expenses }) {
   );
 }
 
-// ── Cash Flow Bars ────────────────────────────────────────────
 function CashFlowBars({ data, tab }) {
   if (!data || data.length === 0) {
     return <div style={{ height:100, display:'flex', alignItems:'center', justifyContent:'center', color:'#94A3B8', fontSize:13 }}>No cash flow data available</div>;
@@ -334,7 +326,6 @@ function CashFlowBars({ data, tab }) {
   );
 }
 
-// ── Cash Flow Card ────────────────────────────────────────────
 function CashFlowCard({ data, balance, loading, onView, title, subtitle }) {
   const [tab,   setTab]   = useState('balance');
   const [range, setRange] = useState('6M');
@@ -399,7 +390,6 @@ function CashFlowCard({ data, balance, loading, onView, title, subtitle }) {
   );
 }
 
-// ── Add Widget Card ───────────────────────────────────────────
 function AddWidgetCard({ onAdd }) {
   const [hov, setHov] = useState(false);
   return (
@@ -421,7 +411,6 @@ function AddWidgetCard({ onAdd }) {
   );
 }
 
-// ── Dashboard Card ────────────────────────────────────────────
 function DashCard({ label, subtitle, value, valueColor, trend, trendUp, children, footer, onFooter, loading, accentColor, topBorder }) {
   const [hov, setHov] = useState(false);
   return (
@@ -460,13 +449,16 @@ function DashCard({ label, subtitle, value, valueColor, trend, trendUp, children
     </div>
   );
 }
-// ── Pills Row ─────────────────────────────────────────────────
-function PillsRow({ navigate, isMobile }) {
+
+// ── Pills Row — uses fixed positioning via scroll listener ────
+function PillsRow({ navigate, isMobile, scrollTop, headerHeight, sidebarWidth }) {
   const navScrollRef = useRef(null);
-  const sentinelRef  = useRef(null);
   const [showLeft,  setShowLeft]  = useState(false);
   const [showRight, setShowRight] = useState(true);
-  const [isStuck,   setIsStuck]   = useState(false);
+
+  // greeting block is approx 120px tall + 48px top padding = 168px
+  const GREETING_HEIGHT = 168;
+  const isFixed = scrollTop > GREETING_HEIGHT;
 
   const updateChevrons = () => {
     const el = navScrollRef.current;
@@ -487,103 +479,78 @@ function PillsRow({ navigate, isMobile }) {
     };
   }, []);
 
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsStuck(!entry.isIntersecting),
-      { threshold: 0, rootMargin: '-104px 0px 0px 0px' }
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, []);
+  const pillsBg   = isFixed ? '#fff' : 'transparent';
+  const pillsBorder = isFixed ? '1px solid #E5E7EB' : '1px solid transparent';
+  const pillsShadow = isFixed ? '0 2px 8px rgba(0,0,0,0.06)' : 'none';
 
-  const HEADER_H = isMobile ? 56 : 64;
-
-  const chevronBtn = (onClick, icon, side) => (
-    <div onClick={onClick} style={{
-      position:'absolute', [side]:0, top:'50%', transform:'translateY(-50%)',
-      zIndex:10, display:'flex', alignItems:'center', justifyContent:'center',
-      width:32, height:32,
-      background: isStuck ? '#fff' : '#F8FAFC',
-      border:'1px solid #E5E7EB',
-      borderRadius:'50%', cursor:'pointer',
-      boxShadow:'0 2px 8px rgba(0,0,0,0.10)',
-      transition:'all 0.15s', flexShrink:0,
-    }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor='#0AB98A'; e.currentTarget.style.boxShadow='0 2px 12px rgba(10,185,138,0.2)'; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E7EB'; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.10)'; }}
-    >
-      {icon}
-    </div>
-  );
+  const containerStyle = isFixed ? {
+    position: 'fixed',
+    top: headerHeight,
+    left: sidebarWidth,
+    right: 0,
+    zIndex: 35,
+    background: pillsBg,
+    borderBottom: pillsBorder,
+    boxShadow: pillsShadow,
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingLeft: isMobile ? 16 : 32,
+    paddingRight: isMobile ? 16 : 32,
+    transition: 'background 0.2s, box-shadow 0.2s',
+  } : {
+    position: 'relative',
+    background: pillsBg,
+    borderBottom: pillsBorder,
+    boxShadow: pillsShadow,
+    marginBottom: 32,
+    marginLeft: isMobile ? -16 : -32,
+    marginRight: isMobile ? -16 : -32,
+    paddingLeft: isMobile ? 16 : 32,
+    paddingRight: isMobile ? 16 : 32,
+    paddingTop: 10,
+    paddingBottom: 10,
+    transition: 'background 0.2s, box-shadow 0.2s',
+  };
 
   return (
     <>
-      <div ref={sentinelRef} style={{ height:1, pointerEvents:'none' }}/>
-      <div style={{
-        position:'sticky',
-        top: HEADER_H,
-        zIndex:30,
-        background: isStuck ? '#fff' : 'transparent',
-        borderBottom: isStuck ? '1px solid #E5E7EB' : '1px solid transparent',
-        boxShadow: isStuck ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-        transition:'background 0.2s, box-shadow 0.2s, border-color 0.2s',
-        marginBottom:32,
-        marginLeft: isMobile ? -16 : -32,
-        marginRight: isMobile ? -16 : -32,
-        paddingLeft: isMobile ? 16 : 32,
-        paddingRight: isMobile ? 16 : 32,
-        paddingTop:10,
-        paddingBottom:10,
-        boxSizing:'border-box',
-      }}>
-        <div style={{ position:'relative', display:'flex', alignItems:'center' }}>
+      <div style={containerStyle}>
+        <div style={{ position:'relative', display:'flex', alignItems:'center', maxWidth: isFixed ? 'none' : 1136, margin:'0 auto' }}>
 
           {showLeft && (
             <>
-              <div style={{ position:'absolute', left:32, top:0, bottom:0, width:48, background:`linear-gradient(to right,${isStuck?'#fff':'#F8FAFC'},transparent)`, zIndex:9, pointerEvents:'none' }}/>
-              {chevronBtn(
-                () => navScrollRef.current?.scrollBy({ left:-240, behavior:'smooth' }),
-                <ChevronLeft size={15} color="#374151"/>,
-                'left'
-              )}
+              <div style={{ position:'absolute', left:32, top:0, bottom:0, width:48, background:`linear-gradient(to right,${isFixed?'#fff':'#F8FAFC'},transparent)`, zIndex:9, pointerEvents:'none' }}/>
+              <div onClick={() => navScrollRef.current?.scrollBy({ left:-240, behavior:'smooth' })}
+                style={{ position:'absolute', left:0, top:'50%', transform:'translateY(-50%)', zIndex:10, display:'flex', alignItems:'center', justifyContent:'center', width:32, height:32, background: isFixed?'#fff':'#F8FAFC', border:'1px solid #E5E7EB', borderRadius:'50%', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.10)' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor='#0AB98A'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E7EB'; }}>
+                <ChevronLeft size={15} color="#374151"/>
+              </div>
             </>
           )}
 
           {showRight && (
             <>
-              <div style={{ position:'absolute', right:32, top:0, bottom:0, width:48, background:`linear-gradient(to left,${isStuck?'#fff':'#F8FAFC'},transparent)`, zIndex:9, pointerEvents:'none' }}/>
-              {chevronBtn(
-                () => navScrollRef.current?.scrollBy({ left:240, behavior:'smooth' }),
-                <ChevronRight size={15} color="#374151"/>,
-                'right'
-              )}
+              <div style={{ position:'absolute', right:32, top:0, bottom:0, width:48, background:`linear-gradient(to left,${isFixed?'#fff':'#F8FAFC'},transparent)`, zIndex:9, pointerEvents:'none' }}/>
+              <div onClick={() => navScrollRef.current?.scrollBy({ left:240, behavior:'smooth' })}
+                style={{ position:'absolute', right:0, top:'50%', transform:'translateY(-50%)', zIndex:10, display:'flex', alignItems:'center', justifyContent:'center', width:32, height:32, background: isFixed?'#fff':'#F8FAFC', border:'1px solid #E5E7EB', borderRadius:'50%', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.10)' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor='#0AB98A'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E7EB'; }}>
+                <ChevronRight size={15} color="#374151"/>
+              </div>
             </>
           )}
 
-          <div
-            ref={navScrollRef}
-            onScroll={updateChevrons}
-            style={{
-              display:'flex', gap:10, overflowX:'auto',
-              scrollbarWidth:'none', msOverflowStyle:'none',
-              WebkitOverflowScrolling:'touch',
-              padding:'4px 2px', alignItems:'center',
-              flexWrap:'nowrap', width:'100%',
-            }}
-          >
+          <div ref={navScrollRef} onScroll={updateChevrons}
+            style={{ display:'flex', gap:10, overflowX:'auto', scrollbarWidth:'none', msOverflowStyle:'none', WebkitOverflowScrolling:'touch', padding:'4px 2px', alignItems:'center', flexWrap:'nowrap', width:'100%' }}>
             {NAV_CATS.map(cat => {
               const Icon     = cat.icon;
               const isActive = window.location.pathname === cat.path;
               return (
-                <div
-                  key={cat.label}
-                  onClick={() => navigate(cat.path)}
+                <div key={cat.label} onClick={() => navigate(cat.path)}
                   style={{ display:'flex', alignItems:'center', gap:9, padding:'10px 18px', background:isActive?cat.bg:'#F8FAFC', border:'1px solid '+(isActive?cat.color+'40':'#E5E7EB'), borderRadius:999, cursor:'pointer', flexShrink:0, transition:'all 0.18s ease', whiteSpace:'nowrap', boxShadow:isActive?'0 2px 10px '+cat.color+'20':'0 1px 4px rgba(0,0,0,0.06)' }}
                   onMouseEnter={e => { e.currentTarget.style.background=cat.bg; e.currentTarget.style.borderColor=cat.color+'40'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 14px '+cat.color+'25'; }}
-                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background='#F8FAFC'; e.currentTarget.style.borderColor='#E5E7EB'; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.06)'; } e.currentTarget.style.transform='none'; }}
-                >
+                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background='#F8FAFC'; e.currentTarget.style.borderColor='#E5E7EB'; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.06)'; } e.currentTarget.style.transform='none'; }}>
                   <div style={{ width:30, height:30, borderRadius:'50%', background:cat.bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                     <Icon size={15} color={cat.color} strokeWidth={2.2}/>
                   </div>
@@ -594,6 +561,8 @@ function PillsRow({ navigate, isMobile }) {
           </div>
         </div>
       </div>
+      {/* Spacer so content doesn't jump when pills become fixed */}
+      {isFixed && <div style={{ height: 62, marginBottom: 32 }}/>}
     </>
   );
 }
@@ -602,11 +571,12 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const token    = localStorage.getItem('token');
 
- const rawName     = localStorage.getItem('user_name') || localStorage.getItem('full_name') || localStorage.getItem('user_email') || '';
+  const rawName     = localStorage.getItem('user_name') || localStorage.getItem('full_name') || localStorage.getItem('user_email') || '';
   const userEmail   = localStorage.getItem('user_email') || '';
   const company     = localStorage.getItem('company_name') || 'My Business';
   const savedFirst  = localStorage.getItem('first_name') || '';
   const displayName = savedFirst || getFirstName(rawName || userEmail);
+
   const [stats,            setStats]            = useState(null);
   const [txns,             setTxns]             = useState([]);
   const [invoices,         setInvoices]         = useState([]);
@@ -615,9 +585,10 @@ export default function Dashboard() {
   const [showBriefing,     setShowBriefing]     = useState(false);
   const [briefingSettings, setBriefingSettings] = useState(null);
   const [showCreatePanel,  setShowCreatePanel]  = useState(false);
-  const [showBanner,       setShowBanner]       = useState(() => localStorage.getItem('nova_banner_dismissed') !== 'true');
   const [isMobile,         setIsMobile]         = useState(window.innerWidth < 768);
-  const headers      = { Authorization: 'Bearer ' + token };
+  const [scrollTop,        setScrollTop]        = useState(0);
+  const pageRef  = useRef(null);
+  const headers  = { Authorization: 'Bearer ' + token };
 
   const hour     = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -629,6 +600,26 @@ export default function Dashboard() {
     const h = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', h);
     return () => window.removeEventListener('resize', h);
+  }, []);
+
+  // Scroll listener — track scroll position of the main element
+  useEffect(() => {
+    const el = pageRef.current;
+    if (!el) return;
+    const onScroll = () => setScrollTop(el.scrollTop);
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Find the main scrolling container after mount
+  useEffect(() => {
+    // The main element is the parent that scrolls
+    const main = document.querySelector('main');
+    if (!main) return;
+    pageRef.current = main;
+    const onScroll = () => setScrollTop(main.scrollTop);
+    main.addEventListener('scroll', onScroll, { passive: true });
+    return () => main.removeEventListener('scroll', onScroll);
   }, []);
 
   useEffect(() => {
@@ -649,12 +640,11 @@ export default function Dashboard() {
     }).finally(() => setLoading(false));
   }, [refresh]);
 
-  const revenue     = stats?.total_revenue || stats?.revenue || stats?.income || txns.filter(t => parseFloat(t.amount||0) > 0).reduce((s,t) => s + Math.abs(parseFloat(t.amount||0)), 0);
-  const expenses    = stats?.total_expenses || stats?.expenses || txns.filter(t => parseFloat(t.amount||0) < 0).reduce((s,t) => s + Math.abs(parseFloat(t.amount||0)), 0);
-  const netProfit   = stats?.net_profit || stats?.profit || (revenue - expenses);
-  const profitUp    = netProfit >= 0;
-  const unpaidInv   = invoices.filter(inv => ['unpaid','pending','sent'].includes((inv.status||'').toLowerCase()));
-  const totalUnpaid = unpaidInv.reduce((s,inv) => s + parseFloat(inv.amount||inv.total||0), 0);
+  const revenue   = stats?.total_revenue || stats?.revenue || stats?.income || txns.filter(t => parseFloat(t.amount||0) > 0).reduce((s,t) => s + Math.abs(parseFloat(t.amount||0)), 0);
+  const expenses  = stats?.total_expenses || stats?.expenses || txns.filter(t => parseFloat(t.amount||0) < 0).reduce((s,t) => s + Math.abs(parseFloat(t.amount||0)), 0);
+  const netProfit = stats?.net_profit || stats?.profit || (revenue - expenses);
+  const profitUp  = netProfit >= 0;
+  const unpaidInv = invoices.filter(inv => ['unpaid','pending','sent'].includes((inv.status||'').toLowerCase()));
 
   const cashFlowMap = {};
   txns.forEach(t => {
@@ -664,10 +654,14 @@ export default function Dashboard() {
   });
   const cashFlowData = Object.entries(cashFlowMap).slice(-8).map(([month,amount]) => ({ month, amount }));
 
-
   const briefingBadgeColor = briefingPaused?'#F59E0B':briefingOn?ACCENT:'#94A3B8';
   const briefingBadgeBg    = briefingPaused?'rgba(245,158,11,0.1)':briefingOn?'rgba(10,185,138,0.1)':'#F1F5F9';
   const briefingLabel      = briefingPaused?'PAUSED':briefingOn?'ON':'OFF';
+
+  // Header height = promo banner (40px if visible) + topbar (64px)
+  const promoDismissed = localStorage.getItem('nova_banner_dismissed') === 'true';
+  const headerHeight   = (promoDismissed ? 0 : 40) + 64;
+  const sidebarWidth   = isMobile ? 0 : 80;
 
   return (
     <div style={{ background:'#F8FAFC', minHeight:'100vh', fontFamily:FONT }}>
@@ -677,41 +671,31 @@ export default function Dashboard() {
         div::-webkit-scrollbar { display:none; }
       `}</style>
 
-      {/* Modals */}
       {showBriefing    && <BriefingModal onClose={() => setShowBriefing(false)} onSave={s => { setBriefingSettings(s); setShowBriefing(false); }} initial={briefingSettings}/>}
       {showCreatePanel && <CreatePanel  onClose={() => setShowCreatePanel(false)} onNavigate={navigate}/>}
 
-    
-      {/* ── PAGE CONTENT ── */}
-     <div style={{ maxWidth:1200, margin:'0 auto', padding:isMobile?'32px 16px':'48px 32px 32px', overflow:'visible' }}>
+      <div style={{ maxWidth:1200, margin:'0 auto', padding:isMobile?'32px 16px':'48px 32px 32px' }}>
 
-        {/* ── GREETING BLOCK ── */}
+        {/* ── GREETING ── */}
         <div style={{ position:'relative', textAlign:'center', marginBottom:32 }}>
-
-          {/* Customize + Privacy links — top right */}
           {!isMobile && (
             <div style={{ position:'absolute', right:0, top:'50%', transform:'translateY(-50%)', display:'flex', alignItems:'center', gap:24 }}>
-              <button
-                onClick={() => navigate('/settings')}
+              <button onClick={() => navigate('/settings')}
                 style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', color:'#6B7280', fontSize:13, fontFamily:FONT, transition:'color 0.15s' }}
                 onMouseEnter={e => e.currentTarget.style.color='#0F172A'}
                 onMouseLeave={e => e.currentTarget.style.color='#6B7280'}>
                 <SlidersHorizontal size={15}/> Customize
               </button>
-              <button
-                onClick={() => {}}
-                style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', color:'#6B7280', fontSize:13, fontFamily:FONT, transition:'color 0.15s' }}
+              <button style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', color:'#6B7280', fontSize:13, fontFamily:FONT, transition:'color 0.15s' }}
                 onMouseEnter={e => e.currentTarget.style.color='#0F172A'}
                 onMouseLeave={e => e.currentTarget.style.color='#6B7280'}>
                 <Eye size={15}/> Privacy
               </button>
             </div>
           )}
-
           <h1 style={{ fontSize:isMobile?24:32, fontWeight:600, color:'#0F172A', margin:0, letterSpacing:'-0.02em' }}>
-            {greeting}, {displayName}
+            {greeting}, {displayName}!
           </h1>
-
           {briefingPaused && (
             <div style={{ display:'inline-flex', alignItems:'center', gap:6, marginTop:10, padding:'6px 14px', borderRadius:20, background:'rgba(245,158,11,0.08)', border:'1px solid rgba(245,158,11,0.2)', fontSize:12, color:'#F59E0B' }}>
               Morning Briefing is paused.
@@ -719,24 +703,26 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-        {/* ── APP PILL NAV ROW ── */}
-        <PillsRow navigate={navigate} isMobile={isMobile}/>
-{/* ── APP PILL NAV ROW — sticky + smart chevrons ── */}
-      
-            {/* ── CREATE ACTIONS ROW ── */}
+
+        {/* ── PILLS ROW — position fixed when scrolled past greeting ── */}
+        <PillsRow
+          navigate={navigate}
+          isMobile={isMobile}
+          scrollTop={scrollTop}
+          headerHeight={headerHeight}
+          sidebarWidth={sidebarWidth}
+        />
+
+        {/* ── CREATE ACTIONS ── */}
         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:24, flexWrap:'wrap' }}>
-         <span style={{ fontSize:13, fontWeight:600, color:'#374151', marginRight:4 }}>Create actions</span>
+          <span style={{ fontSize:13, fontWeight:600, color:'#374151', marginRight:4 }}>Create actions</span>
           {QUICK_CREATE.map(action => (
-            <div
-              key={action.label}
-              className="action-chip"
-              onClick={() => navigate(action.path)}
+            <div key={action.label} className="action-chip" onClick={() => navigate(action.path)}
               style={{ padding:'7px 16px', background:'#fff', border:'1px solid #E5E7EB', borderRadius:999, cursor:'pointer', fontSize:12, fontWeight:500, color:'#475569', transition:'all 0.15s', boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
               {action.label}
             </div>
           ))}
-          <span
-            onClick={() => setShowCreatePanel(true)}
+          <span onClick={() => setShowCreatePanel(true)}
             style={{ fontSize:12, color:ACCENT, fontWeight:600, cursor:'pointer', marginLeft:4 }}
             onMouseEnter={e => e.currentTarget.style.textDecoration='underline'}
             onMouseLeave={e => e.currentTarget.style.textDecoration='none'}>
@@ -744,14 +730,14 @@ export default function Dashboard() {
           </span>
         </div>
 
-        {/* ══ SECTION A — Business at a glance ══ */}
+        {/* ══ SECTION A ══ */}
         <div style={{ marginBottom:16 }}>
           <div style={{ fontSize:20, fontWeight:700, color:'#0F172A', letterSpacing:'-0.02em' }}>Business at a glance</div>
         </div>
 
-     <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(4,1fr)', gap:16, marginBottom:20 }}>
+        <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(4,1fr)', gap:16, marginBottom:20 }}>
 
-          {/* Card 1 — Profit & Loss */}
+          {/* Card 1 — P&L */}
           <div onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 8px 32px rgba(0,0,0,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'; }}
             style={{ background:'#fff', border:'1px solid #E8F0FE', borderTop:'3px solid #0AB98A', borderRadius:16, padding:'22px 24px', display:'flex', flexDirection:'column', minWidth:0, transition:'all 0.2s', boxShadow:'0 2px 12px rgba(0,0,0,0.04)' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
@@ -780,9 +766,7 @@ export default function Dashboard() {
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:12 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:20, background:profitUp?'rgba(10,185,138,0.1)':'rgba(239,68,68,0.1)' }}>
                   {profitUp ? <TrendingUp size={12} color="#0AB98A"/> : <TrendingDown size={12} color="#EF4444"/>}
-                  <span style={{ fontSize:11, fontWeight:600, color:profitUp?'#0AB98A':'#EF4444' }}>
-                    {profitUp?'Up':'Down'} vs prior month
-                  </span>
+                  <span style={{ fontSize:11, fontWeight:600, color:profitUp?'#0AB98A':'#EF4444' }}>{profitUp?'Up':'Down'} vs prior month</span>
                 </div>
               </div>
             )}
@@ -845,12 +829,12 @@ export default function Dashboard() {
                 </div>
               </div>
             )}
-            <div style={{ display:'flex', justifyContent:'center', alignItems:'center', margin:'8px 0 12px' }}>
+           <div style={{ display:'flex', justifyContent:'center', alignItems:'center', margin:'8px 0 12px' }}>
               <svg width="80" height="80" viewBox="0 0 80 80">
                 <circle cx="40" cy="40" r="28" fill="none" stroke="#E5E7EB" strokeWidth="12"/>
                 {expenses > 0 && (
                   <circle cx="40" cy="40" r="28" fill="none" stroke="#3B82F6" strokeWidth="12"
-                    strokeDasharray={`${Math.min((expenses/(expenses+1000))*175,175)} 175`}
+                    strokeDasharray={String(Math.min((expenses/(expenses+1000))*175,175)) + ' 175'}
                     strokeLinecap="round" transform="rotate(-90 40 40)"/>
                 )}
                 <text x="40" y="44" textAnchor="middle" fontSize="11" fontWeight="700" fill="#334155">
@@ -955,7 +939,7 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* ══ SECTION B — Banking & Payroll ══ */}
+        {/* ══ SECTION B ══ */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16, marginTop:8 }}>
           <div style={{ fontSize:20, fontWeight:700, color:'#0F172A', letterSpacing:'-0.02em' }}>Banking & Payroll</div>
           <div style={{ padding:'4px 12px', borderRadius:20, background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.2)' }}>
@@ -964,12 +948,10 @@ export default function Dashboard() {
         </div>
 
         <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(auto-fit,minmax(230px,1fr))', gap:16, marginBottom:20 }}>
-
           <DashCard label="Profit & Loss" subtitle="Net accounting profit" value="$48,200" valueColor="#0AB98A" trend="+24% vs last month" trendUp={true} footer="View accounting report" onFooter={() => navigate('/reports')} topBorder="#0AB98A">
             <MiniBar income={72000} expenses={23800}/>
             <div style={{ marginTop:8, display:'inline-flex', fontSize:9, fontWeight:700, color:'#3B82F6', background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.15)', padding:'2px 8px', borderRadius:20 }}>SAMPLE DATA</div>
           </DashCard>
-
           <DashCard label="Expenses" subtitle="Total business expenses" value="$23,800" valueColor="#3B82F6" trend="Across all accounts" trendUp={false} footer="View expense breakdown" onFooter={() => navigate('/transactions')} topBorder="#3B82F6">
             <div style={{ marginTop:8 }}>
               {[
@@ -990,7 +972,6 @@ export default function Dashboard() {
             </div>
             <div style={{ marginTop:8, display:'inline-flex', fontSize:9, fontWeight:700, color:'#3B82F6', background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.15)', padding:'2px 8px', borderRadius:20 }}>SAMPLE DATA</div>
           </DashCard>
-
           <DashCard label="Bank Accounts" subtitle="Connected accounts balance" value="$84,320" valueColor="#0F172A" footer="Connect bank account" onFooter={() => navigate('/integrations')} topBorder="#06B6D4">
             <div style={{ marginTop:4 }}>
               {[
@@ -1009,7 +990,6 @@ export default function Dashboard() {
             </div>
             <div style={{ marginTop:8, display:'inline-flex', fontSize:9, fontWeight:700, color:'#3B82F6', background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.15)', padding:'2px 8px', borderRadius:20 }}>SAMPLE DATA</div>
           </DashCard>
-
           <DashCard label="Payroll Expenses" subtitle="This pay period" value="$14,200" valueColor="#8B5CF6" footer="Run payroll" onFooter={() => navigate('/team')} topBorder="#8B5CF6">
             <div style={{ marginTop:8, padding:'10px 12px', background:'rgba(139,92,246,0.06)', borderRadius:10, border:'1px solid rgba(139,92,246,0.15)' }}>
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
@@ -1020,7 +1000,6 @@ export default function Dashboard() {
             </div>
             <div style={{ marginTop:8, display:'inline-flex', fontSize:9, fontWeight:700, color:'#3B82F6', background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.15)', padding:'2px 8px', borderRadius:20 }}>SAMPLE DATA</div>
           </DashCard>
-
           <AddWidgetCard onAdd={() => navigate('/settings')}/>
         </div>
 
@@ -1046,8 +1025,8 @@ export default function Dashboard() {
           <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(auto-fit,minmax(220px,1fr))', gap:12 }}>
             {[
               { icon:'📨', title:'Send invoice reminders', desc:unpaidInv.length>0?unpaidInv.length+' invoices overdue':'All invoices up to date', action:() => navigate('/invoices'), btn:'View invoices' },
-              { icon:'🏦', title:'Connect your bank',      desc:'Auto-sync transactions and reconcile faster',     action:() => navigate('/integrations'), btn:'Connect now' },
-              { icon:'📊', title:'Run a financial report', desc:'See your profit & loss for this quarter',         action:() => navigate('/reports'),      btn:'Run report'  },
+              { icon:'🏦', title:'Connect your bank',      desc:'Auto-sync transactions and reconcile faster', action:() => navigate('/integrations'), btn:'Connect now' },
+              { icon:'📊', title:'Run a financial report', desc:'See your profit & loss for this quarter',     action:() => navigate('/reports'),      btn:'Run report'  },
             ].map(s => (
               <div key={s.title} style={{ background:'rgba(255,255,255,0.15)', borderRadius:12, padding:'16px', backdropFilter:'blur(10px)', border:'1px solid rgba(255,255,255,0.2)' }}>
                 <div style={{ fontSize:24, marginBottom:8 }}>{s.icon}</div>
