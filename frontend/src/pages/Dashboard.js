@@ -461,7 +461,8 @@ function DashCard({ label, subtitle, value, valueColor, trend, trendUp, children
   );
 }
 // ── Pills Row — sticky + smart chevrons ──────────────────────
-function PillsRow({ navigate, isMobile, navScrollRef }) {
+function PillsRow({ navigate, isMobile }) {
+  const navScrollRef = useRef(null);
   const [showLeft,  setShowLeft]  = useState(false);
   const [showRight, setShowRight] = useState(true);
   const [isStuck,   setIsStuck]   = useState(false);
@@ -739,7 +740,7 @@ export default function Dashboard() {
           )}
         </div>
 {/* ── APP PILL NAV ROW — sticky + smart chevrons ── */}
-        <PillsRow navigate={navigate} isMobile={isMobile} navScrollRef={navScrollRef}/>
+       <PillsRow navigate={navigate} isMobile={isMobile}/>
             {/* ── CREATE ACTIONS ROW ── */}
         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:24, flexWrap:'wrap' }}>
          <span style={{ fontSize:13, fontWeight:600, color:'#374151', marginRight:4 }}>Create actions</span>
