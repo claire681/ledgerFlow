@@ -460,7 +460,143 @@ function DashCard({ label, subtitle, value, valueColor, trend, trendUp, children
     </div>
   );
 }
+// ── Pills Row ─────────────────────────────────────────────────
+function PillsRow({ navigate, isMobile }) {
+  const navScrollRef = useRef(null);
+  const sentinelRef  = useRef(null);
+  const [showLeft,  setShowLeft]  = useState(false);
+  const [showRight, setShowRight] = useState(true);
+  const [isStuck,   setIsStuck]   = useState(false);
 
+  const updateChevrons = () => {
+    const el = navScrollRef.current;
+    if (!el) return;
+    setShowLeft(el.scrollLeft > 4);
+    setShowRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  };
+
+  useEffect(() => {
+    const el = navScrollRef.current;
+    if (!el) return;
+    updateChevrons();
+    el.addEventListener('scroll', updateChevrons, { passive: true });
+    window.addEventListener('resize', updateChevrons);
+    return () => {
+      el.removeEventListener('scroll', updateChevrons);
+      window.removeEventListener('resize', updateChevrons);
+    };
+  }, []);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsStuck(!entry.isIntersecting),
+      { threshold: 0, rootMargin: '-104px 0px 0px 0px' }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
+
+  const HEADER_H = isMobile ? 56 : 64;
+
+  const chevronBtn = (onClick, icon, side) => (
+    <div onClick={onClick} style={{
+      position:'absolute', [side]:0, top:'50%', transform:'translateY(-50%)',
+      zIndex:10, display:'flex', alignItems:'center', justifyContent:'center',
+      width:32, height:32,
+      background: isStuck ? '#fff' : '#F8FAFC',
+      border:'1px solid #E5E7EB',
+      borderRadius:'50%', cursor:'pointer',
+      boxShadow:'0 2px 8px rgba(0,0,0,0.10)',
+      transition:'all 0.15s', flexShrink:0,
+    }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor='#0AB98A'; e.currentTarget.style.boxShadow='0 2px 12px rgba(10,185,138,0.2)'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E7EB'; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.10)'; }}
+    >
+      {icon}
+    </div>
+  );
+
+  return (
+    <>
+      <div ref={sentinelRef} style={{ height:1, pointerEvents:'none' }}/>
+      <div style={{
+        position:'sticky',
+        top: HEADER_H,
+        zIndex:30,
+        background: isStuck ? '#fff' : 'transparent',
+        borderBottom: isStuck ? '1px solid #E5E7EB' : '1px solid transparent',
+        boxShadow: isStuck ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+        transition:'background 0.2s, box-shadow 0.2s, border-color 0.2s',
+        marginBottom:32,
+        marginLeft: isMobile ? -16 : -32,
+        marginRight: isMobile ? -16 : -32,
+        paddingLeft: isMobile ? 16 : 32,
+        paddingRight: isMobile ? 16 : 32,
+        paddingTop:10,
+        paddingBottom:10,
+        boxSizing:'border-box',
+      }}>
+        <div style={{ position:'relative', display:'flex', alignItems:'center' }}>
+
+          {showLeft && (
+            <>
+              <div style={{ position:'absolute', left:32, top:0, bottom:0, width:48, background:`linear-gradient(to right,${isStuck?'#fff':'#F8FAFC'},transparent)`, zIndex:9, pointerEvents:'none' }}/>
+              {chevronBtn(
+                () => navScrollRef.current?.scrollBy({ left:-240, behavior:'smooth' }),
+                <ChevronLeft size={15} color="#374151"/>,
+                'left'
+              )}
+            </>
+          )}
+
+          {showRight && (
+            <>
+              <div style={{ position:'absolute', right:32, top:0, bottom:0, width:48, background:`linear-gradient(to left,${isStuck?'#fff':'#F8FAFC'},transparent)`, zIndex:9, pointerEvents:'none' }}/>
+              {chevronBtn(
+                () => navScrollRef.current?.scrollBy({ left:240, behavior:'smooth' }),
+                <ChevronRight size={15} color="#374151"/>,
+                'right'
+              )}
+            </>
+          )}
+
+          <div
+            ref={navScrollRef}
+            onScroll={updateChevrons}
+            style={{
+              display:'flex', gap:10, overflowX:'auto',
+              scrollbarWidth:'none', msOverflowStyle:'none',
+              WebkitOverflowScrolling:'touch',
+              padding:'4px 2px', alignItems:'center',
+              flexWrap:'nowrap', width:'100%',
+            }}
+          >
+            {NAV_CATS.map(cat => {
+              const Icon     = cat.icon;
+              const isActive = window.location.pathname === cat.path;
+              return (
+                <div
+                  key={cat.label}
+                  onClick={() => navigate(cat.path)}
+                  style={{ display:'flex', alignItems:'center', gap:9, padding:'10px 18px', background:isActive?cat.bg:'#F8FAFC', border:'1px solid '+(isActive?cat.color+'40':'#E5E7EB'), borderRadius:999, cursor:'pointer', flexShrink:0, transition:'all 0.18s ease', whiteSpace:'nowrap', boxShadow:isActive?'0 2px 10px '+cat.color+'20':'0 1px 4px rgba(0,0,0,0.06)' }}
+                  onMouseEnter={e => { e.currentTarget.style.background=cat.bg; e.currentTarget.style.borderColor=cat.color+'40'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 14px '+cat.color+'25'; }}
+                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background='#F8FAFC'; e.currentTarget.style.borderColor='#E5E7EB'; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.06)'; } e.currentTarget.style.transform='none'; }}
+                >
+                  <div style={{ width:30, height:30, borderRadius:'50%', background:cat.bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <Icon size={15} color={cat.color} strokeWidth={2.2}/>
+                  </div>
+                  <span style={{ fontSize:13, fontWeight:600, color:isActive?cat.color:'#374151' }}>{cat.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
 // ── Main Dashboard ────────────────────────────────────────────
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -583,6 +719,8 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+        {/* ── APP PILL NAV ROW ── */}
+        <PillsRow navigate={navigate} isMobile={isMobile}/>
 {/* ── APP PILL NAV ROW — sticky + smart chevrons ── */}
       
             {/* ── CREATE ACTIONS ROW ── */}
