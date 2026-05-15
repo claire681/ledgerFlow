@@ -183,10 +183,9 @@ const handleLogin = (t, email) => {
     localStorage.setItem('token', t);
     if (email) localStorage.setItem('user_email', email);
   };
-  const handleLogout = () => {
+ const handleLogout = () => {
     localStorage.clear();
     setToken(null);
-    setOnboardingDone(false);
   };
 
  const handleOnboardingComplete = () => {
