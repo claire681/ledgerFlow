@@ -6,7 +6,7 @@ import {
 import { AIProvider }      from './context/AIContext';
 import Sidebar             from './components/Sidebar';
 import TopBar              from './components/TopBar';
-import AIAssistant         from './components/AIAssistant';
+
 
 import Login               from './pages/Login';
 import Dashboard           from './pages/Dashboard';
@@ -169,7 +169,7 @@ function AppLayout({ onLogout }) {
         </main>
       </div>
 
-      <AIAssistant />
+     
     </div>
   );
 }
