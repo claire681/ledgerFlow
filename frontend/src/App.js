@@ -187,11 +187,11 @@ const handleLogin = (t, email) => {
     localStorage.clear();
     setToken(null);
   };
-
- const handleOnboardingComplete = () => {
-    window.location.href = '/';
+const handleOnboardingComplete = () => {
+    const token = localStorage.getItem('token');
+    if (token) setToken(token);
+    else window.location.href = '/';
   };
-
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F8FAFC' }}>

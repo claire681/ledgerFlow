@@ -101,19 +101,24 @@ export default function Login({ onLogin }) {
     }
   };
 
-  const handleSendEmailCode = async () => {
+ const handleSendEmailCode = async () => {
     setCodeSending(true);
     setCodeError('');
     try {
-      await fetch(API + '/auth/send-login-code', {
+      const res = await fetch(API + '/auth/send-login-code', {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify({ email }),
       });
+      if (!res.ok) {
+        const data = await res.json();
+        setCodeError(data.detail || 'Could not send code. Please try again.');
+        return;
+      }
       setCodeSent(true);
       setCodeMode('email');
     } catch (e) {
-      setCodeError('Could not send code. Please try again.');
+      setCodeError('Could not connect to server. Please try again.');
     } finally {
       setCodeSending(false);
     }
