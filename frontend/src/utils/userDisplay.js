@@ -1,42 +1,22 @@
-/**
- * getFirstName — extracts a clean first name from any raw username/email/full name
- *
- * Examples:
- *   "Clairekemanzi01"        → "Claire"
- *   "claire.kemanzi@gmail"   → "Claire"
- *   "Claire Kemanzi"         → "Claire"
- *   "clairekemanzi01@gmail"  → "Claire"
- *   "john_doe"               → "John"
- *   ""                       → "there"
- */
-export function getFirstName(rawName) {
-  if (!rawName || typeof rawName !== 'string') return 'there';
+export function getFirstName(raw) {
+  if (!raw) return 'there';
 
-  let name = rawName.trim();
+  // If it looks like an email, take the part before @
+  let base = raw.includes('@') ? raw.split('@')[0] : raw;
 
-  // Strip email domain
-  if (name.includes('@')) name = name.split('@')[0];
+  // Remove trailing digits (e.g. clairekemanzi01 → clairekemanzi)
+  base = base.replace(/\d+$/, '');
 
-  // Replace separators with spaces
-  name = name.replace(/[._\-]/g, ' ').trim();
+  // Remove separators like dots, underscores, hyphens
+  base = base.replace(/[._-]/g, ' ').trim();
 
-  // Take the first segment
-  const first = name.split(/\s+/)[0];
+  // Capitalize first letter of each word
+  const words = base.split(' ').filter(Boolean).map(w =>
+    w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+  );
 
-  if (!first) return 'there';
+  if (words.length === 0) return 'there';
 
-  // Strip trailing digits
-  const stripped = first.replace(/\d+$/, '');
-
-  if (!stripped) return 'there';
-
-  // Capitalize first letter
-  const capitalized = stripped.charAt(0).toUpperCase() + stripped.slice(1);
-
-  // Extract first capitalized word using regex — handles "Clairekemanzi" → "Claire"
-  const match = capitalized.match(/^[A-Z][a-z]+/);
-  if (match) return match[0];
-
-  // Fallback — return capitalized version as-is if no camelCase boundary found
-  return capitalized.length > 0 ? capitalized : 'there';
+  // Return only the first word
+  return words[0];
 }
