@@ -283,7 +283,7 @@ function MiniBar({ income, expenses }) {
           <span style={{ fontSize:11, color:'#64748B', fontWeight:500 }}>Income {fmt(income)}</span>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-          <div style={{ width:10, height:10, borderRadius:3, background:'#3B82F6' }}/>
+          <div style={{ width:10, height:10, borderRadius:3, background:'#94A3B8' }}/>
           <span style={{ fontSize:11, color:'#64748B', fontWeight:500 }}>Expenses {fmt(expenses)}</span>
         </div>
       </div>
@@ -313,7 +313,7 @@ function CashFlowBars({ data, tab }) {
           const pos = tab === 'money-out' ? false : d.amount >= 0;
           return (
             <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-              <div style={{ width:'100%', height:h+'%', background:pos?'linear-gradient(180deg,#0DD9A3,#0AB98A)':'linear-gradient(180deg,#60A5FA,#3B82F6)', borderRadius:'4px 4px 0 0', minHeight:4, cursor:'pointer', transition:'opacity 0.15s', boxShadow:pos?'0 2px 8px rgba(10,185,138,0.3)':'0 2px 8px rgba(59,130,246,0.3)' }}
+              <div style={{ width:'100%', height:h+'%', background:pos?'linear-gradient(180deg,#CBD5E1,#94A3B8)':'linear-gradient(180deg,#E2E8F0,#CBD5E1)', borderRadius:'4px 4px 0 0', minHeight:4, cursor:'pointer', transition:'opacity 0.15s' }}
                 onMouseEnter={e => e.currentTarget.style.opacity='0.8'}
                 onMouseLeave={e => e.currentTarget.style.opacity='1'}
               />
@@ -350,12 +350,12 @@ function CashFlowCard({ data, balance, loading, onView, title, subtitle }) {
       <div style={{ display:'flex', gap:16, marginBottom:20, padding:'14px 16px', background:'#F8FAFC', borderRadius:12 }}>
         <div style={{ flex:1 }}>
           <div style={{ fontSize:11, color:'#94A3B8', fontWeight:600, marginBottom:4 }}>Money in</div>
-          <div style={{ fontSize:18, fontWeight:800, color:'#0AB98A' }}>{fmt(moneyIn)}</div>
+          <div style={{ fontSize:18, fontWeight:800, color:'#0F172A' }}>{fmt(moneyIn)}</div>
         </div>
         <div style={{ width:1, background:'#E5E7EB' }}/>
         <div style={{ flex:1 }}>
           <div style={{ fontSize:11, color:'#94A3B8', fontWeight:600, marginBottom:4 }}>Money out</div>
-          <div style={{ fontSize:18, fontWeight:800, color:'#3B82F6' }}>{fmt(moneyOut)}</div>
+          <div style={{ fontSize:18, fontWeight:800, color:'#0F172A' }}>{fmt(moneyOut)}</div>
         </div>
         <div style={{ width:1, background:'#E5E7EB' }}/>
         <div style={{ flex:1 }}>
@@ -373,10 +373,10 @@ function CashFlowCard({ data, balance, loading, onView, title, subtitle }) {
       {loading ? <div style={{ height:100, background:'linear-gradient(90deg,#F1F5F9,#E2E8F0)', borderRadius:8, animation:'pulse 1.5s infinite' }}/> : <CashFlowBars data={data} tab={tab}/>}
       <div style={{ display:'flex', gap:20, marginTop:16, paddingTop:16, borderTop:'1px solid #F1F5F9', alignItems:'center' }}>
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-          <div style={{ width:12, height:12, borderRadius:3, background:'linear-gradient(135deg,#0AB98A,#0DD9A3)' }}/><span style={{ fontSize:12, color:'#64748B' }}>Income</span>
+          <div style={{ width:12, height:12, borderRadius:3, background:'#94A3B8' }}/><span style={{ fontSize:12, color:'#64748B' }}>Income</span>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-          <div style={{ width:12, height:12, borderRadius:3, background:'linear-gradient(135deg,#3B82F6,#60A5FA)' }}/><span style={{ fontSize:12, color:'#64748B' }}>Expenses</span>
+          <div style={{ width:12, height:12, borderRadius:3, background:'#CBD5E1' }}/><span style={{ fontSize:12, color:'#64748B' }}>Expenses</span>
         </div>
         <div style={{ marginLeft:'auto' }}>
           <span onClick={onView} style={{ fontSize:13, color:ACCENT, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:4 }}
@@ -450,13 +450,11 @@ function DashCard({ label, subtitle, value, valueColor, trend, trendUp, children
   );
 }
 
-// ── Pills Row — uses fixed positioning via scroll listener ────
 function PillsRow({ navigate, isMobile, scrollTop, headerHeight, sidebarWidth }) {
   const navScrollRef = useRef(null);
   const [showLeft,  setShowLeft]  = useState(false);
   const [showRight, setShowRight] = useState(true);
 
-  // greeting block is approx 120px tall + 48px top padding = 168px
   const GREETING_HEIGHT = 168;
   const isFixed = scrollTop > GREETING_HEIGHT;
 
@@ -479,68 +477,49 @@ function PillsRow({ navigate, isMobile, scrollTop, headerHeight, sidebarWidth })
     };
   }, []);
 
-  const pillsBg   = isFixed ? '#fff' : 'transparent';
-  const pillsBorder = isFixed ? '1px solid #E5E7EB' : '1px solid transparent';
-  const pillsShadow = isFixed ? '0 2px 8px rgba(0,0,0,0.06)' : 'none';
-
   const containerStyle = isFixed ? {
-    position: 'fixed',
-    top: headerHeight,
-    left: sidebarWidth,
-    right: 0,
-    zIndex: 35,
-    background: pillsBg,
-    borderBottom: pillsBorder,
-    boxShadow: pillsShadow,
-    paddingTop: 10,
-    paddingBottom: 10,
-    paddingLeft: isMobile ? 16 : 32,
-    paddingRight: isMobile ? 16 : 32,
-    transition: 'background 0.2s, box-shadow 0.2s',
+    position:'fixed', top:headerHeight, left:sidebarWidth, right:0, zIndex:35,
+    background:'#fff', borderBottom:'1px solid #E5E7EB',
+    boxShadow:'0 2px 8px rgba(0,0,0,0.06)',
+    paddingTop:10, paddingBottom:10,
+    paddingLeft:isMobile?16:32, paddingRight:isMobile?16:32,
+    transition:'background 0.2s, box-shadow 0.2s',
   } : {
-    position: 'relative',
-    background: pillsBg,
-    borderBottom: pillsBorder,
-    boxShadow: pillsShadow,
-    marginBottom: 32,
-    marginLeft: isMobile ? -16 : -32,
-    marginRight: isMobile ? -16 : -32,
-    paddingLeft: isMobile ? 16 : 32,
-    paddingRight: isMobile ? 16 : 32,
-    paddingTop: 10,
-    paddingBottom: 10,
-    transition: 'background 0.2s, box-shadow 0.2s',
+    position:'relative', background:'transparent',
+    borderBottom:'1px solid transparent',
+    marginBottom:32,
+    marginLeft:isMobile?-16:-32, marginRight:isMobile?-16:-32,
+    paddingLeft:isMobile?16:32, paddingRight:isMobile?16:32,
+    paddingTop:10, paddingBottom:10,
+    transition:'background 0.2s, box-shadow 0.2s',
   };
 
   return (
     <>
       <div style={containerStyle}>
-        <div style={{ position:'relative', display:'flex', alignItems:'center', maxWidth: isFixed ? 'none' : 1136, margin:'0 auto' }}>
-
+        <div style={{ position:'relative', display:'flex', alignItems:'center' }}>
           {showLeft && (
             <>
               <div style={{ position:'absolute', left:32, top:0, bottom:0, width:48, background:`linear-gradient(to right,${isFixed?'#fff':'#F8FAFC'},transparent)`, zIndex:9, pointerEvents:'none' }}/>
               <div onClick={() => navScrollRef.current?.scrollBy({ left:-240, behavior:'smooth' })}
-                style={{ position:'absolute', left:0, top:'50%', transform:'translateY(-50%)', zIndex:10, display:'flex', alignItems:'center', justifyContent:'center', width:32, height:32, background: isFixed?'#fff':'#F8FAFC', border:'1px solid #E5E7EB', borderRadius:'50%', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.10)' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor='#0AB98A'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E7EB'; }}>
+                style={{ position:'absolute', left:0, top:'50%', transform:'translateY(-50%)', zIndex:10, display:'flex', alignItems:'center', justifyContent:'center', width:32, height:32, background:isFixed?'#fff':'#F8FAFC', border:'1px solid #E5E7EB', borderRadius:'50%', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.10)' }}
+                onMouseEnter={e => e.currentTarget.style.borderColor='#0AB98A'}
+                onMouseLeave={e => e.currentTarget.style.borderColor='#E5E7EB'}>
                 <ChevronLeft size={15} color="#374151"/>
               </div>
             </>
           )}
-
           {showRight && (
             <>
               <div style={{ position:'absolute', right:32, top:0, bottom:0, width:48, background:`linear-gradient(to left,${isFixed?'#fff':'#F8FAFC'},transparent)`, zIndex:9, pointerEvents:'none' }}/>
               <div onClick={() => navScrollRef.current?.scrollBy({ left:240, behavior:'smooth' })}
-                style={{ position:'absolute', right:0, top:'50%', transform:'translateY(-50%)', zIndex:10, display:'flex', alignItems:'center', justifyContent:'center', width:32, height:32, background: isFixed?'#fff':'#F8FAFC', border:'1px solid #E5E7EB', borderRadius:'50%', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.10)' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor='#0AB98A'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E7EB'; }}>
+                style={{ position:'absolute', right:0, top:'50%', transform:'translateY(-50%)', zIndex:10, display:'flex', alignItems:'center', justifyContent:'center', width:32, height:32, background:isFixed?'#fff':'#F8FAFC', border:'1px solid #E5E7EB', borderRadius:'50%', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.10)' }}
+                onMouseEnter={e => e.currentTarget.style.borderColor='#0AB98A'}
+                onMouseLeave={e => e.currentTarget.style.borderColor='#E5E7EB'}>
                 <ChevronRight size={15} color="#374151"/>
               </div>
             </>
           )}
-
           <div ref={navScrollRef} onScroll={updateChevrons}
             style={{ display:'flex', gap:10, overflowX:'auto', scrollbarWidth:'none', msOverflowStyle:'none', WebkitOverflowScrolling:'touch', padding:'4px 2px', alignItems:'center', flexWrap:'nowrap', width:'100%' }}>
             {NAV_CATS.map(cat => {
@@ -561,12 +540,10 @@ function PillsRow({ navigate, isMobile, scrollTop, headerHeight, sidebarWidth })
           </div>
         </div>
       </div>
-      {/* Spacer so content doesn't jump when pills become fixed */}
-      {isFixed && <div style={{ height: 62, marginBottom: 32 }}/>}
+      {isFixed && <div style={{ height:62, marginBottom:32 }}/>}
     </>
   );
 }
-// ── Main Dashboard ────────────────────────────────────────────
 export default function Dashboard() {
   const navigate = useNavigate();
   const token    = localStorage.getItem('token');
@@ -602,18 +579,7 @@ export default function Dashboard() {
     return () => window.removeEventListener('resize', h);
   }, []);
 
-  // Scroll listener — track scroll position of the main element
   useEffect(() => {
-    const el = pageRef.current;
-    if (!el) return;
-    const onScroll = () => setScrollTop(el.scrollTop);
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
-  }, []);
-
-  // Find the main scrolling container after mount
-  useEffect(() => {
-    // The main element is the parent that scrolls
     const main = document.querySelector('main');
     if (!main) return;
     pageRef.current = main;
@@ -654,11 +620,6 @@ export default function Dashboard() {
   });
   const cashFlowData = Object.entries(cashFlowMap).slice(-8).map(([month,amount]) => ({ month, amount }));
 
-  const briefingBadgeColor = briefingPaused?'#F59E0B':briefingOn?ACCENT:'#94A3B8';
-  const briefingBadgeBg    = briefingPaused?'rgba(245,158,11,0.1)':briefingOn?'rgba(10,185,138,0.1)':'#F1F5F9';
-  const briefingLabel      = briefingPaused?'PAUSED':briefingOn?'ON':'OFF';
-
-  // Header height = promo banner (40px if visible) + topbar (64px)
   const promoDismissed = localStorage.getItem('nova_banner_dismissed') === 'true';
   const headerHeight   = (promoDismissed ? 0 : 40) + 64;
   const sidebarWidth   = isMobile ? 0 : 80;
@@ -704,7 +665,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* ── PILLS ROW — position fixed when scrolled past greeting ── */}
+        {/* ── PILLS ROW ── */}
         <PillsRow
           navigate={navigate}
           isMobile={isMobile}
@@ -739,7 +700,7 @@ export default function Dashboard() {
 
           {/* Card 1 — P&L */}
           <div onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 8px 32px rgba(0,0,0,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'; }}
-            style={{ background:'#fff', border:'1px solid #E8F0FE', borderTop:'3px solid #0AB98A', borderRadius:16, padding:'22px 24px', display:'flex', flexDirection:'column', minWidth:0, transition:'all 0.2s', boxShadow:'0 2px 12px rgba(0,0,0,0.04)' }}>
+            style={{ background:'#fff', border:'1px solid #E8F0FE', borderTop:'3px solid #E2E8F0', borderRadius:16, padding:'22px 24px', display:'flex', flexDirection:'column', minWidth:0, transition:'all 0.2s', boxShadow:'0 2px 12px rgba(0,0,0,0.04)' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
               <div style={{ fontSize:11, fontWeight:700, color:'#94A3B8', letterSpacing:'0.08em', textTransform:'uppercase' }}>Profit & Loss</div>
               <div style={{ display:'flex', alignItems:'center', gap:6 }}>
@@ -754,7 +715,7 @@ export default function Dashboard() {
               ? <div style={{ height:40, background:'linear-gradient(90deg,#F1F5F9,#E2E8F0)', borderRadius:8, animation:'pulse 1.5s infinite', marginBottom:10 }}/>
               : (
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
-                  <div style={{ fontSize:32, fontWeight:800, color:profitUp?'#0AB98A':'#EF4444', letterSpacing:'-0.03em', lineHeight:1 }}>{fmt(netProfit)}</div>
+                  <div style={{ fontSize:32, fontWeight:800, color:'#0F172A', letterSpacing:'-0.03em', lineHeight:1 }}>{fmt(netProfit)}</div>
                   <Info size={13} color="#CBD5E1"/>
                   <div style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:profitUp?'rgba(10,185,138,0.1)':'rgba(239,68,68,0.1)', color:profitUp?'#0AB98A':'#EF4444' }}>
                     {profitUp?'↑':'↓'} {profitUp?'73%':'12%'}
@@ -774,7 +735,7 @@ export default function Dashboard() {
               <div style={{ marginBottom:12 }}>
                 <div style={{ height:10, borderRadius:6, overflow:'hidden', display:'flex', marginBottom:8 }}>
                   <div style={{ background:'linear-gradient(90deg,#0AB98A,#0DD9A3)', width:revenue+expenses>0?(revenue/(revenue+expenses)*100)+'%':'50%', minWidth:4 }}/>
-                  <div style={{ background:'linear-gradient(90deg,#3B82F6,#06B6D4)', flex:1, minWidth:4 }}/>
+                  <div style={{ background:'#E2E8F0', flex:1, minWidth:4 }}/>
                 </div>
                 <div style={{ display:'flex', justifyContent:'space-between' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:5 }}>
@@ -782,7 +743,7 @@ export default function Dashboard() {
                     <span style={{ fontSize:10, color:'#64748B' }}>Income {fmt(revenue)}</span>
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:5 }}>
-                    <div style={{ width:8, height:8, borderRadius:2, background:'#3B82F6' }}/>
+                    <div style={{ width:8, height:8, borderRadius:2, background:'#CBD5E1' }}/>
                     <span style={{ fontSize:10, color:'#64748B' }}>Expenses {fmt(expenses)}</span>
                   </div>
                 </div>
@@ -800,7 +761,7 @@ export default function Dashboard() {
 
           {/* Card 2 — Expenses */}
           <div onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 8px 32px rgba(0,0,0,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'; }}
-            style={{ background:'#fff', border:'1px solid #E8F0FE', borderTop:'3px solid #3B82F6', borderRadius:16, padding:'22px 24px', display:'flex', flexDirection:'column', minWidth:0, transition:'all 0.2s', boxShadow:'0 2px 12px rgba(0,0,0,0.04)' }}>
+            style={{ background:'#fff', border:'1px solid #E8F0FE', borderTop:'3px solid #E2E8F0', borderRadius:16, padding:'22px 24px', display:'flex', flexDirection:'column', minWidth:0, transition:'all 0.2s', boxShadow:'0 2px 12px rgba(0,0,0,0.04)' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
               <div style={{ fontSize:11, fontWeight:700, color:'#94A3B8', letterSpacing:'0.08em', textTransform:'uppercase' }}>Expenses</div>
               <div style={{ display:'flex', alignItems:'center', gap:6 }}>
@@ -815,25 +776,25 @@ export default function Dashboard() {
               ? <div style={{ height:40, background:'linear-gradient(90deg,#F1F5F9,#E2E8F0)', borderRadius:8, animation:'pulse 1.5s infinite', marginBottom:10 }}/>
               : (
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
-                  <div style={{ fontSize:32, fontWeight:800, color:'#3B82F6', letterSpacing:'-0.03em', lineHeight:1 }}>{fmt(expenses)}</div>
+                  <div style={{ fontSize:32, fontWeight:800, color:'#0F172A', letterSpacing:'-0.03em', lineHeight:1 }}>{fmt(expenses)}</div>
                   <Info size={13} color="#CBD5E1"/>
-                  <div style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:'rgba(59,130,246,0.1)', color:'#3B82F6' }}>100%</div>
+                  <div style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:'rgba(15,23,42,0.06)', color:'#64748B' }}>100%</div>
                 </div>
               )
             }
             {!loading && (
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:12 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:20, background:'rgba(239,68,68,0.1)' }}>
-                  <TrendingUp size={12} color="#EF4444"/>
+                  <TrendingDown size={12} color="#EF4444"/>
                   <span style={{ fontSize:11, fontWeight:600, color:'#EF4444' }}>Up 24% from prior 30 days</span>
                 </div>
               </div>
             )}
-           <div style={{ display:'flex', justifyContent:'center', alignItems:'center', margin:'8px 0 12px' }}>
+            <div style={{ display:'flex', justifyContent:'center', alignItems:'center', margin:'8px 0 12px' }}>
               <svg width="80" height="80" viewBox="0 0 80 80">
                 <circle cx="40" cy="40" r="28" fill="none" stroke="#E5E7EB" strokeWidth="12"/>
                 {expenses > 0 && (
-                  <circle cx="40" cy="40" r="28" fill="none" stroke="#3B82F6" strokeWidth="12"
+                  <circle cx="40" cy="40" r="28" fill="none" stroke="#94A3B8" strokeWidth="12"
                     strokeDasharray={String(Math.min((expenses/(expenses+1000))*175,175)) + ' 175'}
                     strokeLinecap="round" transform="rotate(-90 40 40)"/>
                 )}
@@ -843,7 +804,7 @@ export default function Dashboard() {
               </svg>
             </div>
             <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
-              <div style={{ width:8, height:8, borderRadius:'50%', background:'#3B82F6' }}/>
+              <div style={{ width:8, height:8, borderRadius:'50%', background:'#94A3B8' }}/>
               <span style={{ fontSize:11, color:'#64748B' }}>Payroll expenses</span>
             </div>
             <div onClick={() => navigate('/transactions')} style={{ fontSize:12, color:ACCENT, fontWeight:600, cursor:'pointer', marginTop:'auto', paddingTop:14, borderTop:'1px solid #F1F5F9' }}
@@ -858,7 +819,7 @@ export default function Dashboard() {
 
           {/* Card 4 — Bank Accounts */}
           <div onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 8px 32px rgba(0,0,0,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'; }}
-            style={{ background:'#fff', border:'1px solid #E8F0FE', borderTop:'3px solid #06B6D4', borderRadius:16, padding:'22px 24px', display:'flex', flexDirection:'column', minWidth:0, transition:'all 0.2s', boxShadow:'0 2px 12px rgba(0,0,0,0.04)' }}>
+            style={{ background:'#fff', border:'1px solid #E8F0FE', borderTop:'3px solid #E2E8F0', borderRadius:16, padding:'22px 24px', display:'flex', flexDirection:'column', minWidth:0, transition:'all 0.2s', boxShadow:'0 2px 12px rgba(0,0,0,0.04)' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
               <div style={{ fontSize:11, fontWeight:700, color:'#94A3B8', letterSpacing:'0.08em', textTransform:'uppercase' }}>Bank Accounts</div>
               <MoreHorizontal size={16} color="#CBD5E1" style={{ cursor:'pointer' }}/>
@@ -870,7 +831,7 @@ export default function Dashboard() {
               <Info size={13} color="#CBD5E1"/>
             </div>
             <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 12px', borderRadius:10, background:'#F8FAFC', border:'1px solid #E5E7EB', marginBottom:8 }}>
-              <Landmark size={15} color="#06B6D4"/>
+              <Landmark size={15} color="#94A3B8"/>
               <div>
                 <div style={{ fontSize:12, fontWeight:600, color:'#374151' }}>No bank connected</div>
                 <div style={{ fontSize:11, color:'#9CA3AF', marginTop:1 }}>Connect to sync transactions</div>
@@ -923,15 +884,15 @@ export default function Dashboard() {
             return (
               <div key={t.id||i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 0', borderBottom:i<5?'1px solid #F8FAFC':'none' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                  <div style={{ width:40, height:40, borderRadius:12, background:isPos?'rgba(10,185,138,0.1)':'rgba(59,130,246,0.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    {isPos ? <TrendingUp size={17} color="#0AB98A"/> : <TrendingDown size={17} color="#3B82F6"/>}
+                  <div style={{ width:40, height:40, borderRadius:12, background:'#F8FAFC', border:'1px solid #E5E7EB', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    {isPos ? <TrendingUp size={17} color="#0AB98A"/> : <TrendingDown size={17} color="#EF4444"/>}
                   </div>
                   <div>
                     <div style={{ fontSize:13, fontWeight:600, color:'#0F172A' }}>{t.description||t.name||t.memo||'Transaction'}</div>
                     <div style={{ fontSize:11, color:'#94A3B8', marginTop:2 }}>{dateStr}</div>
                   </div>
                 </div>
-                <div style={{ fontSize:15, fontWeight:800, color:isPos?'#0AB98A':'#3B82F6', letterSpacing:'-0.01em' }}>
+                <div style={{ fontSize:15, fontWeight:700, color:isPos?'#0AB98A':'#EF4444', letterSpacing:'-0.01em' }}>
                   {isPos?'+':''}{fmt(amt)}
                 </div>
               </div>
@@ -942,27 +903,27 @@ export default function Dashboard() {
         {/* ══ SECTION B ══ */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16, marginTop:8 }}>
           <div style={{ fontSize:20, fontWeight:700, color:'#0F172A', letterSpacing:'-0.02em' }}>Banking & Payroll</div>
-          <div style={{ padding:'4px 12px', borderRadius:20, background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.2)' }}>
-            <span style={{ fontSize:11, fontWeight:700, color:'#3B82F6' }}>COMING SOON</span>
+          <div style={{ padding:'4px 12px', borderRadius:20, background:'#F1F5F9', border:'1px solid #E2E8F0' }}>
+            <span style={{ fontSize:11, fontWeight:700, color:'#64748B' }}>COMING SOON</span>
           </div>
         </div>
 
         <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(auto-fit,minmax(230px,1fr))', gap:16, marginBottom:20 }}>
-          <DashCard label="Profit & Loss" subtitle="Net accounting profit" value="$48,200" valueColor="#0AB98A" trend="+24% vs last month" trendUp={true} footer="View accounting report" onFooter={() => navigate('/reports')} topBorder="#0AB98A">
+          <DashCard label="Profit & Loss" subtitle="Net accounting profit" value="$48,200" valueColor="#0F172A" trend="+24% vs last month" trendUp={true} footer="View accounting report" onFooter={() => navigate('/reports')} topBorder="#E2E8F0">
             <MiniBar income={72000} expenses={23800}/>
-            <div style={{ marginTop:8, display:'inline-flex', fontSize:9, fontWeight:700, color:'#3B82F6', background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.15)', padding:'2px 8px', borderRadius:20 }}>SAMPLE DATA</div>
+            <div style={{ marginTop:8, display:'inline-flex', fontSize:9, fontWeight:700, color:'#94A3B8', background:'#F1F5F9', border:'1px solid #E2E8F0', padding:'2px 8px', borderRadius:20 }}>SAMPLE DATA</div>
           </DashCard>
-          <DashCard label="Expenses" subtitle="Total business expenses" value="$23,800" valueColor="#3B82F6" trend="Across all accounts" trendUp={false} footer="View expense breakdown" onFooter={() => navigate('/transactions')} topBorder="#3B82F6">
+          <DashCard label="Expenses" subtitle="Total business expenses" value="$23,800" valueColor="#0F172A" trend="Across all accounts" trendUp={false} footer="View expense breakdown" onFooter={() => navigate('/transactions')} topBorder="#E2E8F0">
             <div style={{ marginTop:8 }}>
               {[
-                { label:'Operations', pct:45, color:'#3B82F6' },
-                { label:'Payroll',    pct:35, color:'#8B5CF6' },
-                { label:'Marketing',  pct:20, color:'#EC4899' },
+                { label:'Operations', pct:45, color:'#94A3B8' },
+                { label:'Payroll',    pct:35, color:'#64748B' },
+                { label:'Marketing',  pct:20, color:'#CBD5E1' },
               ].map(item => (
                 <div key={item.label} style={{ marginBottom:6 }}>
                   <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
                     <span style={{ fontSize:10, color:'#64748B' }}>{item.label}</span>
-                    <span style={{ fontSize:10, fontWeight:700, color:item.color }}>{item.pct}%</span>
+                    <span style={{ fontSize:10, fontWeight:700, color:'#475569' }}>{item.pct}%</span>
                   </div>
                   <div style={{ height:4, background:'#F1F5F9', borderRadius:99, overflow:'hidden' }}>
                     <div style={{ height:'100%', width:item.pct+'%', background:item.color, borderRadius:99 }}/>
@@ -970,17 +931,17 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
-            <div style={{ marginTop:8, display:'inline-flex', fontSize:9, fontWeight:700, color:'#3B82F6', background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.15)', padding:'2px 8px', borderRadius:20 }}>SAMPLE DATA</div>
+            <div style={{ marginTop:8, display:'inline-flex', fontSize:9, fontWeight:700, color:'#94A3B8', background:'#F1F5F9', border:'1px solid #E2E8F0', padding:'2px 8px', borderRadius:20 }}>SAMPLE DATA</div>
           </DashCard>
-          <DashCard label="Bank Accounts" subtitle="Connected accounts balance" value="$84,320" valueColor="#0F172A" footer="Connect bank account" onFooter={() => navigate('/integrations')} topBorder="#06B6D4">
+          <DashCard label="Bank Accounts" subtitle="Connected accounts balance" value="$84,320" valueColor="#0F172A" footer="Connect bank account" onFooter={() => navigate('/integrations')} topBorder="#E2E8F0">
             <div style={{ marginTop:4 }}>
               {[
-                { name:'Business Chequing', bal:'$62,100', color:'#0AB98A' },
-                { name:'Business Savings',  bal:'$22,220', color:'#3B82F6' },
+                { name:'Business Chequing', bal:'$62,100' },
+                { name:'Business Savings',  bal:'$22,220' },
               ].map(acc => (
                 <div key={acc.name} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 10px', borderRadius:10, background:'#F8FAFC', marginBottom:6 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                    <div style={{ width:8, height:8, borderRadius:'50%', background:acc.color }}/>
+                    <div style={{ width:8, height:8, borderRadius:'50%', background:'#CBD5E1' }}/>
                     <span style={{ fontSize:12, color:'#475569', fontWeight:500 }}>{acc.name}</span>
                   </div>
                   <span style={{ fontSize:13, fontWeight:700, color:'#0F172A' }}>{acc.bal}</span>
@@ -988,17 +949,17 @@ export default function Dashboard() {
               ))}
               <div style={{ fontSize:10, color:'#94A3B8', marginTop:4 }}>Last updated just now</div>
             </div>
-            <div style={{ marginTop:8, display:'inline-flex', fontSize:9, fontWeight:700, color:'#3B82F6', background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.15)', padding:'2px 8px', borderRadius:20 }}>SAMPLE DATA</div>
+            <div style={{ marginTop:8, display:'inline-flex', fontSize:9, fontWeight:700, color:'#94A3B8', background:'#F1F5F9', border:'1px solid #E2E8F0', padding:'2px 8px', borderRadius:20 }}>SAMPLE DATA</div>
           </DashCard>
-          <DashCard label="Payroll Expenses" subtitle="This pay period" value="$14,200" valueColor="#8B5CF6" footer="Run payroll" onFooter={() => navigate('/team')} topBorder="#8B5CF6">
-            <div style={{ marginTop:8, padding:'10px 12px', background:'rgba(139,92,246,0.06)', borderRadius:10, border:'1px solid rgba(139,92,246,0.15)' }}>
+          <DashCard label="Payroll Expenses" subtitle="This pay period" value="$14,200" valueColor="#0F172A" footer="Run payroll" onFooter={() => navigate('/team')} topBorder="#E2E8F0">
+            <div style={{ marginTop:8, padding:'10px 12px', background:'#F8FAFC', borderRadius:10, border:'1px solid #E5E7EB' }}>
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
-                <Users size={13} color="#8B5CF6"/>
-                <span style={{ fontSize:12, fontWeight:600, color:'#8B5CF6' }}>6 employees active</span>
+                <Users size={13} color="#64748B"/>
+                <span style={{ fontSize:12, fontWeight:600, color:'#475569' }}>6 employees active</span>
               </div>
-              <div style={{ fontSize:11, color:'#64748B' }}>Next payroll run: May 31</div>
+              <div style={{ fontSize:11, color:'#94A3B8' }}>Next payroll run: May 31</div>
             </div>
-            <div style={{ marginTop:8, display:'inline-flex', fontSize:9, fontWeight:700, color:'#3B82F6', background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.15)', padding:'2px 8px', borderRadius:20 }}>SAMPLE DATA</div>
+            <div style={{ marginTop:8, display:'inline-flex', fontSize:9, fontWeight:700, color:'#94A3B8', background:'#F1F5F9', border:'1px solid #E2E8F0', padding:'2px 8px', borderRadius:20 }}>SAMPLE DATA</div>
           </DashCard>
           <AddWidgetCard onAdd={() => navigate('/settings')}/>
         </div>
@@ -1045,10 +1006,10 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr 1fr':'repeat(4,1fr)', gap:12, marginBottom:24 }}>
           {[
-            { label:'New Invoice',  icon:FileText,  path:'/invoices',     color:'#3B82F6', bg:'#DBEAFE' },
-            { label:'Add Expense',  icon:Receipt,   path:'/transactions', color:'#EF4444', bg:'#FEE2E2' },
-            { label:'View Reports', icon:BarChart2, path:'/reports',      color:'#F59E0B', bg:'#FEF3C7' },
-            { label:'Scan Receipt', icon:ScanLine,  path:'/receipts',     color:'#8B5CF6', bg:'#EDE9FE' },
+            { label:'New Invoice',  icon:FileText,  path:'/invoices',     color:'#0F172A', bg:'#F1F5F9' },
+            { label:'Add Expense',  icon:Receipt,   path:'/transactions', color:'#0F172A', bg:'#F1F5F9' },
+            { label:'View Reports', icon:BarChart2, path:'/reports',      color:'#0F172A', bg:'#F1F5F9' },
+            { label:'Scan Receipt', icon:ScanLine,  path:'/receipts',     color:'#0F172A', bg:'#F1F5F9' },
           ].map(item => {
             const Icon = item.icon;
             return (
