@@ -8,10 +8,10 @@ import {
   ShoppingCart, UserCheck, Briefcase, ClipboardList,
   Calendar, Clock, Pause, Play, Save, Bell,
   Building2, CreditCard, Percent, Package,
-  ChevronDown, 
+  ChevronDown,
   Landmark, Wallet, BarChart3, Tag, Zap,
   BookOpen, GitMerge, ScanLine, Link2, Coffee,
-  SlidersHorizontal,
+  SlidersHorizontal, Megaphone,
 } from 'lucide-react';
 import { getFirstName } from '../utils/userDisplay';
 
@@ -26,14 +26,14 @@ const fmt = (n) => {
 
 // ── Nav categories ────────────────────────────────────────────
 const NAV_CATS = [
-  { label: 'Accounting',       icon: BookOpen,   color: '#0AB98A', bg: '#E6F7F2', path: '/reconciliation' },
-  { label: 'Expenses & Pay',   icon: Receipt,    color: '#EF4444', bg: '#FEE2E2', path: '/transactions'   },
-  { label: 'Sales & Get Paid', icon: TrendingUp, color: '#3B82F6', bg: '#DBEAFE', path: '/invoices'       },
-  { label: 'Customer Hub',     icon: UserCheck,  color: '#06B6D4', bg: '#CFFAFE', path: '/customers'      },
-  { label: 'Payroll',          icon: Wallet,     color: '#8B5CF6', bg: '#EDE9FE', path: '/team'           },
-  { label: 'Team',             icon: Users,      color: '#6366F1', bg: '#E0E7FF', path: '/team'           },
-  { label: 'Sales Tax',        icon: Percent,    color: '#F59E0B', bg: '#FEF3C7', path: '/tax'            },
-  { label: 'Marketing',        icon: Tag,        color: '#EC4899', bg: '#FCE7F3', path: '/marketing'      },
+  { label: 'Accounting',          icon: BookOpen,   color: '#0AB98A', bg: '#E6F7F2', path: '/reconciliation' },
+  { label: 'Expenses & Pay Bills',icon: Receipt,    color: '#EF4444', bg: '#FEE2E2', path: '/transactions'   },
+  { label: 'Sales & Get Paid',    icon: TrendingUp, color: '#3B82F6', bg: '#DBEAFE', path: '/invoices'       },
+  { label: 'Customer Hub',        icon: UserCheck,  color: '#0AB98A', bg: '#E6F7F2', path: '/customers'      },
+  { label: 'Payroll',             icon: Wallet,     color: '#8B5CF6', bg: '#EDE9FE', path: '/team'           },
+  { label: 'Team',                icon: Users,      color: '#6366F1', bg: '#E0E7FF', path: '/team'           },
+  { label: 'Sales Tax',           icon: Percent,    color: '#F59E0B', bg: '#FEF3C7', path: '/tax'            },
+  { label: 'Marketing',           icon: Megaphone,  color: '#F97316', bg: '#FFF7ED', path: '/marketing'      },
 ];
 
 // ── Create actions ────────────────────────────────────────────
@@ -404,7 +404,7 @@ function AddWidgetCard({ onAdd }) {
   const [hov, setHov] = useState(false);
   return (
     <div onClick={onAdd} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{ background:'#fff', border:'1px dashed '+(hov?ACCENT:'#CBD5E1'), borderRadius:16, padding:'24px 20px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, cursor:'pointer', transition:'all 0.2s', minHeight:200 }}>
+      style={{ background:'#fff', border:'2px dashed '+(hov?ACCENT:'#CBD5E1'), borderRadius:16, padding:'24px 20px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, cursor:'pointer', transition:'all 0.2s', minHeight:200 }}>
       <div style={{ fontSize:14, fontWeight:600, color:hov?ACCENT:'#374151' }}>Add widgets</div>
       <div style={{ width:44, height:44, borderRadius:'50%', background:hov?'rgba(10,185,138,0.1)':'#F3F4F6', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s' }}>
         <Plus size={22} color={hov?ACCENT:'#9CA3AF'}/>
@@ -584,12 +584,12 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* ── APP PILL NAV ROW — below greeting ── */}
+       {/* ── APP PILL NAV ROW — below greeting ── */}
         <div style={{ position:'relative', marginBottom:32 }}>
           <div style={{ position:'absolute', left:0, top:0, bottom:0, width:24, background:'linear-gradient(to right,#F8FAFC,transparent)', zIndex:2, pointerEvents:'none' }}/>
           <div
             ref={navScrollRef}
-            style={{ display:'flex', gap:10, overflowX:'auto', scrollbarWidth:'none', WebkitOverflowScrolling:'touch', padding:'4px 2px', alignItems:'center', justifyContent:isMobile?'flex-start':'center', flexWrap:isMobile?'nowrap':'wrap' }}
+            style={{ display:'flex', gap:10, overflowX:'auto', scrollbarWidth:'none', WebkitOverflowScrolling:'touch', padding:'4px 2px', alignItems:'center', flexWrap:'nowrap' }}
           >
             {NAV_CATS.map(cat => {
               const Icon     = cat.icon;
@@ -609,22 +609,22 @@ export default function Dashboard() {
                 </div>
               );
             })}
-            {/* Scroll chevron — mobile only */}
-            {isMobile && (
-              <div
-                onClick={() => navScrollRef.current?.scrollBy({ left:200, behavior:'smooth' })}
-                style={{ display:'flex', alignItems:'center', gap:4, padding:'10px 14px', background:'#F9FAFB', border:'1px solid #E5E7EB', borderRadius:999, cursor:'pointer', flexShrink:0 }}
-              >
-                <ChevronRight size={15} color="#6B7280"/>
-              </div>
-            )}
+          {/* Scroll chevron — always visible */}
+            <div
+              onClick={() => navScrollRef.current?.scrollBy({ left:240, behavior:'smooth' })}
+              style={{ display:'flex', alignItems:'center', justifyContent:'center', width:32, height:32, background:'#fff', border:'1px solid #E5E7EB', borderRadius:'50%', cursor:'pointer', flexShrink:0, boxShadow:'0 2px 8px rgba(0,0,0,0.08)', transition:'all 0.15s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor=ACCENT; e.currentTarget.style.boxShadow='0 2px 12px rgba(10,185,138,0.2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor='#E5E7EB'; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)'; }}
+            >
+              <ChevronRight size={15} color="#6B7280"/>
+            </div>
           </div>
           <div style={{ position:'absolute', right:0, top:0, bottom:0, width:24, background:'linear-gradient(to left,#F8FAFC,transparent)', zIndex:2, pointerEvents:'none' }}/>
         </div>
 
         {/* ── CREATE ACTIONS ROW ── */}
         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:24, flexWrap:'wrap' }}>
-          <span style={{ fontSize:13, fontWeight:600, color:'#374151', marginRight:4 }}>Create</span>
+         <span style={{ fontSize:13, fontWeight:600, color:'#374151', marginRight:4 }}>Create actions</span>
           {QUICK_CREATE.map(action => (
             <div
               key={action.label}
@@ -648,68 +648,155 @@ export default function Dashboard() {
           <div style={{ fontSize:20, fontWeight:700, color:'#0F172A', letterSpacing:'-0.02em' }}>Business at a glance</div>
         </div>
 
-        <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':' repeat(4,1fr)', gap:16, marginBottom:20 }}>
+     <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'repeat(4,1fr)', gap:16, marginBottom:20 }}>
 
           {/* Card 1 — Profit & Loss */}
-          <DashCard
-            label="Profit & Loss"
-            subtitle="Net profit this month"
-            value={loading?null:fmt(netProfit)}
-            valueColor={profitUp?'#0AB98A':'#EF4444'}
-            trend={profitUp?'Up vs prior month':'Down vs prior month'}
-            trendUp={profitUp}
-            footer="View full report"
-            onFooter={() => navigate('/reports')}
-            loading={loading}
-            topBorder="#0AB98A">
-            {!loading && <MiniBar income={revenue} expenses={expenses}/>}
-          </DashCard>
-
-          {/* Card 2 — Expenses */}
-          <DashCard
-            label="Expenses"
-            subtitle="Spending for last 30 days"
-            value={loading?null:fmt(expenses)}
-            valueColor="#3B82F6"
-            trend={expenses>0?'Up from prior 30 days':'No expenses yet'}
-            trendUp={false}
-            footer="View all spending"
-            onFooter={() => navigate('/transactions')}
-            loading={loading}
-            topBorder="#3B82F6">
-            {!loading && (
-              <div style={{ display:'flex', gap:6, marginTop:8, flexWrap:'wrap' }}>
-                {['Payroll','Office','Software','Other'].map((cat,i) => (
-                  <div key={cat} style={{ padding:'3px 10px', borderRadius:20, background:['rgba(59,130,246,0.1)','rgba(6,182,212,0.1)','rgba(139,92,246,0.1)','rgba(248,113,113,0.1)'][i], fontSize:10, fontWeight:600, color:['#3B82F6','#06B6D4','#8B5CF6','#EF4444'][i] }}>
-                    {cat}
+          <div onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 8px 32px rgba(0,0,0,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'; }}
+            style={{ background:'#fff', border:'1px solid #E8F0FE', borderTop:'3px solid #0AB98A', borderRadius:16, padding:'22px 24px', display:'flex', flexDirection:'column', minWidth:0, transition:'all 0.2s', boxShadow:'0 2px 12px rgba(0,0,0,0.04)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'#94A3B8', letterSpacing:'0.08em', textTransform:'uppercase' }}>Profit & Loss</div>
+              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                <div style={{ fontSize:11, color:'#64748B', cursor:'pointer', display:'flex', alignItems:'center', gap:3, padding:'3px 8px', borderRadius:6, border:'1px solid #E5E7EB', background:'#F8FAFC' }}>
+                  Last month <ChevronDown size={11} color="#94A3B8"/>
+                </div>
+                <MoreHorizontal size={16} color="#CBD5E1" style={{ cursor:'pointer' }}/>
+              </div>
+            </div>
+            <div style={{ fontSize:12, color:'#94A3B8', marginBottom:8 }}>Net profit this month</div>
+            {loading
+              ? <div style={{ height:40, background:'linear-gradient(90deg,#F1F5F9,#E2E8F0)', borderRadius:8, animation:'pulse 1.5s infinite', marginBottom:10 }}/>
+              : (
+                <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+                  <div style={{ fontSize:32, fontWeight:800, color:profitUp?'#0AB98A':'#EF4444', letterSpacing:'-0.03em', lineHeight:1 }}>{fmt(netProfit)}</div>
+                  <Info size={13} color="#CBD5E1"/>
+                  <div style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:profitUp?'rgba(10,185,138,0.1)':'rgba(239,68,68,0.1)', color:profitUp?'#0AB98A':'#EF4444' }}>
+                    {profitUp?'↑':'↓'} {profitUp?'73%':'12%'}
                   </div>
-                ))}
+                </div>
+              )
+            }
+            {!loading && (
+              <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:12 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:20, background:profitUp?'rgba(10,185,138,0.1)':'rgba(239,68,68,0.1)' }}>
+                  {profitUp ? <TrendingUp size={12} color="#0AB98A"/> : <TrendingDown size={12} color="#EF4444"/>}
+                  <span style={{ fontSize:11, fontWeight:600, color:profitUp?'#0AB98A':'#EF4444' }}>
+                    {profitUp?'Up':'Down'} vs prior month
+                  </span>
+                </div>
               </div>
             )}
-          </DashCard>
+            {!loading && (
+              <div style={{ marginBottom:12 }}>
+                <div style={{ height:10, borderRadius:6, overflow:'hidden', display:'flex', marginBottom:8 }}>
+                  <div style={{ background:'linear-gradient(90deg,#0AB98A,#0DD9A3)', width:revenue+expenses>0?(revenue/(revenue+expenses)*100)+'%':'50%', minWidth:4 }}/>
+                  <div style={{ background:'linear-gradient(90deg,#3B82F6,#06B6D4)', flex:1, minWidth:4 }}/>
+                </div>
+                <div style={{ display:'flex', justifyContent:'space-between' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+                    <div style={{ width:8, height:8, borderRadius:2, background:'#0AB98A' }}/>
+                    <span style={{ fontSize:10, color:'#64748B' }}>Income {fmt(revenue)}</span>
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+                    <div style={{ width:8, height:8, borderRadius:2, background:'#3B82F6' }}/>
+                    <span style={{ fontSize:10, color:'#64748B' }}>Expenses {fmt(expenses)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'auto', paddingTop:14, borderTop:'1px solid #F1F5F9' }}>
+              <div onClick={() => navigate('/transactions')} style={{ fontSize:12, color:ACCENT, fontWeight:600, cursor:'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.textDecoration='underline'}
+                onMouseLeave={e => e.currentTarget.style.textDecoration='none'}>
+                Categorize {txns.length} transactions
+              </div>
+              <MoreHorizontal size={14} color="#CBD5E1" style={{ cursor:'pointer' }}/>
+            </div>
+          </div>
+
+          {/* Card 2 — Expenses */}
+          <div onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 8px 32px rgba(0,0,0,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'; }}
+            style={{ background:'#fff', border:'1px solid #E8F0FE', borderTop:'3px solid #3B82F6', borderRadius:16, padding:'22px 24px', display:'flex', flexDirection:'column', minWidth:0, transition:'all 0.2s', boxShadow:'0 2px 12px rgba(0,0,0,0.04)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'#94A3B8', letterSpacing:'0.08em', textTransform:'uppercase' }}>Expenses</div>
+              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                <div style={{ fontSize:11, color:'#64748B', cursor:'pointer', display:'flex', alignItems:'center', gap:3, padding:'3px 8px', borderRadius:6, border:'1px solid #E5E7EB', background:'#F8FAFC' }}>
+                  Last 30 days <ChevronDown size={11} color="#94A3B8"/>
+                </div>
+                <MoreHorizontal size={16} color="#CBD5E1" style={{ cursor:'pointer' }}/>
+              </div>
+            </div>
+            <div style={{ fontSize:12, color:'#94A3B8', marginBottom:8 }}>Spending for last 30 days</div>
+            {loading
+              ? <div style={{ height:40, background:'linear-gradient(90deg,#F1F5F9,#E2E8F0)', borderRadius:8, animation:'pulse 1.5s infinite', marginBottom:10 }}/>
+              : (
+                <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+                  <div style={{ fontSize:32, fontWeight:800, color:'#3B82F6', letterSpacing:'-0.03em', lineHeight:1 }}>{fmt(expenses)}</div>
+                  <Info size={13} color="#CBD5E1"/>
+                  <div style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:'rgba(59,130,246,0.1)', color:'#3B82F6' }}>100%</div>
+                </div>
+              )
+            }
+            {!loading && (
+              <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:12 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:20, background:'rgba(239,68,68,0.1)' }}>
+                  <TrendingUp size={12} color="#EF4444"/>
+                  <span style={{ fontSize:11, fontWeight:600, color:'#EF4444' }}>Up 24% from prior 30 days</span>
+                </div>
+              </div>
+            )}
+            <div style={{ display:'flex', justifyContent:'center', alignItems:'center', margin:'8px 0 12px' }}>
+              <svg width="80" height="80" viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="28" fill="none" stroke="#E5E7EB" strokeWidth="12"/>
+                {expenses > 0 && (
+                  <circle cx="40" cy="40" r="28" fill="none" stroke="#3B82F6" strokeWidth="12"
+                    strokeDasharray={`${Math.min((expenses/(expenses+1000))*175,175)} 175`}
+                    strokeLinecap="round" transform="rotate(-90 40 40)"/>
+                )}
+                <text x="40" y="44" textAnchor="middle" fontSize="11" fontWeight="700" fill="#334155">
+                  {expenses > 0 ? 'Payroll' : 'None'}
+                </text>
+              </svg>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
+              <div style={{ width:8, height:8, borderRadius:'50%', background:'#3B82F6' }}/>
+              <span style={{ fontSize:11, color:'#64748B' }}>Payroll expenses</span>
+            </div>
+            <div onClick={() => navigate('/transactions')} style={{ fontSize:12, color:ACCENT, fontWeight:600, cursor:'pointer', marginTop:'auto', paddingTop:14, borderTop:'1px solid #F1F5F9' }}
+              onMouseEnter={e => e.currentTarget.style.textDecoration='underline'}
+              onMouseLeave={e => e.currentTarget.style.textDecoration='none'}>
+              View all spending
+            </div>
+          </div>
 
           {/* Card 3 — Add Widgets */}
           <AddWidgetCard onAdd={() => navigate('/settings')}/>
 
           {/* Card 4 — Bank Accounts */}
-          <DashCard
-            label="Bank Accounts"
-            subtitle="As of today"
-            value="—"
-            valueColor="#0F172A"
-            footer="Connect bank account"
-            onFooter={() => navigate('/integrations')}
-            topBorder="#06B6D4">
-            <div style={{ marginTop:8 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 12px', borderRadius:10, background:'#F8FAFC', border:'1px solid #E5E7EB' }}>
-                <Landmark size={15} color="#06B6D4"/>
-                <div>
-                  <div style={{ fontSize:12, fontWeight:600, color:'#374151' }}>No bank connected</div>
-                  <div style={{ fontSize:11, color:'#9CA3AF', marginTop:1 }}>Connect to sync transactions</div>
-                </div>
+          <div onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 8px 32px rgba(0,0,0,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 2px 12px rgba(0,0,0,0.04)'; }}
+            style={{ background:'#fff', border:'1px solid #E8F0FE', borderTop:'3px solid #06B6D4', borderRadius:16, padding:'22px 24px', display:'flex', flexDirection:'column', minWidth:0, transition:'all 0.2s', boxShadow:'0 2px 12px rgba(0,0,0,0.04)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'#94A3B8', letterSpacing:'0.08em', textTransform:'uppercase' }}>Bank Accounts</div>
+              <MoreHorizontal size={16} color="#CBD5E1" style={{ cursor:'pointer' }}/>
+            </div>
+            <div style={{ fontSize:12, color:'#94A3B8', marginBottom:6 }}>As of today</div>
+            <div style={{ fontSize:13, color:'#94A3B8', marginBottom:4 }}>Total bank balance</div>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
+              <div style={{ fontSize:32, fontWeight:800, color:'#0F172A', letterSpacing:'-0.03em', lineHeight:1 }}>$0</div>
+              <Info size={13} color="#CBD5E1"/>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 12px', borderRadius:10, background:'#F8FAFC', border:'1px solid #E5E7EB', marginBottom:8 }}>
+              <Landmark size={15} color="#06B6D4"/>
+              <div>
+                <div style={{ fontSize:12, fontWeight:600, color:'#374151' }}>No bank connected</div>
+                <div style={{ fontSize:11, color:'#9CA3AF', marginTop:1 }}>Connect to sync transactions</div>
               </div>
             </div>
-          </DashCard>
+            <div onClick={() => navigate('/integrations')} style={{ fontSize:12, color:ACCENT, fontWeight:600, cursor:'pointer', marginTop:'auto', paddingTop:14, borderTop:'1px solid #F1F5F9' }}
+              onMouseEnter={e => e.currentTarget.style.textDecoration='underline'}
+              onMouseLeave={e => e.currentTarget.style.textDecoration='none'}>
+              Connect bank account
+            </div>
+          </div>
         </div>
 
         {/* Cash Flow A */}
