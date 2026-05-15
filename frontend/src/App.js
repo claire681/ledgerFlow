@@ -6,7 +6,7 @@ import {
 import { AIProvider }      from './context/AIContext';
 import Sidebar             from './components/Sidebar';
 import TopBar              from './components/TopBar';
-
+import AIAssistant         from './components/AIAssistant';
 
 import Login               from './pages/Login';
 import Dashboard           from './pages/Dashboard';
@@ -39,6 +39,7 @@ import APIAccess           from './pages/APIAccess';
 import Businesses          from './pages/Businesses';
 
 const ACCENT = '#0AB98A';
+
 function PromoBanner() {
   const [show, setShow] = React.useState(
     () => localStorage.getItem('nova_banner_dismissed') !== 'true'
@@ -50,7 +51,7 @@ function PromoBanner() {
         Meet Nova — Instant, smart answers inside Novala.
         <span
           style={{ color:'#fff', fontWeight:700, textDecoration:'underline', cursor:'pointer' }}
-          onClick={() => {/* open Nova panel */}}
+          onClick={() => {}}
         >
           Try Nova
         </span>
@@ -66,6 +67,7 @@ function PromoBanner() {
     </div>
   );
 }
+
 function AppLayout({ onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile,       setIsMobile]       = useState(window.innerWidth < 768);
@@ -92,7 +94,7 @@ function AppLayout({ onLogout }) {
       background:    '#F8FAFC',
       fontFamily:    "'Inter', -apple-system, sans-serif",
     }}>
-     {/* Promo banner — full width above header */}
+      {/* Promo banner — full width above header */}
       <PromoBanner/>
 
       {/* Top header — full width, always visible */}
@@ -169,7 +171,8 @@ function AppLayout({ onLogout }) {
         </main>
       </div>
 
-     
+      {/* Nova floating assistant — visible on all pages */}
+      <AIAssistant />
     </div>
   );
 }
