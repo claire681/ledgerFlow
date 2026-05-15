@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../services/api';
-import { Eye, EyeOff, TrendingUp, Mail, ChevronRight, X, User } from 'lucide-react';
+import { Eye, EyeOff, TrendingUp, Mail, ChevronRight, X, User, CheckCircle } from 'lucide-react';
 
 const DARK    = '#0F1729';
 const DARK2   = '#1A2540';
