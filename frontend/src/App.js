@@ -37,6 +37,7 @@ import Customers           from './pages/Customers';
 import Inventory           from './pages/Inventory';
 import APIAccess           from './pages/APIAccess';
 import Businesses          from './pages/Businesses';
+import ResetPassword from './pages/ResetPassword';
 
 
 const ACCENT = '#0AB98A';
@@ -209,11 +210,12 @@ const handleOnboardingComplete = () => {
     <Router>
       <AIProvider>
         {!token ? (
-          <Routes>
-            <Route path="/"         element={<Landing />}                                          />
-            <Route path="/login"    element={<LoginPage onLogin={handleLogin} />}                  />
-            <Route path="/register" element={<Onboarding onComplete={handleOnboardingComplete} />} />
-            <Route path="*"         element={<Navigate to="/" />}                                  />
+       <Routes>
+            <Route path="/"                element={<Landing />}                                          />
+            <Route path="/login"           element={<LoginPage onLogin={handleLogin} />}                  />
+            <Route path="/register"        element={<Onboarding onComplete={handleOnboardingComplete} />} />
+            <Route path="/reset-password"  element={<ResetPassword />}                                    />
+            <Route path="*"               element={<Navigate to="/" />}                                   />
           </Routes>
         ) : (
           <AppLayout onLogout={handleLogout} />

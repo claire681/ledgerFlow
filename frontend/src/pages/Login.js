@@ -36,7 +36,7 @@ function PrimaryBtn({ onClick, disabled, children, fullWidth }) {
   );
 }
 
-function TrustCard({ icon, title, desc }) {
+function TrustCard({ title, desc }) {
   return (
     <div style={{ padding:'16px 18px', borderRadius:14, background:'rgba(255,255,255,0.04)', border:'1px solid '+BORDER, display:'flex', alignItems:'flex-start', gap:12, marginBottom:10 }}>
       <div style={{ width:8, height:8, borderRadius:'50%', background:MINT, marginTop:5, flexShrink:0 }}/>
@@ -52,19 +52,23 @@ export default function Login({ onLogin }) {
   const navigate = useNavigate();
   const savedEmail = localStorage.getItem('saved_account_email') || '';
 
-  const [screen,       setScreen]       = useState(savedEmail ? 'saved' : 'email');
-  const [email,        setEmail]        = useState(savedEmail);
-  const [emailInput,   setEmailInput]   = useState('');
-  const [password,     setPassword]     = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error,        setError]        = useState('');
-  const [loading,      setLoading]      = useState(false);
-  const [codeMode,     setCodeMode]     = useState(''); // 'email'
-  const [codeSent,     setCodeSent]     = useState(false);
-  const [code,         setCode]         = useState('');
-  const [codeSending,  setCodeSending]  = useState(false);
-  const [codeError,    setCodeError]    = useState('');
-  const [codeVerifying,setCodeVerifying]= useState(false);
+  const [screen,        setScreen]        = useState(savedEmail ? 'saved' : 'email');
+  const [email,         setEmail]         = useState(savedEmail);
+  const [emailInput,    setEmailInput]    = useState('');
+  const [password,      setPassword]      = useState('');
+  const [showPassword,  setShowPassword]  = useState(false);
+  const [error,         setError]         = useState('');
+  const [loading,       setLoading]       = useState(false);
+  const [codeMode,      setCodeMode]      = useState('');
+  const [codeSent,      setCodeSent]      = useState(false);
+  const [code,          setCode]          = useState('');
+  const [codeSending,   setCodeSending]   = useState(false);
+  const [codeError,     setCodeError]     = useState('');
+  const [codeVerifying, setCodeVerifying] = useState(false);
+  const [forgotEmail,   setForgotEmail]   = useState('');
+  const [forgotError,   setForgotError]   = useState('');
+  const [forgotSent,    setForgotSent]    = useState(false);
+  const [forgotSending, setForgotSending] = useState(false);
 
   const inputStyle = {
     width:'100%', padding:'13px 16px', borderRadius:10,
@@ -101,7 +105,7 @@ export default function Login({ onLogin }) {
     }
   };
 
- const handleSendEmailCode = async () => {
+  const handleSendEmailCode = async () => {
     setCodeSending(true);
     setCodeError('');
     try {
@@ -151,7 +155,7 @@ export default function Login({ onLogin }) {
     }
   };
 
-  const handleEmailSubmit = async () => {
+  const handleEmailSubmit = () => {
     if (!emailInput.trim() || !emailInput.includes('@')) {
       setError('Please enter a valid email address.');
       return;
@@ -161,9 +165,30 @@ export default function Login({ onLogin }) {
     setScreen('password');
   };
 
+  const handleForgotPassword = async () => {
+    if (!forgotEmail.trim() || !forgotEmail.includes('@')) {
+      setForgotError('Please enter a valid email address.');
+      return;
+    }
+    setForgotError('');
+    setForgotSending(true);
+    try {
+      await fetch(API + '/auth/forgot-password', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      setForgotSent(true);
+    } catch (e) {
+      setForgotError('Could not send reset email. Please try again.');
+    } finally {
+      setForgotSending(false);
+    }
+  };
+
   const pageStyle = {
     minHeight:'100vh',
-    background:`linear-gradient(160deg, ${DARK} 0%, ${DARK2} 100%)`,
+    background:linear-gradient(160deg, ${DARK} 0%, ${DARK2} 100%),
     display:'flex',
     alignItems:'center',
     justifyContent:'center',
@@ -204,7 +229,6 @@ export default function Login({ onLogin }) {
                   Welcome back. Select your account to continue.
                 </div>
 
-                {/* Saved account card */}
                 <div onClick={() => setScreen('password')}
                   style={{ display:'flex', alignItems:'center', gap:14, padding:'16px 18px', borderRadius:14, border:'1px solid '+BORDER, background:'#0D1526', cursor:'pointer', marginBottom:20, transition:'all 0.2s' }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor=MINT; e.currentTarget.style.boxShadow=MINTGLOW; }}
@@ -219,7 +243,6 @@ export default function Login({ onLogin }) {
                   <ChevronRight size={18} color={MUTED}/>
                 </div>
 
-                {/* Other actions */}
                 <div style={{ fontSize:11, fontWeight:700, color:MUTED, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>Other actions</div>
                 <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
                   <div onClick={() => { setScreen('email'); setEmail(''); }}
@@ -268,7 +291,7 @@ export default function Login({ onLogin }) {
 
                 {error && (
                   <div style={{ padding:'10px 14px', borderRadius:10, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', marginBottom:16 }}>
-                    <span style={{ fontSize:13, color:'#EF4444' }}>⚠ {error}</span>
+                    <span style={{ fontSize:13, color:'#EF4444' }}>⚠️ {error}</span>
                   </div>
                 )}
 
@@ -290,7 +313,6 @@ export default function Login({ onLogin }) {
                   Enter your Novala password
                 </div>
 
-                {/* Email display */}
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
                   <div style={{ fontSize:14, color:MINT, fontWeight:600 }}>{email}</div>
                 </div>
@@ -303,7 +325,6 @@ export default function Login({ onLogin }) {
 
                 {!codeSent ? (
                   <>
-                    {/* Password input */}
                     <div style={{ marginBottom:8 }}>
                       <div style={{ fontSize:11, fontWeight:700, color:MUTED, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Password</div>
                       <div style={{ position:'relative' }}>
@@ -323,12 +344,15 @@ export default function Login({ onLogin }) {
                     </div>
 
                     <div style={{ textAlign:'right', marginBottom:20 }}>
-                      <span style={{ fontSize:12, color:MINT, cursor:'pointer', fontWeight:600 }}>Forgot password?</span>
+                      <span onClick={() => { setScreen('forgot'); setForgotEmail(email); }}
+                        style={{ fontSize:12, color:MINT, cursor:'pointer', fontWeight:600 }}>
+                        Forgot password?
+                      </span>
                     </div>
 
                     {error && (
                       <div style={{ padding:'10px 14px', borderRadius:10, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', marginBottom:16 }}>
-                        <span style={{ fontSize:13, color:'#EF4444' }}>⚠ {error}</span>
+                        <span style={{ fontSize:13, color:'#EF4444' }}>⚠️ {error}</span>
                       </div>
                     )}
 
@@ -337,14 +361,12 @@ export default function Login({ onLogin }) {
                       {loading ? 'Signing in...' : 'Continue'}
                     </PrimaryBtn>
 
-                    {/* OR divider */}
                     <div style={{ display:'flex', alignItems:'center', gap:12, margin:'20px 0' }}>
                       <div style={{ flex:1, height:1, background:BORDER }}/>
                       <span style={{ fontSize:12, color:MUTED, fontWeight:600 }}>OR</span>
                       <div style={{ flex:1, height:1, background:BORDER }}/>
                     </div>
 
-                    {/* Code options */}
                     <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                       <div onClick={handleSendEmailCode}
                         style={{ display:'flex', alignItems:'center', gap:12, padding:'13px 16px', borderRadius:12, border:'1px solid '+BORDER, background:'#0D1526', cursor: codeSending?'not-allowed':'pointer', transition:'all 0.2s', opacity: codeSending?0.6:1 }}
@@ -353,7 +375,7 @@ export default function Login({ onLogin }) {
                         <Mail size={18} color={MINT}/>
                         <div>
                           <div style={{ fontSize:13, fontWeight:600, color:WHITE }}>
-                            {codeSending ? 'Sending code...' : 'Email a code to ' + email.replace(/(.{2}).*(@.*)/, '$1***$2')}
+                            {codeSending ? 'Sending code...' : 'Email a code to ' + email.replace(/(.{2}).(@.)/, '$1***$2')}
                           </div>
                           <div style={{ fontSize:11, color:MUTED }}>We will send a 6 digit code to your email</div>
                         </div>
@@ -362,12 +384,11 @@ export default function Login({ onLogin }) {
 
                     {codeError && (
                       <div style={{ padding:'10px 14px', borderRadius:10, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', marginTop:12 }}>
-                        <span style={{ fontSize:13, color:'#EF4444' }}>⚠ {codeError}</span>
+                        <span style={{ fontSize:13, color:'#EF4444' }}>⚠️ {codeError}</span>
                       </div>
                     )}
                   </>
                 ) : (
-                  /* Code entry */
                   <div>
                     <div style={{ padding:'14px 16px', borderRadius:12, background:MINTDIM, border:'1px solid rgba(0,212,164,0.2)', marginBottom:20, display:'flex', alignItems:'center', gap:10 }}>
                       <Mail size={16} color={MINT}/>
@@ -392,7 +413,7 @@ export default function Login({ onLogin }) {
 
                     {codeError && (
                       <div style={{ padding:'10px 14px', borderRadius:10, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', marginBottom:16 }}>
-                        <span style={{ fontSize:13, color:'#EF4444' }}>⚠ {codeError}</span>
+                        <span style={{ fontSize:13, color:'#EF4444' }}>⚠️ {codeError}</span>
                       </div>
                     )}
 
@@ -420,6 +441,64 @@ export default function Login({ onLogin }) {
                 )}
               </div>
             )}
+
+            {/* ── SCREEN: Forgot Password ── */}
+            {screen === 'forgot' && (
+              <div style={{ animation:'fadeUp 0.2s ease' }}>
+                <div style={{ fontSize:22, fontWeight:800, color:'#fff', marginBottom:6, letterSpacing:'-0.02em' }}>
+                  Reset your password
+                </div>
+                <div style={{ fontSize:14, color:MUTED, marginBottom:28, lineHeight:1.6 }}>
+                  Enter your email address and we will send you a link to reset your password.
+                </div>
+
+                <div style={{ marginBottom:14 }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:MUTED, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>Email Address</div>
+                  <input
+                    autoFocus
+                    type="email"
+                    placeholder="you@company.com"
+                    value={forgotEmail}
+                    onChange={e => { setForgotEmail(e.target.value); if (forgotError) setForgotError(''); }}
+                    onKeyDown={e => e.key === 'Enter' && handleForgotPassword()}
+                    style={inputStyle}
+                    onFocus={e => { e.target.style.borderColor=MINT; e.target.style.boxShadow=MINTGLOW; }}
+                    onBlur={e => { e.target.style.borderColor=BORDER; e.target.style.boxShadow='none'; }}
+                  />
+                </div>
+
+                {forgotError && (
+                  <div style={{ padding:'10px 14px', borderRadius:10, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', marginBottom:16 }}>
+                    <span style={{ fontSize:13, color:'#EF4444' }}>⚠️ {forgotError}</span>
+                  </div>
+                )}
+
+                {forgotSent && (
+                  <div style={{ padding:'14px 16px', borderRadius:12, background:MINTDIM, border:'1px solid rgba(0,212,164,0.2)', marginBottom:16, display:'flex', alignItems:'center', gap:10 }}>
+                    <CheckCircle size={16} color={MINT}/>
+                    <span style={{ fontSize:13, color:WHITE }}>Reset link sent to <strong style={{ color:MINT }}>{forgotEmail}</strong>. Check your inbox.</span>
+                  </div>
+                )}
+
+                {!forgotSent && (
+                  <PrimaryBtn onClick={handleForgotPassword} disabled={forgotSending} fullWidth>
+                    <Mail size={16}/>
+                    {forgotSending ? 'Sending...' : 'Send reset link'}
+                  </PrimaryBtn>
+                )}
+
+                <div style={{ textAlign:'center', marginTop:16 }}>
+                  <span
+                    onClick={() => { setScreen('password'); setForgotError(''); setForgotSent(false); }}
+                    style={{ fontSize:12, color:MUTED, cursor:'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.color=MINT}
+                    onMouseLeave={e => e.currentTarget.style.color=MUTED}>
+                    Back to sign in
+                  </span>
+                </div>
+              </div>
+            )}
+
           </div>
 
           <div style={{ textAlign:'center', marginTop:20, fontSize:11, color:'#1E2D4A' }}>
@@ -459,9 +538,5 @@ export default function Login({ onLogin }) {
         input::placeholder { color: #334155; }
       `}</style>
     </div>
-
-
-
-
   );
 }
