@@ -346,7 +346,7 @@ function FlyoutPanel({ title, onClose, children, width, flyoutId, onPanelEnter, 
     <div
       onMouseEnter={function() { if (onPanelEnter) onPanelEnter(flyoutId); }}
       onMouseLeave={function() { if (onPanelLeave) onPanelLeave(flyoutId); }}
-      style={{ position:'fixed', top:56, left:80, height:'calc(100vh - 56px)', width:w, background:'#fff', boxShadow:'4px 0 24px rgba(0,0,0,0.1)', zIndex:45, display:'flex', flexDirection:'column', animation:'slideIn 0.2s ease', borderRight:'1px solid #F1F5F9' }}
+      style={{ position:'fixed', top:104, left:80, height:'calc(100vh - 104px)', width:w, background:'#fff', boxShadow:'4px 0 24px rgba(0,0,0,0.1)', zIndex:45, display:'flex', flexDirection:'column', animation:'slideIn 0.2s ease', borderRight:'1px solid #F1F5F9' }}
     >
       <style>{SLIDE_IN}</style>
       <div style={{ padding:'18px 20px 14px', borderBottom:'1px solid #F1F5F9', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
@@ -761,7 +761,7 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
       )}
 
       {/* Desktop slim sidebar */}
-     <aside style={{ position:'fixed', top:56, left:0, width:80, height:'calc(100vh - 56px)', background:'#FAFAFA', borderRight:'1px solid #E8EDF3', display:mobile?'none':'flex', flexDirection:'column', alignItems:'center', paddingTop:16, paddingBottom:8, zIndex:44, fontFamily:FONT, overflowY:'auto', scrollbarWidth:'none' }}>
+     <aside style={{ position:'fixed', top:104, left:0, width:80, height:'calc(100vh - 104px)', background:'#FAFAFA', borderRight:'1px solid #E8EDF3', display:mobile?'none':'flex', flexDirection:'column', alignItems:'center', paddingTop:16, paddingBottom:8, zIndex:44, fontFamily:FONT, overflowY:'auto', scrollbarWidth:'none' }}>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', width:'100%', paddingTop:4 }}>
           {SLIM_ITEMS.map(function(item) { return renderSlimItem(item); })}
         </div>
