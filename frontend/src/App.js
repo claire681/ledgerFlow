@@ -8,7 +8,7 @@ import Sidebar             from './components/Sidebar';
 import TopBar              from './components/TopBar';
 import AIAssistant         from './components/AIAssistant';
 
-import Login               from './pages/Login';
+import LoginPage           from './pages/Login';
 import Dashboard           from './pages/Dashboard';
 import Documents           from './pages/Documents';
 import Transactions        from './pages/Transactions';
@@ -37,13 +37,44 @@ import Customers           from './pages/Customers';
 import Inventory           from './pages/Inventory';
 import APIAccess           from './pages/APIAccess';
 import Businesses          from './pages/Businesses';
+import ResetPassword from './pages/ResetPassword';
+
 
 const ACCENT = '#0AB98A';
+
+function PromoBanner() {
+  const [show, setShow] = React.useState(
+    () => localStorage.getItem('nova_banner_dismissed') !== 'true'
+  );
+  if (!show) return null;
+  return (
+    <div style={{ width:'100%', height:40, background:'#0F5959', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', flexShrink:0, zIndex:101 }}>
+      <div style={{ fontSize:13, color:'#fff', display:'flex', alignItems:'center', gap:6 }}>
+        Meet Nova — Instant, smart answers inside Novala.
+        <span
+          style={{ color:'#fff', fontWeight:700, textDecoration:'underline', cursor:'pointer' }}
+          onClick={() => {}}
+        >
+          Try Nova
+        </span>
+      </div>
+      <button
+        onClick={() => { localStorage.setItem('nova_banner_dismissed','true'); setShow(false); }}
+        style={{ position:'absolute', right:16, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.7)', display:'flex', alignItems:'center', padding:4 }}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+      </button>
+    </div>
+  );
+}
 
 function AppLayout({ onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile,       setIsMobile]       = useState(window.innerWidth < 768);
   const [isTablet,       setIsTablet]       = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
+  
 
   useEffect(() => {
     const handler = () => {
@@ -55,27 +86,36 @@ function AppLayout({ onLogout }) {
     return () => window.removeEventListener('resize', handler);
   }, []);
 
+  
+  
+
+  
+
   const isDesktop = !isMobile && !isTablet;
+
+
+
 
   return (
     <div style={{
-      display:       'flex',
-      flexDirection: 'column',
-      height:        '100vh',
-      overflow:      'hidden',
-      background:    '#F8FAFC',
-      fontFamily:    "'Inter', -apple-system, sans-serif",
+      display:'flex', flexDirection:'column', height:'100vh',
+      overflow:'hidden', background:'#F8FAFC',
+      fontFamily:"'Inter', -apple-system, sans-serif",
     }}>
-      {/* Top header — full width, always visible */}
+      {/* Promo banner */}
+      <PromoBanner/>
+
+      {/* Main header */}
       <TopBar
         onLogout={onLogout}
         onMobileMenu={() => setMobileMenuOpen(o => !o)}
         isMobile={isMobile}
       />
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+    
 
-        {/* Sidebar */}
+      <div style={{ display:'flex', flex:1, overflow:'hidden', position:'relative' }}>
+
         <Sidebar
           onLogout={onLogout}
           mobileOpen={mobileMenuOpen}
@@ -85,28 +125,11 @@ function AppLayout({ onLogout }) {
           isDesktop={isDesktop}
         />
 
-        {/* Mobile overlay */}
         {mobileMenuOpen && isMobile && (
-          <div
-            onClick={() => setMobileMenuOpen(false)}
-            style={{
-              position:       'fixed',
-              inset:          0,
-              background:     'rgba(0,0,0,0.5)',
-              zIndex:         39,
-              backdropFilter: 'blur(2px)',
-            }}
-          />
+          <div onClick={() => setMobileMenuOpen(false)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:39, backdropFilter:'blur(2px)' }}/>
         )}
 
-        {/* Main content */}
-        <main style={{
-          flex:      1,
-          overflowY: 'auto',
-          position:  'relative',
-          minWidth:  0,
-          marginLeft: isMobile ? 0 : 80,
-        }}>
+        <main  style={{ flex:1, overflowY:'auto', position:'relative', minWidth:0, marginLeft: isMobile ? 0 : 80 }}>
           <Routes>
             <Route path="/"               element={<Dashboard />}          />
             <Route path="/documents"      element={<Documents />}          />
@@ -144,12 +167,10 @@ function AppLayout({ onLogout }) {
     </div>
   );
 }
-
 export default function App() {
   const [token,              setToken]              = useState(null);
   const [loading,            setLoading]            = useState(true);
-  const [onboardingDone,     setOnboardingDone]     = useState(false);
-  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+ 
 
   useEffect(() => {
     const stored = localStorage.getItem('token');
@@ -157,61 +178,22 @@ export default function App() {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    if (!token) {
-      setCheckingOnboarding(false);
-      setOnboardingDone(false);
-      return;
-    }
-    const cached = localStorage.getItem('onboarding_completed');
-    if (cached === 'true') {
-      setOnboardingDone(true);
-      setCheckingOnboarding(false);
-      return;
-    }
-    setCheckingOnboarding(true);
-    const timeout = setTimeout(() => {
-      setOnboardingDone(true);
-      setCheckingOnboarding(false);
-    }, 3000);
-    fetch('https://api.getnovala.com/api/v1/onboarding/status', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => r.json())
-      .then(d => {
-        const done = d.onboarding_completed || false;
-        setOnboardingDone(done);
-        if (done) localStorage.setItem('onboarding_completed', 'true');
-      })
-      .catch(() => {
-        setOnboardingDone(true);
-        localStorage.setItem('onboarding_completed', 'true');
-      })
-      .finally(() => {
-        clearTimeout(timeout);
-        setCheckingOnboarding(false);
-      });
-  }, [token]);
 
-  const handleLogin = (t, email) => {
+const handleLogin = (t, email) => {
     setToken(t);
     localStorage.setItem('token', t);
     if (email) localStorage.setItem('user_email', email);
   };
-
-  const handleLogout = () => {
+ const handleLogout = () => {
     localStorage.clear();
     setToken(null);
-    setOnboardingDone(false);
   };
-
-  const handleOnboardingComplete = () => {
-    localStorage.setItem('novala_just_onboarded', 'true');
-    localStorage.setItem('onboarding_completed', 'true');
-    setOnboardingDone(true);
+const handleOnboardingComplete = () => {
+    const token = localStorage.getItem('token');
+    if (token) setToken(token);
+    else window.location.href = '/';
   };
-
-  if (loading || (token && checkingOnboarding)) {
+  if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F8FAFC' }}>
         <div style={{ textAlign: 'center' }}>
@@ -224,21 +206,22 @@ export default function App() {
     );
   }
 
-  return (
+ return (
     <Router>
       <AIProvider>
-        {!token ? (
-          <Routes>
-            <Route path="/"         element={<Landing />}                     />
-            <Route path="/login"    element={<Login onLogin={handleLogin} />} />
-            <Route path="/register" element={<Login onLogin={handleLogin} defaultRegister={true} />} />
-            <Route path="*"         element={<Navigate to="/" />}             />
-          </Routes>
-        ) : !onboardingDone ? (
-          <Onboarding onComplete={handleOnboardingComplete} />
-        ) : (
-          <AppLayout onLogout={handleLogout} />
-        )}
+        <Routes>
+          <Route path="/reset-password" element={<ResetPassword />}/>
+          {!token ? (
+            <>
+              <Route path="/"        element={<Landing />}                                          />
+              <Route path="/login"   element={<LoginPage onLogin={handleLogin} />}                  />
+              <Route path="/register"element={<Onboarding onComplete={handleOnboardingComplete} />} />
+              <Route path="*"        element={<Navigate to="/" />}                                  />
+            </>
+          ) : (
+            <Route path="*" element={<AppLayout onLogout={handleLogout} />}/>
+          )}
+        </Routes>
       </AIProvider>
     </Router>
   );

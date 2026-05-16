@@ -58,51 +58,41 @@ function DocViewerModal({ doc, onClose }) {
   const isPDF    = rawExt === 'pdf';
   const docId    = doc.id || doc.document_id;
 
-  useEffect(() => {
+ useEffect(() => {
     let objectUrl = null;
 
     const tryLoad = async () => {
       setLoading(true);
       setError('');
-
-      const endpoints = [
-        BASE + '/documents/' + docId + '/view',
-        BASE + '/documents/' + docId + '/download',
-        BASE + '/documents/' + docId + '/file',
-      ];
-
-      for (var i = 0; i < endpoints.length; i++) {
-        try {
-          const res = await fetch(endpoints[i], {
-            headers: { Authorization: 'Bearer ' + getToken() },
-          });
-          if (!res.ok) continue;
-
-          const contentType = res.headers.get('content-type') || '';
-
-          if (contentType.includes('application/json')) {
-            const data = await res.json();
-            const signed = data.url || data.file_url || data.download_url || data.signed_url;
-            if (signed) {
-              setUrl(signed);
-              setLoading(false);
-              return;
-            }
-            continue;
+      try {
+        const res = await fetch(BASE + '/documents/' + docId + '/view-url', {
+          headers: { Authorization: 'Bearer ' + getToken() },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const presignedUrl = data.url || data.file_url || data.signed_url;
+          if (presignedUrl) {
+            setUrl(presignedUrl);
+            setLoading(false);
+            return;
           }
-
-          const blob = await res.blob();
-          if (blob.size === 0) continue;
-          objectUrl = URL.createObjectURL(blob);
-          setUrl(objectUrl);
-          setLoading(false);
-          return;
-        } catch (e) {
-          continue;
         }
+        const res2 = await fetch(BASE + '/documents/' + docId + '/view', {
+          headers: { Authorization: 'Bearer ' + getToken() },
+        });
+        if (res2.ok) {
+          const blob = await res2.blob();
+          if (blob.size > 0) {
+            objectUrl = URL.createObjectURL(blob);
+            setUrl(objectUrl);
+            setLoading(false);
+            return;
+          }
+        }
+        setError('Preview not available. Use the download button to open the file.');
+      } catch (e) {
+        setError('Could not load document. Please try downloading instead.');
       }
-
-      setError('Preview not available. Use the download button to open the file.');
       setLoading(false);
     };
 
@@ -195,12 +185,39 @@ function DocViewerModal({ doc, onClose }) {
                 style={{ maxWidth: '100%', maxHeight: '75vh', objectFit: 'contain', transform: 'scale(' + zoom + ') rotate(' + rotate + 'deg)', transition: 'transform 0.2s ease', borderRadius: 8, boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
               />
             )}
-            {isPDF && (
-              <iframe
-                src={url + '#toolbar=1&navpanes=0&scrollbar=1'}
-                title={filename}
-                style={{ width: '100%', height: '78vh', border: 'none', borderRadius: 8, background: '#fff' }}
-              />
+          {isPDF && (
+              <div style={{ textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center' }}>
+                <style>{`
+                  @keyframes glow-pulse {
+                    0%, 100% { box-shadow: 0 0 24px rgba(10,185,138,0.15), 0 0 48px rgba(10,185,138,0.08), 0 24px 48px rgba(0,0,0,0.4); }
+                    50% { box-shadow: 0 0 32px rgba(10,185,138,0.25), 0 0 64px rgba(10,185,138,0.12), 0 24px 48px rgba(0,0,0,0.4); }
+                  }
+                  @keyframes float-card {
+                    0%, 100% { transform: translateY(0px); }
+                    50% { transform: translateY(-6px); }
+                  }
+                `}</style>
+                <div style={{ width:160, height:200, borderRadius:16, background:'linear-gradient(145deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)', border:'1px solid rgba(255,255,255,0.12)', backdropFilter:'blur(20px)', animation:'glow-pulse 3s ease-in-out infinite, float-card 4s ease-in-out infinite', marginBottom:28, position:'relative', overflow:'hidden', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+                  <div style={{ position:'absolute', top:0, right:0, width:0, height:0, borderStyle:'solid', borderWidth:'0 32px 32px 0', borderColor:'transparent rgba(10,185,138,0.4) transparent transparent' }}/>
+                  <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:'linear-gradient(90deg, transparent, #0AB98A, transparent)' }}/>
+                  <div style={{ width:56, height:56, borderRadius:14, background:'linear-gradient(135deg, rgba(10,185,138,0.25), rgba(14,165,233,0.15))', border:'1px solid rgba(10,185,138,0.3)', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:14 }}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#0AB98A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <polyline points="14 2 14 8 20 8" stroke="#0AB98A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <line x1="16" y1="13" x2="8" y2="13" stroke="#0AB98A" strokeWidth="1.5" strokeLinecap="round"/>
+                      <line x1="16" y1="17" x2="8" y2="17" stroke="#0AB98A" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <div style={{ fontSize:10, fontWeight:800, letterSpacing:'0.15em', color:'#0AB98A', background:'rgba(10,185,138,0.12)', border:'1px solid rgba(10,185,138,0.25)', padding:'3px 10px', borderRadius:20 }}>PDF</div>
+                  <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%, rgba(255,255,255,0.02) 100%)', borderRadius:16, pointerEvents:'none' }}/>
+                </div>
+                <div style={{ fontSize:14, fontWeight:600, color:'#F1F5F9', marginBottom:6, maxWidth:280, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{filename}</div>
+                <div style={{ fontSize:12, color:'#475569', marginBottom:24 }}>Click below to open or download</div>
+               <div style={{ display:'flex', flexDirection:'column', gap:12, alignItems:'center' }}>
+                  <button onClick={() => window.open(url, '_blank')} style={{ padding:'12px 48px', borderRadius:10, background:ACCENT, color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:FONT, width:200 }}>Open PDF</button>
+                  <button onClick={handleDownload} style={{ padding:'12px 48px', borderRadius:10, background:'transparent', color:ACCENT, border:'1px solid ' + ACCENT, cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:FONT, width:200 }}>Download</button>
+                </div>
+              </div>
             )}
             {!isImage && !isPDF && (
               <div style={{ textAlign: 'center', color: '#94A3B8' }}>

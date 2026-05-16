@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     app_env: str = "development"
     secret_key: str = "changeme"
     access_token_expire_minutes: int = 60
+    stripe_secret_key: str | None = None
+    stripe_publishable_key: str | None = None
 
     # Database
     database_url: str = "postgresql+asyncpg://postgres:password@localhost:5432/ledgerai"
