@@ -301,7 +301,7 @@ function CreateFlyout({ onClose, onNavigate, flyoutId, onPanelEnter, onPanelLeav
     <div
       onMouseEnter={function() { onPanelEnter(flyoutId); }}
       onMouseLeave={function() { onPanelLeave(flyoutId); }}
-      style={{ position:'fixed', top:56, left:80, height:'calc(100vh - 56px)', width:780, background:'#fff', boxShadow:'4px 0 32px rgba(0,0,0,0.12)', zIndex:45, display:'flex', flexDirection:'column', animation:'slideIn 0.2s ease', borderRight:'1px solid #F1F5F9' }}
+      style={{ position:'fixed', top:104, left:80, height:'calc(100vh - 104px)', width:780, background:'#fff', boxShadow:'4px 0 32px rgba(0,0,0,0.12)', zIndex:45, display:'flex', flexDirection:'column', animation:'slideIn 0.2s ease', borderRight:'1px solid #F1F5F9' }}
     >
       <style>{SLIDE_IN}</style>
       <div style={{ padding:'16px 24px 12px', borderBottom:'1px solid #F1F5F9', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
