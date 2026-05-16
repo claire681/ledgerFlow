@@ -61,7 +61,8 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "https://getnovala.com",
         "https://www.getnovala.com",
-        "https://main.d1234567890.amplifyapp.com",  # replace with your Amplify URL later
+        "https://app.getnovala.com",
+        "https://main.deueoqmz37o7w.amplifyapp.com",  # replace with your Amplify URL later
     ],
     allow_credentials = True,
     allow_methods     = ["*"],
@@ -89,7 +90,7 @@ app.include_router(snapshots.router,    prefix="/api/v1")
 app.include_router(preferences.router,  prefix="/api/v1")
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     return {
         "status":  "ok",
