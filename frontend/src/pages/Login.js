@@ -188,7 +188,7 @@ export default function Login({ onLogin }) {
 
   const pageStyle = {
     minHeight:'100vh',
-    background:linear-gradient(160deg, ${DARK} 0%, ${DARK2} 100%),
+    background:'linear-gradient(160deg, #0F1729 0%, #1A2540 100%)',
     display:'flex',
     alignItems:'center',
     justifyContent:'center',
