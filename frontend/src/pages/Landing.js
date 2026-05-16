@@ -266,7 +266,21 @@ function OrbitalAnimation() {
       <div style={{ position: "absolute", top: cx - R2, left: cx - R2, width: R2 * 2, height: R2 * 2, borderRadius: "50%", border: "1px solid rgba(0,255,178,0.12)", boxShadow: "0 0 40px rgba(0,255,178,0.04) inset" }}/>
       <div style={{ position: "absolute", top: cx - R1, left: cx - R1, width: R1 * 2, height: R1 * 2, borderRadius: "50%", border: "1px solid rgba(34,211,238,0.18)", boxShadow: "0 0 30px rgba(34,211,238,0.06) inset" }}/>
 
-      {ORBIT_ICONS.slice(0, 4).map((item, i) => {
+      <div style={{
+      position:"absolute",
+      left:cx - 56,
+      top:cx - 56,
+      width:112,
+      height:112,
+      borderRadius:"50%",
+      border:`1.5px solid ${C.accent}`,
+      boxShadow:`0 0 18px ${C.accent}`,
+      pointerEvents:"none",
+      willChange:"transform, opacity",
+      animation:"core-pulse 3.6s cubic-bezier(0.22,1,0.36,1) infinite"
+    }}/>
+
+    {ORBIT_ICONS.slice(0, 4).map((item, i) => {
         const deg = angle + (i * 360) / 4;
         const rad = (deg * Math.PI) / 180;
         const x = cx + R1 * Math.cos(rad) - 22;
@@ -376,6 +390,11 @@ export default function NovalaLanding() {
         @keyframes pulse-glow { 0%,100%{box-shadow:0 0 30px rgba(0,255,178,0.2)} 50%{box-shadow:0 0 70px rgba(0,255,178,0.55)} }
         @keyframes pulse-cyan { 0%,100%{box-shadow:0 0 20px rgba(34,211,238,0.2)} 50%{box-shadow:0 0 50px rgba(34,211,238,0.5)} }
         @keyframes ping       { 0%{transform:scale(1);opacity:1} 75%,100%{transform:scale(2.2);opacity:0} }
+
+      @keyframes core-pulse {
+        0%{transform:scale(1);opacity:0.55}
+        100%{transform:scale(3.8);opacity:0}
+      }
         @keyframes wave       { 0%,100%{transform:scaleY(0.5)} 50%{transform:scaleY(1.5)} }
         @keyframes slideInRight { from{transform:translateX(100%)} to{transform:translateX(0)} }
         @keyframes fadeIn     { from{opacity:0} to{opacity:1} }
