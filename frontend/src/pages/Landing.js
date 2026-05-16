@@ -516,17 +516,17 @@ export default function NovalaLanding() {
               <Reveal delay={0}>
                 <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(0,255,178,0.08)", border:"1px solid rgba(0,255,178,0.25)", borderRadius:99, padding:"6px 18px", marginBottom:30 }}>
                   <div style={{ width:7, height:7, borderRadius:"50%", background:C.accent, animation:"pulse-glow 2s infinite" }}/>
-                  <span style={{ fontSize:11, fontWeight:700, color:C.accent, letterSpacing:"0.1em", textTransform:"uppercase" }}>AI-Powered Financial Intelligence</span>
+                  <span style={{ fontSize:11, fontWeight:700, color:C.accent, letterSpacing:"0.1em", textTransform:"uppercase" }}>Financial Intelligence Platform</span>
                 </div>
               </Reveal>
               <Reveal delay={0.1}>
                 <h1 style={{ fontSize:"clamp(38px,5.5vw,72px)", fontWeight:800, lineHeight:1.06, letterSpacing:"-0.045em", color:C.text, marginBottom:22 }}>
-                  Precision-powered<br/><span style={{ background:`linear-gradient(135deg, ${C.accent}, ${C.cyan})`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>business finance.</span>
+                  Financial intelligence,<br/><span style={{ background:`linear-gradient(135deg, ${C.accent}, ${C.cyan})`, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>on autopilot.</span>
                 </h1>
               </Reveal>
               <Reveal delay={0.18}>
                 <p style={{ fontSize:"clamp(15px,2.2vw,19px)", color:C.textSub, lineHeight:1.7, maxWidth:520, marginBottom:38, fontWeight:400 }}>
-                  Novala automates your bookkeeping, invoicing, and reporting — intelligent financial operations for modern businesses.
+                  Bookkeeping, payroll, invoicing, smart reminders, recurring revenue, bill pay, and reporting. All on autopilot.
                 </p>
               </Reveal>
               <Reveal delay={0.26}>
@@ -883,7 +883,7 @@ export default function NovalaLanding() {
                 </div>
                 <span style={{ fontSize:18, fontWeight:800, color:C.text, letterSpacing:"-0.03em" }}>No<span style={{ color:C.accent }}>vala</span></span>
               </div>
-              <p style={{ fontSize:12.5, color:C.textMuted, lineHeight:1.7, maxWidth:230 }}>Intelligent financial operations for modern businesses and teams.</p>
+              <p style={{ fontSize:12.5, color:C.textMuted, lineHeight:1.7, maxWidth:230 }}>Financial intelligence, on autopilot.</p>
               <div style={{ display:"flex", gap:8, marginTop:18 }}>
                 {["𝕏","in","gh"].map(s => (
                   <div key={s} style={{ width:32, height:32, borderRadius:9, background:C.bgCard, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", fontSize:12, color:C.textMuted, fontWeight:700, transition:"all 0.2s ease" }}
