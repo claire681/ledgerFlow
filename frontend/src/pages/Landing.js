@@ -102,7 +102,7 @@ function FloatingMarquee() {
               {item.icon}
             </div>
             <div>
-              <div style={{ fontSize: 10, color: C.textMuted, fontWeight: 500 }}>{item.label}</div>
+              <div style={{ fontSize: 10, color: C.textSub, fontWeight: 500 }}>{item.label}</div>
               <div style={{ fontSize: 12, color: item.color, fontWeight: 700 }}>{item.val}</div>
             </div>
           </div>
