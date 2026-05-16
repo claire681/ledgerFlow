@@ -209,17 +209,19 @@ const handleOnboardingComplete = () => {
  return (
     <Router>
       <AIProvider>
-        {!token ? (
-       <Routes>
-            <Route path="/"                element={<Landing />}                                          />
-            <Route path="/login"           element={<LoginPage onLogin={handleLogin} />}                  />
-            <Route path="/register"        element={<Onboarding onComplete={handleOnboardingComplete} />} />
-            <Route path="/reset-password"  element={<ResetPassword />}                                    />
-            <Route path="*"               element={<Navigate to="/" />}                                   />
-          </Routes>
-        ) : (
-          <AppLayout onLogout={handleLogout} />
-        )}
+        <Routes>
+          <Route path="/reset-password" element={<ResetPassword />}/>
+          {!token ? (
+            <>
+              <Route path="/"        element={<Landing />}                                          />
+              <Route path="/login"   element={<LoginPage onLogin={handleLogin} />}                  />
+              <Route path="/register"element={<Onboarding onComplete={handleOnboardingComplete} />} />
+              <Route path="*"        element={<Navigate to="/" />}                                  />
+            </>
+          ) : (
+            <Route path="*" element={<AppLayout onLogout={handleLogout} />}/>
+          )}
+        </Routes>
       </AIProvider>
     </Router>
   );
