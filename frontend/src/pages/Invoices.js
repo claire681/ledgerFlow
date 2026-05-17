@@ -47,6 +47,26 @@ const buildMetaKey         = (inv) => inv?.id || inv?.invoice_number || '';
 const getInvoiceExtras     = (inv) => ({ terms:inv?.terms||'Net 30', logo_url:inv?.logo_url||'', from_phone:inv?.from_phone||'', from_bn:inv?.from_bn||'', discount:inv?.discount??0 });
 const mergeInvoiceWithMeta = (inv, mm) => { const k = buildMetaKey(inv); return { ...inv, ...(k ? mm[k]||{} : {}) }; };
 
+const DEFAULT_FOLLOWUP_TEMPLATE = `Dear {{customer_name}},
+
+I hope this message finds you well. This is a friendly reminder regarding your outstanding invoice {{invoice_number}} in the amount of {{amount}}.
+
+Please find the invoice attached to this email for your reference.
+
+Kindly process the payment at your earliest convenience. If you have already sent payment, please disregard this message.
+
+Thank you for your continued business.`;
+
+const renderFollowUpTemplate = (tmpl, inv) => {
+  if (!tmpl) return '';
+  const total = Number(inv?.total || 0);
+  const amount = `$${total.toFixed(2)}`;
+  return tmpl
+    .replace(/{{customer_name}}/g, inv?.to_name || 'Valued Client')
+    .replace(/{{invoice_number}}/g, inv?.invoice_number || '')
+    .replace(/{{amount}}/g, amount);
+};
+
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
@@ -249,6 +269,7 @@ export default function Invoices() {
 
   const [followUpModal,   setFollowUpModal]   = useState(false);
   const [followUpInvoice, setFollowUpInvoice] = useState(null);
+  const [savedFollowUpTemplate, setSavedFollowUpTemplate] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [followUpEmail,   setFollowUpEmail]   = useState('');
   const [followUpDate,    setFollowUpDate]    = useState('');
@@ -297,6 +318,13 @@ export default function Invoices() {
   };
 
   useEffect(() => { load(); loadFollowUpStatus(); const id=setInterval(()=>{ load(true); loadFollowUpStatus(); },30000); return ()=>clearInterval(id); }, []);
+
+  useEffect(() => {
+    fetch('https://api.getnovala.com/api/v1/preferences/', { headers: getHeaders() })
+      .then(r => r.json())
+      .then(data => { if (data?.preferences?.followup_message) setSavedFollowUpTemplate(data.preferences.followup_message); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setPageContext('invoices', {
@@ -414,15 +442,8 @@ export default function Invoices() {
     setFollowUpDate('');
     setFollowUpTime('09:00');
     setFollowUpSuccess('');
-    setFollowUpMessage(`Dear ${inv.to_name || 'Valued Client'},
-
-I hope this message finds you well. This is a friendly reminder regarding your outstanding invoice.
-
-Please find the invoice attached to this email for your reference.
-
-Kindly process the payment at your earliest convenience. If you have already sent payment, please disregard this message.
-
-Thank you for your continued business.`);
+    const _tmpl = savedFollowUpTemplate || DEFAULT_FOLLOWUP_TEMPLATE;
+    setFollowUpMessage(_tmpl);
     setFollowUpModal(true);
   };
 
@@ -487,6 +508,21 @@ Thank you for your continued business.`);
       }
     } catch(e) { window.alert('Could not schedule follow-up.'); }
     finally { setFollowUpSaving(false); }
+  };
+
+  const saveFollowUpAsDefault = async () => {
+    try {
+      const res = await fetch('https://api.getnovala.com/api/v1/preferences/', {
+        method: 'POST',
+        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'followup_message', value: followUpMessage })
+      });
+      if (res.ok) {
+        setSavedFollowUpTemplate(followUpMessage);
+        setFollowUpSuccess('Saved as your default template');
+        setTimeout(() => setFollowUpSuccess(''), 2500);
+      }
+    } catch (e) { console.error(e); }
   };
 
   const exportPDF = (inv) => {
@@ -894,6 +930,7 @@ Thank you for your continued business.`);
               </div>
 
               <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+                <button onClick={saveFollowUpAsDefault} style={{ padding:'9px 14px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:12, fontFamily:L.font, fontWeight:600, marginRight:'auto' }}>Save as my default</button>
                 <button onClick={() => setFollowUpModal(false)} style={{ padding:'9px 18px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:13, fontFamily:L.font }}>
                   Cancel
                 </button>
