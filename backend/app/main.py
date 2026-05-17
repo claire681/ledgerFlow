@@ -9,7 +9,7 @@ load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
 
 from app.core.config import settings
 from app.db.database import engine, Base
-from app.services.scheduler import run_scheduler
+from app.services.scheduler import run_scheduler, run_followup_scheduler
 
 # Import ALL models so SQLAlchemy knows about them
 from app.models import models  # noqa: F401
@@ -21,7 +21,7 @@ from app.api.routes import (
 )
 from app.api.routes import (
     company, tax_reports, scenarios,
-    ai_context, snapshots, preferences,
+    ai_context, snapshots, preferences, followup,
 )
 from app.api.routes.briefing import router as briefing_router
 
@@ -33,6 +33,7 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
     # Start the briefing scheduler
     asyncio.create_task(run_scheduler())
+    asyncio.create_task(run_followup_scheduler())
     yield
     await engine.dispose()
 
@@ -88,6 +89,7 @@ app.include_router(scenarios.router,    prefix="/api/v1")
 app.include_router(ai_context.router,   prefix="/api/v1")
 app.include_router(snapshots.router,    prefix="/api/v1")
 app.include_router(preferences.router,  prefix="/api/v1")
+app.include_router(followup.router,     prefix="/api/v1")
 
 
 @app.api_route("/health", methods=["GET", "HEAD"])

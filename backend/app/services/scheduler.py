@@ -97,3 +97,15 @@ async def run_scheduler():
     while True:
         await check_and_send_briefings()
         await asyncio.sleep(15 * 60)  # 15 minutes
+
+async def run_followup_scheduler():
+    """Runs the follow-up scheduler loop every 60 seconds."""
+    from app.api.routes.followup import send_scheduled_emails
+    print("[FollowupScheduler] Started -- checking every 60 seconds")
+    while True:
+        try:
+            async with AsyncSessionLocal() as db:
+                await send_scheduled_emails(db)
+        except Exception:
+            print(f"[FollowupScheduler] Error: {traceback.format_exc()}")
+        await asyncio.sleep(60)
