@@ -7,3 +7,9 @@ dist/
 build/
 .expo/
 uploads/s
+# Backup files from in-place edits
+*.backup
+*.backup-*
+
+# User-uploaded files (should be in S3/DB, not git)
+backend/uploads/
