@@ -4,6 +4,7 @@ import {
   Trash2, X, FileText, Eye, Edit2, Save, Printer, Mail, Bell,
 } from 'lucide-react';
 import InvoiceRowActions from '../components/InvoiceRowActions';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
 import { jsPDF } from 'jspdf';
@@ -236,6 +237,7 @@ export default function Invoices() {
 
   const [followUpModal,   setFollowUpModal]   = useState(false);
   const [followUpInvoice, setFollowUpInvoice] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [followUpEmail,   setFollowUpEmail]   = useState('');
   const [followUpDate,    setFollowUpDate]    = useState('');
   const [followUpTime,    setFollowUpTime]    = useState('09:00');
@@ -378,9 +380,16 @@ export default function Invoices() {
     if (res.ok) { await load(); if (selected?.id===id) setSelected(p=>p?{...p,status}:p); }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this invoice?')) return;
-    const inv = invoices.find(i=>i.id===id)||(selected?.id===id?selected:null);
+  const handleDelete = (id) => {
+    const inv = invoices.find(i=>i.id===id)|| (selected?.id===id?selected:null);
+    setDeleteConfirm({ id, name: inv?.invoice_number || null });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
+    const id = deleteConfirm.id;
+    const inv = invoices.find(i=>i.id===id)|| (selected?.id===id?selected:null);
+    setDeleteConfirm(null);
     const res = await fetch(`https://api.getnovala.com/api/v1/invoices/${id}`, { method:'DELETE', headers:getHeaders() });
     if (res.ok||res.status===204) { if (inv) removeInvoiceMeta(inv); setModal(null); await load(); }
   };
@@ -884,6 +893,17 @@ Thank you for your continued business.`);
             </>
           )}
         </Modal>
+
+        <ConfirmDialog
+          isOpen={!!deleteConfirm}
+          title="Delete invoice?"
+          message={`This will permanently delete ${deleteConfirm?.name ? 'invoice ' + deleteConfirm.name : 'this invoice'}. This action cannot be undone.`}
+          confirmText="Delete"
+          danger={true}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteConfirm(null)}
+          L={L}
+        />
       )}
     </div>
   );
