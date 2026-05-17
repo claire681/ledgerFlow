@@ -622,19 +622,19 @@ Thank you for your continued business.`);
       </div>
 
       <div style={{ padding:pad }}>
-        <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(4,1fr)', gap:isMobile?10:14, marginBottom:isMobile?14:20 }}>
+        <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(4,1fr)', gap:isMobile?10:16, marginBottom:isMobile?14:24 }}>
           {[
-            { label:'Total Invoices', value:invoices.length,               color:L.text,    icon:<FileText size={16}/> },
-            { label:'Paid Revenue',   value:`$${totalRevenue.toFixed(2)}`, color:L.accent,  icon:<CheckCircle size={16}/> },
-            { label:'Outstanding',    value:`$${totalDue.toFixed(2)}`,     color:L.red,     icon:<AlertCircle size={16}/> },
-            { label:'In Draft',       value:`$${totalDraft.toFixed(2)}`,   color:'#F59E0B', icon:<Clock size={16}/> },
+            { label:'Total Invoices', value:invoices.length, dot:null },
+            { label:'Paid Revenue',   value:`$${totalRevenue.toFixed(2)}`, dot:L.accent },
+            { label:'Outstanding',    value:`$${totalDue.toFixed(2)}`, dot:L.red },
+            { label:'In Draft',       value:`$${totalDraft.toFixed(2)}`, dot:'#F59E0B' },
           ].map(item => (
-            <div key={item.label} style={{ ...card, padding:isMobile?'12px 14px':'18px 20px' }}>
-              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:isMobile?6:10 }}>
-                <div style={{ fontSize:9, fontWeight:700, color:L.textFaint, letterSpacing:'0.12em', textTransform:'uppercase' }}>{item.label}</div>
-                <span style={{ color:item.color, opacity:0.6 }}>{item.icon}</span>
+            <div key={item.label} style={{ ...card, padding:isMobile?'16px':'22px 24px', transition:'transform 160ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform='translateY(-1px)'; }} onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; }}>
+              <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:isMobile?10:14 }}>
+                {item.dot && <span style={{ width:5, height:5, borderRadius:'50%', background:item.dot, display:'inline-block', flexShrink:0 }}/>}
+                <div style={{ fontSize:10, fontWeight:600, color:L.textFaint, letterSpacing:'0.08em', textTransform:'uppercase' }}>{item.label}</div>
               </div>
-              <div style={{ fontSize:isMobile?16:22, fontWeight:700, color:item.color, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.value}</div>
+              <div style={{ fontSize:isMobile?22:30, fontWeight:600, color:L.text, letterSpacing:'-0.02em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.value}</div>
             </div>
           ))}
         </div>
