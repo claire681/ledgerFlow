@@ -520,7 +520,7 @@ Thank you for your continued business.`);
   };
 
   const totalRevenue = invoices.filter(i=>i.status==='paid').reduce((s,i)=>s+(Number(i.total)||0),0);
-  const totalDue     = invoices.filter(i=>['due','overdue'].includes(i.status)).reduce((s,i)=>s+(Number(i.total)||0),0);
+  const totalDue     = invoices.filter(i=>['sent','due','overdue'].includes(i.status)).reduce((s,i)=>s+(Number(i.total)||0),0);
   const totalDraft   = invoices.filter(i=>i.status==='draft').reduce((s,i)=>s+(Number(i.total)||0),0);
 
   const renderForm = (isEdit) => (

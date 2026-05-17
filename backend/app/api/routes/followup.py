@@ -237,6 +237,13 @@ async def send_scheduled_emails(db: AsyncSession):
                     text("UPDATE scheduled_emails SET status = 'sent', sent_at = :now WHERE id = :id"),
                     {"now": now, "id": str(email["id"])}
                 )
+
+                # Flip the parent invoice from draft to sent now that the email left
+                if email.get("invoice_id"):
+                    await db.execute(
+                        text("UPDATE invoices SET status = 'sent' WHERE id = :iid AND status = 'draft'"),
+                        {"iid": str(email["invoice_id"])}
+                    )
                 await db.commit()
                 print(f"[FollowUp] Sent to {email['to_email']}")
 

@@ -803,12 +803,23 @@ async def delete_invoice(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    invoice = await get_invoice_or_404(db, invoice_id,current_user.id )
-    path = invoice_file_path(str(invoice.id))
-    await db.delete(invoice)
-    await db.commit()
-    if path.exists():
-        try:
-            path.unlink()
-        except Exception as e:
-            print(f"Failed to delete invoice export file: {e}")
+    try:
+        invoice = await get_invoice_or_404(db, invoice_id, current_user.id)
+        path = invoice_file_path(str(invoice.id))
+        from sqlalchemy import text as _del_t
+        await db.execute(_del_t("DELETE FROM scheduled_emails WHERE invoice_id = :iid"), {"iid": str(invoice.id)})
+        await db.delete(invoice)
+        await db.commit()
+        if path.exists():
+            try:
+                path.unlink()
+            except Exception as e:
+                print(f"Failed to delete invoice export file: {e}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        print(f"[DELETE invoice {invoice_id}] ERROR: {e}")
+        print(traceback.format_exc())
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
