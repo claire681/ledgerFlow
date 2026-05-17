@@ -3,12 +3,35 @@ import { Eye, MoreHorizontal, Edit2, CheckCircle, Download, Bell, Trash2 } from 
 
 const InvoiceRowActions = ({ inv, fuStatus, L, openView, openEdit, handleStatus, exportPDF, handleFollowUp, handleDelete }) => {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const [menuStyle, setMenuStyle] = useState({});
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
+
+  const handleToggle = (e) => {
+    e.stopPropagation();
+    if (open) { setOpen(false); return; }
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const estimatedHeight = 240;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUp = spaceBelow < estimatedHeight && rect.top > estimatedHeight;
+    setMenuStyle({
+      position: 'fixed',
+      right: (window.innerWidth - rect.right) + 'px',
+      ...(openUp
+        ? { bottom: (window.innerHeight - rect.top + 4) + 'px' }
+        : { top: (rect.bottom + 4) + 'px' })
+    });
+    setOpen(true);
+  };
 
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (menuRef.current && !menuRef.current.contains(e.target)
+          && triggerRef.current && !triggerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
     };
     document.addEventListener('mousedown', handler);
     document.addEventListener('touchstart', handler);
@@ -25,8 +48,8 @@ const InvoiceRowActions = ({ inv, fuStatus, L, openView, openEdit, handleStatus,
     <button
       onClick={(e) => { e.stopPropagation(); setOpen(false); onClick(); }}
       style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        width: '100%', padding: '10px 14px',
+        display: 'flex', alignItems: 'center', gap: 10,
+        width: '100%', padding: '12px 14px',
         background: 'transparent', border: 'none',
         cursor: 'pointer', fontSize: 13, fontFamily: L.font,
         color: danger ? L.red : L.text, textAlign: 'left'
@@ -39,7 +62,7 @@ const InvoiceRowActions = ({ inv, fuStatus, L, openView, openEdit, handleStatus,
   );
 
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'flex', gap: 6 }}>
+    <div style={{ display: 'flex', gap: 6 }}>
       <button
         onClick={(e) => { e.stopPropagation(); openView(inv); }}
         style={{
@@ -48,33 +71,37 @@ const InvoiceRowActions = ({ inv, fuStatus, L, openView, openEdit, handleStatus,
           background: L.blueSoft, border: `1px solid ${L.blueBorder}`,
           color: L.blue, cursor: 'pointer',
           fontSize: 12, fontWeight: 600, fontFamily: L.font
-        }}
-      >
+        }}>
         <Eye size={12} /> View
       </button>
       <button
-        onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
+        ref={triggerRef}
+        onClick={handleToggle}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          width: 30, height: 30, borderRadius: L.radiusSm,
+          width: 32, height: 32, borderRadius: L.radiusSm,
           background: open ? L.pageBg : 'transparent',
           border: `1px solid ${L.border}`,
           color: L.textMuted, cursor: 'pointer'
-        }}
-      >
+        }}>
         <MoreHorizontal size={14} />
       </button>
       {open && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 4px)', right: 0,
-          background: '#fff',
-          border: `1px solid ${L.border}`,
-          borderRadius: L.radiusSm,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-          minWidth: 180, zIndex: 100, overflow: 'hidden',
-          display: 'flex', flexDirection: 'column',
-          paddingTop: 4, paddingBottom: 4
-        }}>
+        <div
+          ref={menuRef}
+          style={{
+            ...menuStyle,
+            background: '#fff',
+            border: `1px solid ${L.border}`,
+            borderRadius: L.radiusSm,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            minWidth: 200,
+            maxHeight: '70vh',
+            overflowY: 'auto',
+            zIndex: 9999,
+            display: 'flex', flexDirection: 'column',
+            paddingTop: 4, paddingBottom: 4,
+          }}>
           {item(<Edit2 size={13} />, 'Edit', () => openEdit(inv))}
           {!isPaid && !isDraft && item(<CheckCircle size={13} />, 'Mark Paid', () => handleStatus(inv.id, 'paid'))}
           {item(<Download size={13} />, 'Download PDF', () => exportPDF(inv))}
