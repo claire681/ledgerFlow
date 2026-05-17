@@ -18,7 +18,19 @@ const STATUS = {
   overdue: { label:'Overdue', color:'#F59E0B', bg:'rgba(245,158,11,0.08)',  border:'rgba(245,158,11,0.2)',  icon:AlertCircle  },
 };
 
-const INVOICE_META_KEY = 'ledgerflow_invoice_meta_v1';
+const INVOICE_META_KEY = 'novala_invoice_meta_v1';
+
+// One-time migration from legacy LedgerFlow key (preserves user data)
+(() => {
+  try {
+    const OLD = 'ledgerflow_invoice_meta_v1';
+    const oldData = localStorage.getItem(OLD);
+    if (oldData && !localStorage.getItem(INVOICE_META_KEY)) {
+      localStorage.setItem(INVOICE_META_KEY, oldData);
+    }
+    if (oldData) localStorage.removeItem(OLD);
+  } catch {}
+})();
 const todayString      = () => new Date().toISOString().slice(0, 10);
 const plus30Days       = () => { const d = new Date(); d.setDate(d.getDate() + 30); return d.toISOString().slice(0, 10); };
 const emptyItem        = () => ({ description:'', qty:1, rate:0 });
