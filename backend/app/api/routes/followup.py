@@ -184,7 +184,7 @@ async def send_scheduled_emails(db: AsyncSession):
 
                 sg  = sendgrid.SendGridAPIClient(api_key=settings.sendgrid_api_key)
                 msg = Mail(
-                    from_email = (f"invoices@getnovala.com", f"{company_name} via Novala"),
+                    from_email = (f"invoices@getnovala.com", company_name),
                     to_emails  = email["to_email"],
                     subject    = email["subject"],
                     plain_text_content = email["body"],
