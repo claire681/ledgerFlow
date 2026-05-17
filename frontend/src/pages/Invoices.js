@@ -281,7 +281,7 @@ export default function Invoices() {
     } catch {}
   };
 
-  useEffect(() => { load(); loadFollowUpStatus(); const id=setInterval(loadFollowUpStatus,30000); return ()=>clearInterval(id); }, []);
+  useEffect(() => { load(); loadFollowUpStatus(); const id=setInterval(()=>{ load(); loadFollowUpStatus(); },30000); return ()=>clearInterval(id); }, []);
 
   useEffect(() => {
     setPageContext('invoices', {
