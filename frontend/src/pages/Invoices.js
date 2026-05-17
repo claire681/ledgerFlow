@@ -263,14 +263,14 @@ export default function Invoices() {
     const mm = loadInvoiceMeta(); delete mm[k]; saveInvoiceMeta(mm);
   }, []);
 
-  const load = async () => {
-    setLoading(true);
+  const load = async (silent=false) => {
+    if (!silent) setLoading(true);
     try {
-      const res  = await fetch('https://api.getnovala.com/api/v1/invoices/', { headers:getHeaders() });
+      const res = await fetch('https://api.getnovala.com/api/v1/invoices/', { headers:getHeaders() });
       const data = await safeJson(res);
       setInvoices(mergeInvoices(data));
     } catch { setInvoices([]); }
-    finally { setLoading(false); }
+    finally { if (!silent) setLoading(false); }
   };
 
   const loadFollowUpStatus = async () => {
@@ -281,7 +281,7 @@ export default function Invoices() {
     } catch {}
   };
 
-  useEffect(() => { load(); loadFollowUpStatus(); const id=setInterval(()=>{ load(); loadFollowUpStatus(); },30000); return ()=>clearInterval(id); }, []);
+  useEffect(() => { load(); loadFollowUpStatus(); const id=setInterval(()=>{ load(true); loadFollowUpStatus(); },30000); return ()=>clearInterval(id); }, []);
 
   useEffect(() => {
     setPageContext('invoices', {
