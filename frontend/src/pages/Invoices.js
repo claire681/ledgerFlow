@@ -67,6 +67,17 @@ const renderFollowUpTemplate = (tmpl, inv) => {
     .replace(/{{amount}}/g, amount);
 };
 
+const reverseFollowUpTemplate = (text, inv) => {
+  if (!text || !inv) return text;
+  let result = text;
+  const total = Number(inv?.total || 0);
+  const amount = `$${total.toFixed(2)}`;
+  if (inv.to_name) result = result.split(inv.to_name).join('{{customer_name}}');
+  if (inv.invoice_number) result = result.split(inv.invoice_number).join('{{invoice_number}}');
+  if (amount && amount !== '$0.00') result = result.split(amount).join('{{amount}}');
+  return result;
+};
+
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
@@ -443,7 +454,7 @@ export default function Invoices() {
     setFollowUpTime('09:00');
     setFollowUpSuccess('');
     const _tmpl = savedFollowUpTemplate || DEFAULT_FOLLOWUP_TEMPLATE;
-    setFollowUpMessage(_tmpl);
+    setFollowUpMessage(renderFollowUpTemplate(_tmpl, inv));
     setFollowUpModal(true);
   };
 
@@ -515,7 +526,7 @@ export default function Invoices() {
       const res = await fetch('https://api.getnovala.com/api/v1/preferences/', {
         method: 'POST',
         headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'followup_message', value: followUpMessage })
+        body: JSON.stringify({ key: 'followup_message', value: reverseFollowUpTemplate(followUpMessage, followUpInvoice) })
       });
       if (res.ok) {
         setSavedFollowUpTemplate(followUpMessage);
