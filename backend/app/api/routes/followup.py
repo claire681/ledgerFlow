@@ -180,7 +180,19 @@ async def send_scheduled_emails(db: AsyncSession):
                     {"uid": str(email["user_id"])}
                 )
                 company_row  = company_result.mappings().first()
-                company_name = company_row["company_name"] if company_row else user_name
+                # Resolve business name: businesses table -> company_profiles -> user_name
+                biz_result = await db.execute(
+                    text("SELECT name FROM businesses WHERE owner_id = :uid AND is_active = TRUE ORDER BY created_at LIMIT 1"),
+                    {"uid": str(email["user_id"])}
+                )
+                biz_row = biz_result.mappings().first()
+                company_name = None
+                if biz_row and biz_row.get("name") and biz_row["name"].strip():
+                    company_name = biz_row["name"].strip()
+                if not company_name and company_row and company_row.get("company_name") and company_row["company_name"].strip():
+                    company_name = company_row["company_name"].strip()
+                if not company_name:
+                    company_name = user_name or "Novala"
 
                 sg  = sendgrid.SendGridAPIClient(api_key=settings.sendgrid_api_key)
                 msg = Mail(
