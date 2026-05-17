@@ -893,18 +893,18 @@ Thank you for your continued business.`);
             </>
           )}
         </Modal>
-
-        <ConfirmDialog
-          isOpen={!!deleteConfirm}
-          title="Delete invoice?"
-          message={`This will permanently delete ${deleteConfirm?.name ? 'invoice ' + deleteConfirm.name : 'this invoice'}. This action cannot be undone.`}
-          confirmText="Delete"
-          danger={true}
-          onConfirm={confirmDelete}
-          onCancel={() => setDeleteConfirm(null)}
-          L={L}
-        />
       )}
+
+      <ConfirmDialog
+        isOpen={!!deleteConfirm}
+        title="Delete invoice?"
+        message={`This will permanently delete ${deleteConfirm?.name ? 'invoice ' + deleteConfirm.name : 'this invoice'}. This action cannot be undone.`}
+        confirmText="Delete"
+        danger={true}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm(null)}
+        L={L}
+      />
     </div>
   );
 }
