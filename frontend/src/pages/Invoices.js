@@ -3,6 +3,7 @@ import {
   Plus, Download, CheckCircle, Clock, AlertCircle,
   Trash2, X, FileText, Eye, Edit2, Save, Printer, Mail, Bell,
 } from 'lucide-react';
+import InvoiceRowActions from '../components/InvoiceRowActions';
 import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
 import { jsPDF } from 'jspdf';
@@ -700,30 +701,17 @@ Thank you for your continued business.`);
                       )}
                     </div>
                   </div>
-                  <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-                    <button onClick={() => openView(inv)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:L.blueSoft, border:`1px solid ${L.blueBorder}`, color:L.blue, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
-                      <Eye size={10}/> View
-                    </button>
-                    <button onClick={() => openEdit(inv)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
-                      <Edit2 size={10}/> Edit
-                    </button>
-                    {inv.status !== 'paid' && (
-                      <button onClick={() => handleStatus(inv.id,'paid')} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.06)', border:'1px solid rgba(10,185,138,0.2)', color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
-                        <CheckCircle size={10}/> Paid
-                      </button>
-                    )}
-                    <button onClick={() => exportPDF(inv)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}>
-                      <Download size={11}/>
-                    </button>
-                    {inv.status !== 'paid' && !fuStatus && (
-                      <button onClick={() => handleFollowUp(inv)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', color:'#8B5CF6', cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
-                        <Bell size={10}/> Follow Up
-                      </button>
-                    )}
-                    <button onClick={() => handleDelete(inv.id)} style={{ display:'flex', alignItems:'center', gap:4, padding:'6px 10px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}>
-                      <Trash2 size={11}/>
-                    </button>
-                  </div>
+                  <InvoiceRowActions
+                    inv={inv}
+                    fuStatus={fuStatus}
+                    L={L}
+                    openView={openView}
+                    openEdit={openEdit}
+                    handleStatus={handleStatus}
+                    exportPDF={exportPDF}
+                    handleFollowUp={handleFollowUp}
+                    handleDelete={handleDelete}
+                  />
                 </div>
               );
             }
@@ -754,34 +742,17 @@ Thank you for your continued business.`);
                     </span>
                   )}
                 </div>
-                <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
-                  <button onClick={e=>{e.stopPropagation();openView(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:L.blueSoft, border:`1px solid ${L.blueBorder}`, color:L.blue, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
-                    <Eye size={10}/> View
-                  </button>
-                  <button onClick={e=>{e.stopPropagation();openEdit(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:L.accentSoft, border:`1px solid ${L.accentBorder}`, color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
-                    <Edit2 size={10}/> Edit
-                  </button>
-                  {inv.status !== 'paid' && (
-                    <button onClick={e=>{e.stopPropagation();handleStatus(inv.id,'paid');}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 9px', borderRadius:L.radiusSm, background:'rgba(10,185,138,0.06)', border:'1px solid rgba(10,185,138,0.2)', color:L.accent, cursor:'pointer', fontSize:11, fontWeight:600, fontFamily:L.font }}>
-                      <CheckCircle size={10}/> Paid
-                    </button>
-                  )}
-                  <button onClick={e=>{e.stopPropagation();exportPDF(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 8px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}
-                    onMouseEnter={e=>{e.currentTarget.style.borderColor=L.accentBorder;e.currentTarget.style.color=L.accent;}}
-                    onMouseLeave={e=>{e.currentTarget.style.borderColor=L.border;e.currentTarget.style.color=L.textMuted;}}>
-                    <Download size={11}/>
-                  </button>
-                  {inv.status !== 'paid' && !fuStatus && (
-                    <button onClick={e=>{e.stopPropagation();handleFollowUp(inv);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 8px', borderRadius:L.radiusSm, background:'rgba(139,92,246,0.08)', border:'1px solid rgba(139,92,246,0.2)', color:'#8B5CF6', cursor:'pointer', fontSize:11 }}>
-                      <Bell size={11}/> Follow Up
-                    </button>
-                  )}
-                  <button onClick={e=>{e.stopPropagation();handleDelete(inv.id);}} style={{ display:'flex', alignItems:'center', gap:4, padding:'5px 8px', borderRadius:L.radiusSm, background:'transparent', border:`1px solid ${L.border}`, color:L.textMuted, cursor:'pointer', fontSize:11 }}
-                    onMouseEnter={e=>{e.currentTarget.style.borderColor=L.redBorder;e.currentTarget.style.color=L.red;}}
-                    onMouseLeave={e=>{e.currentTarget.style.borderColor=L.border;e.currentTarget.style.color=L.textMuted;}}>
-                    <Trash2 size={11}/>
-                  </button>
-                </div>
+                <InvoiceRowActions
+                  inv={inv}
+                  fuStatus={fuStatus}
+                  L={L}
+                  openView={openView}
+                  openEdit={openEdit}
+                  handleStatus={handleStatus}
+                  exportPDF={exportPDF}
+                  handleFollowUp={handleFollowUp}
+                  handleDelete={handleDelete}
+                />
               </div>
             );
           })}
