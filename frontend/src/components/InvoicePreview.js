@@ -44,7 +44,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
         </div>
       </div>
 
-      <div style={{ background: template === "standard" ? "#fff" : ((accentColor || "#52b788") + "26"), border: template === "standard" ? "1px solid #e5e7eb" : "none", padding: isMobile ? "16px" : "24px 28px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 16 : 40 }}>
+      <div style={{ background: template === "standard" ? "#f1f5f9" : ((accentColor || "#52b788") + "26"), border: template === "standard" ? "1px solid #e5e7eb" : "none", padding: isMobile ? "16px" : "24px 28px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 16 : 40 }}>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a2e", marginBottom: 6 }}>Bill to</div>
           <div style={{ fontSize: 15, color: "#1a1a2e" }}>{inv.to_name || "-"}</div>
