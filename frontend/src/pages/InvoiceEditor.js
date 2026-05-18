@@ -111,7 +111,7 @@ export default function InvoiceEditor() {
       const url = isNew ? "https://api.getnovala.com/api/v1/invoices/" : "https://api.getnovala.com/api/v1/invoices/" + id;
       const method = isNew ? "POST" : "PATCH";
       const body = isNew ? JSON.stringify({
-        invoice_number: invoice.invoice_number || ("DRAFT-" + Date.now()),
+        invoice_number: invoice.invoice_number || "",
         date: invoice.date || new Date().toISOString().slice(0, 10),
         due_date: invoice.due_date || new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0, 10),
         terms: invoice.terms || "Net 30",
