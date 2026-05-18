@@ -176,7 +176,7 @@ export default function App() {
  
 
   useEffect(() => {
-    const stored = localStorage.getItem('token');
+    const stored = localStorage.getItem('token') || localStorage.getItem('access_token');
     if (stored) setToken(stored);
     setLoading(false);
   }, []);
