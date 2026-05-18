@@ -129,7 +129,7 @@ export default function InvoiceEditor() {
           <div style={{ maxWidth: 800, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 400, overflow: "hidden" }}>
             {loading ? <div style={{ padding: 40, textAlign: "center", color: SUBTLE, fontSize: 14 }}>Loading invoice...</div>
               : error ? <div style={{ padding: 40, textAlign: "center", color: "#dc2626", fontSize: 14 }}>Error: {error}</div>
-              : <InvoicePreview inv={invoice} customization={customization} accentColor={accentColor} />}
+              : <InvoicePreview inv={invoice} customization={customization} accentColor={accentColor} template={templateChoice} />}
           </div>
         </div>
 
