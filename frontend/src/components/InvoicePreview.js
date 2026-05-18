@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { Edit2 } from "lucide-react";
+import CustomerCombobox from "./customers/CustomerCombobox";
 
 const useIsMobile = () => {
   const [m, setM] = useState(typeof window !== "undefined" && window.innerWidth < 768);
@@ -15,123 +17,149 @@ const DEFAULTS = {
   showTerms: true, showCustomerEmail: true, showCustomerAddress: true
 };
 
-const editableBase = (s) => ({ ...s, background: "transparent", border: "none", padding: "2px 6px", margin: "-2px -6px", fontFamily: "inherit", outline: "none", width: "100%", cursor: "text", boxSizing: "border-box" });
-const onFocusBg = (e) => { e.target.style.background = "rgba(15,89,89,0.08)"; e.target.style.borderRadius = "4px"; };
-const onBlurBg = (e) => { e.target.style.background = "transparent"; };
+const editableBase = (s) => ({ ...s, background: "transparent", border: "1px solid #e2e8f0", padding: "8px 12px", fontFamily: "inherit", outline: "none", borderRadius: 6, width: "100%", boxSizing: "border-box" });
+const onFocusBg = (e) => { e.target.style.borderColor = "#0F5959"; e.target.style.boxShadow = "0 0 0 3px rgba(15,89,89,0.12)"; };
+const onBlurBg = (e) => { e.target.style.borderColor = "#e2e8f0"; e.target.style.boxShadow = "none"; };
 
 const EditableText = ({ value, field, onFieldChange, style, placeholder, fallback }) => {
   if (!onFieldChange) return <div style={style}>{value || (fallback !== undefined ? fallback : "-")}</div>;
   return <input type="text" value={value || ""} onChange={e => onFieldChange(field, e.target.value)} placeholder={placeholder} style={editableBase(style)} onFocus={onFocusBg} onBlur={onBlurBg} />;
 };
 
-const EditableArea = ({ value, field, onFieldChange, style, placeholder, fallback }) => {
-  if (!onFieldChange) return <div style={{ ...style, whiteSpace: "pre-line" }}>{value || (fallback !== undefined ? fallback : "-")}</div>;
-  return <textarea value={value || ""} onChange={e => onFieldChange(field, e.target.value)} placeholder={placeholder} rows={2} style={{ ...editableBase(style), resize: "vertical", minHeight: 36 }} onFocus={onFocusBg} onBlur={onBlurBg} />;
-};
-
 const EditableDate = ({ value, field, onFieldChange, style }) => {
   const d = value ? String(value).slice(0, 10) : "";
   if (!onFieldChange) return <span style={style}>{d || "-"}</span>;
-  return <input type="date" value={d} onChange={e => onFieldChange(field, e.target.value)} style={{ ...editableBase(style), padding: "2px 4px", margin: "-2px -4px", width: "auto" }} onFocus={onFocusBg} onBlur={onBlurBg} />;
+  return <input type="date" value={d} onChange={e => onFieldChange(field, e.target.value)} style={editableBase(style)} onFocus={onFocusBg} onBlur={onBlurBg} />;
 };
 
-export default function InvoicePreview({ inv, customization, accentColor, template, onFieldChange }) {
+const FormRow = ({ label, isMobile, children }) => (
+  <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 4 : 12, alignItems: isMobile ? "stretch" : "center", marginBottom: 12 }}>
+    <div style={{ width: isMobile ? "100%" : 110, fontSize: 13, fontWeight: 500, color: "#475569", flexShrink: 0 }}>{label}</div>
+    <div style={{ flex: 1, minWidth: 0, maxWidth: isMobile ? "100%" : 220 }}>{children}</div>
+  </div>
+);
+
+const SkeletonBar = ({ width }) => <div style={{ width, height: 12, background: "#e2e8f0", borderRadius: 4, marginBottom: 8 }} />;
+
+export default function InvoicePreview({ inv, customization, accentColor, template, onFieldChange, onCustomerSelect }) {
   const isMobile = useIsMobile();
   const c = { ...DEFAULTS, ...(customization || {}) };
   const lineItems = inv.line_items || inv.items || [];
   const subtotal = Number(inv.subtotal || lineItems.reduce((s, it) => s + (Number(it.quantity ?? it.qty ?? 1)) * (Number(it.price ?? it.rate ?? 0)), 0));
   const taxAmt = Number(inv.tax_amount || 0);
   const totalAmt = Number(inv.total || subtotal + taxAmt);
-  const paid = inv.status === "paid";
+  const hasCustomer = !!(inv.to_name || inv.to_email);
+  const numStyle = { fontVariantNumeric: "lining-nums tabular-nums" };
 
   return (
-    <div style={{ fontFamily: "Georgia, serif", background: "#fff", color: "#1a1a2e", lineHeight: 1.6, padding: isMobile ? "24px 16px" : "48px 52px" }}>
-      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: isMobile ? 20 : 40 }}>
-        <div>
-          <div style={{ fontSize: isMobile ? (template === "standard" ? 24 : 28) : (template === "standard" ? 32 : 38), fontWeight: 700, color: template === "standard" ? "#1a1a2e" : (accentColor || "#52b788"), letterSpacing: "0.02em", marginBottom: 12 }}>INVOICE</div>
-          {inv.from_name && <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1a2e", marginBottom: 2 }}>{inv.from_name}</div>}
-          {inv.from_bn && <div style={{ fontSize: 14, color: "#444", marginBottom: 2 }}>BN {inv.from_bn}</div>}
-          {inv.from_address && <div style={{ fontSize: 14, color: "#444", whiteSpace: "pre-line", marginBottom: 2 }}>{inv.from_address}</div>}
-          {inv.from_email && <div style={{ fontSize: 14, color: "#444", marginBottom: 2 }}>{inv.from_email}</div>}
-          {inv.from_phone && <div style={{ fontSize: 14, color: "#444" }}>{inv.from_phone}</div>}
-        </div>
-      </div>
+    <div style={{ background: "#fff", fontFamily: "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif" }}>
 
-      <div style={{ background: template === "standard" ? "#f1f5f9" : ((accentColor || "#52b788") + "26"), border: template === "standard" ? "1px solid #e5e7eb" : "none", padding: isMobile ? "16px" : "24px 28px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 16 : 40 }}>
+      {/* Zone 1 - Invoice document header */}
+      <div style={{ padding: isMobile ? "24px 16px" : "40px 32px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: isMobile ? 20 : 32, background: "#fff" }}>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a2e", marginBottom: 6 }}>Bill to</div>
-          <EditableText value={inv.to_name} field="to_name" onFieldChange={onFieldChange} style={{ fontSize: 15, color: "#1a1a2e" }} placeholder="Customer name" />
-          {c.showCustomerEmail && <EditableText value={inv.to_email} field="to_email" onFieldChange={onFieldChange} style={{ fontSize: 14, color: "#444", marginTop: 4 }} placeholder="Customer email" fallback="" />}
-          {c.showCustomerAddress && <EditableArea value={inv.to_address} field="to_address" onFieldChange={onFieldChange} style={{ fontSize: 14, color: "#444", marginTop: 4 }} placeholder="Customer address" fallback="" />}
+          <h1 style={{ fontFamily: "Georgia, serif", fontSize: isMobile ? 26 : 32, fontWeight: 600, color: "#0F172A", margin: 0, marginBottom: 24, letterSpacing: "0.01em" }}>INVOICE</h1>
+          {inv.from_name && <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 4 }}>{inv.from_name}</div>}
+          {inv.from_address && <div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line", lineHeight: 1.5 }}>{inv.from_address}</div>}
+          <a href="#" onClick={(e) => e.preventDefault()} style={{ fontSize: 13, color: "#2563eb", textDecoration: "none", marginTop: 10, display: "inline-block" }}>Edit company</a>
         </div>
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a2e", marginBottom: 6 }}>Invoice details</div>
-          {c.showInvoiceNo && (
-            <div style={{ display: "flex", gap: 8, fontSize: 14, color: "#1a1a2e", marginBottom: 3, alignItems: "center" }}>
-              <span style={{ minWidth: isMobile ? 90 : 100, fontWeight: 600 }}>Invoice no.:</span>
-              <EditableText value={inv.invoice_number} field="invoice_number" onFieldChange={onFieldChange} style={{ fontSize: 14, color: "#1a1a2e", flex: 1 }} placeholder="INV-0001" />
-            </div>
-          )}
-          {c.showTerms && (
-            <div style={{ display: "flex", gap: 8, fontSize: 14, color: "#1a1a2e", marginBottom: 3, alignItems: "center" }}>
-              <span style={{ minWidth: isMobile ? 90 : 100, fontWeight: 600 }}>Terms:</span>
-              <EditableText value={inv.terms} field="terms" onFieldChange={onFieldChange} style={{ fontSize: 14, color: "#1a1a2e", flex: 1 }} placeholder="Net 30" fallback="Net 30" />
-            </div>
-          )}
-          {c.showInvoiceDate && (
-            <div style={{ display: "flex", gap: 8, fontSize: 14, color: "#1a1a2e", marginBottom: 3, alignItems: "center" }}>
-              <span style={{ minWidth: isMobile ? 90 : 100, fontWeight: 600 }}>Invoice date:</span>
-              <EditableDate value={inv.date} field="date" onFieldChange={onFieldChange} style={{ fontSize: 14, color: "#1a1a2e" }} />
-            </div>
-          )}
-          {c.showDueDate && (
-            <div style={{ display: "flex", gap: 8, fontSize: 14, color: "#1a1a2e", marginBottom: 3, alignItems: "center" }}>
-              <span style={{ minWidth: isMobile ? 90 : 100, fontWeight: 600 }}>Due date:</span>
-              <EditableDate value={inv.due_date} field="due_date" onFieldChange={onFieldChange} style={{ fontSize: 14, color: "#1a1a2e" }} />
-            </div>
-          )}
+        <div style={{ paddingTop: isMobile ? 0 : 56 }}>
+          {inv.from_email && <div style={{ fontSize: 13, color: "#475569", marginBottom: 4 }}>{inv.from_email}</div>}
+          {inv.from_phone && <div style={{ fontSize: 13, color: "#475569" }}>{inv.from_phone}</div>}
         </div>
-      </div>
-
-      <div style={{ overflowX: isMobile ? "auto" : "visible", marginTop: 24 }}>
-        <table style={{ width: "100%", minWidth: isMobile ? 480 : "auto", borderCollapse: "collapse", fontSize: 14 }}>
-          <thead><tr style={{ borderBottom: "2px solid #1a1a2e" }}>
-            <th style={{ textAlign: "left", padding: "12px 8px", fontSize: 13, color: "#1a1a2e" }}>#</th>
-            <th style={{ textAlign: "left", padding: "12px 8px", fontSize: 13, color: "#1a1a2e" }}>Description</th>
-            <th style={{ textAlign: "right", padding: "12px 8px", fontSize: 13, color: "#1a1a2e" }}>Qty</th>
-            <th style={{ textAlign: "right", padding: "12px 8px", fontSize: 13, color: "#1a1a2e" }}>Rate</th>
-            <th style={{ textAlign: "right", padding: "12px 8px", fontSize: 13, color: "#1a1a2e" }}>Amount</th>
-          </tr></thead>
-          <tbody>
-            {lineItems.length === 0 ? (
-              <tr><td colSpan={5} style={{ textAlign: "center", padding: "32px 0", color: "#94a3b8", fontSize: 13 }}>No line items</td></tr>
-            ) : lineItems.map((item, i) => {
-              const qty = Number(item.quantity ?? item.qty ?? 1);
-              const price = Number(item.price ?? item.rate ?? 0);
-              return (
-                <tr key={i} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: "12px 8px", fontSize: 13, color: "#1a1a2e" }}>{i + 1}.</td>
-                  <td style={{ padding: "12px 8px", fontSize: 13, fontWeight: 600, color: "#1a1a2e" }}>{item.description || item.service || "-"}</td>
-                  <td style={{ padding: "12px 8px", fontSize: 13, color: "#1a1a2e", textAlign: "right" }}>{qty}</td>
-                  <td style={{ padding: "12px 8px", fontSize: 13, color: "#1a1a2e", textAlign: "right" }}>${price.toFixed(2)}</td>
-                  <td style={{ padding: "12px 8px", fontSize: 13, fontWeight: 600, color: "#1a1a2e", textAlign: "right" }}>${(qty * price).toFixed(2)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
-        <div style={{ width: isMobile ? "100%" : 280 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #ddd" }}>
-            <span style={{ fontSize: 14, color: "#444" }}>Total</span>
-            <span style={{ fontSize: 14, color: "#1a1a2e", fontWeight: 600 }}>${totalAmt.toFixed(2)}</span>
+        <div style={{ textAlign: isMobile ? "left" : "right" }}>
+          <div style={{ fontSize: 13, color: "#64748B", marginBottom: 12, ...numStyle }}>Balance due (hidden): <span style={{ color: accentColor || "#0F172A", fontWeight: 600 }}>${totalAmt.toFixed(2)}</span></div>
+          {inv.logo_url ? (
+            <img src={inv.logo_url} alt="Logo" style={{ maxHeight: 80, width: "auto", display: "inline-block" }} onError={e => { e.target.style.display = "none"; }} />
+          ) : (
+            <div style={{ width: 80, height: 80, borderRadius: 8, background: "#f1f5f9", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: 11 }}>Logo</div>
+          )}
+          <div style={{ marginTop: 8 }}>
+            <button style={{ width: 28, height: 28, borderRadius: "50%", background: "#f1f5f9", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <Edit2 size={12} color="#64748B" />
+            </button>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0" }}>
-            <span style={{ fontSize: 14, color: "#1a1a2e", fontWeight: 700 }}>Balance due</span>
-            <span style={{ fontSize: 14, color: paid ? (accentColor || "#52b788") : "#1a1a2e", fontWeight: 700 }}>{paid ? "$0.00" : "$" + totalAmt.toFixed(2)}</span>
+        </div>
+      </div>
+
+      {/* Zone 2 - Customer + invoice meta */}
+      <div style={{ padding: isMobile ? "24px 16px" : "32px", background: "#f8fafc", borderTop: "1px solid #f1f5f9", borderBottom: "1px solid #f1f5f9" }}>
+        <div style={{ marginBottom: 24 }}>
+          <CustomerCombobox value={inv.to_name} onSelect={onCustomerSelect} />
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 24 : 32 }}>
+          <div>
+            {hasCustomer ? (
+              <>
+                {inv.to_name && <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 4 }}>{inv.to_name}</div>}
+                {c.showCustomerEmail && inv.to_email && <div style={{ fontSize: 13, color: "#475569", marginBottom: 4 }}>{inv.to_email}</div>}
+                {c.showCustomerAddress && inv.to_address && <div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line" }}>{inv.to_address}</div>}
+              </>
+            ) : (
+              <>
+                <SkeletonBar width={192} />
+                <SkeletonBar width={160} />
+                <SkeletonBar width={128} />
+              </>
+            )}
           </div>
+          <div>
+            {c.showInvoiceNo && (
+              <FormRow label="Invoice no." isMobile={isMobile}>
+                <EditableText value={inv.invoice_number} field="invoice_number" onFieldChange={onFieldChange} style={{ fontSize: 13, color: "#0F172A" }} placeholder="1009" />
+              </FormRow>
+            )}
+            {c.showTerms && (
+              <FormRow label="Terms" isMobile={isMobile}>
+                <EditableText value={inv.terms} field="terms" onFieldChange={onFieldChange} style={{ fontSize: 13, color: "#0F172A" }} placeholder="Net 30" fallback="Net 30" />
+              </FormRow>
+            )}
+            {c.showInvoiceDate && (
+              <FormRow label="Invoice date" isMobile={isMobile}>
+                <EditableDate value={inv.date} field="date" onFieldChange={onFieldChange} style={{ fontSize: 13, color: "#0F172A" }} />
+              </FormRow>
+            )}
+            {c.showDueDate && (
+              <FormRow label="Due date" isMobile={isMobile}>
+                <EditableDate value={inv.due_date} field="due_date" onFieldChange={onFieldChange} style={{ fontSize: 13, color: "#0F172A" }} />
+              </FormRow>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Zone 3 - Line items */}
+      <div style={{ padding: isMobile ? "24px 16px" : "32px", background: "#fff" }}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, color: "#0F172A", margin: 0, marginBottom: 20 }}>Product or service</h2>
+        <div style={{ overflowX: isMobile ? "auto" : "visible" }}>
+          <table style={{ width: "100%", minWidth: isMobile ? 480 : "auto", borderCollapse: "collapse", fontSize: 14 }}>
+            <thead><tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+              <th style={{ textAlign: "left", padding: "10px 8px", fontSize: 12, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>#</th>
+              <th style={{ textAlign: "left", padding: "10px 8px", fontSize: 12, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>Description</th>
+              <th style={{ textAlign: "right", padding: "10px 8px", fontSize: 12, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>Qty</th>
+              <th style={{ textAlign: "right", padding: "10px 8px", fontSize: 12, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>Rate</th>
+              <th style={{ textAlign: "right", padding: "10px 8px", fontSize: 12, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>Amount</th>
+            </tr></thead>
+            <tbody>
+              {lineItems.length === 0 ? (
+                <tr><td colSpan={5} style={{ textAlign: "center", padding: "32px 0", color: "#94a3b8", fontSize: 13 }}>No line items yet</td></tr>
+              ) : lineItems.map((item, i) => {
+                const qty = Number(item.quantity ?? item.qty ?? 1);
+                const price = Number(item.price ?? item.rate ?? 0);
+                return (
+                  <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <td style={{ padding: "12px 8px", fontSize: 13, color: "#0F172A", ...numStyle }}>{i + 1}</td>
+                    <td style={{ padding: "12px 8px", fontSize: 13, fontWeight: 500, color: "#0F172A" }}>{item.description || item.service || "-"}</td>
+                    <td style={{ padding: "12px 8px", fontSize: 13, color: "#0F172A", textAlign: "right", ...numStyle }}>{qty}</td>
+                    <td style={{ padding: "12px 8px", fontSize: 13, color: "#0F172A", textAlign: "right", ...numStyle }}>${price.toFixed(2)}</td>
+                    <td style={{ padding: "12px 8px", fontSize: 13, fontWeight: 600, color: "#0F172A", textAlign: "right", ...numStyle }}>${(qty * price).toFixed(2)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div style={{ marginTop: 24, textAlign: "center" }}>
+          <button style={{ background: "none", border: "none", color: "#64748B", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>Print or download</button>
         </div>
       </div>
     </div>
