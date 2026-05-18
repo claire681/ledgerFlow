@@ -68,7 +68,7 @@ export default function InvoiceReviewSend() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [from] = useState("invoices@notification.novala.com");
+  const [from, setFrom] = useState("Your Company");
   const [to, setTo] = useState([]);
   const [cc, setCc] = useState([]);
   const [bcc, setBcc] = useState([]);
@@ -94,6 +94,7 @@ export default function InvoiceReviewSend() {
         setInvoice(data);
         if (data.to_email) setTo([data.to_email]);
         const fromName = data.from_name || "Your Company";
+        setFrom(fromName);
         setSubject("Invoice " + (data.invoice_number || "") + " from " + fromName);
         setBody(DEFAULT_BODY.replace("{client_name}", data.to_name || "Customer").replace("{company_name}", fromName));
         setLoading(false);
