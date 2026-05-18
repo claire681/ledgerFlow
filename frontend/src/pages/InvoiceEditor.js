@@ -39,6 +39,8 @@ const TEMPLATES = [
   { key: "standard", label: "Standard" }
 ];
 
+const buildEmptyInvoice = () => { const p = (typeof window !== "undefined") ? getStoredProfile() : {}; return { from_name: p.name || "", from_bn: p.business_number || "", from_email: p.email || "", from_phone: p.phone || "", from_website: p.website || "", from_address: p.address || "", to_name: "", invoice_number: "", date: new Date().toISOString().slice(0, 10), due_date: "", terms: "Net 30", items: [], status: "draft" }; };
+
 const EMPTY_INVOICE = {
   from_name: "", to_name: "", invoice_number: "",
   date: new Date().toISOString().slice(0, 10),
@@ -73,7 +75,7 @@ export default function InvoiceEditor() {
   const [activeTab, setActiveTab] = useState("edit");
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [openSections, setOpenSections] = useState({ customization: true, payment: false, design: false, scheduling: false });
-  const [invoice, setInvoice] = useState(EMPTY_INVOICE);
+  const [invoice, setInvoice] = useState(buildEmptyInvoice());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [customization, setCustomization] = useState({
