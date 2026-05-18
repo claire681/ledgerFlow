@@ -694,7 +694,8 @@ export default function Invoices() {
 
   return (
     <div style={page}>
-      <div style={{ ...topBar, flexDirection:isMobile?'column':'row', alignItems:isMobile?'flex-start':'center', gap:isMobile?10:0, padding:isMobile?'16px':undefined }}>
+      <div style={{ ...topBar,
+        borderBottom: `1px solid ${L.border}`, flexDirection:isMobile?'column':'row', alignItems:isMobile?'flex-start':'center', gap:isMobile?10:0, padding:isMobile?'20px 16px':'26px 28px 22px 28px' }}>
         <div>
           <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
             <h1 style={{ margin:0, fontSize:isMobile?24:32, fontWeight:500, color:L.text, letterSpacing:'-0.01em', fontFamily:'Georgia, "Times New Roman", serif' }}>Invoices</h1>
