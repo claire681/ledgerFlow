@@ -4,6 +4,7 @@ import {
   Routes, Route, Navigate, Link,
 } from 'react-router-dom';
 import InvoiceEditor from "./pages/InvoiceEditor";
+import InvoiceReviewSend from "./pages/InvoiceReviewSend";
 import { AIProvider }      from './context/AIContext';
 import Sidebar             from './components/Sidebar';
 import TopBar              from './components/TopBar';
@@ -139,6 +140,7 @@ function AppLayout({ onLogout }) {
             <Route path="/invoices"       element={<Invoices />}           />
             <Route path="/invoices/new" element={<InvoiceEditor />} />
             <Route path="/invoices/:id/edit" element={<InvoiceEditor />} />
+        <Route path="/invoices/:id/send" element={<InvoiceReviewSend />} />
             <Route path="/tax"            element={<TaxCalculator />}      />
             <Route path="/vendors"        element={<VendorAnalytics />}    />
             <Route path="/currency"       element={<Currency />}           />

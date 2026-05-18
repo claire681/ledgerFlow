@@ -246,7 +246,7 @@ export default function InvoiceEditor() {
         <button style={{ background: "none", border: "none", color: SUBTLE, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>Print or download</button>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={handleSave} disabled={saving} style={{ padding: "8px 14px", background: "#fff", border: "1px solid " + BORDER, borderRadius: 6, fontSize: 14, fontWeight: 500, color: TEXT, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.6 : 1 }}>{saving ? "Saving..." : "Save"}</button>
-          <button style={{ padding: "8px 16px", background: BRAND, border: "1px solid " + BRAND, borderRadius: 6, fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Review and send</button>
+          <button onClick={() => navigate("/invoices/" + id + "/send")} style={{ padding: "8px 16px", background: BRAND, border: "1px solid " + BRAND, borderRadius: 6, fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Review and send</button>
         </div>
       </div>
 
