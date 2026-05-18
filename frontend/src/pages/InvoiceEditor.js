@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Settings, PlayCircle, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
 import InvoicePreview from "../components/InvoicePreview";
+import EditCompanyDrawer from "../components/company/EditCompanyDrawer";
 
 const useIsMobile = () => {
   const [m, setM] = useState(typeof window !== "undefined" && window.innerWidth < 768);
@@ -83,6 +84,7 @@ export default function InvoiceEditor() {
   const [templateChoice, setTemplateChoice] = useState("modern");
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState(null);
+  const [editCompanyOpen, setEditCompanyOpen] = useState(false);
 
   useEffect(() => {
     if (!id || id === "new") { setInvoice(EMPTY_INVOICE); return; }
@@ -102,6 +104,20 @@ export default function InvoiceEditor() {
   const handleAddItem = () => setInvoice(prev => { const items = [...(prev.items || prev.line_items || [])]; items.push({ description: "", qty: 1, rate: 0 }); return { ...prev, items }; });
   const handleDeleteItem = (i) => setInvoice(prev => { const items = [...(prev.items || prev.line_items || [])]; items.splice(i, 1); return { ...prev, items }; });
   const handleClearItems = () => setInvoice(prev => ({ ...prev, items: [] }));
+  const handleSaveCompany = async (data) => {
+    setInvoice(prev => ({ ...prev, ...data }));
+    const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+    if (id && id !== "new") {
+      const res = await fetch("https://api.getnovala.com/api/v1/invoices/" + id, {
+        method: "PATCH",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error("Save failed (" + res.status + ")");
+    }
+    try { await fetch("https://api.getnovala.com/api/v1/businesses/me", { method: "PATCH", headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }, body: JSON.stringify({ name: data.from_name, email: data.from_email, phone: data.from_phone, address: data.from_address, business_number: data.from_bn, website: data.from_website }) }); } catch (e) {}
+    setSaveMessage({ type: "success", text: "Company info updated" });
+  };
 
   const handleSave = async () => {
     const isNew = !id || id === "new";
@@ -180,7 +196,7 @@ export default function InvoiceEditor() {
           <div style={{ maxWidth: 800, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 400, overflow: "hidden" }}>
             {loading ? <div style={{ padding: 40, textAlign: "center", color: SUBTLE, fontSize: 14 }}>Loading invoice...</div>
               : error ? <div style={{ padding: 40, textAlign: "center", color: "#dc2626", fontSize: 14 }}>Error: {error}</div>
-              : <InvoicePreview inv={invoice} customization={customization} accentColor={accentColor} template={templateChoice} onFieldChange={handleFieldChange} onCustomerSelect={handleCustomerSelect} onItemChange={handleItemChange} onAddItem={handleAddItem} onDeleteItem={handleDeleteItem} onClearItems={handleClearItems} />}
+              : <InvoicePreview inv={invoice} customization={customization} accentColor={accentColor} template={templateChoice} onFieldChange={handleFieldChange} onCustomerSelect={handleCustomerSelect} onItemChange={handleItemChange} onAddItem={handleAddItem} onDeleteItem={handleDeleteItem} onClearItems={handleClearItems} onEditCompany={() => setEditCompanyOpen(true)} />}
           </div>
         </div>
 
@@ -255,6 +271,7 @@ export default function InvoiceEditor() {
         </div>
       </div>
 
+      <EditCompanyDrawer open={editCompanyOpen} onClose={() => setEditCompanyOpen(false)} initialData={invoice} onSave={handleSaveCompany} />
       {saveMessage && (
         <div style={{ position: "fixed", bottom: 80, right: 24, padding: "10px 16px", background: saveMessage.type === "success" ? "#10b981" : "#dc2626", color: "#fff", borderRadius: 6, fontSize: 14, zIndex: 9999, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>{saveMessage.text}</div>
       )}

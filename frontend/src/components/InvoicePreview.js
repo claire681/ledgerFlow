@@ -45,7 +45,7 @@ const TableInput = ({ value, onChange, type, placeholder, align }) => (
   <input type={type || "text"} value={value} onChange={onChange} placeholder={placeholder} style={{ width: "100%", border: "1px solid transparent", borderRadius: 4, padding: "6px 8px", fontSize: 13, fontFamily: "inherit", outline: "none", background: "transparent", textAlign: align || "left", boxSizing: "border-box", fontVariantNumeric: type === "number" ? "lining-nums tabular-nums" : "normal" }} onFocus={e => { e.target.style.borderColor = "#0F5959"; e.target.style.background = "#fff"; }} onBlur={e => { e.target.style.borderColor = "transparent"; e.target.style.background = "transparent"; }} />
 );
 
-export default function InvoicePreview({ inv, customization, accentColor, template, onFieldChange, onCustomerSelect, onItemChange, onAddItem, onDeleteItem, onClearItems }) {
+export default function InvoicePreview({ inv, customization, accentColor, template, onFieldChange, onCustomerSelect, onItemChange, onAddItem, onDeleteItem, onClearItems, onEditCompany }) {
   const isMobile = useIsMobile();
   const c = { ...DEFAULTS, ...(customization || {}) };
   const items = inv.line_items || inv.items || [];
@@ -63,7 +63,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           <h1 style={{ fontFamily: "Georgia, serif", fontSize: isMobile ? 26 : 32, fontWeight: 600, color: "#0F172A", margin: 0, marginBottom: 24, letterSpacing: "0.01em" }}>INVOICE</h1>
           {inv.from_name && <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 4 }}>{inv.from_name}</div>}
           {inv.from_address && <div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line", lineHeight: 1.5 }}>{inv.from_address}</div>}
-          <a href="#" onClick={(e) => e.preventDefault()} style={{ fontSize: 13, color: "#2563eb", textDecoration: "none", marginTop: 10, display: "inline-block" }}>Edit company</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); onEditCompany && onEditCompany(); }} style={{ fontSize: 13, color: "#2563eb", textDecoration: "none", marginTop: 10, display: "inline-block", cursor: "pointer" }}>Edit company</a>
         </div>
         <div style={{ paddingTop: isMobile ? 0 : 56 }}>
           {inv.from_email && <div style={{ fontSize: 13, color: "#475569", marginBottom: 4 }}>{inv.from_email}</div>}
