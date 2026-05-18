@@ -593,7 +593,7 @@ export default function Invoices() {
   const printInvoice = () => {
     const el=printRef.current; if (!el) return;
     const win=window.open('','_blank');
-    win.document.write(`<html><head><title>Invoice</title><style>body{margin:0;padding:0;font-family:'Georgia',serif;}@media print{body{margin:0;}}</style></head><body>${el.innerHTML}</body></html>`);
+    win.document.write(`<html><head><title>Invoice</title><style>body{margin:0;padding:0;font-family:'Georgia',serif;font-variant-numeric:lining-nums tabular-nums;}@media print{body{margin:0;}}</style></head><body>${el.innerHTML}</body></html>`);
     win.document.close(); win.focus();
     setTimeout(()=>{ win.print(); win.close(); }, 300);
   };
@@ -730,7 +730,7 @@ export default function Invoices() {
                   </div>
                 )}
               </div>
-              <div style={{ fontSize:isMobile?26:32, fontWeight:500, color:L.text, letterSpacing:'-0.02em', fontFamily:'Georgia, "Times New Roman", serif', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.value}</div>
+              <div style={{ fontSize:isMobile?26:32, fontWeight:500, color:L.text, letterSpacing:'-0.02em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.value}</div>
             </div>
           ))}
         </div>
