@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Settings, PlayCircle, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
+import InvoicePreview from "../components/InvoicePreview";
 
 const useIsMobile = () => {
   const [m, setM] = useState(typeof window !== "undefined" && window.innerWidth < 768);
@@ -82,9 +83,18 @@ export default function InvoiceEditor() {
       <div style={{ flex: 1, display: "flex", overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
 
         <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? 16 : 32, background: PAGE_BG }}>
-          <div style={{ maxWidth: 800, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 600, padding: 40, color: SUBTLE, fontSize: 14, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            Invoice preview wires in next step.
-          </div>
+          <InvoicePreview inv={{
+            from_name: "Your Company",
+            from_email: "hello@yourcompany.com",
+            to_name: "Customer Name",
+            to_email: "customer@example.com",
+            invoice_number: "1001",
+            date: "2026-05-18",
+            due_date: "2026-06-17",
+            terms: "Net 30",
+            items: [{ description: "Consulting services", qty: 10, rate: 150 }, { description: "Setup fee", qty: 1, rate: 500 }],
+            status: "draft"
+          }} />
         </div>
 
         {sidebarOpen && (
