@@ -3,6 +3,7 @@ import {
   BrowserRouter as Router,
   Routes, Route, Navigate,
 } from 'react-router-dom';
+import InvoiceEditor from "./pages/InvoiceEditor";
 import { AIProvider }      from './context/AIContext';
 import Sidebar             from './components/Sidebar';
 import TopBar              from './components/TopBar';
