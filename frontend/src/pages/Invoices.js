@@ -160,7 +160,7 @@ function InvoicePreview({ inv }) {
         </div>
         <div>
           <div style={{ fontSize:14, fontWeight:700, color:'#1a1a2e', marginBottom:6 }}>Invoice details</div>
-          {[['Invoice no.:',inv.invoice_number||'—'],['Terms:',inv.terms||'Net 30'],['Invoice date:',fmtDate(inv.date)],['Due date:',fmtDate(inv.due_date)]].map(([l,v]) => (
+          {[['Invoice no.:',inv.invoice_number||'—'],['Terms:',inv.terms||'Net 30'],['Invoice date:',(inv.date ? String(inv.date).slice(0,10) : '-')],['Due date:',(inv.due_date ? String(inv.due_date).slice(0,10) : '-')]].map(([l,v]) => (
             <div key={l} style={{ display:'flex', gap:8, fontSize:14, color:'#1a1a2e', marginBottom:3, flexWrap:'wrap' }}>
               <span style={{ minWidth:isMobile?90:100, fontWeight:600 }}>{l}</span>
               <span>{v}</span>
@@ -488,7 +488,7 @@ export default function Invoices() {
         if (inv.to_email) { doc.setFontSize(9); doc.text(inv.to_email, 14, boxY+22); }
         doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.text('Invoice details', 110, boxY+8);
         doc.setFontSize(9); doc.setFont('helvetica','normal');
-        [['Invoice no.:',inv.invoice_number||'—'],['Due date:',fmtDate(inv.due_date)],['Total:',`$${tot.toFixed(2)}`]].forEach(([l,v],idx) => { doc.text(l,110,boxY+16+idx*6); doc.text(v,150,boxY+16+idx*6); });
+        [['Invoice no.:',inv.invoice_number||'—'],['Due date:',(inv.due_date ? String(inv.due_date).slice(0,10) : '-')],['Total:',`$${tot.toFixed(2)}`]].forEach(([l,v],idx) => { doc.text(l,110,boxY+16+idx*6); doc.text(v,150,boxY+16+idx*6); });
         const rows = lineItems.map((it,idx) => { const q=Number(it.quantity??it.qty??1),p=Number(it.price??it.rate??0); return [`${idx+1}.`,it.description||'',String(q),`$${p.toFixed(2)}`,`$${(q*p).toFixed(2)}`]; });
         autoTable(doc,{ startY:boxY+42, head:[['#','Description','Qty','Rate','Amount']], body:rows.length?rows:[['1.','No items','','','']], styles:{fontSize:9}, headStyles:{fillColor:[255,255,255],textColor:[26,26,46],fontStyle:'bold'} });
         pdfBase64   = doc.output('datauristring').split(',')[1];
@@ -574,7 +574,7 @@ export default function Invoices() {
       if (inv.to_address) { doc.setFontSize(9); doc.text(inv.to_address, 14, boxY+27); }
       doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.text('Invoice details', 110, boxY+8);
       doc.setFontSize(9); doc.setFont('helvetica','normal');
-      [['Invoice no.:',inv.invoice_number||'—'],['Terms:',inv.terms||'Net 30'],['Invoice date:',fmtDate(inv.date)],['Due date:',fmtDate(inv.due_date)]].forEach(([l,v],i) => { doc.text(l,110,boxY+16+i*6); doc.text(v,150,boxY+16+i*6); });
+      [['Invoice no.:',inv.invoice_number||'—'],['Terms:',inv.terms||'Net 30'],['Invoice date:',(inv.date ? String(inv.date).slice(0,10) : '-')],['Due date:',(inv.due_date ? String(inv.due_date).slice(0,10) : '-')]].forEach(([l,v],i) => { doc.text(l,110,boxY+16+i*6); doc.text(v,150,boxY+16+i*6); });
       const rows=lineItems.map((it,idx)=>{ const q=Number(it.quantity??it.qty??1),p=Number(it.price??it.rate??0); return [`${idx+1}.`,it.service||it.description||'',it.service?it.description||'':'',String(q),`$${p.toFixed(2)}`,`$${(q*p).toFixed(2)}`]; });
       autoTable(doc,{ startY:boxY+42, head:[['#','Product or service','Description','Qty','Rate','Amount']], body:rows.length?rows:[['1.','No items','','','','']], styles:{fontSize:9,cellPadding:{top:5,bottom:5,left:4,right:4},textColor:[26,26,46]}, headStyles:{fillColor:[255,255,255],textColor:[26,26,46],fontStyle:'bold',fontSize:9,lineColor:[187,187,187],lineWidth:0.3}, columnStyles:{0:{cellWidth:10},1:{fontStyle:'bold',cellWidth:42},2:{cellWidth:68},3:{halign:'right',cellWidth:16},4:{halign:'right',cellWidth:28},5:{halign:'right',cellWidth:28,fontStyle:'bold'}}, tableLineColor:[238,238,238], tableLineWidth:0.2 });
       const tableEnd=(doc.lastAutoTable?.finalY||160)+10;
