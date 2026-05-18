@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Plus, Download, CheckCircle, Clock, AlertCircle,
   Trash2, X, FileText, Eye, Edit2, Save, Printer, Mail, Bell,
-} from 'lucide-react';
+, DollarSign, FilePen } from 'lucide-react';
 import InvoiceRowActions from '../components/InvoiceRowActions';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { L, card, page, topBar } from '../styles/light';
@@ -696,7 +696,7 @@ export default function Invoices() {
       <div style={{ ...topBar, flexDirection:isMobile?'column':'row', alignItems:isMobile?'flex-start':'center', gap:isMobile?10:0, padding:isMobile?'16px':undefined }}>
         <div>
           <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
-            <h1 style={{ margin:0, fontSize:isMobile?22:28, fontWeight:500, color:L.text, letterSpacing:'-0.01em', fontFamily:'Georgia, "Times New Roman", serif' }}>Invoices</h1>
+            <h1 style={{ margin:0, fontSize:isMobile?24:32, fontWeight:500, color:L.text, letterSpacing:'-0.01em', fontFamily:'Georgia, "Times New Roman", serif' }}>Invoices</h1>
             {activeCount > 0 && (
               <span style={{ display:'inline-flex', alignItems:'center', padding:'2px 10px', fontSize:11, fontWeight:500, color:L.textMuted, background:L.pageBg, border:`1px solid ${L.border}`, borderRadius:999 }}>{activeCount} active</span>
             )}
@@ -711,17 +711,24 @@ export default function Invoices() {
       <div style={{ padding:pad }}>
         <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(4,1fr)', gap:isMobile?10:16, marginBottom:isMobile?14:24 }}>
           {[
-            { label:'Total Invoices', value:invoices.length, sub:'All time', dot:null },
-            { label:'Paid Revenue',   value:`$${totalRevenue.toFixed(2)}`, dot:L.accent },
-            { label:'Outstanding',    value:`$${totalDue.toFixed(2)}`, dot:L.red },
-            { label:'In Draft',       value:`$${totalDraft.toFixed(2)}`, dot:'#F59E0B' },
+            { label:'Total Invoices', value:invoices.length, sub:'All time', dot:null, icon:FileText, iconBg:'#F1F5F9', iconColor:'#475569' },
+            { label:'Paid Revenue',   value:`$${totalRevenue.toFixed(2)}`, dot:L.accent, icon:DollarSign, iconBg:'#ECFDF5', iconColor:'#047857' },
+            { label:'Outstanding',    value:`$${totalDue.toFixed(2)}`, dot:L.red, icon:Clock, iconBg:'#FFFBEB', iconColor:'#B45309' },
+            { label:'In Draft',       value:`$${totalDraft.toFixed(2)}`, dot:'#F59E0B', icon:FilePen, iconBg:'#FEF3C7', iconColor:'#92400E' },
           ].map(item => (
             <div key={item.label} style={{ ...card, padding:isMobile?'16px':'22px 24px', transition:'transform 160ms ease' }} onMouseEnter={e => { e.currentTarget.style.transform='translateY(-1px)'; }} onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; }}>
-              <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:isMobile?10:14 }}>
-                {item.dot && <span style={{ width:5, height:5, borderRadius:'50%', background:item.dot, display:'inline-block', flexShrink:0 }}/>}
-                <div style={{ fontSize:10, fontWeight:600, color:L.textFaint, letterSpacing:'0.08em', textTransform:'uppercase' }}>{item.label}</div>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:10, marginBottom: isMobile ? 14 : 18 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  {item.dot && <span style={{ width:5, height:5, borderRadius:'50%', background:item.dot, display:'inline-block', flexShrink:0 }} />}
+                  <div style={{ fontSize:10, fontWeight:600, color:L.textFaint, letterSpacing:'0.08em', textTransform:'uppercase' }}>{item.label}</div>
+                </div>
+                {item.icon && (
+                  <div style={{ width:28, height:28, borderRadius:8, background:item.iconBg, display:'flex', alignItems:'center', justifyContent:'center', color:item.iconColor, flexShrink:0 }}>
+                    <item.icon size={14}/>
+                  </div>
+                )}
               </div>
-              <div style={{ fontSize:isMobile?22:30, fontWeight:600, color:L.text, letterSpacing:'-0.02em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.value}</div>
+              <div style={{ fontSize:isMobile?26:32, fontWeight:500, color:L.text, letterSpacing:'-0.02em', fontFamily:'Georgia, "Times New Roman", serif', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.value}</div>
             </div>
           ))}
         </div>
