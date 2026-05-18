@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Plus, Download, CheckCircle, Clock, AlertCircle,
   Trash2, X, FileText, Eye, Edit2, Save, Printer, Mail, Bell,
-, DollarSign, FilePen } from 'lucide-react';
+  DollarSign, FilePen,
+} from 'lucide-react';
 import InvoiceRowActions from '../components/InvoiceRowActions';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { L, card, page, topBar } from '../styles/light';
