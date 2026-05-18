@@ -135,11 +135,11 @@ function InvoicePreview({ inv }) {
       <div style={{ display:'flex', flexDirection:isMobile?'column':'row', justifyContent:'space-between', alignItems:'flex-start', marginBottom:isMobile?20:40, gap:isMobile?12:0 }}>
         <div>
           <div style={{ fontSize:isMobile?28:38, fontWeight:700, color:'#52b788', letterSpacing:'0.02em', marginBottom:12 }}>INVOICE</div>
-          {inv.from_name    && <div style={{ fontSize:14, fontWeight:700, color:'#1a1a2e', marginBottom:2 }}>{inv.from_name}</div>}
-          {inv.from_bn      && <div style={{ fontSize:13, color:'#444', marginBottom:2 }}>BN {inv.from_bn}</div>}
-          {inv.from_address && <div style={{ fontSize:13, color:'#444', whiteSpace:'pre-line', marginBottom:2 }}>{inv.from_address}</div>}
-          {inv.from_email   && <div style={{ fontSize:13, color:'#444', marginBottom:2 }}>{inv.from_email}</div>}
-          {inv.from_phone   && <div style={{ fontSize:13, color:'#444' }}>{inv.from_phone}</div>}
+          {inv.from_name    && <div style={{ fontSize:15, fontWeight:700, color:'#1a1a2e', marginBottom:2 }}>{inv.from_name}</div>}
+          {inv.from_bn      && <div style={{ fontSize:14, color:'#444', marginBottom:2 }}>BN {inv.from_bn}</div>}
+          {inv.from_address && <div style={{ fontSize:14, color:'#444', whiteSpace:'pre-line', marginBottom:2 }}>{inv.from_address}</div>}
+          {inv.from_email   && <div style={{ fontSize:14, color:'#444', marginBottom:2 }}>{inv.from_email}</div>}
+          {inv.from_phone   && <div style={{ fontSize:14, color:'#444' }}>{inv.from_phone}</div>}
         </div>
         {inv.logo_url && (
           <img
@@ -153,15 +153,15 @@ function InvoicePreview({ inv }) {
 
       <div style={{ background:'#eaf7f0', padding:isMobile?'16px':'24px 28px', display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 1fr', gap:isMobile?16:40, marginBottom:0 }}>
         <div>
-          <div style={{ fontSize:13, fontWeight:700, color:'#1a1a2e', marginBottom:6 }}>Bill to</div>
-          <div style={{ fontSize:14, color:'#1a1a2e' }}>{inv.to_name||'—'}</div>
-          {inv.to_email   && <div style={{ fontSize:13, color:'#444' }}>{inv.to_email}</div>}
-          {inv.to_address && <div style={{ fontSize:13, color:'#444', whiteSpace:'pre-line' }}>{inv.to_address}</div>}
+          <div style={{ fontSize:14, fontWeight:700, color:'#1a1a2e', marginBottom:6 }}>Bill to</div>
+          <div style={{ fontSize:15, color:'#1a1a2e' }}>{inv.to_name||'—'}</div>
+          {inv.to_email   && <div style={{ fontSize:14, color:'#444' }}>{inv.to_email}</div>}
+          {inv.to_address && <div style={{ fontSize:14, color:'#444', whiteSpace:'pre-line' }}>{inv.to_address}</div>}
         </div>
         <div>
-          <div style={{ fontSize:13, fontWeight:700, color:'#1a1a2e', marginBottom:6 }}>Invoice details</div>
+          <div style={{ fontSize:14, fontWeight:700, color:'#1a1a2e', marginBottom:6 }}>Invoice details</div>
           {[['Invoice no.:',inv.invoice_number||'—'],['Terms:',inv.terms||'Net 30'],['Invoice date:',fmtDate(inv.date)],['Due date:',fmtDate(inv.due_date)]].map(([l,v]) => (
-            <div key={l} style={{ display:'flex', gap:8, fontSize:13, color:'#1a1a2e', marginBottom:3, flexWrap:'wrap' }}>
+            <div key={l} style={{ display:'flex', gap:8, fontSize:14, color:'#1a1a2e', marginBottom:3, flexWrap:'wrap' }}>
               <span style={{ minWidth:isMobile?90:100, fontWeight:600 }}>{l}</span>
               <span>{v}</span>
             </div>
@@ -170,11 +170,11 @@ function InvoicePreview({ inv }) {
       </div>
 
       <div style={{ overflowX:isMobile?'auto':'visible', marginTop:0 }}>
-        <table style={{ width:isMobile?'max-content':'100%', minWidth:isMobile?480:'auto', borderCollapse:'collapse', fontSize:13 }}>
+        <table style={{ width:isMobile?'max-content':'100%', minWidth:isMobile?480:'auto', borderCollapse:'collapse', fontSize:14 }}>
           <thead>
             <tr>
               {[{label:'#',align:'left',w:30},{label:'Description',align:'left',w:160},{label:'',align:'left',w:''},{label:'Qty',align:'right',w:50},{label:'Rate',align:'right',w:90},{label:'Amount',align:'right',w:90}].map(col => (
-                <th key={col.label} style={{ padding:'12px 8px', textAlign:col.align, fontWeight:600, color:'#1a1a2e', fontSize:13, width:col.w||'auto', borderBottom:'1px solid #bbb', whiteSpace:'nowrap' }}>{col.label}</th>
+                <th key={col.label} style={{ padding:'12px 8px', textAlign:col.align, fontWeight:600, color:'#1a1a2e', fontSize:14, width:col.w||'auto', borderBottom:'1px solid #bbb', whiteSpace:'nowrap' }}>{col.label}</th>
               ))}
             </tr>
           </thead>
@@ -187,7 +187,7 @@ function InvoicePreview({ inv }) {
                 <tr key={i} style={{ borderBottom:'1px solid #eee' }}>
                   <td style={{ padding:'12px 8px', fontSize:13, color:'#1a1a2e', verticalAlign:'top' }}>{i+1}.</td>
                   <td style={{ padding:'12px 8px', fontSize:13, fontWeight:700, color:'#1a1a2e', verticalAlign:'top' }}>{item.service||item.description||'—'}</td>
-                  <td style={{ padding:'12px 8px', fontSize:13, color:'#444', verticalAlign:'top' }}>{item.service?item.description:''}</td>
+                  <td style={{ padding:'12px 8px', fontSize:14, color:'#444', verticalAlign:'top' }}>{item.service?item.description:''}</td>
                   <td style={{ padding:'12px 8px', fontSize:13, color:'#1a1a2e', textAlign:'right', verticalAlign:'top' }}>{qty}</td>
                   <td style={{ padding:'12px 8px', fontSize:13, color:'#1a1a2e', textAlign:'right', verticalAlign:'top', whiteSpace:'nowrap' }}>${price.toFixed(2)}</td>
                   <td style={{ padding:'12px 8px', fontSize:13, fontWeight:600, color:'#1a1a2e', textAlign:'right', verticalAlign:'top', whiteSpace:'nowrap' }}>${(qty*price).toFixed(2)}</td>
@@ -201,12 +201,12 @@ function InvoicePreview({ inv }) {
       <div style={{ display:'flex', justifyContent:'flex-end', marginTop:20, marginBottom:32 }}>
         <div style={{ width:isMobile?'100%':300 }}>
           <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid #ddd' }}>
-            <span style={{ fontSize:13, color:'#444' }}>Total</span>
+            <span style={{ fontSize:14, color:'#444' }}>Total</span>
             <span style={{ fontSize:13, color:'#1a1a2e', fontWeight:600 }}>${totalAmt.toFixed(2)}</span>
           </div>
           <div style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid #ddd' }}>
-            <span style={{ fontSize:13, color:'#444' }}>Payment</span>
-            <span style={{ fontSize:13, color:'#444' }}>{paid?`-$${totalAmt.toFixed(2)}`:'$0.00'}</span>
+            <span style={{ fontSize:14, color:'#444' }}>Payment</span>
+            <span style={{ fontSize:14, color:'#444' }}>{paid?`-$${totalAmt.toFixed(2)}`:'$0.00'}</span>
           </div>
           <div style={{ display:'flex', justifyContent:'space-between', padding:'10px 0' }}>
             <span style={{ fontSize:14, color:'#1a1a2e', fontWeight:700 }}>Balance due</span>
@@ -593,7 +593,7 @@ export default function Invoices() {
   const printInvoice = () => {
     const el=printRef.current; if (!el) return;
     const win=window.open('','_blank');
-    win.document.write(`<html><head><title>Invoice</title><style>body{margin:0;padding:0;font-family:'Georgia',serif;font-variant-numeric:lining-nums tabular-nums;}@media print{body{margin:0;}}</style></head><body>${el.innerHTML}</body></html>`);
+    win.document.write(`<html><head><title>Invoice</title><style>body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-variant-numeric:lining-nums tabular-nums;}@media print{body{margin:0;}}</style></head><body>${el.innerHTML}</body></html>`);
     win.document.close(); win.focus();
     setTimeout(()=>{ win.print(); win.close(); }, 300);
   };
