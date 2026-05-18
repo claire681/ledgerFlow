@@ -99,17 +99,33 @@ export default function InvoiceEditor() {
   const handleFieldChange = (field, value) => setInvoice(prev => ({ ...prev, [field]: value }));
 
   const handleSave = async () => {
-    if (!id || id === "new") { setSaveMessage({ type: "error", text: "Cannot save new invoice yet" }); return; }
+    const isNew = !id || id === "new";
     setSaving(true); setSaveMessage(null);
     const token = localStorage.getItem("token") || localStorage.getItem("access_token");
     try {
-      const res = await fetch("https://api.getnovala.com/api/v1/invoices/" + id, {
-        method: "PATCH",
+      const url = isNew ? "https://api.getnovala.com/api/v1/invoices/" : "https://api.getnovala.com/api/v1/invoices/" + id;
+      const method = isNew ? "POST" : "PATCH";
+      const body = isNew ? JSON.stringify({
+        invoice_number: invoice.invoice_number || ("DRAFT-" + Date.now()),
+        date: invoice.date || new Date().toISOString().slice(0, 10),
+        due_date: invoice.due_date || new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0, 10),
+        terms: invoice.terms || "Net 30",
+        from_name: invoice.from_name || "",
+        to_name: invoice.to_name || "",
+        items: invoice.items || [],
+        status: "draft"
+      }) : JSON.stringify({ to_name: invoice.to_name });
+      const res = await fetch(url, {
+        method,
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ to_name: invoice.to_name })
+        body
       });
       if (!res.ok) throw new Error("Save failed (" + res.status + ")");
-      setSaveMessage({ type: "success", text: "Saved" });
+      const data = await res.json();
+      setSaveMessage({ type: "success", text: isNew ? "Invoice created" : "Saved" });
+      if (isNew && data.id) {
+        setTimeout(() => navigate("/invoices/" + data.id + "/edit"), 800);
+      }
     } catch (e) {
       setSaveMessage({ type: "error", text: e.message });
     } finally {
