@@ -523,17 +523,26 @@ export default function Invoices() {
 
   const saveFollowUpAsDefault = async () => {
     try {
+      const tmpl = reverseFollowUpTemplate(followUpMessage, followUpInvoice);
       const res = await fetch('https://api.getnovala.com/api/v1/preferences/', {
         method: 'POST',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'followup_message', value: reverseFollowUpTemplate(followUpMessage, followUpInvoice) })
+        headers: getHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ key: 'followup_message', value: tmpl })
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        setSavedFollowUpTemplate(followUpMessage);
+        setSavedFollowUpTemplate(tmpl);
         setFollowUpSuccess('Saved as your default template');
         setTimeout(() => setFollowUpSuccess(''), 2500);
+      } else {
+        console.error('[saveFollowUpAsDefault] ', res.status, data);
+        setFollowUpSuccess((data.detail || 'Save failed') + ' (HTTP ' + res.status + ')');
+        setTimeout(() => setFollowUpSuccess(''), 5000);
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      setFollowUpSuccess('Network error');
+    }
   };
 
   const exportPDF = (inv) => {
