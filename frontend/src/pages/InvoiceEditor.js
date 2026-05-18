@@ -81,6 +81,8 @@ export default function InvoiceEditor() {
   });
   const [accentColor, setAccentColor] = useState(BRAND);
   const [templateChoice, setTemplateChoice] = useState("modern");
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState(null);
 
   useEffect(() => {
     if (!id || id === "new") { setInvoice(EMPTY_INVOICE); return; }
@@ -94,6 +96,34 @@ export default function InvoiceEditor() {
 
   const toggleSection = (k) => setOpenSections(s => ({ ...s, [k]: !s[k] }));
   const toggleField = (k) => setCustomization(s => ({ ...s, [k]: !s[k] }));
+  const handleFieldChange = (field, value) => setInvoice(prev => ({ ...prev, [field]: value }));
+
+  const handleSave = async () => {
+    if (!id || id === "new") { setSaveMessage({ type: "error", text: "Cannot save new invoice yet" }); return; }
+    setSaving(true); setSaveMessage(null);
+    const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+    try {
+      const res = await fetch("https://api.getnovala.com/api/v1/invoices/" + id, {
+        method: "PATCH",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ to_name: invoice.to_name })
+      });
+      if (!res.ok) throw new Error("Save failed (" + res.status + ")");
+      setSaveMessage({ type: "success", text: "Saved" });
+    } catch (e) {
+      setSaveMessage({ type: "error", text: e.message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    if (saveMessage) {
+      const t = setTimeout(() => setSaveMessage(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [saveMessage]);
+
   const headerNumber = invoice.invoice_number || (id === "new" ? "new" : id);
 
   return (
@@ -129,7 +159,7 @@ export default function InvoiceEditor() {
           <div style={{ maxWidth: 800, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 400, overflow: "hidden" }}>
             {loading ? <div style={{ padding: 40, textAlign: "center", color: SUBTLE, fontSize: 14 }}>Loading invoice...</div>
               : error ? <div style={{ padding: 40, textAlign: "center", color: "#dc2626", fontSize: 14 }}>Error: {error}</div>
-              : <InvoicePreview inv={invoice} customization={customization} accentColor={accentColor} template={templateChoice} />}
+              : <InvoicePreview inv={invoice} customization={customization} accentColor={accentColor} template={templateChoice} onFieldChange={handleFieldChange} />}
           </div>
         </div>
 
@@ -199,10 +229,14 @@ export default function InvoiceEditor() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: isMobile ? "12px 16px" : "14px 24px", background: "#fff", borderTop: "1px solid " + BORDER }}>
         <button style={{ background: "none", border: "none", color: SUBTLE, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>Print or download</button>
         <div style={{ display: "flex", gap: 8 }}>
-          <button style={{ padding: "8px 14px", background: "#fff", border: "1px solid " + BORDER, borderRadius: 6, fontSize: 14, fontWeight: 500, color: TEXT, cursor: "pointer" }}>Save</button>
+          <button onClick={handleSave} disabled={saving} style={{ padding: "8px 14px", background: "#fff", border: "1px solid " + BORDER, borderRadius: 6, fontSize: 14, fontWeight: 500, color: TEXT, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.6 : 1 }}>{saving ? "Saving..." : "Save"}</button>
           <button style={{ padding: "8px 16px", background: BRAND, border: "1px solid " + BRAND, borderRadius: 6, fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Review and send</button>
         </div>
       </div>
+
+      {saveMessage && (
+        <div style={{ position: "fixed", bottom: 80, right: 24, padding: "10px 16px", background: saveMessage.type === "success" ? "#10b981" : "#dc2626", color: "#fff", borderRadius: 6, fontSize: 14, zIndex: 9999, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>{saveMessage.text}</div>
+      )}
     </div>
   );
 }

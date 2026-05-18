@@ -15,7 +15,7 @@ const DEFAULTS = {
   showTerms: true, showCustomerEmail: true, showCustomerAddress: true
 };
 
-export default function InvoicePreview({ inv, customization, accentColor, template }) {
+export default function InvoicePreview({ inv, customization, accentColor, template, onFieldChange }) {
   const isMobile = useIsMobile();
   const c = { ...DEFAULTS, ...(customization || {}) };
   const lineItems = inv.line_items || inv.items || [];
@@ -47,7 +47,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
       <div style={{ background: template === "standard" ? "#f1f5f9" : ((accentColor || "#52b788") + "26"), border: template === "standard" ? "1px solid #e5e7eb" : "none", padding: isMobile ? "16px" : "24px 28px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 16 : 40 }}>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a2e", marginBottom: 6 }}>Bill to</div>
-          <div style={{ fontSize: 15, color: "#1a1a2e" }}>{inv.to_name || "-"}</div>
+          {onFieldChange ? (<input type="text" value={inv.to_name || ""} onChange={e => onFieldChange("to_name", e.target.value)} placeholder="Customer name" style={{ fontSize: 15, color: "#1a1a2e", background: "transparent", border: "none", padding: "2px 6px", margin: "-2px -6px", fontFamily: "inherit", outline: "none", width: "100%", cursor: "text" }} onFocus={e => { e.target.style.background = "rgba(15,89,89,0.08)"; e.target.style.borderRadius = "4px"; }} onBlur={e => { e.target.style.background = "transparent"; }} />) : (<div style={{ fontSize: 15, color: "#1a1a2e" }}>{inv.to_name || "-"}</div>)}
           {c.showCustomerEmail && inv.to_email && <div style={{ fontSize: 14, color: "#444" }}>{inv.to_email}</div>}
           {c.showCustomerAddress && inv.to_address && <div style={{ fontSize: 14, color: "#444", whiteSpace: "pre-line" }}>{inv.to_address}</div>}
         </div>
