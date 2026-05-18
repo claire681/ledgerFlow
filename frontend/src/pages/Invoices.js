@@ -600,6 +600,10 @@ export default function Invoices() {
   const totalRevenue = invoices.filter(i=>i.status==='paid').reduce((s,i)=>s+(Number(i.total)||0),0);
   const totalDue     = invoices.filter(i=>['sent','due','overdue'].includes(i.status)).reduce((s,i)=>s+(Number(i.total)||0),0);
   const totalDraft   = invoices.filter(i=>i.status==='draft').reduce((s,i)=>s+(Number(i.total)||0),0);
+  const paidCount  = invoices.filter(i=>i.status==='paid').length;
+  const dueCount   = invoices.filter(i=>['sent','due','overdue'].includes(i.status)).length;
+  const draftCount = invoices.filter(i=>i.status==='draft').length;
+  const activeCount = dueCount;
 
   const renderForm = (isEdit) => (
     <>
@@ -691,8 +695,13 @@ export default function Invoices() {
     <div style={page}>
       <div style={{ ...topBar, flexDirection:isMobile?'column':'row', alignItems:isMobile?'flex-start':'center', gap:isMobile?10:0, padding:isMobile?'16px':undefined }}>
         <div>
-          <div style={{ fontSize:isMobile?18:20, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>Invoices</div>
-          <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>Create, manage and track client invoices</div>
+          <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
+            <h1 style={{ margin:0, fontSize:isMobile?22:28, fontWeight:500, color:L.text, letterSpacing:'-0.01em', fontFamily:'Georgia, "Times New Roman", serif' }}>Invoices</h1>
+            {activeCount > 0 && (
+              <span style={{ display:'inline-flex', alignItems:'center', padding:'2px 10px', fontSize:11, fontWeight:500, color:L.textMuted, background:L.pageBg, border:`1px solid ${L.border}`, borderRadius:999 }}>{activeCount} active</span>
+            )}
+          </div>
+          <div style={{ fontSize:12, color:L.textMuted, marginTop:4 }}>Create, manage, and track client invoices</div>
         </div>
         <button onClick={openCreate} style={{ display:'flex', alignItems:'center', gap:7, padding:'9px 18px', borderRadius:L.radiusSm, background:L.accent, color:'#fff', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, fontFamily:L.font, alignSelf:isMobile?'stretch':'auto', justifyContent:isMobile?'center':'flex-start' }}>
           <Plus size={14}/> New Invoice
@@ -702,7 +711,7 @@ export default function Invoices() {
       <div style={{ padding:pad }}>
         <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(4,1fr)', gap:isMobile?10:16, marginBottom:isMobile?14:24 }}>
           {[
-            { label:'Total Invoices', value:invoices.length, dot:null },
+            { label:'Total Invoices', value:invoices.length, sub:'All time', dot:null },
             { label:'Paid Revenue',   value:`$${totalRevenue.toFixed(2)}`, dot:L.accent },
             { label:'Outstanding',    value:`$${totalDue.toFixed(2)}`, dot:L.red },
             { label:'In Draft',       value:`$${totalDraft.toFixed(2)}`, dot:'#F59E0B' },
