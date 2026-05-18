@@ -172,13 +172,13 @@ export default function InvoiceEditor() {
                     ))}
                     <div style={{ fontSize: 11, fontWeight: 700, color: SUBTLE, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 16, marginBottom: 10 }}>Color</div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 6, background: accentColor, border: "1px solid " + BORDER }} />
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: accentColor, border: "1px solid " + BORDER }} />
                       <span style={{ fontSize: 13, color: TEXT, fontFamily: "monospace" }}>{accentColor}</span>
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                       {PALETTE.map(color => (
                         <button key={color} onClick={() => setAccentColor(color)} style={{
-                          height: 40, borderRadius: 6, background: color, cursor: "pointer",
+                          width: 36, height: 36, borderRadius: "50%", background: color, cursor: "pointer", padding: 0,
                           border: accentColor === color ? "3px solid #0F172A" : "1px solid " + BORDER
                         }} />
                       ))}
