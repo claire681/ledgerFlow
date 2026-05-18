@@ -136,6 +136,8 @@ function AppLayout({ onLogout }) {
             <Route path="/transactions"   element={<Transactions />}       />
             <Route path="/budgets"        element={<Budgets />}            />
             <Route path="/invoices"       element={<Invoices />}           />
+            <Route path="/invoices/new" element={<InvoiceEditor />} />
+            <Route path="/invoices/:id/edit" element={<InvoiceEditor />} />
             <Route path="/tax"            element={<TaxCalculator />}      />
             <Route path="/vendors"        element={<VendorAnalytics />}    />
             <Route path="/currency"       element={<Currency />}           />
