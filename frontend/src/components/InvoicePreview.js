@@ -15,6 +15,26 @@ const DEFAULTS = {
   showTerms: true, showCustomerEmail: true, showCustomerAddress: true
 };
 
+const editableBase = (s) => ({ ...s, background: "transparent", border: "none", padding: "2px 6px", margin: "-2px -6px", fontFamily: "inherit", outline: "none", width: "100%", cursor: "text", boxSizing: "border-box" });
+const onFocusBg = (e) => { e.target.style.background = "rgba(15,89,89,0.08)"; e.target.style.borderRadius = "4px"; };
+const onBlurBg = (e) => { e.target.style.background = "transparent"; };
+
+const EditableText = ({ value, field, onFieldChange, style, placeholder, fallback }) => {
+  if (!onFieldChange) return <div style={style}>{value || (fallback !== undefined ? fallback : "-")}</div>;
+  return <input type="text" value={value || ""} onChange={e => onFieldChange(field, e.target.value)} placeholder={placeholder} style={editableBase(style)} onFocus={onFocusBg} onBlur={onBlurBg} />;
+};
+
+const EditableArea = ({ value, field, onFieldChange, style, placeholder, fallback }) => {
+  if (!onFieldChange) return <div style={{ ...style, whiteSpace: "pre-line" }}>{value || (fallback !== undefined ? fallback : "-")}</div>;
+  return <textarea value={value || ""} onChange={e => onFieldChange(field, e.target.value)} placeholder={placeholder} rows={2} style={{ ...editableBase(style), resize: "vertical", minHeight: 36 }} onFocus={onFocusBg} onBlur={onBlurBg} />;
+};
+
+const EditableDate = ({ value, field, onFieldChange, style }) => {
+  const d = value ? String(value).slice(0, 10) : "";
+  if (!onFieldChange) return <span style={style}>{d || "-"}</span>;
+  return <input type="date" value={d} onChange={e => onFieldChange(field, e.target.value)} style={{ ...editableBase(style), padding: "2px 4px", margin: "-2px -4px", width: "auto" }} onFocus={onFocusBg} onBlur={onBlurBg} />;
+};
+
 export default function InvoicePreview({ inv, customization, accentColor, template, onFieldChange }) {
   const isMobile = useIsMobile();
   const c = { ...DEFAULTS, ...(customization || {}) };
@@ -23,13 +43,6 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
   const taxAmt = Number(inv.tax_amount || 0);
   const totalAmt = Number(inv.total || subtotal + taxAmt);
   const paid = inv.status === "paid";
-
-  const detailsRows = [
-    c.showInvoiceNo && ["Invoice no.:", inv.invoice_number || "-"],
-    c.showTerms && ["Terms:", inv.terms || "Net 30"],
-    c.showInvoiceDate && ["Invoice date:", inv.date ? String(inv.date).slice(0, 10) : "-"],
-    c.showDueDate && ["Due date:", inv.due_date ? String(inv.due_date).slice(0, 10) : "-"]
-  ].filter(Boolean);
 
   return (
     <div style={{ fontFamily: "Georgia, serif", background: "#fff", color: "#1a1a2e", lineHeight: 1.6, padding: isMobile ? "24px 16px" : "48px 52px" }}>
@@ -47,21 +60,37 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
       <div style={{ background: template === "standard" ? "#f1f5f9" : ((accentColor || "#52b788") + "26"), border: template === "standard" ? "1px solid #e5e7eb" : "none", padding: isMobile ? "16px" : "24px 28px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 16 : 40 }}>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a2e", marginBottom: 6 }}>Bill to</div>
-          {onFieldChange ? (<input type="text" value={inv.to_name || ""} onChange={e => onFieldChange("to_name", e.target.value)} placeholder="Customer name" style={{ fontSize: 15, color: "#1a1a2e", background: "transparent", border: "none", padding: "2px 6px", margin: "-2px -6px", fontFamily: "inherit", outline: "none", width: "100%", cursor: "text" }} onFocus={e => { e.target.style.background = "rgba(15,89,89,0.08)"; e.target.style.borderRadius = "4px"; }} onBlur={e => { e.target.style.background = "transparent"; }} />) : (<div style={{ fontSize: 15, color: "#1a1a2e" }}>{inv.to_name || "-"}</div>)}
-          {c.showCustomerEmail && inv.to_email && <div style={{ fontSize: 14, color: "#444" }}>{inv.to_email}</div>}
-          {c.showCustomerAddress && inv.to_address && <div style={{ fontSize: 14, color: "#444", whiteSpace: "pre-line" }}>{inv.to_address}</div>}
+          <EditableText value={inv.to_name} field="to_name" onFieldChange={onFieldChange} style={{ fontSize: 15, color: "#1a1a2e" }} placeholder="Customer name" />
+          {c.showCustomerEmail && <EditableText value={inv.to_email} field="to_email" onFieldChange={onFieldChange} style={{ fontSize: 14, color: "#444", marginTop: 4 }} placeholder="Customer email" fallback="" />}
+          {c.showCustomerAddress && <EditableArea value={inv.to_address} field="to_address" onFieldChange={onFieldChange} style={{ fontSize: 14, color: "#444", marginTop: 4 }} placeholder="Customer address" fallback="" />}
         </div>
-        {detailsRows.length > 0 && (
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a2e", marginBottom: 6 }}>Invoice details</div>
-            {detailsRows.map(([l, v]) => (
-              <div key={l} style={{ display: "flex", gap: 8, fontSize: 14, color: "#1a1a2e", marginBottom: 3, flexWrap: "wrap" }}>
-                <span style={{ minWidth: isMobile ? 90 : 100, fontWeight: 600 }}>{l}</span>
-                <span>{v}</span>
-              </div>
-            ))}
-          </div>
-        )}
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a2e", marginBottom: 6 }}>Invoice details</div>
+          {c.showInvoiceNo && (
+            <div style={{ display: "flex", gap: 8, fontSize: 14, color: "#1a1a2e", marginBottom: 3, alignItems: "center" }}>
+              <span style={{ minWidth: isMobile ? 90 : 100, fontWeight: 600 }}>Invoice no.:</span>
+              <EditableText value={inv.invoice_number} field="invoice_number" onFieldChange={onFieldChange} style={{ fontSize: 14, color: "#1a1a2e", flex: 1 }} placeholder="INV-0001" />
+            </div>
+          )}
+          {c.showTerms && (
+            <div style={{ display: "flex", gap: 8, fontSize: 14, color: "#1a1a2e", marginBottom: 3, alignItems: "center" }}>
+              <span style={{ minWidth: isMobile ? 90 : 100, fontWeight: 600 }}>Terms:</span>
+              <EditableText value={inv.terms} field="terms" onFieldChange={onFieldChange} style={{ fontSize: 14, color: "#1a1a2e", flex: 1 }} placeholder="Net 30" fallback="Net 30" />
+            </div>
+          )}
+          {c.showInvoiceDate && (
+            <div style={{ display: "flex", gap: 8, fontSize: 14, color: "#1a1a2e", marginBottom: 3, alignItems: "center" }}>
+              <span style={{ minWidth: isMobile ? 90 : 100, fontWeight: 600 }}>Invoice date:</span>
+              <EditableDate value={inv.date} field="date" onFieldChange={onFieldChange} style={{ fontSize: 14, color: "#1a1a2e" }} />
+            </div>
+          )}
+          {c.showDueDate && (
+            <div style={{ display: "flex", gap: 8, fontSize: 14, color: "#1a1a2e", marginBottom: 3, alignItems: "center" }}>
+              <span style={{ minWidth: isMobile ? 90 : 100, fontWeight: 600 }}>Due date:</span>
+              <EditableDate value={inv.due_date} field="due_date" onFieldChange={onFieldChange} style={{ fontSize: 14, color: "#1a1a2e" }} />
+            </div>
+          )}
+        </div>
       </div>
 
       <div style={{ overflowX: isMobile ? "auto" : "visible", marginTop: 24 }}>

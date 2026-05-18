@@ -114,7 +114,7 @@ export default function InvoiceEditor() {
         to_name: invoice.to_name || "",
         items: invoice.items || [],
         status: "draft"
-      }) : JSON.stringify({ to_name: invoice.to_name });
+      }) : JSON.stringify({ to_name: invoice.to_name, to_email: invoice.to_email, to_address: invoice.to_address, invoice_number: invoice.invoice_number, terms: invoice.terms, date: invoice.date, due_date: invoice.due_date });
       const res = await fetch(url, {
         method,
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
