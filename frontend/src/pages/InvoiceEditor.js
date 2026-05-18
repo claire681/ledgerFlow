@@ -98,6 +98,10 @@ export default function InvoiceEditor() {
   const toggleField = (k) => setCustomization(s => ({ ...s, [k]: !s[k] }));
   const handleFieldChange = (field, value) => setInvoice(prev => ({ ...prev, [field]: value }));
   const handleCustomerSelect = (c) => setInvoice(prev => ({ ...prev, to_name: c.name, to_email: c.email, to_address: c.address }));
+  const handleItemChange = (i, field, value) => setInvoice(prev => { const items = [...(prev.items || prev.line_items || [])]; items[i] = { ...items[i], [field]: (field === "qty" || field === "rate") ? Number(value) : value }; return { ...prev, items }; });
+  const handleAddItem = () => setInvoice(prev => { const items = [...(prev.items || prev.line_items || [])]; items.push({ description: "", qty: 1, rate: 0 }); return { ...prev, items }; });
+  const handleDeleteItem = (i) => setInvoice(prev => { const items = [...(prev.items || prev.line_items || [])]; items.splice(i, 1); return { ...prev, items }; });
+  const handleClearItems = () => setInvoice(prev => ({ ...prev, items: [] }));
 
   const handleSave = async () => {
     const isNew = !id || id === "new";
@@ -115,7 +119,7 @@ export default function InvoiceEditor() {
         to_name: invoice.to_name || "",
         items: invoice.items || [],
         status: "draft"
-      }) : JSON.stringify({ to_name: invoice.to_name, to_email: invoice.to_email, to_address: invoice.to_address, invoice_number: invoice.invoice_number, terms: invoice.terms, date: invoice.date, due_date: invoice.due_date });
+      }) : JSON.stringify({ to_name: invoice.to_name, to_email: invoice.to_email, to_address: invoice.to_address, invoice_number: invoice.invoice_number, terms: invoice.terms, date: invoice.date, due_date: invoice.due_date, items: invoice.items || invoice.line_items || [], note: invoice.note || "" });
       const res = await fetch(url, {
         method,
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
@@ -176,7 +180,7 @@ export default function InvoiceEditor() {
           <div style={{ maxWidth: 800, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 400, overflow: "hidden" }}>
             {loading ? <div style={{ padding: 40, textAlign: "center", color: SUBTLE, fontSize: 14 }}>Loading invoice...</div>
               : error ? <div style={{ padding: 40, textAlign: "center", color: "#dc2626", fontSize: 14 }}>Error: {error}</div>
-              : <InvoicePreview inv={invoice} customization={customization} accentColor={accentColor} template={templateChoice} onFieldChange={handleFieldChange} onCustomerSelect={handleCustomerSelect} />}
+              : <InvoicePreview inv={invoice} customization={customization} accentColor={accentColor} template={templateChoice} onFieldChange={handleFieldChange} onCustomerSelect={handleCustomerSelect} onItemChange={handleItemChange} onAddItem={handleAddItem} onDeleteItem={handleDeleteItem} onClearItems={handleClearItems} />}
           </div>
         </div>
 
