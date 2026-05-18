@@ -15,7 +15,7 @@ const DEFAULTS = {
   showTerms: true, showCustomerEmail: true, showCustomerAddress: true
 };
 
-export default function InvoicePreview({ inv, customization }) {
+export default function InvoicePreview({ inv, customization, accentColor }) {
   const isMobile = useIsMobile();
   const c = { ...DEFAULTS, ...(customization || {}) };
   const lineItems = inv.line_items || inv.items || [];
@@ -35,7 +35,7 @@ export default function InvoicePreview({ inv, customization }) {
     <div style={{ fontFamily: "Georgia, serif", background: "#fff", color: "#1a1a2e", lineHeight: 1.6, padding: isMobile ? "24px 16px" : "48px 52px" }}>
       <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: isMobile ? 20 : 40 }}>
         <div>
-          <div style={{ fontSize: isMobile ? 28 : 38, fontWeight: 700, color: "#52b788", letterSpacing: "0.02em", marginBottom: 12 }}>INVOICE</div>
+          <div style={{ fontSize: isMobile ? 28 : 38, fontWeight: 700, color: accentColor || "#52b788", letterSpacing: "0.02em", marginBottom: 12 }}>INVOICE</div>
           {inv.from_name && <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1a2e", marginBottom: 2 }}>{inv.from_name}</div>}
           {inv.from_bn && <div style={{ fontSize: 14, color: "#444", marginBottom: 2 }}>BN {inv.from_bn}</div>}
           {inv.from_address && <div style={{ fontSize: 14, color: "#444", whiteSpace: "pre-line", marginBottom: 2 }}>{inv.from_address}</div>}
@@ -101,7 +101,7 @@ export default function InvoicePreview({ inv, customization }) {
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0" }}>
             <span style={{ fontSize: 14, color: "#1a1a2e", fontWeight: 700 }}>Balance due</span>
-            <span style={{ fontSize: 14, color: paid ? "#52b788" : "#1a1a2e", fontWeight: 700 }}>{paid ? "$0.00" : "$" + totalAmt.toFixed(2)}</span>
+            <span style={{ fontSize: 14, color: paid ? (accentColor || "#52b788") : "#1a1a2e", fontWeight: 700 }}>{paid ? "$0.00" : "$" + totalAmt.toFixed(2)}</span>
           </div>
         </div>
       </div>

@@ -28,6 +28,16 @@ const CUSTOMIZATION_FIELDS = [
   { key: "showCustomerAddress", label: "Customer address" }
 ];
 
+const PALETTE = [
+  "#0F5959", "#047857", "#1e40af", "#6b21a8",
+  "#9d174d", "#b45309", "#1e293b", "#0891b2"
+];
+
+const TEMPLATES = [
+  { key: "modern", label: "Modern" },
+  { key: "standard", label: "Standard" }
+];
+
 const EMPTY_INVOICE = {
   from_name: "", to_name: "", invoice_number: "",
   date: new Date().toISOString().slice(0, 10),
@@ -69,6 +79,8 @@ export default function InvoiceEditor() {
     showInvoiceNo: true, showInvoiceDate: true, showDueDate: true,
     showTerms: true, showCustomerEmail: true, showCustomerAddress: true
   });
+  const [accentColor, setAccentColor] = useState(BRAND);
+  const [templateChoice, setTemplateChoice] = useState("modern");
 
   useEffect(() => {
     if (!id || id === "new") { setInvoice(EMPTY_INVOICE); return; }
@@ -117,7 +129,7 @@ export default function InvoiceEditor() {
           <div style={{ maxWidth: 800, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 400, overflow: "hidden" }}>
             {loading ? <div style={{ padding: 40, textAlign: "center", color: SUBTLE, fontSize: 14 }}>Loading invoice...</div>
               : error ? <div style={{ padding: 40, textAlign: "center", color: "#dc2626", fontSize: 14 }}>Error: {error}</div>
-              : <InvoicePreview inv={invoice} customization={customization} />}
+              : <InvoicePreview inv={invoice} customization={customization} accentColor={accentColor} />}
           </div>
         </div>
 
@@ -149,7 +161,31 @@ export default function InvoiceEditor() {
                     ))}
                   </div>
                 )}
-                {openSections[s.k] && s.k !== "customization" && (
+                {openSections[s.k] && s.k === "design" && (
+                  <div style={{ marginTop: 14 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: SUBTLE, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Template</div>
+                    {TEMPLATES.map(t => (
+                      <label key={t.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", cursor: "pointer" }}>
+                        <input type="radio" checked={templateChoice === t.key} onChange={() => setTemplateChoice(t.key)} style={{ accentColor: BRAND, cursor: "pointer" }} />
+                        <span style={{ fontSize: 13, color: TEXT }}>{t.label}</span>
+                      </label>
+                    ))}
+                    <div style={{ fontSize: 11, fontWeight: 700, color: SUBTLE, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 16, marginBottom: 10 }}>Color</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 6, background: accentColor, border: "1px solid " + BORDER }} />
+                      <span style={{ fontSize: 13, color: TEXT, fontFamily: "monospace" }}>{accentColor}</span>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+                      {PALETTE.map(color => (
+                        <button key={color} onClick={() => setAccentColor(color)} style={{
+                          height: 40, borderRadius: 6, background: color, cursor: "pointer",
+                          border: accentColor === color ? "3px solid #0F172A" : "1px solid " + BORDER
+                        }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {openSections[s.k] && s.k !== "customization" && s.k !== "design" && (
                   <div style={{ marginTop: 12, fontSize: 13, color: SUBTLE, lineHeight: 1.5 }}>
                     Controls for {s.t.toLowerCase()} land in a later step.
                   </div>
