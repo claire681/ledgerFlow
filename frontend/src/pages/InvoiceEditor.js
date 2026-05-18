@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Settings, PlayCircle, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
 import InvoicePreview from "../components/InvoicePreview";
+import CustomerCombobox from "../components/customers/CustomerCombobox";
 
 const useIsMobile = () => {
   const [m, setM] = useState(typeof window !== "undefined" && window.innerWidth < 768);
@@ -97,6 +98,7 @@ export default function InvoiceEditor() {
   const toggleSection = (k) => setOpenSections(s => ({ ...s, [k]: !s[k] }));
   const toggleField = (k) => setCustomization(s => ({ ...s, [k]: !s[k] }));
   const handleFieldChange = (field, value) => setInvoice(prev => ({ ...prev, [field]: value }));
+  const handleCustomerSelect = (c) => setInvoice(prev => ({ ...prev, to_name: c.name, to_email: c.email, to_address: c.address }));
 
   const handleSave = async () => {
     const isNew = !id || id === "new";
@@ -172,6 +174,7 @@ export default function InvoiceEditor() {
 
       <div style={{ flex: 1, display: "flex", overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
         <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? 16 : 32, background: PAGE_BG }}>
+          <div style={{ maxWidth: 800, margin: "0 auto 16px auto" }}><CustomerCombobox value={invoice.to_name} onSelect={handleCustomerSelect} /></div>
           <div style={{ maxWidth: 800, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 400, overflow: "hidden" }}>
             {loading ? <div style={{ padding: 40, textAlign: "center", color: SUBTLE, fontSize: 14 }}>Loading invoice...</div>
               : error ? <div style={{ padding: 40, textAlign: "center", color: "#dc2626", fontSize: 14 }}>Error: {error}</div>
