@@ -19,12 +19,14 @@ const TEXT = "#0F172A";
 const SUBTLE = "#64748B";
 const PAGE_BG = "#f8fafc";
 
-const topBtn = (isMobile) => ({
-  display: "flex", alignItems: "center", gap: 6,
-  padding: isMobile ? "6px 8px" : "6px 12px",
-  background: "none", border: "none", cursor: "pointer",
-  fontSize: 13, color: SUBTLE
-});
+const CUSTOMIZATION_FIELDS = [
+  { key: "showInvoiceNo", label: "Invoice no." },
+  { key: "showInvoiceDate", label: "Invoice date" },
+  { key: "showDueDate", label: "Due date" },
+  { key: "showTerms", label: "Terms" },
+  { key: "showCustomerEmail", label: "Customer email" },
+  { key: "showCustomerAddress", label: "Customer address" }
+];
 
 const EMPTY_INVOICE = {
   from_name: "", to_name: "", invoice_number: "",
@@ -32,36 +34,54 @@ const EMPTY_INVOICE = {
   due_date: "", terms: "Net 30", items: [], status: "draft"
 };
 
+const Toggle = ({ on, onClick }) => (
+  <button onClick={onClick} style={{
+    width: 38, height: 22, borderRadius: 11, position: "relative",
+    background: on ? BRAND : "#cbd5e1", border: "none", cursor: "pointer",
+    transition: "background 0.2s", flexShrink: 0
+  }}>
+    <div style={{
+      width: 16, height: 16, borderRadius: "50%", background: "#fff",
+      position: "absolute", top: 3, left: on ? 19 : 3,
+      transition: "left 0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.2)"
+    }} />
+  </button>
+);
+
+const topBtn = (isMobile) => ({
+  display: "flex", alignItems: "center", gap: 6,
+  padding: isMobile ? "6px 8px" : "6px 12px",
+  background: "none", border: "none", cursor: "pointer",
+  fontSize: 13, color: SUBTLE
+});
+
 export default function InvoiceEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("edit");
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-  const [openSections, setOpenSections] = useState({
-    customization: true, payment: false, design: false, scheduling: false
-  });
+  const [openSections, setOpenSections] = useState({ customization: true, payment: false, design: false, scheduling: false });
   const [invoice, setInvoice] = useState(EMPTY_INVOICE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [customization, setCustomization] = useState({
+    showInvoiceNo: true, showInvoiceDate: true, showDueDate: true,
+    showTerms: true, showCustomerEmail: true, showCustomerAddress: true
+  });
 
   useEffect(() => {
     if (!id || id === "new") { setInvoice(EMPTY_INVOICE); return; }
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     const token = localStorage.getItem("token") || localStorage.getItem("access_token");
-    fetch("https://api.getnovala.com/api/v1/invoices/" + id, {
-      headers: { Authorization: "Bearer " + token }
-    })
-      .then(r => {
-        if (!r.ok) throw new Error("Failed to load invoice (" + r.status + ")");
-        return r.json();
-      })
+    fetch("https://api.getnovala.com/api/v1/invoices/" + id, { headers: { Authorization: "Bearer " + token } })
+      .then(r => { if (!r.ok) throw new Error("Failed to load invoice (" + r.status + ")"); return r.json(); })
       .then(data => { setInvoice(data); setLoading(false); })
       .catch(e => { setError(e.message); setLoading(false); });
   }, [id]);
 
   const toggleSection = (k) => setOpenSections(s => ({ ...s, [k]: !s[k] }));
+  const toggleField = (k) => setCustomization(s => ({ ...s, [k]: !s[k] }));
   const headerNumber = invoice.invoice_number || (id === "new" ? "new" : id);
 
   return (
@@ -95,13 +115,9 @@ export default function InvoiceEditor() {
       <div style={{ flex: 1, display: "flex", overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
         <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? 16 : 32, background: PAGE_BG }}>
           <div style={{ maxWidth: 800, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 400, overflow: "hidden" }}>
-            {loading ? (
-              <div style={{ padding: 40, textAlign: "center", color: SUBTLE, fontSize: 14 }}>Loading invoice...</div>
-            ) : error ? (
-              <div style={{ padding: 40, textAlign: "center", color: "#dc2626", fontSize: 14 }}>Error: {error}</div>
-            ) : (
-              <InvoicePreview inv={invoice} />
-            )}
+            {loading ? <div style={{ padding: 40, textAlign: "center", color: SUBTLE, fontSize: 14 }}>Loading invoice...</div>
+              : error ? <div style={{ padding: 40, textAlign: "center", color: "#dc2626", fontSize: 14 }}>Error: {error}</div>
+              : <InvoicePreview inv={invoice} customization={customization} />}
           </div>
         </div>
 
@@ -122,9 +138,20 @@ export default function InvoiceEditor() {
                   <span>{s.t}</span>
                   {openSections[s.k] ? <ChevronUp size={16} color={SUBTLE} /> : <ChevronDown size={16} color={SUBTLE} />}
                 </button>
-                {openSections[s.k] && (
+                {openSections[s.k] && s.k === "customization" && (
+                  <div style={{ marginTop: 14 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: SUBTLE, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Header fields</div>
+                    {CUSTOMIZATION_FIELDS.map(f => (
+                      <div key={f.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0" }}>
+                        <span style={{ fontSize: 13, color: TEXT }}>{f.label}</span>
+                        <Toggle on={customization[f.key]} onClick={() => toggleField(f.key)} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {openSections[s.k] && s.k !== "customization" && (
                   <div style={{ marginTop: 12, fontSize: 13, color: SUBTLE, lineHeight: 1.5 }}>
-                    Controls for {s.t.toLowerCase()} land in PR3.
+                    Controls for {s.t.toLowerCase()} land in a later step.
                   </div>
                 )}
               </div>
