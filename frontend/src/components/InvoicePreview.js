@@ -22,6 +22,14 @@ const inputBase = (s) => ({ ...s, background: "#fff", border: "1px solid #e2e8f0
 const onFocusBg = (e) => { e.target.style.borderColor = "#0F5959"; e.target.style.boxShadow = "0 0 0 3px rgba(15,89,89,0.12)"; };
 const onBlurBg = (e) => { e.target.style.borderColor = "#e2e8f0"; e.target.style.boxShadow = "none"; };
 
+const formatDate = (iso) => {
+  if (!iso) return "";
+  const s = String(iso).slice(0, 10);
+  const parts = s.split("-");
+  if (parts.length !== 3) return s;
+  return parts[2] + "/" + parts[1] + "/" + parts[0];
+};
+
 const EditableText = ({ value, field, onFieldChange, style, placeholder, fallback }) => {
   if (!onFieldChange) return <div style={style}>{value || (fallback !== undefined ? fallback : "-")}</div>;
   return <input type="text" value={value || ""} onChange={e => onFieldChange(field, e.target.value)} placeholder={placeholder} style={inputBase(style)} onFocus={onFocusBg} onBlur={onBlurBg} />;
@@ -29,7 +37,7 @@ const EditableText = ({ value, field, onFieldChange, style, placeholder, fallbac
 
 const EditableDate = ({ value, field, onFieldChange, style }) => {
   const d = value ? String(value).slice(0, 10) : "";
-  if (!onFieldChange) return <span style={style}>{d || "-"}</span>;
+  if (!onFieldChange) return <span style={style}>{formatDate(d) || "-"}</span>;
   return <input type="date" value={d} onChange={e => onFieldChange(field, e.target.value)} style={inputBase(style)} onFocus={onFocusBg} onBlur={onBlurBg} />;
 };
 

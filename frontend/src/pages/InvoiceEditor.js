@@ -83,6 +83,29 @@ export default function InvoiceEditor() {
     showTerms: true, showCustomerEmail: true, showCustomerAddress: true
   });
   const [accentColor, setAccentColor] = useState(BRAND);
+
+  // Auto-populate due date based on terms
+  useEffect(() => {
+    if (!invoice.date || !invoice.terms) return;
+    const t = String(invoice.terms).toLowerCase().trim();
+    let daysToAdd = null;
+    if (t === "net 30" || t === "net30") daysToAdd = 30;
+    else if (t === "net 15" || t === "net15") daysToAdd = 15;
+    else if (t === "net 60" || t === "net60") daysToAdd = 60;
+    else if (t === "net 7" || t === "net7") daysToAdd = 7;
+    else if (t === "net 45" || t === "net45") daysToAdd = 45;
+    else if (t.includes("due on receipt") || t === "receipt") daysToAdd = 0;
+    if (daysToAdd === null) return;
+    const base = new Date(invoice.date + "T00:00:00");
+    base.setDate(base.getDate() + daysToAdd);
+    const yyyy = base.getFullYear();
+    const mm = String(base.getMonth() + 1).padStart(2, "0");
+    const dd = String(base.getDate()).padStart(2, "0");
+    const newDue = yyyy + "-" + mm + "-" + dd;
+    if (newDue !== invoice.due_date) {
+      setInvoice(prev => ({ ...prev, due_date: newDue }));
+    }
+  }, [invoice.date, invoice.terms]);
   const [templateChoice, setTemplateChoice] = useState("modern");
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState(null);
