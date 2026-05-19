@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Settings, PlayCircle, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
 import InvoicePreview from "../components/InvoicePreview";
 import EditCompanyDrawer, { getStoredProfile } from "../components/company/EditCompanyDrawer";
+import NewCustomerDrawer from "../components/customers/NewCustomerDrawer";
 
 const useIsMobile = () => {
   const [m, setM] = useState(typeof window !== "undefined" && window.innerWidth < 768);
@@ -76,6 +77,9 @@ export default function InvoiceEditor() {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [openSections, setOpenSections] = useState({ customization: true, payment: false, design: false, scheduling: false });
   const [invoice, setInvoice] = useState(buildEmptyInvoice());
+  const [editCustomerOpen, setEditCustomerOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [customization, setCustomization] = useState({
@@ -126,7 +130,20 @@ export default function InvoiceEditor() {
   const toggleSection = (k) => setOpenSections(s => ({ ...s, [k]: !s[k] }));
   const toggleField = (k) => setCustomization(s => ({ ...s, [k]: !s[k] }));
   const handleFieldChange = (field, value) => setInvoice(prev => ({ ...prev, [field]: value }));
-  const handleCustomerSelect = (c) => setInvoice(prev => ({ ...prev, to_name: c.name, to_email: c.email, to_address: c.address }));
+  const handleCustomerSelect = (c) => { setSelectedCustomer(c); setInvoice(prev => ({ ...prev, to_name: c.name, to_email: c.email, to_address: c.address })); };
+
+  const handleEditCustomer = () => { if (selectedCustomer) { setEditingCustomer(selectedCustomer); setEditCustomerOpen(true); } };
+  const handleEditCustomerSave = async (customerData) => {
+    const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+    const id = editingCustomer && editingCustomer.id;
+    if (id && token) {
+      try {
+        const res = await fetch("https://api.getnovala.com/api/v1/customers/" + id, { method: "PATCH", headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }, body: JSON.stringify(customerData) });
+        if (res.ok) { const updated = await res.json(); setInvoice(prev => ({ ...prev, to_name: updated.name || prev.to_name, to_email: updated.email || prev.to_email, to_address: updated.address || prev.to_address })); setSelectedCustomer(updated); }
+      } catch (e) { console.error("Edit customer failed:", e); }
+    }
+    setEditCustomerOpen(false);
+  };
   const handleItemChange = (i, field, value) => setInvoice(prev => { const items = [...(prev.items || prev.line_items || [])]; items[i] = { ...items[i], [field]: (field === "qty" || field === "rate") ? Number(value) : value }; return { ...prev, items }; });
   const handleAddItem = () => setInvoice(prev => { const items = [...(prev.items || prev.line_items || [])]; items.push({ description: "", qty: 1, rate: 0 }); return { ...prev, items }; });
   const handleDeleteItem = (i) => setInvoice(prev => { const items = [...(prev.items || prev.line_items || [])]; items.splice(i, 1); return { ...prev, items }; });
@@ -223,7 +240,8 @@ export default function InvoiceEditor() {
           <div style={{ maxWidth: 800, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 400, overflow: "hidden" }}>
             {loading ? <div style={{ padding: 40, textAlign: "center", color: SUBTLE, fontSize: 14 }}>Loading invoice...</div>
               : error ? <div style={{ padding: 40, textAlign: "center", color: "#dc2626", fontSize: 14 }}>Error: {error}</div>
-              : <InvoicePreview inv={invoice} customization={customization} accentColor={accentColor} template={templateChoice} onFieldChange={handleFieldChange} onCustomerSelect={handleCustomerSelect} onItemChange={handleItemChange} onAddItem={handleAddItem} onDeleteItem={handleDeleteItem} onClearItems={handleClearItems} onEditCompany={() => setEditCompanyOpen(true)} />}
+              : <InvoicePreview inv={invoice} customization={customization} accentColor={accentColor} template={templateChoice} onFieldChange={handleFieldChange} onCustomerSelect={handleCustomerSelect} onItemChange={handleItemChange} onAddItem={handleAddItem} onDeleteItem={handleDeleteItem} onClearItems={handleClearItems} onEditCompany={() => setEditCompanyOpen(true)}
+          onEditCustomer={handleEditCustomer} />}
           </div>
         </div>
 
@@ -299,6 +317,12 @@ export default function InvoiceEditor() {
       </div>
 
       <EditCompanyDrawer open={editCompanyOpen} onClose={() => setEditCompanyOpen(false)} initialData={invoice} onSave={handleSaveCompany} />
+      <NewCustomerDrawer
+        isOpen={editCustomerOpen}
+        onClose={() => setEditCustomerOpen(false)}
+        onSave={handleEditCustomerSave}
+        initialData={editingCustomer}
+      />
       {saveMessage && (
         <div style={{ position: "fixed", bottom: 80, right: 24, padding: "10px 16px", background: saveMessage.type === "success" ? "#10b981" : "#dc2626", color: "#fff", borderRadius: 6, fontSize: 14, zIndex: 9999, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>{saveMessage.text}</div>
       )}

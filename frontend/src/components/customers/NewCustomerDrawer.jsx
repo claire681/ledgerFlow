@@ -319,6 +319,7 @@ const initialState = {
 export function NewCustomerDrawer({ isOpen, onClose, onSave }) {
   const isMobile = useIsMobile();
   const [customer, setCustomer] = useState(initialState);
+  useEffect(() => { if (isOpen && initialData) { setCustomer(prev => ({ ...prev, ...initialData })); } }, [isOpen, initialData]); // initialData merge
   const [displayNameTouched, setDisplayNameTouched] = useState(false);
   const [customFieldModalOpen, setCustomFieldModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
