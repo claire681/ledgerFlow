@@ -72,3 +72,10 @@ body {
 .novala-phone-input .PhoneInputInput { flex: 1; height: 44px; padding: 0 14px; border: 1px solid rgb(203, 213, 225); border-radius: 0 8px 8px 0; font-size: 15px; color: rgb(15, 23, 42); outline: none; background: white; font-family: inherit; }
 .novala-phone-input .PhoneInputInput:focus { border-color: rgb(15, 89, 89); box-shadow: 0 0 0 3px rgba(15, 89, 89, 0.15); }
 .novala-phone-input .PhoneInputInput::placeholder { color: rgb(148, 163, 184); }
+
+/* Force phone country dropdown to open downward */
+.react-tel-input .country-list {
+  bottom: auto !important;
+  top: 100% !important;
+  margin-top: 4px !important;
+}
