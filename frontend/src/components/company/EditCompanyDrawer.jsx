@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, Upload, Trash2 } from "lucide-react";
 
 const COMPANY_KEY = "novala_company_profile_v1";
 
@@ -13,18 +13,33 @@ export const setStoredProfile = (d) => {
 };
 
 const BRAND = "#0F5959";
-const BORDER = "#e2e8f0";
+const GREEN = "#047857";
+const BORDER = "#cbd5e1";
 const TEXT = "#0F172A";
-const SUBTLE = "#64748B";
+const SUBTLE = "#475569";
 
 const labelStyle = { display: "block", fontSize: 14, fontWeight: 600, color: "#1e293b", marginBottom: 8 };
-const inputStyle = { width: "100%", padding: "12px 14px", border: "1px solid " + BORDER, borderRadius: 8, fontSize: 15, fontFamily: "inherit", outline: "none", boxSizing: "border-box", background: "#fff", color: "#0F172A" };
-const sectionStyle = { fontSize: 13, fontWeight: 600, color: "#0F172A", marginBottom: 12, marginTop: 24 };
-const onFocus = (e) => { e.target.style.borderColor = BRAND; e.target.style.boxShadow = "0 0 0 3px rgba(15,89,89,0.12)"; };
+const inputStyle = { width: "100%", padding: "12px 14px", border: "1px solid " + BORDER, borderRadius: 8, fontSize: 15, fontFamily: "inherit", outline: "none", boxSizing: "border-box", background: "#fff", color: TEXT };
+const sectionStyle = { fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 14, marginTop: 28 };
+const onFocus = (e) => { e.target.style.borderColor = BRAND; e.target.style.boxShadow = "0 0 0 3px rgba(15,89,89,0.15)"; };
 const onBlur = (e) => { e.target.style.borderColor = BORDER; e.target.style.boxShadow = "none"; };
 
+const COUNTRIES = [
+  { code: "CA", flag: "\uD83C\uDDE8\uD83C\uDDE6", dial: "+1" },
+  { code: "US", flag: "\uD83C\uDDFA\uD83C\uDDF8", dial: "+1" },
+  { code: "GB", flag: "\uD83C\uDDEC\uD83C\uDDE7", dial: "+44" },
+  { code: "AU", flag: "\uD83C\uDDE6\uD83C\uDDFA", dial: "+61" },
+  { code: "NG", flag: "\uD83C\uDDF3\uD83C\uDDEC", dial: "+234" },
+  { code: "KE", flag: "\uD83C\uDDF0\uD83C\uDDEA", dial: "+254" },
+  { code: "IN", flag: "\uD83C\uDDEE\uD83C\uDDF3", dial: "+91" },
+  { code: "FR", flag: "\uD83C\uDDEB\uD83C\uDDF7", dial: "+33" },
+  { code: "DE", flag: "\uD83C\uDDE9\uD83C\uDDEA", dial: "+49" },
+  { code: "ZA", flag: "\uD83C\uDDFF\uD83C\uDDE6", dial: "+27" }
+];
+
 export default function EditCompanyDrawer({ open, onClose, initialData, onSave }) {
-  const [data, setData] = useState({ name: "", business_number: "", email: "", phone: "", website: "", address_street: "", address_city: "", address_province: "", address_postal_code: "" });
+  const [data, setData] = useState({ name: "", business_number: "", email: "", phone: "", website: "", address_street: "", address_city: "", address_province: "", address_postal_code: "", cf_same: true, cf_street: "", cf_city: "", cf_province: "", cf_postal_code: "", logo: null });
+  const [phoneCountry, setPhoneCountry] = useState("CA");
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth < 768);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -45,13 +60,20 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
       name: src.from_name || "",
       business_number: src.from_bn || "",
       email: src.from_email || "",
-      phone: src.from_phone || "",
+      phone: src.from_phone ? src.from_phone.replace(/^\+\d+\s*/, "") : "",
       website: src.from_website || "",
       address_street: lines[0] || "",
       address_city: lines[1] || "",
       address_province: lines[2] || "",
-      address_postal_code: lines[3] || ""
+      address_postal_code: lines[3] || "",
+      cf_same: stored.cf_same !== false,
+      cf_street: stored.cf_street || "",
+      cf_city: stored.cf_city || "",
+      cf_province: stored.cf_province || "",
+      cf_postal_code: stored.cf_postal_code || "",
+      logo: stored.logo || initialData?.logo_url || null
     });
+    setPhoneCountry(stored.phoneCountry || "CA");
     setError(null);
   }, [open, initialData]);
 
@@ -59,15 +81,26 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
 
   const setField = (k, v) => setData(prev => ({ ...prev, [k]: v }));
 
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { setError("Logo too large (max 2 MB)"); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => setField("logo", ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async () => {
     if (!data.name.trim()) { setError("Company name is required"); return; }
     setSaving(true); setError(null);
+    const country = COUNTRIES.find(c => c.code === phoneCountry) || COUNTRIES[0];
+    const fullPhone = data.phone ? (country.dial + " " + data.phone) : "";
     const addrParts = [data.address_street, data.address_city, data.address_province, data.address_postal_code].filter(Boolean);
     const fullAddr = addrParts.join("\n");
 
-    setStoredProfile({ name: data.name.trim(), business_number: data.business_number, email: data.email, phone: data.phone, website: data.website, address: fullAddr });
+    setStoredProfile({ name: data.name.trim(), business_number: data.business_number, email: data.email, phone: fullPhone, phoneCountry, website: data.website, address: fullAddr, cf_same: data.cf_same, cf_street: data.cf_street, cf_city: data.cf_city, cf_province: data.cf_province, cf_postal_code: data.cf_postal_code, logo: data.logo });
 
-    const payload = { from_name: data.name.trim(), from_bn: data.business_number, from_email: data.email, from_phone: data.phone, from_website: data.website, from_address: fullAddr };
+    const payload = { from_name: data.name.trim(), from_bn: data.business_number, from_email: data.email, from_phone: fullPhone, from_website: data.website, from_address: fullAddr, logo_url: data.logo };
 
     try {
       if (onSave) await onSave(payload);
@@ -80,13 +113,15 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
     }
   };
 
+  const canSave = data.name.trim().length > 0 && !saving;
+
   return (
     <>
       <div onClick={onClose} style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(2px)", zIndex: 100 }} />
       <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: isMobile ? "100%" : 520, background: "#fff", boxShadow: "-4px 0 24px rgba(0,0,0,0.1)", zIndex: 101, display: "flex", flexDirection: "column", fontFamily: "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif" }}>
-        <div style={{ padding: "20px 24px", borderBottom: "1px solid " + BORDER }}>
+        <div style={{ padding: "20px 24px", borderBottom: "1px solid " + BORDER, flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <h2 style={{ fontSize: 18, fontWeight: 600, color: TEXT, margin: 0 }}>My company</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: TEXT, margin: 0 }}>My company</h2>
             <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}><X size={20} color={SUBTLE} /></button>
           </div>
           <p style={{ fontSize: 13, color: SUBTLE, marginTop: 6, marginBottom: 0 }}>Changes made here will update your company information everywhere.</p>
@@ -96,7 +131,17 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
           <div style={{ marginBottom: 16 }}><label style={labelStyle}>Company name (required)</label><input type="text" value={data.name} onChange={e => setField("name", e.target.value)} style={inputStyle} placeholder="Acme Inc." onFocus={onFocus} onBlur={onBlur} /></div>
           <div style={{ marginBottom: 16 }}><label style={labelStyle}>Business number (BN)</label><input type="text" value={data.business_number} onChange={e => setField("business_number", e.target.value)} style={inputStyle} placeholder="123456789RT0001" onFocus={onFocus} onBlur={onBlur} /></div>
           <div style={{ marginBottom: 16 }}><label style={labelStyle}>Email</label><input type="email" value={data.email} onChange={e => setField("email", e.target.value)} style={inputStyle} placeholder="contact@yourcompany.com" onFocus={onFocus} onBlur={onBlur} /></div>
-          <div style={{ marginBottom: 16 }}><label style={labelStyle}>Phone number</label><input type="tel" value={data.phone} onChange={e => setField("phone", e.target.value)} style={inputStyle} placeholder="+1 (780) 555-1234" onFocus={onFocus} onBlur={onBlur} /></div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Phone number</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <select value={phoneCountry} onChange={e => setPhoneCountry(e.target.value)} style={{ ...inputStyle, width: 110, flexShrink: 0, padding: "12px 8px" }}>
+                {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.dial}</option>)}
+              </select>
+              <input type="tel" value={data.phone} onChange={e => setField("phone", e.target.value)} style={inputStyle} placeholder="(780) 555-1234" onFocus={onFocus} onBlur={onBlur} />
+            </div>
+          </div>
+
           <div style={{ marginBottom: 16 }}><label style={labelStyle}>Website</label><input type="url" value={data.website} onChange={e => setField("website", e.target.value)} style={inputStyle} placeholder="https://yourcompany.com" onFocus={onFocus} onBlur={onBlur} /></div>
 
           <div style={sectionStyle}>Company address</div>
@@ -108,16 +153,41 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
           </div>
 
           <div style={sectionStyle}>Customer-facing address</div>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, cursor: "pointer", fontSize: 13, color: TEXT }}>
-            <input type="checkbox" defaultChecked style={{ accentColor: BRAND, width: 16, height: 16 }} />
+          <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, cursor: "pointer", fontSize: 14, color: TEXT }}>
+            <input type="checkbox" checked={data.cf_same} onChange={e => setField("cf_same", e.target.checked)} style={{ accentColor: GREEN, width: 18, height: 18 }} />
             <span>Same as company address</span>
           </label>
+          {!data.cf_same && (
+            <>
+              <div style={{ marginBottom: 12 }}><label style={labelStyle}>Street</label><input type="text" value={data.cf_street} onChange={e => setField("cf_street", e.target.value)} style={inputStyle} placeholder="PO Box 123" onFocus={onFocus} onBlur={onBlur} /></div>
+              <div style={{ marginBottom: 12 }}><label style={labelStyle}>City</label><input type="text" value={data.cf_city} onChange={e => setField("cf_city", e.target.value)} style={inputStyle} onFocus={onFocus} onBlur={onBlur} /></div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                <div><label style={labelStyle}>Province</label><input type="text" value={data.cf_province} onChange={e => setField("cf_province", e.target.value)} style={inputStyle} onFocus={onFocus} onBlur={onBlur} /></div>
+                <div><label style={labelStyle}>Postal code</label><input type="text" value={data.cf_postal_code} onChange={e => setField("cf_postal_code", e.target.value)} style={inputStyle} onFocus={onFocus} onBlur={onBlur} /></div>
+              </div>
+            </>
+          )}
+
+          <div style={sectionStyle}>Company logo</div>
+          {data.logo ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 16, padding: 12, background: "#f8fafc", border: "1px solid " + BORDER, borderRadius: 8, marginBottom: 12 }}>
+              <img src={data.logo} alt="Logo" style={{ maxHeight: 60, maxWidth: 120, objectFit: "contain" }} />
+              <button onClick={() => setField("logo", null)} style={{ marginLeft: "auto", background: "none", border: "1px solid " + BORDER, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: 13, color: "#dc2626", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "inherit" }}><Trash2 size={14} /> Remove</button>
+            </div>
+          ) : (
+            <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", border: "2px dashed " + BORDER, borderRadius: 8, cursor: "pointer", background: "#f8fafc", marginBottom: 12 }}>
+              <Upload size={20} color={SUBTLE} />
+              <div style={{ marginTop: 8, fontSize: 14, fontWeight: 600, color: GREEN }}>Upload logo</div>
+              <div style={{ marginTop: 4, fontSize: 12, color: SUBTLE }}>PNG, JPG, SVG · Max 2 MB</div>
+              <input type="file" accept="image/png,image/jpeg,image/svg+xml" onChange={handleLogoUpload} style={{ display: "none" }} />
+            </label>
+          )}
 
           {error && (<div style={{ padding: "10px 12px", background: "#fef9c3", border: "1px solid #fde68a", borderRadius: 6, color: "#854d0e", fontSize: 13, marginTop: 12 }}>{error}</div>)}
         </div>
 
         <div style={{ width: "100%", background: "#f8fafc", borderTop: "1px solid #e2e8f0", padding: "16px 24px", boxSizing: "border-box", display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
-          <button onClick={handleSave} disabled={saving || !data.name.trim()} style={{ background: "#047857", color: "#fff", border: "none", borderRadius: 8, padding: "0 24px", height: 40, fontSize: 14, fontWeight: 500, cursor: (saving || !data.name.trim()) ? "not-allowed" : "pointer", opacity: (saving || !data.name.trim()) ? 0.5 : 1, fontFamily: "inherit" }}>{saving ? "Saving..." : "Save"}</button>
+          <button onClick={handleSave} disabled={!canSave} style={{ background: canSave ? GREEN : "#cbd5e1", color: "#fff", border: "none", borderRadius: 8, padding: "0 24px", height: 40, fontSize: 14, fontWeight: 500, cursor: canSave ? "pointer" : "not-allowed", opacity: 1, fontFamily: "inherit" }}>{saving ? "Saving..." : "Save"}</button>
         </div>
       </div>
     </>

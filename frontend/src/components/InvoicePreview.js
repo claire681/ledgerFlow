@@ -115,6 +115,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           <table style={{ width: "100%", minWidth: isMobile ? 540 : "auto", borderCollapse: "collapse", fontSize: 13 }}>
             <thead><tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
               <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", width: 32 }}>#</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>Product/service</th>
               <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>Description</th>
               <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", width: 80 }}>Qty</th>
               <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", width: 100 }}>Rate</th>
@@ -123,13 +124,14 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
             </tr></thead>
             <tbody>
               {items.length === 0 ? (
-                <tr><td colSpan={editable ? 6 : 5} style={{ textAlign: "center", padding: "32px 0", color: "#94a3b8", fontSize: 13 }}>No line items yet. Click below to add one.</td></tr>
+                <tr><td colSpan={editable ? 7 : 6} style={{ textAlign: "center", padding: "32px 0", color: "#94a3b8", fontSize: 13 }}>No line items yet. Click below to add one.</td></tr>
               ) : items.map((item, i) => {
                 const qty = Number(item.qty ?? item.quantity ?? 1);
                 const rate = Number(item.rate ?? item.price ?? 0);
                 return (
                   <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
                     <td style={{ padding: "8px 12px", fontSize: 13, color: "#0F172A", verticalAlign: "middle", ...numStyle }}>{i + 1}</td>
+                    <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput value={item.name || ""} onChange={e => onItemChange(i, "name", e.target.value)} placeholder="Pick or type" /> : <span style={{ padding: "6px 8px", fontSize: 13 }}>{item.name || "-"}</span>}</td>
                     <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput value={item.description || ""} onChange={e => onItemChange(i, "description", e.target.value)} placeholder="Enter description" /> : <span style={{ padding: "6px 8px", fontSize: 13 }}>{item.description || "-"}</span>}</td>
                     <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput type="number" value={qty} onChange={e => onItemChange(i, "qty", e.target.value)} align="right" /> : <span style={{ padding: "6px 8px", fontSize: 13, ...numStyle }}>{qty}</span>}</td>
                     <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput type="number" value={rate} onChange={e => onItemChange(i, "rate", e.target.value)} align="right" /> : <span style={{ padding: "6px 8px", fontSize: 13, ...numStyle }}>${rate.toFixed(2)}</span>}</td>
