@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { Edit2, Trash2, Plus } from "lucide-react";
 import CustomerCombobox from "./customers/CustomerCombobox";
+import { LogoUploadModal } from "./LogoUploadModal";
 
 const useIsMobile = () => {
+  const [logoModalOpen, setLogoModalOpen] = useState(false);
+  const [localLogoOverride, setLocalLogoOverride] = useState(null);
+  const handleLogoUpload = (base64) => {
+    setLocalLogoOverride(base64);
+    try {
+      const profile = JSON.parse(localStorage.getItem("novala_company_profile_v1") || "{}");
+      profile.logo = base64;
+      localStorage.setItem("novala_company_profile_v1", JSON.stringify(profile));
+    } catch (e) {}
+    if (typeof inv === "object" && inv) inv.logo_url = base64;
+  };
   const [m, setM] = useState(typeof window !== "undefined" && window.innerWidth < 768);
   useEffect(() => {
     const h = () => setM(window.innerWidth < 768);
@@ -72,16 +84,40 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
         </div>
         <div style={{ textAlign: isMobile ? "left" : "right" }}>
           <div style={{ fontSize: 13, color: "#64748B", marginBottom: 12, ...numStyle }}>Balance due (hidden): <span style={{ color: accentColor || "#0F172A", fontWeight: 600 }}>${totalAmt.toFixed(2)}</span></div>
-          {inv.logo_url ? (
-            <img src={inv.logo_url} alt="Logo" style={{ maxHeight: 80, width: "auto", display: "inline-block" }} onError={e => { e.target.style.display = "none"; }} />
+          {(localLogoOverride || inv.logo_url) ? (
+            <img src={localLogoOverride || inv.logo_url} alt="Logo" style={{ maxHeight: 80, width: "auto", display: "inline-block" }} onError={e => { e.target.style.display = "none"; }} />
           ) : (
             <div style={{ width: 80, height: 80, borderRadius: 8, background: "#f1f5f9", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: 11 }}>Logo</div>
           )}
           <div style={{ marginTop: 8 }}>
-            <button style={{ width: 28, height: 28, borderRadius: "50%", background: "#f1f5f9", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-              <Edit2 size={12} color="#64748B" />
-            </button>
-          </div>
+  <button
+    type="button"
+    onClick={() => setLogoModalOpen(true)}
+    style={{
+      width: 36,
+      height: 36,
+      borderRadius: "50%",
+      background: "#f1f5f9",
+      border: "none",
+      cursor: "pointer",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      transition: "background 0.15s ease"
+    }}
+    onMouseOver={(e) => e.currentTarget.style.background = "#e2e8f0"}
+    onMouseOut={(e) => e.currentTarget.style.background = "#f1f5f9"}
+    title="Change logo"
+  >
+    <Edit2 size={14} color="#64748B" />
+  </button>
+</div>
+
+<LogoUploadModal
+  isOpen={logoModalOpen}
+  onClose={() => setLogoModalOpen(false)}
+  onUpload={handleLogoUpload}
+/>
         </div>
       </div>
 
