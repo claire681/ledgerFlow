@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ChevronDown, Search, Plus } from "lucide-react";
+import { NewCustomerDrawer } from "./NewCustomerDrawer";
 
 const BRAND = "#0F5959";
 const BORDER = "#e2e8f0";
@@ -28,6 +29,66 @@ const addressOf = (c) => {
 
 export default function CustomerCombobox({ value, onSelect }) {
   const [open, setOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const handleNewCustomerSave = async (payload) => {
+    const addressParts = [
+      payload.address_street,
+      payload.address_city,
+      payload.address_province,
+      payload.address_postal_code
+    ].filter(Boolean);
+    const addressString = addressParts.join(", ");
+    const apiPayload = {
+      name: payload.display_name,
+      email: payload.email,
+      phone: payload.phone,
+      address: addressString
+    };
+    try {
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("access_token") ||
+        "";
+      const response = await fetch("/api/v1/customers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: "Bearer " + token } : {})
+        },
+        body: JSON.stringify(apiPayload)
+      });
+      if (!response.ok) throw new Error("Save failed");
+      const newCustomer = await response.json();
+      if (onSelect) {
+        onSelect({
+          name: displayNameOf(newCustomer),
+          email: newCustomer.email || "",
+          address: addressOf(newCustomer),
+          raw: newCustomer
+        });
+      }
+      setOpen(false);
+      setSearch("");
+    } catch (e) {
+      const localCustomer = {
+        id: "local-" + Date.now(),
+        name: payload.display_name,
+        email: payload.email,
+        phone: payload.phone,
+        address: addressString
+      };
+      if (onSelect) {
+        onSelect({
+          name: localCustomer.name,
+          email: localCustomer.email,
+          address: localCustomer.address,
+          raw: localCustomer
+        });
+      }
+      setOpen(false);
+      setSearch("");
+    }
+  };
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -85,7 +146,7 @@ export default function CustomerCombobox({ value, onSelect }) {
             <Search size={14} color={SUBTLE} />
             <input autoFocus type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search customers..." style={{ flex: 1, border: "none", outline: "none", fontSize: 14, fontFamily: "inherit", background: "transparent" }} />
           </div>
-          <button onClick={() => alert("Add new customer drawer coming in next PR. For now, add customers via the Customers page.")} style={{ width: "100%", padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", borderBottom: "1px solid #e2e8f0", cursor: "pointer", fontSize: 14, color: "#047857", fontWeight: 600, textAlign: "left", fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#d1fae5"} onMouseLeave={e => e.currentTarget.style.background = "none"}><Plus size={14} />Add new</button>
+          <button onClick={() => setDrawerOpen(true)} style={{ width: "100%", padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", borderBottom: "1px solid #e2e8f0", cursor: "pointer", fontSize: 14, color: "#047857", fontWeight: 600, textAlign: "left", fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#d1fae5"} onMouseLeave={e => e.currentTarget.style.background = "none"}><Plus size={14} />Add new</button>
           <div style={{ overflowY: "auto", flex: 1 }}>
             {loading ? (
               <div style={{ padding: 20, textAlign: "center", color: SUBTLE, fontSize: 13 }}>Loading customers...</div>
@@ -112,6 +173,11 @@ export default function CustomerCombobox({ value, onSelect }) {
           </div>
         </div>
       )}
-    </div>
+          <NewCustomerDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onSave={handleNewCustomerSave}
+      />
+      </div>
   );
 }
