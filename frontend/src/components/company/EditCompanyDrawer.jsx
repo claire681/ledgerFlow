@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Upload, Trash2 } from "lucide-react";
+import { X, Upload, Trash2, ChevronDown } from "lucide-react";
 
 const COMPANY_KEY = "novala_company_profile_v1";
 
@@ -40,6 +40,7 @@ const COUNTRIES = [
 export default function EditCompanyDrawer({ open, onClose, initialData, onSave }) {
   const [data, setData] = useState({ name: "", business_number: "", email: "", phone: "", website: "", address_street: "", address_city: "", address_province: "", address_postal_code: "", cf_same: true, cf_street: "", cf_city: "", cf_province: "", cf_postal_code: "", logo: null });
   const [phoneCountry, setPhoneCountry] = useState("CA");
+  const [phoneDropdownOpen, setPhoneDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth < 768);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -49,6 +50,13 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
     window.addEventListener("resize", h);
     return () => window.removeEventListener("resize", h);
   }, []);
+
+  useEffect(() => {
+    if (!phoneDropdownOpen) return;
+    const handler = (e) => { if (!e.target.closest("[data-phone-dropdown]")) setPhoneDropdownOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [phoneDropdownOpen]);
 
   useEffect(() => {
     if (!open) return;
@@ -134,11 +142,23 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
 
           <div style={{ marginBottom: 16 }}>
             <label style={labelStyle}>Phone number</label>
-            <div style={{ display: "flex", gap: 8 }}>
-              <select value={phoneCountry} onChange={e => setPhoneCountry(e.target.value)} style={{ ...inputStyle, width: 110, flexShrink: 0, padding: "12px 8px" }}>
-                {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.dial}</option>)}
-              </select>
+            <div style={{ display: "flex", gap: 8, position: "relative" }} data-phone-dropdown>
+              <button type="button" onClick={() => setPhoneDropdownOpen(!phoneDropdownOpen)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 12px", border: "1px solid " + BORDER, borderRadius: 8, background: "#fff", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>
+                <span style={{ fontSize: 20, lineHeight: 1 }}>{flagOf(phoneCountry)}</span>
+                <ChevronDown size={14} color={SUBTLE} />
+              </button>
               <input type="tel" value={data.phone} onChange={e => setField("phone", e.target.value)} style={inputStyle} placeholder="(780) 555-1234" onFocus={onFocus} onBlur={onBlur} />
+              {phoneDropdownOpen && (
+                <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, maxHeight: 320, overflowY: "auto", background: "#fff", border: "1px solid " + BORDER, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50 }}>
+                  {COUNTRIES.map(c => (
+                    <button key={c.code} type="button" onClick={() => { setPhoneCountry(c.code); setPhoneDropdownOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", width: "100%", border: "none", borderBottom: "1px solid #f1f5f9", background: "none", cursor: "pointer", textAlign: "left", fontFamily: "inherit", fontSize: 14, color: TEXT, boxSizing: "border-box" }} onMouseEnter={e => e.currentTarget.style.background = "#f1f5f9"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                      <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>{flagOf(c.code)}</span>
+                      <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
+                      <span style={{ color: SUBTLE, fontSize: 13, flexShrink: 0 }}>{c.dial}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
