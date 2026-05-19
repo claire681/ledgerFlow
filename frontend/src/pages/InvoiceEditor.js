@@ -30,7 +30,7 @@ const CUSTOMIZATION_FIELDS = [
 ];
 
 const PALETTE = [
-  "#0F5959", "#047857", "#1e40af", "#6b21a8",
+  "#0F5959", "#22c55e", "#1e40af", "#6b21a8",
   "#9d174d", "#b45309", "#1e293b", "#0891b2"
 ];
 

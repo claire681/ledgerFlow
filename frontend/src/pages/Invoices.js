@@ -714,7 +714,7 @@ export default function Invoices() {
         <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(4,1fr)', gap:isMobile?10:16, marginBottom:isMobile?14:24 }}>
           {[
             { label:'Total Invoices', value:invoices.length, sub:'All time', dot:null, icon:FileText, iconBg:'#F1F5F9', iconColor:'#475569' },
-            { label:'Paid Revenue',   value:`$${totalRevenue.toFixed(2)}`, dot:L.accent, icon:DollarSign, iconBg:'#ECFDF5', iconColor:'#047857' },
+            { label:'Paid Revenue',   value:`$${totalRevenue.toFixed(2)}`, dot:L.accent, icon:DollarSign, iconBg:'#ECFDF5', iconColor:'#22c55e' },
             { label:'Outstanding',    value:`$${totalDue.toFixed(2)}`, dot:L.red, icon:Clock, iconBg:'#FFFBEB', iconColor:'#B45309' },
             { label:'In Draft',       value:`$${totalDraft.toFixed(2)}`, dot:'#F59E0B', icon:FilePen, iconBg:'#FEF3C7', iconColor:'#92400E' },
           ].map(item => (

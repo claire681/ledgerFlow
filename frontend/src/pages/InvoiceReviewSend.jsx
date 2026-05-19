@@ -159,7 +159,7 @@ export default function InvoiceReviewSend() {
             </FormRow>
 
             <FormRow label="" isMobile={isMobile}>
-              <button onClick={() => setAttachPdf(!attachPdf)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: attachPdf ? "#ecfdf5" : "#fef3c7", color: attachPdf ? "#047857" : "#92400e", border: "1px solid " + (attachPdf ? "#a7f3d0" : "#fde68a"), borderRadius: 6, fontSize: 13, cursor: "pointer" }}>
+              <button onClick={() => setAttachPdf(!attachPdf)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: attachPdf ? "#ecfdf5" : "#fef3c7", color: attachPdf ? "#22c55e" : "#92400e", border: "1px solid " + (attachPdf ? "#a7f3d0" : "#fde68a"), borderRadius: 6, fontSize: 13, cursor: "pointer" }}>
                 <Paperclip size={14} />
                 {attachPdf ? "PDF attached" : "PDF not attached"}
               </button>

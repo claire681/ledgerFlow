@@ -6,8 +6,8 @@ import {
 } from "lucide-react";
 import { CompanyPhoneField } from "../CompanyPhoneField";
 
-const GREEN = "#047857";
-const GREEN_DARK = "#065f46";
+const GREEN = "#22c55e";
+const GREEN_DARK = "#16a34a";
 const TEXT = "#0F172A";
 const SUBTLE = "#64748b";
 const BORDER = "#e2e8f0";
@@ -27,7 +27,7 @@ const selectStyle = { ...inputBaseStyle, cursor: "pointer" };
 
 const handleFocus = (e) => {
   e.target.style.borderColor = GREEN;
-  e.target.style.boxShadow = "0 0 0 3px rgba(4, 120, 87, 0.1)";
+  e.target.style.boxShadow = "0 0 0 3px rgba(34, 197, 94, 0.1)";
 };
 const handleBlur = (e) => {
   e.target.style.borderColor = BORDER;
@@ -687,7 +687,7 @@ export function NewCustomerDrawer({ isOpen, onClose, onSave }) {
           <div style={{ padding: "10px 20px", background: "#fef9c3", borderTop: "1px solid #fde68a", color: "#854d0e", fontSize: 13 }}>{error}</div>
         )}
 
-        <div style={{ background: SUBTLE_BG, borderTop: "1px solid " + BORDER, padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+        <div style={{ background: SUBTLE_BG, borderTop: "1px solid " + BORDER, padding: "16px 96px 16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
           <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: GREEN, textDecoration: "none", fontWeight: 500 }}>Privacy</a>
           <button type="button" disabled={!isFormValid || saving} onClick={handleSave} style={{
             padding: "0 24px", height: 40, borderRadius: 8, fontSize: 14, fontWeight: 600,

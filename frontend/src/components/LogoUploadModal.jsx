@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { X } from 'lucide-react';
 
-const GREEN = '#047857';
+const GREEN = '#22c55e';
 const TEXT = '#0F172A';
 const SUBTLE = '#64748b';
 const DANGER = '#dc2626';
@@ -125,7 +125,7 @@ export function LogoUploadModal({ isOpen, onClose, onUpload, currentLogo, onRemo
               browse files
             </button>
           </p>
-          <button type="button" onClick={() => fileInputRef.current && fileInputRef.current.click()} style={{ background: GREEN, color: '#fff', border: 'none', borderRadius: 8, padding: '0 24px', height: 40, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 2px 8px rgba(4, 120, 87, 0.2)' }}>
+          <button type="button" onClick={() => fileInputRef.current && fileInputRef.current.click()} style={{ background: GREEN, color: '#fff', border: 'none', borderRadius: 8, padding: '0 24px', height: 40, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 2px 8px rgba(34, 197, 94, 0.2)' }}>
             Upload
           </button>
           <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 12, marginBottom: 0 }}>Max file size 10MB</p>

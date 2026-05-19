@@ -16,7 +16,7 @@ export const setStoredProfile = (d) => {
 };
 
 const BRAND = "#0F5959";
-const GREEN = "#047857";
+const GREEN = "#22c55e";
 const BORDER = "#cbd5e1";
 const TEXT = "#0F172A";
 const SUBTLE = "#475569";
@@ -181,7 +181,7 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
     width: "100%",
     background: "#fff",
     borderTop: "1px solid #e2e8f0",
-    padding: "16px 24px",
+    padding: "16px 96px 16px 24px",
     boxSizing: "border-box",
     display: "flex",
     justifyContent: "flex-end",
@@ -195,7 +195,7 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
     onClick={handleSave}
     disabled={!canSave}
     style={{
-      background: canSave ? "#047857" : "#94a3b8",
+      background: canSave ? "#22c55e" : "#94a3b8",
       color: "#fff",
       border: "none",
       borderRadius: 8,
@@ -205,7 +205,7 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
       fontWeight: 600,
       cursor: canSave ? "pointer" : "not-allowed",
       fontFamily: "inherit",
-      boxShadow: canSave ? "0 4px 12px rgba(4, 120, 87, 0.3)" : "none",
+      boxShadow: canSave ? "0 4px 12px rgba(34, 197, 94, 0.3)" : "none",
       transition: "all 0.15s ease",
       minWidth: 160,
       letterSpacing: "0.01em"
