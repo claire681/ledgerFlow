@@ -58,6 +58,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
   const [logoModalOpen, setLogoModalOpen] = useState(false);
   const [localLogoOverride, setLocalLogoOverride] = useState(null);
   const [logoRemoved, setLogoRemoved] = useState(false);
+  const [addDropdownOpen, setAddDropdownOpen] = useState(false);
   const displayedLogoUrl = logoRemoved ? null : (localLogoOverride || inv.logo_url);
   const handleLogoUpload = (base64) => {
     setLocalLogoOverride(base64);
@@ -195,7 +196,8 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
         <div style={{ overflowX: isMobile ? "auto" : "visible", border: "1px solid #e2e8f0", borderRadius: 8 }}>
           <table style={{ width: "100%", minWidth: isMobile ? 540 : "auto", borderCollapse: "collapse", fontSize: 13 }}>
             <thead><tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
-              <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", width: 32 }}>#</th>
+              {editable && <th style={{ width: 28, padding: "10px 4px" }}></th>}
+            <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", width: 32 }}>#</th>
               <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>Product/service</th>
               <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>Description</th>
               <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", width: 80 }}>Qty</th>
@@ -205,7 +207,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
             </tr></thead>
             <tbody>
               {items.length === 0 ? (
-                <tr><td colSpan={editable ? 7 : 6} style={{ textAlign: "center", padding: "32px 0", color: "#94a3b8", fontSize: 13 }}>No line items yet. Click below to add one.</td></tr>
+                <tr><td colSpan={editable ? 8 : 6} style={{ textAlign: "center", padding: "32px 0", color: "#94a3b8", fontSize: 13 }}>No line items yet. Click below to add one.</td></tr>
               ) : items.map((item, i) => {
                 const qty = Number(item.qty ?? item.quantity ?? 1);
                 const rate = Number(item.rate ?? item.price ?? 0);
@@ -226,11 +228,26 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
         </div>
 
         {editable && (
-          <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center", flexWrap: "wrap" }}>
-            <button onClick={onAddItem} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "#22c55e", border: "1px solid #22c55e", borderRadius: 6, color: "#fff", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}><Plus size={14} /> Add product or service</button>
-            {items.length > 0 && (<button onClick={() => { if (window.confirm("Clear all line items? This cannot be undone.")) onClearItems(); }} style={{ background: "none", border: "none", color: "#64748B", fontSize: 13, cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}>Clear all lines</button>)}
-          </div>
+      <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ position: "relative" }}>
+          <button onClick={() => setAddDropdownOpen(!addDropdownOpen)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: 6, color: "#0F172A", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+            Add product or service
+            <span style={{ fontSize: 10, color: "#64748B" }}>v</span>
+          </button>
+          {addDropdownOpen && (<>
+            <div onClick={() => setAddDropdownOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
+            <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 20, minWidth: 220, overflow: "hidden" }}>
+              <button onClick={() => { onAddItem(); setAddDropdownOpen(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 16px", background: "#fff", border: "none", fontSize: 14, color: "#0F172A", cursor: "pointer", fontFamily: "inherit" }}>Add product or service</button>
+              <button onClick={() => { alert("Add subtotal: coming soon"); setAddDropdownOpen(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 16px", background: "#fff", border: "none", fontSize: 14, color: "#0F172A", cursor: "pointer", fontFamily: "inherit" }}>Add subtotal</button>
+              <button onClick={() => { alert("Add text: coming soon"); setAddDropdownOpen(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 16px", background: "#fff", border: "none", fontSize: 14, color: "#0F172A", cursor: "pointer", fontFamily: "inherit" }}>Add text</button>
+            </div>
+          </>)}
+        </div>
+        {items.length > 0 && (
+          <button onClick={() => { if (window.confirm("Clear all line items? This cannot be undone.")) onClearItems(); }} style={{ padding: "8px 14px", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: 6, color: "#0F172A", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>Clear all lines</button>
         )}
+      </div>
+    )}
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>
           <div style={{ width: isMobile ? "100%" : 280 }}>
