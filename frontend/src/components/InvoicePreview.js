@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Edit2, Trash2, Plus } from "lucide-react";
+import { Edit2, Trash2, Plus, ChevronDown, X, Upload } from "lucide-react";
 import CustomerCombobox from "./customers/CustomerCombobox";
 import { LogoUploadModal } from "./LogoUploadModal";
 
@@ -59,6 +59,9 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
   const [localLogoOverride, setLocalLogoOverride] = useState(null);
   const [logoRemoved, setLogoRemoved] = useState(false);
   const [addDropdownOpen, setAddDropdownOpen] = useState(false);
+  const [discount, setDiscount] = useState({ value: 0, type: "percent" });
+  const [deposit, setDeposit] = useState(0);
+  const [attachments, setAttachments] = useState([]);
   const displayedLogoUrl = logoRemoved ? null : (localLogoOverride || inv.logo_url);
   const handleLogoUpload = (base64) => {
     setLocalLogoOverride(base64);
@@ -255,6 +258,28 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
               <span style={{ fontSize: 13, color: "#64748B" }}>Subtotal</span>
               <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${subtotal.toFixed(2)}</span>
             </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #e2e8f0" }}>
+          <span style={{ fontSize: 13, color: "#64748B" }}>Discount</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <input type="number" value={discount.value} onChange={e => setDiscount({ ...discount, value: e.target.value })} style={{ width: 56, padding: "4px 6px", border: "1px solid #e2e8f0", borderRadius: 4, fontSize: 13, textAlign: "right", fontFamily: "inherit", outline: "none" }} />
+            <div style={{ display: "flex", background: "#f1f5f9", borderRadius: 12, padding: 2 }}>
+              <button onClick={() => setDiscount({ ...discount, type: "percent" })} style={{ padding: "2px 8px", borderRadius: 10, border: "none", background: discount.type === "percent" ? "#fff" : "transparent", fontSize: 11, fontWeight: 600, color: discount.type === "percent" ? "#0F172A" : "#64748B", cursor: "pointer", fontFamily: "inherit", boxShadow: discount.type === "percent" ? "0 1px 2px rgba(0,0,0,0.08)" : "none" }}>%</button>
+              <button onClick={() => setDiscount({ ...discount, type: "amount" })} style={{ padding: "2px 8px", borderRadius: 10, border: "none", background: discount.type === "amount" ? "#fff" : "transparent", fontSize: 11, fontWeight: 600, color: discount.type === "amount" ? "#0F172A" : "#64748B", cursor: "pointer", fontFamily: "inherit", boxShadow: discount.type === "amount" ? "0 1px 2px rgba(0,0,0,0.08)" : "none" }}>$</button>
+            </div>
+            <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, minWidth: 60, textAlign: "right", ...numStyle }}>${(discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0).toFixed(2)}</span>
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderTop: "2px solid #0F172A", borderBottom: "1px solid #e2e8f0", marginTop: 4 }}>
+          <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700 }}>Invoice total</span>
+          <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700, ...numStyle }}>${(subtotal - (discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0)).toFixed(2)}</span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #e2e8f0" }}>
+          <span style={{ fontSize: 13, color: "#64748B" }}>Deposit</span>
+          <input type="number" value={deposit} onChange={e => setDeposit(e.target.value)} style={{ width: 100, padding: "4px 8px", border: "1px solid #e2e8f0", borderRadius: 4, fontSize: 13, textAlign: "right", fontFamily: "inherit", outline: "none" }} />
+        </div>
+        <div style={{ textAlign: "right", marginTop: 8 }}>
+          <a href="#" onClick={(e) => e.preventDefault()} style={{ fontSize: 13, color: "#22c55e", textDecoration: "none", cursor: "pointer", fontWeight: 500 }}>Edit totals</a>
+        </div>
             <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0" }}>
               <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 600 }}>Invoice total</span>
               <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700, ...numStyle }}>${totalAmt.toFixed(2)}</span>
@@ -274,6 +299,32 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           {onFieldChange ? (
             <textarea value={inv.memo || ""} onChange={e => onFieldChange("memo", e.target.value)} rows={2} placeholder="This memo will not show on the invoice, but will appear on the statement." style={{ width: "100%", maxWidth: 600, padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} onFocus={onFocusBg} onBlur={onBlurBg} />
           ) : (<div style={{ fontSize: 13, color: "#475569" }}>{inv.memo || ""}</div>)}
+
+      <div style={{ marginTop: 24 }}>
+        <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#0F172A", marginBottom: 8 }}>Attachments</label>
+        <div style={{ border: "2px dashed #cbd5e1", borderRadius: 8, padding: "24px 16px", textAlign: "center", cursor: "pointer", maxWidth: 600, transition: "background 0.15s" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fafc"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }} onClick={() => document.getElementById("novala-attachment-input").click()}>
+          <Upload size={24} color="#22c55e" style={{ marginBottom: 8 }} />
+          <div style={{ fontSize: 14, fontWeight: 500, color: "#22c55e", marginBottom: 4 }}>Add attachment</div>
+          <div style={{ fontSize: 12, color: "#64748B" }}>Max file size: 20 MB</div>
+          <input id="novala-attachment-input" type="file" multiple style={{ display: "none" }} onChange={(e) => {
+            const files = Array.from(e.target.files || []).filter(f => f.size <= 20 * 1024 * 1024);
+            setAttachments([...attachments, ...files]);
+            e.target.value = "";
+          }} />
+        </div>
+        {attachments.length > 0 && (
+          <div style={{ marginTop: 12, maxWidth: 600 }}>
+            {attachments.map((f, idx) => (
+              <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#f8fafc", borderRadius: 6, marginBottom: 6, border: "1px solid #e2e8f0" }}>
+                <span style={{ fontSize: 13, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+                <button onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex", borderRadius: 4 }}>
+                  <X size={14} color="#94a3b8" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
         </div>
 
         <div style={{ marginTop: 32, borderTop: "1px solid #e2e8f0", paddingTop: 18, textAlign: "center" }}>
