@@ -144,7 +144,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
 
         {editable && (
           <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center", flexWrap: "wrap" }}>
-            <button onClick={onAddItem} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "#fff", border: "1px solid #0F5959", borderRadius: 6, color: "#0F5959", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}><Plus size={14} /> Add product or service</button>
+            <button onClick={onAddItem} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "#10b981", border: "1px solid #10b981", borderRadius: 6, color: "#fff", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}><Plus size={14} /> Add product or service</button>
             {items.length > 0 && (<button onClick={() => { if (window.confirm("Clear all line items? This cannot be undone.")) onClearItems(); }} style={{ background: "none", border: "none", color: "#64748B", fontSize: 13, cursor: "pointer", textDecoration: "underline", fontFamily: "inherit" }}>Clear all lines</button>)}
           </div>
         )}

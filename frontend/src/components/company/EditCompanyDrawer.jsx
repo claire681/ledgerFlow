@@ -116,8 +116,8 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
           {error && (<div style={{ padding: "10px 12px", background: "#fef9c3", border: "1px solid #fde68a", borderRadius: 6, color: "#854d0e", fontSize: 13, marginTop: 12 }}>{error}</div>)}
         </div>
 
-        <div style={{ padding: "20px 24px", borderTop: "1px solid " + BORDER, display: "flex", justifyContent: "flex-end", background: "#f8fafc" }}>
-          <button onClick={handleSave} disabled={saving || !data.name.trim()} style={{ padding: "14px 36px", background: BRAND, color: "#fff", border: "none", borderRadius: 8, fontSize: 16, fontWeight: 700, boxShadow: "0 4px 12px rgba(15,89,89,0.35)", letterSpacing: "0.02em", cursor: saving ? "wait" : "pointer", opacity: (saving || !data.name.trim()) ? 0.6 : 1, fontFamily: "inherit" }}>{saving ? "Saving..." : "Save"}</button>
+        <div style={{ padding: "20px 24px", borderTop: "1px solid " + BORDER, display: "flex", justifyContent: "flex-end", background: "#f8fafc", width: "100%", boxSizing: "border-box" }}>
+          <button onClick={handleSave} disabled={saving || !data.name.trim()} style={{ padding: "14px 36px", background: "#10b981", color: "#fff", border: "none", borderRadius: 8, fontSize: 16, fontWeight: 700, boxShadow: "0 4px 12px rgba(15,89,89,0.35)", letterSpacing: "0.02em", cursor: saving ? "wait" : "pointer", opacity: (saving || !data.name.trim()) ? 0.6 : 1, fontFamily: "inherit" }}>{saving ? "Saving..." : "Save"}</button>
         </div>
       </div>
     </>

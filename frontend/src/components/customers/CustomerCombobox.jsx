@@ -85,7 +85,7 @@ export default function CustomerCombobox({ value, onSelect }) {
             <Search size={14} color={SUBTLE} />
             <input autoFocus type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search customers..." style={{ flex: 1, border: "none", outline: "none", fontSize: 14, fontFamily: "inherit", background: "transparent" }} />
           </div>
-          <button onClick={() => alert("Add new customer drawer coming in next PR. For now, add customers via the Customers page.")} style={{ width: "100%", padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", borderBottom: "1px solid #e2e8f0", cursor: "pointer", fontSize: 14, color: "#0F5959", fontWeight: 500, textAlign: "left", fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f0fdf4"} onMouseLeave={e => e.currentTarget.style.background = "none"}><Plus size={14} />Add new</button>
+          <button onClick={() => alert("Add new customer drawer coming in next PR. For now, add customers via the Customers page.")} style={{ width: "100%", padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", borderBottom: "1px solid #e2e8f0", cursor: "pointer", fontSize: 14, color: "#10b981", fontWeight: 600, textAlign: "left", fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#d1fae5"} onMouseLeave={e => e.currentTarget.style.background = "none"}><Plus size={14} />Add new</button>
           <div style={{ overflowY: "auto", flex: 1 }}>
             {loading ? (
               <div style={{ padding: 20, textAlign: "center", color: SUBTLE, fontSize: 13 }}>Loading customers...</div>
