@@ -75,6 +75,7 @@ const ALL_APPS = [
     id: 'sales', label: 'Sales & Get Paid', color: '#F59E0B', icon: TrendingUp,
     items: [
       { label: 'Invoices',          path: '/invoices'        },
+      { label: 'New invoice',        path: '/invoices/new' },
       { label: 'Estimates',         path: '/sales/estimates' },
       { label: 'Payments received', path: '/transactions'    },
       { label: 'Sales receipts',    path: '/receipts'        },
