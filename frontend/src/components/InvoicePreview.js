@@ -54,7 +54,7 @@ const TableInput = ({ value, onChange, type, placeholder, align }) => (
   <input type={type || "text"} value={value} onChange={onChange} placeholder={placeholder} style={{ width: "100%", border: "1px solid transparent", borderRadius: 4, padding: "6px 8px", fontSize: 13, fontFamily: "inherit", outline: "none", background: "transparent", textAlign: align || "left", boxSizing: "border-box", fontVariantNumeric: type === "number" ? "lining-nums tabular-nums" : "normal" }} onFocus={e => { e.target.style.borderColor = "#0F5959"; e.target.style.background = "#fff"; }} onBlur={e => { e.target.style.borderColor = "transparent"; e.target.style.background = "transparent"; }} />
 );
 
-export default function InvoicePreview({ inv, customization, accentColor, template, onFieldChange, onCustomerSelect, onItemChange, onAddItem, onDeleteItem, onClearItems, onEditCompany }) {
+export default function InvoicePreview({ inv, customization, accentColor, template, onFieldChange, onCustomerSelect, onItemChange, onAddItem, onDeleteItem, onClearItems, onEditCompany , onEditCustomer }) {
   const [logoModalOpen, setLogoModalOpen] = useState(false);
   const [localLogoOverride, setLocalLogoOverride] = useState(null);
   const [logoRemoved, setLogoRemoved] = useState(false);
@@ -107,6 +107,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
   const items = inv.line_items || inv.items || [];
   const subtotal = items.reduce((s, it) => s + (Number(it.qty ?? it.quantity ?? 1) * Number(it.rate ?? it.price ?? 0)), 0);
   const totalAmt = subtotal + Number(inv.tax_amount || 0);
+  const [showCcBcc, setShowCcBcc] = useState(false);
   const hasCustomer = !!(inv.to_name || inv.to_email);
   const numStyle = { fontVariantNumeric: "lining-nums tabular-nums" };
   const editable = !!onItemChange;
@@ -177,11 +178,37 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
             {hasCustomer ? (
               <>
                 {c.showCustomerEmail && (editable ? <input type="email" value={inv.to_email || ""} onChange={(e) => onFieldChange && onFieldChange("to_email", e.target.value)} placeholder="Enter Customer email" style={{ width: "100%", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 6, fontSize: 14, color: "#0F172A", marginBottom: 12, boxSizing: "border-box", outline: "none", fontFamily: "inherit" }} onFocus={onFocusBg} onBlur={onBlurBg} /> : (inv.to_email && <div style={{ fontSize: 13, color: "#0F172A", marginBottom: 12, padding: "8px 12px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6 }}>{inv.to_email}</div>))}
+                {editable && (
+                  <div style={{ position: "relative", marginBottom: 12 }}>
+                    <button type="button" onClick={() => setShowCcBcc(true)} style={{ background: "none", border: "none", padding: 0, color: "#2563eb", fontSize: 13, cursor: "pointer", textDecoration: "none", fontWeight: 500 }}>Cc/Bcc</button>
+                    {showCcBcc && (
+                      <div style={{ position: "absolute", top: 28, left: 0, width: 320, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", padding: 20, zIndex: 50 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: "#0F172A" }}>Add Cc/Bcc</h3>
+                          <button type="button" onClick={() => setShowCcBcc(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}><X size={18} color="#64748B" /></button>
+                        </div>
+                        <div style={{ marginBottom: 14 }}>
+                          <label style={{ display: "block", fontSize: 13, color: "#0F172A", marginBottom: 4 }}>Cc</label>
+                          <input type="text" value={inv.to_cc || ""} onChange={(e) => onFieldChange && onFieldChange("to_cc", e.target.value)} placeholder="Separate emails with commas" style={{ width: "100%", padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: 6, fontSize: 13, boxSizing: "border-box", fontFamily: "inherit", outline: "none" }} />
+                        </div>
+                        <div style={{ marginBottom: 16 }}>
+                          <label style={{ display: "block", fontSize: 13, color: "#0F172A", marginBottom: 4 }}>Bcc</label>
+                          <input type="text" value={inv.to_bcc || ""} onChange={(e) => onFieldChange && onFieldChange("to_bcc", e.target.value)} placeholder="Separate emails with commas" style={{ width: "100%", padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: 6, fontSize: 13, boxSizing: "border-box", fontFamily: "inherit", outline: "none" }} />
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                          <button type="button" onClick={() => setShowCcBcc(false)} style={{ padding: "8px 16px", background: "#fff", border: "1px solid #cbd5e1", borderRadius: 6, fontSize: 13, fontWeight: 600, color: "#0F172A", cursor: "pointer" }}>Cancel</button>
+                          <button type="button" onClick={() => setShowCcBcc(false)} style={{ padding: "8px 16px", background: "#22c55e", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Save</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div style={{ border: "1px solid #e2e8f0", borderRadius: 8, padding: 14, background: "#fff", marginBottom: 8 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Bill to</div>
                   {inv.to_name && <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 4 }}>{inv.to_name}</div>}
                   {c.showCustomerAddress && inv.to_address && <div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line", lineHeight: 1.5 }}>{inv.to_address}</div>}
                 </div>
+                {editable && (<a href="#" onClick={(e) => { e.preventDefault(); onEditCustomer && onEditCustomer(); }} style={{ fontSize: 13, color: "#2563eb", textDecoration: "none", cursor: "pointer", fontWeight: 500 }}>Edit Customer</a>)}
               </>
             ) : (
               <><SkeletonBar width={192} /><SkeletonBar width={160} /><SkeletonBar width={128} /></>
