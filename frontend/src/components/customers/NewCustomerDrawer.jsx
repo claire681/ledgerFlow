@@ -108,97 +108,191 @@ function QuickJumpButton({ icon: Icon, onClick, label }) {
   );
 }
 
-function AddCustomFieldModal({ isOpen, onClose, onAdd }) {
-  const [name, setName] = useState("");
-  const [type, setType] = useState("text_or_number");
-  const [category, setCategory] = useState("customer");
-  const [showOn, setShowOn] = useState({ invoices: false, estimates: false, salesReceipts: false });
-
+function UnsavedChangesDialog({ isOpen, onStay, onLeave }) {
   if (!isOpen) return null;
-
-  const handleSave = () => {
-    if (!name.trim()) return;
-    onAdd({ name: name.trim(), type, category, showOn });
-    setName(""); setType("text_or_number"); setCategory("customer");
-    setShowOn({ invoices: false, estimates: false, salesReceipts: false });
-    onClose();
-  };
-
   return (
-    <div onClick={onClose} style={{
+    <div style={{
       position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      zIndex: 2000, padding: 16
+      zIndex: 2500, padding: 16
     }}>
-      <div onClick={(e) => e.stopPropagation()} style={{
-        background: "#fff", borderRadius: 12, boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+      <div style={{
+        background: "#fff", borderRadius: 12,
+        boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
         width: "100%", maxWidth: 480, padding: 24
       }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: TEXT }}>Add custom field</h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: SUBTLE }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: TEXT, margin: 0, paddingRight: 16 }}>
+            Save your custom fields before leaving
+          </h2>
+          <button onClick={onStay} style={{ background: "none", border: "none", cursor: "pointer", color: SUBTLE, flexShrink: 0 }}>
             <X size={20} />
           </button>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Field label="Field name" required>
-            <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Account number" />
-          </Field>
-          <Field label="Type">
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: TEXT }}>
-                <input type="radio" name="cf-type" checked={type === "text_or_number"} onChange={() => setType("text_or_number")} style={{ accentColor: GREEN }} />
-                Text or number
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: TEXT }}>
-                <input type="radio" name="cf-type" checked={type === "dropdown"} onChange={() => setType("dropdown")} style={{ accentColor: GREEN }} />
-                Dropdown
-              </label>
-            </div>
-          </Field>
-          <Field label="Category">
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: TEXT }}>
-                <input type="radio" name="cf-cat" checked={category === "customer"} onChange={() => setCategory("customer")} style={{ accentColor: GREEN }} />
-                Customer
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: TEXT }}>
-                <input type="radio" name="cf-cat" checked={category === "transaction"} onChange={() => setCategory("transaction")} style={{ accentColor: GREEN }} />
-                Transaction
-              </label>
-            </div>
-          </Field>
-          <Field label="Show on forms">
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: TEXT }}>
-                <input type="checkbox" checked={showOn.invoices} onChange={(e) => setShowOn({ ...showOn, invoices: e.target.checked })} style={{ accentColor: GREEN }} />
-                Invoices
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: TEXT }}>
-                <input type="checkbox" checked={showOn.estimates} onChange={(e) => setShowOn({ ...showOn, estimates: e.target.checked })} style={{ accentColor: GREEN }} />
-                Estimates
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: TEXT }}>
-                <input type="checkbox" checked={showOn.salesReceipts} onChange={(e) => setShowOn({ ...showOn, salesReceipts: e.target.checked })} style={{ accentColor: GREEN }} />
-                Sales receipts
-              </label>
-            </div>
-          </Field>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 24 }}>
-          <button type="button" onClick={onClose} style={{
-            padding: "0 16px", height: 40, borderRadius: 8,
+        <p style={{ fontSize: 14, color: "#475569", margin: 0, marginBottom: 24 }}>
+          Your work will be lost if you leave. Do you want to leave without saving?
+        </p>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+          <button type="button" onClick={onStay} style={{
+            padding: "0 24px", height: 40, borderRadius: 8,
             fontSize: 14, fontWeight: 500, color: "#475569",
-            background: "none", border: "none", cursor: "pointer", fontFamily: "inherit"
-          }}>Cancel</button>
-          <button type="button" onClick={handleSave} disabled={!name.trim()} style={{
-            padding: "0 16px", height: 40, borderRadius: 8, fontSize: 14, fontWeight: 600,
-            color: "#fff", background: name.trim() ? GREEN : "#cbd5e1",
-            border: "none", cursor: name.trim() ? "pointer" : "not-allowed", fontFamily: "inherit"
-          }}>Save</button>
+            background: "#fff", border: "1px solid #cbd5e1",
+            cursor: "pointer", fontFamily: "inherit"
+          }}>No</button>
+          <button type="button" onClick={onLeave} style={{
+            padding: "0 24px", height: 40, borderRadius: 8,
+            fontSize: 14, fontWeight: 600, color: "#fff",
+            background: GREEN, border: "none",
+            cursor: "pointer", fontFamily: "inherit"
+          }}>Yes</button>
         </div>
       </div>
     </div>
+  );
+}
+
+function AddCustomFieldModal({ isOpen, onClose, onAdd }) {
+  const [name, setName] = useState("");
+  const [type, setType] = useState("");
+  const [category, setCategory] = useState("customer");
+  const [forms, setForms] = useState({
+    salesReceipt: false, invoice: false, estimate: false,
+    creditMemo: false, refundReceipt: false, expense: false,
+    bill: false, cheque: false, supplierCredit: false, creditCardCredit: false
+  });
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+
+  if (!isOpen) return null;
+
+  const hasUnsavedChanges =
+    name.trim() !== "" || type !== "" || Object.values(forms).some((v) => v === true);
+
+  const resetForm = () => {
+    setName(""); setType(""); setCategory("customer");
+    setForms({
+      salesReceipt: false, invoice: false, estimate: false,
+      creditMemo: false, refundReceipt: false, expense: false,
+      bill: false, cheque: false, supplierCredit: false, creditCardCredit: false
+    });
+  };
+
+  const handleAttemptClose = () => {
+    if (hasUnsavedChanges) setShowUnsavedDialog(true);
+    else onClose();
+  };
+  const handleConfirmLeave = () => { setShowUnsavedDialog(false); resetForm(); onClose(); };
+  const handleStay = () => setShowUnsavedDialog(false);
+
+  const handleSave = () => {
+    if (!name.trim() || !type) return;
+    onAdd({ name: name.trim(), type, category, forms });
+    resetForm();
+    onClose();
+  };
+
+  const formOptions = [
+    { key: "salesReceipt", label: "Sales Receipt" },
+    { key: "invoice", label: "Invoice" },
+    { key: "estimate", label: "Estimate" },
+    { key: "creditMemo", label: "Credit Memo" },
+    { key: "refundReceipt", label: "Refund Receipt" },
+    { key: "expense", label: "Expense" },
+    { key: "bill", label: "Bill" },
+    { key: "cheque", label: "Cheque" },
+    { key: "supplierCredit", label: "Supplier credit" },
+    { key: "creditCardCredit", label: "Credit card credit" }
+  ];
+
+  const canSave = name.trim() !== "" && type !== "";
+
+  return (
+    <>
+      <div onClick={handleAttemptClose} style={{
+        position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        zIndex: 2000, padding: 16
+      }}>
+        <div onClick={(e) => e.stopPropagation()} style={{
+          background: "#fff", borderRadius: 12,
+          boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+          width: "100%", maxWidth: 672, padding: 32,
+          maxHeight: "90vh", overflowY: "auto"
+        }}>
+          <div style={{ position: "relative", marginBottom: 24 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 600, color: TEXT, margin: 0, textAlign: "center" }}>
+              Add custom field
+            </h2>
+            <button onClick={handleAttemptClose} style={{
+              position: "absolute", top: 0, right: 0,
+              background: "none", border: "none", cursor: "pointer", color: SUBTLE
+            }}>
+              <X size={20} />
+            </button>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+            <Field label="Name">
+              <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Account number" />
+            </Field>
+            <Field label="Data type">
+              <SelectInput value={type} onChange={(e) => setType(e.target.value)}>
+                <option value="">Select type here</option>
+                <option value="text_or_number">Text or number</option>
+                <option value="dropdown">Dropdown</option>
+                <option value="date">Date</option>
+                <option value="currency">Currency</option>
+              </SelectInput>
+            </Field>
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <p style={{ fontSize: 14, fontWeight: 500, color: TEXT, margin: 0, marginBottom: 12 }}>Select category</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: TEXT, cursor: "pointer" }}>
+                <input type="radio" name="cf-cat" checked={category === "customer"} onChange={() => setCategory("customer")} style={{ accentColor: GREEN, width: 16, height: 16 }} />
+                Customer
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: TEXT, cursor: "pointer" }}>
+                <input type="radio" name="cf-cat" checked={category === "transaction"} onChange={() => setCategory("transaction")} style={{ accentColor: GREEN, width: 16, height: 16 }} />
+                Transaction
+              </label>
+            </div>
+          </div>
+
+          {category === "transaction" && (
+            <div style={{ marginBottom: 24 }}>
+              <p style={{ fontSize: 14, fontWeight: 500, color: TEXT, margin: 0, marginBottom: 12 }}>Select forms</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {formOptions.map((opt) => (
+                  <label key={opt.key} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: TEXT, cursor: "pointer" }}>
+                    <input type="checkbox" checked={forms[opt.key]} onChange={(e) => setForms({ ...forms, [opt.key]: e.target.checked })} style={{ accentColor: GREEN, width: 16, height: 16 }} />
+                    {opt.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 24 }}>
+            <button type="button" onClick={handleAttemptClose} style={{
+              padding: "0 24px", height: 40, borderRadius: 8,
+              fontSize: 14, fontWeight: 500, color: "#475569",
+              background: "none", border: "none", cursor: "pointer", fontFamily: "inherit"
+            }}>Cancel</button>
+            <button type="button" onClick={handleSave} disabled={!canSave} style={{
+              padding: "0 24px", height: 40, borderRadius: 8,
+              fontSize: 14, fontWeight: 600, color: "#fff",
+              background: canSave ? GREEN : "#cbd5e1",
+              border: "none",
+              cursor: canSave ? "pointer" : "not-allowed",
+              fontFamily: "inherit"
+            }}>Save</button>
+          </div>
+        </div>
+      </div>
+
+      <UnsavedChangesDialog isOpen={showUnsavedDialog} onStay={handleStay} onLeave={handleConfirmLeave} />
+    </>
   );
 }
 
