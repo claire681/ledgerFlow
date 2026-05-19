@@ -116,8 +116,8 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
           {error && (<div style={{ padding: "10px 12px", background: "#fef9c3", border: "1px solid #fde68a", borderRadius: 6, color: "#854d0e", fontSize: 13, marginTop: 12 }}>{error}</div>)}
         </div>
 
-        <div style={{ padding: "20px 24px", borderTop: "1px solid " + BORDER, display: "flex", justifyContent: "flex-end", background: "#f8fafc", width: "100%", boxSizing: "border-box" }}>
-          <button onClick={handleSave} disabled={saving || !data.name.trim()} style={{ padding: "14px 36px", background: "#10b981", color: "#fff", border: "none", borderRadius: 8, fontSize: 16, fontWeight: 700, boxShadow: "0 4px 12px rgba(15,89,89,0.35)", letterSpacing: "0.02em", cursor: saving ? "wait" : "pointer", opacity: (saving || !data.name.trim()) ? 0.6 : 1, fontFamily: "inherit" }}>{saving ? "Saving..." : "Save"}</button>
+        <div style={{ width: "100%", background: "#f8fafc", borderTop: "1px solid #e2e8f0", padding: "16px 24px", boxSizing: "border-box", display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
+          <button onClick={handleSave} disabled={saving || !data.name.trim()} style={{ background: "#047857", color: "#fff", border: "none", borderRadius: 8, padding: "0 24px", height: 40, fontSize: 14, fontWeight: 500, cursor: (saving || !data.name.trim()) ? "not-allowed" : "pointer", opacity: (saving || !data.name.trim()) ? 0.5 : 1, fontFamily: "inherit" }}>{saving ? "Saving..." : "Save"}</button>
         </div>
       </div>
     </>
