@@ -49,8 +49,11 @@ const TableInput = ({ value, onChange, type, placeholder, align }) => (
 export default function InvoicePreview({ inv, customization, accentColor, template, onFieldChange, onCustomerSelect, onItemChange, onAddItem, onDeleteItem, onClearItems, onEditCompany }) {
   const [logoModalOpen, setLogoModalOpen] = useState(false);
   const [localLogoOverride, setLocalLogoOverride] = useState(null);
+  const [logoRemoved, setLogoRemoved] = useState(false);
+  const displayedLogoUrl = logoRemoved ? null : (localLogoOverride || inv.logo_url);
   const handleLogoUpload = (base64) => {
     setLocalLogoOverride(base64);
+    setLogoRemoved(false);
     if (typeof onFieldChange === "function") onFieldChange("logo_url", base64);
     try {
       const profile = JSON.parse(localStorage.getItem("novala_company_profile_v1") || "{}");
@@ -58,6 +61,34 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
       localStorage.setItem("novala_company_profile_v1", JSON.stringify(profile));
     } catch (e) {}
   };
+  const handleLogoRemove = () => {
+    setLocalLogoOverride(null);
+    setLogoRemoved(true);
+    if (typeof onFieldChange === "function") {
+      onFieldChange("logo_url", null);
+    }
+    try {
+      const profile = JSON.parse(
+        localStorage.getItem("novala_company_profile_v1") || "{}"
+      );
+      profile.logo = null;
+      localStorage.setItem(
+        "novala_company_profile_v1",
+        JSON.stringify(profile)
+      );
+    } catch (e) {}
+  };
+  useEffect(() => {
+    if (!inv || inv.logo_url) return;
+    try {
+      const profile = JSON.parse(
+        localStorage.getItem("novala_company_profile_v1") || "{}"
+      );
+      if (profile.logo) {
+        setLocalLogoOverride(profile.logo);
+      }
+    } catch (e) {}
+  }, []);
 
   const isMobile = useIsMobile();
   const c = { ...DEFAULTS, ...(customization || {}) };
@@ -85,8 +116,8 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
         </div>
         <div style={{ textAlign: isMobile ? "left" : "right" }}>
           <div style={{ fontSize: 13, color: "#64748B", marginBottom: 12, ...numStyle }}>Balance due (hidden): <span style={{ color: accentColor || "#0F172A", fontWeight: 600 }}>${totalAmt.toFixed(2)}</span></div>
-          {(localLogoOverride || inv.logo_url) ? (
-            <img src={localLogoOverride || inv.logo_url} alt="Logo" style={{ maxHeight: 80, width: "auto", display: "inline-block" }} onError={e => { e.target.style.display = "none"; }} />
+          {displayedLogoUrl ? (
+            <img src={displayedLogoUrl} alt="Logo" style={{ maxHeight: 80, width: "auto", display: "inline-block" }} onError={e => { e.target.style.display = "none"; }} />
           ) : (
             <div style={{ width: 80, height: 80, borderRadius: 8, background: "#f1f5f9", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: 11 }}>Logo</div>
           )}
@@ -115,10 +146,12 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
 </div>
 
 <LogoUploadModal
-  isOpen={logoModalOpen}
-  onClose={() => setLogoModalOpen(false)}
-  onUpload={handleLogoUpload}
-/>
+        isOpen={logoModalOpen}
+        onClose={() => setLogoModalOpen(false)}
+        onUpload={handleLogoUpload}
+        currentLogo={displayedLogoUrl}
+        onRemove={handleLogoRemove}
+      />
         </div>
       </div>
 
