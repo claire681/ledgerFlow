@@ -81,8 +81,9 @@ export default function CustomerCombobox({ value, onSelect }) {
       <button onClick={() => setOpen(!open)} style={{
         width: "100%", padding: "10px 14px", display: "flex",
         alignItems: "center", justifyContent: "space-between",
-        border: "1px solid " + BORDER, borderRadius: 8, background: "#fff",
-        cursor: "pointer", fontSize: 14, color: value ? TEXT : SUBTLE,
+        border: "1px solid #047857", borderRadius: 8, background: "#fff",
+        cursor: "pointer", fontSize: 14, color: value ? TEXT : "#0F5959",
+          fontWeight: value ? 400 : 600,
         fontFamily: "inherit"
       }}>
         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value || "Add Customer"}</span>
