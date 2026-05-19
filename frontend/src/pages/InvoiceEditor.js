@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Settings, PlayCircle, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
 import InvoicePreview from "../components/InvoicePreview";
-import EditCompanyDrawer from "../components/company/EditCompanyDrawer";
+import EditCompanyDrawer, { getStoredProfile } from "../components/company/EditCompanyDrawer";
 
 const useIsMobile = () => {
   const [m, setM] = useState(typeof window !== "undefined" && window.innerWidth < 768);
