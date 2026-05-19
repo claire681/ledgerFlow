@@ -56,7 +56,8 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
   const editable = !!onItemChange;
 
   return (
-    <div style={{ background: "#fff", fontFamily: "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif" }}>
+    <div id="novala-invoice-canvas" style={{ background: "#fff", fontFamily: "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif" }}>
+      <style>{"@media print { body * { visibility: hidden; } #novala-invoice-canvas, #novala-invoice-canvas * { visibility: visible; } #novala-invoice-canvas { position: absolute; left: 0; top: 0; width: 100%; background: white !important; box-shadow: none !important; } button { display: none !important; } input, select, textarea { border: none !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; -webkit-appearance: none !important; appearance: none !important; color: black !important; } @page { margin: 0.5in; } }"}</style>
 
       <div style={{ padding: isMobile ? "24px 16px" : "40px 32px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: isMobile ? 20 : 32 }}>
         <div>
@@ -179,7 +180,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
         </div>
 
         <div style={{ marginTop: 32, borderTop: "1px solid #e2e8f0", paddingTop: 18, textAlign: "center" }}>
-          <button style={{ background: "none", border: "none", color: "#475569", fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Print or download</button>
+          <button onClick={() => window.print()} style={{ background: "none", border: "none", color: "#475569", fontSize: 14, cursor: "pointer", fontFamily: "inherit", textDecoration: "underline" }}>Print or download</button>
         </div>
       </div>
     </div>
