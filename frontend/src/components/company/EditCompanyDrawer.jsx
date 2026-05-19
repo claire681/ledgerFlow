@@ -24,6 +24,8 @@ const sectionStyle = { fontSize: 15, fontWeight: 700, color: TEXT, marginBottom:
 const onFocus = (e) => { e.target.style.borderColor = BRAND; e.target.style.boxShadow = "0 0 0 3px rgba(15,89,89,0.15)"; };
 const onBlur = (e) => { e.target.style.borderColor = BORDER; e.target.style.boxShadow = "none"; };
 
+const flagOf = (code) => code.toUpperCase().split("").map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join("");
+
 const COUNTRIES = [
   { code: "CA", flag: "\uD83C\uDDE8\uD83C\uDDE6", dial: "+1" },
   { code: "US", flag: "\uD83C\uDDFA\uD83C\uDDF8", dial: "+1" },
