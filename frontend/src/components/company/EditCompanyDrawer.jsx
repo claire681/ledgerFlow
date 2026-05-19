@@ -17,8 +17,8 @@ const BORDER = "#e2e8f0";
 const TEXT = "#0F172A";
 const SUBTLE = "#64748B";
 
-const labelStyle = { display: "block", fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 6 };
-const inputStyle = { width: "100%", padding: "10px 12px", border: "1px solid " + BORDER, borderRadius: 6, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box", background: "#fff" };
+const labelStyle = { display: "block", fontSize: 14, fontWeight: 600, color: "#1e293b", marginBottom: 8 };
+const inputStyle = { width: "100%", padding: "12px 14px", border: "1px solid " + BORDER, borderRadius: 8, fontSize: 15, fontFamily: "inherit", outline: "none", boxSizing: "border-box", background: "#fff", color: "#0F172A" };
 const sectionStyle = { fontSize: 13, fontWeight: 600, color: "#0F172A", marginBottom: 12, marginTop: 24 };
 const onFocus = (e) => { e.target.style.borderColor = BRAND; e.target.style.boxShadow = "0 0 0 3px rgba(15,89,89,0.12)"; };
 const onBlur = (e) => { e.target.style.borderColor = BORDER; e.target.style.boxShadow = "none"; };
@@ -116,8 +116,8 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
           {error && (<div style={{ padding: "10px 12px", background: "#fef9c3", border: "1px solid #fde68a", borderRadius: 6, color: "#854d0e", fontSize: 13, marginTop: 12 }}>{error}</div>)}
         </div>
 
-        <div style={{ padding: "16px 24px", borderTop: "1px solid " + BORDER, display: "flex", justifyContent: "flex-end" }}>
-          <button onClick={handleSave} disabled={saving || !data.name.trim()} style={{ padding: "10px 20px", background: BRAND, color: "#fff", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 600, cursor: saving ? "wait" : "pointer", opacity: (saving || !data.name.trim()) ? 0.6 : 1, fontFamily: "inherit" }}>{saving ? "Saving..." : "Save"}</button>
+        <div style={{ padding: "20px 24px", borderTop: "1px solid " + BORDER, display: "flex", justifyContent: "flex-end", background: "#f8fafc" }}>
+          <button onClick={handleSave} disabled={saving || !data.name.trim()} style={{ padding: "14px 36px", background: BRAND, color: "#fff", border: "none", borderRadius: 8, fontSize: 16, fontWeight: 700, boxShadow: "0 4px 12px rgba(15,89,89,0.35)", letterSpacing: "0.02em", cursor: saving ? "wait" : "pointer", opacity: (saving || !data.name.trim()) ? 0.6 : 1, fontFamily: "inherit" }}>{saving ? "Saving..." : "Save"}</button>
         </div>
       </div>
     </>

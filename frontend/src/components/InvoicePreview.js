@@ -176,8 +176,8 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           ) : (<div style={{ fontSize: 13, color: "#475569" }}>{inv.memo || ""}</div>)}
         </div>
 
-        <div style={{ marginTop: 24, textAlign: "center" }}>
-          <button style={{ background: "none", border: "none", color: "#64748B", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>Print or download</button>
+        <div style={{ marginTop: 32, borderTop: "1px solid #e2e8f0", paddingTop: 18, textAlign: "center" }}>
+          <button style={{ background: "none", border: "none", color: "#475569", fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Print or download</button>
         </div>
       </div>
     </div>
