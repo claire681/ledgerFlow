@@ -165,7 +165,7 @@ function AppLayout({ onLogout }) {
             <Route path="/search"         element={<SmartSearch />}        />
             <Route path="*"               element={<Navigate to="/" />}    />
           </Routes>
-        
+        <Link to="/invoices/new" style={{position:'fixed', bottom:24, right:24, padding:'12px 18px', background:'#0F5959', color:'#fff', borderRadius:8, fontSize:14, fontWeight:600, textDecoration:'none', boxShadow:'0 4px 12px rgba(0,0,0,0.18)', zIndex:1000}}>Open New Editor</Link>
         </main>
       </div>
 
