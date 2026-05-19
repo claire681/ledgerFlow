@@ -30,64 +30,17 @@ const addressOf = (c) => {
 export default function CustomerCombobox({ value, onSelect }) {
   const [open, setOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const handleNewCustomerSave = async (payload) => {
-    const addressParts = [
-      payload.address_street,
-      payload.address_city,
-      payload.address_province,
-      payload.address_postal_code
-    ].filter(Boolean);
-    const addressString = addressParts.join(", ");
-    const apiPayload = {
-      name: payload.display_name,
-      email: payload.email,
-      phone: payload.phone,
-      address: addressString
-    };
-    try {
-      const token =
-        localStorage.getItem("token") ||
-        localStorage.getItem("access_token") ||
-        "";
-      const response = await fetch("/api/v1/customers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: "Bearer " + token } : {})
-        },
-        body: JSON.stringify(apiPayload)
+  const handleNewCustomerSave = (newCustomer) => {
+    if (newCustomer && onSelect) {
+      onSelect({
+        name: displayNameOf(newCustomer),
+        email: newCustomer.email || "",
+        address: addressOf(newCustomer),
+        raw: newCustomer
       });
-      if (!response.ok) throw new Error("Save failed");
-      const newCustomer = await response.json();
-      if (onSelect) {
-        onSelect({
-          name: displayNameOf(newCustomer),
-          email: newCustomer.email || "",
-          address: addressOf(newCustomer),
-          raw: newCustomer
-        });
-      }
-      setOpen(false);
-      setSearch("");
-    } catch (e) {
-      const localCustomer = {
-        id: "local-" + Date.now(),
-        name: payload.display_name,
-        email: payload.email,
-        phone: payload.phone,
-        address: addressString
-      };
-      if (onSelect) {
-        onSelect({
-          name: localCustomer.name,
-          email: localCustomer.email,
-          address: localCustomer.address,
-          raw: localCustomer
-        });
-      }
-      setOpen(false);
-      setSearch("");
     }
+    setOpen(false);
+    setSearch("");
   };
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
