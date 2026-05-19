@@ -188,21 +188,6 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
             </>
           )}
 
-          <div style={sectionStyle}>Company logo</div>
-          {data.logo ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 16, padding: 12, background: "#f8fafc", border: "1px solid " + BORDER, borderRadius: 8, marginBottom: 12 }}>
-              <img src={data.logo} alt="Logo" style={{ maxHeight: 60, maxWidth: 120, objectFit: "contain" }} />
-              <button onClick={() => setField("logo", null)} style={{ marginLeft: "auto", background: "none", border: "1px solid " + BORDER, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontSize: 13, color: "#dc2626", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "inherit" }}><Trash2 size={14} /> Remove</button>
-            </div>
-          ) : (
-            <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", border: "2px dashed " + BORDER, borderRadius: 8, cursor: "pointer", background: "#f8fafc", marginBottom: 12 }}>
-              <Upload size={20} color={SUBTLE} />
-              <div style={{ marginTop: 8, fontSize: 14, fontWeight: 600, color: GREEN }}>Upload logo</div>
-              <div style={{ marginTop: 4, fontSize: 12, color: SUBTLE }}>PNG, JPG, SVG · Max 2 MB</div>
-              <input type="file" accept="image/png,image/jpeg,image/svg+xml" onChange={handleLogoUpload} style={{ display: "none" }} />
-            </label>
-          )}
-
           {error && (<div style={{ padding: "10px 12px", background: "#fef9c3", border: "1px solid #fde68a", borderRadius: 6, color: "#854d0e", fontSize: 13, marginTop: 12 }}>{error}</div>)}
         </div>
 
