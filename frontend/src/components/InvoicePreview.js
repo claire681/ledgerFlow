@@ -115,7 +115,9 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
         <div>
           <h1 style={{ fontFamily: "Georgia, serif", fontSize: isMobile ? 26 : 32, fontWeight: 600, color: "#0F172A", margin: 0, marginBottom: 24, letterSpacing: "0.01em" }}>INVOICE</h1>
           {inv.from_name && <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 4 }}>{inv.from_name}</div>}
-          {inv.from_address && <div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line", lineHeight: 1.5 }}>{inv.from_address}</div>}
+          {inv.from_name && <div style={{ fontSize: 16, fontWeight: 600, color: "#0F172A", marginBottom: 4 }}>{inv.from_name}</div>}
+        {inv.from_bn && <div style={{ fontSize: 12, color: "#64748B", marginBottom: 8 }}>BN: {inv.from_bn}</div>}
+        {inv.from_address && <div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line", lineHeight: 1.5 }}>{inv.from_address}</div>}
           <a href="#" onClick={(e) => { e.preventDefault(); onEditCompany && onEditCompany(); }} style={{ fontSize: 15, color: "#2563eb", textDecoration: "none", marginTop: 10, display: "inline-block", cursor: "pointer", fontWeight: 500 }}>Edit company</a>
         </div>
         <div style={{ paddingTop: isMobile ? 0 : 56 }}>
