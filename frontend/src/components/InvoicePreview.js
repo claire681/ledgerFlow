@@ -169,6 +169,13 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           ) : (<div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line" }}>{inv.note || ""}</div>)}
         </div>
 
+        <div style={{ marginTop: 24 }}>
+          <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 6 }}>Memo on statement (hidden)</label>
+          {onFieldChange ? (
+            <textarea value={inv.memo || ""} onChange={e => onFieldChange("memo", e.target.value)} rows={2} placeholder="This memo will not show on the invoice, but will appear on the statement." style={{ width: "100%", maxWidth: 600, padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} onFocus={onFocusBg} onBlur={onBlurBg} />
+          ) : (<div style={{ fontSize: 13, color: "#475569" }}>{inv.memo || ""}</div>)}
+        </div>
+
         <div style={{ marginTop: 24, textAlign: "center" }}>
           <button style={{ background: "none", border: "none", color: "#64748B", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>Print or download</button>
         </div>

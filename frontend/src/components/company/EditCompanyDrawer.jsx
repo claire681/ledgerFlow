@@ -107,6 +107,12 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
             <div><label style={labelStyle}>Postal code</label><input type="text" value={data.address_postal_code} onChange={e => setField("address_postal_code", e.target.value)} style={inputStyle} placeholder="T5H 0S4" onFocus={onFocus} onBlur={onBlur} /></div>
           </div>
 
+          <div style={sectionStyle}>Customer-facing address</div>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, cursor: "pointer", fontSize: 13, color: TEXT }}>
+            <input type="checkbox" defaultChecked style={{ accentColor: BRAND, width: 16, height: 16 }} />
+            <span>Same as company address</span>
+          </label>
+
           {error && (<div style={{ padding: "10px 12px", background: "#fef9c3", border: "1px solid #fde68a", borderRadius: 6, color: "#854d0e", fontSize: 13, marginTop: 12 }}>{error}</div>)}
         </div>
 
