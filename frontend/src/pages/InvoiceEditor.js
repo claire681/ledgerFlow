@@ -109,6 +109,8 @@ export default function InvoiceEditor() {
   const [templateChoice, setTemplateChoice] = useState("modern");
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState(null);
+  const [saveDropdownOpen, setSaveDropdownOpen] = useState(false);
+  const [reviewDropdownOpen, setReviewDropdownOpen] = useState(false);
   const [editCompanyOpen, setEditCompanyOpen] = useState(false);
 
   useEffect(() => {
