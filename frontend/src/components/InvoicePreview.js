@@ -176,9 +176,12 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           <div>
             {hasCustomer ? (
               <>
-                {inv.to_name && <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 4 }}>{inv.to_name}</div>}
-                {c.showCustomerEmail && inv.to_email && <div style={{ fontSize: 13, color: "#475569", marginBottom: 4 }}>{inv.to_email}</div>}
-                {c.showCustomerAddress && inv.to_address && <div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line" }}>{inv.to_address}</div>}
+                {c.showCustomerEmail && inv.to_email && <div style={{ fontSize: 13, color: "#0F172A", marginBottom: 12, padding: "8px 12px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6 }}>{inv.to_email}</div>}
+                <div style={{ border: "1px solid #e2e8f0", borderRadius: 8, padding: 14, background: "#fff", marginBottom: 8 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Bill to</div>
+                  {inv.to_name && <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 4 }}>{inv.to_name}</div>}
+                  {c.showCustomerAddress && inv.to_address && <div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line", lineHeight: 1.5 }}>{inv.to_address}</div>}
+                </div>
               </>
             ) : (
               <><SkeletonBar width={192} /><SkeletonBar width={160} /><SkeletonBar width={128} /></>
