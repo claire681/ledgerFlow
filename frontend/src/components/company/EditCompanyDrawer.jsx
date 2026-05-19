@@ -89,7 +89,7 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
             <h2 style={{ fontSize: 18, fontWeight: 600, color: TEXT, margin: 0 }}>My company</h2>
             <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}><X size={20} color={SUBTLE} /></button>
           </div>
-          <p style={{ fontSize: 13, color: SUBTLE, marginTop: 6, marginBottom: 0 }}>Saved on this device. Applies to all new invoices.</p>
+          <p style={{ fontSize: 13, color: SUBTLE, marginTop: 6, marginBottom: 0 }}>Changes made here will update your company information everywhere.</p>
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
