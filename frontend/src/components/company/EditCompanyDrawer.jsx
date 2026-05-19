@@ -174,9 +174,46 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
           {error && (<div style={{ padding: "10px 12px", background: "#fef9c3", border: "1px solid #fde68a", borderRadius: 6, color: "#854d0e", fontSize: 13, marginTop: 12 }}>{error}</div>)}
         </div>
 
-        <div style={{ width: "100%", background: "#f8fafc", borderTop: "1px solid #e2e8f0", padding: "16px 24px", boxSizing: "border-box", display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
-          <button onClick={handleSave} disabled={!canSave} style={{ background: canSave ? GREEN : "#cbd5e1", color: "#fff", border: "none", borderRadius: 8, padding: "0 24px", height: 40, fontSize: 14, fontWeight: 500, cursor: canSave ? "pointer" : "not-allowed", opacity: 1, fontFamily: "inherit" }}>{saving ? "Saving..." : "Save"}</button>
-        </div>
+        <div
+  style={{
+    position: "sticky",
+    bottom: 0,
+    width: "100%",
+    background: "#fff",
+    borderTop: "1px solid #e2e8f0",
+    padding: "16px 24px",
+    boxSizing: "border-box",
+    display: "flex",
+    justifyContent: "flex-end",
+    flexShrink: 0,
+    boxShadow: "0 -8px 20px rgba(0,0,0,0.06)",
+    zIndex: 10,
+    marginTop: 20
+  }}
+>
+  <button
+    onClick={handleSave}
+    disabled={!canSave}
+    style={{
+      background: canSave ? "#047857" : "#94a3b8",
+      color: "#fff",
+      border: "none",
+      borderRadius: 8,
+      padding: "0 32px",
+      height: 48,
+      fontSize: 16,
+      fontWeight: 600,
+      cursor: canSave ? "pointer" : "not-allowed",
+      fontFamily: "inherit",
+      boxShadow: canSave ? "0 4px 12px rgba(4, 120, 87, 0.3)" : "none",
+      transition: "all 0.15s ease",
+      minWidth: 160,
+      letterSpacing: "0.01em"
+    }}
+  >
+    {saving ? "Saving..." : "Save changes"}
+  </button>
+</div>
       </div>
     </>
   );
