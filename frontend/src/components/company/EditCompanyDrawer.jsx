@@ -106,8 +106,8 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
     setSaving(true); setError(null);
     const country = COUNTRIES.find(c => c.code === phoneCountry) || COUNTRIES[0];
     const fullPhone = data.phone ? "+" + data.phone : "";
-    const addrParts = [data.address_street, data.address_city, data.address_province, data.address_postal_code].filter(Boolean);
-    const fullAddr = addrParts.join("\n");
+    const cityLine = [data.address_city, data.address_province, data.address_postal_code].filter(Boolean).join(" ");
+    const fullAddr = [data.address_street, cityLine].filter(Boolean).join("\n");
 
     setStoredProfile({ name: data.name.trim(), business_number: data.business_number, email: data.email, phone: fullPhone, phoneCountry, website: data.website, address: fullAddr, cf_same: data.cf_same, cf_street: data.cf_street, cf_city: data.cf_city, cf_province: data.cf_province, cf_postal_code: data.cf_postal_code, logo: data.logo });
 
