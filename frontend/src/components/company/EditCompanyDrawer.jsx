@@ -71,7 +71,7 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
       name: src.from_name || "",
       business_number: src.from_bn || "",
       email: src.from_email || "",
-      phone: src.from_phone ? src.from_phone.replace(/^\+\d+\s*/, "") : "",
+      phone: (() => { let p = (src.from_phone || "").replace(/^\+/, "").replace(/\s+/g, ""); if (p.length === 12 && p.startsWith("11")) p = p.substring(1); return p; })(),
       website: src.from_website || "",
       address_street: lines[0] || "",
       address_city: lines[1] || "",
@@ -105,7 +105,7 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
     if (!data.name.trim()) { setError("Company name is required"); return; }
     setSaving(true); setError(null);
     const country = COUNTRIES.find(c => c.code === phoneCountry) || COUNTRIES[0];
-    const fullPhone = data.phone ? (country.dial + " " + data.phone) : "";
+    const fullPhone = data.phone ? "+" + data.phone : "";
     const addrParts = [data.address_street, data.address_city, data.address_province, data.address_postal_code].filter(Boolean);
     const fullAddr = addrParts.join("\n");
 
