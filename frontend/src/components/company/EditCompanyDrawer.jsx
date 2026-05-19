@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Upload, Trash2, ChevronDown } from "lucide-react";
+import { CompanyPhoneField } from "../CompanyPhoneField";
 
 const flagOf = (code) => code.toUpperCase().split("").map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join("");
 
@@ -142,27 +143,7 @@ export default function EditCompanyDrawer({ open, onClose, initialData, onSave }
           <div style={{ marginBottom: 16 }}><label style={labelStyle}>Business number (BN)</label><input type="text" value={data.business_number} onChange={e => setField("business_number", e.target.value)} style={inputStyle} placeholder="123456789RT0001" onFocus={onFocus} onBlur={onBlur} /></div>
           <div style={{ marginBottom: 16 }}><label style={labelStyle}>Email</label><input type="email" value={data.email} onChange={e => setField("email", e.target.value)} style={inputStyle} placeholder="contact@yourcompany.com" onFocus={onFocus} onBlur={onBlur} /></div>
 
-          <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>Phone number</label>
-            <div style={{ display: "flex", gap: 8, position: "relative" }} data-phone-dropdown>
-              <button type="button" onClick={() => setPhoneDropdownOpen(!phoneDropdownOpen)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 12px", border: "1px solid " + BORDER, borderRadius: 8, background: "#fff", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>
-                <span style={{ fontSize: 20, lineHeight: 1 }}>{flagOf(phoneCountry)}</span>
-                <ChevronDown size={14} color={SUBTLE} />
-              </button>
-              <input type="tel" value={data.phone} onChange={e => setField("phone", e.target.value)} style={inputStyle} placeholder="(780) 555-1234" onFocus={onFocus} onBlur={onBlur} />
-              {phoneDropdownOpen && (
-                <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, maxHeight: 320, overflowY: "auto", background: "#fff", border: "1px solid " + BORDER, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50 }}>
-                  {COUNTRIES.map(c => (
-                    <button key={c.code} type="button" onClick={() => { setPhoneCountry(c.code); setPhoneDropdownOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", width: "100%", border: "none", borderBottom: "1px solid #f1f5f9", background: "none", cursor: "pointer", textAlign: "left", fontFamily: "inherit", fontSize: 14, color: TEXT, boxSizing: "border-box" }} onMouseEnter={e => e.currentTarget.style.background = "#f1f5f9"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                      <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>{flagOf(c.code)}</span>
-                      <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
-                      <span style={{ color: SUBTLE, fontSize: 13, flexShrink: 0 }}>{c.dial}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <div style={{ marginBottom: 16 }}><CompanyPhoneField value={data.phone} onChange={v => setField("phone", v || "")} /></div>
 
           <div style={{ marginBottom: 16 }}><label style={labelStyle}>Website</label><input type="url" value={data.website} onChange={e => setField("website", e.target.value)} style={inputStyle} placeholder="https://yourcompany.com" onFocus={onFocus} onBlur={onBlur} /></div>
 

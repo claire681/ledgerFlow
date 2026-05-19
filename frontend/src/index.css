@@ -63,3 +63,12 @@ body {
 .card-grid {
   gap: 16px;
 }
+/* Novala phone number field */
+.novala-phone-input { display: flex; align-items: center; width: 100%; }
+.novala-phone-input .PhoneInputCountry { display: flex; align-items: center; gap: 4px; padding: 0 10px; height: 44px; border: 1px solid rgb(203, 213, 225); border-right: none; border-radius: 8px 0 0 8px; background: white; cursor: pointer; }
+.novala-phone-input .PhoneInputCountry:hover { background: rgb(248, 250, 252); }
+.novala-phone-input .PhoneInputCountryIcon { width: 28px; height: 20px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08); border-radius: 2px; }
+.novala-phone-input .PhoneInputCountrySelectArrow { border-style: solid; border-color: rgb(100, 116, 139); border-width: 0 1.5px 1.5px 0; display: inline-block; padding: 2px; transform: rotate(45deg); margin-left: 4px; }
+.novala-phone-input .PhoneInputInput { flex: 1; height: 44px; padding: 0 14px; border: 1px solid rgb(203, 213, 225); border-radius: 0 8px 8px 0; font-size: 15px; color: rgb(15, 23, 42); outline: none; background: white; font-family: inherit; }
+.novala-phone-input .PhoneInputInput:focus { border-color: rgb(15, 89, 89); box-shadow: 0 0 0 3px rgba(15, 89, 89, 0.15); }
+.novala-phone-input .PhoneInputInput::placeholder { color: rgb(148, 163, 184); }
