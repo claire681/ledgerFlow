@@ -45,7 +45,7 @@ const buildEmptyInvoice = () => { const p = (typeof window !== "undefined") ? ge
 const EMPTY_INVOICE = {
   from_name: "", to_name: "", invoice_number: "",
   date: new Date().toISOString().slice(0, 10),
-  due_date: "", terms: "Net 30", items: [], status: "draft"
+  due_date: "", terms: "Net 30", items: [{ name: "", description: "", qty: 1, rate: 0 }], status: "draft"
 };
 
 const Toggle = ({ on, onClick }) => (
@@ -147,7 +147,7 @@ export default function InvoiceEditor() {
   const handleItemChange = (i, field, value) => setInvoice(prev => { const items = [...(prev.items || prev.line_items || [])]; items[i] = { ...items[i], [field]: (field === "qty" || field === "rate") ? Number(value) : value }; return { ...prev, items }; });
   const handleAddItem = () => setInvoice(prev => { const items = [...(prev.items || prev.line_items || [])]; items.push({ description: "", qty: 1, rate: 0 }); return { ...prev, items }; });
   const handleDeleteItem = (i) => setInvoice(prev => { const items = [...(prev.items || prev.line_items || [])]; items.splice(i, 1); return { ...prev, items }; });
-  const handleClearItems = () => setInvoice(prev => ({ ...prev, items: [] }));
+  const handleClearItems = () => setInvoice(prev => ({ ...prev, items: [{ name: "", description: "", qty: 1, rate: 0 }] }));
   const handleSaveCompany = async (data) => {
     setInvoice(prev => ({ ...prev, ...data }));
     const token = localStorage.getItem("token") || localStorage.getItem("access_token");
