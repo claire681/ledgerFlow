@@ -61,6 +61,27 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
   const [localLogoOverride, setLocalLogoOverride] = useState(null);
   const [hoveredRow, setHoveredRow] = useState(null);
   const [rowMenuOpen, setRowMenuOpen] = useState(null);
+  const addLineOfType = (type) => {
+    if (typeof onAddItem === "function") onAddItem();
+    setTimeout(() => {
+      const newIdx = items.length;
+      onItemChange(newIdx, "type", type);
+    }, 0);
+  };
+
+  const computeRunningSubtotal = (uptoIdx) => {
+    let sum = 0;
+    for (let k = uptoIdx - 1; k >= 0; k--) {
+      const it = items[k] || {};
+      if (it.type === "subtotal") break;
+      if (it.type === "text") continue;
+      const q = Number(it.qty ?? it.quantity ?? 0);
+      const r = Number(it.rate ?? it.price ?? 0);
+      sum += q * r;
+    }
+    return sum;
+  };
+
   const [logoRemoved, setLogoRemoved] = useState(false);
   const [addDropdownOpen, setAddDropdownOpen] = useState(false);
   const [discount, setDiscount] = useState({ value: 0, type: "percent" });
@@ -252,9 +273,57 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
     const qty = Number(item.qty ?? item.quantity ?? 1);
     const rate = Number(item.rate ?? item.price ?? 0);
     const hovered = hoveredRow === i;
+    const rowType = item.type || "item";
+
+    if (rowType === "subtotal") {
+      const stAmount = computeRunningSubtotal(i);
+      return (
+        <tr key={i} onMouseEnter={() => setHoveredRow(i)} onMouseLeave={() => setHoveredRow(null)} style={{ borderBottom: "1px solid #f1f5f9", position: "relative" }}>
+          {editable && (<td style={{ width: 28, padding: "4px 2px", verticalAlign: "middle" }}></td>)}
+          {editable && (<td style={{ width: 20, padding: "4px 2px", verticalAlign: "middle", textAlign: "center", color: hovered ? "#94a3b8" : "transparent", cursor: "grab", fontSize: 14, lineHeight: 1, userSelect: "none" }}>⠿</td>)}
+          <td style={{ padding: "8px 12px", fontSize: 13, color: "#0F172A", verticalAlign: "middle" }}></td>
+          <td colSpan={3} style={{ padding: 4, verticalAlign: "middle" }}>
+            {editable ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input type="text" value={item.name || ""} placeholder="" onChange={e => onItemChange(i, "name", e.target.value)} style={{ flex: 1, padding: "8px 10px", border: "1px solid " + (hovered ? "#cbd5e1" : "#e2e8f0"), borderRadius: 4, fontSize: 13, fontFamily: "inherit", outline: "none", background: "#fff", boxSizing: "border-box" }} />
+                <span style={{ fontSize: 13, color: "#64748B", fontStyle: "italic", whiteSpace: "nowrap" }}>Subtotal</span>
+              </div>
+            ) : (
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 8px" }}>
+                <span style={{ fontSize: 13, fontWeight: 500 }}>{item.name || ""}</span>
+                <span style={{ fontSize: 13, fontStyle: "italic", color: "#64748B" }}>Subtotal</span>
+              </div>
+            )}
+          </td>
+          <td style={{ padding: 4, verticalAlign: "middle", textAlign: "right" }}>
+            <div style={{ padding: "8px 10px", fontSize: 13, fontWeight: 700, color: "#0F172A", ...numStyle }}>{"$" + stAmount.toFixed(2)}</div>
+          </td>
+          {editable && (<td style={{ padding: "8px 4px", textAlign: "center", verticalAlign: "middle" }}><button onClick={() => onDeleteItem(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex", borderRadius: 4, opacity: hovered ? 1 : 0, transition: "opacity 0.12s" }}><Trash2 size={14} color="#94a3b8" /></button></td>)}
+        </tr>
+      );
+    }
+
+    if (rowType === "text") {
+      return (
+        <tr key={i} onMouseEnter={() => setHoveredRow(i)} onMouseLeave={() => setHoveredRow(null)} style={{ borderBottom: "1px solid #f1f5f9", position: "relative" }}>
+          {editable && (<td style={{ width: 28, padding: "4px 2px", verticalAlign: "middle" }}></td>)}
+          {editable && (<td style={{ width: 20, padding: "4px 2px", verticalAlign: "middle", textAlign: "center", color: hovered ? "#94a3b8" : "transparent", cursor: "grab", fontSize: 14, lineHeight: 1, userSelect: "none" }}>⠿</td>)}
+          <td style={{ padding: "8px 12px", fontSize: 13, color: "#0F172A", verticalAlign: "middle" }}></td>
+          <td colSpan={4} style={{ padding: 4, verticalAlign: "top" }}>
+            {editable ? (
+              <textarea value={item.description || ""} onChange={e => onItemChange(i, "description", e.target.value)} rows={1} placeholder="Add a note or instruction..." style={{ width: "100%", border: "1px solid " + (hovered ? "#cbd5e1" : "transparent"), borderRadius: 4, padding: "8px 10px", fontSize: 13, fontFamily: "inherit", outline: "none", background: hovered ? "#fff" : "transparent", boxSizing: "border-box", resize: "none", overflow: "hidden", minHeight: 36, lineHeight: 1.5, fontStyle: "italic", color: "#475569" }} onInput={e => { e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }} />
+            ) : (
+              <span style={{ padding: "6px 8px", fontSize: 13, fontStyle: "italic", color: "#475569", whiteSpace: "pre-wrap" }}>{item.description || ""}</span>
+            )}
+          </td>
+          {editable && (<td style={{ padding: "8px 4px", textAlign: "center", verticalAlign: "middle" }}><button onClick={() => onDeleteItem(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex", borderRadius: 4, opacity: hovered ? 1 : 0, transition: "opacity 0.12s" }}><Trash2 size={14} color="#94a3b8" /></button></td>)}
+        </tr>
+      );
+    }
+
     return (
       <tr key={i} onMouseEnter={() => setHoveredRow(i)} onMouseLeave={() => setHoveredRow(null)} style={{ borderBottom: "1px solid #f1f5f9", position: "relative" }}>
-        {editable && (<td style={{ width: 28, padding: "4px 2px", verticalAlign: "middle", textAlign: "center", position: "relative" }}><button onClick={(e) => { e.stopPropagation(); setRowMenuOpen(rowMenuOpen === i ? null : i); }} title="Add" style={{ background: hovered || rowMenuOpen === i ? "#0F9599" : "transparent", border: "1px solid " + (hovered || rowMenuOpen === i ? "#0F9599" : "transparent"), borderRadius: "50%", width: 22, height: 22, cursor: "pointer", padding: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", color: hovered || rowMenuOpen === i ? "#fff" : "#64748B", transition: "all 0.12s" }}><Plus size={12} /></button>{rowMenuOpen === i && (<><div onClick={() => setRowMenuOpen(null)} style={{ position: "fixed", inset: 0, zIndex: 40 }} /><div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, boxShadow: "0 4px 14px rgba(0,0,0,0.12)", zIndex: 50, minWidth: 200, overflow: "hidden", textAlign: "left" }}><button onClick={() => { onAddItem && onAddItem(); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Add product or service</button><button onClick={() => { alert("Add subtotal: coming soon"); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Add subtotal</button><button onClick={() => { const copy = { ...items[i] }; onAddItem && onAddItem(); setTimeout(() => { onItemChange(items.length, "name", copy.name || ""); onItemChange(items.length, "description", copy.description || ""); onItemChange(items.length, "qty", copy.qty || ""); onItemChange(items.length, "rate", copy.rate || ""); }, 0); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Duplicate</button><button onClick={() => { alert("Add text: coming soon"); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Add text</button></div></>)}</td>)}
+        {editable && (<td style={{ width: 28, padding: "4px 2px", verticalAlign: "middle", textAlign: "center", position: "relative" }}><button onClick={(e) => { e.stopPropagation(); setRowMenuOpen(rowMenuOpen === i ? null : i); }} title="Add" style={{ background: hovered || rowMenuOpen === i ? "#0F9599" : "transparent", border: "1px solid " + (hovered || rowMenuOpen === i ? "#0F9599" : "transparent"), borderRadius: "50%", width: 22, height: 22, cursor: "pointer", padding: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", color: hovered || rowMenuOpen === i ? "#fff" : "#64748B", transition: "all 0.12s" }}><Plus size={12} /></button>{rowMenuOpen === i && (<><div onClick={() => setRowMenuOpen(null)} style={{ position: "fixed", inset: 0, zIndex: 40 }} /><div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, boxShadow: "0 4px 14px rgba(0,0,0,0.12)", zIndex: 50, minWidth: 200, overflow: "hidden", textAlign: "left" }}><button onClick={() => { onAddItem && onAddItem(); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Add product or service</button><button onClick={() => { addLineOfType("subtotal"); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Add subtotal</button><button onClick={() => { const copy = { ...items[i] }; onAddItem && onAddItem(); setTimeout(() => { onItemChange(items.length, "name", copy.name || ""); onItemChange(items.length, "description", copy.description || ""); onItemChange(items.length, "qty", copy.qty || ""); onItemChange(items.length, "rate", copy.rate || ""); }, 0); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Duplicate</button><button onClick={() => { addLineOfType("text"); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Add text</button></div></>)}</td>)}
         {editable && (<td style={{ width: 20, padding: "4px 2px", verticalAlign: "middle", textAlign: "center", color: hovered ? "#94a3b8" : "transparent", cursor: "grab", fontSize: 14, lineHeight: 1, userSelect: "none" }}>⠿</td>)}
         <td style={{ padding: "8px 12px", fontSize: 13, color: "#0F172A", verticalAlign: "middle", ...numStyle }}>{i + 1}</td>
                     <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <ProductServiceCombobox value={item.name || ""} onChange={e => onItemChange(i, "name", e.target.value)} onSelect={(p) => { onItemChange(i, "name", p.name); if (p.description) onItemChange(i, "description", p.description); if (p.price_rate !== undefined && p.price_rate !== "") onItemChange(i, "rate", p.price_rate); }} onAddNew={() => { setActiveRowIdx(i); setShowAddProductModal(true); }} /> : <span style={{ padding: "6px 8px", fontSize: 13 }}>{item.name || "-"}</span>}</td>
@@ -280,8 +349,8 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
             <div onClick={() => setAddDropdownOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
             <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 20, minWidth: 220, overflow: "hidden" }}>
               <button onClick={() => { onAddItem(); setAddDropdownOpen(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 16px", background: "#fff", border: "none", fontSize: 14, color: "#0F172A", cursor: "pointer", fontFamily: "inherit" }}>Add product or service</button>
-              <button onClick={() => { alert("Add subtotal: coming soon"); setAddDropdownOpen(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 16px", background: "#fff", border: "none", fontSize: 14, color: "#0F172A", cursor: "pointer", fontFamily: "inherit" }}>Add subtotal</button>
-              <button onClick={() => { alert("Add text: coming soon"); setAddDropdownOpen(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 16px", background: "#fff", border: "none", fontSize: 14, color: "#0F172A", cursor: "pointer", fontFamily: "inherit" }}>Add text</button>
+              <button onClick={() => { addLineOfType("subtotal"); setAddDropdownOpen(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 16px", background: "#fff", border: "none", fontSize: 14, color: "#0F172A", cursor: "pointer", fontFamily: "inherit" }}>Add subtotal</button>
+              <button onClick={() => { addLineOfType("text"); setAddDropdownOpen(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 16px", background: "#fff", border: "none", fontSize: 14, color: "#0F172A", cursor: "pointer", fontFamily: "inherit" }}>Add text</button>
             </div>
           </>)}
         </div>
