@@ -236,8 +236,8 @@ export default function InvoiceEditor() {
       </div>
 
       <div style={{ flex: 1, display: "flex", overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
-        <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? 16 : 32, background: PAGE_BG }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 400, overflow: "hidden" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? 16 : 20, background: PAGE_BG }}>
+          <div style={{ maxWidth: 1500, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 800, overflow: "hidden" }}>
             {loading ? <div style={{ padding: 40, textAlign: "center", color: SUBTLE, fontSize: 14 }}>Loading invoice...</div>
               : error ? <div style={{ padding: 40, textAlign: "center", color: "#dc2626", fontSize: 14 }}>Error: {error}</div>
               : <InvoicePreview inv={invoice} customization={customization} accentColor={accentColor} template={templateChoice} onFieldChange={handleFieldChange} onCustomerSelect={handleCustomerSelect} onItemChange={handleItemChange} onAddItem={handleAddItem} onDeleteItem={handleDeleteItem} onClearItems={handleClearItems} onEditCompany={() => setEditCompanyOpen(true)}
