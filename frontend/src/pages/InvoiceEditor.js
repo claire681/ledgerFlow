@@ -51,13 +51,85 @@ const MORE_OPTIONS_FIELDS = [
 ];
 
 const PAYMENT_METHODS = [
-  { key: "applePay", label: "Pay", style: { background: "#000", color: "#fff" } },
-  { key: "visa", label: "VISA", style: { background: "#1a1f71", color: "#fff", fontWeight: 700 } },
-  { key: "mastercard", label: "MC", style: { background: "#fff", color: "#eb001b", fontWeight: 700, border: "1px solid " + BORDER } },
-  { key: "discover", label: "DISCOVER", style: { background: "#fff", color: "#ff6000", fontSize: 8, fontWeight: 700, border: "1px solid " + BORDER } },
-  { key: "amex", label: "AMEX", style: { background: "#2e77bb", color: "#fff", fontSize: 9, fontWeight: 700 } },
-  { key: "jcb", label: "JCB", style: { background: "linear-gradient(90deg,#0066b2 33%,#cc0000 33%,#cc0000 66%,#0a8b3c 66%)", color: "#fff", fontWeight: 700, fontSize: 9 } },
-  { key: "bank", label: "BANK", style: { background: "#fff", color: TEXT, border: "1px solid " + BORDER, fontWeight: 600 } }
+  {
+    key: "applePay",
+    svg: (
+      <svg width="38" height="24" viewBox="0 0 38 24" xmlns="http://www.w3.org/2000/svg">
+        <rect width="38" height="24" rx="3" fill="#000"/>
+        <path d="M9.5 8.2c-.4.5-1.1.9-1.7.8-.1-.7.2-1.4.6-1.8.4-.5 1.1-.8 1.7-.9.1.7-.2 1.4-.6 1.9zm.6.9c-.9-.1-1.7.5-2.2.5-.5 0-1.1-.5-1.9-.5-1 0-1.9.6-2.4 1.5-1 1.8-.3 4.4.7 5.9.5.7 1.1 1.5 1.9 1.5.7 0 1-.5 1.9-.5s1.1.5 1.9.5c.8 0 1.3-.7 1.8-1.5.6-.8.8-1.6.8-1.7 0 0-1.5-.6-1.5-2.3 0-1.4 1.2-2.1 1.2-2.1-.7-1-1.7-1.3-2.2-1.3z" fill="#fff"/>
+        <text x="14" y="16" fontFamily="-apple-system,Helvetica,Arial,sans-serif" fontSize="9" fontWeight="500" fill="#fff">Pay</text>
+      </svg>
+    )
+  },
+  {
+    key: "visa",
+    svg: (
+      <svg width="38" height="24" viewBox="0 0 38 24" xmlns="http://www.w3.org/2000/svg">
+        <rect width="38" height="24" rx="3" fill="#fff" stroke="#e2e8f0"/>
+        <text x="19" y="16" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="10" fontWeight="900" fontStyle="italic" fill="#1a1f71" letterSpacing="0.5">VISA</text>
+      </svg>
+    )
+  },
+  {
+    key: "mastercard",
+    svg: (
+      <svg width="38" height="24" viewBox="0 0 38 24" xmlns="http://www.w3.org/2000/svg">
+        <rect width="38" height="24" rx="3" fill="#fff" stroke="#e2e8f0"/>
+        <circle cx="16" cy="12" r="6" fill="#eb001b"/>
+        <circle cx="22" cy="12" r="6" fill="#f79e1b" fillOpacity="0.9"/>
+        <path d="M19 7.5a6 6 0 0 1 0 9 6 6 0 0 1 0-9z" fill="#ff5f00"/>
+      </svg>
+    )
+  },
+  {
+    key: "discover",
+    svg: (
+      <svg width="58" height="24" viewBox="0 0 58 24" xmlns="http://www.w3.org/2000/svg">
+        <rect width="58" height="24" rx="3" fill="#fff" stroke="#e2e8f0"/>
+        <text x="6" y="15" fontFamily="Arial,sans-serif" fontSize="8" fontWeight="700" fill="#000">DISC</text>
+        <circle cx="30" cy="13" r="3" fill="#ff6000"/>
+        <text x="35" y="15" fontFamily="Arial,sans-serif" fontSize="8" fontWeight="700" fill="#000">VER</text>
+        <path d="M2 19 Q29 22 56 17 L56 22 L2 22 Z" fill="#ff6000"/>
+      </svg>
+    )
+  },
+  {
+    key: "amex",
+    svg: (
+      <svg width="38" height="24" viewBox="0 0 38 24" xmlns="http://www.w3.org/2000/svg">
+        <rect width="38" height="24" rx="3" fill="#2e77bb"/>
+        <text x="19" y="11" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="6" fontWeight="900" fill="#fff" letterSpacing="0.3">AM</text>
+        <text x="19" y="19" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="6" fontWeight="900" fill="#fff" letterSpacing="0.3">EX</text>
+      </svg>
+    )
+  },
+  {
+    key: "jcb",
+    svg: (
+      <svg width="38" height="24" viewBox="0 0 38 24" xmlns="http://www.w3.org/2000/svg">
+        <rect width="38" height="24" rx="3" fill="#fff" stroke="#e2e8f0"/>
+        <rect x="2" y="3" width="10" height="18" rx="2" fill="#0066b2"/>
+        <rect x="14" y="3" width="10" height="18" rx="2" fill="#cc0000"/>
+        <rect x="26" y="3" width="10" height="18" rx="2" fill="#0a8b3c"/>
+        <text x="7" y="15" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="6" fontWeight="900" fill="#fff">J</text>
+        <text x="19" y="15" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="6" fontWeight="900" fill="#fff">C</text>
+        <text x="31" y="15" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="6" fontWeight="900" fill="#fff">B</text>
+      </svg>
+    )
+  },
+  {
+    key: "bank",
+    svg: (
+      <svg width="42" height="24" viewBox="0 0 42 24" xmlns="http://www.w3.org/2000/svg">
+        <rect width="42" height="24" rx="3" fill="#fff" stroke="#e2e8f0"/>
+        <path d="M6 9 L10 6 L14 9 L14 10 L6 10 Z" fill="#0F172A"/>
+        <rect x="7" y="11" width="1.5" height="5" fill="#0F172A"/>
+        <rect x="11.5" y="11" width="1.5" height="5" fill="#0F172A"/>
+        <rect x="6" y="16.5" width="8" height="1.5" fill="#0F172A"/>
+        <text x="28" y="15" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="8" fontWeight="700" fill="#0F172A">BANK</text>
+      </svg>
+    )
+  }
 ];
 
 const PALETTE = [
@@ -633,10 +705,10 @@ export default function InvoiceEditor() {
                     <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>Accepted payment methods</div>
                     <button style={{ background: "none", border: "none", color: LINK, fontSize: 12, cursor: "pointer", padding: 0 }}>Set up</button>
                   </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+                  <div style={{ display: "flex", flexWrap: "nowrap", gap: 4, marginBottom: 16, alignItems: "center" }}>
                     {PAYMENT_METHODS.map(pm => (
-                      <div key={pm.key} style={{ padding: "5px 9px", borderRadius: 4, fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center", minWidth: 38, height: 24, ...pm.style }}>
-                        {pm.label}
+                      <div key={pm.key} style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        {pm.svg}
                       </div>
                     ))}
                   </div>
