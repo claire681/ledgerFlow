@@ -141,7 +141,9 @@ function NewAccountModal({ onClose, onSave }) {
   );
 }
 
-export function AddNewServiceModal({ onClose, onSave }) {
+export function AddNewServiceModal({ isOpen = true, onClose, onSave, onSaved }) {
+  if (!isOpen) return null;
+  const emit = onSaved || onSave;
   const [basicOpen, setBasicOpen] = useState(true);
   const [salesOpen, setSalesOpen] = useState(true);
   const [purchOpen, setPurchOpen] = useState(true);
@@ -163,6 +165,8 @@ export function AddNewServiceModal({ onClose, onSave }) {
     try { const s = localStorage.getItem(CATEGORIES_KEY); return s ? JSON.parse(s) : []; } catch { return []; }
   });
   const [showNewAccount, setShowNewAccount] = useState(false);
+  const [showCatPrompt, setShowCatPrompt] = useState(false);
+  const [catDraft, setCatDraft] = useState("");
   const fileRef = useRef(null);
 
   const handleImage = (e) => {
@@ -173,14 +177,15 @@ export function AddNewServiceModal({ onClose, onSave }) {
     r.readAsDataURL(f);
   };
 
-  const handleAddCategory = () => {
-    const v = window.prompt("New category name");
-    if (v && v.trim()) {
-      const next = [...categories, v.trim()];
-      setCategories(next);
-      try { localStorage.setItem(CATEGORIES_KEY, JSON.stringify(next)); } catch {}
-      setCategory(v.trim());
-    }
+  const handleAddCategory = () => { setCatDraft(""); setShowCatPrompt(true); };
+  const confirmAddCategory = () => {
+    const v = catDraft.trim();
+    if (!v) { setShowCatPrompt(false); return; }
+    const next = [...categories, v];
+    setCategories(next);
+    try { localStorage.setItem(CATEGORIES_KEY, JSON.stringify(next)); } catch {}
+    setCategory(v);
+    setShowCatPrompt(false);
   };
 
   const handleSaveAccount = (acct) => {
@@ -202,11 +207,13 @@ export function AddNewServiceModal({ onClose, onSave }) {
       category,
       imageUrl,
       description,
+      price_rate: priceRate ? Number(priceRate) : 0,
       priceRate: priceRate ? Number(priceRate) : 0,
       incomeAccount,
       purchaseFromSupplier,
     };
-    onSave(product, closeAfter);
+    if (emit) emit(product, !closeAfter);
+    if (closeAfter && onClose) onClose();
     if (!closeAfter) {
       setName(""); setSku(""); setCategory(""); setImageUrl(""); setDescription(""); setPriceRate(""); setPurchaseFromSupplier(false);
     }
@@ -321,6 +328,28 @@ export function AddNewServiceModal({ onClose, onSave }) {
       </div>
 
       {showNewAccount && <NewAccountModal onClose={() => setShowNewAccount(false)} onSave={handleSaveAccount} />}
+
+      {showCatPrompt && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)", zIndex: 300, display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <div style={{ width: 440, background: "#fff", borderRadius: 8, boxShadow: "0 12px 32px rgba(0,0,0,0.2)", overflow: "hidden" }}>
+            <div style={{ padding: "20px 24px 8px", fontSize: 16, fontWeight: 600, color: TEXT }}>Add new category</div>
+            <div style={{ padding: "0 24px 16px" }}>
+              <label style={{ display: "block", fontSize: 13, color: MUTED, marginBottom: 8 }}>Category name</label>
+              <input
+                autoFocus
+                value={catDraft}
+                onChange={e => setCatDraft(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") confirmAddCategory(); if (e.key === "Escape") setShowCatPrompt(false); }}
+                style={inputStyle}
+              />
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, padding: "12px 24px 20px" }}>
+              <button type="button" onClick={() => setShowCatPrompt(false)} style={{ padding: "10px 20px", background: "#fff", border: "1px solid " + BORDER, borderRadius: 4, fontSize: 14, fontWeight: 500, color: TEXT, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button type="button" onClick={confirmAddCategory} style={{ padding: "10px 20px", background: TEAL, border: "none", borderRadius: 4, fontSize: 14, fontWeight: 500, color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>OK</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
