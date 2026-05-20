@@ -239,7 +239,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
             </tr></thead>
             <tbody>
               {items.length === 0 ? (
-                <tr><td colSpan={editable ? 8 : 6} style={{ textAlign: "center", padding: "32px 0", color: "#94a3b8", fontSize: 13 }}>No line items yet. Click below to add one.</td></tr>
+                null
               ) : items.map((item, i) => {
                 const qty = Number(item.qty ?? item.quantity ?? 1);
                 const rate = Number(item.rate ?? item.price ?? 0);
