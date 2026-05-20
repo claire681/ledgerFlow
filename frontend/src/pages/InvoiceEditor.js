@@ -588,7 +588,20 @@ export default function InvoiceEditor() {
       }}
     >
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? 8 : 24 }}>
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 24px", borderBottom: "1px solid " + BORDER, background: "#fff" }}>
+            <div style={{ display: "flex", gap: 4 }}>
+              <div style={{ padding: "6px 12px", borderBottom: "2px solid " + TEXT, color: TEXT, fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Edit</div>
+              <div style={{ padding: "6px 12px", color: SUBTLE, fontSize: 14, cursor: "pointer" }}>Email view</div>
+              <div style={{ padding: "6px 12px", color: SUBTLE, fontSize: 14, cursor: "pointer" }}>PDF view</div>
+            </div>
+            <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+              <button onClick={() => setSidebarOpen(s => !s)} style={{ background: "none", border: "none", display: "flex", alignItems: "center", gap: 5, cursor: "pointer", color: SUBTLE, fontSize: 13, fontFamily: "inherit" }}><Settings size={15} /> Manage</button>
+              <button style={{ background: "none", border: "none", display: "flex", alignItems: "center", gap: 5, cursor: "pointer", color: SUBTLE, fontSize: 13, fontFamily: "inherit" }}><PlayCircle size={15} /> Take tour</button>
+              <button style={{ background: "none", border: "none", display: "flex", alignItems: "center", gap: 5, cursor: "pointer", color: SUBTLE, fontSize: 13, fontFamily: "inherit" }}><MessageSquare size={15} /> Feedback</button>
+            </div>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? 8 : 24 }}>
           <div style={{ maxWidth: 1500, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 800, overflow: "hidden" }}>
             {loading ? (
               <div style={{ padding: 40, textAlign: "center", color: SUBTLE, fontSize: 14 }}>
@@ -629,17 +642,7 @@ export default function InvoiceEditor() {
               padding: 16
             }}
           >
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 14, alignItems: "center", marginBottom: 12, color: SUBTLE, fontSize: 13 }}>
-              <button style={{ background: "none", border: "none", display: "flex", alignItems: "center", gap: 5, cursor: "pointer", color: SUBTLE, fontSize: 13 }}>
-                <Settings size={15} /> Manage
-              </button>
-              <button style={{ background: "none", border: "none", display: "flex", alignItems: "center", gap: 5, cursor: "pointer", color: SUBTLE, fontSize: 13 }}>
-                <PlayCircle size={15} /> Take tour
-              </button>
-              <button style={{ background: "none", border: "none", display: "flex", alignItems: "center", gap: 5, cursor: "pointer", color: SUBTLE, fontSize: 13 }}>
-                <MessageSquare size={15} /> Feedback
-              </button>
-            </div>
+            
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
               <div>
