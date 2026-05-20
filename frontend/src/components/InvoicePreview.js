@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Edit2, Trash2, Plus, ChevronDown, X, Upload } from "lucide-react";
 import CustomerCombobox from "./customers/CustomerCombobox";
 import { LogoUploadModal } from "./LogoUploadModal";
+import { ProductServiceCombobox } from "./products/ProductServiceCombobox";
 
 const useIsMobile = () => {
   const [m, setM] = useState(typeof window !== "undefined" && window.innerWidth < 768);
@@ -246,7 +247,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
                 return (
                   <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
                     <td style={{ padding: "8px 12px", fontSize: 13, color: "#0F172A", verticalAlign: "middle", ...numStyle }}>{i + 1}</td>
-                    <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput value={item.name || ""} onChange={e => onItemChange(i, "name", e.target.value)} placeholder="" /> : <span style={{ padding: "6px 8px", fontSize: 13 }}>{item.name || "-"}</span>}</td>
+                    <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <ProductServiceCombobox value={item.name || ""} onChange={e => onItemChange(i, "name", e.target.value)} onSelect={(p) => { onItemChange(i, "name", p.name); if (p.description) onItemChange(i, "description", p.description); if (p.price_rate !== undefined && p.price_rate !== "") onItemChange(i, "rate", p.price_rate); }} onAddNew={() => alert("Full Add New Service modal coming in next patch. For now, type the name and rate directly in the row.")} /> : <span style={{ padding: "6px 8px", fontSize: 13 }}>{item.name || "-"}</span>}</td>
                     <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput value={item.description || ""} onChange={e => onItemChange(i, "description", e.target.value)} placeholder="" /> : <span style={{ padding: "6px 8px", fontSize: 13 }}>{item.description || "-"}</span>}</td>
                     <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput type="number" value={item.qty ?? ""} onChange={e => onItemChange(i, "qty", e.target.value)} align="right" /> : <span style={{ padding: "6px 8px", fontSize: 13, ...numStyle }}>{qty > 0 ? qty : ""}</span>}</td>
                     <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput type="number" value={item.rate ?? ""} onChange={e => onItemChange(i, "rate", e.target.value)} align="right" /> : <span style={{ padding: "6px 8px", fontSize: 13, ...numStyle }}>{rate > 0 ? "$" + rate.toFixed(2) : ""}</span>}</td>
