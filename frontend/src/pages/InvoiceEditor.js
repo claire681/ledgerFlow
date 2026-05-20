@@ -225,6 +225,7 @@ export default function InvoiceEditor() {
 
   const [activeTab, setActiveTab] = useState("edit");
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [viewMode, setViewMode] = useState("edit");
   const [openSections, setOpenSections] = useState({
     customization: true,
     payment: false,
