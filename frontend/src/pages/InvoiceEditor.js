@@ -630,6 +630,7 @@ export default function InvoiceEditor() {
             )}
           </div>
         </div>
+        </div>
 
         {sidebarOpen && (
           <div
