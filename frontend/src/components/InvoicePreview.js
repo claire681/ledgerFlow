@@ -204,7 +204,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
                   </div>
                 )}
                 <div style={{ border: "1px solid #e2e8f0", borderRadius: 8, padding: 14, background: "#fff", marginBottom: 8 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Bill to</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", marginBottom: 8 }}>Bill to</div>
                   {inv.to_name && <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 4 }}>{inv.to_name}</div>}
                   {c.showCustomerAddress && inv.to_address && <div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line", lineHeight: 1.5 }}>{inv.to_address}</div>}
                 </div>
@@ -229,12 +229,12 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           <table style={{ width: "100%", minWidth: isMobile ? 540 : "auto", borderCollapse: "collapse", fontSize: 13 }}>
             <thead><tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
               {editable && <th style={{ width: 28, padding: "10px 4px" }}></th>}
-            <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", width: 32 }}>#</th>
-              <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>Product/service</th>
-              <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em" }}>Description</th>
-              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", width: 80 }}>Qty</th>
-              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", width: 100 }}>Rate</th>
-              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", width: 100 }}>Amount</th>
+            <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 32 }}>#</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em" }}>Product/service</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em" }}>Description</th>
+              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 80 }}>Qty</th>
+              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 100 }}>Rate</th>
+              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 100 }}>Amount</th>
               {editable && <th style={{ width: 40 }}></th>}
             </tr></thead>
             <tbody>
@@ -326,7 +326,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
         <div style={{ marginTop: 24 }}>
           <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 6 }}>Memo on statement (hidden)</label>
           {onFieldChange ? (
-            <textarea value={inv.memo || ""} onChange={e => onFieldChange("memo", e.target.value)} rows={2} placeholder="This memo will not show on the invoice, but will appear on the statement." style={{ width: "100%", maxWidth: 600, padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} onFocus={onFocusBg} onBlur={onBlurBg} />
+            <textarea value={inv.memo || ""} onChange={e => onFieldChange("memo", e.target.value)} rows={2} placeholder="This memo will not show up on your invoice, but will appear on the statement." style={{ width: "100%", maxWidth: 600, padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} onFocus={onFocusBg} onBlur={onBlurBg} />
           ) : (<div style={{ fontSize: 13, color: "#475569" }}>{inv.memo || ""}</div>)}
 
       <div style={{ marginTop: 24 }}>

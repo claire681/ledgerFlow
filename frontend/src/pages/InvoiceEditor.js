@@ -40,7 +40,7 @@ const TEMPLATES = [
   { key: "standard", label: "Standard" }
 ];
 
-const buildEmptyInvoice = () => { const p = (typeof window !== "undefined") ? getStoredProfile() : {}; return { from_name: p.name || "", from_bn: p.business_number || "", from_email: p.email || "", from_phone: p.phone || "", from_website: p.website || "", from_address: p.address || "", to_name: "", invoice_number: "", date: new Date().toISOString().slice(0, 10), due_date: "", terms: "Net 30", items: [], status: "draft" }; };
+const buildEmptyInvoice = () => { const p = (typeof window !== "undefined") ? getStoredProfile() : {}; return { from_name: p.name || "", from_bn: p.business_number || "", from_email: p.email || "", from_phone: p.phone || "", from_website: p.website || "", from_address: p.address || "", to_name: "", invoice_number: "", date: new Date().toISOString().slice(0, 10), due_date: "", terms: "Net 30", items: [{ name: "", description: "", qty: 1, rate: 0 }], status: "draft" }; };
 
 const EMPTY_INVOICE = {
   from_name: "", to_name: "", invoice_number: "",
@@ -237,7 +237,7 @@ export default function InvoiceEditor() {
 
       <div style={{ flex: 1, display: "flex", overflow: "hidden", flexDirection: isMobile ? "column" : "row" }}>
         <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? 16 : 32, background: PAGE_BG }}>
-          <div style={{ maxWidth: 800, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 400, overflow: "hidden" }}>
+          <div style={{ maxWidth: 1100, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 400, overflow: "hidden" }}>
             {loading ? <div style={{ padding: 40, textAlign: "center", color: SUBTLE, fontSize: 14 }}>Loading invoice...</div>
               : error ? <div style={{ padding: 40, textAlign: "center", color: "#dc2626", fontSize: 14 }}>Error: {error}</div>
               : <InvoicePreview inv={invoice} customization={customization} accentColor={accentColor} template={templateChoice} onFieldChange={handleFieldChange} onCustomerSelect={handleCustomerSelect} onItemChange={handleItemChange} onAddItem={handleAddItem} onDeleteItem={handleDeleteItem} onClearItems={handleClearItems} onEditCompany={() => setEditCompanyOpen(true)}
