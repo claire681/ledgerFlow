@@ -261,9 +261,9 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
             <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 32 }}>#</th>
               <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em" }}>Product/service</th>
               <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em" }}>Description</th>
-              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 80 }}>Qty</th>
-              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 100 }}>Rate</th>
-              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 110 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>Amount{editable && <button onClick={() => { if (window.confirm("Clear all amounts?")) { items.forEach((_, idx) => { onItemChange(idx, "qty", ""); onItemChange(idx, "rate", ""); }); } }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, display: "inline-flex" }} title="Clear all amounts"><Trash2 size={13} color="#94a3b8" /></button>}</span></th>
+              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 110 }}>Qty</th>
+              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 140 }}>Rate</th>
+              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 160 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>Amount{editable && <button onClick={() => { if (window.confirm("Clear all amounts?")) { items.forEach((_, idx) => { onItemChange(idx, "qty", ""); onItemChange(idx, "rate", ""); }); } }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, display: "inline-flex" }} title="Clear all amounts"><Trash2 size={13} color="#94a3b8" /></button>}</span></th>
               {editable && <th style={{ width: 40 }}></th>}
             </tr></thead>
             <tbody>
@@ -361,39 +361,34 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
     )}
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>
-          <div style={{ width: isMobile ? "100%" : 280 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #e2e8f0" }}>
-              <span style={{ fontSize: 13, color: "#64748B" }}>Subtotal</span>
-              <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${subtotal.toFixed(2)}</span>
-            </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #e2e8f0" }}>
-          <span style={{ fontSize: 13, color: "#64748B" }}>Discount</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <input type="number" value={discount.value} onChange={e => setDiscount({ ...discount, value: e.target.value })} style={{ width: 56, padding: "4px 6px", border: "1px solid #e2e8f0", borderRadius: 4, fontSize: 13, textAlign: "right", fontFamily: "inherit", outline: "none" }} />
-            <div style={{ display: "flex", background: "#f1f5f9", borderRadius: 12, padding: 2 }}>
-              <button onClick={() => setDiscount({ ...discount, type: "percent" })} style={{ padding: "2px 8px", borderRadius: 10, border: "none", background: discount.type === "percent" ? "#fff" : "transparent", fontSize: 11, fontWeight: 600, color: discount.type === "percent" ? "#0F172A" : "#64748B", cursor: "pointer", fontFamily: "inherit", boxShadow: discount.type === "percent" ? "0 1px 2px rgba(0,0,0,0.08)" : "none" }}>%</button>
-              <button onClick={() => setDiscount({ ...discount, type: "amount" })} style={{ padding: "2px 8px", borderRadius: 10, border: "none", background: discount.type === "amount" ? "#fff" : "transparent", fontSize: 11, fontWeight: 600, color: discount.type === "amount" ? "#0F172A" : "#64748B", cursor: "pointer", fontFamily: "inherit", boxShadow: discount.type === "amount" ? "0 1px 2px rgba(0,0,0,0.08)" : "none" }}>$</button>
-            </div>
-            <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, minWidth: 60, textAlign: "right", ...numStyle }}>${(discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0).toFixed(2)}</span>
-          </div>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderTop: "2px solid #0F172A", borderBottom: "1px solid #e2e8f0", marginTop: 4 }}>
-          <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700 }}>Invoice total</span>
-          <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700, ...numStyle }}>${(subtotal - (discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0)).toFixed(2)}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #e2e8f0" }}>
-          <span style={{ fontSize: 13, color: "#64748B" }}>Deposit</span>
-          <input type="number" value={deposit} onChange={e => setDeposit(e.target.value)} style={{ width: 100, padding: "4px 8px", border: "1px solid #e2e8f0", borderRadius: 4, fontSize: 13, textAlign: "right", fontFamily: "inherit", outline: "none" }} />
-        </div>
-        <div style={{ textAlign: "right", marginTop: 8 }}>
-          <a href="#" onClick={(e) => e.preventDefault()} style={{ fontSize: 13, color: "#22c55e", textDecoration: "none", cursor: "pointer", fontWeight: 500 }}>Edit totals</a>
-        </div>
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0" }}>
-              <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 600 }}>Invoice total</span>
-              <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700, ...numStyle }}>${totalAmt.toFixed(2)}</span>
+            <div style={{ width: isMobile ? "100%" : 320 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
+                <span style={{ fontSize: 13, color: "#0F172A" }}>Subtotal</span>
+                <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${subtotal.toFixed(2)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 13, color: "#0F172A" }}>Discount {discount.value || 0}%</span>
+                  <div style={{ display: "inline-flex", borderRadius: 999, border: "1px solid #cbd5e1", overflow: "hidden", fontSize: 12 }}>
+                    <button type="button" onClick={() => setDiscount({ ...discount, type: "percent" })} style={{ padding: "3px 12px", background: discount.type === "percent" ? "#cbd5e1" : "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: "#0F172A" }}>%</button>
+                    <button type="button" onClick={() => setDiscount({ ...discount, type: "amount" })} style={{ padding: "3px 12px", background: discount.type === "amount" ? "#cbd5e1" : "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: "#0F172A" }}>$</button>
+                  </div>
+                </div>
+                <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${((discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0)).toFixed(2)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderTop: "1px solid #e2e8f0", marginTop: 4 }}>
+                <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700 }}>Invoice total</span>
+                <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700, ...numStyle }}>${(subtotal - (discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0)).toFixed(2)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
+                <span style={{ fontSize: 13, color: "#0F172A" }}>Deposit</span>
+                <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${(Number(deposit) || 0).toFixed(2)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", padding: "4px 0" }}>
+                <button type="button" onClick={() => alert("Edit totals: coming soon")} style={{ background: "none", border: "none", color: "#25b26b", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>Edit totals</button>
+              </div>
             </div>
           </div>
-        </div>
 
         <div style={{ marginTop: 32 }}>
           <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 6 }}>Note to customer</label>
