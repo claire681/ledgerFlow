@@ -3,6 +3,7 @@ import { Edit2, Trash2, Plus, ChevronDown, X, Upload } from "lucide-react";
 import CustomerCombobox from "./customers/CustomerCombobox";
 import { LogoUploadModal } from "./LogoUploadModal";
 import { ProductServiceCombobox } from "./products/ProductServiceCombobox";
+import { AddNewServiceModal } from "./products/AddNewServiceModal";
 
 const useIsMobile = () => {
   const [m, setM] = useState(typeof window !== "undefined" && window.innerWidth < 768);
@@ -109,12 +110,15 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
   const subtotal = items.reduce((s, it) => s + (Number(it.qty ?? it.quantity ?? 1) * Number(it.rate ?? it.price ?? 0)), 0);
   const totalAmt = subtotal + Number(inv.tax_amount || 0);
   const [showCcBcc, setShowCcBcc] = useState(false);
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [activeRowIdx, setActiveRowIdx] = useState(null);
   const hasCustomer = !!(inv.to_name || inv.to_email);
   const numStyle = { fontVariantNumeric: "lining-nums tabular-nums" };
   const editable = !!onItemChange;
 
   return (
     <div id="novala-invoice-canvas" style={{ background: "#fff", fontFamily: "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif" }}>
+      <AddNewServiceModal isOpen={showAddProductModal} onClose={() => { setShowAddProductModal(false); setActiveRowIdx(null); }} onSaved={(p, saveAndNew) => { if (activeRowIdx !== null) { onItemChange(activeRowIdx, "name", p.name); if (p.description) onItemChange(activeRowIdx, "description", p.description); if (p.price_rate !== undefined && p.price_rate !== "") onItemChange(activeRowIdx, "rate", p.price_rate); } if (!saveAndNew) setActiveRowIdx(null); }} />
       <style>{"@media print { body * { visibility: hidden; } #novala-invoice-canvas, #novala-invoice-canvas * { visibility: visible; } #novala-invoice-canvas { position: absolute; left: 0; top: 0; width: 100%; background: white !important; box-shadow: none !important; } button { display: none !important; } input, select, textarea { border: none !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; -webkit-appearance: none !important; appearance: none !important; color: black !important; } @page { margin: 0.5in; } }"}</style>
 
       <div style={{ padding: isMobile ? "24px 16px" : "40px 32px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: isMobile ? 20 : 32 }}>
@@ -247,7 +251,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
                 return (
                   <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
                     <td style={{ padding: "8px 12px", fontSize: 13, color: "#0F172A", verticalAlign: "middle", ...numStyle }}>{i + 1}</td>
-                    <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <ProductServiceCombobox value={item.name || ""} onChange={e => onItemChange(i, "name", e.target.value)} onSelect={(p) => { onItemChange(i, "name", p.name); if (p.description) onItemChange(i, "description", p.description); if (p.price_rate !== undefined && p.price_rate !== "") onItemChange(i, "rate", p.price_rate); }} onAddNew={() => alert("Full Add New Service modal coming in next patch. For now, type the name and rate directly in the row.")} /> : <span style={{ padding: "6px 8px", fontSize: 13 }}>{item.name || "-"}</span>}</td>
+                    <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <ProductServiceCombobox value={item.name || ""} onChange={e => onItemChange(i, "name", e.target.value)} onSelect={(p) => { onItemChange(i, "name", p.name); if (p.description) onItemChange(i, "description", p.description); if (p.price_rate !== undefined && p.price_rate !== "") onItemChange(i, "rate", p.price_rate); }} onAddNew={() => { setActiveRowIdx(i); setShowAddProductModal(true); }} /> : <span style={{ padding: "6px 8px", fontSize: 13 }}>{item.name || "-"}</span>}</td>
                     <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput value={item.description || ""} onChange={e => onItemChange(i, "description", e.target.value)} placeholder="" /> : <span style={{ padding: "6px 8px", fontSize: 13 }}>{item.description || "-"}</span>}</td>
                     <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput type="number" value={item.qty ?? ""} onChange={e => onItemChange(i, "qty", e.target.value)} align="right" /> : <span style={{ padding: "6px 8px", fontSize: 13, ...numStyle }}>{qty > 0 ? qty : ""}</span>}</td>
                     <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput type="number" value={item.rate ?? ""} onChange={e => onItemChange(i, "rate", e.target.value)} align="right" /> : <span style={{ padding: "6px 8px", fontSize: 13, ...numStyle }}>{rate > 0 ? "$" + rate.toFixed(2) : ""}</span>}</td>
