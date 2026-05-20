@@ -142,8 +142,6 @@ function NewAccountModal({ onClose, onSave }) {
 }
 
 export function AddNewServiceModal({ isOpen = true, onClose, onSave, onSaved }) {
-  if (!isOpen) return null;
-  const emit = onSaved || onSave;
   const [basicOpen, setBasicOpen] = useState(true);
   const [salesOpen, setSalesOpen] = useState(true);
   const [purchOpen, setPurchOpen] = useState(true);
@@ -167,6 +165,7 @@ export function AddNewServiceModal({ isOpen = true, onClose, onSave, onSaved }) 
   const [showNewAccount, setShowNewAccount] = useState(false);
   const [showCatPrompt, setShowCatPrompt] = useState(false);
   const [catDraft, setCatDraft] = useState("");
+  const [nameError, setNameError] = useState("");
   const fileRef = useRef(null);
 
   const handleImage = (e) => {
@@ -197,8 +196,8 @@ export function AddNewServiceModal({ isOpen = true, onClose, onSave, onSaved }) 
   };
 
   const submit = (closeAfter) => {
-    if (!name.trim()) { alert("Name is required"); return; }
-    if (!incomeAccount) { alert("Income account is required"); return; }
+    if (!name.trim()) { setNameError("Name is required"); return; }
+    setNameError("");
     const product = {
       id: "p_" + Date.now(),
       name: name.trim(),
@@ -212,12 +211,15 @@ export function AddNewServiceModal({ isOpen = true, onClose, onSave, onSaved }) 
       incomeAccount,
       purchaseFromSupplier,
     };
-    if (emit) emit(product, !closeAfter);
-    if (closeAfter && onClose) onClose();
+    const cb = typeof onSaved === "function" ? onSaved : (typeof onSave === "function" ? onSave : null);
+    if (cb) cb(product, !closeAfter);
+    if (closeAfter && typeof onClose === "function") onClose();
     if (!closeAfter) {
       setName(""); setSku(""); setCategory(""); setImageUrl(""); setDescription(""); setPriceRate(""); setPurchaseFromSupplier(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <>
@@ -238,7 +240,8 @@ export function AddNewServiceModal({ isOpen = true, onClose, onSave, onSaved }) 
                   <div>
                     <div style={{ marginBottom: 16 }}>
                       <label style={labelStyle}>Name *</label>
-                      <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} />
+                      <input value={name} onChange={e => { setName(e.target.value); if (nameError) setNameError(""); }} style={{ ...inputStyle, borderColor: nameError ? "#dc2626" : BORDER }} />
+                      {nameError && <div style={{ color: "#dc2626", fontSize: 12, marginTop: 6 }}>{nameError}</div>}
                     </div>
                     <div style={{ marginBottom: 16 }}>
                       <label style={labelStyle}>Item type</label>
