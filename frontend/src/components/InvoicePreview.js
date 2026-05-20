@@ -59,6 +59,7 @@ const TableInput = ({ value, onChange, type, placeholder, align }) => (
 export default function InvoicePreview({ inv, customization, accentColor, template, onFieldChange, onCustomerSelect, onItemChange, onAddItem, onDeleteItem, onClearItems, onEditCompany , onEditCustomer }) {
   const [logoModalOpen, setLogoModalOpen] = useState(false);
   const [localLogoOverride, setLocalLogoOverride] = useState(null);
+  const [hoveredRow, setHoveredRow] = useState(null);
   const [logoRemoved, setLogoRemoved] = useState(false);
   const [addDropdownOpen, setAddDropdownOpen] = useState(false);
   const [discount, setDiscount] = useState({ value: 0, type: "percent" });
@@ -234,29 +235,33 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           <table style={{ width: "100%", minWidth: isMobile ? 540 : "auto", borderCollapse: "collapse", fontSize: 13 }}>
             <thead><tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
               {editable && <th style={{ width: 28, padding: "10px 4px" }}></th>}
+ {editable && <th style={{ width: 20, padding: "10px 2px" }}></th>}
             <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 32 }}>#</th>
               <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em" }}>Product/service</th>
               <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em" }}>Description</th>
               <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 80 }}>Qty</th>
               <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 100 }}>Rate</th>
-              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 100 }}>Amount</th>
+              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 110 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>Amount{editable && <button onClick={() => { if (window.confirm("Clear all amounts?")) { items.forEach((_, idx) => { onItemChange(idx, "qty", ""); onItemChange(idx, "rate", ""); }); } }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, display: "inline-flex" }} title="Clear all amounts"><Trash2 size={13} color="#94a3b8" /></button>}</span></th>
               {editable && <th style={{ width: 40 }}></th>}
             </tr></thead>
             <tbody>
               {items.length === 0 ? (
                 null
               ) : items.map((item, i) => {
-                const qty = Number(item.qty ?? item.quantity ?? 1);
-                const rate = Number(item.rate ?? item.price ?? 0);
-                return (
-                  <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "8px 12px", fontSize: 13, color: "#0F172A", verticalAlign: "middle", ...numStyle }}>{i + 1}</td>
+    const qty = Number(item.qty ?? item.quantity ?? 1);
+    const rate = Number(item.rate ?? item.price ?? 0);
+    const hovered = hoveredRow === i;
+    return (
+      <tr key={i} onMouseEnter={() => setHoveredRow(i)} onMouseLeave={() => setHoveredRow(null)} style={{ borderBottom: "1px solid #f1f5f9", position: "relative" }}>
+        {editable && (<td style={{ width: 28, padding: "4px 2px", verticalAlign: "middle", textAlign: "center" }}><button onClick={() => onAddItem && onAddItem()} title="Add line" style={{ background: "none", border: "1px solid " + (hovered ? "#cbd5e1" : "transparent"), borderRadius: "50%", width: 22, height: 22, cursor: "pointer", padding: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#64748B" }}><Plus size={12} /></button></td>)}
+        {editable && (<td style={{ width: 20, padding: "4px 2px", verticalAlign: "middle", textAlign: "center", color: hovered ? "#94a3b8" : "transparent", cursor: "grab", fontSize: 14, lineHeight: 1, userSelect: "none" }}>⠿</td>)}
+        <td style={{ padding: "8px 12px", fontSize: 13, color: "#0F172A", verticalAlign: "middle", ...numStyle }}>{i + 1}</td>
                     <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <ProductServiceCombobox value={item.name || ""} onChange={e => onItemChange(i, "name", e.target.value)} onSelect={(p) => { onItemChange(i, "name", p.name); if (p.description) onItemChange(i, "description", p.description); if (p.price_rate !== undefined && p.price_rate !== "") onItemChange(i, "rate", p.price_rate); }} onAddNew={() => { setActiveRowIdx(i); setShowAddProductModal(true); }} /> : <span style={{ padding: "6px 8px", fontSize: 13 }}>{item.name || "-"}</span>}</td>
-                    <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput value={item.description || ""} onChange={e => onItemChange(i, "description", e.target.value)} placeholder="" /> : <span style={{ padding: "6px 8px", fontSize: 13 }}>{item.description || "-"}</span>}</td>
-                    <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput type="number" value={item.qty ?? ""} onChange={e => onItemChange(i, "qty", e.target.value)} align="right" /> : <span style={{ padding: "6px 8px", fontSize: 13, ...numStyle }}>{qty > 0 ? qty : ""}</span>}</td>
-                    <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput type="number" value={item.rate ?? ""} onChange={e => onItemChange(i, "rate", e.target.value)} align="right" /> : <span style={{ padding: "6px 8px", fontSize: 13, ...numStyle }}>{rate > 0 ? "$" + rate.toFixed(2) : ""}</span>}</td>
-                    <td style={{ padding: "8px 12px", fontSize: 13, fontWeight: 600, color: "#0F172A", textAlign: "right", verticalAlign: "middle", ...numStyle }}>{(qty * rate) > 0 ? "$" + (qty * rate).toFixed(2) : ""}</td>
-                    {editable && <td style={{ padding: "8px 4px", textAlign: "center", verticalAlign: "middle" }}><button onClick={() => onDeleteItem(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex", borderRadius: 4 }}><Trash2 size={14} color="#94a3b8" /></button></td>}
+                    <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput value={item.description || ""} onChange={e => onItemChange(i, "description", e.target.value)} placeholder="" revealed={hovered} /> : <span style={{ padding: "6px 8px", fontSize: 13 }}>{item.description || "-"}</span>}</td>
+                    <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput type="number" value={item.qty ?? ""} onChange={e => onItemChange(i, "qty", e.target.value)} align="right" revealed={hovered} /> : <span style={{ padding: "6px 8px", fontSize: 13, ...numStyle }}>{qty > 0 ? qty : ""}</span>}</td>
+                    <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput type="number" value={item.rate ?? ""} onChange={e => onItemChange(i, "rate", e.target.value)} align="right" revealed={hovered} /> : <span style={{ padding: "6px 8px", fontSize: 13, ...numStyle }}>{rate > 0 ? "$" + rate.toFixed(2) : ""}</span>}</td>
+                    <td style={{ padding: 4, verticalAlign: "middle", textAlign: "right" }}><div style={{ padding: "8px 10px", border: "1px solid " + (hovered ? "#cbd5e1" : "transparent"), borderRadius: 4, fontSize: 13, fontWeight: 600, color: "#0F172A", background: hovered ? "#f8fafc" : "transparent", ...numStyle }}>{(qty * rate) > 0 ? "$" + (qty * rate).toFixed(2) : ""}</div></td>
+                    {editable && <td style={{ padding: "8px 4px", textAlign: "center", verticalAlign: "middle" }}><button onClick={() => onDeleteItem(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex", borderRadius: 4, opacity: hovered ? 1 : 0, transition: "opacity 0.12s" }}><Trash2 size={14} color="#94a3b8" /></button></td>}
                   </tr>
                 );
               })}
