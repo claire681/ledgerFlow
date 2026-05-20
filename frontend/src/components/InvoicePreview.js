@@ -270,7 +270,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           <button onClick={() => setAddDropdownOpen(!addDropdownOpen)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: 6, color: "#0F172A", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
             Add product or service
             <span style={{ fontSize: 10, color: "#64748B" }}>v</span>
-          </button>
+           <ChevronDown size={14} color="#64748B" style={{ marginLeft: 6 }} /></button>
           {addDropdownOpen && (<>
             <div onClick={() => setAddDropdownOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
             <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 20, minWidth: 220, overflow: "hidden" }}>
