@@ -479,9 +479,6 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           </div>
         </div>
 
-        <div style={{ marginTop: 32, borderTop: "1px solid #e2e8f0", paddingTop: 18, textAlign: "center" }}>
-          <button onClick={() => window.print()} style={{ background: "none", border: "none", color: "#475569", fontSize: 14, cursor: "pointer", fontFamily: "inherit", textDecoration: "underline" }}>Print or download</button>
-        </div>
       </div>
     </div>
   );

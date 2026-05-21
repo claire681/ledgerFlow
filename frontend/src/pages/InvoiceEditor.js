@@ -1008,7 +1008,7 @@ export default function InvoiceEditor() {
           borderTop: "1px solid " + BORDER
         }}
       >
-        <button style={{ background: "none", border: "none", color: SUBTLE, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>
+          <button onClick={() => window.print()} style={{ background: "none", border: "none", color: "#0F9599", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>
           Print or download
         </button>
 
@@ -1028,7 +1028,7 @@ export default function InvoiceEditor() {
               opacity: saving ? 0.6 : 1
             }}
           >
-            {saving ? "Saving..." : "Save"}
+            {saving ? "Saving..." : (<span style={{display:"inline-flex",alignItems:"center",gap:4}}>Save <ChevronDown size={14} /></span>)}
           </button>
 
           <button
@@ -1050,7 +1050,7 @@ export default function InvoiceEditor() {
               cursor: "pointer"
             }}
           >
-            Review and send
+      <span style={{display:"inline-flex",alignItems:"center",gap:6}}>Review and send <ChevronDown size={14} /></span>
           </button>
         </div>
       </div>
