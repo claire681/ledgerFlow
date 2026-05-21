@@ -62,6 +62,39 @@ const DATE_PRESETS = [
   { value: "today", label: "Today" }
 ];
 
+const TRANSACTION_TYPES = [
+  "Invoice",
+  "Advance payment",
+  "Build assembly",
+  "Cash expense",
+  "Change order",
+  "Credit card",
+  "Credit card credit",
+  "Credit card payment",
+  "Credit memo",
+  "Custom",
+  "Delayed charge",
+  "Delayed credit",
+  "Deposit",
+  "Estimate",
+  "Expense",
+  "Inventory adjustment",
+  "Invoice payment",
+  "Journal entry",
+  "Pay bills",
+  "Payment",
+  "Purchase order",
+  "Receive payment",
+  "Refund receipt",
+  "Sales receipt",
+  "Statement charge",
+  "Supplier credit",
+  "Time activity",
+  "Transfer",
+  "Vendor bill",
+  "Vendor credit"
+];
+
 function resolveDateRange(preset, customFrom, customTo) {
   switch (preset) {
     case "today": return { from: isoToday(), to: isoToday() };
@@ -116,6 +149,11 @@ export default function InvoicesAll() {
   const [dateTo, setDateTo] = useState("");
 
   const [refNumber, setRefNumber] = useState("");
+
+  const [selectedTxnType, setSelectedTxnType] = useState("Invoice");
+  const [openTxnType, setOpenTxnType] = useState(false);
+  const [txnTypeSearch, setTxnTypeSearch] = useState("");
+  const txnTypeRef = useRef(null);
 
   const [selectedContact, setSelectedContact] = useState("");
 
@@ -181,6 +219,7 @@ export default function InvoicesAll() {
   useEffect(() => {
     const h = (e) => {
       if (dateRef.current && !dateRef.current.contains(e.target)) { setOpenDate(false); setPresetMenuOpen(false); }
+      if (txnTypeRef.current && !txnTypeRef.current.contains(e.target)) setOpenTxnType(false);
       if (refRef.current && !refRef.current.contains(e.target)) setOpenRef(false);
       if (contactRef.current && !contactRef.current.contains(e.target)) setOpenContact(false);
       if (amountRef.current && !amountRef.current.contains(e.target)) setOpenAmount(false);
@@ -199,7 +238,9 @@ export default function InvoicesAll() {
   if (refNumber) filtered = filtered.filter(i => String(i.invoice_number || "").toLowerCase().includes(refNumber.toLowerCase()));
   if (selectedContact) filtered = filtered.filter(i => String(i.to_name || "") === selectedContact);
   if (amountMode === "equals" && amountValue) filtered = filtered.filter(i => Math.abs(Number(i.total || 0) - Number(amountValue)) < 0.01);
-  if (amountMode === "range") {
+  if (amountMode === "lt" && amountValue) filtered = filtered.filter(i => Number(i.total || 0) < Number(amountValue));
+  if (amountMode === "gt" && amountValue) filtered = filtered.filter(i => Number(i.total || 0) > Number(amountValue));
+  if (amountMode === "between") {
     if (amountMin) filtered = filtered.filter(i => Number(i.total || 0) >= Number(amountMin));
     if (amountMax) filtered = filtered.filter(i => Number(i.total || 0) <= Number(amountMax));
   }
@@ -311,12 +352,23 @@ export default function InvoicesAll() {
         </div>
 
         {/* Transaction type (locked) */}
-        <div style={{ flex: "1 1 0", minWidth: 160 }}>
+        <div ref={txnTypeRef} style={{ position: "relative", flex: "1 1 0", minWidth: 160 }}>
           <label style={labelStyle}>Transaction type</label>
-          <div style={{ ...fieldStyle, background: "#f8fafc", cursor: "not-allowed", color: SUBTLE }}>
-            <span>Invoice</span>
+          <div onClick={() => { setOpenTxnType(o => !o); setTxnTypeSearch(""); }} style={{ ...fieldStyle, borderColor: openTxnType ? BRAND_GREEN : BORDER }}>
+            <span style={{ color: selectedTxnType ? TEXT : SUBTLE }}>{selectedTxnType || "Select..."}</span>
             <ChevronDown size={16} color={SUBTLE} />
           </div>
+          {openTxnType && (
+            <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, background: "#fff", border: "1px solid " + BORDER, borderRadius: 8, boxShadow: "0 6px 20px rgba(0,0,0,0.12)", zIndex: 200, width: 280, maxHeight: 380, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              <div style={{ overflowY: "auto", flex: 1, padding: "6px 0" }}>
+                {TRANSACTION_TYPES.map(t => (
+                  <div key={t} onClick={() => { setSelectedTxnType(t); setOpenTxnType(false); }} style={{ padding: "10px 18px", cursor: "pointer", fontSize: 14, color: TEXT, background: selectedTxnType === t ? "#f1f5f9" : "transparent" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = selectedTxnType === t ? "#f1f5f9" : "transparent"}>
+                    {t}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Reference number */}
@@ -351,22 +403,39 @@ export default function InvoicesAll() {
             <div style={{ ...popoverStyle, width: 340, padding: 0, maxHeight: 380, overflow: "hidden", display: "flex", flexDirection: "column" }}>
               <div style={{ padding: "12px 14px", borderBottom: "1px solid " + BORDER, display: "flex", alignItems: "center", gap: 8 }}>
                 <Search size={14} color={SUBTLE} />
-                <input autoFocus type="text" value={contactSearch} onChange={e => setContactSearch(e.target.value)} placeholder="Search customers..." style={{ flex: 1, border: "none", outline: "none", fontSize: 14, fontFamily: "inherit", background: "transparent" }} />
+                <input autoFocus type="text" value={contactSearch} onChange={e => {
+                  const v = e.target.value;
+                  setContactSearch(v);
+                  if (v.length === 1) {
+                    setTimeout(() => {
+                      const target = document.getElementById("contact-letter-" + v.toUpperCase());
+                      const list = document.getElementById("contact-scroll-list");
+                      if (target && list) list.scrollTop = target.offsetTop - list.offsetTop;
+                    }, 50);
+                  }
+                }} placeholder="Search customers..." style={{ flex: 1, border: "none", outline: "none", fontSize: 14, fontFamily: "inherit", background: "transparent" }} />
               </div>
-              <div style={{ overflowY: "auto", flex: 1 }}>
+              <div id="contact-scroll-list" style={{ overflowY: "auto", flex: 1 }}>
                 <div onClick={() => { setSelectedContact(""); setOpenContact(false); }} style={{ padding: "10px 14px", cursor: "pointer", fontSize: 14, color: SUBTLE, borderBottom: "1px solid #f1f5f9" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                   All contacts
                 </div>
-                {customers
+                {[...customers]
+                  .sort((a, b) => {
+                    const na = (a.display_name || a.name || ((a.first_name || "") + " " + (a.last_name || ""))).trim().toLowerCase();
+                    const nb = (b.display_name || b.name || ((b.first_name || "") + " " + (b.last_name || ""))).trim().toLowerCase();
+                    return na.localeCompare(nb);
+                  })
                   .filter(c => {
-                    const n = c.display_name || c.name || ((c.first_name || "") + " " + (c.last_name || "")).trim();
-                    return !contactSearch || n.toLowerCase().includes(contactSearch.toLowerCase());
+                    const n = (c.display_name || c.name || ((c.first_name || "") + " " + (c.last_name || ""))).trim();
+                    return !contactSearch || n.toLowerCase().startsWith(contactSearch.toLowerCase()) || n.toLowerCase().includes(contactSearch.toLowerCase());
                   })
                   .map(c => {
-                    const name = c.display_name || c.name || ((c.first_name || "") + " " + (c.last_name || "")).trim();
+                    const name = (c.display_name || c.name || ((c.first_name || "") + " " + (c.last_name || ""))).trim();
+                    const firstLetter = name.charAt(0).toUpperCase();
                     return (
-                      <div key={c.id} onClick={() => { setSelectedContact(name); setOpenContact(false); }} style={{ padding: "10px 14px", cursor: "pointer", fontSize: 14, color: TEXT, borderBottom: "1px solid #f1f5f9" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                        {name}
+                      <div key={c.id} id={"contact-letter-" + firstLetter} onClick={() => { setSelectedContact(name); setOpenContact(false); }} style={{ padding: "10px 14px", cursor: "pointer", fontSize: 14, color: TEXT, borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                        <span>{name}</span>
+                        <span style={{ fontSize: 12, color: SUBTLE, fontStyle: "italic" }}>Customer</span>
                       </div>
                     );
                   })}
@@ -381,43 +450,58 @@ export default function InvoicesAll() {
           <div onClick={() => {
             setOpenAmount(o => !o);
             if (!openAmount) {
-              setTmpAmountMode(amountMode); setTmpAmountValue(amountValue); setTmpAmountMin(amountMin); setTmpAmountMax(amountMax);
+              setTmpAmountMode(amountMode || "equals"); setTmpAmountValue(amountValue); setTmpAmountMin(amountMin); setTmpAmountMax(amountMax);
             }
           }} style={{ ...fieldStyle, borderColor: openAmount ? BRAND_GREEN : BORDER }}>
             <span style={{ color: (amountValue || amountMin || amountMax) ? TEXT : SUBTLE }}>
-              {amountMode === "equals" && amountValue ? "= " + amountValue : (amountMode === "range" && (amountMin || amountMax) ? (amountMin || "0") + " - " + (amountMax || "∞") : "Select...")}
+              {amountMode === "equals" && amountValue ? "Equals CA$" + amountValue : (amountMode === "lt" && amountValue ? "< CA$" + amountValue : (amountMode === "gt" && amountValue ? "> CA$" + amountValue : (amountMode === "between" && (amountMin || amountMax) ? "CA$" + (amountMin || "0") + " - CA$" + (amountMax || "∞") : "Select...")))}
             </span>
             <ChevronDown size={16} color={SUBTLE} />
           </div>
           {openAmount && (
-            <div style={{ ...popoverStyle, width: 340 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                <span style={{ fontSize: 16, fontWeight: 600, color: TEXT }}>Amount</span>
+            <div style={{ ...popoverStyle, width: 440 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+                <span style={{ fontSize: 18, fontWeight: 600, color: TEXT }}>Amount</span>
                 <button onClick={() => setOpenAmount(false)} style={{ background: "none", border: "none", cursor: "pointer", color: SUBTLE, padding: 2, display: "flex" }}><X size={18} /></button>
               </div>
-              <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
-                <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 14, color: TEXT }}>
-                  <input type="radio" checked={tmpAmountMode === "equals"} onChange={() => setTmpAmountMode("equals")} /> Equals
-                </label>
-                <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 14, color: TEXT }}>
-                  <input type="radio" checked={tmpAmountMode === "range"} onChange={() => setTmpAmountMode("range")} /> Range
-                </label>
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>Amount type</label>
+                <select disabled value="line_or_total" style={{ ...inputStyle, background: "#fff", cursor: "pointer", appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 36 }}>
+                  <option value="line_or_total">Line or total</option>
+                </select>
               </div>
-              {tmpAmountMode === "equals" ? (
-                <input type="number" value={tmpAmountValue} onChange={e => setTmpAmountValue(e.target.value)} placeholder="0.00" style={inputStyle} />
-              ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <div>
-                    <label style={labelStyle}>Min</label>
-                    <input type="number" value={tmpAmountMin} onChange={e => setTmpAmountMin(e.target.value)} placeholder="0.00" style={inputStyle} />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Max</label>
-                    <input type="number" value={tmpAmountMax} onChange={e => setTmpAmountMax(e.target.value)} placeholder="0.00" style={inputStyle} />
-                  </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                <div>
+                  <label style={labelStyle}>Amount</label>
+                  <select value={tmpAmountMode} onChange={e => setTmpAmountMode(e.target.value)} style={{ ...inputStyle, cursor: "pointer", appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 36 }}>
+                    <option value="equals">Equals</option>
+                    <option value="lt">Less than</option>
+                    <option value="gt">Greater than</option>
+                    <option value="between">Between</option>
+                  </select>
                 </div>
-              )}
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
+                <div>
+                  <label style={labelStyle}>Amount</label>
+                  {tmpAmountMode === "between" ? (
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <div style={{ flex: 1, position: "relative" }}>
+                        <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: SUBTLE, fontSize: 14, pointerEvents: "none" }}>CA$</span>
+                        <input type="number" value={tmpAmountMin} onChange={e => setTmpAmountMin(e.target.value)} placeholder="0.00" style={{ ...inputStyle, paddingLeft: 44 }} />
+                      </div>
+                      <div style={{ flex: 1, position: "relative" }}>
+                        <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: SUBTLE, fontSize: 14, pointerEvents: "none" }}>CA$</span>
+                        <input type="number" value={tmpAmountMax} onChange={e => setTmpAmountMax(e.target.value)} placeholder="0.00" style={{ ...inputStyle, paddingLeft: 44 }} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ position: "relative" }}>
+                      <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: SUBTLE, fontSize: 14, pointerEvents: "none" }}>CA$</span>
+                      <input type="number" value={tmpAmountValue} onChange={e => setTmpAmountValue(e.target.value)} placeholder="0.00" style={{ ...inputStyle, paddingLeft: 44 }} />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 20 }}>
                 <button onClick={() => { setTmpAmountValue(""); setTmpAmountMin(""); setTmpAmountMax(""); }} style={clearBtnStyle}>Clear</button>
                 <button onClick={() => { setAmountMode(tmpAmountMode); setAmountValue(tmpAmountValue); setAmountMin(tmpAmountMin); setAmountMax(tmpAmountMax); setOpenAmount(false); }} style={applyBtnStyle}>Apply</button>
               </div>
@@ -436,8 +520,8 @@ export default function InvoicesAll() {
       {/* Active filter chips */}
       <div style={{ marginBottom: 18, display: "flex", flexWrap: "wrap", gap: 8 }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#f1f5f9", padding: "6px 12px", borderRadius: 20, fontSize: 13, color: TEXT }}>
-          Transaction type: Invoice
-          <button onClick={() => navigate("/transactions")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", color: SUBTLE }}><X size={14} /></button>
+          Transaction type: {selectedTxnType}
+          <button onClick={() => setSelectedTxnType("Invoice")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", color: SUBTLE }}><X size={14} /></button>
         </span>
         {datePreset && (
           <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#f1f5f9", padding: "6px 12px", borderRadius: 20, fontSize: 13, color: TEXT }}>
