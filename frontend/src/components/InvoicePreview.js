@@ -57,6 +57,11 @@ const TableInput = ({ value, onChange, type, placeholder, align }) => (
 );
 
 export default function InvoicePreview({ inv, customization, accentColor, template, onFieldChange, onCustomerSelect, onItemChange, onAddItem, onDeleteItem, onClearItems, onEditCompany , onEditCustomer , onEditTotals }) {
+  const editable = !!onFieldChange;
+  const hasRealPaymentNote = !!(inv && inv.paymentNote && String(inv.paymentNote).trim());
+  const hasRealNote = !!(inv && inv.note && String(inv.note).trim());
+  const hasRealMemo = !!(inv && inv.memo && String(inv.memo).trim());
+
 
   // Inject ghost-edit CSS once
   React.useEffect(() => {
@@ -418,11 +423,13 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
 
         <div style={{ display: "flex", justifyContent: "space-between", gap: 40, marginTop: 24, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div style={{ flex: "1 1 360px", minWidth: 280, maxWidth: 600 }}>
+            {(editable || hasRealPaymentNote) && (
             <div style={{ marginBottom: 20 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
               <span style={{ fontSize: 15, fontWeight: 600, color: "#0F172A" }}>Customer payment options</span>
               <button type="button" style={{ background: "none", border: "none", color: "#0F9599", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>Edit</button>
             </div>
+              {editable && (
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
               <span title="Apple Pay" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 40, height: 26, background: "#000", borderRadius: 4 }}>
                 <svg width="28" height="12" viewBox="0 0 165 72" xmlns="http://www.w3.org/2000/svg" fill="#fff"><path d="M30.7 9.3c-1.9 2.3-5 4.1-8.1 3.8-.4-3.1 1.1-6.4 2.9-8.4C27.4 2.4 30.8.8 33.5.6c.3 3.2-.9 6.4-2.8 8.7zm2.7 4.4c-4.5-.3-8.3 2.5-10.5 2.5-2.2 0-5.5-2.4-9.1-2.3-4.7.1-9 2.7-11.4 6.9-4.9 8.4-1.3 20.9 3.5 27.7 2.3 3.4 5.1 7.1 8.8 7 3.5-.1 4.8-2.3 9-2.3s5.5 2.3 9.2 2.2c3.8-.1 6.2-3.4 8.5-6.8 2.6-3.9 3.7-7.6 3.7-7.8-.1 0-7.2-2.8-7.3-10.9-.1-6.8 5.5-10 5.8-10.2-3.1-4.6-8-5.1-9.7-5.2"/><path d="M70.2 4.4v53.3h8.3v-18.2h11.4c10.4 0 17.7-7.1 17.7-17.6S100.5 4.4 90.2 4.4H70.2zm8.3 7h9.5c7.2 0 11.3 3.9 11.3 10.6s-4.1 10.6-11.3 10.6h-9.5V11.4zM118.4 58.1c5.2 0 10-2.6 12.2-6.8h.2v6.4h7.7V31.1c0-7.7-6.2-12.7-15.7-12.7-8.8 0-15.4 5-15.6 11.9h7.5c.6-3.3 3.6-5.4 7.9-5.4 5.2 0 8.1 2.4 8.1 6.9v3l-10.4.6c-9.6.6-14.8 4.5-14.8 11.4 0 6.9 5.4 11.3 13 11.3zm2.2-6.3c-4.5 0-7.4-2.2-7.4-5.5 0-3.4 2.8-5.4 8.1-5.7l9.2-.6v3.1c0 5-4.3 8.7-9.9 8.7zM146.9 72c8.1 0 11.9-3.1 15.2-12.4l14.6-41h-8.4l-9.8 31.7h-.2L148.5 18.6h-8.7l14.1 39.1-.8 2.4c-1.3 4-3.3 5.5-7 5.5-.6 0-1.9-.1-2.4-.1v6.4c.5.1 2.5.2 3.2.2z"/></svg>
@@ -447,28 +454,36 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
                 <span style={{ color: "#fff", fontSize: 8, fontWeight: 700, letterSpacing: "0.5px" }}>BANK</span>
               </span>
             </div>
+              )}
+              {editable && (
             <div style={{ fontSize: 13, color: "#475569", marginBottom: 12, lineHeight: 1.5 }}>
               Activate online card or bank transfer payments for your customers.&nbsp;
               <button type="button" style={{ background: "none", border: "none", color: "#0F9599", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>Activate payments</button>
             </div>
+              )}
             {onFieldChange ? (
               <textarea value={inv.paymentNote || ""} onChange={e => onFieldChange("paymentNote", e.target.value)} rows={2} placeholder="Tell your customer how you want to get paid." style={{ width: "100%", padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} onFocus={onFocusBg} onBlur={onBlurBg} />
             ) : (
               <div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line" }}>{inv.paymentNote || ""}</div>
             )}
           </div>
+            )}
+            {(editable || hasRealNote) && (
             <div style={{ marginTop: 32 }}>
           <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 6 }}>Note to customer</label>
           {onFieldChange ? (
             <textarea value={inv.note || ""} onChange={e => onFieldChange("note", e.target.value)} rows={3} placeholder="Thank you for your business." style={{ width: "100%", maxWidth: 600, padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} onFocus={onFocusBg} onBlur={onBlurBg} />
           ) : (<div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line" }}>{inv.note || ""}</div>)}
         </div>
+            )}
+            {editable && (
             <div style={{ marginTop: 24 }}>
           <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 6 }}>Memo on statement (hidden)</label>
           {onFieldChange ? (
             <textarea value={inv.memo || ""} onChange={e => onFieldChange("memo", e.target.value)} rows={2} placeholder="This memo will not show up on your invoice, but will appear on the statement." style={{ width: "100%", maxWidth: 600, padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} onFocus={onFocusBg} onBlur={onBlurBg} />
           ) : (<div style={{ fontSize: 13, color: "#475569" }}>{inv.memo || ""}</div>)}
 
+            {(editable || attachments.length > 0) && (
       <div style={{ marginTop: 24 }}>
         <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#0F172A", marginBottom: 8 }}>Attachments</label>
         <div style={{ border: "2px dashed #cbd5e1", borderRadius: 8, padding: "24px 16px", textAlign: "center", cursor: "pointer", maxWidth: 600, transition: "background 0.15s" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fafc"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }} onClick={() => document.getElementById("novala-attachment-input").click()}>
@@ -494,7 +509,9 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           </div>
         )}
       </div>
+            )}
         </div>
+            )}
           </div>
           <div style={{ flex: "0 0 320px", minWidth: 280 }}>
             <div style={{ width: isMobile ? "100%" : 320 }}>
