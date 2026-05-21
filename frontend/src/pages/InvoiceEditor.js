@@ -635,6 +635,48 @@ export default function InvoiceEditor() {
     >
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 24px", borderBottom: "1px solid " + BORDER, background: "#fff" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ position: "relative" }}>
+                <button id="invoice-history-button" onClick={() => setHistoryOpen(o => !o)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center", color: SUBTLE }} title="Recently viewed invoices">
+                  <Clock size={20} />
+                </button>
+                {historyOpen && (
+                  <div id="invoice-history-dropdown" style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, width: 340, background: "#fff", border: "1px solid " + BORDER, borderRadius: 8, boxShadow: "0 6px 20px rgba(0,0,0,0.12)", zIndex: 200, maxHeight: 420, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                    <div style={{ padding: "12px 14px", borderBottom: "1px solid " + BORDER, fontSize: 13, fontWeight: 600, color: TEXT }}>Recently viewed</div>
+                    <div style={{ overflowY: "auto", flex: 1 }}>
+                      {recentInvoices.length === 0 ? (
+                        <div style={{ padding: 20, textAlign: "center", color: SUBTLE, fontSize: 13 }}>No recent invoices</div>
+                      ) : (
+                        recentInvoices.map(r => (
+                          <button key={r.id} onClick={() => { setHistoryOpen(false); navigate("/invoices/" + r.id + "/edit"); }} style={{ width: "100%", padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", borderBottom: "1px solid #f1f5f9", cursor: "pointer", textAlign: "left", fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ fontSize: 14, fontWeight: 500, color: TEXT }}>Invoice {r.number}</div>
+                              {r.customer && <div style={{ fontSize: 12, color: SUBTLE, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.customer}</div>}
+                            </div>
+                            <div style={{ fontSize: 12, color: SUBTLE, flexShrink: 0, marginLeft: 8 }}>{r.date}</div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                    <button onClick={() => { setHistoryOpen(false); navigate("/invoices"); }} style={{ padding: "10px 14px", background: "#f8fafc", border: "none", borderTop: "1px solid " + BORDER, cursor: "pointer", fontSize: 13, color: "#0F9599", fontWeight: 600, fontFamily: "inherit", textAlign: "center" }}>View all invoices</button>
+                  </div>
+                )}
+              </div>
+              <span style={{ fontSize: 20, fontWeight: 600, color: TEXT }}>Invoice {headerNumber}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <button style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center", color: SUBTLE }} title="Help">
+                <HelpCircle size={20} />
+              </button>
+              <button style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center", color: "#7c3aed" }} title="AI assistant">
+                <Sparkles size={20} />
+              </button>
+              <button onClick={() => navigate("/invoices")} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center", color: SUBTLE }} title="Close">
+                <X size={20} />
+              </button>
+            </div>
+          </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 24px", borderBottom: "1px solid " + BORDER, background: "#fff", flexWrap: "nowrap", gap: 16 }}>
             <div style={{ display: "flex", gap: 4 }}>
               <div onClick={() => setViewMode("edit")} style={{ padding: "6px 12px", borderBottom: viewMode === "edit" ? "2px solid " + TEXT : "2px solid transparent", color: viewMode === "edit" ? TEXT : SUBTLE, fontWeight: viewMode === "edit" ? 600 : 400, fontSize: 16, cursor: "pointer" }}>Edit</div>
