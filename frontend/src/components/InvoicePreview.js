@@ -266,8 +266,8 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           <div>
             {hasCustomer ? (
               <>
-                {c.showCustomerEmail && (editable ? <input type="email" value={inv.to_email || ""} onChange={(e) => onFieldChange && onFieldChange("to_email", e.target.value)} placeholder="Enter Customer email" style={{ width: "100%", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 6, fontSize: 14, color: "#0F172A", marginBottom: 12, boxSizing: "border-box", outline: "none", fontFamily: "inherit" }} onFocus={onFocusBg} onBlur={onBlurBg} /> : (inv.to_email && <div style={{ fontSize: 13, color: "#0F172A", marginBottom: 12, padding: "8px 12px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6 }}>{inv.to_email}</div>))}
-                {editable && (
+                {c.showCustomerEmail && (itemsEditable ? <input type="email" value={inv.to_email || ""} onChange={(e) => onFieldChange && onFieldChange("to_email", e.target.value)} placeholder="Enter Customer email" style={{ width: "100%", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 6, fontSize: 14, color: "#0F172A", marginBottom: 12, boxSizing: "border-box", outline: "none", fontFamily: "inherit" }} onFocus={onFocusBg} onBlur={onBlurBg} /> : (inv.to_email && <div style={{ fontSize: 13, color: "#0F172A", marginBottom: 12, padding: "8px 12px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6 }}>{inv.to_email}</div>))}
+                {itemsEditable && (
                   <div style={{ position: "relative", marginBottom: 12 }}>
                     <button type="button" onClick={() => setShowCcBcc(true)} style={{ background: "none", border: "none", padding: 0, color: "#2563eb", fontSize: 13, cursor: "pointer", textDecoration: "none", fontWeight: 500 }}>Cc/Bcc</button>
                     {showCcBcc && (
@@ -297,7 +297,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
                   {inv.to_name && <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 4 }}>{inv.to_name}</div>}
                   {c.showCustomerAddress && inv.to_address && <div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line", lineHeight: 1.5 }}>{inv.to_address}</div>}
                 </div>
-                {editable && (<a href="#" onClick={(e) => { e.preventDefault(); onEditCustomer && onEditCustomer(); }} style={{ fontSize: 13, color: "#2563eb", textDecoration: "none", cursor: "pointer", fontWeight: 500 }}>Edit Customer</a>)}
+                {itemsEditable && (<a href="#" onClick={(e) => { e.preventDefault(); onEditCustomer && onEditCustomer(); }} style={{ fontSize: 13, color: "#2563eb", textDecoration: "none", cursor: "pointer", fontWeight: 500 }}>Edit Customer</a>)}
               </>
             ) : (
               <><SkeletonBar width={192} /><SkeletonBar width={160} /><SkeletonBar width={128} /></>
