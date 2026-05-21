@@ -226,6 +226,32 @@ export default function InvoiceEditor() {
   const [activeTab, setActiveTab] = useState("edit");
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [viewMode, setViewMode] = useState("edit");
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [recentInvoices, setRecentInvoices] = useState([]);
+
+  // Load recent invoices from localStorage when dropdown opens
+  useEffect(() => {
+    if (historyOpen) {
+      try {
+        const raw = localStorage.getItem("recent_invoices");
+        setRecentInvoices(raw ? JSON.parse(raw) : []);
+      } catch(e) { setRecentInvoices([]); }
+    }
+  }, [historyOpen]);
+
+  // Close history dropdown on outside click
+  useEffect(() => {
+    if (!historyOpen) return;
+    const handler = (e) => {
+      const dd = document.getElementById("invoice-history-dropdown");
+      const btn = document.getElementById("invoice-history-button");
+      if (dd && !dd.contains(e.target) && btn && !btn.contains(e.target)) {
+        setHistoryOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [historyOpen]);
   const [openSections, setOpenSections] = useState({
     customization: true,
     payment: false,
@@ -557,6 +583,25 @@ export default function InvoiceEditor() {
   }, [saveMessage]);
 
   const headerNumber = invoice.invoice_number || (id === "new" ? "new" : id);
+
+  // Track recently viewed invoices in localStorage
+  useEffect(() => {
+    if (!invoice.invoice_number || id === "new" || !id) return;
+    try {
+      const raw = localStorage.getItem("recent_invoices");
+      let list = raw ? JSON.parse(raw) : [];
+      list = list.filter(r => String(r.id) !== String(id));
+      list.unshift({
+        id: id,
+        number: invoice.invoice_number,
+        customer: (invoice.customer && (invoice.customer.name || invoice.customer.display_name)) || invoice.customer_name || "",
+        date: invoice.invoice_date || new Date().toISOString().split("T")[0],
+        viewedAt: Date.now()
+      });
+      list = list.slice(0, 10);
+      localStorage.setItem("recent_invoices", JSON.stringify(list));
+    } catch(e) { /* ignore */ }
+  }, [id, invoice.invoice_number]);
 
   const sectionLabelStyle = {
     fontSize: 11,
