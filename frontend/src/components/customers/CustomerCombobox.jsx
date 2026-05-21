@@ -55,7 +55,15 @@ export default function CustomerCombobox({ value, onSelect }) {
     fetch("https://api.getnovala.com/api/v1/customers/", {
       headers: { Authorization: "Bearer " + token }
     })
-      .then(r => { if (!r.ok) throw new Error("Failed to load (" + r.status + ")"); return r.json(); })
+      .then(r => { if (r.status === 401 || r.status === 403) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("access_token");
+          setError("Session expired - redirecting to login...");
+          setLoading(false);
+          setTimeout(() => { window.location.href = "/login"; }, 1500);
+          return null;
+        }
+        if (!r.ok) throw new Error("Failed to load (" + r.status + ")"); return r.json(); })
       .then(data => {
         const list = Array.isArray(data) ? data : (data.data || data.customers || data.results || []);
         setCustomers(list);
