@@ -78,11 +78,21 @@ export default function CustomerCombobox({ value, onSelect }) {
     return () => document.removeEventListener("mousedown", h);
   }, [open]);
 
-  const filtered = customers.filter(c => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return displayNameOf(c).toLowerCase().includes(q) || (c.email || "").toLowerCase().includes(q);
+  // Sort by created_at desc (newest first), fallback to id desc
+  const sorted = [...customers].sort((a, b) => {
+    const ad = a.created_at || a.createdAt || "";
+    const bd = b.created_at || b.createdAt || "";
+    if (ad && bd) return bd.localeCompare(ad);
+    return (b.id || 0) - (a.id || 0);
   });
+
+  // When no search: show only last 4. When searching: show all matches.
+  const filtered = search
+    ? sorted.filter(c => {
+        const q = search.toLowerCase();
+        return displayNameOf(c).toLowerCase().includes(q) || (c.email || "").toLowerCase().includes(q);
+      })
+    : sorted.slice(0, 4);
 
   return (
     <div ref={ref} style={{ position: "relative", width: "100%", maxWidth: 340 }}>
