@@ -594,8 +594,10 @@ export default function InvoiceEditor() {
       list.unshift({
         id: id,
         number: invoice.invoice_number,
-        customer: (invoice.customer && (invoice.customer.name || invoice.customer.display_name)) || invoice.customer_name || "",
-        date: invoice.invoice_date || new Date().toISOString().split("T")[0],
+        customer: invoice.to_name || (invoice.customer && (invoice.customer.name || invoice.customer.display_name)) || invoice.customer_name || "",
+        date: (invoice.date || invoice.invoice_date || new Date().toISOString().split("T")[0]).replace(/-/g, "/").split("/").reverse().join("/"),
+        total: invoice.total || 0,
+        currency: invoice.currency === "CAD" ? "CA$" : (invoice.currency === "USD" ? "$" : (invoice.currency + "$" || "$")),
         viewedAt: Date.now()
       });
       list = list.slice(0, 10);
@@ -642,24 +644,26 @@ export default function InvoiceEditor() {
                   <Clock size={20} />
                 </button>
                 {historyOpen && (
-                  <div id="invoice-history-dropdown" style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, width: 340, background: "#fff", border: "1px solid " + BORDER, borderRadius: 8, boxShadow: "0 6px 20px rgba(0,0,0,0.12)", zIndex: 200, maxHeight: 420, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                    <div style={{ padding: "12px 14px", borderBottom: "1px solid " + BORDER, fontSize: 13, fontWeight: 600, color: TEXT }}>Recently viewed</div>
-                    <div style={{ overflowY: "auto", flex: 1 }}>
+                  <div id="invoice-history-dropdown" style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, width: 620, background: "#fff", border: "1px solid " + BORDER, borderRadius: 8, boxShadow: "0 6px 20px rgba(0,0,0,0.12)", zIndex: 200, maxHeight: 500, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                    <div style={{ padding: "16px 18px", borderBottom: "1px solid " + BORDER, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 16, fontWeight: 600, color: TEXT }}>Recent Transactions</span>
+                      <button onClick={() => setHistoryOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: SUBTLE, padding: 2, display: "flex" }}><X size={18} /></button>
+                    </div>
+                    <div style={{ overflowY: "auto", flex: 1, padding: "8px 0" }}>
                       {recentInvoices.length === 0 ? (
                         <div style={{ padding: 20, textAlign: "center", color: SUBTLE, fontSize: 13 }}>No recent invoices</div>
                       ) : (
                         recentInvoices.map(r => (
-                          <button key={r.id} onClick={() => { setHistoryOpen(false); navigate("/invoices/" + r.id + "/edit"); }} style={{ width: "100%", padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", borderBottom: "1px solid #f1f5f9", cursor: "pointer", textAlign: "left", fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div style={{ fontSize: 14, fontWeight: 500, color: TEXT }}>Invoice {r.number}</div>
-                              {r.customer && <div style={{ fontSize: 12, color: SUBTLE, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.customer}</div>}
-                            </div>
-                            <div style={{ fontSize: 12, color: SUBTLE, flexShrink: 0, marginLeft: 8 }}>{r.date}</div>
-                          </button>
+                          <div key={r.id} onClick={() => { setHistoryOpen(false); navigate("/invoices/" + r.id + "/edit"); }} style={{ display: "grid", gridTemplateColumns: "150px 110px 100px 1fr", gap: 16, padding: "10px 18px", cursor: "pointer", alignItems: "center" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                            <span style={{ color: "#0F9599", fontSize: 14, fontWeight: 500 }}>Invoice No.{r.number}</span>
+                            <span style={{ color: "#0F9599", fontSize: 13 }}>{r.date}</span>
+                            <span style={{ color: "#0F9599", fontSize: 13 }}>{r.currency || "CA$"}{Number(r.total || 0).toFixed(2)}</span>
+                            <span style={{ color: "#0F9599", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.customer || ""}</span>
+                          </div>
                         ))
                       )}
                     </div>
-                    <button onClick={() => { setHistoryOpen(false); navigate("/invoices"); }} style={{ padding: "10px 14px", background: "#f8fafc", border: "none", borderTop: "1px solid " + BORDER, cursor: "pointer", fontSize: 13, color: "#0F9599", fontWeight: 600, fontFamily: "inherit", textAlign: "center" }}>View all invoices</button>
+                    <button onClick={() => { setHistoryOpen(false); navigate("/invoices/all"); }} style={{ padding: "12px 18px", background: "#fff", border: "none", borderTop: "1px solid " + BORDER, cursor: "pointer", fontSize: 14, color: "#7c3aed", fontWeight: 600, fontFamily: "inherit", textAlign: "left" }}>View More</button>
                   </div>
                 )}
               </div>
