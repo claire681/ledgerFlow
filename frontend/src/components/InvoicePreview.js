@@ -238,7 +238,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
 
       <div style={{ padding: isMobile ? "24px 16px" : "40px 32px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: isMobile ? 20 : 32 }}>
         <div>
-          <h1 style={{ fontFamily: "Georgia, serif", fontSize: isMobile ? 26 : 32, fontWeight: 600, color: "#0F172A", margin: 0, marginBottom: 24, letterSpacing: "0.01em" }}>INVOICE</h1>
+          <h1 style={{ fontFamily: "Georgia, serif", fontSize: isMobile ? 26 : 32, fontWeight: 600, color: accentColor || "#0F172A", margin: 0, marginBottom: 24, letterSpacing: "0.01em" }}>INVOICE</h1>
           {inv.from_name && <div style={{ fontSize: 18, fontWeight: 700, color: "#0F172A", marginBottom: 6 }}>{inv.from_name}</div>}
         {inv.from_bn && <div style={{ fontSize: 12, color: "#64748B", marginBottom: 8 }}>BN: {inv.from_bn}</div>}
         {inv.from_address && <div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line", lineHeight: 1.5 }}>{inv.from_address}</div>}
@@ -570,7 +570,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderTop: "1px solid #e2e8f0", marginTop: 4 }}>
                 <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700 }}>Invoice total</span>
-                <span style={{ fontSize: 28, color: "#0F172A", fontWeight: 700, ...numStyle }}>${(subtotal - (discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0)).toFixed(2)}</span>
+                <span style={{ fontSize: 28, color: accentColor || "#0F172A", fontWeight: 700, ...numStyle }}>${(subtotal - (discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0)).toFixed(2)}</span>
               </div>
               <div className={Number(deposit) > 0 ? "" : "print-hide"} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
                 <span style={{ fontSize: 13, color: "#0F172A" }}>Deposit</span>
