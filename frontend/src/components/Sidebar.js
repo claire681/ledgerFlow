@@ -528,7 +528,7 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
   const sidebarTop = hasTopBar ? 104 : 0;
   const sidebarHeight = hasTopBar ? 'calc(100vh - 104px)' : '100vh';
   const navigate = useNavigate();
-  const location = useLocation();
+  
 
   const [flyout,        setFlyout]        = useState(null);
   const [flyoutExpanded,setFlyoutExpanded]= useState(null);
