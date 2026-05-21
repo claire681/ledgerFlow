@@ -525,8 +525,8 @@ function CustomizeModal({ onClose, pinnedApps, appOrder, onSave }) {
 export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile }) {
   const location = useLocation();
   const hasTopBar = location.pathname === '/';
-  const sidebarTop = hasTopBar ? 104 : 0;
-  const sidebarHeight = hasTopBar ? 'calc(100vh - 104px)' : '100vh';
+  const sidebarTop = hasTopBar ? 60 : 0;
+  const sidebarHeight = hasTopBar ? 'calc(100vh - 60px)' : '100vh';
   const navigate = useNavigate();
   
 
