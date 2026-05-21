@@ -57,6 +57,54 @@ const TableInput = ({ value, onChange, type, placeholder, align }) => (
 );
 
 export default function InvoicePreview({ inv, customization, accentColor, template, onFieldChange, onCustomerSelect, onItemChange, onAddItem, onDeleteItem, onClearItems, onEditCompany , onEditCustomer , onEditTotals }) {
+
+  // Inject ghost-edit CSS once
+  React.useEffect(() => {
+    if (document.getElementById("ghost-edit-style")) return;
+    const style = document.createElement("style");
+    style.id = "ghost-edit-style";
+    style.textContent = `
+      .ghost-edit-section input,
+      .ghost-edit-section select,
+      .ghost-edit-section textarea {
+        border-color: transparent !important;
+        background-color: transparent !important;
+        transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+      }
+      .ghost-edit-section:hover input,
+      .ghost-edit-section:hover select,
+      .ghost-edit-section:hover textarea,
+      .ghost-edit-section input:focus,
+      .ghost-edit-section select:focus,
+      .ghost-edit-section textarea:focus,
+      .ghost-edit-section input:hover,
+      .ghost-edit-section select:hover,
+      .ghost-edit-section textarea:hover {
+        border-color: #cbd5e1 !important;
+        background-color: #fff !important;
+      }
+      .ghost-edit-section input:focus,
+      .ghost-edit-section select:focus,
+      .ghost-edit-section textarea:focus {
+        border-color: #0F5959 !important;
+        box-shadow: 0 0 0 1px #0F5959 !important;
+        outline: none !important;
+      }
+      .ghost-edit-section .qb-combo-btn {
+        border-color: transparent !important;
+        background-color: transparent !important;
+        transition: border-color 0.15s ease, background-color 0.15s ease;
+      }
+      .ghost-edit-section:hover .qb-combo-btn,
+      .ghost-edit-section .qb-combo-btn:hover,
+      .ghost-edit-section .qb-combo-btn:focus {
+        border-color: #cbd5e1 !important;
+        background-color: #fff !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }, []);
+
   React.useEffect(() => {
     if (document.getElementById("spinner-hide-style")) return;
     const style = document.createElement("style");
