@@ -44,9 +44,9 @@ const EditableDate = ({ value, field, onFieldChange, style }) => {
 };
 
 const FormRow = ({ label, isMobile, children }) => (
-  <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 4 : 12, alignItems: isMobile ? "stretch" : "center", marginBottom: 12 }}>
-    <div style={{ width: isMobile ? "100%" : 110, fontSize: 13, fontWeight: 500, color: "#475569", flexShrink: 0 }}>{label}</div>
-    <div style={{ flex: 1, minWidth: 0, maxWidth: isMobile ? "100%" : 220 }}>{children}</div>
+  <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 4 : 8, alignItems: isMobile ? "stretch" : "center", marginBottom: 6 }}>
+    <div style={{ width: isMobile ? "100%" : 90, fontSize: 13, fontWeight: 500, color: "#475569", flexShrink: 0 }}>{label}</div>
+    <div style={{ flex: 1, minWidth: 0, maxWidth: isMobile ? "100%" : 140 }}>{children}</div>
   </div>
 );
 
@@ -262,7 +262,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
         <div style={{ marginBottom: 24 }}>
           <CustomerCombobox value={inv.to_name} onSelect={onCustomerSelect} />
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 24 : 32 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1.6fr 1fr", gap: isMobile ? 24 : 48, alignItems: "start" }}>
           <div>
             {hasCustomer ? (
               <>
@@ -292,10 +292,17 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
                     )}
                   </div>
                 )}
-                <div style={{ border: "1px solid #e2e8f0", borderRadius: 8, padding: 14, background: "#fff", marginBottom: 8 }}>
+                <div style={{ border: "1px solid #e2e8f0", borderRadius: 8, padding: "12px 14px", background: "#fff", marginBottom: 8, maxWidth: 360 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", marginBottom: 8 }}>Bill to</div>
                   {inv.to_name && <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 4 }}>{inv.to_name}</div>}
-                  {c.showCustomerAddress && inv.to_address && <div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line", lineHeight: 1.5 }}>{inv.to_address}</div>}
+                  {c.showCustomerAddress && inv.to_address && (
+                <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
+                  {String(inv.to_address).split(/[,\n]/).map((line, i) => {
+                    const t = line.trim();
+                    return t ? <div key={i}>{t}</div> : null;
+                  })}
+                </div>
+              )}
                 </div>
                 {itemsEditable && (<a href="#" onClick={(e) => { e.preventDefault(); onEditCustomer && onEditCustomer(); }} style={{ fontSize: 13, color: "#2563eb", textDecoration: "none", cursor: "pointer", fontWeight: 500 }}>Edit Customer</a>)}
               </>
