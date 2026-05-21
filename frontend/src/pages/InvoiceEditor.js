@@ -1011,62 +1011,88 @@ export default function InvoiceEditor() {
         )}
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: isMobile ? "12px 16px" : "14px 24px",
-          background: "#fff",
-          borderTop: "1px solid " + BORDER
-        }}
-      >
-          <button onClick={() => window.print()} style={{ background: "none", border: "none", color: "#0F9599", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>
-          Print or download
-        </button>
-
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              padding: "8px 14px",
-              background: "#fff",
-              border: "1px solid " + BORDER,
-              borderRadius: 6,
-              fontSize: 14,
-              fontWeight: 500,
-              color: TEXT,
-              cursor: saving ? "wait" : "pointer",
-              opacity: saving ? 0.6 : 1
-            }}
-          >
-            {saving ? "Saving..." : (<span style={{display:"inline-flex",alignItems:"center",gap:4}}>Save <ChevronDown size={14} /></span>)}
-          </button>
-
-          <button
-            onClick={() => {
-              if (!id || id === "new") {
-                alert("Save the invoice first");
-                return;
-              }
-              navigate("/invoices/" + id + "/send");
-            }}
-            style={{
-              padding: "8px 16px",
-              background: BRAND,
-              border: "1px solid " + BRAND,
-              borderRadius: 6,
-              fontSize: 14,
-              fontWeight: 600,
-              color: "#fff",
-              cursor: "pointer"
-            }}
-          >
-      <span style={{display:"inline-flex",alignItems:"center",gap:6}}>Review and send <ChevronDown size={14} /></span>
-          </button>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: isMobile ? "12px 16px" : "14px 24px",
+            background: "#fff",
+            borderTop: "1px solid " + BORDER
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ position: "relative" }}>
+              <button id="print-menu-btn" onClick={() => setPrintMenuOpen(o => !o)} style={{ background: "none", border: "none", color: "#0F9599", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                Print or download <ChevronDown size={14} />
+              </button>
+              {printMenuOpen && (
+                <div id="print-menu" style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, width: 220, background: "#fff", border: "1px solid " + BORDER, borderRadius: 8, boxShadow: "0 6px 20px rgba(0,0,0,0.12)", zIndex: 200, overflow: "hidden", fontFamily: "inherit" }}>
+                  <button onClick={() => { setPrintMenuOpen(false); window.print(); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: 14, color: TEXT, fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "none"}>Print</button>
+                  <button onClick={() => { setPrintMenuOpen(false); alert("Download coming soon"); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: 14, color: TEXT, fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "none"}>Download</button>
+                  <button onClick={() => { setPrintMenuOpen(false); alert("Print packing slip coming soon"); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: 14, color: TEXT, fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "none"}>Print packing slip</button>
+                </div>
+              )}
+            </div>
+            <div style={{ position: "relative" }}>
+              <button id="more-menu-btn" onClick={() => setMoreMenuOpen(o => !o)} style={{ background: "none", border: "none", color: "#0F9599", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                More actions <ChevronDown size={14} />
+              </button>
+              {moreMenuOpen && (
+                <div id="more-menu" style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, width: 240, background: "#fff", border: "1px solid " + BORDER, borderRadius: 8, boxShadow: "0 6px 20px rgba(0,0,0,0.12)", zIndex: 200, overflow: "hidden", fontFamily: "inherit" }}>
+                  <button onClick={() => { setMoreMenuOpen(false); alert("Make a copy coming soon"); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: 14, color: TEXT, fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "none"}>Make a copy</button>
+                  <button onClick={() => { setMoreMenuOpen(false); if (window.confirm("Delete this invoice?")) alert("Delete coming soon"); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: 14, color: TEXT, fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "none"}>Delete</button>
+                  <button onClick={() => { setMoreMenuOpen(false); if (window.confirm("Void this invoice?")) alert("Void coming soon"); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: 14, color: TEXT, fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "none"}>Void</button>
+                  <button onClick={() => { setMoreMenuOpen(false); alert("Transaction journal coming soon"); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: 14, color: TEXT, fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "none"}>Transaction journal</button>
+                  <button onClick={() => { setMoreMenuOpen(false); alert("Audit history coming soon"); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: 14, color: TEXT, fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "none"}>Audit history</button>
+                </div>
+              )}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ position: "relative", display: "inline-flex" }}>
+              <button onClick={handleSave} disabled={saving} style={{ padding: "8px 14px", background: "#fff", border: "1px solid " + BORDER, borderRight: "none", borderRadius: "6px 0 0 6px", fontSize: 14, fontWeight: 500, color: TEXT, cursor: saving ? "wait" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "inherit" }}>
+                {saving ? "Saving..." : "Save"}
+              </button>
+              <button id="save-menu-btn" onClick={() => setSaveMenuOpen(o => !o)} style={{ padding: "8px 8px", background: "#fff", border: "1px solid " + BORDER, borderRadius: "0 6px 6px 0", cursor: "pointer", display: "flex", alignItems: "center", fontFamily: "inherit" }}>
+                <ChevronDown size={14} color={TEXT} />
+              </button>
+              {saveMenuOpen && (
+                <div id="save-menu" style={{ position: "absolute", bottom: "calc(100% + 6px)", right: 0, width: 240, background: "#fff", border: "1px solid " + BORDER, borderRadius: 8, boxShadow: "0 6px 20px rgba(0,0,0,0.12)", zIndex: 200, overflow: "hidden", fontFamily: "inherit" }}>
+                  <button onClick={async () => { setSaveMenuOpen(false); await handleSave(); navigate("/invoices/new"); setTimeout(() => window.location.reload(), 100); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 14, color: TEXT, fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                    <span>Save and new</span>
+                    <span style={{ color: SUBTLE, fontSize: 12 }}>Ctrl+Alt+S</span>
+                  </button>
+                  <button onClick={async () => { setSaveMenuOpen(false); await handleSave(); navigate("/invoices"); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 14, color: TEXT, fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                    <span>Save and close</span>
+                    <span style={{ color: SUBTLE, fontSize: 12 }}>Ctrl+Alt+D</span>
+                  </button>
+                </div>
+              )}
+            </div>
+            <div style={{ position: "relative", display: "inline-flex" }}>
+              <button onClick={() => { if (!id || id === "new") { alert("Save the invoice first"); return; } navigate("/invoices/" + id + "/send"); }} style={{ padding: "8px 16px", background: BRAND, border: "1px solid " + BRAND, borderRight: "1px solid rgba(255,255,255,0.25)", borderRadius: "6px 0 0 6px", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
+                Review and send
+              </button>
+              <button id="review-menu-btn" onClick={() => setReviewMenuOpen(o => !o)} style={{ padding: "8px 8px", background: BRAND, border: "1px solid " + BRAND, borderRadius: "0 6px 6px 0", cursor: "pointer", display: "flex", alignItems: "center", fontFamily: "inherit" }}>
+                <ChevronDown size={14} color="#fff" />
+              </button>
+              {reviewMenuOpen && (
+                <div id="review-menu" style={{ position: "absolute", bottom: "calc(100% + 6px)", right: 0, width: 260, background: "#fff", border: "1px solid " + BORDER, borderRadius: 8, boxShadow: "0 6px 20px rgba(0,0,0,0.12)", zIndex: 200, overflow: "hidden", fontFamily: "inherit" }}>
+                  <button onClick={() => { setReviewMenuOpen(false); if (!id || id === "new") { alert("Save the invoice first"); return; } const url = window.location.origin + "/invoices/" + id + "/view"; if (navigator.clipboard) { navigator.clipboard.writeText(url); alert("Link copied:\n" + url); } else { prompt("Copy this link:", url); } }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 14, color: TEXT, fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                    <span>Share link</span>
+                    <span style={{ color: SUBTLE, fontSize: 12 }}>Ctrl+Alt+L</span>
+                  </button>
+                  <button onClick={async () => { setReviewMenuOpen(false); await handleSave(); if (!id || id === "new") { alert("Save the invoice first"); return; } const url = window.location.origin + "/invoices/" + id + "/view"; const text = encodeURIComponent("Hi, here is your invoice: " + url); window.open("https://wa.me/?text=" + text, "_blank"); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 14, color: TEXT, fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "none"}>
+                    <span>Save &amp; Share (WhatsApp)</span>
+                    <span style={{ color: SUBTLE, fontSize: 12 }}>Ctrl+Alt+W</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+
 
       <EditCompanyDrawer
         open={editCompanyOpen}
