@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Settings, PlayCircle, MessageSquare, ChevronDown, ChevronUp, X, HelpCircle } from "lucide-react";
+import { ArrowLeft, Settings, PlayCircle, MessageSquare, ChevronDown, ChevronUp, X, HelpCircle, Clock, Sparkles} from "lucide-react";
 import InvoicePreview from "../components/InvoicePreview";
 import EditCompanyDrawer, { getStoredProfile } from "../components/company/EditCompanyDrawer";
 import { NewCustomerDrawer } from "../components/customers/NewCustomerDrawer";

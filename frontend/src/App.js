@@ -120,7 +120,8 @@ function AppLayout({ onLogout }) {
 
       <div style={{ display:'flex', flex:1, overflow:'hidden', position:'relative' }}>
 
-        <Sidebar
+        {!(location.pathname.startsWith("/invoices/new") || location.pathname.match(/^\/invoices\/[^/]+\/(edit|send)$/)) && (
+            <Sidebar
           onLogout={onLogout}
           mobileOpen={mobileMenuOpen}
           onMobileClose={() => setMobileMenuOpen(false)}
@@ -128,12 +129,13 @@ function AppLayout({ onLogout }) {
           isTablet={isTablet}
           isDesktop={isDesktop}
         />
+          )}
 
         {mobileMenuOpen && isMobile && (
           <div onClick={() => setMobileMenuOpen(false)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:39, backdropFilter:'blur(2px)' }}/>
         )}
 
-        <main  style={{ flex:1, overflowY:'auto', position:'relative', minWidth:0, marginLeft: isMobile ? 0 : 80 }}>
+        <main  style={{ flex:1, overflowY:'auto', position:'relative', minWidth:0, marginLeft: isMobile || location.pathname.startsWith("/invoices/new") || location.pathname.match(/^\/invoices\/[^/]+\/(edit|send)$/) ? 0 : 80 }}>
           <Routes>
             <Route path="/"               element={<Dashboard />}          />
             <Route path="/documents"      element={<Documents />}          />
