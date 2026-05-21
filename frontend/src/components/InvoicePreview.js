@@ -325,8 +325,8 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
                   </div>
                 )}
                 <div style={{ border: "1px solid #e2e8f0", borderRadius: 8, padding: "12px 14px", background: "#fff", marginBottom: 8, maxWidth: 360 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>Bill to</div>
-                  {inv.to_name && <div style={{ fontSize: 17, fontWeight: 600, color: "#0F172A", marginBottom: 8, letterSpacing: "-0.01em" }}>{inv.to_name}</div>}
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", marginBottom: 8 }}>Bill to</div>
+                  {inv.to_name && <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 4 }}>{inv.to_name}</div>}
                   {c.showCustomerAddress && inv.to_address && (
                 <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
                   {String(inv.to_address).split(/[,\n]/).map((line, i) => {
@@ -555,12 +555,12 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           <div style={{ flex: "0 0 320px", minWidth: 280 }}>
             <div style={{ width: isMobile ? "100%" : 320 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
-                <span style={{ fontSize: 13, color: "#64748B" }}>Subtotal</span>
+                <span style={{ fontSize: 13, color: "#0F172A" }}>Subtotal</span>
                 <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${subtotal.toFixed(2)}</span>
               </div>
               <div className={Number(discount.value) > 0 ? "" : "print-hide"} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 13, color: "#64748B" }}>Discount {discount.value || 0}%</span>
+                  <span style={{ fontSize: 13, color: "#0F172A" }}>Discount {discount.value || 0}%</span>
                   <div className="print-hide" style={{ display: "inline-flex", borderRadius: 999, border: "1px solid #cbd5e1", overflow: "hidden", fontSize: 12 }}>
                     <button type="button" onClick={() => setDiscount({ ...discount, type: "percent" })} style={{ padding: "3px 12px", background: discount.type === "percent" ? "#cbd5e1" : "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: "#0F172A" }}>%</button>
                     <button type="button" onClick={() => setDiscount({ ...discount, type: "amount" })} style={{ padding: "3px 12px", background: discount.type === "amount" ? "#cbd5e1" : "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: "#0F172A" }}>$</button>
@@ -568,12 +568,12 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
                 </div>
                 <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${((discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0)).toFixed(2)}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderTop: "2px solid #0F172A", marginTop: 20 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderTop: "1px solid #e2e8f0", marginTop: 4 }}>
                 <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700 }}>Invoice total</span>
                 <span style={{ fontSize: 28, color: accentColor || "#0F172A", fontWeight: 700, ...numStyle }}>${(subtotal - (discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0)).toFixed(2)}</span>
               </div>
               <div className={Number(deposit) > 0 ? "" : "print-hide"} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
-                <span style={{ fontSize: 13, color: "#64748B" }}>Deposit</span>
+                <span style={{ fontSize: 13, color: "#0F172A" }}>Deposit</span>
                 <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${(Number(deposit) || 0).toFixed(2)}</span>
               </div>
               <div className="print-hide" style={{ display: "flex", justifyContent: "flex-end", padding: "4px 0" }}>
