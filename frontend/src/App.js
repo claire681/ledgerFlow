@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   BrowserRouter as Router,
-  Routes, Route, Navigate, Link,
-} from 'react-router-dom';
+  Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import InvoiceEditor from "./pages/InvoiceEditor";
 import InvoiceReviewSend from "./pages/InvoiceReviewSend";
 import { AIProvider }      from './context/AIContext';
@@ -73,6 +72,7 @@ function PromoBanner() {
 }
 
 function AppLayout({ onLogout }) {
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile,       setIsMobile]       = useState(window.innerWidth < 768);
   const [isTablet,       setIsTablet]       = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
@@ -108,11 +108,13 @@ function AppLayout({ onLogout }) {
       <PromoBanner/>
 
       {/* Main header */}
-      <TopBar
+      {location.pathname === "/" && (
+          <TopBar
         onLogout={onLogout}
         onMobileMenu={() => setMobileMenuOpen(o => !o)}
         isMobile={isMobile}
       />
+        )}
 
     
 
