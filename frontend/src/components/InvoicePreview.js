@@ -258,6 +258,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           <div style={{ marginTop: 8 }}>
   <button
     type="button"
+    className="print-hide"
     onClick={() => setLogoModalOpen(true)}
     style={{
       width: 36,
@@ -557,10 +558,10 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
                 <span style={{ fontSize: 13, color: "#0F172A" }}>Subtotal</span>
                 <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${subtotal.toFixed(2)}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
+              <div className={Number(discount.value) > 0 ? "" : "print-hide"} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ fontSize: 13, color: "#0F172A" }}>Discount {discount.value || 0}%</span>
-                  <div style={{ display: "inline-flex", borderRadius: 999, border: "1px solid #cbd5e1", overflow: "hidden", fontSize: 12 }}>
+                  <div className="print-hide" style={{ display: "inline-flex", borderRadius: 999, border: "1px solid #cbd5e1", overflow: "hidden", fontSize: 12 }}>
                     <button type="button" onClick={() => setDiscount({ ...discount, type: "percent" })} style={{ padding: "3px 12px", background: discount.type === "percent" ? "#cbd5e1" : "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: "#0F172A" }}>%</button>
                     <button type="button" onClick={() => setDiscount({ ...discount, type: "amount" })} style={{ padding: "3px 12px", background: discount.type === "amount" ? "#cbd5e1" : "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: "#0F172A" }}>$</button>
                   </div>
@@ -571,11 +572,11 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
                 <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700 }}>Invoice total</span>
                 <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700, ...numStyle }}>${(subtotal - (discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0)).toFixed(2)}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
+              <div className={Number(deposit) > 0 ? "" : "print-hide"} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
                 <span style={{ fontSize: 13, color: "#0F172A" }}>Deposit</span>
                 <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${(Number(deposit) || 0).toFixed(2)}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "flex-end", padding: "4px 0" }}>
+              <div className="print-hide" style={{ display: "flex", justifyContent: "flex-end", padding: "4px 0" }}>
                 <button type="button" onClick={() => onEditTotals && onEditTotals()} style={{ background: "none", border: "none", color: "#0F5959", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0, textDecoration: "underline" }}>Edit totals</button>
               </div>
             </div>
