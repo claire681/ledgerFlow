@@ -15,6 +15,7 @@ import Documents           from './pages/Documents';
 import Transactions        from './pages/Transactions';
 import Budgets             from './pages/Budgets';
 import Invoices            from './pages/Invoices';
+import InvoicesAll from './pages/InvoicesAll';
 import TaxCalculator       from './pages/TaxCalculator';
 import VendorAnalytics     from './pages/VendorAnalytics';
 import Currency            from './pages/Currency';
@@ -141,6 +142,7 @@ function AppLayout({ onLogout }) {
             <Route path="/documents"      element={<Documents />}          />
             <Route path="/transactions"   element={<Transactions />}       />
             <Route path="/budgets"        element={<Budgets />}            />
+            <Route path="/invoices/all" element={<InvoicesAll />} />
             <Route path="/invoices"       element={<Invoices />}           />
             <Route path="/invoices/new" element={<InvoiceEditor />} />
             <Route path="/invoices/:id/edit" element={<InvoiceEditor />} />
