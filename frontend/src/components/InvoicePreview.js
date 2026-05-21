@@ -360,44 +360,39 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
       </div>
     )}
 
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>
-            <div style={{ width: isMobile ? "100%" : 320 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
-                <span style={{ fontSize: 13, color: "#0F172A" }}>Subtotal</span>
-                <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${subtotal.toFixed(2)}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 13, color: "#0F172A" }}>Discount {discount.value || 0}%</span>
-                  <div style={{ display: "inline-flex", borderRadius: 999, border: "1px solid #cbd5e1", overflow: "hidden", fontSize: 12 }}>
-                    <button type="button" onClick={() => setDiscount({ ...discount, type: "percent" })} style={{ padding: "3px 12px", background: discount.type === "percent" ? "#cbd5e1" : "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: "#0F172A" }}>%</button>
-                    <button type="button" onClick={() => setDiscount({ ...discount, type: "amount" })} style={{ padding: "3px 12px", background: discount.type === "amount" ? "#cbd5e1" : "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: "#0F172A" }}>$</button>
-                  </div>
-                </div>
-                <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${((discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0)).toFixed(2)}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderTop: "1px solid #e2e8f0", marginTop: 4 }}>
-                <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700 }}>Invoice total</span>
-                <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700, ...numStyle }}>${(subtotal - (discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0)).toFixed(2)}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
-                <span style={{ fontSize: 13, color: "#0F172A" }}>Deposit</span>
-                <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${(Number(deposit) || 0).toFixed(2)}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "flex-end", padding: "4px 0" }}>
-                <button type="button" onClick={() => onEditTotals && onEditTotals()} style={{ background: "none", border: "none", color: "#0F5959", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0, textDecoration: "underline" }}>Edit totals</button>
-              </div>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 40, marginTop: 24, flexWrap: "wrap", alignItems: "flex-start" }}>
+          <div style={{ flex: "1 1 360px", minWidth: 280, maxWidth: 600 }}>
+            <div style={{ marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: "#0F172A" }}>Customer payment options</span>
+              <button type="button" style={{ background: "none", border: "none", color: "#0F9599", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>Edit</button>
             </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 22, background: "#000", color: "#fff", borderRadius: 3, fontSize: 9, fontWeight: 700 }}>&#63743;Pay</span>
+              <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 22, background: "#1A1F71", color: "#fff", borderRadius: 3, fontSize: 9, fontWeight: 700, fontStyle: "italic" }}>VISA</span>
+              <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 22, background: "#EB001B", color: "#fff", borderRadius: 3, fontSize: 8, fontWeight: 700 }}>MC</span>
+              <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 22, background: "#FF6000", color: "#fff", borderRadius: 3, fontSize: 8, fontWeight: 700 }}>DISC</span>
+              <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 22, background: "#006FCF", color: "#fff", borderRadius: 3, fontSize: 8, fontWeight: 700 }}>AMEX</span>
+              <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 36, height: 22, background: "#0E4C96", color: "#fff", borderRadius: 3, fontSize: 8, fontWeight: 700 }}>JCB</span>
+              <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 40, height: 22, background: "#475569", color: "#fff", borderRadius: 3, fontSize: 8, fontWeight: 700 }}>BANK</span>
+            </div>
+            <div style={{ fontSize: 13, color: "#475569", marginBottom: 12, lineHeight: 1.5 }}>
+              Activate online card or bank transfer payments for your customers.&nbsp;
+              <button type="button" style={{ background: "none", border: "none", color: "#0F9599", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>Activate payments</button>
+            </div>
+            {onFieldChange ? (
+              <textarea value={inv.paymentNote || ""} onChange={e => onFieldChange("paymentNote", e.target.value)} rows={2} placeholder="Tell your customer how you want to get paid." style={{ width: "100%", padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} onFocus={onFocusBg} onBlur={onBlurBg} />
+            ) : (
+              <div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line" }}>{inv.paymentNote || ""}</div>
+            )}
           </div>
-
-        <div style={{ marginTop: 32 }}>
+            <div style={{ marginTop: 32 }}>
           <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 6 }}>Note to customer</label>
           {onFieldChange ? (
             <textarea value={inv.note || ""} onChange={e => onFieldChange("note", e.target.value)} rows={3} placeholder="Thank you for your business." style={{ width: "100%", maxWidth: 600, padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} onFocus={onFocusBg} onBlur={onBlurBg} />
           ) : (<div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line" }}>{inv.note || ""}</div>)}
         </div>
-
-        <div style={{ marginTop: 24 }}>
+            <div style={{ marginTop: 24 }}>
           <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 6 }}>Memo on statement (hidden)</label>
           {onFieldChange ? (
             <textarea value={inv.memo || ""} onChange={e => onFieldChange("memo", e.target.value)} rows={2} placeholder="This memo will not show up on your invoice, but will appear on the statement." style={{ width: "100%", maxWidth: 600, padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} onFocus={onFocusBg} onBlur={onBlurBg} />
@@ -428,6 +423,37 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           </div>
         )}
       </div>
+        </div>
+          </div>
+          <div style={{ flex: "0 0 320px", minWidth: 280 }}>
+            <div style={{ width: isMobile ? "100%" : 320 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
+                <span style={{ fontSize: 13, color: "#0F172A" }}>Subtotal</span>
+                <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${subtotal.toFixed(2)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 13, color: "#0F172A" }}>Discount {discount.value || 0}%</span>
+                  <div style={{ display: "inline-flex", borderRadius: 999, border: "1px solid #cbd5e1", overflow: "hidden", fontSize: 12 }}>
+                    <button type="button" onClick={() => setDiscount({ ...discount, type: "percent" })} style={{ padding: "3px 12px", background: discount.type === "percent" ? "#cbd5e1" : "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: "#0F172A" }}>%</button>
+                    <button type="button" onClick={() => setDiscount({ ...discount, type: "amount" })} style={{ padding: "3px 12px", background: discount.type === "amount" ? "#cbd5e1" : "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: "#0F172A" }}>$</button>
+                  </div>
+                </div>
+                <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${((discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0)).toFixed(2)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderTop: "1px solid #e2e8f0", marginTop: 4 }}>
+                <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700 }}>Invoice total</span>
+                <span style={{ fontSize: 14, color: "#0F172A", fontWeight: 700, ...numStyle }}>${(subtotal - (discount.type === "percent" ? subtotal * (Number(discount.value) || 0) / 100 : Number(discount.value) || 0)).toFixed(2)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
+                <span style={{ fontSize: 13, color: "#0F172A" }}>Deposit</span>
+                <span style={{ fontSize: 13, color: "#0F172A", fontWeight: 500, ...numStyle }}>${(Number(deposit) || 0).toFixed(2)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", padding: "4px 0" }}>
+                <button type="button" onClick={() => onEditTotals && onEditTotals()} style={{ background: "none", border: "none", color: "#0F5959", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0, textDecoration: "underline" }}>Edit totals</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div style={{ marginTop: 32, borderTop: "1px solid #e2e8f0", paddingTop: 18, textAlign: "center" }}>
