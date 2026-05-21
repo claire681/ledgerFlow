@@ -507,7 +507,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           </div>
             )}
             {(itemsEditable || hasRealNote) && (
-            <div style={{ marginTop: 32 }}>
+            <div className={hasRealNote ? "" : "print-hide"} style={{ marginTop: 32 }}>
           <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 6 }}>Note to customer</label>
           {onFieldChange ? (
             <textarea value={inv.note || ""} onChange={e => onFieldChange("note", e.target.value)} rows={3} placeholder="Thank you for your business." style={{ width: "100%", maxWidth: 600, padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} onFocus={onFocusBg} onBlur={onBlurBg} />
@@ -515,14 +515,14 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
         </div>
             )}
             {itemsEditable && (
-            <div style={{ marginTop: 24 }}>
+            <div className="print-hide" style={{ marginTop: 24 }}>
           <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 6 }}>Memo on statement (hidden)</label>
           {onFieldChange ? (
             <textarea value={inv.memo || ""} onChange={e => onFieldChange("memo", e.target.value)} rows={2} placeholder="This memo will not show up on your invoice, but will appear on the statement." style={{ width: "100%", maxWidth: 600, padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} onFocus={onFocusBg} onBlur={onBlurBg} />
           ) : (<div style={{ fontSize: 13, color: "#475569" }}>{inv.memo || ""}</div>)}
 
             {(itemsEditable || attachments.length > 0) && (
-      <div style={{ marginTop: 24 }}>
+      <div className={(attachments && attachments.length > 0) ? "" : "print-hide"} style={{ marginTop: 24 }}>
         <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#0F172A", marginBottom: 8 }}>Attachments</label>
         <div style={{ border: "2px dashed #cbd5e1", borderRadius: 8, padding: "24px 16px", textAlign: "center", cursor: "pointer", maxWidth: 600, transition: "background 0.15s" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fafc"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }} onClick={() => document.getElementById("novala-attachment-input").click()}>
           <Upload size={24} color="#22c55e" style={{ marginBottom: 8 }} />
