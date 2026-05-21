@@ -44,9 +44,9 @@ const EditableDate = ({ value, field, onFieldChange, style }) => {
 };
 
 const FormRow = ({ label, isMobile, children }) => (
-  <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 4 : 8, alignItems: isMobile ? "stretch" : "center", marginBottom: 6 }}>
+  <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 4 : 8, alignItems: isMobile ? "stretch" : "center", marginBottom: 4 }}>
     <div style={{ width: isMobile ? "100%" : 90, fontSize: 13, fontWeight: 500, color: "#475569", flexShrink: 0 }}>{label}</div>
-    <div style={{ flex: 1, minWidth: 0, maxWidth: isMobile ? "100%" : 140 }}>{children}</div>
+    <div style={{ flex: 1, minWidth: 0, maxWidth: isMobile ? "100%" : 120 }}>{children}</div>
   </div>
 );
 
@@ -79,12 +79,12 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
       .ghost-edit-section:hover input,
       .ghost-edit-section:hover select,
       .ghost-edit-section:hover textarea,
+      .ghost-edit-active input,
+      .ghost-edit-active select,
+      .ghost-edit-active textarea,
       .ghost-edit-section input:focus,
       .ghost-edit-section select:focus,
-      .ghost-edit-section textarea:focus,
-      .ghost-edit-section input:hover,
-      .ghost-edit-section select:hover,
-      .ghost-edit-section textarea:hover {
+      .ghost-edit-section textarea:focus {
         border-color: #cbd5e1 !important;
         background-color: #fff !important;
       }
@@ -95,19 +95,50 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
         box-shadow: 0 0 0 1px #0F5959 !important;
         outline: none !important;
       }
-      .ghost-edit-section .qb-combo-btn {
+      .ghost-edit-section .qb-combo-btn,
+      .ghost-edit-section .qb-combo-chevron {
         border-color: transparent !important;
         background-color: transparent !important;
-        transition: border-color 0.15s ease, background-color 0.15s ease;
+        transition: border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
+      }
+      .ghost-edit-section .qb-combo-chevron {
+        opacity: 0;
       }
       .ghost-edit-section:hover .qb-combo-btn,
-      .ghost-edit-section .qb-combo-btn:hover,
+      .ghost-edit-active .qb-combo-btn,
       .ghost-edit-section .qb-combo-btn:focus {
         border-color: #cbd5e1 !important;
         background-color: #fff !important;
       }
+      .ghost-edit-section:hover .qb-combo-chevron,
+      .ghost-edit-active .qb-combo-chevron {
+        opacity: 1;
+      }
+      @media print {
+        .print-hide { display: none !important; }
+        .ghost-edit-section input,
+        .ghost-edit-section select,
+        .ghost-edit-section textarea {
+          border: none !important;
+          box-shadow: none !important;
+          background: transparent !important;
+          padding: 0 !important;
+        }
+      }
     `;
     document.head.appendChild(style);
+  }, []);
+
+  const [detailsEditing, setDetailsEditing] = React.useState(false);
+  const detailsRef = React.useRef(null);
+  React.useEffect(() => {
+    const onDown = (e) => {
+      if (detailsRef.current && !detailsRef.current.contains(e.target)) {
+        setDetailsEditing(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
   React.useEffect(() => {
@@ -218,7 +249,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           {inv.from_phone && <div style={{ fontSize: 13, color: "#475569" }}>{inv.from_phone}</div>}
         </div>
         <div style={{ textAlign: isMobile ? "left" : "right" }}>
-          <div style={{ fontSize: 13, color: "#64748B", marginBottom: 12, ...numStyle }}>Balance due (hidden): <span style={{ color: accentColor || "#0F172A", fontWeight: 600 }}>${totalAmt.toFixed(2)}</span></div>
+          <div className="print-hide" style={{ fontSize: 13, color: "#64748B", marginBottom: 12, ...numStyle }}>Balance due (hidden): <span style={{ color: accentColor || "#0F172A", fontWeight: 600 }}>${totalAmt.toFixed(2)}</span></div>
           {displayedLogoUrl ? (
             <img src={displayedLogoUrl} alt="Logo" style={{ maxHeight: 80, width: "auto", display: "inline-block" }} onError={e => { e.target.style.display = "none"; }} />
           ) : (
@@ -258,7 +289,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
         </div>
       </div>
 
-      <div style={{ padding: isMobile ? "24px 16px" : "32px", background: "#f8fafc", borderTop: "1px solid #f1f5f9", borderBottom: "1px solid #f1f5f9" }}>
+      <div ref={detailsRef} onClick={() => editable && setDetailsEditing(true)} className={"ghost-edit-section " + (detailsEditing ? "ghost-edit-active" : "")} style={{ padding: isMobile ? "20px 16px" : "20px 32px 28px 32px", background: "#f8fafc", borderTop: "1px solid #f1f5f9", borderBottom: "1px solid #f1f5f9" }}>
         <div style={{ marginBottom: 24 }}>
           <CustomerCombobox value={inv.to_name} onSelect={onCustomerSelect} />
         </div>
@@ -269,7 +300,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
                 {c.showCustomerEmail && (itemsEditable ? <input type="email" value={inv.to_email || ""} onChange={(e) => onFieldChange && onFieldChange("to_email", e.target.value)} placeholder="Enter Customer email" style={{ width: "100%", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 6, fontSize: 14, color: "#0F172A", marginBottom: 12, boxSizing: "border-box", outline: "none", fontFamily: "inherit" }} onFocus={onFocusBg} onBlur={onBlurBg} /> : (inv.to_email && <div style={{ fontSize: 13, color: "#0F172A", marginBottom: 12, padding: "8px 12px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6 }}>{inv.to_email}</div>))}
                 {itemsEditable && (
                   <div style={{ position: "relative", marginBottom: 12 }}>
-                    <button type="button" onClick={() => setShowCcBcc(true)} style={{ background: "none", border: "none", padding: 0, color: "#2563eb", fontSize: 13, cursor: "pointer", textDecoration: "none", fontWeight: 500 }}>Cc/Bcc</button>
+                    <button className="print-hide" type="button" onClick={() => setShowCcBcc(true)} style={{ background: "none", border: "none", padding: 0, color: "#2563eb", fontSize: 13, cursor: "pointer", textDecoration: "none", fontWeight: 500 }}>Cc/Bcc</button>
                     {showCcBcc && (
                       <div style={{ position: "absolute", top: 28, left: 0, width: 320, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", padding: 20, zIndex: 50 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -304,7 +335,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
                 </div>
               )}
                 </div>
-                {itemsEditable && (<a href="#" onClick={(e) => { e.preventDefault(); onEditCustomer && onEditCustomer(); }} style={{ fontSize: 13, color: "#2563eb", textDecoration: "none", cursor: "pointer", fontWeight: 500 }}>Edit Customer</a>)}
+                {itemsEditable && (<a className="print-hide" href="#" onClick={(e) => { e.preventDefault(); onEditCustomer && onEditCustomer(); }} style={{ fontSize: 13, color: "#2563eb", textDecoration: "none", cursor: "pointer", fontWeight: 500 }}>Edit Customer</a>)}
               </>
             ) : (
               <><SkeletonBar width={192} /><SkeletonBar width={160} /><SkeletonBar width={128} /></>
@@ -431,7 +462,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
         <div style={{ display: "flex", justifyContent: "space-between", gap: 40, marginTop: 24, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div style={{ flex: "1 1 360px", minWidth: 280, maxWidth: 600 }}>
             {(itemsEditable || hasRealPaymentNote) && (
-            <div style={{ marginBottom: 20 }}>
+            <div className="print-hide" style={{ marginBottom: 20 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
               <span style={{ fontSize: 15, fontWeight: 600, color: "#0F172A" }}>Customer payment options</span>
               <button type="button" style={{ background: "none", border: "none", color: "#0F9599", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>Edit</button>
