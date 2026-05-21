@@ -57,6 +57,14 @@ const TableInput = ({ value, onChange, type, placeholder, align }) => (
 );
 
 export default function InvoicePreview({ inv, customization, accentColor, template, onFieldChange, onCustomerSelect, onItemChange, onAddItem, onDeleteItem, onClearItems, onEditCompany , onEditCustomer , onEditTotals }) {
+  React.useEffect(() => {
+    if (document.getElementById("spinner-hide-style")) return;
+    const style = document.createElement("style");
+    style.id = "spinner-hide-style";
+    style.textContent = 'input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}input[type="number"]{-moz-appearance:textfield}';
+    document.head.appendChild(style);
+  }, []);
+
   const [logoModalOpen, setLogoModalOpen] = useState(false);
   const [localLogoOverride, setLocalLogoOverride] = useState(null);
   const [hoveredRow, setHoveredRow] = useState(null);
