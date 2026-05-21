@@ -226,6 +226,19 @@ export default function InvoiceEditor() {
   const [activeTab, setActiveTab] = useState("edit");
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [viewMode, setViewMode] = useState("edit");
+  const [saveMenuOpen, setSaveMenuOpen] = useState(false);
+  const [reviewMenuOpen, setReviewMenuOpen] = useState(false);
+  const [printMenuOpen, setPrintMenuOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const h = (e) => {
+      const checks = [["save-menu","save-menu-btn",saveMenuOpen,setSaveMenuOpen],["review-menu","review-menu-btn",reviewMenuOpen,setReviewMenuOpen],["print-menu","print-menu-btn",printMenuOpen,setPrintMenuOpen],["more-menu","more-menu-btn",moreMenuOpen,setMoreMenuOpen]];
+      checks.forEach(function(c){ var menuId=c[0], btnId=c[1], isOpen=c[2], setter=c[3]; if(!isOpen)return; var m=document.getElementById(menuId); var b=document.getElementById(btnId); if(m && !m.contains(e.target) && b && !b.contains(e.target)) setter(false); });
+    };
+    document.addEventListener("mousedown", h);
+    return function(){ document.removeEventListener("mousedown", h); };
+  }, [saveMenuOpen, reviewMenuOpen, printMenuOpen, moreMenuOpen]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [recentInvoices, setRecentInvoices] = useState([]);
 
