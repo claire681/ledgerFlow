@@ -523,6 +523,10 @@ function CustomizeModal({ onClose, pinnedApps, appOrder, onSave }) {
 }
 
 export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile }) {
+  const location = useLocation();
+  const hasTopBar = location.pathname === '/';
+  const sidebarTop = hasTopBar ? 104 : 0;
+  const sidebarHeight = hasTopBar ? 'calc(100vh - 104px)' : '100vh';
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -762,7 +766,11 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
       )}
 
       {/* Desktop slim sidebar */}
-     <aside style={{ position:'fixed', top:104, left:0, width:80, height:'calc(100vh - 104px)', background:'#FAFAFA', borderRight:'1px solid #E8EDF3', display:mobile?'none':'flex', flexDirection:'column', alignItems:'center', paddingTop:16, paddingBottom:8, zIndex:44, fontFamily:FONT, overflowY:'auto', scrollbarWidth:'none' }}>
+     <aside style={{ position:'fixed',
+      top:sidebarTop,
+      left:0,
+      width:80,
+      height:sidebarHeight, background:'#FAFAFA', borderRight:'1px solid #E8EDF3', display:mobile?'none':'flex', flexDirection:'column', alignItems:'center', paddingTop:16, paddingBottom:8, zIndex:44, fontFamily:FONT, overflowY:'auto', scrollbarWidth:'none' }}>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', width:'100%', paddingTop:4 }}>
           {SLIM_ITEMS.map(function(item) { return renderSlimItem(item); })}
         </div>
