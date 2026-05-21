@@ -198,7 +198,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
   const [activeRowIdx, setActiveRowIdx] = useState(null);
   const hasCustomer = !!(inv.to_name || inv.to_email);
   const numStyle = { fontVariantNumeric: "lining-nums tabular-nums" };
-  const editable = !!onItemChange;
+  const itemsEditable = !!onItemChange;
 
   return (
     <div id="novala-invoice-canvas" style={{ background: "#fff", fontFamily: "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif" }}>
@@ -317,15 +317,15 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
         <div style={{ overflowX: isMobile ? "auto" : "visible", border: "1px solid #e2e8f0", borderRadius: 8 }}>
           <table style={{ width: "100%", minWidth: isMobile ? 540 : "auto", borderCollapse: "collapse", fontSize: 13 }}>
             <thead><tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
-              {editable && <th style={{ width: 28, padding: "10px 4px" }}></th>}
- {editable && <th style={{ width: 20, padding: "10px 2px" }}></th>}
+              {itemsEditable && <th style={{ width: 28, padding: "10px 4px" }}></th>}
+ {itemsEditable && <th style={{ width: 20, padding: "10px 2px" }}></th>}
             <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 32 }}>#</th>
               <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em" }}>Product/service</th>
               <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em" }}>Description</th>
               <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 110 }}>Qty</th>
               <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 140 }}>Rate</th>
-              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 160 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>Amount{editable && <button onClick={() => { if (window.confirm("Clear all amounts?")) { items.forEach((_, idx) => { onItemChange(idx, "qty", ""); onItemChange(idx, "rate", ""); }); } }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, display: "inline-flex" }} title="Clear all amounts"><Trash2 size={13} color="#94a3b8" /></button>}</span></th>
-              {editable && <th style={{ width: 40 }}></th>}
+              <th style={{ textAlign: "right", padding: "10px 12px", fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", width: 160 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>Amount{itemsEditable && <button onClick={() => { if (window.confirm("Clear all amounts?")) { items.forEach((_, idx) => { onItemChange(idx, "qty", ""); onItemChange(idx, "rate", ""); }); } }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, display: "inline-flex" }} title="Clear all amounts"><Trash2 size={13} color="#94a3b8" /></button>}</span></th>
+              {itemsEditable && <th style={{ width: 40 }}></th>}
             </tr></thead>
             <tbody>
               {items.length === 0 ? (
@@ -340,11 +340,11 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
       const stAmount = computeRunningSubtotal(i);
       return (
         <tr key={i} onMouseEnter={() => setHoveredRow(i)} onMouseLeave={() => setHoveredRow(null)} style={{ borderBottom: "1px solid #f1f5f9", position: "relative" }}>
-          {editable && (<td style={{ width: 28, padding: "4px 2px", verticalAlign: "middle" }}></td>)}
-          {editable && (<td style={{ width: 20, padding: "4px 2px", verticalAlign: "middle", textAlign: "center", color: hovered ? "#94a3b8" : "transparent", cursor: "grab", fontSize: 14, lineHeight: 1, userSelect: "none" }}>⠿</td>)}
+          {itemsEditable && (<td style={{ width: 28, padding: "4px 2px", verticalAlign: "middle" }}></td>)}
+          {itemsEditable && (<td style={{ width: 20, padding: "4px 2px", verticalAlign: "middle", textAlign: "center", color: hovered ? "#94a3b8" : "transparent", cursor: "grab", fontSize: 14, lineHeight: 1, userSelect: "none" }}>⠿</td>)}
           <td style={{ padding: "8px 12px", fontSize: 13, color: "#0F172A", verticalAlign: "middle" }}></td>
           <td colSpan={3} style={{ padding: 4, verticalAlign: "middle" }}>
-            {editable ? (
+            {itemsEditable ? (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <input type="text" value={item.name || ""} placeholder="" onChange={e => onItemChange(i, "name", e.target.value)} style={{ flex: 1, padding: "8px 10px", border: "1px solid " + (hovered ? "#cbd5e1" : "#e2e8f0"), borderRadius: 4, fontSize: 13, fontFamily: "inherit", outline: "none", background: "#fff", boxSizing: "border-box" }} />
                 <span style={{ fontSize: 13, color: "#64748B", fontStyle: "italic", whiteSpace: "nowrap" }}>Subtotal</span>
@@ -359,7 +359,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           <td style={{ padding: 4, verticalAlign: "middle", textAlign: "right" }}>
             <div style={{ padding: "8px 10px", fontSize: 13, fontWeight: 700, color: "#0F172A", ...numStyle }}>{"$" + stAmount.toFixed(2)}</div>
           </td>
-          {editable && (<td style={{ padding: "8px 4px", textAlign: "center", verticalAlign: "middle" }}><button onClick={() => onDeleteItem(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex", borderRadius: 4, opacity: hovered ? 1 : 0, transition: "opacity 0.12s" }}><Trash2 size={14} color="#94a3b8" /></button></td>)}
+          {itemsEditable && (<td style={{ padding: "8px 4px", textAlign: "center", verticalAlign: "middle" }}><button onClick={() => onDeleteItem(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex", borderRadius: 4, opacity: hovered ? 1 : 0, transition: "opacity 0.12s" }}><Trash2 size={14} color="#94a3b8" /></button></td>)}
         </tr>
       );
     }
@@ -367,32 +367,32 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
     if (rowType === "text") {
       return (
         <tr key={i} onMouseEnter={() => setHoveredRow(i)} onMouseLeave={() => setHoveredRow(null)} style={{ borderBottom: "1px solid #f1f5f9", position: "relative" }}>
-          {editable && (<td style={{ width: 28, padding: "4px 2px", verticalAlign: "middle" }}></td>)}
-          {editable && (<td style={{ width: 20, padding: "4px 2px", verticalAlign: "middle", textAlign: "center", color: hovered ? "#94a3b8" : "transparent", cursor: "grab", fontSize: 14, lineHeight: 1, userSelect: "none" }}>⠿</td>)}
+          {itemsEditable && (<td style={{ width: 28, padding: "4px 2px", verticalAlign: "middle" }}></td>)}
+          {itemsEditable && (<td style={{ width: 20, padding: "4px 2px", verticalAlign: "middle", textAlign: "center", color: hovered ? "#94a3b8" : "transparent", cursor: "grab", fontSize: 14, lineHeight: 1, userSelect: "none" }}>⠿</td>)}
           <td style={{ padding: "8px 12px", fontSize: 13, color: "#0F172A", verticalAlign: "middle" }}></td>
           <td colSpan={4} style={{ padding: 4, verticalAlign: "top" }}>
-            {editable ? (
+            {itemsEditable ? (
               <textarea value={item.description || ""} onChange={e => onItemChange(i, "description", e.target.value)} rows={1} placeholder="Add a note or instruction..." style={{ width: "100%", border: "1px solid " + (hovered ? "#cbd5e1" : "transparent"), borderRadius: 4, padding: "8px 10px", fontSize: 13, fontFamily: "inherit", outline: "none", background: hovered ? "#fff" : "transparent", boxSizing: "border-box", resize: "none", overflow: "hidden", minHeight: 36, lineHeight: 1.5, fontStyle: "italic", color: "#475569" }} onInput={e => { e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }} />
             ) : (
               <span style={{ padding: "6px 8px", fontSize: 13, fontStyle: "italic", color: "#475569", whiteSpace: "pre-wrap" }}>{item.description || ""}</span>
             )}
           </td>
-          {editable && (<td style={{ padding: "8px 4px", textAlign: "center", verticalAlign: "middle" }}><button onClick={() => onDeleteItem(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex", borderRadius: 4, opacity: hovered ? 1 : 0, transition: "opacity 0.12s" }}><Trash2 size={14} color="#94a3b8" /></button></td>)}
+          {itemsEditable && (<td style={{ padding: "8px 4px", textAlign: "center", verticalAlign: "middle" }}><button onClick={() => onDeleteItem(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex", borderRadius: 4, opacity: hovered ? 1 : 0, transition: "opacity 0.12s" }}><Trash2 size={14} color="#94a3b8" /></button></td>)}
         </tr>
       );
     }
 
     return (
       <tr key={i} onMouseEnter={() => setHoveredRow(i)} onMouseLeave={() => setHoveredRow(null)} style={{ borderBottom: "1px solid #f1f5f9", position: "relative" }}>
-        {editable && (<td style={{ width: 28, padding: "4px 2px", verticalAlign: "middle", textAlign: "center", position: "relative" }}><button onClick={(e) => { e.stopPropagation(); setRowMenuOpen(rowMenuOpen === i ? null : i); }} title="Add" style={{ background: hovered || rowMenuOpen === i ? "#0F9599" : "transparent", border: "1px solid " + (hovered || rowMenuOpen === i ? "#0F9599" : "transparent"), borderRadius: "50%", width: 22, height: 22, cursor: "pointer", padding: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", color: hovered || rowMenuOpen === i ? "#fff" : "#64748B", transition: "all 0.12s" }}><Plus size={12} /></button>{rowMenuOpen === i && (<><div onClick={() => setRowMenuOpen(null)} style={{ position: "fixed", inset: 0, zIndex: 40 }} /><div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, boxShadow: "0 4px 14px rgba(0,0,0,0.12)", zIndex: 50, minWidth: 200, overflow: "hidden", textAlign: "left" }}><button onClick={() => { onAddItem && onAddItem(); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Add product or service</button><button onClick={() => { addLineOfType("subtotal"); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Add subtotal</button><button onClick={() => { const copy = { ...items[i] }; onAddItem && onAddItem(); setTimeout(() => { onItemChange(items.length, "name", copy.name || ""); onItemChange(items.length, "description", copy.description || ""); onItemChange(items.length, "qty", copy.qty || ""); onItemChange(items.length, "rate", copy.rate || ""); }, 0); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Duplicate</button><button onClick={() => { addLineOfType("text"); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Add text</button></div></>)}</td>)}
-        {editable && (<td style={{ width: 20, padding: "4px 2px", verticalAlign: "middle", textAlign: "center", color: hovered ? "#94a3b8" : "transparent", cursor: "grab", fontSize: 14, lineHeight: 1, userSelect: "none" }}>⠿</td>)}
+        {itemsEditable && (<td style={{ width: 28, padding: "4px 2px", verticalAlign: "middle", textAlign: "center", position: "relative" }}><button onClick={(e) => { e.stopPropagation(); setRowMenuOpen(rowMenuOpen === i ? null : i); }} title="Add" style={{ background: hovered || rowMenuOpen === i ? "#0F9599" : "transparent", border: "1px solid " + (hovered || rowMenuOpen === i ? "#0F9599" : "transparent"), borderRadius: "50%", width: 22, height: 22, cursor: "pointer", padding: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", color: hovered || rowMenuOpen === i ? "#fff" : "#64748B", transition: "all 0.12s" }}><Plus size={12} /></button>{rowMenuOpen === i && (<><div onClick={() => setRowMenuOpen(null)} style={{ position: "fixed", inset: 0, zIndex: 40 }} /><div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, boxShadow: "0 4px 14px rgba(0,0,0,0.12)", zIndex: 50, minWidth: 200, overflow: "hidden", textAlign: "left" }}><button onClick={() => { onAddItem && onAddItem(); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Add product or service</button><button onClick={() => { addLineOfType("subtotal"); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Add subtotal</button><button onClick={() => { const copy = { ...items[i] }; onAddItem && onAddItem(); setTimeout(() => { onItemChange(items.length, "name", copy.name || ""); onItemChange(items.length, "description", copy.description || ""); onItemChange(items.length, "qty", copy.qty || ""); onItemChange(items.length, "rate", copy.rate || ""); }, 0); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Duplicate</button><button onClick={() => { addLineOfType("text"); setRowMenuOpen(null); }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "#fff", border: "none", fontSize: 13, color: "#0F172A", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>Add text</button></div></>)}</td>)}
+        {itemsEditable && (<td style={{ width: 20, padding: "4px 2px", verticalAlign: "middle", textAlign: "center", color: hovered ? "#94a3b8" : "transparent", cursor: "grab", fontSize: 14, lineHeight: 1, userSelect: "none" }}>⠿</td>)}
         <td style={{ padding: "8px 12px", fontSize: 13, color: "#0F172A", verticalAlign: "middle", ...numStyle }}>{i + 1}</td>
-                    <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <ProductServiceCombobox value={item.name || ""} onChange={e => onItemChange(i, "name", e.target.value)} onSelect={(p) => { onItemChange(i, "name", p.name); if (p.description) onItemChange(i, "description", p.description); if (p.price_rate !== undefined && p.price_rate !== "") onItemChange(i, "rate", p.price_rate); }} onAddNew={() => { setActiveRowIdx(i); setShowAddProductModal(true); }} /> : <span style={{ padding: "6px 8px", fontSize: 13 }}>{item.name || "-"}</span>}</td>
-                    <td style={{ padding: 4, verticalAlign: "top" }}>{editable ? <textarea value={item.description || ""} onChange={e => onItemChange(i, "description", e.target.value)} rows={1} style={{ width: "100%", border: "1px solid " + (hovered ? "#cbd5e1" : "transparent"), borderRadius: 4, padding: "8px 10px", fontSize: 13, fontFamily: "inherit", outline: "none", background: hovered ? "#fff" : "transparent", boxSizing: "border-box", resize: "none", overflow: "hidden", minHeight: 36, lineHeight: 1.5, transition: "border-color 0.12s, background 0.12s" }} onInput={e => { e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }} /> : <span style={{ padding: "6px 8px", fontSize: 13, whiteSpace: "pre-wrap" }}>{item.description || "-"}</span>}</td>
-                    <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput type="number" value={item.qty ?? ""} onChange={e => onItemChange(i, "qty", e.target.value)} align="right" revealed={hovered} /> : <span style={{ padding: "6px 8px", fontSize: 13, ...numStyle }}>{qty > 0 ? qty : ""}</span>}</td>
-                    <td style={{ padding: 4, verticalAlign: "middle" }}>{editable ? <TableInput type="number" value={item.rate ?? ""} onChange={e => onItemChange(i, "rate", e.target.value)} align="right" revealed={hovered} /> : <span style={{ padding: "6px 8px", fontSize: 13, ...numStyle }}>{rate > 0 ? "$" + rate.toFixed(2) : ""}</span>}</td>
+                    <td style={{ padding: 4, verticalAlign: "middle" }}>{itemsEditable ? <ProductServiceCombobox value={item.name || ""} onChange={e => onItemChange(i, "name", e.target.value)} onSelect={(p) => { onItemChange(i, "name", p.name); if (p.description) onItemChange(i, "description", p.description); if (p.price_rate !== undefined && p.price_rate !== "") onItemChange(i, "rate", p.price_rate); }} onAddNew={() => { setActiveRowIdx(i); setShowAddProductModal(true); }} /> : <span style={{ padding: "6px 8px", fontSize: 13 }}>{item.name || "-"}</span>}</td>
+                    <td style={{ padding: 4, verticalAlign: "top" }}>{itemsEditable ? <textarea value={item.description || ""} onChange={e => onItemChange(i, "description", e.target.value)} rows={1} style={{ width: "100%", border: "1px solid " + (hovered ? "#cbd5e1" : "transparent"), borderRadius: 4, padding: "8px 10px", fontSize: 13, fontFamily: "inherit", outline: "none", background: hovered ? "#fff" : "transparent", boxSizing: "border-box", resize: "none", overflow: "hidden", minHeight: 36, lineHeight: 1.5, transition: "border-color 0.12s, background 0.12s" }} onInput={e => { e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }} /> : <span style={{ padding: "6px 8px", fontSize: 13, whiteSpace: "pre-wrap" }}>{item.description || "-"}</span>}</td>
+                    <td style={{ padding: 4, verticalAlign: "middle" }}>{itemsEditable ? <TableInput type="number" value={item.qty ?? ""} onChange={e => onItemChange(i, "qty", e.target.value)} align="right" revealed={hovered} /> : <span style={{ padding: "6px 8px", fontSize: 13, ...numStyle }}>{qty > 0 ? qty : ""}</span>}</td>
+                    <td style={{ padding: 4, verticalAlign: "middle" }}>{itemsEditable ? <TableInput type="number" value={item.rate ?? ""} onChange={e => onItemChange(i, "rate", e.target.value)} align="right" revealed={hovered} /> : <span style={{ padding: "6px 8px", fontSize: 13, ...numStyle }}>{rate > 0 ? "$" + rate.toFixed(2) : ""}</span>}</td>
                     <td style={{ padding: 4, verticalAlign: "middle", textAlign: "right" }}><div style={{ padding: "8px 10px", border: "1px solid " + (hovered ? "#cbd5e1" : "transparent"), borderRadius: 4, fontSize: 13, fontWeight: 600, color: "#0F172A", background: hovered ? "#f8fafc" : "transparent", ...numStyle }}>{(qty * rate) > 0 ? "$" + (qty * rate).toFixed(2) : ""}</div></td>
-                    {editable && <td style={{ padding: "8px 4px", textAlign: "center", verticalAlign: "middle" }}><button onClick={() => onDeleteItem(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex", borderRadius: 4, opacity: hovered ? 1 : 0, transition: "opacity 0.12s" }}><Trash2 size={14} color="#94a3b8" /></button></td>}
+                    {itemsEditable && <td style={{ padding: "8px 4px", textAlign: "center", verticalAlign: "middle" }}><button onClick={() => onDeleteItem(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex", borderRadius: 4, opacity: hovered ? 1 : 0, transition: "opacity 0.12s" }}><Trash2 size={14} color="#94a3b8" /></button></td>}
                   </tr>
                 );
               })}
@@ -400,7 +400,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           </table>
         </div>
 
-        {editable && (
+        {itemsEditable && (
       <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center", flexWrap: "wrap" }}>
         <div style={{ position: "relative" }}>
           <button onClick={() => setAddDropdownOpen(!addDropdownOpen)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: 6, color: "#0F172A", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
@@ -423,13 +423,13 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
 
         <div style={{ display: "flex", justifyContent: "space-between", gap: 40, marginTop: 24, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div style={{ flex: "1 1 360px", minWidth: 280, maxWidth: 600 }}>
-            {(editable || hasRealPaymentNote) && (
+            {(itemsEditable || hasRealPaymentNote) && (
             <div style={{ marginBottom: 20 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
               <span style={{ fontSize: 15, fontWeight: 600, color: "#0F172A" }}>Customer payment options</span>
               <button type="button" style={{ background: "none", border: "none", color: "#0F9599", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>Edit</button>
             </div>
-              {editable && (
+              {itemsEditable && (
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
               <span title="Apple Pay" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 40, height: 26, background: "#000", borderRadius: 4 }}>
                 <svg width="28" height="12" viewBox="0 0 165 72" xmlns="http://www.w3.org/2000/svg" fill="#fff"><path d="M30.7 9.3c-1.9 2.3-5 4.1-8.1 3.8-.4-3.1 1.1-6.4 2.9-8.4C27.4 2.4 30.8.8 33.5.6c.3 3.2-.9 6.4-2.8 8.7zm2.7 4.4c-4.5-.3-8.3 2.5-10.5 2.5-2.2 0-5.5-2.4-9.1-2.3-4.7.1-9 2.7-11.4 6.9-4.9 8.4-1.3 20.9 3.5 27.7 2.3 3.4 5.1 7.1 8.8 7 3.5-.1 4.8-2.3 9-2.3s5.5 2.3 9.2 2.2c3.8-.1 6.2-3.4 8.5-6.8 2.6-3.9 3.7-7.6 3.7-7.8-.1 0-7.2-2.8-7.3-10.9-.1-6.8 5.5-10 5.8-10.2-3.1-4.6-8-5.1-9.7-5.2"/><path d="M70.2 4.4v53.3h8.3v-18.2h11.4c10.4 0 17.7-7.1 17.7-17.6S100.5 4.4 90.2 4.4H70.2zm8.3 7h9.5c7.2 0 11.3 3.9 11.3 10.6s-4.1 10.6-11.3 10.6h-9.5V11.4zM118.4 58.1c5.2 0 10-2.6 12.2-6.8h.2v6.4h7.7V31.1c0-7.7-6.2-12.7-15.7-12.7-8.8 0-15.4 5-15.6 11.9h7.5c.6-3.3 3.6-5.4 7.9-5.4 5.2 0 8.1 2.4 8.1 6.9v3l-10.4.6c-9.6.6-14.8 4.5-14.8 11.4 0 6.9 5.4 11.3 13 11.3zm2.2-6.3c-4.5 0-7.4-2.2-7.4-5.5 0-3.4 2.8-5.4 8.1-5.7l9.2-.6v3.1c0 5-4.3 8.7-9.9 8.7zM146.9 72c8.1 0 11.9-3.1 15.2-12.4l14.6-41h-8.4l-9.8 31.7h-.2L148.5 18.6h-8.7l14.1 39.1-.8 2.4c-1.3 4-3.3 5.5-7 5.5-.6 0-1.9-.1-2.4-.1v6.4c.5.1 2.5.2 3.2.2z"/></svg>
@@ -455,7 +455,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
               </span>
             </div>
               )}
-              {editable && (
+              {itemsEditable && (
             <div style={{ fontSize: 13, color: "#475569", marginBottom: 12, lineHeight: 1.5 }}>
               Activate online card or bank transfer payments for your customers.&nbsp;
               <button type="button" style={{ background: "none", border: "none", color: "#0F9599", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>Activate payments</button>
@@ -468,7 +468,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
             )}
           </div>
             )}
-            {(editable || hasRealNote) && (
+            {(itemsEditable || hasRealNote) && (
             <div style={{ marginTop: 32 }}>
           <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 6 }}>Note to customer</label>
           {onFieldChange ? (
@@ -476,14 +476,14 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           ) : (<div style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-line" }}>{inv.note || ""}</div>)}
         </div>
             )}
-            {editable && (
+            {itemsEditable && (
             <div style={{ marginTop: 24 }}>
           <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 6 }}>Memo on statement (hidden)</label>
           {onFieldChange ? (
             <textarea value={inv.memo || ""} onChange={e => onFieldChange("memo", e.target.value)} rows={2} placeholder="This memo will not show up on your invoice, but will appear on the statement." style={{ width: "100%", maxWidth: 600, padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} onFocus={onFocusBg} onBlur={onBlurBg} />
           ) : (<div style={{ fontSize: 13, color: "#475569" }}>{inv.memo || ""}</div>)}
 
-            {(editable || attachments.length > 0) && (
+            {(itemsEditable || attachments.length > 0) && (
       <div style={{ marginTop: 24 }}>
         <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#0F172A", marginBottom: 8 }}>Attachments</label>
         <div style={{ border: "2px dashed #cbd5e1", borderRadius: 8, padding: "24px 16px", textAlign: "center", cursor: "pointer", maxWidth: 600, transition: "background 0.15s" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fafc"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }} onClick={() => document.getElementById("novala-attachment-input").click()}>
