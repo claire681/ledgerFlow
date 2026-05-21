@@ -16,7 +16,6 @@ import Transactions        from './pages/Transactions';
 import Budgets             from './pages/Budgets';
 import Invoices            from './pages/Invoices';
 import InvoicesAll from './pages/InvoicesAll';
-import InvoicesAll from './pages/InvoicesAll';
 import TaxCalculator       from './pages/TaxCalculator';
 import VendorAnalytics     from './pages/VendorAnalytics';
 import Currency            from './pages/Currency';
