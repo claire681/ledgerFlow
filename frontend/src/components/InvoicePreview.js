@@ -56,7 +56,7 @@ const TableInput = ({ value, onChange, type, placeholder, align }) => (
   <input type={type || "text"} value={value} onChange={onChange} placeholder={placeholder} style={{ width: "100%", border: "1px solid transparent", borderRadius: 4, padding: "6px 8px", fontSize: 13, fontFamily: "inherit", outline: "none", background: "transparent", textAlign: align || "left", boxSizing: "border-box", fontVariantNumeric: type === "number" ? "lining-nums tabular-nums" : "normal" }} onFocus={e => { e.target.style.borderColor = "#0F5959"; e.target.style.background = "#fff"; }} onBlur={e => { e.target.style.borderColor = "transparent"; e.target.style.background = "transparent"; }} />
 );
 
-export default function InvoicePreview({ inv, customization, accentColor, template, onFieldChange, onCustomerSelect, onItemChange, onAddItem, onDeleteItem, onClearItems, onEditCompany , onEditCustomer , onEditTotals }) {
+export default function InvoicePreview({ inv, customization, accentColor, template, paymentOptions, scheduling, printerFriendly, selectedFont, onFieldChange, onCustomerSelect, onItemChange, onAddItem, onDeleteItem, onClearItems, onEditCompany , onEditCustomer , onEditTotals }) {
   const editable = !!onFieldChange;
   const hasRealPaymentNote = !!(inv && inv.paymentNote && String(inv.paymentNote).trim());
   const hasRealNote = !!(inv && inv.note && String(inv.note).trim());

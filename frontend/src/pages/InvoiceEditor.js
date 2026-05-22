@@ -722,6 +722,10 @@ export default function InvoiceEditor() {
                 customization={customization}
                 accentColor={accentColor}
                 template={templateChoice}
+          paymentOptions={paymentOptions}
+          scheduling={scheduling}
+          printerFriendly={printerFriendly}
+          selectedFont={selectedFont}
                 onFieldChange={handleFieldChange}
                 onCustomerSelect={handleCustomerSelect}
                 onItemChange={handleItemChange}
