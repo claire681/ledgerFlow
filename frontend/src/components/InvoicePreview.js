@@ -298,7 +298,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
           <div>
             {hasCustomer ? (
               <>
-                {c.showCustomerEmail && (itemsEditable ? <input type="email" value={inv.to_email || ""} onChange={(e) => onFieldChange && onFieldChange("to_email", e.target.value)} placeholder="Enter Customer email" style={{ width: "100%", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 6, fontSize: 14, color: "#0F172A", marginBottom: 12, boxSizing: "border-box", outline: "none", fontFamily: "inherit" }} onFocus={onFocusBg} onBlur={onBlurBg} /> : (inv.to_email && <div style={{ fontSize: 13, color: "#0F172A", marginBottom: 12, padding: "8px 12px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6 }}>{inv.to_email}</div>))}
+                {c.showCustomerEmail && (itemsEditable ? <input type="email" value={inv.to_email || ""} onChange={(e) => onFieldChange && onFieldChange("to_email", e.target.value)} placeholder="Enter Customer email" style={{ width: "100%", padding: "10px 14px", border: "1px solid #cbd5e1", borderRadius: 6, fontSize: 14, color: "#0F172A", marginBottom: 12, boxSizing: "border-box", outline: "none", fontFamily: "inherit" }} onFocus={onFocusBg} onBlur={onBlurBg} /> : (inv.to_email && <div style={{ fontSize: 13, color: "#475569", marginBottom: 8 }}>{inv.to_email}</div>))}
                 {itemsEditable && (
                   <div style={{ position: "relative", marginBottom: 12 }}>
                     <button className="print-hide" type="button" onClick={() => setShowCcBcc(true)} style={{ background: "none", border: "none", padding: 0, color: "#2563eb", fontSize: 13, cursor: "pointer", textDecoration: "none", fontWeight: 500 }}>Cc/Bcc</button>
@@ -325,8 +325,8 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
                   </div>
                 )}
                 <div style={{ border: "1px solid #e2e8f0", borderRadius: 8, padding: "12px 14px", background: "#fff", marginBottom: 8, maxWidth: 360 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", marginBottom: 8 }}>Bill to</div>
-                  {inv.to_name && <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 4 }}>{inv.to_name}</div>}
+                  <div style={{ fontSize: 13, fontWeight: 700, color: accentColor || "#0F9599", letterSpacing: "0.02em", marginBottom: 8 }}>Bill to</div>
+                  {inv.to_name && <div style={{ fontSize: 15, fontWeight: 600, color: "#0F172A", marginBottom: 4, paddingLeft: 10, borderLeft: `3px solid ${accentColor || "#0F9599"}` }}>{inv.to_name}</div>}
                   {c.showCustomerAddress && inv.to_address && (
                 <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
                   {String(inv.to_address).split(/[,\n]/).map((line, i) => {
