@@ -324,7 +324,7 @@ export default function InvoicePreview({ inv, customization, accentColor, templa
                     )}
                   </div>
                 )}
-                <div style={{ border: "1px solid #e2e8f0", borderRadius: 8, padding: "12px 14px", background: "#fff", marginBottom: 8, maxWidth: 360 }}>
+                <div style={{ border: "1px solid #e2e8f0", borderRadius: 8, padding: "12px 14px", background: "#fff", marginBottom: 8, maxWidth: 480 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: accentColor || "#0F9599", letterSpacing: "0.02em", marginBottom: 8 }}>Bill to</div>
                   {inv.to_name && <div style={{ fontSize: 15, fontWeight: 600, color: "#0F172A", marginBottom: 4, paddingLeft: 10, borderLeft: `3px solid ${accentColor || "#0F9599"}` }}>{inv.to_name}</div>}
                   {c.showCustomerAddress && inv.to_address && (

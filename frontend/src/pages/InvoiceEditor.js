@@ -707,7 +707,7 @@ export default function InvoiceEditor() {
             </div>
           </div>
           <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? 8 : 24 }}>
-          <div style={{ maxWidth: 1500, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 800, overflow: "hidden" }}>
+          <div style={{ maxWidth: "none", margin: 0, background: "#fff", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", minHeight: 800, overflow: "hidden" }}>
             {loading ? (
               <div style={{ padding: 40, textAlign: "center", color: SUBTLE, fontSize: 14 }}>
                 Loading invoice...
