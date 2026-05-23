@@ -411,6 +411,29 @@ export default function Invoices() {
     setModal('edit');
   };
 
+  // ---- URL-driven modal opener: /invoices/new and /invoices/:id/edit open this page's modal ----
+  const __urlLocation = useLocation();
+  const { id: __urlInvId } = useParams();
+  const __lastOpenedUrlRef = useRef('');
+  useEffect(() => {
+    const url = __urlLocation.pathname;
+    if (url === __lastOpenedUrlRef.current) return;
+    if (url === '/invoices/new') {
+      __lastOpenedUrlRef.current = url;
+      openCreate();
+    } else if (__urlInvId && url.endsWith('/edit') && invoices.length > 0) {
+      const inv = invoices.find(i => String(i.id) === String(__urlInvId));
+      if (inv) {
+        __lastOpenedUrlRef.current = url;
+        openEdit(inv);
+      }
+    } else {
+      __lastOpenedUrlRef.current = '';
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [__urlLocation.pathname, __urlInvId, invoices]);
+  // ----------------------------------------------------------------------------------------------
+
   const handleSave = async (isEdit) => {
     if (!form.to_name?.trim()) { window.alert('Client name is required.'); return; }
     setSaving(true);
