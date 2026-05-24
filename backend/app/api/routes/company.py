@@ -1,5 +1,5 @@
 """
-LedgerFlow Company Profile Routes
+Novala Company Profile Routes
 Manages the user's business profile — used as defaults across the whole app.
 """
 

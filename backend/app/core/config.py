@@ -5,7 +5,7 @@ from typing import Optional
 
 class Settings(BaseSettings):
     # App
-    app_name: str = "LedgerFlow"
+    app_name: str = "Novala"
     app_env: str = "development"
     secret_key: str = "changeme"
     access_token_expire_minutes: int = 60
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     # SendGrid
     sendgrid_api_key: str = ""
     sendgrid_from_email: str = ""
-    sendgrid_from_name: str = "LedgerFlow"
+    sendgrid_from_name: str = "Novala"
 
     # CORS
     allowed_origins: str = "http://localhost:3000"

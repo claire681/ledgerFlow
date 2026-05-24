@@ -1,7 +1,7 @@
 /**
- * LedgerFlow AI Service — Frontend
+ * Novala AI Service — Frontend
  * Handles all AI-related API calls from the frontend.
- * No provider names anywhere — this is LedgerFlow AI.
+ * No provider names anywhere — this is Novala AI.
  */
 
 import {
@@ -15,8 +15,8 @@ import {
   getAISuggestions,
 } from './api';
 
-// ── Ask LedgerFlow AI a question ──────────────────────────────────────────
-export async function askLedgerFlowAI({
+// ── Ask Novala AI a question ──────────────────────────────────────────
+export async function askNovalaAI({
   question,
   sessionId   = null,
   page        = null,

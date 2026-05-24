@@ -174,7 +174,7 @@ async def generate_briefing_with_ai(data: dict) -> str:
     try:
         import httpx
         prompt = f"""
-You are LedgerFlow's AI financial assistant. Write a concise friendly morning briefing email body (HTML) for a small business owner based on this data:
+You are Novala's AI financial assistant. Write a concise friendly morning briefing email body (HTML) for a small business owner based on this data:
 
 Date: {data['date']}
 Overdue invoices: {data['overdue_invoices']}
@@ -272,7 +272,7 @@ def generate_briefing_simple(data: dict) -> str:
     {f'<div style="background:#FFF7ED;border-radius:10px;padding:14px 16px;border:1px solid #FED7AA;margin-bottom:20px;font-size:13px;color:#92400E;">📋 {data["pending_docs"]} document{"s" if data["pending_docs"] > 1 else ""} need{"s" if data["pending_docs"] == 1 else ""} your review.</div>' if data["pending_docs"] else ""}
 
     <div style="background:#F0FDF9;border-radius:10px;padding:14px 16px;border:1px solid #D1FAE5;font-size:13px;color:#065F46;">
-      ✅ LedgerFlow is monitoring your finances. Have a productive day!
+      ✅ Novala is monitoring your finances. Have a productive day!
     </div>
     """
 
@@ -351,7 +351,7 @@ async def send_briefing(
 
         result = await send_email(
             to_email  = email,
-            subject   = f"📊 LedgerFlow Morning Briefing — {data['date']}",
+            subject   = f"📊 Novala Morning Briefing — {data['date']}",
             body_html = html,
             to_name   = name,
         )

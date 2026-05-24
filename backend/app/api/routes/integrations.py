@@ -426,8 +426,8 @@ async def test_integration(
                     res = await client.post(
                         webhook_url,
                         json={
-                            "text":     f"✅ *LedgerFlow* — Slack integration test successful! You will receive financial alerts in {channel}.",
-                            "username": "LedgerFlow",
+                            "text":     f"✅ *Novala* — Slack integration test successful! You will receive financial alerts in {channel}.",
+                            "username": "Novala",
                         },
                         headers={"Content-Type": "application/json"},
                     )

@@ -1,5 +1,5 @@
 """
-LedgerFlow Activity Service
+Novala Activity Service
 Logs every significant action the user takes.
 Used by the AI to understand what the user has been doing.
 Also powers the dashboard recent activity feed.

@@ -1,5 +1,5 @@
 """
-LedgerFlow Financial Snapshots Routes
+Novala Financial Snapshots Routes
 Monthly financial snapshots for trend analysis and AI insights.
 """
 

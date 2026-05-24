@@ -1,5 +1,5 @@
 """
-LedgerFlow Memory Service
+Novala Memory Service
 Builds and manages AI memory about users and their businesses.
 Memory is included in every AI call so the assistant always knows the user deeply.
 """

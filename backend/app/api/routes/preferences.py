@@ -1,5 +1,5 @@
 """
-LedgerFlow User Preferences Routes
+Novala User Preferences Routes
 Stores and retrieves user preferences that persist across sessions.
 """
 

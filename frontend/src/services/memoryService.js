@@ -1,5 +1,5 @@
 /**
- * LedgerFlow Memory Service — Frontend
+ * Novala Memory Service — Frontend
  * Manages user preferences and local memory caching.
  */
 

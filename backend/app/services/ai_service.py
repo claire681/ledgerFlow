@@ -1,7 +1,7 @@
 """
-LedgerFlow AI Service
+Novala AI Service
 Powers the intelligent assistant throughout the app.
-No provider names exposed — this is LedgerFlow AI.
+No provider names exposed — this is Novala AI.
 """
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,9 +22,9 @@ import json
 
 # ── System prompt ─────────────────────────────────────────────────────────
 
-LEDGERFLOW_SYSTEM_PROMPT = """You are LedgerFlow AI — an intelligent financial assistant built into LedgerFlow.
+LEDGERFLOW_SYSTEM_PROMPT = """You are Novala AI — an intelligent financial assistant built into Novala.
 You help small business owners understand their finances using their REAL data.
-NEVER mention third-party AI providers. You are LedgerFlow AI only.
+NEVER mention third-party AI providers. You are Novala AI only.
 ALWAYS use actual numbers from the data provided. Never say $0 if real data shows other values.
 Keep responses concise, specific, and end with a recommended action.
 """
@@ -295,7 +295,7 @@ def _fallback_insights(real_data: str) -> list[dict]:
         insights.append({
             "type":        "info",
             "title":       f"{docs} document{'s' if docs > 1 else ''} on record",
-            "description": f"You have {docs} document{'s' if docs > 1 else ''} uploaded and processed in LedgerFlow.",
+            "description": f"You have {docs} document{'s' if docs > 1 else ''} uploaded and processed in Novala.",
             "action":      "Open Documents to verify all extracted data is correctly categorized",
             "priority":    "low",
         })

@@ -10,7 +10,7 @@ SENDGRID_FROM      = settings.sendgrid_from_email
 SENDGRID_FROM_NAME = settings.sendgrid_from_name
 
 def build_base_template(title: str, body_html: str) -> str:
-    """Wraps any email content in a clean professional LedgerFlow template."""
+    """Wraps any email content in a clean professional Novala template."""
     return f"""
 <!DOCTYPE html>
 <html>
@@ -29,7 +29,7 @@ def build_base_template(title: str, body_html: str) -> str:
           <tr>
             <td style="background:linear-gradient(135deg,#0AB98A 0%,#0EA5E9 100%);padding:32px 40px;">
               <div style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;">
-                ⚡ LedgerFlow
+                ⚡ Novala
               </div>
               <div style="font-size:13px;color:rgba(255,255,255,0.8);margin-top:4px;">
                 AI-Powered Financial Intelligence
@@ -48,7 +48,7 @@ def build_base_template(title: str, body_html: str) -> str:
           <tr>
             <td style="padding:24px 40px;border-top:1px solid #E2E8F0;background:#F8FAFC;">
               <div style="font-size:11px;color:#94A3B8;text-align:center;line-height:1.6;">
-                You are receiving this email from LedgerFlow.<br/>
+                You are receiving this email from Novala.<br/>
                 This is an automated message — please do not reply directly to this email.
               </div>
             </td>
@@ -70,7 +70,7 @@ async def send_email(
     to_name:   str = "",
 ) -> dict:
     """
-    Central email sender. All email sending in LedgerFlow goes through this.
+    Central email sender. All email sending in Novala goes through this.
     Returns { success: bool, message: str }
     """
     if not SENDGRID_API_KEY:
@@ -118,7 +118,7 @@ async def send_test_email(to_email: str, to_name: str = "") -> dict:
       ✅ Email Integration Working
     </h2>
     <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 20px;">
-      Your LedgerFlow email integration is connected and working correctly.
+      Your Novala email integration is connected and working correctly.
       You will now receive:
     </p>
     <table width="100%" cellpadding="0" cellspacing="0">
@@ -155,13 +155,13 @@ async def send_test_email(to_email: str, to_name: str = "") -> dict:
     </table>
     <div style="margin-top:28px;padding:16px;background:#F0FDF9;border-radius:10px;border:1px solid #D1FAE5;">
       <div style="font-size:13px;color:#065F46;font-weight:600;">
-        🚀 You are all set. LedgerFlow is now watching your finances.
+        🚀 You are all set. Novala is now watching your finances.
       </div>
     </div>
     """
     return await send_email(
         to_email  = to_email,
-        subject   = "✅ LedgerFlow — Email Integration Test",
+        subject   = "✅ Novala — Email Integration Test",
         body_html = body,
         to_name   = to_name,
     )
@@ -174,7 +174,7 @@ async def send_invoice_email(
     amount:         float,
     currency:       str = "USD",
     due_date:       str = "",
-    from_name:      str = "LedgerFlow",
+    from_name:      str = "Novala",
 ) -> dict:
     """Sends an invoice notification email to a client."""
     body = f"""
@@ -274,7 +274,7 @@ async def send_budget_alert(
 
     <p style="color:#374151;font-size:14px;line-height:1.7;">
       Your <strong>{category}</strong> spending has reached {percentage:.0f}% of your monthly budget.
-      Log in to LedgerFlow to review your expenses.
+      Log in to Novala to review your expenses.
     </p>
     """
     return await send_email(

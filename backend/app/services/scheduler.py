@@ -70,7 +70,7 @@ async def check_and_send_briefings():
 
                     result_send = await send_email(
                         to_email  = user.email,
-                        subject   = f"📊 LedgerFlow Morning Briefing — {data['date']}",
+                        subject   = f"📊 Novala Morning Briefing — {data['date']}",
                         body_html = html,
                         to_name   = name,
                     )

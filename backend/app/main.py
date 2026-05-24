@@ -40,7 +40,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title       = "LedgerFlow API",
+    title       = "Novala API",
     description = "AI-powered financial intelligence platform",
     version     = "2.0.0",
     lifespan    = lifespan,
@@ -98,6 +98,6 @@ app.include_router(customers.router, prefix="/api/v1")
 async def health():
     return {
         "status":  "ok",
-        "app":     "LedgerFlow",
+        "app":     "Novala",
         "version": "2.0.0",
     }

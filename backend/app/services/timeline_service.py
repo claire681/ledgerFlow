@@ -1,5 +1,5 @@
 """
-LedgerFlow Timeline Service
+Novala Timeline Service
 Generates and manages monthly financial snapshots.
 Used for trend analysis, AI insights, and dashboard charts.
 Auto-updated whenever transactions or invoices change.

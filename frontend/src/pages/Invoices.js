@@ -22,7 +22,7 @@ const STATUS = {
 
 const INVOICE_META_KEY = 'novala_invoice_meta_v1';
 
-// One-time migration from legacy LedgerFlow key (preserves user data)
+// One-time migration from legacy Novala key (preserves user data)
 (() => {
   try {
     const OLD = 'ledgerflow_invoice_meta_v1';

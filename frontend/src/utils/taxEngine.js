@@ -1,5 +1,5 @@
 /**
- * LedgerFlow Tax Engine
+ * Novala Tax Engine
  * Calculates corporate tax with federal + state/province split
  * Returns a clean breakdown object for the UI and PDF
  */

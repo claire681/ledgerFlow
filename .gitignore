@@ -13,3 +13,10 @@ uploads/s
 
 # User-uploaded files (should be in S3/DB, not git)
 backend/uploads/
+
+# Local backups (may contain .env secrets — never commit)
+.nova-rename-backup-*/
+*.bak
+*.bak.*
+*.backup
+*.backup-*
