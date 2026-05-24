@@ -259,6 +259,24 @@ export default function Onboarding({ onComplete }) {
       localStorage.setItem('user_email', email);
       localStorage.setItem('user_name', fullName);
       localStorage.setItem('company_name', companyName);
+      // Auto-save first name for personalized greetings (no need for user to visit Settings)
+      const firstWord = fullName.trim().split(/\s+/)[0] || '';
+      if (firstWord) {
+        const firstName = firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase();
+        localStorage.setItem('first_name', firstName);
+        localStorage.setItem('full_name', fullName.trim());
+        // Persist to backend so it follows the user across devices
+        try {
+          const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+          if (token) {
+            await fetch('https://api.getnovala.com/api/v1/auth/profile', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+              body: JSON.stringify({ first_name: firstName, full_name: fullName.trim() })
+            });
+          }
+        } catch (e) { /* non-fatal */ }
+      }
       localStorage.setItem('saved_account_email', email);
       try {
         await fetch('https://api.getnovala.com/api/v1/onboarding/update', {
