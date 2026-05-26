@@ -146,6 +146,8 @@ function AppLayout({ onLogout }) {
             <Route path="/invoices"       element={<Invoices />}           />
             <Route path="/invoices/new" element={<Invoices />} />
             <Route path="/invoices/:id/edit" element={<Invoices />} />
+            <Route path="/invoices/:id/qb-edit" element={<InvoiceEditor />} />
+            <Route path="/invoices/new-qb" element={<InvoiceEditor />} />
         <Route path="/invoices/:id/send" element={<InvoiceReviewSend />} />
             <Route path="/tax"            element={<TaxCalculator />}      />
             <Route path="/vendors"        element={<VendorAnalytics />}    />

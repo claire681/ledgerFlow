@@ -105,6 +105,7 @@ const InvoiceRowActions = ({ inv, fuStatus, L, openView, openEdit, handleStatus,
             paddingTop: 4, paddingBottom: 4,
           }}>
           {item(<Edit2 size={13} />, 'Edit', () => openEdit(inv))}
+          {item(<Sparkles size={13} />, 'Open in QB editor', () => navigate('/invoices/' + inv.id + '/qb-edit'))}
 
           {!isPaid && !isDraft && item(<CheckCircle size={13} />, 'Mark Paid', () => handleStatus(inv.id, 'paid'))}
           {item(<Download size={13} />, 'Download PDF', () => exportPDF(inv))}
