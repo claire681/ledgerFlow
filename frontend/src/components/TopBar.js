@@ -6,6 +6,7 @@ import {
   Headphones, Sparkles, Users,
 } from 'lucide-react';
 import { getFirstName } from '../utils/userDisplay';
+import { getstoredProfile } from './company/EditCompanyDrawer';
 
 const TEAL = '#0F5959';
 const ACCENT = '#0AB98A';
