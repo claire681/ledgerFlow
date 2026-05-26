@@ -106,7 +106,6 @@ const InvoiceRowActions = ({ inv, fuStatus, L, openView, openEdit, handleStatus,
           }}>
           {item(<Edit2 size={13} />, 'Edit', () => openEdit(inv))}
 
-          {item(<Sparkles size={13} />, 'Open in new editor', () => navigate('/invoices/' + inv.id + '/edit'))}
           {!isPaid && !isDraft && item(<CheckCircle size={13} />, 'Mark Paid', () => handleStatus(inv.id, 'paid'))}
           {item(<Download size={13} />, 'Download PDF', () => exportPDF(inv))}
           {!isPaid && !fuStatus && item(<Bell size={13} />, 'Send Follow Up', () => handleFollowUp(inv))}
