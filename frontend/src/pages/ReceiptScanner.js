@@ -11,10 +11,15 @@ import { useAI } from '../hooks/useAI';
 
 // Compress image to under 1MB before upload (saves bandwidth on mobile)
 async function compressImage(file) {
-  // Skip if not an image or already small
-  if (!file.type.startsWith('image/')) return file;
-  if (file.size < 800 * 1024) return file; // under 800KB, no need
+  // Bulletproof: skip non-images, small files, or unknown types
+  if (!file) return file;
+  const isImage = file.type && file.type.startsWith('image/');
+  if (!isImage) return file; // PDFs and unknowns pass through untouched
+  if (file.size < 500 * 1024) return file; // under 500KB, no need to compress
   return new Promise((resolve) => {
+    // Safety: if compression takes too long, return original file
+    const timeoutId = setTimeout(() => { console.warn('Compress timeout - using original'); resolve(file); }, 8000);
+    const safeResolve = (result) => { clearTimeout(timeoutId); resolve(result); };
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
@@ -31,19 +36,19 @@ async function compressImage(file) {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
         canvas.toBlob((blob) => {
-          if (!blob) return resolve(file);
+          if (!blob) return safeResolve(file);
           const compressed = new File([blob], file.name.replace(/\.(heic|heif|tiff?)$/i, '.jpg'), {
             type: 'image/jpeg',
             lastModified: Date.now()
           });
           console.log('Compressed: ' + file.size + ' -> ' + compressed.size + ' bytes');
-          resolve(compressed);
+          safeResolve(compressed);
         }, 'image/jpeg', 0.82);
       };
-      img.onerror = () => resolve(file);
+      img.onerror = () => safeResolve(file);
       img.src = e.target.result;
     };
-    reader.onerror = () => resolve(file);
+    reader.onerror = () => safeResolve(file);
     reader.readAsDataURL(file);
   });
 }
@@ -273,7 +278,7 @@ export default function ReceiptScanner() {
       <div style={{ ...topBar, flexDirection:isMobile?'column':'row', alignItems:isMobile?'flex-start':'center', gap:isMobile?12:0, padding:isMobile?'16px':undefined }}>
         <div>
           <div style={{ fontSize:isMobile?18:20, fontWeight:700, color:L.text, letterSpacing:'-0.02em' }}>Receipt Scanner</div>
-          <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>Upload a receipt or invoice — AI extracts all data automatically</div>
+          <div style={{ fontSize:12, color:L.textMuted, marginTop:2 }}>Upload a receipt or invoice — Nova extracts all data automatically</div>
         </div>
         <div style={{ display:'flex', gap:4, padding:'4px', background:L.pageBg, borderRadius:L.radiusSm, border:`1px solid ${L.border}`, alignSelf:isMobile?'stretch':'auto' }}>
           {[
@@ -385,7 +390,7 @@ export default function ReceiptScanner() {
                   <Sparkles size={24} color="#fff"/>
                 </div>
                 <div style={{ fontSize:15, fontWeight:700, color:L.text, marginBottom:4 }}>
-                  AI is reading your {txnType==='income'?'invoice':'receipt'}...
+                  Nova is reading your {txnType==='income'?'invoice':'receipt'}...
                 </div>
                 <div style={{ fontSize:12, color:L.textMuted, marginBottom:20 }}>This usually takes 5–15 seconds</div>
                 <div style={{ height:6, background:'#E2E8F0', borderRadius:99, overflow:'hidden', marginBottom:20 }}>
@@ -433,7 +438,7 @@ export default function ReceiptScanner() {
                         {txnType==='income'?'Invoice':'Receipt'} scanned successfully
                       </div>
                       <div style={{ fontSize:11, color:L.textMuted }}>
-                        AI confidence: {Math.round((result.confidence||0)*100)}% · {result.filename}
+                        Nova confidence: {Math.round((result.confidence||0)*100)}% · {result.filename}
                       </div>
                     </div>
                   </div>
@@ -495,7 +500,7 @@ export default function ReceiptScanner() {
 
                   <div style={{ padding:'12px 0' }}>
                     <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
-                      <span style={{ fontSize:12, color:L.textMuted }}>AI Confidence</span>
+                      <span style={{ fontSize:12, color:L.textMuted }}>Nova Confidence</span>
                       <span style={{ fontSize:12, fontWeight:600, color:(result.confidence||0)>=0.7?ACCENT:'#F59E0B' }}>{Math.round((result.confidence||0)*100)}%</span>
                     </div>
                     <div style={{ height:6, background:'#E2E8F0', borderRadius:99, overflow:'hidden' }}>
@@ -554,7 +559,7 @@ export default function ReceiptScanner() {
           <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(4,1fr)', gap:isMobile?10:14 }}>
             {[
               { icon:<Camera size={20} color={ACCENT}/>,   step:'1', title:'Upload File',    desc:'Upload a photo or PDF of any receipt or invoice' },
-              { icon:<Sparkles size={20} color={ACCENT}/>, step:'2', title:'AI Reads It',    desc:'AI scans and identifies all text, numbers and fields' },
+              { icon:<Sparkles size={20} color={ACCENT}/>, step:'2', title:'Nova Reads It',    desc:'AI scans and identifies all text, numbers and fields' },
               { icon:<Edit2 size={20} color={ACCENT}/>,    step:'3', title:'Review & Edit',  desc:'Check the extracted data and correct any mistakes' },
               { icon:<Database size={20} color={ACCENT}/>, step:'4', title:'Confirm & Save', desc:'One click saves to your transactions and documents' },
             ].map(item => (
