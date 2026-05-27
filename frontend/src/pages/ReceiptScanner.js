@@ -170,7 +170,7 @@ export default function ReceiptScanner() {
         method:'POST', headers:{ Authorization:`Bearer ${getToken()}` }, body:formData,
       });
       const data = await res.json();
-      if (!res.ok)      throw new Error(data.detail || 'Upload failed');
+      if (!res.ok)      throw new Error(typeof data.detail === 'string' ? data.detail : (data.detail && data.detail.message) || (data.detail && JSON.stringify(data.detail)) || data.message || 'Upload failed (status ' + res.status + ')');
       if (!data.job_id) throw new Error('No job ID returned');
       setScanStep(1);
 
@@ -188,9 +188,9 @@ export default function ReceiptScanner() {
             setScanning(false);
           }
           if (statusData.status === 'failed') { stopPolling(); throw new Error(statusData.error_message || 'Processing failed'); }
-        } catch (pollErr) { stopPolling(); setError('Scan failed: ' + pollErr.message); setScanning(false); }
+        } catch (pollErr) { stopPolling(); const pmsg = pollErr && (typeof pollErr === 'string' ? pollErr : (pollErr.message || JSON.stringify(pollErr))) || 'Polling error'; setError('Scan failed: ' + pmsg); setScanning(false); console.error('Poll error full:', pollErr); }
       }, 1500);
-    } catch (e) { stopPolling(); setError('Scan failed: ' + e.message); setScanning(false); }
+    } catch (e) { stopPolling(); const msg = e && (typeof e === 'string' ? e : (e.message || JSON.stringify(e))) || 'Unknown error'; setError('Scan failed: ' + msg); setScanning(false); console.error('Scan error full:', e); }
   };
 
   const handleSave = async () => {
