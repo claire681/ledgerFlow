@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../services/api';
 import { Eye, EyeOff, TrendingUp, Mail, ChevronRight, X, User, CheckCircle } from 'lucide-react';
@@ -48,7 +48,20 @@ function TrustCard({ title, desc }) {
   );
 }
 
+
+// Mobile detection hook
+function useIsMobileLogin() {
+  const [m, setM] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
+  useEffect(() => {
+    const h = () => setM(window.innerWidth < 768);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
+  return m;
+}
+
 export default function Login({ onLogin }) {
+  const isMobile = useIsMobileLogin();
   const navigate = useNavigate();
   const savedEmail = localStorage.getItem('saved_account_email') || '';
 
@@ -211,10 +224,10 @@ export default function Login({ onLogin }) {
 
   return (
     <div style={pageStyle}>
-      <div style={{ width:'100%', maxWidth:900, display:'flex', gap:40, alignItems:'center' }}>
+      <div style={{ width:'100%', maxWidth:isMobile?'100%':900, display:'flex', flexDirection:isMobile?'column':'row', gap:isMobile?20:40, alignItems:'center', padding:isMobile?'16px':0 }}>
 
         {/* Left — main card */}
-        <div style={{ flex:1, maxWidth:440 }}>
+        <div style={{ flex:1, maxWidth:isMobile?'100%':440, width:'100%' }}>
           <Logo/>
 
           <div style={{ background:CARD, borderRadius:20, padding:'36px', border:'1px solid '+BORDER, boxShadow:'0 24px 64px rgba(0,0,0,0.4)' }}>
@@ -507,7 +520,7 @@ export default function Login({ onLogin }) {
         </div>
 
         {/* Right — trust panel */}
-        <div style={{ flex:1, maxWidth:340, display:'flex', flexDirection:'column', gap:0 }}>
+        <div style={{ flex:1, maxWidth:isMobile?'100%':340, width:'100%', display:'flex', flexDirection:'column', gap:0 }}>
           <div style={{ fontSize:13, fontWeight:700, color:MUTED, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:16 }}>Why Novala</div>
           <TrustCard
             title="Built for small businesses"
