@@ -9,6 +9,47 @@ import {
 import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
 
+// Compress image to under 1MB before upload (saves bandwidth on mobile)
+async function compressImage(file) {
+  // Skip if not an image or already small
+  if (!file.type.startsWith('image/')) return file;
+  if (file.size < 800 * 1024) return file; // under 800KB, no need
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        const MAX_DIM = 1800; // 1800px max on longest side - plenty for OCR
+        if (width > MAX_DIM || height > MAX_DIM) {
+          if (width > height) { height = (height / width) * MAX_DIM; width = MAX_DIM; }
+          else { width = (width / height) * MAX_DIM; height = MAX_DIM; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (!blob) return resolve(file);
+          const compressed = new File([blob], file.name.replace(/\.(heic|heif|tiff?)$/i, '.jpg'), {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          });
+          console.log('Compressed: ' + file.size + ' -> ' + compressed.size + ' bytes');
+          resolve(compressed);
+        }, 'image/jpeg', 0.82);
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
+
+
 const BASE     = 'https://api.getnovala.com/api/v1';
 const getToken = () => localStorage.getItem('token') || '';
 const ACCENT   = '#0AB98A';
@@ -122,7 +163,8 @@ export default function ReceiptScanner() {
     setShowOriginal(false);
     try {
       const formData = new FormData();
-      formData.append('file', image);
+      const fileToUpload = await compressImage(image);
+      formData.append('file', fileToUpload);
       const res  = await fetch(`${BASE}/documents/upload?txn_type=${txnType === 'income' ? 'income' : 'expense'}`, {
         method:'POST', headers:{ Authorization:`Bearer ${getToken()}` }, body:formData,
       });
