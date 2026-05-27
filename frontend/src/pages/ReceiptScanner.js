@@ -164,7 +164,8 @@ export default function ReceiptScanner() {
   };
 
   const handleScan = async (overrideImage) => {
-    const imgToScan = overrideImage || image; if (!imgToScan) return;
+    const isFile = overrideImage && (overrideImage instanceof File || overrideImage instanceof Blob);
+  const imgToScan = isFile ? overrideImage : image; if (!imgToScan) return;
     setScanning(true); setError(''); setScanStep(0); setResult(null); setCameraMsg('');
     setShowOriginal(false);
     try {
