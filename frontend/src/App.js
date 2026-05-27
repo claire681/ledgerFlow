@@ -109,7 +109,7 @@ function AppLayout({ onLogout }) {
       <PromoBanner/>
 
       {/* Main header */}
-      {location.pathname === "/" && (
+      {(
           <TopBar
         onLogout={onLogout}
         onMobileMenu={() => setMobileMenuOpen(o => !o)}
