@@ -142,7 +142,7 @@ export default function ReceiptScanner() {
       reader.onload = e => setImageURL(e.target.result);
       reader.readAsDataURL(file);
     } else { setImageURL(''); }
-    if (fromCamera) { setTimeout(() => handleScan(), 100); }
+    if (fromCamera) { setTimeout(() => handleScan(file), 50); }
   };
 
   const handleTakePhoto = () => {
@@ -158,13 +158,13 @@ export default function ReceiptScanner() {
     setTxnType(data.doc_type === 'invoice_sent' ? 'income' : 'expense');
   };
 
-  const handleScan = async () => {
-    if (!image) return;
+  const handleScan = async (overrideImage) => {
+    const imgToScan = overrideImage || image; if (!imgToScan) return;
     setScanning(true); setError(''); setScanStep(0); setResult(null); setCameraMsg('');
     setShowOriginal(false);
     try {
       const formData = new FormData();
-      const fileToUpload = await compressImage(image);
+      const fileToUpload = await compressImage(imgToScan);
       formData.append('file', fileToUpload);
       const res  = await fetch(`${BASE}/documents/upload?txn_type=${txnType === 'income' ? 'income' : 'expense'}`, {
         method:'POST', headers:{ Authorization:`Bearer ${getToken()}` }, body:formData,
