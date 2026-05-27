@@ -686,7 +686,7 @@ export default function InvoiceEditor() {
               <button style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center", color: SUBTLE }} title="Help">
                 <HelpCircle size={20} />
               </button>
-              <button style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center", color: "#7c3aed" }} title="AI assistant">
+              <button style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center", color: "#7c3aed" }} title="Nova">
                 <Sparkles size={20} />
               </button>
               <button onClick={() => navigate("/invoices")} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center", color: SUBTLE }} title="Close">
