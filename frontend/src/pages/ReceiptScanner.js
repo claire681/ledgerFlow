@@ -90,9 +90,10 @@ export default function ReceiptScanner() {
 
   const handleFile = (file) => {
     if (!file) return;
-    const allowed = ['image/jpeg','image/png','image/webp','image/heic','image/tiff','application/pdf'];
-    if (!allowed.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|webp|heic|tiff|pdf)$/i)) {
-      setError('Please upload an image or PDF file'); return;
+    const allowed = ['image/jpeg','image/png','image/webp','image/heic','image/heif','image/tiff','application/pdf','application/octet-stream',''];
+    const hasValidExt = file.name && file.name.match(/\.(jpg|jpeg|png|webp|heic|heif|tiff|tif|pdf)$/i);
+    if (!allowed.includes(file.type) && !hasValidExt) {
+      setError('Please upload an image or PDF file (got type: ' + (file.type || 'unknown') + ', name: ' + file.name + ')'); return;
     }
     setError(''); setCameraMsg(''); setResult(null); setSaved(false); setImage(file);
     if (file.type.startsWith('image/')) {
