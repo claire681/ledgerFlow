@@ -129,7 +129,7 @@ export default function ReceiptScanner() {
     if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
   };
 
-  const handleFile = (file) => {
+  const handleFile = (file, fromCamera = false) => {
     if (!file) return;
     const allowed = ['image/jpeg','image/png','image/webp','image/heic','image/heif','image/tiff','application/pdf','application/octet-stream',''];
     const hasValidExt = file.name && file.name.match(/\.(jpg|jpeg|png|webp|heic|heif|tiff|tif|pdf)$/i);
@@ -142,6 +142,7 @@ export default function ReceiptScanner() {
       reader.onload = e => setImageURL(e.target.result);
       reader.readAsDataURL(file);
     } else { setImageURL(''); }
+    if (fromCamera) { setTimeout(() => handleScan(), 100); }
   };
 
   const handleTakePhoto = () => {
@@ -266,7 +267,7 @@ export default function ReceiptScanner() {
       `}</style>
 
       <input ref={fileInputRef}   type="file" accept="image/*,.pdf" style={{ display:'none' }} onChange={e => handleFile(e.target.files[0])}/>
-      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" style={{ display:'none' }} onChange={e => handleFile(e.target.files[0])}/>
+      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" style={{ display:'none' }} onChange={e => handleFile(e.target.files[0], true)}/>
 
       {/* Top bar */}
       <div style={{ ...topBar, flexDirection:isMobile?'column':'row', alignItems:isMobile?'flex-start':'center', gap:isMobile?12:0, padding:isMobile?'16px':undefined }}>
