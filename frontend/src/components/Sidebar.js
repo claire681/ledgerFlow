@@ -777,7 +777,7 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
           {renderAccountingPinned()}
         </div>
         <div style={{ width:48, height:1, background:'#E8EDF3', margin:'8px 0', flexShrink:0 }}/>
-        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', width:'100%', marginTop:'auto' }}>
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', width:'100%', marginTop:12 }}>
           {SLIM_BOTTOM.map(function(item) { return renderSlimItem(item); })}
           <div style={{ width:48, height:1, background:'#E8EDF3', margin:'6px 0', flexShrink:0 }}/>
           <div

@@ -635,7 +635,7 @@ export default function Dashboard() {
       {showBriefing    && <BriefingModal onClose={() => setShowBriefing(false)} onSave={s => { setBriefingSettings(s); setShowBriefing(false); }} initial={briefingSettings}/>}
       {showCreatePanel && <CreatePanel  onClose={() => setShowCreatePanel(false)} onNavigate={navigate}/>}
 
-      <div style={{ maxWidth:1200, margin:'0 auto', padding:isMobile?'32px 16px':'48px 32px 32px' }}>
+      <div style={{ maxWidth:1600, margin:'0', width:'100%', padding:isMobile?'32px 16px':'48px 32px 32px' }}>
 
         {/* ── GREETING ── */}
         <div style={{ position:'relative', textAlign:'center', marginBottom:32 }}>
