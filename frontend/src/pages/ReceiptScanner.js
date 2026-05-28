@@ -165,12 +165,27 @@ export default function ReceiptScanner() {
 
   const handleScan = async (overrideImage) => {
     const isFile = overrideImage && (overrideImage instanceof File || overrideImage instanceof Blob);
-  const imgToScan = isFile ? overrideImage : image; if (!imgToScan) return;
+  const imgToScan = isFile ? overrideImage : image;
+  console.log("SCAN_DEBUG_1", {
+    overrideImage_ctor: overrideImage && overrideImage.constructor && overrideImage.constructor.name,
+    overrideImage_isFile: overrideImage instanceof File,
+    image_ctor: image && image.constructor && image.constructor.name,
+    image_isFile: image instanceof File,
+    image_name: image && image.name,
+    image_size: image && image.size,
+    imgToScan_ctor: imgToScan && imgToScan.constructor && imgToScan.constructor.name,
+  }); if (!imgToScan) return;
     setScanning(true); setError(''); setScanStep(0); setResult(null); setCameraMsg('');
     setShowOriginal(false);
     try {
       const formData = new FormData();
       const fileToUpload = await compressImage(imgToScan);
+    console.log("SCAN_DEBUG_2", {
+      fileToUpload_ctor: fileToUpload && fileToUpload.constructor && fileToUpload.constructor.name,
+      fileToUpload_isFile: fileToUpload instanceof File,
+      fileToUpload_name: fileToUpload && fileToUpload.name,
+      fileToUpload_size: fileToUpload && fileToUpload.size,
+    });
       formData.append('file', fileToUpload);
       const res  = await fetch(`${BASE}/documents/upload?txn_type=${txnType === 'income' ? 'income' : 'expense'}`, {
         method:'POST', headers:{ Authorization:`Bearer ${getToken()}` }, body:formData,
