@@ -766,11 +766,9 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
       )}
 
       {/* Desktop slim sidebar */}
-     <aside style={{ position:'fixed',
-      top:sidebarTop,
-      left:0,
+     <aside style={{ position:'relative',
       width:80,
-      height:sidebarHeight, background:'#FAFAFA', borderRight:'1px solid #E8EDF3', display:mobile?'none':'flex', flexDirection:'column', alignItems:'center', paddingTop:16, paddingBottom:8, zIndex:44, fontFamily:FONT, overflowY:'auto', scrollbarWidth:'none' }}>
+      height:'100%', flexShrink:0, background:'#FAFAFA', borderRight:'1px solid #E8EDF3', display:mobile?'none':'flex', flexDirection:'column', alignItems:'center', paddingTop:16, paddingBottom:8, zIndex:44, fontFamily:FONT, overflowY:'auto', scrollbarWidth:'none' }}>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', width:'100%', paddingTop:4 }}>
           {SLIM_ITEMS.map(function(item) { return renderSlimItem(item); })}
         </div>
