@@ -101,6 +101,24 @@ export default function Login({ onLogin }) {
       localStorage.setItem('token', token);
       localStorage.setItem('user_email', email);
       localStorage.setItem('saved_account_email', email);
+      // Fetch user profile so name displays consistently everywhere
+      try {
+        const profRes = await fetch('https://api.getnovala.com/api/v1/auth/profile', {
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        if (profRes.ok) {
+          const prof = await profRes.json();
+          if (prof.full_name) {
+            localStorage.setItem('full_name', prof.full_name);
+            localStorage.setItem('user_name', prof.full_name);
+            const firstWord = prof.full_name.trim().split(' ')[0];
+            if (firstWord) localStorage.setItem('first_name', firstWord);
+          }
+          if (prof.first_name) localStorage.setItem('first_name', prof.first_name);
+        }
+      } catch (profErr) {
+        console.warn('Profile fetch failed (non-fatal):', profErr);
+      }
       onLogin(token, email);
     } catch (err) {
       const detail = err.response?.data?.detail;
