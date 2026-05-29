@@ -5,6 +5,7 @@ import {
 import InvoiceEditor from "./pages/InvoiceEditor";
 import InvoiceReviewSend from "./pages/InvoiceReviewSend";
 import { AIProvider }      from './context/AIContext';
+import useAI from './hooks/useAI';
 import Sidebar             from './components/Sidebar';
 import TopBar              from './components/TopBar';
 import AIAssistant         from './components/AIAssistant';
@@ -48,6 +49,7 @@ function PromoBanner() {
   const [show, setShow] = React.useState(
     () => localStorage.getItem('nova_banner_dismissed') !== 'true'
   );
+  const { askAndOpen } = useAI();
   if (!show) return null;
   return (
     <div style={{ width:'100%', height:40, background:'#0F5959', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', flexShrink:0, zIndex:101 }}>
