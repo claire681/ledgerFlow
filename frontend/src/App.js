@@ -46,6 +46,7 @@ import ResetPassword from './pages/ResetPassword';
 const ACCENT = '#0AB98A';
 
 function PromoBanner() {
+  const { askAndOpen } = useAI();
   const [show, setShow] = React.useState(
     () => localStorage.getItem('nova_banner_dismissed') !== 'true'
   );
