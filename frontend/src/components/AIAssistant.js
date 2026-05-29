@@ -229,6 +229,18 @@ export default function AIAssistant() {
 
   const [input,       setInput]     = useState('');
   const [isMinimized, setMinimized] = useState(false);
+
+  const [position, setPosition] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("nova_button_position") || "null");
+      if (saved && typeof saved.x === "number" && typeof saved.y === "number") return saved;
+    } catch (e) {}
+    return {
+      x: typeof window !== "undefined" ? window.innerWidth - 84 : 20,
+      y: typeof window !== "undefined" ? window.innerHeight - 84 : 20
+    };
+  });
+  const dragRef = useRef({ dragging: false, startX: 0, startY: 0, origX: 0, origY: 0, moved: false });
   const messagesEndRef               = useRef(null);
   const inputRef                     = useRef(null);
   const isMobile                     = useIsMobile();
@@ -244,6 +256,71 @@ export default function AIAssistant() {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen, isMinimized]);
+
+  useEffect(() => {
+    const handleMove = (e) => {
+      if (!dragRef.current.dragging) return;
+      const t = e.touches && e.touches[0];
+      const cx = t ? t.clientX : e.clientX;
+      const cy = t ? t.clientY : e.clientY;
+      const dx = cx - dragRef.current.startX;
+      const dy = cy - dragRef.current.startY;
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) dragRef.current.moved = true;
+      const sz = 64;
+      const nx = Math.max(0, Math.min(window.innerWidth - sz, dragRef.current.origX + dx));
+      const ny = Math.max(0, Math.min(window.innerHeight - sz, dragRef.current.origY + dy));
+      setPosition({ x: nx, y: ny });
+      if (t && e.preventDefault) e.preventDefault();
+    };
+    const handleEnd = () => {
+      if (!dragRef.current.dragging) return;
+      dragRef.current.dragging = false;
+      if (dragRef.current.moved) {
+        setPosition(p => {
+          try { localStorage.setItem("nova_button_position", JSON.stringify(p)); } catch (e) {}
+          return p;
+        });
+      }
+    };
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleEnd);
+    window.addEventListener("touchmove", handleMove, { passive: false });
+    window.addEventListener("touchend", handleEnd);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleEnd);
+      window.removeEventListener("touchmove", handleMove);
+      window.removeEventListener("touchend", handleEnd);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onResize = () => {
+      const sz = 64;
+      setPosition(p => ({
+        x: Math.max(0, Math.min(window.innerWidth - sz, p.x)),
+        y: Math.max(0, Math.min(window.innerHeight - sz, p.y))
+      }));
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const handleDragStart = (e) => {
+    const t = e.touches && e.touches[0];
+    const cx = t ? t.clientX : e.clientX;
+    const cy = t ? t.clientY : e.clientY;
+    dragRef.current = { dragging: true, startX: cx, startY: cy, origX: position.x, origY: position.y, moved: false };
+  };
+
+  const handleButtonClick = (e) => {
+    if (dragRef.current.moved) {
+      if (e && e.preventDefault) e.preventDefault();
+      if (e && e.stopPropagation) e.stopPropagation();
+      return;
+    }
+    toggleAssistant();
+  };
 
   const handleSend = async () => {
     const q = input.trim();
@@ -293,7 +370,9 @@ export default function AIAssistant() {
       {/* ── Floating button ── */}
       {!isOpen && (
         <button
-          onClick={toggleAssistant}
+          onClick={handleButtonClick}
+        onMouseDown={handleDragStart}
+        onTouchStart={handleDragStart}
           title="Novala Assistant"
           style={{
             position:     'fixed',
