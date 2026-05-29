@@ -376,8 +376,10 @@ export default function AIAssistant() {
           title="Novala Assistant"
           style={{
             position:     'fixed',
-            bottom:       isMobile ? 20 : 28,
-            right:        isMobile ? 16 : 28,
+            top: position.y,
+            left: position.x,
+          touchAction: 'none',
+          userSelect: 'none',
             width:        isMobile ? 52 : 56,
             height:       isMobile ? 52 : 56,
             borderRadius: 16,
