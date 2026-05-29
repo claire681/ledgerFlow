@@ -346,6 +346,12 @@ export default function AIAssistant() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
+  // Compute panel anchoring based on dragged bubble position
+  const _w = typeof window !== 'undefined' ? window.innerWidth : 1200;
+  const _h = typeof window !== 'undefined' ? window.innerHeight : 800;
+  const fromTop = position.y < _h / 2;
+  const fromLeft = position.x < _w / 2;
+
   return (
     <>
       <style>{`
@@ -407,12 +413,15 @@ export default function AIAssistant() {
         <div style={{
           position:  'fixed',
           ...(isMobile ? {
-            bottom: 0, left: 0, right: 0, width: '100%',
+            width: '100%', left: 0, right: 0,
+      ...(fromTop ? { top: position.y + 64 } : { bottom: Math.max(0, _h - position.y) }),
             height: isMinimized ? 56 : '58vh',
-            borderRadius: '20px 20px 0 0',
+            borderRadius: fromTop ? '0 0 20px 20px' : '20px 20px 0 0',
             animation: 'slideUpMobile 0.3s ease',
           } : {
-            bottom: 28, right: 28, width: 380,
+            width: 380,
+      ...(fromLeft ? { left: position.x } : { right: Math.max(0, _w - position.x - 56) }),
+      ...(fromTop ? { top: position.y + 64 } : { bottom: Math.max(0, _h - position.y) }),
             height: isMinimized ? 56 : 580,
             borderRadius: 20,
             animation: 'slideUp 0.2s ease',
