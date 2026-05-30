@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { askAI } from '../services/api';
 
 const AIContext = createContext(null);
@@ -107,6 +108,35 @@ export function AIProvider({ children }) {
   const [sessionId,       setSessionId]        = useState(null);
   const [suggestions,     setSuggestions]      = useState(PAGE_SUGGESTIONS.dashboard);
   const [currentPage,     setCurrentPage]      = useState('dashboard');
+
+// Auto-sync Nova with current route — no page component needs to call setPageContext
+const routeLocation = useLocation();
+useEffect(() => {
+    const ROUTE_TO_PAGE = {
+        '': 'dashboard',
+        'dashboard': 'dashboard',
+        'transactions': 'transactions',
+        'documents': 'documents',
+        'invoices': 'invoices',
+        'tax': 'tax',
+        'team': 'team',
+        'vendors': 'vendors',
+        'budgets': 'budgets',
+        'scanner': 'scanner',
+        'receipts': 'documents',
+        'integrations': 'integrations',
+        'agents': 'agents',
+    };
+    const path = (routeLocation && routeLocation.pathname ? routeLocation.pathname : '/').toLowerCase();
+    const first = path.split('/').filter(Boolean)[0] || '';
+    const detected = ROUTE_TO_PAGE[first] || 'dashboard';
+    if (detected !== prevPageRef.current) {
+        prevPageRef.current = detected;
+        setCurrentPage(detected);
+        setCurrentMode(detected);
+        setSuggestions(PAGE_SUGGESTIONS[detected] || PAGE_SUGGESTIONS.dashboard);
+    }
+}, [routeLocation && routeLocation.pathname]);
   const [currentMode,     setCurrentMode]      = useState('dashboard');
   const [pageContext,     setPageContextState] = useState(null);
   const [error,           setError]            = useState(null);
