@@ -395,7 +395,12 @@ export default function Help() {
             {/* Other contact */}
             <div style={Object.assign({}, card, { padding: '20px 24px' })}>
               <div style={{ fontSize: 13, fontWeight: 700, color: L.text, marginBottom: 14 }}>Other ways to reach us</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div
+                onClick={() => { window.location.href = 'mailto:novala.support@gmail.com?subject=Novala%20Support%20Request'; }}
+                onMouseEnter={e => { e.currentTarget.style.background = L.accentSoft; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, cursor: 'pointer', borderRadius: 8, padding: '6px 8px', transition: 'background 0.15s' }}
+              >
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: L.accentSoft, border: '1px solid ' + L.accentBorder, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Mail size={16} color={ACCENT} />
                 </div>
