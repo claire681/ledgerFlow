@@ -185,8 +185,7 @@ async def invite_member(
         try:
             from app.services.email_service import send_email
             role_info = ROLE_PERMISSIONS[body.role]
-            accept_url = f"https://app.getnovala.com/accept-invite/{member.id}"
-        body_html = f"""
+            body_html = f"""
             <h2 style="color:#0AB98A;font-size:20px;margin:0 0 16px;">
                 You have been invited to join Novala
             </h2>
@@ -443,11 +442,10 @@ async def get_invite(
 
     inviter_name = ""
     company_name = None
-
     try:
-        from app.models.models import User as _User
-        owner_res = await db.execute(select(_User).where(_User.id == invite.owner_id))
-        owner = owner_res.scalar_one_or_none()
+        from app.models.models import User as _U
+        ores = await db.execute(select(_U).where(_U.id == invite.owner_id))
+        owner = ores.scalar_one_or_none()
         if owner:
             inviter_name = (
                 getattr(owner, "full_name", None)
@@ -458,9 +456,9 @@ async def get_invite(
         print(f"Could not look up inviter: {e}")
 
     try:
-        from app.models.models import CompanyProfile as _Profile
-        prof_res = await db.execute(select(_Profile).where(_Profile.user_id == invite.owner_id))
-        prof = prof_res.scalar_one_or_none()
+        from app.models.models import CompanyProfile as _P
+        pres = await db.execute(select(_P).where(_P.user_id == invite.owner_id))
+        prof = pres.scalar_one_or_none()
         if prof:
             company_name = getattr(prof, "company_name", None)
     except Exception as e:
