@@ -396,16 +396,7 @@ export default function Help() {
             <div style={Object.assign({}, card, { padding: '20px 24px' })}>
               <div style={{ fontSize: 13, fontWeight: 700, color: L.text, marginBottom: 14 }}>Other ways to reach us</div>
               <div
-                onClick={() => {
-          if (navigator && navigator.clipboard) {
-            navigator.clipboard.writeText('novala.support@gmail.com').catch(() => {});
-          }
-          const t = document.createElement('div');
-          t.textContent = 'Email copied: novala.support@gmail.com';
-          t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0F5959;color:#fff;padding:10px 18px;border-radius:8px;z-index:9999;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-family:Inter,-apple-system,sans-serif;';
-          document.body.appendChild(t);
-          setTimeout(() => t.remove(), 2200);
-        }}
+                onClick={() => { window.location.href = 'mailto:novala.support@gmail.com?subject=Novala%20Support%20Request'; }}
                 onMouseEnter={e => { e.currentTarget.style.background = L.accentSoft; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, cursor: 'pointer', borderRadius: 8, padding: '6px 8px', transition: 'background 0.15s' }}
