@@ -185,7 +185,8 @@ async def invite_member(
         try:
             from app.services.email_service import send_email
             role_info = ROLE_PERMISSIONS[body.role]
-            body_html = f"""
+            accept_url = f"https://app.getnovala.com/accept-invite/{member.id}"
+        body_html = f"""
             <h2 style="color:#0AB98A;font-size:20px;margin:0 0 16px;">
                 You have been invited to join Novala
             </h2>
@@ -407,3 +408,130 @@ async def get_team_summary(
     except Exception as e:
         print(f"get_team_summary error: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# === Accept-invite flow ===
+
+@router.get("/invites/{token}")
+async def get_invite(
+    token: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Public lookup of an invite by its token (TeamMember.id)."""
+    from datetime import datetime, timedelta, timezone
+
+    try:
+        invite_uuid = uuid.UUID(token)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Invalid invitation link")
+
+    res = await db.execute(select(TeamMember).where(TeamMember.id == invite_uuid))
+    invite = res.scalar_one_or_none()
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    if invite.status != "pending":
+        raise HTTPException(status_code=410, detail="This invitation has already been used or revoked")
+
+    invited_at = invite.invited_at
+    expires_at = None
+    if invited_at:
+        if invited_at.tzinfo is None:
+            invited_at = invited_at.replace(tzinfo=timezone.utc)
+        expires_at = invited_at + timedelta(days=7)
+        if datetime.now(timezone.utc) > expires_at:
+            raise HTTPException(status_code=410, detail="This invitation has expired")
+
+    inviter_name = ""
+    company_name = None
+
+    try:
+        from app.models.models import User as _User
+        owner_res = await db.execute(select(_User).where(_User.id == invite.owner_id))
+        owner = owner_res.scalar_one_or_none()
+        if owner:
+            inviter_name = (
+                getattr(owner, "full_name", None)
+                or getattr(owner, "name", None)
+                or (owner.email.split("@")[0] if owner.email else "")
+            )
+    except Exception as e:
+        print(f"Could not look up inviter: {e}")
+
+    try:
+        from app.models.models import CompanyProfile as _Profile
+        prof_res = await db.execute(select(_Profile).where(_Profile.user_id == invite.owner_id))
+        prof = prof_res.scalar_one_or_none()
+        if prof:
+            company_name = getattr(prof, "company_name", None)
+    except Exception as e:
+        print(f"Could not look up company profile: {e}")
+
+    if not company_name:
+        company_name = inviter_name or "Novala"
+
+    role_info = ROLE_PERMISSIONS.get(invite.role, ROLE_PERMISSIONS["viewer"])
+
+    return {
+        "email": invite.email,
+        "full_name": invite.full_name,
+        "role": invite.role,
+        "role_label": role_info["label"],
+        "role_description": role_info["description"],
+        "role_icon": role_info["icon"],
+        "role_permissions": role_info["permissions"],
+        "company_name": company_name,
+        "inviter_name": inviter_name,
+        "expires_at": expires_at.isoformat() if expires_at else None,
+        "status": invite.status,
+    }
+
+
+@router.post("/invites/{token}/accept")
+async def accept_invite(
+    token: str,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Accept an invitation. Logged-in user's email must match the invited email."""
+    from datetime import datetime, timedelta, timezone
+
+    try:
+        invite_uuid = uuid.UUID(token)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Invalid invitation link")
+
+    res = await db.execute(select(TeamMember).where(TeamMember.id == invite_uuid))
+    invite = res.scalar_one_or_none()
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    if invite.status != "pending":
+        raise HTTPException(status_code=410, detail="This invitation has already been used")
+
+    invited_at = invite.invited_at
+    if invited_at:
+        if invited_at.tzinfo is None:
+            invited_at = invited_at.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > invited_at + timedelta(days=7):
+            raise HTTPException(status_code=410, detail="This invitation has expired")
+
+    user_email = (current_user.email or "").lower().strip()
+    invite_email = (invite.email or "").lower().strip()
+    if user_email != invite_email:
+        raise HTTPException(
+            status_code=403,
+            detail=f"This invitation is for {invite.email}. Please log in with that email to accept.",
+        )
+
+    invite.status = "active"
+    invite.accepted_at = datetime.utcnow()
+    await db.commit()
+    await db.refresh(invite)
+
+    role_info = ROLE_PERMISSIONS.get(invite.role, ROLE_PERMISSIONS["viewer"])
+
+    return {
+        "success": True,
+        "role": invite.role,
+        "role_label": role_info["label"],
+        "message": f"You are now a {role_info['label']} on Novala.",
+    }
