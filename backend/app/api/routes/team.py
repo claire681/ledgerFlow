@@ -533,3 +533,128 @@ async def accept_invite(
         "role_label": role_info["label"],
         "message": f"You are now a {role_info['label']} on Novala.",
     }
+
+
+
+# === Team data-context helpers (used across the app to determine whose data to show) ===
+
+async def get_data_owner_id(current_user, db) -> str:
+    """
+    Returns the user_id whose data the current user should see.
+    - Owners (no active team membership): their own ID
+    - Team members: the owner's ID
+    """
+    if not current_user or not getattr(current_user, "email", None):
+        return str(getattr(current_user, "id", ""))
+    email = (current_user.email or "").lower().strip()
+    res = await db.execute(
+        select(TeamMember).where(
+            TeamMember.email == email,
+            TeamMember.status == "active",
+        ).order_by(TeamMember.accepted_at.desc())
+    )
+    membership = res.scalar_one_or_none()
+    if membership:
+        return str(membership.owner_id)
+    return str(current_user.id)
+
+
+async def get_view_context(current_user, db) -> dict:
+    """Returns the full view context: data owner, role, permissions."""
+    email = (getattr(current_user, "email", "") or "").lower().strip()
+    res = await db.execute(
+        select(TeamMember).where(
+            TeamMember.email == email,
+            TeamMember.status == "active",
+        ).order_by(TeamMember.accepted_at.desc())
+    )
+    membership = res.scalar_one_or_none()
+    if membership:
+        return {
+            "data_owner_id": str(membership.owner_id),
+            "role": membership.role,
+            "is_owner": False,
+            "membership_id": str(membership.id),
+        }
+    return {
+        "data_owner_id": str(current_user.id),
+        "role": "owner",
+        "is_owner": True,
+        "membership_id": None,
+    }
+
+
+@router.get("/me")
+async def get_my_context(
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Returns the current user's view context. Frontend calls this on load
+    to know what role the user has and what to show/hide in the UI.
+    """
+    ctx = await get_view_context(current_user, db)
+
+    # Build owner-level permissions or look up role permissions
+    if ctx["is_owner"]:
+        permissions = {
+            "can_edit": True,
+            "can_delete": True,
+            "can_invite": True,
+            "can_upload": True,
+            "can_export": True,
+            "can_manage_team": True,
+            "can_view_reports": True,
+        }
+        role_label = "Owner"
+        role_description = "Full access to all features and data"
+        role_icon = "👑"
+    else:
+        role_info = ROLE_PERMISSIONS.get(ctx["role"], ROLE_PERMISSIONS["viewer"])
+        permissions = {k: role_info.get(k, False) for k in (
+            "can_edit", "can_delete", "can_invite",
+            "can_upload", "can_export", "can_manage_team", "can_view_reports",
+        )}
+        role_label = role_info["label"]
+        role_description = role_info["description"]
+        role_icon = role_info["icon"]
+
+    # If team member, fetch owner's display info
+    company_name = None
+    owner_name = None
+    if not ctx["is_owner"]:
+        try:
+            from app.models.models import User as _U
+            ores = await db.execute(select(_U).where(_U.id == uuid.UUID(ctx["data_owner_id"])))
+            owner = ores.scalar_one_or_none()
+            if owner:
+                owner_name = (
+                    getattr(owner, "full_name", None)
+                    or getattr(owner, "name", None)
+                    or (owner.email.split("@")[0] if owner.email else "")
+                )
+        except Exception as e:
+            print(f"Owner lookup failed: {e}")
+        try:
+            from app.models.models import CompanyProfile as _P
+            pres = await db.execute(select(_P).where(_P.user_id == uuid.UUID(ctx["data_owner_id"])))
+            prof = pres.scalar_one_or_none()
+            if prof:
+                company_name = getattr(prof, "company_name", None)
+        except Exception as e:
+            print(f"Profile lookup failed: {e}")
+
+    return {
+        "user_id": str(current_user.id),
+        "email": current_user.email,
+        "full_name": getattr(current_user, "full_name", None),
+        "data_owner_id": ctx["data_owner_id"],
+        "is_owner": ctx["is_owner"],
+        "role": ctx["role"],
+        "role_label": role_label,
+        "role_description": role_description,
+        "role_icon": role_icon,
+        "permissions": permissions,
+        "company_name": company_name,
+        "owner_name": owner_name,
+    }

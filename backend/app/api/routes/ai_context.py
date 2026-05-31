@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, delete
 from app.db.database import get_db, AsyncSessionLocal
 from app.core.security import get_current_user
+from app.api.routes.team import get_data_owner_id
 from app.models.models import (
     AIConversation,
     AIMemory,
@@ -996,7 +997,7 @@ async def ask_ai(
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     mode    = request.mode or request.page or "dashboard"
 
     real_data = ""
