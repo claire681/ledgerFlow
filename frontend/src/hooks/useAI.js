@@ -38,10 +38,13 @@ export function useAI() {
   } = useAIContext();
 
   // Ask a question and open the assistant panel
-  const askAndOpen = useCallback(async (question) => {
+  const askAndOpen = useCallback(async (question, opts = {}) => {
+    if (opts && opts.forceMode && typeof setPageContext === 'function') {
+      setPageContext(opts.forceMode);
+    }
     openAssistant();
     return ask(question);
-  }, [ask, openAssistant]);
+  }, [ask, openAssistant, setPageContext]);
 
   return {
     // Core

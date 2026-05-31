@@ -58,7 +58,7 @@ function PromoBanner() {
         Meet Nova — Instant, smart answers inside Novala.
         <span
           style={{ color:'#fff', fontWeight:700, textDecoration:'underline', cursor:'pointer' }}
-          onClick={() => askAndOpen("Hi! What can you help me with today?")}
+          onClick={() => askAndOpen("Hi! What can you help me with today?", { forceMode: 'dashboard' })}
         >
           Try Nova
         </span>
