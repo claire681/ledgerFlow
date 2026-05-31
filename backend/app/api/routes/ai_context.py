@@ -74,339 +74,570 @@ class ConversationMessage(BaseModel):
 
 # ── Data builders ─────────────────────────────────────────────
 
-async def build_dashboard_context(db: AsyncSession, user_id: str) -> str:
+async def build_dashboard_context(
+    db: AsyncSession,
+    user_id: str
+) -> str:
     try:
-        txn_result   = await db.execute(select(Transaction).where(Transaction.user_id == user_id))
+        from datetime import timedelta
+
+        txn_result = await db.execute(
+            select(Transaction).where(Transaction.user_id == user_id)
+        )
         transactions = txn_result.scalars().all()
 
+        doc_result = await db.execute(
+            select(Document).where(Document.user_id == user_id)
+        )
+        documents = doc_result.scalars().all()
+
+        inv_result = await db.execute(
+            select(Invoice).where(Invoice.user_id == user_id)
+        )
+        invoices = inv_result.scalars().all()
+
+        now = datetime.utcnow()
+        today_str = now.strftime("%Y-%m-%d")
+        this_month = now.strftime("%Y-%m")
+        last_month_dt = now.replace(day=1) - timedelta(days=1)
+        last_month = last_month_dt.strftime("%Y-%m")
+        this_year = now.strftime("%Y")
+
+        def in_month(t, m):
+            return str(t.txn_date or "").startswith(m)
+
+        def in_year(t, y):
+            return str(t.txn_date or "").startswith(y)
+
+        def in_last_n_days(t, n):
+            d = str(t.txn_date or "")[:10]
+            if not d:
+                return False
+            try:
+                td = datetime.strptime(d, "%Y-%m-%d")
+                return (now - td).days <= n
+            except Exception:
+                return False
+
         expense_txns = [t for t in transactions if (t.txn_type or "").lower() == "expense"]
-        income_txns  = [t for t in transactions if (t.txn_type or "").lower() == "income"]
+        income_txns = [t for t in transactions if (t.txn_type or "").lower() == "income"]
 
         total_expense = sum(float(abs(t.amount or 0)) for t in expense_txns)
-        total_income  = sum(float(abs(t.amount or 0)) for t in income_txns)
-        net_profit    = total_income - total_expense
+        total_income = sum(float(abs(t.amount or 0)) for t in income_txns)
+        net_profit = total_income - total_expense
         estimated_tax = max(net_profit * 0.15, 0.0)
 
-        now          = datetime.utcnow()
-        month_prefix = now.strftime("%Y-%m")
+        month_expense_txns = [t for t in expense_txns if in_month(t, this_month)]
+        month_income_txns = [t for t in income_txns if in_month(t, this_month)]
+        month_expense = sum(float(abs(t.amount or 0)) for t in month_expense_txns)
+        month_income = sum(float(abs(t.amount or 0)) for t in month_income_txns)
 
-        month_income = sum(
-            float(abs(t.amount or 0))
-            for t in income_txns
-            if str(t.txn_date or "").startswith(month_prefix)
-        )
-        month_expense = sum(
-            float(abs(t.amount or 0))
-            for t in expense_txns
-            if str(t.txn_date or "").startswith(month_prefix)
-        )
+        last_month_expense_txns = [t for t in expense_txns if in_month(t, last_month)]
+        last_month_income_txns = [t for t in income_txns if in_month(t, last_month)]
+        last_month_expense = sum(float(abs(t.amount or 0)) for t in last_month_expense_txns)
+        last_month_income = sum(float(abs(t.amount or 0)) for t in last_month_income_txns)
+
+        ytd_expense = sum(float(abs(t.amount or 0)) for t in expense_txns if in_year(t, this_year))
+        ytd_income = sum(float(abs(t.amount or 0)) for t in income_txns if in_year(t, this_year))
+
+        last_90d_exp = [t for t in expense_txns if in_last_n_days(t, 90)]
+        last_90d_inc = [t for t in income_txns if in_last_n_days(t, 90)]
+        avg_monthly_exp = (sum(abs(t.amount or 0) for t in last_90d_exp) / 3.0) if last_90d_exp else 0.0
+        avg_monthly_inc = (sum(abs(t.amount or 0) for t in last_90d_inc) / 3.0) if last_90d_inc else 0.0
 
         category_totals: dict[str, float] = {}
         for t in expense_txns:
             category = t.category or t.ml_category or "Uncategorized"
             category_totals[category] = category_totals.get(category, 0.0) + float(abs(t.amount or 0))
-
-        doc_result = await db.execute(select(Document).where(Document.user_id == user_id))
-        documents  = doc_result.scalars().all()
-
-        inv_result = await db.execute(select(Invoice).where(Invoice.user_id == user_id))
-        invoices   = inv_result.scalars().all()
+        top_cats = sorted(category_totals.items(), key=lambda x: x[1], reverse=True)[:5]
 
         overdue_invoices = [i for i in invoices if (i.status or "").lower() in ["overdue", "due"]]
-        paid_invoices    = [i for i in invoices if (i.status or "").lower() == "paid"]
-        draft_invoices   = [i for i in invoices if (i.status or "").lower() == "draft"]
+        paid_invoices = [i for i in invoices if (i.status or "").lower() == "paid"]
+        draft_invoices = [i for i in invoices if (i.status or "").lower() == "draft"]
+        outstanding = sum(float(i.total or 0) for i in overdue_invoices)
 
         insights: list[str] = []
-
         if total_income == 0 and total_expense > 0:
-            insights.append("You are recording expenses but no income yet, so your books may be incomplete.")
+            insights.append("Expenses recorded but no income yet — books may be incomplete.")
         if net_profit < 0:
-            insights.append(f"Your business is currently operating at a loss of ${abs(net_profit):,.2f}.")
-        if total_expense > total_income and total_income > 0:
-            insights.append("Your expenses are higher than your income, which is hurting profitability.")
+            insights.append(f"Currently operating at a loss of ${abs(net_profit):,.2f}.")
         if month_expense > month_income and month_income > 0:
-            insights.append("This month your expenses are higher than your income, so monitor cash flow closely.")
-        if category_totals:
-            top_category        = max(category_totals, key=category_totals.get)
-            top_category_amount = category_totals[top_category]
-            insights.append(f"Your highest spending category is {top_category} at ${top_category_amount:,.2f}.")
+            insights.append("This month expenses exceed income — monitor cash flow.")
+        if avg_monthly_exp > 0 and month_expense > avg_monthly_exp * 1.5:
+            insights.append(f"This month's spending (${month_expense:,.2f}) is significantly above your 3-month average (${avg_monthly_exp:,.2f}).")
+        if top_cats:
+            top_cat, top_amt = top_cats[0]
+            insights.append(f"Highest spending category: {top_cat} at ${top_amt:,.2f} all-time.")
         if overdue_invoices:
-            insights.append(f"You have {len(overdue_invoices)} overdue or due invoice(s) that may need follow-up.")
-        if total_income > 0 and total_expense == 0:
-            insights.append("You have income recorded with no expenses, so you may still need to upload receipts or classify costs.")
+            insights.append(f"{len(overdue_invoices)} invoice(s) overdue/due (${outstanding:,.2f} outstanding).")
         if not transactions and not invoices and not documents:
-            insights.append("Your account is mostly empty right now, so the best next step is to upload a receipt, invoice, or create your first transaction.")
+            insights.append("Account is mostly empty — upload a receipt or add a transaction to begin.")
 
         lines = [
             "DASHBOARD DATA",
+            f"TODAY={today_str}",
+            f"CURRENT_MONTH={this_month}",
+            f"PREVIOUS_MONTH={last_month}",
+            f"CURRENT_YEAR={this_year}",
+            "",
+            "## ALL-TIME",
             f"TOTAL_REVENUE={total_income:.2f}",
             f"TOTAL_EXPENSES={total_expense:.2f}",
             f"NET_PROFIT={net_profit:.2f}",
             f"ESTIMATED_TAX_15={estimated_tax:.2f}",
             f"DOCUMENT_COUNT={len(documents)}",
             f"INVOICE_COUNT={len(invoices)}",
-            f"OVERDUE_INVOICE_COUNT={len(overdue_invoices)}",
-            f"PAID_INVOICE_COUNT={len(paid_invoices)}",
-            f"DRAFT_INVOICE_COUNT={len(draft_invoices)}",
-            f"MONTH_INCOME={month_income:.2f}",
-            f"MONTH_EXPENSES={month_expense:.2f}",
+            f"TRANSACTION_COUNT={len(transactions)}",
             "",
-            "EXPENSE_CATEGORIES",
+            f"## THIS MONTH ({this_month}, through {today_str})",
+            f"MONTH_INCOME={month_income:.2f}",
+            f"MONTH_EXPENSE={month_expense:.2f}",
+            f"MONTH_NET={month_income - month_expense:.2f}",
+            f"MONTH_EXPENSE_COUNT={len(month_expense_txns)}",
+            f"MONTH_INCOME_COUNT={len(month_income_txns)}",
+            "",
+            f"## PREVIOUS MONTH ({last_month})",
+            f"LAST_MONTH_INCOME={last_month_income:.2f}",
+            f"LAST_MONTH_EXPENSE={last_month_expense:.2f}",
+            f"LAST_MONTH_NET={last_month_income - last_month_expense:.2f}",
+            "",
+            f"## YEAR-TO-DATE ({this_year})",
+            f"YTD_INCOME={ytd_income:.2f}",
+            f"YTD_EXPENSE={ytd_expense:.2f}",
+            f"YTD_NET={ytd_income - ytd_expense:.2f}",
+            "",
+            "## TRENDS (LAST 3 MONTHS)",
+            f"AVG_MONTHLY_INCOME={avg_monthly_inc:.2f}",
+            f"AVG_MONTHLY_EXPENSE={avg_monthly_exp:.2f}",
+            "",
+            "## INVOICE STATUS",
+            f"OVERDUE_COUNT={len(overdue_invoices)}",
+            f"OUTSTANDING_AMOUNT={outstanding:.2f}",
+            f"PAID_COUNT={len(paid_invoices)}",
+            f"DRAFT_COUNT={len(draft_invoices)}",
+            "",
+            "## TOP EXPENSE CATEGORIES (ALL-TIME)",
         ]
+        for cat, amt in top_cats:
+            lines.append(f"- {cat}: ${amt:,.2f}")
 
-        if category_totals:
-            for category, amount in sorted(category_totals.items(), key=lambda x: x[1], reverse=True):
-                lines.append(f"{category}={amount:.2f}")
-        else:
-            lines.append("NONE=0.00")
-
-        lines += ["", "SMART_INSIGHTS"]
-        if insights:
-            for insight in insights:
-                lines.append(insight)
-        else:
-            lines.append("NONE")
-
-        lines += ["", "RECENT_TRANSACTIONS"]
-        recent_transactions = sorted(transactions, key=lambda x: str(x.txn_date or ""), reverse=True)[:5]
-        if recent_transactions:
-            for t in recent_transactions:
-                lines.append(
-                    f"{t.vendor or 'Unknown'} | "
-                    f"{float(abs(t.amount or 0)):.2f} | "
-                    f"{(t.txn_type or 'unknown').lower()} | "
-                    f"{t.category or t.ml_category or 'Uncategorized'} | "
-                    f"{t.txn_date or 'unknown'}"
-                )
-        else:
-            lines.append("NONE")
-
-        lines += ["", "INVOICES"]
-        if invoices:
-            recent_invoices = sorted(invoices, key=lambda x: x.created_at or datetime.utcnow(), reverse=True)[:5]
-            for i in recent_invoices:
-                lines.append(
-                    f"{i.invoice_number or 'Unknown'} | "
-                    f"{i.to_name or 'Unknown'} | "
-                    f"{float(i.total or 0):.2f} | "
-                    f"{(i.status or 'unknown').lower()} | "
-                    f"{i.due_date or 'unknown'}"
-                )
-        else:
-            lines.append("NONE")
+        lines += ["", "## SMART INSIGHTS"]
+        for ins in insights:
+            lines.append(f"- {ins}")
 
         return "\n".join(lines)
 
     except Exception as e:
-        print(f"build_dashboard_context error: {e}")
-        import traceback
-        traceback.print_exc()
-        return "\n".join([
-            "DASHBOARD DATA",
-            "TOTAL_REVENUE=0.00",
-            "TOTAL_EXPENSES=0.00",
-            "NET_PROFIT=0.00",
-            "ESTIMATED_TAX_15=0.00",
-            "DOCUMENT_COUNT=0",
-            "INVOICE_COUNT=0",
-            "OVERDUE_INVOICE_COUNT=0",
-            "PAID_INVOICE_COUNT=0",
-            "DRAFT_INVOICE_COUNT=0",
-            "MONTH_INCOME=0.00",
-            "MONTH_EXPENSES=0.00",
-            "",
-            "EXPENSE_CATEGORIES",
-            "NONE=0.00",
-            "",
-            "SMART_INSIGHTS",
-            "NONE",
-            "",
-            "RECENT_TRANSACTIONS",
-            "NONE",
-            "",
-            "INVOICES",
-            "NONE",
-        ])
+        return f"Dashboard context error: {e}"
 
 
 async def build_transactions_context(db: AsyncSession, user_id: str) -> str:
     try:
-        result       = await db.execute(select(Transaction).where(Transaction.user_id == user_id))
+        from datetime import timedelta
+        result = await db.execute(
+            select(Transaction).where(Transaction.user_id == user_id)
+        )
         transactions = result.scalars().all()
-        expenses     = [t for t in transactions if (t.txn_type or "").lower() == "expense"]
-        income_txns  = [t for t in transactions if (t.txn_type or "").lower() == "income"]
+
+        now = datetime.utcnow()
+        today_str = now.strftime("%Y-%m-%d")
+        this_month = now.strftime("%Y-%m")
+        last_month_dt = now.replace(day=1) - timedelta(days=1)
+        last_month = last_month_dt.strftime("%Y-%m")
+
+        def in_month(t, m):
+            return str(t.txn_date or "").startswith(m)
+
+        def in_last_n_days(t, n):
+            d = str(t.txn_date or "")[:10]
+            if not d:
+                return False
+            try:
+                td = datetime.strptime(d, "%Y-%m-%d")
+                return (now - td).days <= n
+            except Exception:
+                return False
+
+        expenses = [t for t in transactions if (t.txn_type or "").lower() == "expense"]
+        income_txns = [t for t in transactions if (t.txn_type or "").lower() == "income"]
         uncategorized = [t for t in transactions if not t.category and not t.ml_category]
 
-        cat_totals: dict[str, float] = {}
+        this_month_exp = [t for t in expenses if in_month(t, this_month)]
+        last_month_exp = [t for t in expenses if in_month(t, last_month)]
+        this_month_inc = [t for t in income_txns if in_month(t, this_month)]
+        last_month_inc = [t for t in income_txns if in_month(t, last_month)]
+
+        last_90d_exp = [t for t in expenses if in_last_n_days(t, 90)]
+        last_90d_inc = [t for t in income_txns if in_last_n_days(t, 90)]
+        avg_monthly_exp = (sum(abs(t.amount or 0) for t in last_90d_exp) / 3.0) if last_90d_exp else 0.0
+        avg_monthly_inc = (sum(abs(t.amount or 0) for t in last_90d_inc) / 3.0) if last_90d_inc else 0.0
+
+        cat_totals = {}
         for t in expenses:
             cat = t.category or t.ml_category or "Uncategorized"
             cat_totals[cat] = cat_totals.get(cat, 0) + abs(t.amount or 0)
-
         top_cats = sorted(cat_totals.items(), key=lambda x: x[1], reverse=True)[:8]
 
         lines = [
             "=== TRANSACTIONS CONTEXT ===",
-            f"Total: {len(transactions)} | Expenses: {len(expenses)} (${sum(abs(t.amount or 0) for t in expenses):,.2f}) | Income: {len(income_txns)} (${sum(abs(t.amount or 0) for t in income_txns):,.2f}) | Uncategorized: {len(uncategorized)}",
+            f"TODAY: {today_str}",
+            f"CURRENT_MONTH: {this_month}",
+            f"PREVIOUS_MONTH: {last_month}",
             "",
-            "ALL TRANSACTIONS:",
+            "## OVERVIEW (ALL-TIME)",
+            f"Total transactions: {len(transactions)}",
+            f"Expenses: {len(expenses)} totalling ${sum(abs(t.amount or 0) for t in expenses):,.2f}",
+            f"Income: {len(income_txns)} totalling ${sum(abs(t.amount or 0) for t in income_txns):,.2f}",
+            f"Uncategorized: {len(uncategorized)}",
+            "",
+            f"## THIS MONTH ({this_month}, through {today_str})",
+            f"Expenses: {len(this_month_exp)} totalling ${sum(abs(t.amount or 0) for t in this_month_exp):,.2f}",
+            f"Income: {len(this_month_inc)} totalling ${sum(abs(t.amount or 0) for t in this_month_inc):,.2f}",
         ]
 
-        for t in sorted(transactions, key=lambda x: x.txn_date or "", reverse=True):
+        if this_month_exp:
+            biggest = max(this_month_exp, key=lambda x: abs(x.amount or 0))
             lines.append(
-                f"- {t.vendor or 'Unknown'} | ${abs(t.amount or 0):,.2f} | "
-                f"{t.txn_type or 'unknown'} | "
-                f"{t.category or t.ml_category or 'Uncategorized'} | "
-                f"{t.txn_date or '?'}"
+                f"Biggest expense this month: ${abs(biggest.amount or 0):,.2f} "
+                f"at {biggest.vendor or 'Unknown'} on {biggest.txn_date or '?'} "
+                f"({biggest.category or biggest.ml_category or 'Uncategorized'})"
+            )
+        else:
+            lines.append("No expenses recorded this month yet.")
+
+        lines += [
+            "",
+            f"## PREVIOUS MONTH ({last_month})",
+            f"Expenses: {len(last_month_exp)} totalling ${sum(abs(t.amount or 0) for t in last_month_exp):,.2f}",
+            f"Income: {len(last_month_inc)} totalling ${sum(abs(t.amount or 0) for t in last_month_inc):,.2f}",
+        ]
+
+        if last_month_exp:
+            biggest_lm = max(last_month_exp, key=lambda x: abs(x.amount or 0))
+            lines.append(
+                f"Biggest expense last month: ${abs(biggest_lm.amount or 0):,.2f} "
+                f"at {biggest_lm.vendor or 'Unknown'}"
             )
 
-        lines += ["", "TOP EXPENSE CATEGORIES:"]
+        lines += [
+            "",
+            "## TRENDS (LAST 3 MONTHS, FOR COMPARISON)",
+            f"Average monthly expense: ${avg_monthly_exp:,.2f}",
+            f"Average monthly income: ${avg_monthly_inc:,.2f}",
+            "(Use these averages to judge whether the current month is normal, high, or low.)",
+            "",
+            "## TOP EXPENSE CATEGORIES (ALL-TIME)",
+        ]
         for cat, amt in top_cats:
             lines.append(f"- {cat}: ${amt:,.2f}")
 
+        lines += ["", "## RECENT TRANSACTIONS (last 25, most recent first)"]
+        for t in sorted(transactions, key=lambda x: x.txn_date or "", reverse=True)[:25]:
+            lines.append(
+                f"- {t.txn_date or '?'} | {t.vendor or 'Unknown'} | "
+                f"${abs(t.amount or 0):,.2f} | {t.txn_type or 'unknown'} | "
+                f"{t.category or t.ml_category or 'Uncategorized'}"
+            )
+
         lines.append("=== END TRANSACTIONS CONTEXT ===")
         return "\n".join(lines)
+
     except Exception as e:
         return f"Transactions context error: {e}"
 
 
 async def build_documents_context(db: AsyncSession, user_id: str) -> str:
     try:
-        result    = await db.execute(select(Document).where(Document.user_id == user_id))
+        from datetime import timedelta
+        result = await db.execute(
+            select(Document).where(Document.user_id == user_id)
+        )
         documents = result.scalars().all()
 
-        paid_docs    = [d for d in documents if (getattr(d, 'payment_status', None) or 'paid') == 'paid']
-        due_docs     = [d for d in documents if (getattr(d, 'payment_status', None) or '') == 'due']
+        now = datetime.utcnow()
+        today_str = now.strftime("%Y-%m-%d")
+        this_month = now.strftime("%Y-%m")
+        last_month_dt = now.replace(day=1) - timedelta(days=1)
+        last_month = last_month_dt.strftime("%Y-%m")
+
+        def uploaded_in(d, m):
+            ua = getattr(d, 'uploaded_at', None)
+            if ua is None:
+                return False
+            return str(ua).startswith(m)
+
+        paid_docs = [d for d in documents if (getattr(d, 'payment_status', None) or 'paid') == 'paid']
+        due_docs = [d for d in documents if (getattr(d, 'payment_status', None) or '') == 'due']
         overdue_docs = [d for d in documents if (getattr(d, 'payment_status', None) or '') == 'overdue']
-        total_due    = sum(float(d.total_amount or 0) for d in due_docs + overdue_docs)
+
+        total_due = sum(float(d.total_amount or 0) for d in due_docs + overdue_docs)
+        total_paid_value = sum(float(d.total_amount or 0) for d in paid_docs)
+
+        processed = [d for d in documents if (d.status or '').lower() == 'processed']
+        needs_review = [d for d in documents if (d.status or '').lower() == 'review']
+        no_amount = [d for d in documents if not (d.total_amount or 0) > 0]
+
+        this_month_docs = [d for d in documents if uploaded_in(d, this_month)]
+        last_month_docs = [d for d in documents if uploaded_in(d, last_month)]
+
+        vendor_totals: dict[str, float] = {}
+        for d in documents:
+            v = d.vendor or 'Unknown'
+            vendor_totals[v] = vendor_totals.get(v, 0) + float(d.total_amount or 0)
+        top_vendors = sorted(vendor_totals.items(), key=lambda x: x[1], reverse=True)[:8]
 
         lines = [
             "=== DOCUMENTS CONTEXT ===",
-            f"Total: {len(documents)} | "
-            f"Processed: {sum(1 for d in documents if (d.status or '').lower() == 'processed')} | "
-            f"Review needed: {sum(1 for d in documents if (d.status or '').lower() == 'review')} | "
-            f"With amounts: {sum(1 for d in documents if (d.total_amount or 0) > 0)}",
-            f"Payment summary: Paid={len(paid_docs)} | Due={len(due_docs)} | "
-            f"Overdue={len(overdue_docs)} | Total outstanding=${total_due:,.2f}",
+            f"TODAY: {today_str}",
+            f"CURRENT_MONTH: {this_month}",
             "",
-            "ALL DOCUMENTS:",
+            "## SUMMARY",
+            f"Total documents: {len(documents)}",
+            f"Processed: {len(processed)}",
+            f"Needs review: {len(needs_review)}",
+            f"Missing amount: {len(no_amount)}",
+            "",
+            "## PAYMENT STATUS",
+            f"Paid: {len(paid_docs)} (${total_paid_value:,.2f})",
+            f"Due: {len(due_docs)}",
+            f"Overdue: {len(overdue_docs)}",
+            f"Outstanding (due + overdue): ${total_due:,.2f}",
+            "",
+            f"## THIS MONTH ({this_month})",
+            f"Uploaded this month: {len(this_month_docs)}",
+            f"Total amount: ${sum(float(d.total_amount or 0) for d in this_month_docs):,.2f}",
+            "",
+            f"## LAST MONTH ({last_month})",
+            f"Uploaded last month: {len(last_month_docs)}",
+            f"Total amount: ${sum(float(d.total_amount or 0) for d in last_month_docs):,.2f}",
+            "",
+            "## TOP VENDORS BY SPEND",
         ]
+        for v, amt in top_vendors:
+            lines.append(f"- {v}: ${amt:,.2f}")
 
-        for d in sorted(documents, key=lambda x: x.uploaded_at or datetime.utcnow(), reverse=True):
+        lines += ["", "## RECENT DOCUMENTS (last 30)"]
+        for d in sorted(documents, key=lambda x: x.uploaded_at or datetime.utcnow(), reverse=True)[:30]:
             payment_status = getattr(d, 'payment_status', None) or 'paid'
-            doc_type       = getattr(d, 'doc_type', None) or 'receipt'
-            client         = getattr(d, 'client_name', None) or ''
+            doc_type = getattr(d, 'doc_type', None) or 'receipt'
+            client = getattr(d, 'client_name', None) or ''
             lines.append(
-                f"- {d.filename} | "
-                f"vendor:{d.vendor or 'Unknown'} | "
-                f"client:{client or 'N/A'} | "
-                f"${d.total_amount or 0:,.2f} | "
-                f"type:{doc_type} | "
-                f"processing:{d.status or 'unknown'} | "
-                f"payment:{payment_status} | "
-                f"date:{d.doc_date or '?'}"
+                f"- {d.filename} | vendor:{d.vendor or 'Unknown'} | client:{client or 'N/A'} | "
+                f"${d.total_amount or 0:,.2f} | {doc_type} | {payment_status}"
             )
 
-        lines += [
-            "",
-            "PAYMENT STATUS RULES:",
-            "- 'processed' means AI finished reading the document. It does NOT mean payment is complete.",
-            "- 'payment:paid' means the invoice or receipt has been paid.",
-            "- 'payment:due' means an invoice is awaiting payment.",
-            "- 'payment:overdue' means an invoice is past its due date and unpaid.",
-            "- receipts are always payment:paid because the user already paid them.",
-            "- invoice_sent documents start as payment:due until marked paid.",
-            "=== END DOCUMENTS CONTEXT ===",
-        ]
-
+        lines.append("=== END DOCUMENTS CONTEXT ===")
         return "\n".join(lines)
+
     except Exception as e:
         return f"Documents context error: {e}"
 
 
-async def build_invoices_context(db: AsyncSession, user_id: str) -> str:
+async def build_invoices_context(
+    db: AsyncSession,
+    user_id: str
+) -> str:
     try:
-        result   = await db.execute(select(Invoice).where(Invoice.user_id == user_id))
+        from datetime import timedelta
+        result = await db.execute(
+            select(Invoice).where(Invoice.user_id == user_id)
+        )
         invoices = result.scalars().all()
 
-        overdue = [i for i in invoices if (i.status or "").lower() in ["overdue", "due"]]
-        paid    = [i for i in invoices if (i.status or "").lower() == "paid"]
-        draft   = [i for i in invoices if (i.status or "").lower() == "draft"]
+        now = datetime.utcnow()
+        today = now.date()
+        today_str = now.strftime("%Y-%m-%d")
+        this_month = now.strftime("%Y-%m")
+        last_month_dt = now.replace(day=1) - timedelta(days=1)
+        last_month = last_month_dt.strftime("%Y-%m")
+
+        def parse_date(d):
+            if d is None:
+                return None
+            if hasattr(d, 'year') and not hasattr(d, 'time'):
+                return d
+            if hasattr(d, 'date'):
+                return d.date()
+            try:
+                return datetime.strptime(str(d)[:10], "%Y-%m-%d").date()
+            except Exception:
+                return None
+
+        marked_paid = [i for i in invoices if (i.status or "").lower() == "paid"]
+        marked_draft = [i for i in invoices if (i.status or "").lower() == "draft"]
+
+        truly_overdue = []
+        upcoming = []
+        for i in invoices:
+            s = (i.status or "").lower()
+            if s in ("paid", "draft"):
+                continue
+            dd = parse_date(i.due_date)
+            if dd is None:
+                continue
+            if dd < today:
+                truly_overdue.append(i)
+            else:
+                upcoming.append(i)
+
+        outstanding_overdue = sum(float(i.total or 0) for i in truly_overdue)
+        outstanding_upcoming = sum(float(i.total or 0) for i in upcoming)
+
+        def created_in(i, m):
+            ca = i.created_at
+            if ca is None:
+                return False
+            return str(ca).startswith(m)
+
+        this_month_inv = [i for i in invoices if created_in(i, this_month)]
+        last_month_inv = [i for i in invoices if created_in(i, last_month)]
+
+        total_billed = sum(float(i.total or 0) for i in invoices if (i.status or "").lower() != "draft")
+        total_paid = sum(float(i.total or 0) for i in marked_paid)
 
         lines = [
             "=== INVOICES CONTEXT ===",
-            f"Total: {len(invoices)} | Paid: {len(paid)} (${sum(i.total or 0 for i in paid):,.2f}) | Overdue/Due: {len(overdue)} (${sum(i.total or 0 for i in overdue):,.2f}) | Draft: {len(draft)}",
+            f"TODAY: {today_str}",
+            f"CURRENT_MONTH: {this_month}",
             "",
-            "ALL INVOICES:",
+            "## SUMMARY",
+            f"Total invoices: {len(invoices)}",
+            f"Paid: {len(marked_paid)} (${total_paid:,.2f})",
+            f"Draft: {len(marked_draft)}",
+            f"Truly overdue (past due_date, unpaid): {len(truly_overdue)} (${outstanding_overdue:,.2f})",
+            f"Upcoming (future due_date, unpaid): {len(upcoming)} (${outstanding_upcoming:,.2f})",
+            f"Total billed (non-draft): ${total_billed:,.2f}",
+            "",
+            f"## THIS MONTH ({this_month})",
+            f"Invoices created this month: {len(this_month_inv)} (${sum(float(i.total or 0) for i in this_month_inv):,.2f})",
+            "",
+            f"## LAST MONTH ({last_month})",
+            f"Invoices created last month: {len(last_month_inv)} (${sum(float(i.total or 0) for i in last_month_inv):,.2f})",
+            "",
         ]
 
-        for i in sorted(invoices, key=lambda x: x.created_at or datetime.utcnow(), reverse=True):
+        if truly_overdue:
+            lines += ["## OVERDUE INVOICES (action needed)"]
+            for i in sorted(truly_overdue, key=lambda x: parse_date(x.due_date) or today):
+                lines.append(
+                    f"- #{i.invoice_number or 'N/A'} | to:{i.to_name or 'Unknown'} | "
+                    f"${i.total or 0:,.2f} | due:{i.due_date or '?'} | status:{i.status or 'unknown'}"
+                )
+            lines.append("")
+
+        lines += ["## ALL INVOICES (most recent first, top 30)"]
+        for i in sorted(invoices, key=lambda x: x.created_at or datetime.utcnow(), reverse=True)[:30]:
             lines.append(
-                f"- #{i.invoice_number or 'N/A'} | "
-                f"to:{i.to_name or 'Unknown'} | "
-                f"${i.total or 0:,.2f} | "
-                f"{i.status or 'unknown'} | "
-                f"due:{i.due_date or '?'}"
+                f"- #{i.invoice_number or 'N/A'} | to:{i.to_name or 'Unknown'} | "
+                f"${i.total or 0:,.2f} | {i.status or 'unknown'} | due:{i.due_date or '?'}"
             )
 
         lines.append("=== END INVOICES CONTEXT ===")
         return "\n".join(lines)
+
     except Exception as e:
         return f"Invoices context error: {e}"
 
 
 async def build_tax_context(db: AsyncSession, user_id: str) -> str:
     try:
-        txn_result   = await db.execute(select(Transaction).where(Transaction.user_id == user_id))
+        txn_result = await db.execute(
+            select(Transaction).where(Transaction.user_id == user_id)
+        )
         transactions = txn_result.scalars().all()
 
-        expenses    = [t for t in transactions if (t.txn_type or "").lower() == "expense"]
+        inv_result = await db.execute(
+            select(Invoice).where(Invoice.user_id == user_id)
+        )
+        invoices = inv_result.scalars().all()
+
+        now = datetime.utcnow()
+        today_str = now.strftime("%Y-%m-%d")
+        this_year = now.strftime("%Y")
+        last_year = str(int(this_year) - 1)
+
+        month_num = now.month
+        quarter = (month_num - 1) // 3 + 1
+        quarter_label = f"Q{quarter} {this_year}"
+
+        def in_year(t, y):
+            return str(t.txn_date or "").startswith(y)
+
+        def in_quarter(t, year, q):
+            d = str(t.txn_date or "")[:7]
+            if not d.startswith(year):
+                return False
+            try:
+                m = int(d[5:7])
+                tq = (m - 1) // 3 + 1
+                return tq == q
+            except Exception:
+                return False
+
+        expenses = [t for t in transactions if (t.txn_type or "").lower() == "expense"]
         income_txns = [t for t in transactions if (t.txn_type or "").lower() == "income"]
 
-        total_exp = sum(abs(t.amount or 0) for t in expenses)
-        total_inc = sum(abs(t.amount or 0) for t in income_txns)
+        ytd_exp = sum(abs(t.amount or 0) for t in expenses if in_year(t, this_year))
+        ytd_inc = sum(abs(t.amount or 0) for t in income_txns if in_year(t, this_year))
+        ytd_paid_inv = sum(float(i.total or 0) for i in invoices if (i.status or "").lower() == "paid" and str(i.created_at or "").startswith(this_year))
+        ytd_total_income = ytd_inc + ytd_paid_inv
 
-        inv_result = await db.execute(select(Invoice).where(Invoice.user_id == user_id))
-        invoices   = inv_result.scalars().all()
-        inv_income = sum(i.total or 0 for i in invoices if (i.status or "").lower() == "paid")
+        ly_exp = sum(abs(t.amount or 0) for t in expenses if in_year(t, last_year))
+        ly_inc = sum(abs(t.amount or 0) for t in income_txns if in_year(t, last_year))
 
-        total_income = total_inc + inv_income
-        profit       = total_income - total_exp
+        q_exp = sum(abs(t.amount or 0) for t in expenses if in_quarter(t, this_year, quarter))
+        q_inc = sum(abs(t.amount or 0) for t in income_txns if in_quarter(t, this_year, quarter))
 
-        cat_totals: dict[str, float] = {}
+        ytd_profit = ytd_total_income - ytd_exp
+        estimated_tax_15 = max(ytd_profit * 0.15, 0.0)
+        estimated_tax_20 = max(ytd_profit * 0.20, 0.0)
+        estimated_tax_25 = max(ytd_profit * 0.25, 0.0)
+
+        deductible_cats = {}
         for t in expenses:
+            if not in_year(t, this_year):
+                continue
             cat = t.category or t.ml_category or "Uncategorized"
-            cat_totals[cat] = cat_totals.get(cat, 0) + abs(t.amount or 0)
-
-        deductible_categories = [
-            "software & saas", "office supplies", "transportation",
-            "professional services", "rent & facilities", "utilities",
-            "marketing", "hardware & equipment", "insurance",
-        ]
-
-        deductible_total = sum(
-            amt for cat, amt in cat_totals.items()
-            if cat.lower() in deductible_categories
-        )
+            deductible_cats[cat] = deductible_cats.get(cat, 0) + abs(t.amount or 0)
+        top_deductible = sorted(deductible_cats.items(), key=lambda x: x[1], reverse=True)[:8]
 
         lines = [
             "=== TAX CONTEXT ===",
-            f"Total income: ${total_income:,.2f}",
-            f"Total expenses: ${total_exp:,.2f}",
-            f"Net profit: ${profit:,.2f}",
-            f"Tax at 15%: ${max(profit * 0.15, 0):,.2f}",
-            f"Tax at 20%: ${max(profit * 0.20, 0):,.2f}",
-            f"Tax at 25%: ${max(profit * 0.25, 0):,.2f}",
-            f"Potentially deductible: ${deductible_total:,.2f}",
+            f"TODAY: {today_str}",
+            f"CURRENT_YEAR: {this_year}",
+            f"CURRENT_QUARTER: {quarter_label}",
             "",
-            "EXPENSE BREAKDOWN:",
+            f"## YEAR-TO-DATE ({this_year})",
+            f"YTD_INCOME: ${ytd_total_income:,.2f}",
+            f"  - From transactions: ${ytd_inc:,.2f}",
+            f"  - From paid invoices: ${ytd_paid_inv:,.2f}",
+            f"YTD_EXPENSES (deductible): ${ytd_exp:,.2f}",
+            f"YTD_NET_PROFIT: ${ytd_profit:,.2f}",
+            "",
+            "## ESTIMATED TAX OWED (rough)",
+            f"At 15% rate: ${estimated_tax_15:,.2f}",
+            f"At 20% rate: ${estimated_tax_20:,.2f}",
+            f"At 25% rate: ${estimated_tax_25:,.2f}",
+            "(Actual rate depends on jurisdiction, brackets, and deductions. These are rough estimates only.)",
+            "",
+            f"## CURRENT QUARTER ({quarter_label})",
+            f"Q_INCOME: ${q_inc:,.2f}",
+            f"Q_EXPENSES: ${q_exp:,.2f}",
+            f"Q_NET: ${q_inc - q_exp:,.2f}",
+            "",
+            f"## LAST YEAR ({last_year}, FOR COMPARISON)",
+            f"LY_INCOME: ${ly_inc:,.2f}",
+            f"LY_EXPENSES: ${ly_exp:,.2f}",
+            f"LY_NET: ${ly_inc - ly_exp:,.2f}",
+            "",
+            "## TOP DEDUCTIBLE CATEGORIES (YTD)",
         ]
-
-        for cat, amt in sorted(cat_totals.items(), key=lambda x: x[1], reverse=True):
-            tag = "✓ deductible" if cat.lower() in deductible_categories else ""
-            lines.append(f"- {cat}: ${amt:,.2f} {tag}")
+        for cat, amt in top_deductible:
+            lines.append(f"- {cat}: ${amt:,.2f}")
 
         lines.append("=== END TAX CONTEXT ===")
         return "\n".join(lines)
+
     except Exception as e:
         return f"Tax context error: {e}"
 
