@@ -68,6 +68,14 @@ export function RoleProvider({ children }) {
 
   useEffect(() => { fetchContext(); }, [fetchContext]);
 
+  // Source-of-truth sync: whenever backend tells us the company name, mirror it to localStorage
+  // so other pages reading company_name from localStorage stay current.
+  useEffect(() => {
+    if (companyName) {
+      localStorage.setItem('company_name', companyName);
+    }
+  }, [companyName]);
+
   return (
     <RoleContext.Provider value={{
       role, isOwner, permissions, companyName, ownerName, roleLabel,
