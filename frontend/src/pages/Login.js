@@ -125,7 +125,7 @@ export default function Login({ onLogin }) {
       if (typeof detail === 'string') {
         const d = detail.toLowerCase();
         if (d.includes('password'))                               setError('Incorrect password. Please try again.');
-        else if (d.includes('email') || d.includes('not found')) setError('No account found with this email.');
+        else if (d.includes('email') || d.includes('not found')) { setError('No account found. Redirecting to register...'); setTimeout(function() { window.location.href = '/onboarding'; }, 1200); }
         else if (d.includes('invalid'))                          setError('Invalid email or password.');
         else                                                     setError(detail);
       } else {
