@@ -157,7 +157,13 @@ function ErrorMsg({ msg }) {
 
 export default function Onboarding({ onComplete }) {
   const navigate = useNavigate();
-  const [step,         setStep]         = useState(1);
+
+  // Invite-token handling: skip company/business steps for team invitees
+  const _inviteParams = new URLSearchParams(window.location.search);
+  const inviteToken = _inviteParams.get('invite_token');
+  const invitedEmail = _inviteParams.get('email');
+  const isInvitedTeamMember = Boolean(inviteToken);
+  const [step, setStep] = useState(isInvitedTeamMember ? 5 : 1);
   const [companyName,  setCompanyName]  = useState('');
   const [bizType,      setBizType]      = useState('');
   const [industry,     setIndustry]     = useState('');
@@ -168,7 +174,7 @@ export default function Onboarding({ onComplete }) {
   const [saving,       setSaving]       = useState(false);
 
   const [fullName,     setFullName]     = useState('');
-  const [email,        setEmail]        = useState('');
+  const [email, setEmail] = useState(invitedEmail || '');
   const [countryCode,  setCountryCode]  = useState('+1');
   const [phone,        setPhone]        = useState('');
   const [password,     setPassword]     = useState('');
@@ -279,6 +285,19 @@ export default function Onboarding({ onComplete }) {
       }
       localStorage.setItem('saved_account_email', email);
       try {
+        // Auto-accept invite for team members coming from /accept-invite
+        if (isInvitedTeamMember && inviteToken) {
+          try {
+            const _tok = (res && res.access_token) || localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+            await fetch(
+              'https://api.getnovala.com/api/v1/team/invites/' + inviteToken + '/accept',
+              { method: 'POST', headers: { Authorization: 'Bearer ' + _tok } }
+            );
+          } catch (e) { console.warn('Auto-accept failed:', e); }
+          navigate('/');
+          return;
+        }
+
         await fetch('https://api.getnovala.com/api/v1/onboarding/update', {
           method: 'POST',
           headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -624,7 +643,7 @@ export default function Onboarding({ onComplete }) {
                 Almost there! Create your account
               </div>
               <div style={{ fontSize:14, color:MUTED, marginBottom:24, lineHeight:1.6 }}>
-                Your workspace for <span style={{ color:MINT, fontWeight:600 }}>{companyName}</span> is ready. Set up your login details below.
+                Your workspace{companyName ? <> for <span style={{ color:MINT, fontWeight:600 }}>{companyName}</span></> : ""} is ready. Set up your login details below.
               </div>
 
               {/* Full name */}
