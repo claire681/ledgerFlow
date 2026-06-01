@@ -14,6 +14,23 @@ import {
   Keyboard, ClipboardList, MessageSquare, Zap,
   Gem, Pin, PinOff, GripVertical,
 } from 'lucide-react';
+import { useRole } from '../context/RoleContext';
+
+// === Role-based access control ===
+function isAppVisibleForRole(appId, role) {
+  if (!role || role === 'owner' || role === 'admin' || role === 'accountant') return true;
+  if (role === 'staff') {
+    return ['home','accounting','feed','bookmarks','more'].includes(appId);
+  }
+  if (role === 'viewer') {
+    return !['payroll','team','marketing','customize','create','allapps'].includes(appId);
+  }
+  return true;
+}
+function isCreateItemVisibleForRole(path, role) {
+  if (!role || role === 'owner' || role === 'admin' || role === 'accountant') return true;
+  return false;
+}
 
 const ACCENT  = '#0AB98A';
 const FONT    = "'Inter', -apple-system, sans-serif";
@@ -298,6 +315,7 @@ function useHoverFlyout() {
 }
 
 function CreateFlyout({ onClose, onNavigate, flyoutId, onPanelEnter, onPanelLeave }) {
+  const { role: userRole } = useRole();
   return (
     <div
       onMouseEnter={function() { onPanelEnter(flyoutId); }}
@@ -310,11 +328,11 @@ function CreateFlyout({ onClose, onNavigate, flyoutId, onPanelEnter, onPanelLeav
         <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:MUTED, display:'flex', alignItems:'center' }}><X size={18}/></button>
       </div>
       <div style={{ flex:1, overflowY:'auto', padding:'20px 24px', display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:20 }}>
-        {CREATE_COLUMNS.map(function(col) {
+        {CREATE_COLUMNS.filter(function(col) { return col.items.some(function(item) { return isCreateItemVisibleForRole(item.path, userRole); }); }).map(function(col) {
           return (
             <div key={col.header}>
               <div style={{ fontSize:13, fontWeight:700, color:'#0A2540', marginBottom:14, paddingBottom:8, borderBottom:'1px solid #F1F5F9' }}>{col.header}</div>
-              {col.items.map(function(item) {
+              {col.items.filter(function(item) { return isCreateItemVisibleForRole(item.path, userRole); }).map(function(item) {
                 return (
                   <div
                     key={item.label}
@@ -361,10 +379,11 @@ function FlyoutPanel({ title, onClose, children, width, flyoutId, onPanelEnter, 
 
 function AllAppsFlyout({ onClose, onNavigate, expandedId, location, flyoutId, onPanelEnter, onPanelLeave }) {
   const [expanded, setExpanded] = useState(expandedId || 'accounting');
+  const { role: userRole } = useRole();
   return (
     <FlyoutPanel title="All Apps" onClose={onClose} width={300} flyoutId={flyoutId} onPanelEnter={onPanelEnter} onPanelLeave={onPanelLeave}>
       <div style={{ padding:'8px 12px' }}>
-        {ALL_APPS.map(function(app) {
+        {ALL_APPS.filter(function(app) { return isAppVisibleForRole(app.id, userRole); }).map(function(app) {
           const isExpanded = expanded === app.id;
           const Icon = app.icon;
           return (
