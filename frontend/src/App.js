@@ -41,6 +41,7 @@ import Inventory           from './pages/Inventory';
 import APIAccess           from './pages/APIAccess';
 import Businesses          from './pages/Businesses';
 import ResetPassword from './pages/ResetPassword';
+import AcceptInvite from './pages/AcceptInvite';
 
 
 const ACCENT = '#0AB98A';
@@ -141,6 +142,7 @@ function AppLayout({ onLogout }) {
 
         <main  style={{ flex:1, overflowY:'auto', position:'relative', minWidth:0, marginLeft: 0 }}>
           <Routes>
+            <Route path="/accept-invite/:token" element={<AcceptInvite />} />
             <Route path="/"               element={<Dashboard />}          />
             <Route path="/documents"      element={<Documents />}          />
             <Route path="/transactions"   element={<Transactions />}       />
