@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete as sql_delete, text
 from app.db.database import get_db, AsyncSessionLocal
 from app.core.security import get_current_user
+from app.api.routes.team import get_data_owner_id
 from app.core.config import settings
 from app.models.models import Document, Transaction, AgentLog, Invoice, UploadJob
 from app.services.activity_service import log_activity
@@ -742,7 +743,7 @@ async def list_documents(
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     result  = await db.execute(
         select(Document)
         .where(Document.user_id == user_id)
@@ -802,7 +803,7 @@ async def get_upload_status(
     current_user=Depends(get_current_user),
     db:          AsyncSession = Depends(get_db),
 ):
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     result  = await db.execute(
         select(UploadJob).where(
             UploadJob.id      == job_id,
@@ -828,7 +829,7 @@ async def get_document(
     current_user=Depends(get_current_user),
     db:          AsyncSession = Depends(get_db),
 ):
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     doc     = await get_document_or_404(db, doc_id, user_id)
     return await doc_to_dict(db, doc)
 
@@ -839,7 +840,7 @@ async def view_document_file(
     current_user=Depends(get_current_user),
     db:          AsyncSession = Depends(get_db),
 ):
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     doc     = await get_document_or_404(db, doc_id, user_id)
     s3_key  = doc.file_path or build_s3_key(str(doc.id), doc.filename)
 
@@ -861,7 +862,7 @@ async def get_document_view_url(
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     doc = await get_document_or_404(db, doc_id, user_id)
 
     s3_key = doc.file_path or build_s3_key(str(doc.id), doc.filename)
@@ -884,7 +885,7 @@ async def download_document_file(
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     doc = await get_document_or_404(db, doc_id, user_id)
 
     s3_key = doc.file_path or build_s3_key(str(doc.id), doc.filename)
@@ -908,7 +909,7 @@ async def update_document(
     current_user=Depends(get_current_user),
     db:          AsyncSession = Depends(get_db),
 ):
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     doc     = await get_document_or_404(db, doc_id, user_id)
     for field, value in body.dict(exclude_unset=True).items():
         if value is not None:
@@ -924,7 +925,7 @@ async def mark_document_paid(
     current_user=Depends(get_current_user),
     db:          AsyncSession = Depends(get_db),
 ):
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     doc     = await get_document_or_404(db, doc_id, user_id)
     doc.payment_status = "paid"
     doc.paid_at        = datetime.utcnow()
@@ -939,7 +940,7 @@ async def delete_document(
     current_user=Depends(get_current_user),
     db:          AsyncSession = Depends(get_db),
 ):
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     doc     = await get_document_or_404(db, doc_id, user_id)
 
     s3_key = doc.file_path or build_s3_key(str(doc.id), doc.filename)

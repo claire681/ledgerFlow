@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from app.db.database import get_db
 from app.core.security import get_current_user
+from app.api.routes.team import get_data_owner_id
 from app.models.models import TaxReport, User
 from app.services.activity_service import log_activity
 from pydantic import BaseModel

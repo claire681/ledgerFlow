@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from app.db.database import get_db
 from app.core.security import get_current_user
+from app.api.routes.team import get_data_owner_id
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 

@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
 from app.db.database import get_db
 from app.core.security import get_current_user
+from app.api.routes.team import get_data_owner_id
 from app.models.models import Transaction
 from pydantic import BaseModel
 from typing import Optional
@@ -124,7 +125,7 @@ async def list_transactions(
     limit:        int           = 100,
 ):
     try:
-        user_id = str(current_user.id)
+        user_id = await get_data_owner_id(current_user, db)
         query = select(Transaction).where(Transaction.user_id == user_id)
         if status:
             query = query.where(Transaction.status == status)
@@ -151,7 +152,7 @@ async def create_transaction(
     db:           AsyncSession    = Depends(get_db),
 ):
     try:
-        user_id = str(current_user.id)
+        user_id = await get_data_owner_id(current_user, db)
         amount  = float(body.amount) if body.amount is not None else 0.0
         txn_type = body.txn_type or ("income" if amount > 0 else "expense")
         txn_type = txn_type.lower()
@@ -210,7 +211,7 @@ async def get_transaction(
     current_user=Depends(get_current_user),
     db:           AsyncSession = Depends(get_db),
 ):
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     result = await db.execute(
         select(Transaction).where(
             Transaction.id      == txn_id,
@@ -232,7 +233,7 @@ async def update_transaction(
     current_user=Depends(get_current_user),
     db:           AsyncSession = Depends(get_db),
 ):
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     result = await db.execute(
         select(Transaction).where(
             Transaction.id      == txn_id,
@@ -270,7 +271,7 @@ async def delete_transaction(
     current_user=Depends(get_current_user),
     db:           AsyncSession = Depends(get_db),
 ):
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     result = await db.execute(
         select(Transaction).where(
             Transaction.id      == txn_id,
@@ -294,7 +295,7 @@ async def delete_by_details(
     current_user=Depends(get_current_user),
     db:           AsyncSession    = Depends(get_db),
 ):
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     query = select(Transaction).where(Transaction.user_id == user_id)
     if vendor:
         query = query.where(Transaction.vendor.ilike(f"%{vendor}%"))
@@ -328,7 +329,7 @@ async def ml_categorize(
     current_user=Depends(get_current_user),
     db:           AsyncSession = Depends(get_db),
 ):
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     result = await db.execute(
         select(Transaction).where(
             Transaction.id      == txn_id,
@@ -369,7 +370,7 @@ async def import_csv(
     import csv
     import io
 
-    user_id = str(current_user.id)
+    user_id = await get_data_owner_id(current_user, db)
     content = await file.read()
     text    = content.decode("utf-8", errors="ignore")
     reader  = csv.DictReader(io.StringIO(text))
