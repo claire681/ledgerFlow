@@ -209,8 +209,8 @@ async def invite_member(
             </div>
             <div style="background:#F8FAFC;border-radius:10px;padding:16px;border:1px solid #E2E8F0;font-size:13px;color:#6B7280;line-height:1.6;">
                 To accept this invitation sign up or log in at
-<a href="https://www.getnovala.com" style="color:#0AB98A;font-weight:600;">
-https://www.getnovala.com
+<a href="https://app.getnovala.com/accept-invite/{member.id}" style="color:#0AB98A;font-weight:600;">
+Accept Invitation
 </a>
 using this email address.
             </div>
