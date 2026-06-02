@@ -520,12 +520,54 @@ function RunPayrollView({ employees, settings }) {
     const confirmed = window.confirm(`Process pay run for ${calc.count} employee(s)?\n\nGross: ${fmtMoney(calc.totals.gross)}\nDeductions: ${fmtMoney(calc.totals.deductions)}\nNet: ${fmtMoney(calc.totals.net)}\n\nPay date: ${payDate}`);
     if (!confirmed) return;
     setProcessing(true);
-    // Pay run persistence endpoint comes in the next patch.
-    // For now we surface the totals so the workflow feels complete.
-    setTimeout(() => {
-      alert(`Pay run calculated successfully.\n\nNext patch wires this into the database and generates pay stub PDFs.`);
+
+    // Pay period = (pay_date - one schedule period) to pay_date
+    const periodsPerYear = PERIODS_PER_YEAR[settings?.default_pay_schedule] || 26;
+    const daysPerPeriod = Math.round(365 / periodsPerYear);
+    const payDateObj = new Date(payDate);
+    const periodStart = new Date(payDateObj); periodStart.setDate(periodStart.getDate() - daysPerPeriod + 1);
+
+    const payStubs = calc.rows.filter(r => selected.has(r.emp.id)).map(({ emp, gross, deductions, net }) => ({
+      employee_id: emp.id,
+      employee_name: `${emp.first_name} ${emp.last_name}`,
+      employee_email: emp.personal_email,
+      position_title: emp.position_title || null,
+      pay_type: emp.pay_type,
+      hours_worked: emp.pay_type === "hourly" ? parseFloat(hoursOverride[emp.id] != null ? hoursOverride[emp.id] : (emp.hours_per_week || 0)) : null,
+      hourly_rate: emp.hourly_rate ? parseFloat(emp.hourly_rate) : null,
+      gross: parseFloat(gross.toFixed(2)),
+      deductions: Object.fromEntries(Object.entries(deductions).filter(([k]) => k !== "total").map(([k, v]) => [k, parseFloat(v.toFixed(2))])),
+      deductions_total: parseFloat(deductions.total.toFixed(2)),
+      net: parseFloat(net.toFixed(2)),
+      currency: emp.currency || "CAD",
+    }));
+
+    const payload = {
+      pay_period_start: periodStart.toISOString().slice(0, 10),
+      pay_period_end: payDateObj.toISOString().slice(0, 10),
+      pay_date: payDate,
+      country,
+      currency: settings?.currency || "CAD",
+      pay_stubs: payStubs,
+    };
+
+    try {
+      const r = await fetch(`${API_URL}/api/v1/payroll/pay-runs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify(payload),
+      });
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({ detail: `HTTP ${r.status}` }));
+        throw new Error(e.detail || `HTTP ${r.status}`);
+      }
+      const saved = await r.json();
+      alert(`Pay run processed ✓\n\n${saved.employee_count} employees · Net paid: ${fmtMoney(saved.total_net)}\n\nFind it under the Pay History tab.`);
+    } catch (e) {
+      alert(`Failed to process pay run: ${e.message}`);
+    } finally {
       setProcessing(false);
-    }, 400);
+    }
   };
 
   if (active.length === 0) {
@@ -625,12 +667,130 @@ function RunPayrollView({ employees, settings }) {
 // ============================================================================
 
 function PayHistoryView() {
-  return (
+  const [runs, setRuns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch(`${API_URL}/api/v1/payroll/pay-runs`, { headers: authHeaders() });
+        if (r.ok) setRuns(await r.json());
+      } catch (e) { /* surface inline */ } finally { setLoading(false); }
+    })();
+  }, []);
+
+  if (loading) return <div style={{ textAlign: "center", padding: 60, color: TEXT_MUTED }}>Loading pay runs…</div>;
+  if (runs.length === 0) return (
     <div style={{ ...cardStyle, padding: 60, textAlign: "center" }}>
       <div style={{ fontSize: 44, marginBottom: 8 }}>📜</div>
       <h3 style={{ fontSize: 17, fontWeight: 600, color: TEXT, margin: "0 0 6px 0" }}>No pay runs yet</h3>
-      <p style={{ fontSize: 13, color: TEXT_MUTED, margin: 0 }}>Once you process your first pay run, it'll show up here with downloadable pay stubs.</p>
+      <p style={{ fontSize: 13, color: TEXT_MUTED, margin: 0 }}>Once you process your first pay run from the Run Payroll tab, it shows up here.</p>
     </div>
+  );
+
+  return (
+    <>
+      <div style={cardStyle}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ background: "#FAFBFC" }}>
+              <th style={th}>Pay date</th>
+              <th style={th}>Period</th>
+              <th style={th}>Employees</th>
+              <th style={{ ...th, textAlign: "right" }}>Gross</th>
+              <th style={{ ...th, textAlign: "right" }}>Deductions</th>
+              <th style={{ ...th, textAlign: "right" }}>Net paid</th>
+              <th style={th}>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {runs.map(pr => (
+              <tr key={pr.id} style={{ borderBottom: `1px solid ${BORDER}`, cursor: "pointer" }} onClick={() => setSelected(pr)}>
+                <td style={td}><div style={{ fontSize: 14, fontWeight: 600, color: TEXT }}>{new Date(pr.pay_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</div></td>
+                <td style={td}><div style={{ fontSize: 13, color: TEXT_MUTED }}>{new Date(pr.pay_period_start).toLocaleDateString("en-US", { month: "short", day: "numeric" })} – {new Date(pr.pay_period_end).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div></td>
+                <td style={td}><div style={{ fontSize: 14, color: TEXT }}>{pr.employee_count}</div></td>
+                <td style={{ ...td, textAlign: "right", fontSize: 14, color: TEXT }}>{fmtMoney(pr.total_gross, pr.currency)}</td>
+                <td style={{ ...td, textAlign: "right", fontSize: 14, color: "#DC2626" }}>−{fmtMoney(pr.total_deductions, pr.currency)}</td>
+                <td style={{ ...td, textAlign: "right", fontSize: 15, fontWeight: 700, color: QB_GREEN }}>{fmtMoney(pr.total_net, pr.currency)}</td>
+                <td style={td}>{statusPill(pr.status)}</td>
+                <td style={{ ...td, textAlign: "right", fontSize: 13, color: BRAND, fontWeight: 600 }}>View →</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {selected && <PayRunDetailDrawer payRun={selected} onClose={() => setSelected(null)} />}
+    </>
+  );
+}
+
+function PayRunDetailDrawer({ payRun, onClose }) {
+  const [detail, setDetail] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch(`${API_URL}/api/v1/payroll/pay-runs/${payRun.id}`, { headers: authHeaders() });
+        if (r.ok) setDetail(await r.json());
+      } finally { setLoading(false); }
+    })();
+  }, [payRun.id]);
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000 }} />
+      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: 720, background: "#fff", zIndex: 1001, overflowY: "auto", boxShadow: "-8px 0 30px rgba(0,0,0,0.12)" }}>
+        <div style={{ padding: "20px 28px", borderBottom: `1px solid ${BORDER}`, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, background: "#fff", zIndex: 2 }}>
+          <div>
+            <div style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}>Pay run</div>
+            <h2 style={{ fontSize: 19, fontWeight: 700, color: TEXT, margin: "2px 0 0 0" }}>{new Date(payRun.pay_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</h2>
+          </div>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", fontSize: 24, cursor: "pointer", color: TEXT_MUTED, lineHeight: 1 }}>×</button>
+        </div>
+
+        <div style={{ padding: 28 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
+            <StatCard label="Gross" value={fmtMoney(payRun.total_gross, payRun.currency)} subtitle={`${payRun.employee_count} employees`} />
+            <StatCard label="Deductions" value={fmtMoney(payRun.total_deductions, payRun.currency)} subtitle="taxes + contributions" />
+            <StatCard label="Net paid" value={fmtMoney(payRun.total_net, payRun.currency)} subtitle="to employees" />
+          </div>
+
+          <div style={{ fontSize: 12, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Pay stubs</div>
+          {loading ? <div style={{ color: TEXT_MUTED, fontSize: 13 }}>Loading…</div> : (
+            <div style={{ ...cardStyle }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead><tr style={{ background: "#FAFBFC" }}>
+                  <th style={th}>Employee</th>
+                  <th style={{ ...th, textAlign: "right" }}>Gross</th>
+                  <th style={{ ...th, textAlign: "right" }}>Deductions</th>
+                  <th style={{ ...th, textAlign: "right" }}>Net</th>
+                </tr></thead>
+                <tbody>
+                  {(detail?.pay_stubs || []).map(s => (
+                    <tr key={s.id} style={{ borderBottom: `1px solid ${BORDER}` }}>
+                      <td style={td}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: TEXT }}>{s.employee_name}</div>
+                        <div style={{ fontSize: 12, color: TEXT_MUTED }}>{s.position_title || "—"}</div>
+                      </td>
+                      <td style={{ ...td, textAlign: "right", fontSize: 14, color: TEXT }}>{fmtMoney(s.gross, s.currency)}</td>
+                      <td style={{ ...td, textAlign: "right", fontSize: 13, color: "#DC2626" }}>
+                        −{fmtMoney(s.deductions_total, s.currency)}
+                        <div style={{ fontSize: 11, color: TEXT_MUTED, fontWeight: 400 }}>{Object.entries(s.deductions || {}).map(([k, v]) => `${k.replace(/_/g, " ")}: ${fmtMoney(v, s.currency)}`).join(" · ")}</div>
+                      </td>
+                      <td style={{ ...td, textAlign: "right", fontSize: 14, fontWeight: 700, color: QB_GREEN }}>{fmtMoney(s.net, s.currency)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
 

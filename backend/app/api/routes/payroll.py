@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime, timedelta, date
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from decimal import Decimal
 import uuid
 import secrets
@@ -11,7 +11,7 @@ import traceback
 
 from app.db.database import get_db
 from app.core.security import get_current_user
-from app.models.models import Employee, PayrollSettings
+from app.models.models import Employee, PayrollSettings, PayRun, PayStub
 from pydantic import BaseModel, EmailStr
 
 router = APIRouter(prefix="/payroll", tags=["Payroll"])
@@ -435,3 +435,162 @@ async def upsert_payroll_settings(body: PayrollSettingsBody, current_user=Depend
     await db.commit()
     await db.refresh(settings)
     return serialize_settings(settings)
+
+
+
+# ============================================================================
+# Pay Runs
+# ============================================================================
+
+class PayStubInput(BaseModel):
+    employee_id: str
+    employee_name: Optional[str] = None
+    employee_email: Optional[str] = None
+    position_title: Optional[str] = None
+    pay_type: Optional[str] = None
+    hours_worked: Optional[float] = None
+    hourly_rate: Optional[float] = None
+    gross: float
+    deductions: Dict[str, Any] = {}
+    deductions_total: float
+    net: float
+    currency: str = "CAD"
+
+
+class PayRunCreateBody(BaseModel):
+    pay_period_start: date
+    pay_period_end: date
+    pay_date: date
+    country: str = "CA"
+    currency: str = "CAD"
+    notes: Optional[str] = None
+    pay_stubs: List[PayStubInput]
+
+
+def serialize_pay_run(pr, stubs=None):
+    out = {
+        "id": str(pr.id),
+        "owner_id": str(pr.owner_id),
+        "pay_period_start": pr.pay_period_start.isoformat() if pr.pay_period_start else None,
+        "pay_period_end": pr.pay_period_end.isoformat() if pr.pay_period_end else None,
+        "pay_date": pr.pay_date.isoformat() if pr.pay_date else None,
+        "status": pr.status,
+        "country": pr.country,
+        "currency": pr.currency,
+        "total_gross": float(pr.total_gross or 0),
+        "total_deductions": float(pr.total_deductions or 0),
+        "total_net": float(pr.total_net or 0),
+        "employee_count": pr.employee_count or 0,
+        "notes": pr.notes,
+        "created_at": pr.created_at.isoformat() if pr.created_at else None,
+        "approved_at": pr.approved_at.isoformat() if pr.approved_at else None,
+    }
+    if stubs is not None:
+        out["pay_stubs"] = [serialize_pay_stub(s) for s in stubs]
+    return out
+
+
+def serialize_pay_stub(s):
+    return {
+        "id": str(s.id),
+        "pay_run_id": str(s.pay_run_id),
+        "employee_id": str(s.employee_id),
+        "employee_name": s.employee_name,
+        "employee_email": s.employee_email,
+        "position_title": s.position_title,
+        "pay_type": s.pay_type,
+        "hours_worked": float(s.hours_worked) if s.hours_worked is not None else None,
+        "hourly_rate": float(s.hourly_rate) if s.hourly_rate is not None else None,
+        "gross": float(s.gross or 0),
+        "deductions": s.deductions or {},
+        "deductions_total": float(s.deductions_total or 0),
+        "net": float(s.net or 0),
+        "currency": s.currency,
+        "created_at": s.created_at.isoformat() if s.created_at else None,
+    }
+
+
+@router.get("/pay-runs")
+async def list_pay_runs(current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(PayRun).where(PayRun.owner_id == current_user.id).order_by(PayRun.pay_date.desc(), PayRun.created_at.desc())
+    )
+    return [serialize_pay_run(pr) for pr in result.scalars().all()]
+
+
+@router.get("/pay-runs/{run_id}")
+async def get_pay_run(run_id: str, current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    try:
+        rid = uuid.UUID(run_id)
+    except ValueError:
+        raise HTTPException(400, "Invalid pay run ID")
+
+    result = await db.execute(select(PayRun).where(PayRun.id == rid, PayRun.owner_id == current_user.id))
+    pr = result.scalar_one_or_none()
+    if not pr:
+        raise HTTPException(404, "Pay run not found")
+
+    stubs_result = await db.execute(select(PayStub).where(PayStub.pay_run_id == pr.id))
+    stubs = stubs_result.scalars().all()
+    return serialize_pay_run(pr, stubs)
+
+
+@router.post("/pay-runs", status_code=201)
+async def create_pay_run(body: PayRunCreateBody, current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if not body.pay_stubs:
+        raise HTTPException(400, "Pay run requires at least one pay stub")
+
+    # Verify all employees belong to this owner
+    emp_ids = [uuid.UUID(s.employee_id) for s in body.pay_stubs]
+    emp_check = await db.execute(
+        select(Employee.id).where(Employee.id.in_(emp_ids), Employee.owner_id == current_user.id)
+    )
+    valid_ids = {row[0] for row in emp_check.all()}
+    if len(valid_ids) != len(emp_ids):
+        raise HTTPException(403, "One or more employees do not belong to you")
+
+    total_gross = sum(s.gross for s in body.pay_stubs)
+    total_deductions = sum(s.deductions_total for s in body.pay_stubs)
+    total_net = sum(s.net for s in body.pay_stubs)
+
+    pr = PayRun(
+        owner_id=current_user.id,
+        pay_period_start=body.pay_period_start,
+        pay_period_end=body.pay_period_end,
+        pay_date=body.pay_date,
+        status="approved",
+        country=body.country,
+        currency=body.currency,
+        total_gross=Decimal(str(total_gross)),
+        total_deductions=Decimal(str(total_deductions)),
+        total_net=Decimal(str(total_net)),
+        employee_count=len(body.pay_stubs),
+        notes=body.notes,
+        approved_at=datetime.utcnow(),
+    )
+    db.add(pr)
+    await db.flush()  # get pr.id
+
+    for s in body.pay_stubs:
+        stub = PayStub(
+            pay_run_id=pr.id,
+            employee_id=uuid.UUID(s.employee_id),
+            employee_name=s.employee_name,
+            employee_email=s.employee_email,
+            position_title=s.position_title,
+            pay_type=s.pay_type,
+            hours_worked=Decimal(str(s.hours_worked)) if s.hours_worked is not None else None,
+            hourly_rate=Decimal(str(s.hourly_rate)) if s.hourly_rate is not None else None,
+            gross=Decimal(str(s.gross)),
+            deductions=s.deductions,
+            deductions_total=Decimal(str(s.deductions_total)),
+            net=Decimal(str(s.net)),
+            currency=s.currency,
+        )
+        db.add(stub)
+
+    await db.commit()
+    await db.refresh(pr)
+
+    stubs_result = await db.execute(select(PayStub).where(PayStub.pay_run_id == pr.id))
+    return serialize_pay_run(pr, stubs_result.scalars().all())

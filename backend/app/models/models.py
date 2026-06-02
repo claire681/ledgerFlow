@@ -693,3 +693,59 @@ class PayrollSettings(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+
+# === PAY RUN MODELS ===
+
+class PayRun(Base):
+    __tablename__ = "pay_runs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+
+    pay_period_start = Column(Date, nullable=False)
+    pay_period_end = Column(Date, nullable=False)
+    pay_date = Column(Date, nullable=False, index=True)
+
+    status = Column(String, nullable=False, default="approved")  # draft, approved, paid, voided
+    country = Column(String, nullable=False, default="CA")
+    currency = Column(String, nullable=False, default="CAD")
+
+    total_gross = Column(Numeric(14, 2), nullable=False, default=0)
+    total_deductions = Column(Numeric(14, 2), nullable=False, default=0)
+    total_net = Column(Numeric(14, 2), nullable=False, default=0)
+    employee_count = Column(Integer, nullable=False, default=0)
+
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    approved_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class PayStub(Base):
+    __tablename__ = "pay_stubs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    pay_run_id = Column(UUID(as_uuid=True), ForeignKey("pay_runs.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False, index=True)
+
+    # Snapshot of employee details at time of pay run (so historical stubs survive employee edits)
+    employee_name = Column(String, nullable=True)
+    employee_email = Column(String, nullable=True)
+    position_title = Column(String, nullable=True)
+
+    # Pay detail
+    pay_type = Column(String, nullable=True)
+    hours_worked = Column(Numeric(8, 2), nullable=True)
+    hourly_rate = Column(Numeric(12, 2), nullable=True)
+
+    # Money
+    gross = Column(Numeric(12, 2), nullable=False)
+    deductions = Column(JSONB, nullable=True, default=dict)
+    deductions_total = Column(Numeric(12, 2), nullable=False, default=0)
+    net = Column(Numeric(12, 2), nullable=False)
+
+    currency = Column(String, nullable=False, default="CAD")
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
