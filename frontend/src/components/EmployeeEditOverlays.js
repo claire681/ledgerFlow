@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X as XIcon, HelpCircle, ChevronDown, Pencil } from "lucide-react";
+import { X as XIcon, HelpCircle, ChevronDown, Pencil, Info, Plus, Trash2 } from "lucide-react";
 
 const BRAND = "#0F5959";
 const BRAND_DARK = "#0A4040";
@@ -15,7 +15,7 @@ function authHeaders() {
   return t ? { Authorization: `Bearer ${t}` } : {};
 }
 
-export function EditOverlayShell({ title, onCancel, onSave, saving, error, children, hideSave }) {
+export function EditOverlayShell({ title, onCancel, onSave, saving, error, children, hideSave, saveLabel }) {
   return (
     <div style={shellBase}>
       <style>{`
@@ -51,7 +51,7 @@ export function EditOverlayShell({ title, onCancel, onSave, saving, error, child
               background: saving ? "#9CA3AF" : BRAND,
               cursor: saving ? "default" : "pointer",
               boxShadow: saving ? "none" : "0 8px 20px -8px rgba(15,89,89,0.6)",
-            }}>{saving ? "Saving…" : "Save"}</button>
+            }}>{saving ? "Saving…" : (saveLabel || "Save")}</button>
           )}
         </div>
       </div>
@@ -464,5 +464,239 @@ const drawerFooter = {
   flexShrink: 0, padding: "16px 24px",
   borderTop: `1px solid ${BORDER}`,
   display: "flex", justifyContent: "space-between", alignItems: "center",
+};
+
+// ============================================================================
+// SCREEN 4f — Edit Deductions and Contributions
+// ============================================================================
+
+const DEDUCTION_TYPES = {
+  other:      "Other deductions",
+  health:     "Health insurance",
+  taxable:    "Taxable benefits (non-cash)",
+  retirement: "Retirement plans",
+};
+
+const DENTAL_CODE_TABLE = [
+  { code: "Code 1", access: "No",  who: "No one" },
+  { code: "Code 2", access: "Yes", who: "Payee" },
+  { code: "Code 3", access: "Yes", who: "Payee, their spouse, and dependents" },
+  { code: "Code 4", access: "Yes", who: "Payee and their spouse" },
+  { code: "Code 5", access: "Yes", who: "Payee and their dependents" },
+];
+
+export function EditDeductionsContributions({ employee, onClose, onSaved }) {
+  const [bannerOpen, setBannerOpen] = useState(true);
+  const [dentalCode, setDentalCode] = useState(employee.dental_benefit_code || "");
+  const [deductions, setDeductions] = useState(Array.isArray(employee.deductions_list) ? employee.deductions_list : []);
+  const [showAddDrawer, setShowAddDrawer] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  const save = async () => {
+    setSaving(true); setErr("");
+    try {
+      await patchEmployee(employee.id, {
+        dental_benefit_code: dentalCode || null,
+        deductions_list: deductions,
+      });
+      onSaved();
+    } catch (e) { setErr(e.message); setSaving(false); }
+  };
+
+  return (
+    <EditOverlayShell
+      title="Edit deductions and contributions"
+      onCancel={onClose}
+      onSave={save}
+      saving={saving}
+      error={err}
+      saveLabel="Done"
+    >
+      {bannerOpen && (
+        <div style={{
+          display: "flex", gap: 14, padding: 16, marginBottom: 28,
+          background: "#F0FAFA", border: "1px solid rgba(15,89,89,0.18)",
+          borderRadius: 12, position: "relative",
+        }}>
+          <Info size={22} strokeWidth={1.9} color={BRAND} style={{ flexShrink: 0, marginTop: 2 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14.5, fontWeight: 700, color: INK, marginBottom: 4 }}>
+              Select a dental benefits code for each employee
+            </div>
+            <div style={{ fontSize: 13.5, color: SUB, lineHeight: 1.55 }}>
+              As part of the Canadian Dental Care Plan, the CRA needs to know who has access to any dental benefits you offer. This info is required to file T4 slips. <a href="#" onClick={e => e.preventDefault()} style={{ color: BRAND, fontWeight: 600 }}>Get more info</a>
+            </div>
+          </div>
+          <button onClick={() => setBannerOpen(false)} aria-label="Dismiss" style={{
+            position: "absolute", top: 10, right: 10, width: 28, height: 28,
+            borderRadius: 999, border: "none", background: "transparent",
+            color: SUB, cursor: "pointer", display: "grid", placeItems: "center",
+          }}><XIcon size={16} /></button>
+        </div>
+      )}
+
+      <h1 style={pageHeading}>
+        What deductions, contributions does {employee.first_name} have?
+      </h1>
+
+      <a href="#" onClick={e => e.preventDefault()} style={{ color: BRAND, fontWeight: 600, fontSize: 14, textDecoration: "none", display: "inline-block", marginBottom: 28 }}>
+        View inactive items
+      </a>
+
+      <h2 style={{ fontSize: 18, fontWeight: 700, color: INK, margin: "0 0 8px 0", letterSpacing: "-0.01em" }}>
+        Deductions and contributions
+      </h2>
+      <p style={{ fontSize: 14, color: SUB, lineHeight: 1.55, margin: "0 0 6px 0" }}>
+        These may include health insurance, retirement plans, loan repayments, and more.
+      </p>
+      <a href="#" onClick={e => e.preventDefault()} style={{ color: BRAND, fontWeight: 600, fontSize: 14, textDecoration: "none", display: "inline-block", marginBottom: 16 }}>
+        Learn about deductions and contributions
+      </a>
+
+      {deductions.length > 0 && (
+        <div style={{ marginBottom: 16, border: `1px solid ${BORDER}`, borderRadius: 12, overflow: "hidden" }}>
+          {deductions.map((d, i) => (
+            <div key={i} style={{
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              padding: "12px 16px",
+              borderBottom: i < deductions.length - 1 ? `1px solid ${BORDER}` : "none",
+              background: "#fff",
+            }}>
+              <span style={{ fontSize: 14.5, color: INK, fontWeight: 500 }}>
+                {DEDUCTION_TYPES[d.type] || d.type}
+              </span>
+              <button onClick={() => setDeductions(prev => prev.filter((_, j) => j !== i))} title="Remove" style={{
+                background: "transparent", border: "none", color: "#D9453C", cursor: "pointer",
+                display: "grid", placeItems: "center", padding: 6, borderRadius: 6,
+              }}><Trash2 size={16} strokeWidth={1.9} /></button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button onClick={() => setShowAddDrawer(true)} style={{
+        display: "inline-flex", alignItems: "center", gap: 6,
+        background: "transparent", border: "none", color: BRAND,
+        fontWeight: 700, fontSize: 14.5, cursor: "pointer", padding: 0,
+        marginBottom: 32,
+      }}>
+        <Plus size={18} strokeWidth={2.2} /> Add deduction/contribution
+      </button>
+
+      <hr style={{ border: "none", borderTop: `1px solid ${BORDER}`, margin: "8px 0 28px 0" }} />
+
+      <h2 style={{ fontSize: 18, fontWeight: 700, color: INK, margin: "0 0 8px 0", letterSpacing: "-0.01em" }}>
+        Dental benefits access
+      </h2>
+      <p style={{ fontSize: 14, color: SUB, lineHeight: 1.55, margin: "0 0 20px 0", maxWidth: 640 }}>
+        Select a T4 code to tell us who has access to any dental benefits you offer as of December 31 of each year. Dental benefits can include health spending and wellness accounts. Even if they opted out, employees and their family members are still considered to have access to dental benefits. <a href="#" onClick={e => e.preventDefault()} style={{ color: BRAND, fontWeight: 600 }}>Get more info</a>
+      </p>
+
+      <Field label="T4 dental benefits codes">
+        <Select value={dentalCode} onChange={e => setDentalCode(e.target.value)} style={{ maxWidth: 360 }}>
+          <option value="">Select an option</option>
+          <option value="code_1">Code 1</option>
+          <option value="code_2">Code 2</option>
+          <option value="code_3">Code 3</option>
+          <option value="code_4">Code 4</option>
+          <option value="code_5">Code 5</option>
+        </Select>
+      </Field>
+
+      <div style={{ border: `1px solid ${BORDER}`, borderRadius: 14, overflow: "hidden", marginTop: 20, maxWidth: 720 }}>
+        <div style={{ padding: "12px 16px", background: "#F7F8F9", borderBottom: `1px solid ${BORDER}`, fontSize: 13, fontWeight: 700, color: INK, letterSpacing: "0.02em" }}>
+          What do the codes mean?
+        </div>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <thead>
+            <tr style={{ background: "#FAFBFB" }}>
+              <th style={dentalTh}>CODE</th>
+              <th style={dentalTh}>ACCESS TO EMPLOYER-PROVIDED DENTAL BENEFITS</th>
+              <th style={dentalTh}>WHO'S COVERED</th>
+            </tr>
+          </thead>
+          <tbody>
+            {DENTAL_CODE_TABLE.map((row, i) => (
+              <tr key={row.code} style={{ borderTop: `1px solid ${BORDER}` }}>
+                <td style={dentalTd}><strong style={{ color: INK }}>{row.code}</strong></td>
+                <td style={dentalTd}>{row.access}</td>
+                <td style={dentalTd}>{row.who}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {showAddDrawer && (
+        <AddDeductionDrawer
+          onClose={() => setShowAddDrawer(false)}
+          onAdd={(item) => { setDeductions(prev => [...prev, item]); setShowAddDrawer(false); }}
+        />
+      )}
+    </EditOverlayShell>
+  );
+}
+
+function AddDeductionDrawer({ onClose, onAdd }) {
+  const [type, setType] = useState("");
+  const [err, setErr] = useState("");
+
+  const save = () => {
+    if (!type) { setErr("This field is required."); return; }
+    onAdd({ type });
+  };
+
+  return (
+    <div style={drawerBackdrop} onClick={onClose}>
+      <div style={drawerPanel} onClick={e => e.stopPropagation()}>
+        <div style={drawerHeader}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: INK, margin: 0 }}>Add deduction/contribution</h2>
+          <button className="nv-overlay-icon-btn" onClick={onClose} style={iconBtn} aria-label="Close">
+            <XIcon size={20} strokeWidth={2.1} />
+          </button>
+        </div>
+        <div style={drawerBody}>
+          <Field label="Deduction/contribution type" required>
+            <Select value={type} onChange={e => { setType(e.target.value); setErr(""); }} style={{
+              maxWidth: 420,
+              borderColor: err ? "#D9453C" : undefined,
+            }}>
+              <option value="">Select one</option>
+              <option value="other">Other deductions</option>
+              <option value="health">Health insurance</option>
+              <option value="taxable">Taxable benefits (non-cash)</option>
+              <option value="retirement">Retirement plans</option>
+            </Select>
+            {err && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, color: "#D9453C", fontSize: 13, fontWeight: 600 }}>
+                <Info size={14} /> {err}
+              </div>
+            )}
+          </Field>
+        </div>
+        <div style={drawerFooter}>
+          <button className="nv-overlay-cancel" onClick={onClose} style={cancelBtn}>Cancel</button>
+          <button className="nv-overlay-save" onClick={save} style={{
+            ...saveBtn,
+            background: BRAND,
+            cursor: "pointer",
+            boxShadow: "0 8px 20px -8px rgba(15,89,89,0.6)",
+          }}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const dentalTh = {
+  padding: "10px 14px", textAlign: "left",
+  fontSize: 11, fontWeight: 700, color: SUB,
+  letterSpacing: "0.05em",
+};
+
+const dentalTd = {
+  padding: "12px 14px", verticalAlign: "top",
+  fontSize: 13.5, color: INK, lineHeight: 1.5,
 };
 

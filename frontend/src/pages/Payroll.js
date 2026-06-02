@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import NovalaVerifyModal from "../components/NovalaVerifyModal";
 import { AlertTriangle, X as XIcon } from "lucide-react";
-import { EditPersonalInfo, EditEmploymentDetails, EditPaymentMethod, BasePayDrawer, EditTimeOff } from "../components/EmployeeEditOverlays";
+import { EditPersonalInfo, EditEmploymentDetails, EditPaymentMethod, BasePayDrawer, EditTimeOff, EditDeductionsContributions } from "../components/EmployeeEditOverlays";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -1236,6 +1236,7 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
   const [showEditPayment, setShowEditPayment] = useState(false);
   const [showBasePayDrawer, setShowBasePayDrawer] = useState(false);
   const [showTimeOff, setShowTimeOff] = useState(false);
+  const [showDeductions, setShowDeductions] = useState(false);
 
   const fetchEmp = async () => {
     try {
@@ -1434,7 +1435,7 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
             <ProfileCard
               title="Deductions and contributions"
               icon={<span title="Info" style={{ color: LINK, fontSize: 15 }}>ⓘ</span>}
-              action={{ label: "Start", onClick: () => alert("Deductions and contributions — coming next") }}
+              action={{ label: "Start", onClick: () => setShowDeductions(true)}}
               helper="Include paycheque deductions and company contributions for healthcare and retirement."
             />
 
@@ -1517,6 +1518,14 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
           employee={emp}
           onClose={() => setShowTimeOff(false)}
           onSaved={() => { setShowTimeOff(false); fetchEmp(); }}
+        />
+      )}
+
+      {showDeductions && (
+        <EditDeductionsContributions
+          employee={emp}
+          onClose={() => setShowDeductions(false)}
+          onSaved={() => { setShowDeductions(false); fetchEmp(); }}
         />
       )}
     </div>

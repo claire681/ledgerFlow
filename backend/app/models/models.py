@@ -654,6 +654,9 @@ class Employee(Base):
     vacation_policy = Column(String(80))
     sick_pay_policy = Column(String(80))
     unpaid_time_off_policy = Column(String(80))
+    # Deductions & contributions (Screen 4f)
+    dental_benefit_code = Column(String(10))
+    deductions_list = Column(JSONB)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
