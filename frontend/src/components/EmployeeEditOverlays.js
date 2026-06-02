@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X as XIcon, HelpCircle, ChevronDown, Pencil, Info, Plus, Trash2 } from "lucide-react";
+import { X as XIcon, HelpCircle, ChevronDown, Pencil, Info, Plus, Trash2, Calendar } from "lucide-react";
 import { FeedbackWidget } from "./FeedbackWidget";
 
 const BRAND = "#0F5959";
@@ -469,6 +469,8 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
   const [hoursPerDay, setHoursPerDay] = useState(employee.hours_per_day || "");
   const [daysPerWeek, setDaysPerWeek] = useState(employee.days_per_week || "");
   const [showFeedback, setShowFeedback] = useState(false);
+  const [effectiveOption, setEffectiveOption] = useState(employee.effective_date ? "specific_date" : "immediately");
+  const [effectiveDate, setEffectiveDate] = useState((employee.effective_date || "").slice(0, 10));
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
@@ -499,6 +501,7 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
         account_mapping: accountMapping,
         hours_per_day: (payType === "hourly" || payType === "salary") ? (parseFloat(hoursPerDay) || null) : null,
         days_per_week: (payType === "hourly" || payType === "salary") ? (parseFloat(daysPerWeek) || null) : null,
+        effective_date: effectiveOption === "specific_date" ? (effectiveDate || null) : null,
       };
       await patchEmployee(employee.id, payload);
       onSaved();
@@ -512,7 +515,7 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
       <style>{`@keyframes nvSlideRight { from { transform: translateX(100%); } to { transform: none; } }`}</style>
       <div style={{ ...drawerPanel, width: 540 }} onClick={e => e.stopPropagation()}>
         <div style={drawerHeader}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: INK, margin: 0 }}>Add base pay</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: INK, margin: 0 }}>{employee.pay_type ? "Edit base pay" : "Add base pay"}</h2>
           <div style={{ display: "flex", gap: 4 }}>
             <button className="nv-overlay-icon-btn" onClick={() => setShowFeedback(true)} style={iconBtn} title="Send us a message" aria-label="Send us a message">
               <Pencil size={18} strokeWidth={1.9} />
@@ -557,11 +560,7 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
               <Field label="Rate per hour" required>
                 <MoneyInput value={hourlyRate} onChange={e => setHourlyRate(e.target.value)} placeholder="0.00" />
               </Field>
-              <Field label="Account mapping" hint={accountHelper}>
-                <Select value={accountMapping} onChange={e => setAccountMapping(e.target.value)} style={{ maxWidth: 360 }}>
-                  <option value="Payroll Expenses:Wages">Payroll Expenses:Wages</option>
-                </Select>
-              </Field>
+              <AccountMappingField value={accountMapping} onChange={setAccountMapping} />
               <div style={{ height: 1, background: BORDER, margin: "20px 0 20px 0" }} />
               <h4 style={{ fontSize: 15, fontWeight: 700, color: INK, margin: "0 0 6px 0" }}>Default working hours (optional)</h4>
               <p style={{ fontSize: 13.5, color: SUB, lineHeight: 1.55, margin: "0 0 16px 0" }}>
@@ -589,11 +588,7 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
                   <MoneyInput value={salaryAmount} onChange={e => setSalaryAmount(e.target.value)} placeholder="0.00" />
                 </Field>
               </div>
-              <Field label="Account mapping" hint={accountHelper}>
-                <Select value={accountMapping} onChange={e => setAccountMapping(e.target.value)} style={{ maxWidth: 360 }}>
-                  <option value="Payroll Expenses:Wages">Payroll Expenses:Wages</option>
-                </Select>
-              </Field>
+              <AccountMappingField value={accountMapping} onChange={setAccountMapping} />
               <div style={{ height: 1, background: BORDER, margin: "20px 0 20px 0" }} />
               <h4 style={{ fontSize: 15, fontWeight: 700, color: INK, margin: "0 0 6px 0" }}>Default working hours</h4>
               <p style={{ fontSize: 13.5, color: SUB, lineHeight: 1.55, margin: "0 0 16px 0" }}>
@@ -615,13 +610,11 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
               <InfoBox>
                 Overtime, stat pay, and time-off policies are not available for commission-only employees.
               </InfoBox>
-              <Field label="Account mapping" hint={accountHelper}>
-                <Select value={accountMapping} onChange={e => setAccountMapping(e.target.value)} style={{ maxWidth: 360 }}>
-                  <option value="Payroll Expenses:Wages">Payroll Expenses:Wages</option>
-                </Select>
-              </Field>
+              <AccountMappingField value={accountMapping} onChange={setAccountMapping} />
             </div>
           )}
+
+          {payType && <EffectiveOnSection effectiveOption={effectiveOption} setEffectiveOption={setEffectiveOption} effectiveDate={effectiveDate} setEffectiveDate={setEffectiveDate} />}
         </div>
 
         <div style={drawerFooter}>
@@ -987,4 +980,52 @@ const dentalTd = {
   padding: "12px 14px", verticalAlign: "top",
   fontSize: 13.5, color: INK, lineHeight: 1.5,
 };
+
+function AccountMappingField({ value, onChange }) {
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <label style={{ fontSize: 13, fontWeight: 600, color: SUB, marginBottom: 6, display: "block" }}>
+        Account mapping
+      </label>
+      <Select value={value} onChange={e => onChange(e.target.value)} style={{ maxWidth: 360 }}>
+        <option value="Payroll Expenses:Wages">Payroll Expenses:Wages</option>
+      </Select>
+      <div style={{ fontSize: 13, color: SUB, marginTop: 6, lineHeight: 1.55 }}>
+        Used to categorize and map your payroll transactions. To edit, see Accounting under{" "}
+        <a href="/payroll?tab=settings" style={{ color: BRAND, fontWeight: 600, textDecoration: "underline" }}>
+          Payroll settings
+        </a>.
+      </div>
+    </div>
+  );
+}
+
+function EffectiveOnSection({ effectiveOption, setEffectiveOption, effectiveDate, setEffectiveDate }) {
+  return (
+    <div>
+      <div style={{ height: 1, background: BORDER, margin: "20px 0 20px 0" }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+        <Calendar size={20} color={INK} strokeWidth={1.9} />
+        <h4 style={{ fontSize: 15, fontWeight: 700, color: INK, margin: 0 }}>Effective on</h4>
+      </div>
+      <p style={{ fontSize: 13.5, color: SUB, lineHeight: 1.55, margin: "0 0 16px 0" }}>
+        When should this change start?
+      </p>
+      <Field label="Effective pay period">
+        <Select value={effectiveOption} onChange={e => setEffectiveOption(e.target.value)} style={{ maxWidth: 320 }}>
+          <option value="immediately">Immediately</option>
+          <option value="specific_date">Specific date</option>
+        </Select>
+      </Field>
+      {effectiveOption === "specific_date" && (
+        <Field label="Date" required>
+          <TextInput type="date" value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} style={{ maxWidth: 240 }} />
+        </Field>
+      )}
+      <InfoBox>
+        Applies to all payrolls processed from now on, even if dated in the past.
+      </InfoBox>
+    </div>
+  );
+}
 

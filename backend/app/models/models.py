@@ -669,6 +669,8 @@ class Employee(Base):
     hours_per_day = Column(Numeric(5, 2))
     days_per_week = Column(Numeric(5, 2))
     account_mapping = Column(String(255))
+    # Base pay effective date (Screen 4d Effective on section)
+    effective_date = Column(Date)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
