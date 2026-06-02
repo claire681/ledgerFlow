@@ -4,6 +4,7 @@ import {
   Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import InvoiceEditor from "./pages/InvoiceEditor";
 import InvoiceReviewSend from "./pages/InvoiceReviewSend";
+import Payroll from "./pages/Payroll";
 import { AIProvider }      from './context/AIContext';
 import useAI from './hooks/useAI';
 import Sidebar             from './components/Sidebar';
@@ -143,6 +144,7 @@ function AppLayout({ onLogout }) {
         <main  style={{ flex:1, overflowY:'auto', position:'relative', minWidth:0, marginLeft: 0 }}>
           <Routes>
             <Route path="/accept-invite/:token" element={<AcceptInvite />} />
+          <Route path="/payroll" element={<Payroll />} />
             <Route path="/"               element={<Dashboard />}          />
             <Route path="/documents"      element={<Documents />}          />
             <Route path="/transactions"   element={<Transactions />}       />
