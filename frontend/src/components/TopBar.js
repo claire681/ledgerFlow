@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Bell, Settings, HelpCircle,
@@ -17,7 +17,42 @@ export default function TopBar({ onLogout, onMobileMenu, isMobile }) {
 
   const rawName   = localStorage.getItem('user_name')    || localStorage.getItem('user_email') || '';
   const userEmail = localStorage.getItem('user_email')   || '';
-  const company   = localStorage.getItem('company_name') || 'My Business';
+  const [company, setCompanyState] = useState(function() {
+    return localStorage.getItem('company_name') || 'Business';
+  });
+  
+  // Always fetch the current user's company from the backend on mount.
+  // This makes the backend the source of truth and prevents stale localStorage from leaking.
+  useEffect(function() {
+    var t = localStorage.getItem('token') || localStorage.getItem('auth_token');
+    if (!t) return;
+    var api = 'https://api.getnovala.com/api/v1';
+    var hdrs = { Authorization: 'Bearer ' + t };
+    
+    // Try /team/me first - this returns the OWNER's company for team members
+    fetch(api + '/team/me', { headers: hdrs })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(d) {
+        if (d && d.company_name) {
+          setCompanyState(d.company_name);
+          localStorage.setItem('company_name', d.company_name);
+          return;
+        }
+        // Fall back to /auth/profile - returns the user's own company (for owners)
+        return fetch(api + '/auth/profile', { headers: hdrs })
+          .then(function(r) { return r.ok ? r.json() : null; })
+          .then(function(p) {
+            if (p && p.company) {
+              setCompanyState(p.company);
+              localStorage.setItem('company_name', p.company);
+            } else if (p) {
+              // No company at all - clear any stale value
+              setCompanyState('Business');
+            }
+          });
+      })
+      .catch(function() {});
+  }, []);
   const savedFirst = localStorage.getItem('first_name')  || '';
   const firstName  = savedFirst || getFirstName(rawName || userEmail);
   const initial    = firstName ? firstName[0].toUpperCase() : 'U';
