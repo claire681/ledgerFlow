@@ -1,6 +1,6 @@
 from sqlalchemy import (
     Column, String, Float, Boolean, Integer, Numeric,
-    DateTime, Text, ForeignKey, JSON,
+    DateTime, Date, Text, ForeignKey, JSON,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
@@ -570,3 +570,126 @@ class UploadJob(Base):
     updated_at    = Column(DateTime(timezone=True), onupdate=func.now())
 
     user = relationship("User", back_populates="upload_jobs")
+
+
+# === PAYROLL MODELS (Phase 1: Canada + US) ===
+
+class Employee(Base):
+    __tablename__ = "employees"
+
+    # System
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)  # set when employee accepts portal invite
+
+    # Personal
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    preferred_name = Column(String, nullable=True)
+    date_of_birth = Column(Date, nullable=True)
+    gender = Column(String, nullable=True)
+    marital_status = Column(String, nullable=True)
+    sin_or_ssn = Column(String, nullable=True)  # encrypted at rest in prod
+
+    # Contact
+    phone = Column(String, nullable=True)
+    personal_email = Column(String, nullable=False, index=True)
+
+    # Address
+    address_line1 = Column(String, nullable=True)
+    address_line2 = Column(String, nullable=True)
+    city = Column(String, nullable=True)
+    province_or_state = Column(String, nullable=True)
+    postal_or_zip = Column(String, nullable=True)
+    country = Column(String, nullable=True)
+
+    # Employment
+    employee_number = Column(String, nullable=True)
+    position_title = Column(String, nullable=True)
+    department = Column(String, nullable=True)
+    employment_type = Column(String, nullable=False, default="full_time")
+    start_date = Column(Date, nullable=True)
+    end_date = Column(Date, nullable=True)
+    status = Column(String, nullable=False, default="active")
+    manager_name = Column(String, nullable=True)
+
+    # Compensation
+    pay_type = Column(String, nullable=False, default="salary")
+    salary_amount = Column(Numeric(12, 2), nullable=True)
+    hourly_rate = Column(Numeric(12, 2), nullable=True)
+    hours_per_week = Column(Numeric(5, 2), nullable=True)
+    pay_schedule = Column(String, nullable=True, default="bi_weekly")
+    currency = Column(String, nullable=False, default="CAD")
+
+    # Banking
+    bank_name = Column(String, nullable=True)
+    transit_number = Column(String, nullable=True)
+    institution_number = Column(String, nullable=True)
+    routing_number = Column(String, nullable=True)
+    account_number_encrypted = Column(String, nullable=True)
+    account_type = Column(String, nullable=True)
+
+    # Tax info (country-specific JSONB)
+    tax_info = Column(JSONB, nullable=True, default=dict)
+
+    # Emergency contact
+    emergency_contact_name = Column(String, nullable=True)
+    emergency_contact_relationship = Column(String, nullable=True)
+    emergency_contact_phone = Column(String, nullable=True)
+    emergency_contact_email = Column(String, nullable=True)
+
+    # Self-service invite tracking (no separate invite table needed)
+    invite_token = Column(String, nullable=True, unique=True, index=True)
+    invite_status = Column(String, nullable=True)
+    invite_expires_at = Column(DateTime(timezone=True), nullable=True)
+    invite_sent_at = Column(DateTime(timezone=True), nullable=True)
+    invite_accepted_at = Column(DateTime(timezone=True), nullable=True)
+    profile_completed = Column(Boolean, default=False)
+
+    # Notes
+    notes = Column(Text, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class PayrollSettings(Base):
+    __tablename__ = "payroll_settings"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False, index=True)
+
+    # Country/jurisdiction
+    country = Column(String, nullable=False, default="CA")
+    province_or_state = Column(String, nullable=True)
+
+    # Pay schedule
+    default_pay_schedule = Column(String, nullable=False, default="bi_weekly")
+    pay_period_anchor_date = Column(Date, nullable=True)
+
+    # Currency
+    currency = Column(String, nullable=False, default="CAD")
+
+    # Custom deduction rates (overrides country defaults if set)
+    # Examples:
+    #   CA: {"federal_tax_rate": 0.15, "cpp_rate": 0.0595, "ei_rate": 0.0166}
+    #   US: {"federal_tax_rate": 0.12, "social_security_rate": 0.062, "medicare_rate": 0.0145}
+    custom_deduction_rates = Column(JSONB, nullable=True, default=dict)
+
+    # Company bank info (for direct deposit later)
+    company_bank_name = Column(String, nullable=True)
+    company_transit_number = Column(String, nullable=True)
+    company_institution_number = Column(String, nullable=True)
+    company_routing_number = Column(String, nullable=True)
+    company_account_number_encrypted = Column(String, nullable=True)
+
+    # Tax filing IDs
+    business_number = Column(String, nullable=True)  # Canada
+    ein = Column(String, nullable=True)              # US
+
+    # Active flag (set true when owner finishes setup)
+    payroll_active = Column(Boolean, default=False)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
