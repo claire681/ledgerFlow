@@ -650,6 +650,10 @@ class Employee(Base):
     notes = Column(Text, nullable=True)
 
     # Timestamps
+    # Time off policies (Screen 4e)
+    vacation_policy = Column(String(80))
+    sick_pay_policy = Column(String(80))
+    unpaid_time_off_policy = Column(String(80))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

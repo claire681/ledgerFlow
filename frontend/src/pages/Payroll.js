@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import NovalaVerifyModal from "../components/NovalaVerifyModal";
 import { AlertTriangle, X as XIcon } from "lucide-react";
-import { EditPersonalInfo, EditEmploymentDetails, EditPaymentMethod } from "../components/EmployeeEditOverlays";
+import { EditPersonalInfo, EditEmploymentDetails, EditPaymentMethod, BasePayDrawer, EditTimeOff } from "../components/EmployeeEditOverlays";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -1234,6 +1234,8 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
   const [showEditPersonal, setShowEditPersonal] = useState(false);
   const [showEditEmployment, setShowEditEmployment] = useState(false);
   const [showEditPayment, setShowEditPayment] = useState(false);
+  const [showBasePayDrawer, setShowBasePayDrawer] = useState(false);
+  const [showTimeOff, setShowTimeOff] = useState(false);
 
   const fetchEmp = async () => {
     try {
@@ -1410,7 +1412,7 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
             <ProfileCard
               title="Base pay"
               icon={hasBasePay ? null : <span title="Required" style={{ color: "#F59E0B", fontSize: 16 }}>⚠</span>}
-              action={hasBasePay ? { label: "Edit", onClick: () => setEditing(true) } : { label: "Start", onClick: () => setEditing(true) }}
+              action={hasBasePay ? { label: "Edit", onClick: () => setShowBasePayDrawer(true) } : { label: "Start", onClick: () => setShowBasePayDrawer(true) }}
               helper={`To pay ${emp.first_name}, set up their hourly, salary or commission earnings.`}
             >
               {hasBasePay && <ProfileFieldGrid fields={[["Base pay", basePayValue], ["Pay type", emp.pay_type]]} />}
@@ -1499,6 +1501,22 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
           employee={emp}
           onClose={() => setShowEditPayment(false)}
           onSaved={() => { setShowEditPayment(false); fetchEmp(); }}
+        />
+      )}
+
+      {showBasePayDrawer && (
+        <BasePayDrawer
+          employee={emp}
+          onClose={() => setShowBasePayDrawer(false)}
+          onSaved={() => { setShowBasePayDrawer(false); fetchEmp(); }}
+        />
+      )}
+
+      {showTimeOff && (
+        <EditTimeOff
+          employee={emp}
+          onClose={() => setShowTimeOff(false)}
+          onSaved={() => { setShowTimeOff(false); fetchEmp(); }}
         />
       )}
     </div>

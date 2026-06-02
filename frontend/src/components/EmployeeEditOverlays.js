@@ -287,3 +287,173 @@ const cancelBtn = { background: "transparent", border: "none", color: BRAND, fon
 const saveBtn = { border: "none", borderRadius: 10, padding: "12px 32px", color: "#fff", fontWeight: 700, fontSize: 15, transition: "background 0.15s, transform 0.15s, box-shadow 0.15s" };
 const pageHeading = { fontSize: 26, fontWeight: 700, color: INK, margin: "0 0 32px 0", letterSpacing: "-0.015em", lineHeight: 1.2 };
 const pencilBtn = { flexShrink: 0, width: 38, height: 38, borderRadius: 8, border: `1.5px solid ${BORDER}`, background: "#fff", color: SUB, cursor: "pointer", display: "grid", placeItems: "center" };
+
+// ============================================================================
+// SCREEN 4d — Base Pay Drawer (right-side slide-out)
+// ============================================================================
+
+export function BasePayDrawer({ employee, onClose, onSaved }) {
+  const [payType, setPayType] = useState(employee.pay_type || "");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  const options = [
+    { value: "hourly",     label: "Hourly" },
+    { value: "salary",     label: "Salary" },
+    { value: "commission", label: "Commission only" },
+  ];
+
+  const save = async () => {
+    if (!payType) { setErr("Please select a compensation type."); return; }
+    setSaving(true); setErr("");
+    try { await patchEmployee(employee.id, { pay_type: payType }); onSaved(); }
+    catch (e) { setErr(e.message); setSaving(false); }
+  };
+
+  return (
+    <div style={drawerBackdrop} onClick={onClose}>
+      <style>{`
+        @keyframes nvSlideRight { from { transform: translateX(100%); } to { transform: none; } }
+      `}</style>
+      <div style={drawerPanel} onClick={e => e.stopPropagation()}>
+        <div style={drawerHeader}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: INK, margin: 0 }}>Add base pay</h2>
+          <div style={{ display: "flex", gap: 4 }}>
+            <button className="nv-overlay-icon-btn" style={iconBtn} title="Edit" aria-label="Edit">
+              <Pencil size={18} strokeWidth={1.9} />
+            </button>
+            <button className="nv-overlay-icon-btn" onClick={onClose} style={iconBtn} aria-label="Close">
+              <XIcon size={20} strokeWidth={2.1} />
+            </button>
+          </div>
+        </div>
+
+        <div style={drawerBody}>
+          {err && <div style={errorBanner}>{err}</div>}
+          <h3 style={{ fontSize: 18, fontWeight: 700, color: INK, margin: "0 0 20px 0", letterSpacing: "-0.01em" }}>
+            Select compensation type
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {options.map(o => (
+              <button key={o.value} onClick={() => setPayType(o.value)} style={{
+                display: "flex", alignItems: "center", gap: 14,
+                padding: "16px 18px", textAlign: "left",
+                background: payType === o.value ? "#F0FAFA" : "#fff",
+                border: `1.5px solid ${payType === o.value ? BRAND : BORDER}`,
+                borderRadius: 10, cursor: "pointer", width: "100%",
+                transition: "background 0.15s, border-color 0.15s",
+              }}>
+                <span style={{
+                  flexShrink: 0, width: 20, height: 20, borderRadius: "50%",
+                  border: `2px solid ${payType === o.value ? BRAND : "#9CA3AF"}`,
+                  background: "#fff", position: "relative",
+                }}>
+                  {payType === o.value && <span style={{ position: "absolute", inset: 3, borderRadius: "50%", background: BRAND }} />}
+                </span>
+                <span style={{ fontSize: 15, fontWeight: 600, color: INK }}>{o.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={drawerFooter}>
+          <button className="nv-overlay-cancel" onClick={onClose} style={cancelBtn}>Cancel</button>
+          <button className="nv-overlay-save" onClick={save} disabled={saving} style={{
+            ...saveBtn,
+            background: saving ? "#9CA3AF" : BRAND,
+            cursor: saving ? "default" : "pointer",
+            boxShadow: saving ? "none" : "0 8px 20px -8px rgba(15,89,89,0.6)",
+          }}>{saving ? "Saving…" : "Save"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// SCREEN 4e — Edit Time Off (full-screen overlay)
+// ============================================================================
+
+export function EditTimeOff({ employee, onClose, onSaved }) {
+  const [f, setF] = useState({
+    vacation_policy: employee.vacation_policy || "",
+    sick_pay_policy: employee.sick_pay_policy || "no_policy",
+    unpaid_time_off_policy: employee.unpaid_time_off_policy || "no_policy",
+  });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+  const set = (k, v) => setF(p => ({ ...p, [k]: v }));
+
+  const handleSelect = (key) => (e) => {
+    const v = e.target.value;
+    if (v === "add_new") {
+      alert("Custom policies — coming soon. Pick one of the standard options for now.");
+      return;
+    }
+    set(key, v);
+  };
+
+  const save = async () => {
+    setSaving(true); setErr("");
+    try { await patchEmployee(employee.id, f); onSaved(); }
+    catch (e) { setErr(e.message); setSaving(false); }
+  };
+
+  return (
+    <EditOverlayShell title="Edit time off" onCancel={onClose} onSave={save} saving={saving} error={err}>
+      <h1 style={pageHeading}>Manage time off policies</h1>
+
+      <Field label="Vacation policy" hint={
+        <span>We recommend the <strong>Pay out each pay period</strong> option for part-time, hourly, and commissioned employees.</span>
+      }>
+        <Select value={f.vacation_policy} onChange={handleSelect("vacation_policy")} style={{ maxWidth: 520 }}>
+          <option value="">Select one</option>
+          <option value="add_new">+ Add vacation policy</option>
+          <option value="accrue_4pct">4.00% Accrue time/hrs worked</option>
+          <option value="paid_out_4pct">4.00% Paid out each pay period</option>
+          <option value="dont_track">Don't track vacation</option>
+        </Select>
+      </Field>
+
+      <Field label="Sick pay">
+        <Select value={f.sick_pay_policy} onChange={handleSelect("sick_pay_policy")} style={{ maxWidth: 520 }}>
+          <option value="no_policy">No sick pay policy</option>
+          <option value="add_new">+ Add new sick pay policy</option>
+        </Select>
+      </Field>
+
+      <Field label="Unpaid time off">
+        <Select value={f.unpaid_time_off_policy} onChange={handleSelect("unpaid_time_off_policy")} style={{ maxWidth: 520 }}>
+          <option value="no_policy">No unpaid time off policy</option>
+          <option value="add_new">+ Add new unpaid time off policy</option>
+        </Select>
+      </Field>
+    </EditOverlayShell>
+  );
+}
+
+// Drawer styles
+const drawerBackdrop = {
+  position: "fixed", inset: 0, background: "rgba(14,26,26,0.45)",
+  backdropFilter: "blur(4px)", zIndex: 9998,
+  display: "flex", justifyContent: "flex-end",
+  fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+};
+const drawerPanel = {
+  width: 480, maxWidth: "100%", height: "100vh", background: "#fff",
+  display: "flex", flexDirection: "column",
+  boxShadow: "-12px 0 32px -12px rgba(0,0,0,0.2)",
+  animation: "nvSlideRight 0.28s cubic-bezier(0.16,1,0.3,1)",
+};
+const drawerHeader = {
+  flexShrink: 0, padding: "18px 24px",
+  borderBottom: `1px solid ${BORDER}`,
+  display: "flex", justifyContent: "space-between", alignItems: "center",
+};
+const drawerBody = { flex: 1, overflowY: "auto", padding: "28px 24px" };
+const drawerFooter = {
+  flexShrink: 0, padding: "16px 24px",
+  borderTop: `1px solid ${BORDER}`,
+  display: "flex", justifyContent: "space-between", alignItems: "center",
+};
+
