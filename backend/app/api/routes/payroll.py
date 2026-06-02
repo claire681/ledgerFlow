@@ -594,3 +594,110 @@ async def create_pay_run(body: PayRunCreateBody, current_user=Depends(get_curren
 
     stubs_result = await db.execute(select(PayStub).where(PayStub.pay_run_id == pr.id))
     return serialize_pay_run(pr, stubs_result.scalars().all())
+
+
+
+# ============================================================================
+# Identity verification (used before sending self-onboard invites)
+# In-memory store; 5-min TTL; resets on service restart (fine for MVP).
+# ============================================================================
+
+import secrets as _secrets
+_VERIFICATION_CODES = {}  # user_id (str) -> {code, expires_at, method, destination, attempts}
+
+
+class VerifyCodeSendBody(BaseModel):
+    method: str = "email"  # "text" | "email" | "call"
+
+
+class VerifyCodeCheckBody(BaseModel):
+    code: str
+
+
+@router.post("/verify/send-code")
+async def send_verification_code(body: VerifyCodeSendBody, current_user=Depends(get_current_user)):
+    user_id = str(current_user.id)
+    method = (body.method or "email").lower()
+    if method not in ("email", "text", "call"):
+        raise HTTPException(400, "Invalid verification method")
+
+    user_email = getattr(current_user, "email", None)
+    user_phone = getattr(current_user, "phone", None)
+
+    if method == "email":
+        destination = user_email or "(no email on file)"
+    else:
+        destination = user_phone or "(no phone on file — add one in account settings)"
+
+    code = f"{_secrets.randbelow(900000) + 100000}"
+    expires_at = datetime.utcnow() + timedelta(minutes=5)
+
+    _VERIFICATION_CODES[user_id] = {
+        "code": code,
+        "expires_at": expires_at,
+        "method": method,
+        "destination": destination,
+        "attempts": 0,
+    }
+
+    delivered = False
+    err_msg = None
+
+    if method == "email" and HAS_SENDGRID and user_email:
+        api_key = os.getenv("SENDGRID_API_KEY")
+        if api_key:
+            try:
+                from_email = os.getenv("SENDGRID_FROM_EMAIL", "noreply@getnovala.com")
+                user_name = getattr(current_user, "full_name", None) or "there"
+                body_html = f"""<!DOCTYPE html>
+<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:32px 20px;color:#1f2937;">
+  <h1 style="color:#0F5959;font-size:24px;margin:0 0 16px 0;">Verification code</h1>
+  <p style="font-size:15px;">Hi {user_name},</p>
+  <p style="font-size:15px;">Use this code to verify your identity in Novala:</p>
+  <div style="font-size:34px;font-weight:700;letter-spacing:10px;background:#F0FAFA;color:#0F5959;padding:20px;text-align:center;border-radius:10px;margin:24px 0;">{code}</div>
+  <p style="font-size:13px;color:#6b7280;">This code expires in 5 minutes. If you didn't request it, you can safely ignore this email.</p>
+</body></html>"""
+                msg = Mail(from_email=from_email, to_emails=user_email,
+                           subject=f"Novala verification code: {code}",
+                           html_content=body_html)
+                SendGridAPIClient(api_key).send(msg)
+                delivered = True
+            except Exception as e:
+                err_msg = str(e)
+                traceback.print_exc()
+
+    # text/call: log to server for now (Twilio later). Always log so dev can grab it.
+    print(f"[verify] user={user_id} method={method} dest={destination} code={code}")
+
+    return {
+        "success": True,
+        "method": method,
+        "destination": destination,
+        "delivered": delivered,
+        "error": err_msg,
+    }
+
+
+@router.post("/verify/check-code")
+async def check_verification_code(body: VerifyCodeCheckBody, current_user=Depends(get_current_user)):
+    user_id = str(current_user.id)
+    stored = _VERIFICATION_CODES.get(user_id)
+
+    if not stored:
+        return {"valid": False, "reason": "No code sent (or already used)."}
+
+    if stored["expires_at"] < datetime.utcnow():
+        _VERIFICATION_CODES.pop(user_id, None)
+        return {"valid": False, "reason": "Code expired."}
+
+    stored["attempts"] += 1
+    if stored["attempts"] > 10:
+        _VERIFICATION_CODES.pop(user_id, None)
+        return {"valid": False, "reason": "Too many attempts."}
+
+    if stored["code"] != (body.code or "").strip():
+        return {"valid": False, "reason": "Incorrect code."}
+
+    # Valid — consume it
+    _VERIFICATION_CODES.pop(user_id, None)
+    return {"valid": True}

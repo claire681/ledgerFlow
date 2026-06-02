@@ -270,7 +270,7 @@ function EmployeesView({ employees, settings, onRefresh, setTab }) {
       {showAddOverlay && (
         <AddEmployeeOverlay
           onClose={() => setShowAddOverlay(false)}
-          onCreated={() => { setShowAddOverlay(false); onRefresh(); }}
+          onCompleted={() => { setShowAddOverlay(false); onRefresh(); }}
           onCreatedEnterMore={(emp) => { setShowAddOverlay(false); onRefresh(); setEditingEmp(emp); }}
         />
       )}
@@ -348,21 +348,35 @@ function EmployeeRow({ emp, privacy, onEdit, onRefresh }) {
 // ADD EMPLOYEE — FULL-SCREEN OVERLAY (QB Screen 2)
 // ============================================================================
 
-function AddEmployeeOverlay({ onClose, onCreated, onCreatedEnterMore }) {
+function AddEmployeeOverlay({ onClose, onCompleted, onCreatedEnterMore }) {
+  const [step, setStep] = useState("form");
+  const [createdEmp, setCreatedEmp] = useState(null);
   const [form, setForm] = useState({
     first_name: "", middle_initial: "", last_name: "",
     email: "", hire_date: "", onboarding: "",
   });
+  const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState("");
   const u = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
-  const submit = async () => {
-    setErr("");
-    if (!form.first_name.trim() || !form.last_name.trim()) { setErr("First name and last name are required."); return; }
-    if (!form.onboarding) { setErr("Please choose an onboarding method."); return; }
-    if (form.onboarding === "self_onboard" && !form.email.trim()) { setErr("Email is required for self-onboarding so we can send the invite."); return; }
+  const resetForm = () => {
+    setForm({ first_name: "", middle_initial: "", last_name: "", email: "", hire_date: "", onboarding: "" });
+    setErrors({}); setCreatedEmp(null); setStep("form");
+  };
 
+  const validate = () => {
+    const e = {};
+    if (!form.first_name.trim()) e.first_name = "This field is required.";
+    if (!form.last_name.trim()) e.last_name = "This field is required.";
+    if (!form.onboarding) e.onboarding = "Please choose an onboarding method.";
+    if (form.onboarding === "self_onboard" && !form.email.trim()) {
+      e.email = "Add an email to invite your employee to self-onboard and access Novala Workforce.";
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const createEmployee = async () => {
     setSaving(true);
     const preferred = form.middle_initial.trim() ? `${form.first_name.trim()} ${form.middle_initial.trim()}.` : "";
     const payload = {
@@ -380,31 +394,30 @@ function AddEmployeeOverlay({ onClose, onCreated, onCreatedEnterMore }) {
         body: JSON.stringify(payload),
       });
       if (!r.ok) {
-        const e = await r.json().catch(() => ({ detail: `HTTP ${r.status}` }));
-        throw new Error(e.detail || `HTTP ${r.status}`);
+        const er = await r.json().catch(() => ({ detail: `HTTP ${r.status}` }));
+        throw new Error(er.detail || `HTTP ${r.status}`);
       }
       const emp = await r.json();
+      setCreatedEmp(emp);
 
       if (form.onboarding === "self_onboard") {
-        try {
-          const inv = await fetch(`${API_URL}/api/v1/payroll/employees/${emp.id}/send-invite`, { method: "POST", headers: authHeaders() });
-          const d = await inv.json();
-          if (d.email_sent) alert(`${emp.first_name} added and invite emailed to ${emp.personal_email}.`);
-          else {
-            try { await navigator.clipboard.writeText(d.invite_url); } catch (_) {}
-            alert(`${emp.first_name} added. Email delivery failed — invite link copied to clipboard:\n\n${d.invite_url}`);
-          }
-        } catch (inviteErr) {
-          alert(`${emp.first_name} added, but invite send failed: ${inviteErr.message}.`);
-        }
-        onCreated();
-      } else {
-        onCreatedEnterMore(emp);
+        try { await fetch(`${API_URL}/api/v1/payroll/employees/${emp.id}/send-invite`, { method: "POST", headers: authHeaders() }); }
+        catch (_) {}
       }
+      setStep("success");
     } catch (e) {
-      setErr(e.message);
+      setErrors({ submit: e.message });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleFormSubmit = async () => {
+    if (!validate()) return;
+    if (form.onboarding === "enter_myself") {
+      await createEmployee();
+    } else {
+      setStep("verify");
     }
   };
 
@@ -415,47 +428,288 @@ function AddEmployeeOverlay({ onClose, onCreated, onCreatedEnterMore }) {
         <button onClick={onClose} aria-label="Close" style={{ background: "transparent", border: "none", fontSize: 26, cursor: "pointer", color: TEXT_MUTED, lineHeight: 1, padding: 4 }}>×</button>
       </div>
 
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "56px 32px 80px 32px" }}>
-        <h1 style={{ fontSize: 30, fontWeight: 600, color: TEXT, margin: "0 0 14px 0", lineHeight: 1.2 }}>Who's your new team member?</h1>
-        <p style={{ fontSize: 15, color: TEXT_MUTED, margin: "0 0 6px 0", lineHeight: 1.5 }}>
-          Add your employee to get them paid. Include their email or mobile number to give them access to Novala Workforce, where they can view pay, T4s and more.
-        </p>
-        <a href="#" onClick={e => e.preventDefault()} style={{ color: LINK, fontSize: 14, textDecoration: "none" }}>Find out more about Novala Workforce</a>
+      {step === "form" && (
+        <AddEmployeeFormView
+          form={form} u={u} errors={errors} saving={saving}
+          onCancel={onClose} onSubmit={handleFormSubmit}
+        />
+      )}
 
-        {err && <div style={{ marginTop: 18, background: "#FEF2F2", color: "#991B1B", padding: 10, borderRadius: 6, fontSize: 13 }}>{err}</div>}
+      {step === "verify" && (
+        <VerifyIdentityModal
+          onCancel={() => setStep("form")}
+          onVerified={createEmployee}
+        />
+      )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 1fr", gap: 12, marginTop: 28 }}>
-          <SpecField label="First name" value={form.first_name} onChange={v => u("first_name", v)} />
-          <SpecField label="M.I." value={form.middle_initial} onChange={v => u("middle_initial", v.slice(0, 1).toUpperCase())} maxLength={1} />
-          <SpecField label="Last name" value={form.last_name} onChange={v => u("last_name", v)} />
-        </div>
+      {step === "success" && createdEmp && (
+        <AddEmployeeSuccessView
+          emp={createdEmp}
+          mode={form.onboarding}
+          onAddAnother={resetForm}
+          onFinish={() => {
+            if (form.onboarding === "enter_myself" && onCreatedEnterMore) {
+              onCreatedEnterMore(createdEmp);
+            } else {
+              onCompleted();
+            }
+          }}
+        />
+      )}
+    </div>
+  );
+}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 14 }}>
-          <SpecField label="Email" type="email" value={form.email} onChange={v => u("email", v)} />
-          <SpecField label="Hire date" type="date" value={form.hire_date} onChange={v => u("hire_date", v)} placeholder="dd/mm/yyyy" />
-        </div>
+// ============================================================================
+// SCREEN 2 — Add Employee FORM view (with validation error states)
+// ============================================================================
 
-        <hr style={{ marginTop: 36, marginBottom: 24, border: "none", borderTop: `1px solid ${BORDER}` }} />
+function AddEmployeeFormView({ form, u, errors, saving, onCancel, onSubmit }) {
+  return (
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: "56px 32px 80px 32px" }}>
+      <h1 style={{ fontSize: 30, fontWeight: 600, color: TEXT, margin: "0 0 14px 0", lineHeight: 1.2 }}>Who's your new team member?</h1>
+      <p style={{ fontSize: 15, color: TEXT_MUTED, margin: "0 0 6px 0", lineHeight: 1.5 }}>
+        Add your employee to get them paid. Include their email or mobile number to give them access to Novala Workforce, where they can view pay, T4s and more.
+      </p>
+      <a href="#" onClick={e => e.preventDefault()} style={{ color: LINK, fontSize: 14, textDecoration: "none" }}>Find out more about Novala Workforce</a>
 
-        <h3 style={{ fontSize: 18, fontWeight: 600, color: TEXT, margin: "0 0 6px 0" }}>Let your employee self onboard and save time</h3>
-        <p style={{ fontSize: 14, color: TEXT_MUTED, margin: "0 0 18px 0" }}>They can enter personal, tax and direct deposit info themselves through a secure link.</p>
+      {errors.submit && <div style={{ marginTop: 18, background: "#FEF2F2", color: "#991B1B", padding: 10, borderRadius: 6, fontSize: 13 }}>{errors.submit}</div>}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <RadioOption checked={form.onboarding === "self_onboard"} onChange={() => u("onboarding", "self_onboard")}
-            label="Employee self onboard" sub="We'll email them a secure link to fill in their own personal, banking and tax info." />
-          <RadioOption checked={form.onboarding === "enter_myself"} onChange={() => u("onboarding", "enter_myself")}
-            label="I'll enter all their info myself" sub="Continue to the full profile editor (SIN, banking, tax forms, emergency contact)." />
-        </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 1fr", gap: 12, marginTop: 28 }}>
+        <ValidatedField label="First name" value={form.first_name} onChange={v => u("first_name", v)} error={errors.first_name} />
+        <ValidatedField label="M.I." value={form.middle_initial} onChange={v => u("middle_initial", v.slice(0, 1).toUpperCase())} maxLength={1} />
+        <ValidatedField label="Last name" value={form.last_name} onChange={v => u("last_name", v)} error={errors.last_name} />
+      </div>
 
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 40, gap: 10 }}>
-          <button onClick={onClose} style={{ ...outlinedBtn, padding: "10px 22px", fontSize: 15 }}>Cancel</button>
-          <button onClick={submit} disabled={saving} style={{
-            background: saving ? "#9CA3AF" : BRAND, color: "#fff", border: "none",
-            padding: "10px 24px", borderRadius: 6, fontWeight: 500, fontSize: 15,
-            cursor: saving ? "default" : "pointer",
-          }}>{saving ? "Adding..." : "Add employee"}</button>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 14 }}>
+        <ValidatedField label="Email" type="email" value={form.email} onChange={v => u("email", v)} error={errors.email} />
+        <ValidatedField label="Hire date" type="date" value={form.hire_date} onChange={v => u("hire_date", v)} placeholder="dd/mm/yyyy" />
+      </div>
+
+      <hr style={{ marginTop: 36, marginBottom: 24, border: "none", borderTop: `1px solid ${BORDER}` }} />
+
+      <h3 style={{ fontSize: 18, fontWeight: 600, color: TEXT, margin: "0 0 6px 0" }}>Let your employee self onboard and save time</h3>
+      <p style={{ fontSize: 14, color: TEXT_MUTED, margin: "0 0 18px 0" }}>They can enter personal, tax and direct deposit info themselves through a secure link.</p>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <RadioOption checked={form.onboarding === "self_onboard"} onChange={() => u("onboarding", "self_onboard")}
+          label="Employee self onboard" sub="We'll email them a secure link to fill in their own personal, banking and tax info." />
+        <RadioOption checked={form.onboarding === "enter_myself"} onChange={() => u("onboarding", "enter_myself")}
+          label="I'll enter all their info myself" sub="Continue to the full profile editor (SIN, banking, tax forms, emergency contact)." />
+      </div>
+      {errors.onboarding && <div style={{ marginTop: 10, color: "#D52B1E", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>⚠ {errors.onboarding}</div>}
+
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 40, gap: 10 }}>
+        <button onClick={onCancel} style={{ ...outlinedBtn, padding: "10px 22px", fontSize: 15 }}>Cancel</button>
+        <button onClick={onSubmit} disabled={saving} style={{
+          background: saving ? "#9CA3AF" : BRAND, color: "#fff", border: "none",
+          padding: "10px 24px", borderRadius: 6, fontWeight: 500, fontSize: 15,
+          cursor: saving ? "default" : "pointer",
+        }}>{saving ? "Adding…" : "Add employee"}</button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// SCREEN 2b — Identity Verification Modal (custom Novala behavior)
+// ============================================================================
+
+function VerifyIdentityModal({ onCancel, onVerified }) {
+  const [method, setMethod] = useState("text");
+  const [destination, setDestination] = useState("");
+  const [delivered, setDelivered] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [code, setCode] = useState("");
+  const [valid, setValid] = useState(null); // null=untested, true=ok, false=wrong
+  const [checking, setChecking] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const sendCode = async (m) => {
+    setSending(true); setErrorMsg(""); setValid(null); setCode("");
+    try {
+      const r = await fetch(`${API_URL}/api/v1/payroll/verify/send-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ method: m }),
+      });
+      const d = await r.json();
+      setDestination(d.destination || "");
+      setDelivered(!!d.delivered);
+      if (d.error) setErrorMsg(`Couldn't send: ${d.error}`);
+    } catch (e) {
+      setErrorMsg(`Couldn't send: ${e.message}`);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  useEffect(() => { sendCode(method); /* eslint-disable-next-line */ }, [method]);
+
+  useEffect(() => {
+    if (code.length !== 6) { setValid(null); return; }
+    let cancelled = false;
+    (async () => {
+      setChecking(true);
+      try {
+        const r = await fetch(`${API_URL}/api/v1/payroll/verify/check-code`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify({ code }),
+        });
+        const d = await r.json();
+        if (!cancelled) setValid(d.valid === true);
+      } catch (e) {
+        if (!cancelled) setValid(false);
+      } finally {
+        if (!cancelled) setChecking(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [code]);
+
+  const headings = { text: "Check your text messages", email: "Check your email", call: "Answer your phone" };
+  const resendLabel = { text: "I didn't get a text message", email: "I didn't get an email", call: "I didn't get a call" };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ width: "100%", maxWidth: 440, background: "#fff", borderRadius: 12, boxShadow: "0 20px 60px rgba(0,0,0,0.25)", overflow: "hidden", position: "relative" }}>
+        <button onClick={onCancel} aria-label="Close" style={{ position: "absolute", top: 12, right: 14, background: "transparent", border: "none", fontSize: 24, cursor: "pointer", color: TEXT_MUTED, lineHeight: 1, padding: 4 }}>×</button>
+
+        <div style={{ padding: "32px 28px 24px 28px", textAlign: "center" }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: BRAND, marginBottom: 18, letterSpacing: 0.5 }}>NOVALA</div>
+          <h2 style={{ fontSize: 22, fontWeight: 600, color: TEXT, margin: "0 0 8px 0" }}>{headings[method]}</h2>
+          <p style={{ fontSize: 14, color: TEXT_MUTED, margin: "0 0 18px 0" }}>Enter the verification code we sent you to verify your identity.</p>
+          <div style={{ fontSize: 48, marginBottom: 18 }}>
+            {method === "email" ? "✉️" : method === "call" ? "📞" : "📱"}
+          </div>
+
+          <div style={{ display: "inline-flex", background: SELECT_BG, padding: 3, borderRadius: 8, border: `1px solid ${BORDER}`, marginBottom: 18 }}>
+            {[["text", "Text message"], ["email", "Email"], ["call", "Call"]].map(([v, l]) => (
+              <button key={v} onClick={() => setMethod(v)} style={{
+                padding: "6px 12px", borderRadius: 6,
+                background: method === v ? "#FFFFFF" : "transparent", border: "none",
+                boxShadow: method === v ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                color: method === v ? TEXT : TEXT_MUTED,
+                fontWeight: method === v ? 600 : 500, fontSize: 13, cursor: "pointer",
+              }}>{l}</button>
+            ))}
+          </div>
+
+          <div style={{ fontSize: 14, color: TEXT, marginBottom: 4 }}>We sent a code to:</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: TEXT, marginBottom: 18 }}>{sending ? "Sending…" : destination}</div>
+
+          {errorMsg && <div style={{ fontSize: 13, color: "#D52B1E", marginBottom: 12 }}>⚠ {errorMsg}</div>}
+
+          <label style={{ display: "block", fontSize: 13, color: TEXT, marginBottom: 6, textAlign: "left" }}>Enter the 6-digit code</label>
+          <div style={{ position: "relative" }}>
+            <input
+              type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6}
+              value={code}
+              onChange={e => setCode(e.target.value.replace(/[^0-9]/g, ""))}
+              autoFocus
+              style={{
+                width: "100%", padding: "12px 40px 12px 14px",
+                border: `2px solid ${valid === true ? "#22C55E" : valid === false ? "#D52B1E" : BORDER}`,
+                borderRadius: 6,
+                fontSize: 22, fontWeight: 600, letterSpacing: 8, textAlign: "center",
+                color: TEXT, boxSizing: "border-box", background: valid === false ? "#FDECEA" : "#fff",
+                outline: "none",
+              }}
+            />
+            {valid === true && (
+              <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: "#22C55E", fontSize: 22, fontWeight: 700 }}>✓</span>
+            )}
+          </div>
+          {valid === false && <div style={{ fontSize: 13, color: "#D52B1E", marginTop: 6, textAlign: "left" }}>That code didn't work. Try again.</div>}
+          {checking && <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 6, textAlign: "left" }}>Checking…</div>}
+
+          <button onClick={onVerified} disabled={valid !== true} style={{
+            width: "100%", marginTop: 18, padding: 12, borderRadius: 6, border: "none",
+            background: valid === true ? BRAND : "#9CA3AF",
+            color: "#fff", fontWeight: 600, fontSize: 15,
+            cursor: valid === true ? "pointer" : "default",
+          }}>Continue</button>
+
+          <button onClick={() => sendCode(method)} disabled={sending} style={{
+            width: "100%", marginTop: 10, padding: 12, borderRadius: 6,
+            background: "#fff", border: `1px solid ${BORDER}`,
+            color: TEXT, fontWeight: 500, fontSize: 14, cursor: sending ? "default" : "pointer",
+          }}>{sending ? "Sending…" : resendLabel[method]}</button>
+
+          {method !== "call" && (
+            <button onClick={() => setMethod("call")} style={{
+              background: "transparent", border: "none", color: BRAND,
+              fontSize: 14, fontWeight: 600, cursor: "pointer", marginTop: 14, padding: 0,
+            }}>Call me instead</button>
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// SCREEN 3 — Success view
+// ============================================================================
+
+function AddEmployeeSuccessView({ emp, mode, onAddAnother, onFinish }) {
+  const name = emp.first_name || "your new hire";
+  return (
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: "56px 32px 80px 32px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
+        <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#22C55E", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700 }}>✓</div>
+        <h1 style={{ fontSize: 30, fontWeight: 600, color: TEXT, margin: 0 }}>You added {name}!</h1>
+      </div>
+      <p style={{ fontSize: 15, color: TEXT_MUTED, margin: "0 0 32px 0" }}>Here's what you need to do next.</p>
+
+      <h3 style={{ fontSize: 17, fontWeight: 700, color: TEXT, margin: "0 0 10px 0" }}>For you</h3>
+      <ul style={{ paddingLeft: 18, margin: "0 0 28px 0", color: TEXT, fontSize: 15, lineHeight: 1.6 }}>
+        <li><strong>Complete {name}'s payroll info</strong> to get them paid, like pay type, pay rates, and pay schedule in their employee profile.</li>
+        <li style={{ marginTop: 8 }}><strong>Add {name}'s employee info</strong>, like assigning a manager and department in their employee profile.</li>
+        <li style={{ marginTop: 8 }}><strong>Share docs in Novala Workforce that {name} needs to get started</strong>, employee handbook, training materials, that kind of stuff.</li>
+      </ul>
+
+      <h3 style={{ fontSize: 17, fontWeight: 700, color: TEXT, margin: "0 0 10px 0" }}>For {name}</h3>
+      <ul style={{ paddingLeft: 18, margin: "0 0 36px 0", color: TEXT, fontSize: 15, lineHeight: 1.6 }}>
+        <li>
+          <strong>Accept the invite to Novala Workforce</strong>, to view pay, T4s, and documents.
+          {" "}<a href="#" onClick={e => e.preventDefault()} style={{ color: LINK, textDecoration: "none" }}>Find out more about Novala Workforce</a>
+        </li>
+        <li style={{ marginTop: 8 }}><strong>Complete their personal info,</strong> tax withholdings, and direct deposit.</li>
+      </ul>
+
+      <div style={{ display: "flex", gap: 10 }}>
+        <button onClick={onAddAnother} style={{ ...outlinedBtn, padding: "10px 22px", fontSize: 15 }}>Add another employee</button>
+        <button onClick={onFinish} style={{
+          background: BRAND, color: "#fff", border: "none",
+          padding: "10px 22px", borderRadius: 6, fontWeight: 500, fontSize: 15, cursor: "pointer",
+        }}>Finish payroll info</button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Validated input (used by Screen 2 form with error states)
+// ============================================================================
+
+function ValidatedField({ label, value, onChange, type = "text", placeholder, maxLength, error }) {
+  return (
+    <div>
+      <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: TEXT, marginBottom: 6 }}>{label}</label>
+      <input
+        type={type} value={value} onChange={e => onChange(e.target.value)}
+        placeholder={placeholder} maxLength={maxLength}
+        style={{
+          width: "100%", padding: "10px 12px",
+          border: `1px solid ${error ? "#D52B1E" : BORDER}`,
+          borderRadius: 4, fontSize: 15, color: TEXT, boxSizing: "border-box",
+          background: error ? "#FDECEA" : "#fff",
+          outline: "none",
+        }}
+      />
+      {error && <div style={{ marginTop: 6, color: "#D52B1E", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>⚠ {error}</div>}
     </div>
   );
 }
