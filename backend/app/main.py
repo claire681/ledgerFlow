@@ -25,6 +25,8 @@ from app.api.routes import (
     ai_context, snapshots, preferences, followup,
 )
 from app.api.routes.briefing import router as briefing_router
+from app.api.routes import bills
+from app.api.routes import apikeys
 
 
 @asynccontextmanager
@@ -92,6 +94,8 @@ app.include_router(snapshots.router,    prefix="/api/v1")
 app.include_router(preferences.router,  prefix="/api/v1")
 app.include_router(followup.router,     prefix="/api/v1")
 app.include_router(customers.router, prefix="/api/v1")
+app.include_router(bills.router, prefix="/api/v1")
+app.include_router(apikeys.router, prefix="/api/v1")
 
 
 @app.api_route("/health", methods=["GET", "HEAD"])
