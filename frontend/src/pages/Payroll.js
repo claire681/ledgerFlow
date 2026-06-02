@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import NovalaVerifyModal from "../components/NovalaVerifyModal";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -447,8 +448,8 @@ function AddEmployeeOverlay({ onClose, onCompleted, onCreatedEnterMore }) {
       )}
 
       {step === "verify" && (
-        <VerifyIdentityModal
-          onCancel={() => setStep("form")}
+        <NovalaVerifyModal
+          onClose={() => setStep("form")}
           onVerified={createEmployee}
         />
       )}
