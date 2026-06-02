@@ -77,6 +77,7 @@ export default function Payroll() {
   const [employees, setEmployees] = useState([]);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [viewingProfileId, setViewingProfileId] = useState(null);
 
   const fetchEmployees = async () => {
     try {
@@ -99,13 +100,23 @@ export default function Payroll() {
     })();
   }, []);
 
+  if (viewingProfileId) {
+    return (
+      <EmployeeProfile
+        employeeId={viewingProfileId}
+        settings={settings}
+        onBack={() => { setViewingProfileId(null); fetchEmployees(); }}
+      />
+    );
+  }
+
   return (
     <div style={{ background: BG, minHeight: "100vh", width: "100%" }}>
       <div style={{ padding: "24px 32px" }}>
         <TabNav tab={tab} setTab={setTab} />
         <div style={{ marginTop: 24 }}>
           {loading && <div style={{ textAlign: "center", padding: 60, color: TEXT_MUTED }}>Loading…</div>}
-          {!loading && tab === "employees" && <EmployeesView employees={employees} settings={settings} onRefresh={fetchEmployees} setTab={setTab} />}
+          {!loading && tab === "employees" && <EmployeesView employees={employees} settings={settings} onRefresh={fetchEmployees} setTab={setTab} onViewProfile={setViewingProfileId} />}
           {!loading && tab === "run" && <RunPayrollView employees={employees} settings={settings} />}
           {!loading && tab === "history" && <PayHistoryView />}
           {!loading && tab === "settings" && <SettingsView settings={settings} onUpdate={fetchSettings} />}
@@ -140,7 +151,7 @@ function TabNav({ tab, setTab }) {
 // EMPLOYEES VIEW — QB-style
 // ============================================================================
 
-function EmployeesView({ employees, settings, onRefresh, setTab }) {
+function EmployeesView({ employees, settings, onRefresh, setTab, onViewProfile }) {
   const [view, setView] = useState("list");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("active");
@@ -260,7 +271,7 @@ function EmployeesView({ employees, settings, onRefresh, setTab }) {
               </td></tr>
             ) : (
               filtered.map(emp => (
-                <EmployeeRow key={emp.id} emp={emp} privacy={privacy} onEdit={() => setEditingEmp(emp)} onRefresh={onRefresh} />
+                <EmployeeRow key={emp.id} emp={emp} privacy={privacy} onEdit={() => setEditingEmp(emp)} onOpen={() => onViewProfile && onViewProfile(emp.id)} onRefresh={onRefresh} />
               ))
             )}
           </tbody>
@@ -270,8 +281,8 @@ function EmployeesView({ employees, settings, onRefresh, setTab }) {
       {showAddOverlay && (
         <AddEmployeeOverlay
           onClose={() => setShowAddOverlay(false)}
-          onCompleted={() => { setShowAddOverlay(false); onRefresh(); }}
-          onCreatedEnterMore={(emp) => { setShowAddOverlay(false); onRefresh(); setEditingEmp(emp); }}
+          onCompleted={(emp) => { setShowAddOverlay(false); onRefresh(); if (emp && onViewProfile) onViewProfile(emp.id); }}
+          onCreatedEnterMore={(emp) => { setShowAddOverlay(false); onRefresh(); if (onViewProfile) onViewProfile(emp.id); }}
         />
       )}
 
@@ -286,7 +297,7 @@ function EmployeesView({ employees, settings, onRefresh, setTab }) {
   );
 }
 
-function EmployeeRow({ emp, privacy, onEdit, onRefresh }) {
+function EmployeeRow({ emp, privacy, onEdit, onOpen, onRefresh }) {
   const initials = `${(emp.last_name || "?")[0]}${(emp.first_name || "?")[0]}`.toUpperCase();
   const displayName = `${(emp.last_name || "").toUpperCase()}, ${emp.first_name || ""}`;
   const payRate = (() => {
@@ -322,7 +333,7 @@ function EmployeeRow({ emp, privacy, onEdit, onRefresh }) {
   };
 
   return (
-    <tr style={{ borderTop: `1px solid ${ROW_DIVIDER}`, cursor: "pointer" }} onClick={onEdit}
+    <tr style={{ borderTop: `1px solid ${ROW_DIVIDER}`, cursor: "pointer" }} onClick={onOpen}
         onMouseEnter={e => e.currentTarget.style.background = BG_SOFT}
         onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
       <td style={tdSpec}>
@@ -448,11 +459,9 @@ function AddEmployeeOverlay({ onClose, onCompleted, onCreatedEnterMore }) {
           mode={form.onboarding}
           onAddAnother={resetForm}
           onFinish={() => {
-            if (form.onboarding === "enter_myself" && onCreatedEnterMore) {
-              onCreatedEnterMore(createdEmp);
-            } else {
-              onCompleted();
-            }
+            // Always navigate to the new employee's profile per the spec.
+            // For "enter myself" we route through the same callback (parent decides view).
+            onCompleted(createdEmp);
           }}
         />
       )}
@@ -1203,6 +1212,289 @@ function SettingsView({ settings, onUpdate }) {
     </div>
   );
 }
+
+
+
+// ============================================================================
+// SCREEN 4 — EMPLOYEE PROFILE (single long scrolling page)
+// ============================================================================
+
+function EmployeeProfile({ employeeId, settings, onBack }) {
+  const [emp, setEmp] = useState(null);
+  const [company, setCompany] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [tab, setTab] = useState("profile");
+  const [actionsOpen, setActionsOpen] = useState(false);
+
+  const fetchEmp = async () => {
+    try {
+      const r = await fetch(`${API_URL}/api/v1/payroll/employees/${employeeId}`, { headers: authHeaders() });
+      if (r.ok) setEmp(await r.json());
+    } catch (_) {}
+  };
+  const fetchCompany = async () => {
+    // Best-effort; company endpoint may or may not exist
+    try {
+      const r = await fetch(`${API_URL}/api/v1/company/profile`, { headers: authHeaders() });
+      if (r.ok) setCompany(await r.json());
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      await Promise.all([fetchEmp(), fetchCompany()]);
+      setLoading(false);
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employeeId]);
+
+  if (loading) return <div style={{ padding: 60, textAlign: "center", color: TEXT_MUTED }}>Loading profile…</div>;
+  if (!emp) return <div style={{ padding: 60, textAlign: "center", color: TEXT_MUTED }}>Employee not found. <button onClick={onBack} style={{ ...linkBtn, marginLeft: 0 }}>Back to list</button></div>;
+
+  const fullName = `${emp.first_name || ""} ${emp.last_name || ""}`.trim();
+  const initial = (emp.first_name || "?")[0].toUpperCase();
+  const fmtDate = (iso) => {
+    if (!iso) return "-";
+    const d = new Date(iso);
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  };
+  const paySchedule = (() => {
+    const sch = settings?.default_pay_schedule;
+    const map = {
+      weekly: "Weekly", bi_weekly: "Bi-weekly",
+      semi_monthly: "Semi-monthly - 15th & End of Month", monthly: "Monthly",
+    };
+    return map[sch] || "-";
+  })();
+  const workLocation = (() => {
+    if (!company) return "-";
+    const parts = [company.address_line1, company.city, company.province_or_state, company.postal_or_zip].filter(Boolean);
+    return parts.length ? parts.join(", ") : "-";
+  })();
+  const paymentMethod = emp.bank_name ? "Direct deposit" : "Paper cheque";
+  const hasBasePay = (emp.pay_type === "salary" && emp.salary_amount) || (emp.pay_type === "hourly" && emp.hourly_rate);
+  const homeAddress = (() => {
+    const parts = [emp.address_line1, emp.city, emp.province_or_state, emp.postal_or_zip].filter(Boolean);
+    return parts.length ? parts.join(", ") : "-";
+  })();
+
+  const personalFields = [
+    ["Legal name", fullName],
+    ["Preferred first name", emp.preferred_name || emp.first_name || "-"],
+    ["Email", emp.personal_email || "-"],
+    ["Phone number", emp.phone || "-"],
+    ["Home address", homeAddress],
+    ["Mailing address", homeAddress],
+    ["Birth date", fmtDate(emp.date_of_birth)],
+    ["Gender", emp.gender || "-"],
+    [emp.country === "US" ? "Social security number" : "Social insurance number", emp.sin_or_ssn || "-"],
+  ];
+
+  const employmentFields = [
+    ["Status", (emp.status || "-").charAt(0).toUpperCase() + (emp.status || "-").slice(1)],
+    ["Hire date", fmtDate(emp.start_date)],
+    ["Pay schedule", paySchedule],
+    ["Work location", workLocation],
+    ["Manager", emp.manager_name || "-"],
+    ["Department", emp.department || "-"],
+    ["Job title", emp.position_title || "-"],
+    ["Employee ID", emp.employee_number || "-"],
+  ];
+
+  const basePayValue = (() => {
+    if (emp.pay_type === "salary" && emp.salary_amount) return `${fmtMoney(parseFloat(emp.salary_amount), emp.currency || "CAD")}/year`;
+    if (emp.pay_type === "hourly" && emp.hourly_rate) return `${fmtMoney(parseFloat(emp.hourly_rate), emp.currency || "CAD")}/hour`;
+    return null;
+  })();
+
+  return (
+    <div style={{ background: BG, minHeight: "100vh", width: "100%" }}>
+      <div style={{ padding: "20px 32px 60px 32px", maxWidth: 1100, margin: "0 auto" }}>
+
+        {/* Back link */}
+        <button onClick={onBack} style={{ background: "none", border: "none", color: LINK, fontSize: 14, fontWeight: 500, cursor: "pointer", padding: 0, marginBottom: 18 }}>‹ Employee List</button>
+
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 6, position: "relative" }}>
+          <div style={{ position: "relative" }}>
+            <div style={{ width: 64, height: 64, borderRadius: "50%", background: BRAND, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 700 }}>{initial}</div>
+            <button onClick={() => setEditing(true)} title="Edit photo / details" aria-label="Edit" style={{ position: "absolute", bottom: -2, right: -2, width: 24, height: 24, borderRadius: "50%", background: "#fff", border: `1px solid ${BORDER}`, color: TEXT, cursor: "pointer", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>✎</button>
+          </div>
+          <div style={{ flex: 1 }}>
+            <h1 style={{ fontSize: 28, fontWeight: 600, color: TEXT, margin: 0 }}>{fullName}</h1>
+            <button onClick={() => setEditing(true)} style={{ background: "none", border: "none", color: TEXT_MUTED, fontSize: 14, padding: 0, marginTop: 2, cursor: "pointer", textDecoration: "underline" }}>{(emp.status || "Active").charAt(0).toUpperCase() + (emp.status || "Active").slice(1)}</button>
+          </div>
+          <div style={{ position: "relative" }}>
+            <button onClick={() => setActionsOpen(!actionsOpen)} style={{ background: BRAND, color: "#fff", border: "none", padding: "10px 18px", borderRadius: 6, fontWeight: 500, fontSize: 14, cursor: "pointer" }}>Actions ▾</button>
+            {actionsOpen && (
+              <div style={{ position: "absolute", top: 42, right: 0, background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 6, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", minWidth: 180, zIndex: 10 }}>
+                <button onClick={() => { setActionsOpen(false); setEditing(true); }} style={menuItem}>Edit profile</button>
+                <button onClick={() => { setActionsOpen(false); alert("Pay this employee: coming soon"); }} style={menuItem}>Pay this employee</button>
+                <button onClick={() => { setActionsOpen(false); alert("View pay stubs: coming soon"); }} style={menuItem}>View pay stubs</button>
+                <button onClick={() => { setActionsOpen(false); alert("Send invite: use Send invite from list"); }} style={menuItem}>Send Workforce invite</button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Tab bar */}
+        <div style={{ display: "flex", gap: 4, borderBottom: `1px solid ${BORDER}`, marginTop: 24, marginBottom: 24 }}>
+          {[["profile", "Profile"], ["paycheque", "Paycheque list"], ["documents", "Documents"], ["notes", "Notes"], ["permissions", "Permissions"]].map(([id, label]) => (
+            <button key={id} onClick={() => setTab(id)} style={{
+              padding: "10px 18px", background: "transparent", border: "none",
+              borderBottom: `3px solid ${tab === id ? BRAND : "transparent"}`,
+              color: tab === id ? TEXT : TEXT_MUTED,
+              fontWeight: tab === id ? 600 : 500, fontSize: 15, cursor: "pointer", marginBottom: -1,
+            }}>{label}</button>
+          ))}
+        </div>
+
+        {tab !== "profile" ? (
+          <div style={{ ...cardStyle, padding: 40, textAlign: "center", color: TEXT_MUTED, fontSize: 14 }}>
+            {tab === "paycheque" && "No paycheques yet — they appear here after the first pay run."}
+            {tab === "documents" && "Documents shared with this employee will appear here."}
+            {tab === "notes" && "Add private internal notes about this employee."}
+            {tab === "permissions" && "Workforce permissions and self-onboarding controls."}
+          </div>
+        ) : (
+          <>
+            <ProfileCard
+              title="Personal info"
+              action={{ label: "Edit", onClick: () => setEditing(true) }}
+              helper={`We asked ${emp.first_name || "your employee"} to fill out the rest of their personal info in Novala Workforce.`}
+            >
+              <ProfileFieldGrid fields={personalFields} />
+            </ProfileCard>
+
+            <ProfileCard
+              title="Employment details"
+              action={{ label: "Edit", onClick: () => setEditing(true) }}
+            >
+              <ProfileFieldGrid fields={employmentFields} />
+            </ProfileCard>
+
+            <ProfileCard
+              title="Tax withholdings"
+              helperJsx={
+                <>
+                  <p style={{ fontSize: 14, color: TEXT_MUTED, margin: "0 0 6px 0" }}>We asked {emp.first_name} to fill out their TD1 Form in Workforce.</p>
+                  <p style={{ fontSize: 14, color: TEXT_MUTED, margin: 0 }}>
+                    Need to fill out the info earlier? Turn off self onboarding in the{" "}
+                    <button onClick={() => setTab("permissions")} style={{ background: "none", border: "none", color: LINK, fontWeight: 600, fontSize: 14, padding: 0, cursor: "pointer" }}>Permissions tab</button>.
+                  </p>
+                </>
+              }
+            />
+
+            <ProfileCard
+              title="Payment method"
+              action={{ label: "Edit", onClick: () => setEditing(true) }}
+              helper={`If you choose direct deposit, ${emp.first_name} will be able to add their bank info in Workforce. But not if you choose paper cheque. Either way, you can always switch later.`}
+            >
+              <ProfileFieldGrid fields={[["Payment method", paymentMethod]]} />
+            </ProfileCard>
+
+            <ProfileCard
+              title="Base pay"
+              icon={hasBasePay ? null : <span title="Required" style={{ color: "#F59E0B", fontSize: 16 }}>⚠</span>}
+              action={hasBasePay ? { label: "Edit", onClick: () => setEditing(true) } : { label: "Start", onClick: () => setEditing(true) }}
+              helper={`To pay ${emp.first_name}, set up their hourly, salary or commission earnings.`}
+            >
+              {hasBasePay && <ProfileFieldGrid fields={[["Base pay", basePayValue], ["Pay type", emp.pay_type]]} />}
+            </ProfileCard>
+
+            <ProfileCard
+              title="Additional pay types"
+              action={hasBasePay ? { label: "Start", onClick: () => alert("Additional pay types: bonus, commission, overtime — coming next") } : null}
+              helper={hasBasePay ? "Add bonuses, commissions, overtime or other earnings." : "You'll need to set a base pay before you can add any additional pay types."}
+              dimmed={!hasBasePay}
+            />
+
+            <ProfileCard
+              title="Time off"
+              action={{ label: "Start", onClick: () => alert("Time off policies — coming next") }}
+              helper="Set up time off policies like sick pay and vacation for eligible employees."
+            />
+
+            <ProfileCard
+              title="Deductions and contributions"
+              icon={<span title="Info" style={{ color: LINK, fontSize: 15 }}>ⓘ</span>}
+              action={{ label: "Start", onClick: () => alert("Deductions and contributions — coming next") }}
+              helper="Include paycheque deductions and company contributions for healthcare and retirement."
+            />
+
+            <ProfileCard
+              title="Emergency contact"
+              helper={emp.emergency_contact_name ? null : `We asked ${emp.first_name} to fill out their emergency contact in Workforce.`}
+              action={emp.emergency_contact_name ? { label: "Edit", onClick: () => setEditing(true) } : null}
+            >
+              {emp.emergency_contact_name && (
+                <ProfileFieldGrid fields={[
+                  ["Name", emp.emergency_contact_name],
+                  ["Relationship", emp.emergency_contact_relationship || "-"],
+                  ["Phone", emp.emergency_contact_phone || "-"],
+                  ["Email", emp.emergency_contact_email || "-"],
+                ]} />
+              )}
+            </ProfileCard>
+          </>
+        )}
+      </div>
+
+      {editing && (
+        <EmployeeEditDrawer
+          employee={emp}
+          onClose={() => setEditing(false)}
+          onSaved={() => { setEditing(false); fetchEmp(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ProfileCard({ title, icon, action, helper, helperJsx, children, dimmed }) {
+  return (
+    <div style={{
+      background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 8,
+      padding: "22px 24px", marginBottom: 14, opacity: dimmed ? 0.6 : 1,
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: helper || helperJsx || children ? 10 : 0, gap: 12 }}>
+        <h3 style={{ fontSize: 17, fontWeight: 600, color: TEXT, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+          {title}
+          {icon}
+        </h3>
+        {action && (
+          <button onClick={action.onClick} style={{ background: "none", border: "none", color: BRAND, fontWeight: 600, fontSize: 14, cursor: "pointer", padding: 0 }}>{action.label}</button>
+        )}
+      </div>
+      {helper && <p style={{ fontSize: 14, color: TEXT_MUTED, margin: "0 0 8px 0", lineHeight: 1.5 }}>{helper}</p>}
+      {helperJsx}
+      {children}
+    </div>
+  );
+}
+
+function ProfileFieldGrid({ fields }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "18px 28px", marginTop: 14 }}>
+      {fields.map(([label, value]) => (
+        <div key={label}>
+          <div style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 500, marginBottom: 4, textTransform: "none" }}>{label}</div>
+          <div style={{ fontSize: 14, color: TEXT, wordBreak: "break-word" }}>{value || "-"}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const menuItem = {
+  display: "block", width: "100%", textAlign: "left",
+  padding: "10px 14px", background: "transparent", border: "none",
+  fontSize: 14, color: TEXT, cursor: "pointer",
+};
+
 
 // ============================================================================
 // SHARED UI
