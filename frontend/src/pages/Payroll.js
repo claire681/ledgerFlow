@@ -1373,7 +1373,7 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
           <>
             <ProfileCard
               title="Personal info"
-              action={{ label: "Edit", onClick: () => setEditing(true) }}
+              action={{ label: "Edit", onClick: () => setShowEditPersonal(true) }}
               helper={`We asked ${emp.first_name || "your employee"} to fill out the rest of their personal info in Novala Workforce.`}
             >
               <ProfileFieldGrid fields={personalFields} />
@@ -1381,7 +1381,7 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
 
             <ProfileCard
               title="Employment details"
-              action={{ label: "Edit", onClick: () => setEditing(true) }}
+              action={{ label: "Edit", onClick: () => setShowEditEmployment(true) }}
             >
               <ProfileFieldGrid fields={employmentFields} />
             </ProfileCard>
@@ -1401,7 +1401,7 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
 
             <ProfileCard
               title="Payment method"
-              action={{ label: "Edit", onClick: () => setEditing(true) }}
+              action={{ label: "Edit", onClick: () => setShowEditPayment(true) }}
               helper={`If you choose direct deposit, ${emp.first_name} will be able to add their bank info in Workforce. But not if you choose paper cheque. Either way, you can always switch later.`}
             >
               <ProfileFieldGrid fields={[["Payment method", paymentMethod]]} />
