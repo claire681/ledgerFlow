@@ -82,9 +82,18 @@ function TextInput(props) {
   }} />;
 }
 
-function Select({ children, ...props }) {
+function Select({ children, style, ...props }) {
+  // Hoist width-related styles to the wrapper so the chevron stays inside the box
+  const wrapperStyle = { position: "relative" };
+  const selectStyle = { ...(style || {}) };
+  for (const k of ["width", "maxWidth", "minWidth"]) {
+    if (selectStyle[k] !== undefined) {
+      wrapperStyle[k] = selectStyle[k];
+      delete selectStyle[k];
+    }
+  }
   return (
-    <div style={{ position: "relative" }}>
+    <div style={wrapperStyle}>
       <select {...props} className="nv-overlay-input" style={{
         width: "100%", padding: "11px 38px 11px 14px", fontSize: 14.5,
         border: `1.6px solid ${BORDER}`, borderRadius: 10, outline: "none",
@@ -92,7 +101,7 @@ function Select({ children, ...props }) {
         fontFamily: "inherit", cursor: "pointer",
         transition: "border-color 0.18s, box-shadow 0.18s",
         boxSizing: "border-box",
-        ...(props.style || {}),
+        ...selectStyle,
       }}>{children}</select>
       <ChevronDown size={18} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: SUB }} />
     </div>
