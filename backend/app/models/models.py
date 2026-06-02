@@ -657,6 +657,13 @@ class Employee(Base):
     # Deductions & contributions (Screen 4f)
     dental_benefit_code = Column(String(10))
     deductions_list = Column(JSONB)
+    # Mailing address (Screen 4a — when "Mailing address is the same" is unchecked)
+    mailing_address_same = Column(Boolean, default=True)
+    mailing_address_line1 = Column(String(255))
+    mailing_address_line2 = Column(String(255))
+    mailing_city = Column(String(120))
+    mailing_province_or_state = Column(String(40))
+    mailing_postal_or_zip = Column(String(20))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

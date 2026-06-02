@@ -127,14 +127,30 @@ export function EditPersonalInfo({ employee, onClose, onSaved }) {
     first_name: employee.first_name || "",
     middle_initial: employee.middle_initial || "",
     last_name: employee.last_name || "",
-    preferred_first_name: employee.preferred_first_name || "",
-    email: employee.email || "",
+    preferred_name: employee.preferred_name || "",
+    personal_email: employee.personal_email || "",
     home_phone: employee.home_phone || "",
     home_phone_ext: employee.home_phone_ext || "",
     work_phone: employee.work_phone || "",
     work_phone_ext: employee.work_phone_ext || "",
-    mobile_phone: employee.mobile_phone || employee.phone || "",
+    phone: employee.phone || "",
+    address_line1: employee.address_line1 || "",
+    address_line2: employee.address_line2 || "",
+    city: employee.city || "",
+    province_or_state: employee.province_or_state || "",
+    postal_or_zip: employee.postal_or_zip || "",
+    mailing_address_same: employee.mailing_address_same !== false,
+    mailing_address_line1: employee.mailing_address_line1 || "",
+    mailing_address_line2: employee.mailing_address_line2 || "",
+    mailing_city: employee.mailing_city || "",
+    mailing_province_or_state: employee.mailing_province_or_state || "",
+    mailing_postal_or_zip: employee.mailing_postal_or_zip || "",
+    date_of_birth: (employee.date_of_birth || "").slice(0, 10),
+    gender: employee.gender || "",
+    sin_or_ssn: employee.sin_or_ssn || "",
   });
+  const [revealDOB, setRevealDOB] = useState(false);
+  const [revealSIN, setRevealSIN] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
   const set = (k, v) => setF(p => ({ ...p, [k]: v }));
@@ -142,35 +158,177 @@ export function EditPersonalInfo({ employee, onClose, onSaved }) {
   const save = async () => {
     if (!f.first_name.trim() || !f.last_name.trim()) { setErr("First name and last name are required."); return; }
     setSaving(true); setErr("");
-    try { await patchEmployee(employee.id, { ...f, phone: f.mobile_phone }); onSaved(); }
-    catch (e) { setErr(e.message); setSaving(false); }
+    try {
+      const payload = { ...f };
+      if (f.mailing_address_same) {
+        payload.mailing_address_line1 = null;
+        payload.mailing_address_line2 = null;
+        payload.mailing_city = null;
+        payload.mailing_province_or_state = null;
+        payload.mailing_postal_or_zip = null;
+      }
+      await patchEmployee(employee.id, payload);
+      onSaved();
+    } catch (e) { setErr(e.message); setSaving(false); }
+  };
+
+  const provinces = [
+    ["AB", "Alberta"], ["BC", "British Columbia"], ["MB", "Manitoba"],
+    ["NB", "New Brunswick"], ["NL", "Newfoundland and Labrador"], ["NS", "Nova Scotia"],
+    ["NT", "Northwest Territories"], ["NU", "Nunavut"], ["ON", "Ontario"],
+    ["PE", "Prince Edward Island"], ["QC", "Quebec"], ["SK", "Saskatchewan"],
+    ["YT", "Yukon"],
+  ];
+
+  const maskSIN = (v) => {
+    if (!v) return "XXX-XXX-XXX";
+    const digits = v.replace(/\D/g, "");
+    const last3 = digits.slice(-3).padStart(3, "X");
+    return `XXX-XXX-${last3}`;
+  };
+
+  const maskedBox = {
+    flex: 1, padding: "11px 14px", fontSize: 14.5,
+    border: `1.6px solid ${BORDER}`, borderRadius: 10,
+    background: "#F7F8F9", color: SUB,
+    fontFamily: "monospace", letterSpacing: "0.05em",
+  };
+
+  const viewEditBtn = {
+    background: "transparent", border: "none", color: BRAND,
+    fontWeight: 700, fontSize: 14, cursor: "pointer",
+    whiteSpace: "nowrap", padding: "4px 8px",
   };
 
   return (
     <EditOverlayShell title="Edit personal info" onCancel={onClose} onSave={save} saving={saving} error={err}>
       <h1 style={pageHeading}>Tell us more about {employee.first_name}</h1>
+
       <Field label="Title">
         <TextInput value={f.title} onChange={e => set("title", e.target.value)} placeholder="e.g. Mr, Ms, Dr" style={{ maxWidth: 280 }} />
       </Field>
-      <div style={{ display: "grid", gridTemplateColumns: "2.5fr 1fr 2.5fr", gap: 16 }}>
+
+      <div style={{ display: "grid", gridTemplateColumns: "2.5fr 1fr 2.5fr", gap: 16, maxWidth: 720 }}>
         <Field label="First name" required><TextInput value={f.first_name} onChange={e => set("first_name", e.target.value)} /></Field>
         <Field label="M.I."><TextInput value={f.middle_initial} onChange={e => set("middle_initial", e.target.value)} maxLength={4} /></Field>
         <Field label="Last name" required><TextInput value={f.last_name} onChange={e => set("last_name", e.target.value)} /></Field>
       </div>
+
       <Field label="Preferred first name">
-        <TextInput value={f.preferred_first_name} onChange={e => set("preferred_first_name", e.target.value)} style={{ maxWidth: 400 }} />
+        <TextInput value={f.preferred_name} onChange={e => set("preferred_name", e.target.value)} style={{ maxWidth: 400 }} />
       </Field>
-      <Field label="Email"><TextInput type="email" value={f.email} onChange={e => set("email", e.target.value)} /></Field>
-      <div style={{ display: "grid", gridTemplateColumns: "3fr 1fr", gap: 16 }}>
+
+      <Field label="Email">
+        <TextInput type="email" value={f.personal_email} onChange={e => set("personal_email", e.target.value)} style={{ maxWidth: 480 }} />
+      </Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "3fr 1fr", gap: 16, maxWidth: 480 }}>
         <Field label="Home phone number"><TextInput value={f.home_phone} onChange={e => set("home_phone", e.target.value)} placeholder="(780) 555-0100" /></Field>
         <Field label="ext."><TextInput value={f.home_phone_ext} onChange={e => set("home_phone_ext", e.target.value)} /></Field>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "3fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "3fr 1fr", gap: 16, maxWidth: 480 }}>
         <Field label="Work phone number"><TextInput value={f.work_phone} onChange={e => set("work_phone", e.target.value)} placeholder="(780) 555-0100" /></Field>
         <Field label="ext."><TextInput value={f.work_phone_ext} onChange={e => set("work_phone_ext", e.target.value)} /></Field>
       </div>
       <Field label="Mobile phone number">
-        <TextInput value={f.mobile_phone} onChange={e => set("mobile_phone", e.target.value)} placeholder="(780) 555-0100" />
+        <TextInput value={f.phone} onChange={e => set("phone", e.target.value)} placeholder="(780) 555-0100" style={{ maxWidth: 480 }} />
+      </Field>
+
+      <div style={{ height: 1, background: BORDER, margin: "20px 0 28px 0" }} />
+
+      <Field label="Street Address" required>
+        <TextInput value={f.address_line1} onChange={e => set("address_line1", e.target.value)} placeholder="123 Main Street" style={{ maxWidth: 560 }} />
+      </Field>
+
+      <Field label="Address line 2">
+        <TextInput value={f.address_line2} onChange={e => set("address_line2", e.target.value)} placeholder="Apt, suite, unit" style={{ maxWidth: 560 }} />
+      </Field>
+
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.4fr", gap: 16, maxWidth: 640 }}>
+        <Field label="City" required><TextInput value={f.city} onChange={e => set("city", e.target.value)} /></Field>
+        <Field label="Province" required>
+          <Select value={f.province_or_state} onChange={e => set("province_or_state", e.target.value)}>
+            <option value="">Select</option>
+            {provinces.map(([code, name]) => <option key={code} value={code}>{`${code} - ${name}`}</option>)}
+          </Select>
+        </Field>
+        <Field label="Postal code" required><TextInput value={f.postal_or_zip} onChange={e => set("postal_or_zip", e.target.value)} placeholder="T0B 4A0" /></Field>
+      </div>
+
+      <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24, cursor: "pointer" }}>
+        <input
+          type="checkbox"
+          checked={f.mailing_address_same}
+          onChange={e => set("mailing_address_same", e.target.checked)}
+          style={{ width: 18, height: 18, accentColor: BRAND, cursor: "pointer" }}
+        />
+        <span style={{ fontSize: 14.5, color: INK, fontWeight: 500 }}>Mailing address is the same</span>
+      </label>
+
+      {!f.mailing_address_same && (
+        <div style={{ paddingLeft: 16, borderLeft: `3px solid ${BORDER}`, marginBottom: 28 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: INK, margin: "0 0 16px 0" }}>Mailing address</h3>
+          <Field label="Street Address" required>
+            <TextInput value={f.mailing_address_line1} onChange={e => set("mailing_address_line1", e.target.value)} placeholder="123 Main Street" style={{ maxWidth: 560 }} />
+          </Field>
+          <Field label="Address line 2">
+            <TextInput value={f.mailing_address_line2} onChange={e => set("mailing_address_line2", e.target.value)} placeholder="Apt, suite, unit" style={{ maxWidth: 560 }} />
+          </Field>
+          <div style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.4fr", gap: 16, maxWidth: 640 }}>
+            <Field label="City" required><TextInput value={f.mailing_city} onChange={e => set("mailing_city", e.target.value)} /></Field>
+            <Field label="Province" required>
+              <Select value={f.mailing_province_or_state} onChange={e => set("mailing_province_or_state", e.target.value)}>
+                <option value="">Select</option>
+                {provinces.map(([code, name]) => <option key={code} value={code}>{`${code} - ${name}`}</option>)}
+              </Select>
+            </Field>
+            <Field label="Postal code" required><TextInput value={f.mailing_postal_or_zip} onChange={e => set("mailing_postal_or_zip", e.target.value)} placeholder="T0B 4A0" /></Field>
+          </div>
+        </div>
+      )}
+
+      <div style={{ height: 1, background: BORDER, margin: "20px 0 28px 0" }} />
+
+      <Field label="Birth date" required>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", maxWidth: 360 }}>
+          {revealDOB ? (
+            <TextInput type="date" value={f.date_of_birth} onChange={e => set("date_of_birth", e.target.value)} autoFocus />
+          ) : (
+            <div style={maskedBox}>{f.date_of_birth ? "**/**/****" : "-"}</div>
+          )}
+          <button type="button" onClick={() => setRevealDOB(r => !r)} style={viewEditBtn}>
+            {revealDOB ? "Hide" : "View/Edit"}
+          </button>
+        </div>
+      </Field>
+
+      <Field label="Gender">
+        <Select value={f.gender} onChange={e => set("gender", e.target.value)} style={{ maxWidth: 320 }}>
+          <option value="">Select</option>
+          <option value="female">Female</option>
+          <option value="male">Male</option>
+          <option value="non_binary">Non-binary</option>
+          <option value="prefer_not_to_say">Prefer not to say</option>
+        </Select>
+      </Field>
+
+      <Field label="Social insurance number" required>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", maxWidth: 360 }}>
+          {revealSIN ? (
+            <TextInput
+              value={f.sin_or_ssn}
+              onChange={e => set("sin_or_ssn", e.target.value.replace(/[^\d-]/g, ""))}
+              placeholder="123-456-789"
+              maxLength={11}
+              autoFocus
+            />
+          ) : (
+            <div style={{ ...maskedBox, letterSpacing: "0.08em" }}>{maskSIN(f.sin_or_ssn)}</div>
+          )}
+          <button type="button" onClick={() => setRevealSIN(r => !r)} style={viewEditBtn}>
+            {revealSIN ? "Hide" : "View/Edit"}
+          </button>
+        </div>
       </Field>
     </EditOverlayShell>
   );
