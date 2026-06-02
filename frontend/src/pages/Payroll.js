@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import NovalaVerifyModal from "../components/NovalaVerifyModal";
 import { AlertTriangle, X as XIcon } from "lucide-react";
+import { EditPersonalInfo, EditEmploymentDetails, EditPaymentMethod } from "../components/EmployeeEditOverlays";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -1230,6 +1231,9 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
   const [actionsOpen, setActionsOpen] = useState(false);
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEditPersonal, setShowEditPersonal] = useState(false);
+  const [showEditEmployment, setShowEditEmployment] = useState(false);
+  const [showEditPayment, setShowEditPayment] = useState(false);
 
   const fetchEmp = async () => {
     try {
@@ -1471,6 +1475,30 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
           employee={emp}
           onClose={() => setShowDeleteConfirm(false)}
           onDeleted={() => { setShowDeleteConfirm(false); onBack(); }}
+        />
+      )}
+
+      {showEditPersonal && (
+        <EditPersonalInfo
+          employee={emp}
+          onClose={() => setShowEditPersonal(false)}
+          onSaved={() => { setShowEditPersonal(false); fetchEmp(); }}
+        />
+      )}
+
+      {showEditEmployment && (
+        <EditEmploymentDetails
+          employee={emp}
+          onClose={() => setShowEditEmployment(false)}
+          onSaved={() => { setShowEditEmployment(false); fetchEmp(); }}
+        />
+      )}
+
+      {showEditPayment && (
+        <EditPaymentMethod
+          employee={emp}
+          onClose={() => setShowEditPayment(false)}
+          onSaved={() => { setShowEditPayment(false); fetchEmp(); }}
         />
       )}
     </div>
