@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { X as XIcon, HelpCircle, ChevronDown, Pencil, Info, Plus, Trash2 } from "lucide-react";
+import { FeedbackWidget } from "./FeedbackWidget";
 
 const BRAND = "#0F5959";
 const BRAND_DARK = "#0A4040";
@@ -467,6 +468,7 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
   const [accountMapping, setAccountMapping] = useState(employee.account_mapping || "Payroll Expenses:Wages");
   const [hoursPerDay, setHoursPerDay] = useState(employee.hours_per_day || "");
   const [daysPerWeek, setDaysPerWeek] = useState(employee.days_per_week || "");
+  const [showFeedback, setShowFeedback] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
@@ -512,7 +514,7 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
         <div style={drawerHeader}>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: INK, margin: 0 }}>Add base pay</h2>
           <div style={{ display: "flex", gap: 4 }}>
-            <button className="nv-overlay-icon-btn" style={iconBtn} title="Edit" aria-label="Edit">
+            <button className="nv-overlay-icon-btn" onClick={() => setShowFeedback(true)} style={iconBtn} title="Send us a message" aria-label="Send us a message">
               <Pencil size={18} strokeWidth={1.9} />
             </button>
             <button className="nv-overlay-icon-btn" onClick={onClose} style={iconBtn} aria-label="Close">
@@ -631,6 +633,7 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
             boxShadow: saving ? "none" : "0 8px 20px -8px rgba(15,89,89,0.6)",
           }}>{saving ? "Saving…" : "Save"}</button>
         </div>
+      {showFeedback && <FeedbackWidget onClose={() => setShowFeedback(false)} source="base_pay_drawer" />}
       </div>
     </div>
   );

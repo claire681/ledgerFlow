@@ -15,7 +15,7 @@ from app.services.scheduler import run_scheduler, run_followup_scheduler
 from app.models import models  # noqa: F401
 
 # Import all routers
-from app.api.routes import (
+from app.api.routes import (, feedback
     auth, documents, transactions, agents,
     analytics, integrations, budgets, invoices, team,
     customers,
@@ -98,6 +98,7 @@ app.include_router(customers.router, prefix="/api/v1")
 app.include_router(bills.router, prefix="/api/v1")
 app.include_router(apikeys.router, prefix="/api/v1")
 app.include_router(payroll.router,       prefix="/api/v1")
+app.include_router(feedback.router, prefix="/api/v1", tags=["feedback"])
 
 
 @app.api_route("/health", methods=["GET", "HEAD"])
