@@ -664,6 +664,11 @@ class Employee(Base):
     mailing_city = Column(String(120))
     mailing_province_or_state = Column(String(40))
     mailing_postal_or_zip = Column(String(20))
+    # Base pay extensions (Screen 4d conditional fields)
+    pay_frequency = Column(String(40))
+    hours_per_day = Column(Numeric(5, 2))
+    days_per_week = Column(Numeric(5, 2))
+    account_mapping = Column(String(255))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

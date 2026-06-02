@@ -461,8 +461,23 @@ const pencilBtn = { flexShrink: 0, width: 38, height: 38, borderRadius: 8, borde
 
 export function BasePayDrawer({ employee, onClose, onSaved }) {
   const [payType, setPayType] = useState(employee.pay_type || "");
+  const [hourlyRate, setHourlyRate] = useState(employee.hourly_rate || "");
+  const [salaryAmount, setSalaryAmount] = useState(employee.salary_amount || "");
+  const [payFrequency, setPayFrequency] = useState(employee.pay_frequency || "per_year");
+  const [accountMapping, setAccountMapping] = useState(employee.account_mapping || "Payroll Expenses:Wages");
+  const [hoursPerDay, setHoursPerDay] = useState(employee.hours_per_day || "");
+  const [daysPerWeek, setDaysPerWeek] = useState(employee.days_per_week || "");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+
+  // Salary defaults: 8 hours/day, 5 days/week if empty
+  React.useEffect(() => {
+    if (payType === "salary") {
+      if (!hoursPerDay) setHoursPerDay("8");
+      if (!daysPerWeek) setDaysPerWeek("5");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [payType]);
 
   const options = [
     { value: "hourly",     label: "Hourly" },
@@ -473,16 +488,27 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
   const save = async () => {
     if (!payType) { setErr("Please select a compensation type."); return; }
     setSaving(true); setErr("");
-    try { await patchEmployee(employee.id, { pay_type: payType }); onSaved(); }
-    catch (e) { setErr(e.message); setSaving(false); }
+    try {
+      const payload = {
+        pay_type: payType,
+        hourly_rate: payType === "hourly" ? (parseFloat(hourlyRate) || null) : null,
+        salary_amount: payType === "salary" ? (parseFloat(salaryAmount) || null) : null,
+        pay_frequency: payType === "salary" ? payFrequency : null,
+        account_mapping: accountMapping,
+        hours_per_day: (payType === "hourly" || payType === "salary") ? (parseFloat(hoursPerDay) || null) : null,
+        days_per_week: (payType === "hourly" || payType === "salary") ? (parseFloat(daysPerWeek) || null) : null,
+      };
+      await patchEmployee(employee.id, payload);
+      onSaved();
+    } catch (e) { setErr(e.message); setSaving(false); }
   };
+
+  const accountHelper = "Used to categorize and map your payroll transactions. To edit, see Accounting under Payroll settings.";
 
   return (
     <div style={drawerBackdrop} onClick={onClose}>
-      <style>{`
-        @keyframes nvSlideRight { from { transform: translateX(100%); } to { transform: none; } }
-      `}</style>
-      <div style={drawerPanel} onClick={e => e.stopPropagation()}>
+      <style>{`@keyframes nvSlideRight { from { transform: translateX(100%); } to { transform: none; } }`}</style>
+      <div style={{ ...drawerPanel, width: 540 }} onClick={e => e.stopPropagation()}>
         <div style={drawerHeader}>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: INK, margin: 0 }}>Add base pay</h2>
           <div style={{ display: "flex", gap: 4 }}>
@@ -497,14 +523,15 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
 
         <div style={drawerBody}>
           {err && <div style={errorBanner}>{err}</div>}
-          <h3 style={{ fontSize: 18, fontWeight: 700, color: INK, margin: "0 0 20px 0", letterSpacing: "-0.01em" }}>
+
+          <h3 style={{ fontSize: 18, fontWeight: 700, color: INK, margin: "0 0 16px 0", letterSpacing: "-0.01em" }}>
             Select compensation type
           </h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
             {options.map(o => (
-              <button key={o.value} onClick={() => setPayType(o.value)} style={{
+              <button key={o.value} type="button" onClick={() => setPayType(o.value)} style={{
                 display: "flex", alignItems: "center", gap: 14,
-                padding: "16px 18px", textAlign: "left",
+                padding: "14px 16px", textAlign: "left",
                 background: payType === o.value ? "#F0FAFA" : "#fff",
                 border: `1.5px solid ${payType === o.value ? BRAND : BORDER}`,
                 borderRadius: 10, cursor: "pointer", width: "100%",
@@ -521,6 +548,78 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
               </button>
             ))}
           </div>
+
+          {payType === "hourly" && (
+            <div>
+              <div style={{ height: 1, background: BORDER, margin: "0 0 24px 0" }} />
+              <Field label="Rate per hour" required>
+                <MoneyInput value={hourlyRate} onChange={e => setHourlyRate(e.target.value)} placeholder="0.00" />
+              </Field>
+              <Field label="Account mapping" hint={accountHelper}>
+                <Select value={accountMapping} onChange={e => setAccountMapping(e.target.value)} style={{ maxWidth: 360 }}>
+                  <option value="Payroll Expenses:Wages">Payroll Expenses:Wages</option>
+                </Select>
+              </Field>
+              <div style={{ height: 1, background: BORDER, margin: "20px 0 20px 0" }} />
+              <h4 style={{ fontSize: 15, fontWeight: 700, color: INK, margin: "0 0 6px 0" }}>Default working hours (optional)</h4>
+              <p style={{ fontSize: 13.5, color: SUB, lineHeight: 1.55, margin: "0 0 16px 0" }}>
+                If an employee works the same schedule every pay period, enter this info to make them eligible for Auto Payroll and calculate any time off.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, maxWidth: 360 }}>
+                <Field label="Hours per day"><TextInput type="number" value={hoursPerDay} onChange={e => setHoursPerDay(e.target.value)} /></Field>
+                <Field label="Days per week"><TextInput type="number" value={daysPerWeek} onChange={e => setDaysPerWeek(e.target.value)} /></Field>
+              </div>
+            </div>
+          )}
+
+          {payType === "salary" && (
+            <div>
+              <div style={{ height: 1, background: BORDER, margin: "0 0 24px 0" }} />
+              <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 14, maxWidth: 420 }}>
+                <Field label="Pay frequency" required>
+                  <Select value={payFrequency} onChange={e => setPayFrequency(e.target.value)}>
+                    <option value="per_year">per year</option>
+                    <option value="per_month">per month</option>
+                    <option value="per_pay_period">per pay period</option>
+                  </Select>
+                </Field>
+                <Field label="Salary" required>
+                  <MoneyInput value={salaryAmount} onChange={e => setSalaryAmount(e.target.value)} placeholder="0.00" />
+                </Field>
+              </div>
+              <Field label="Account mapping" hint={accountHelper}>
+                <Select value={accountMapping} onChange={e => setAccountMapping(e.target.value)} style={{ maxWidth: 360 }}>
+                  <option value="Payroll Expenses:Wages">Payroll Expenses:Wages</option>
+                </Select>
+              </Field>
+              <div style={{ height: 1, background: BORDER, margin: "20px 0 20px 0" }} />
+              <h4 style={{ fontSize: 15, fontWeight: 700, color: INK, margin: "0 0 6px 0" }}>Default working hours</h4>
+              <p style={{ fontSize: 13.5, color: SUB, lineHeight: 1.55, margin: "0 0 16px 0" }}>
+                Used to calculate your employee's time off. You can always change this when you run payroll.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, maxWidth: 360 }}>
+                <Field label="Hours per day"><TextInput type="number" value={hoursPerDay} onChange={e => setHoursPerDay(e.target.value)} /></Field>
+                <Field label="Days per week"><TextInput type="number" value={daysPerWeek} onChange={e => setDaysPerWeek(e.target.value)} /></Field>
+              </div>
+            </div>
+          )}
+
+          {payType === "commission" && (
+            <div>
+              <div style={{ height: 1, background: BORDER, margin: "0 0 20px 0" }} />
+              <InfoBox>
+                A commission pay type will be automatically assigned once you save changes. You can rename this in 'Additional pay types' from the employee profile.
+              </InfoBox>
+              <InfoBox>
+                Overtime, stat pay, and time-off policies are not available for commission-only employees.
+              </InfoBox>
+              <Field label="Account mapping" hint={accountHelper}>
+                <Select value={accountMapping} onChange={e => setAccountMapping(e.target.value)} style={{ maxWidth: 360 }}>
+                  <option value="Payroll Expenses:Wages">Payroll Expenses:Wages</option>
+                </Select>
+              </Field>
+            </div>
+          )}
         </div>
 
         <div style={drawerFooter}>
@@ -537,9 +636,37 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
   );
 }
 
-// ============================================================================
-// SCREEN 4e — Edit Time Off (full-screen overlay)
-// ============================================================================
+function MoneyInput({ value, onChange, placeholder, ...rest }) {
+  return (
+    <div style={{ position: "relative", maxWidth: 200 }}>
+      <span style={{
+        position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)",
+        color: SUB, fontSize: 15, fontWeight: 600, pointerEvents: "none", zIndex: 1,
+      }}>$</span>
+      <TextInput
+        type="number"
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        style={{ paddingLeft: 28 }}
+        {...rest}
+      />
+    </div>
+  );
+}
+
+function InfoBox({ children }) {
+  return (
+    <div style={{
+      display: "flex", gap: 12, padding: 14, marginBottom: 16,
+      background: "#F0FAFA", border: "1px solid rgba(15,89,89,0.18)",
+      borderRadius: 10,
+    }}>
+      <Info size={20} strokeWidth={1.9} color={BRAND} style={{ flexShrink: 0, marginTop: 2 }} />
+      <div style={{ fontSize: 13.5, color: SUB, lineHeight: 1.55 }}>{children}</div>
+    </div>
+  );
+}
 
 export function EditTimeOff({ employee, onClose, onSaved }) {
   const [f, setF] = useState({
