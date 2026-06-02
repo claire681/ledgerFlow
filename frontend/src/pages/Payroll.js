@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import NovalaVerifyModal from "../components/NovalaVerifyModal";
+import { AlertTriangle, X as XIcon } from "lucide-react";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -1227,6 +1228,8 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
   const [editing, setEditing] = useState(false);
   const [tab, setTab] = useState("profile");
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [showStatusPicker, setShowStatusPicker] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const fetchEmp = async () => {
     try {
@@ -1335,6 +1338,9 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
                 <button onClick={() => { setActionsOpen(false); alert("Pay this employee: coming soon"); }} style={menuItem}>Pay this employee</button>
                 <button onClick={() => { setActionsOpen(false); alert("View pay stubs: coming soon"); }} style={menuItem}>View pay stubs</button>
                 <button onClick={() => { setActionsOpen(false); alert("Send invite: use Send invite from list"); }} style={menuItem}>Send Workforce invite</button>
+                <button onClick={() => { setActionsOpen(false); setShowStatusPicker(true); }} style={menuItem}>Change status</button>
+                <div style={{ height: 1, background: BORDER, margin: "4px 0" }} />
+                <button onClick={() => { setActionsOpen(false); setShowDeleteConfirm(true); }} style={menuItemDestructive} onMouseEnter={e => e.currentTarget.style.background = "#FDECEB"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>Delete employee</button>
               </div>
             )}
           </div>
@@ -1451,6 +1457,22 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
           onSaved={() => { setEditing(false); fetchEmp(); }}
         />
       )}
+
+      {showStatusPicker && (
+        <StatusPickerModal
+          employee={emp}
+          onClose={() => setShowStatusPicker(false)}
+          onSaved={() => { setShowStatusPicker(false); fetchEmp(); }}
+        />
+      )}
+
+      {showDeleteConfirm && (
+        <DeleteEmployeeModal
+          employee={emp}
+          onClose={() => setShowDeleteConfirm(false)}
+          onDeleted={() => { setShowDeleteConfirm(false); onBack(); }}
+        />
+      )}
     </div>
   );
 }
@@ -1494,6 +1516,193 @@ const menuItem = {
   display: "block", width: "100%", textAlign: "left",
   padding: "10px 14px", background: "transparent", border: "none",
   fontSize: 14, color: TEXT, cursor: "pointer",
+};
+
+const menuItemDestructive = {
+  display: "block", width: "100%", textAlign: "left",
+  padding: "10px 14px", background: "transparent", border: "none",
+  fontSize: 14, color: "#D9453C", fontWeight: 600, cursor: "pointer",
+  transition: "background 0.15s",
+};
+
+// ============================================================================
+// Status Picker (premium small modal)
+// ============================================================================
+
+function StatusPickerModal({ employee, onClose, onSaved }) {
+  const [status, setStatus] = React.useState(employee.status || "active");
+  const [saving, setSaving] = React.useState(false);
+  const [err, setErr] = React.useState("");
+
+  const options = [
+    { value: "active",     label: "Active",     desc: "Currently employed and working." },
+    { value: "on_leave",   label: "On leave",   desc: "Temporarily away (e.g. parental, medical)." },
+    { value: "inactive",   label: "Inactive",   desc: "Not currently working but record kept." },
+    { value: "terminated", label: "Terminated", desc: "No longer employed by your company." },
+  ];
+
+  const save = async () => {
+    if (status === employee.status) { onClose(); return; }
+    setSaving(true); setErr("");
+    try {
+      const r = await fetch(`${API_URL}/api/v1/payroll/employees/${employee.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ status }),
+      });
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({ detail: `HTTP ${r.status}` }));
+        throw new Error(e.detail || `HTTP ${r.status}`);
+      }
+      onSaved();
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={modalBackdrop}>
+      <div style={{ ...modalCard, width: 460 }} className="nv-card">
+        <button onClick={onClose} aria-label="Close" style={modalClose}>
+          <XIcon size={18} strokeWidth={2.2} />
+        </button>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#0E1A1A", margin: "0 0 6px 0", letterSpacing: "-0.01em" }}>Change status</h2>
+        <p style={{ fontSize: 14, color: "#5B6B6B", margin: "0 0 20px 0" }}>Update {employee.first_name}'s employment status.</p>
+
+        {err && <div style={{ background: "#FDECEB", color: "#D9453C", padding: 10, borderRadius: 8, marginBottom: 14, fontSize: 13 }}>{err}</div>}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {options.map(opt => (
+            <button key={opt.value} onClick={() => setStatus(opt.value)} style={{
+              display: "flex", alignItems: "flex-start", gap: 12,
+              padding: "12px 14px", textAlign: "left",
+              background: status === opt.value ? "#F0FAFA" : "#fff",
+              border: `1.5px solid ${status === opt.value ? BRAND : BORDER}`,
+              borderRadius: 10, cursor: "pointer", width: "100%",
+            }}>
+              <span style={{
+                flexShrink: 0, marginTop: 2, width: 18, height: 18, borderRadius: "50%",
+                border: `2px solid ${status === opt.value ? BRAND : "#9CA3AF"}`,
+                background: "#fff", position: "relative",
+              }}>
+                {status === opt.value && <span style={{ position: "absolute", inset: 3, borderRadius: "50%", background: BRAND }} />}
+              </span>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: "#0E1A1A" }}>{opt.label}</div>
+                <div style={{ fontSize: 13, color: "#5B6B6B", marginTop: 2 }}>{opt.desc}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 24, justifyContent: "flex-end" }}>
+          <button onClick={onClose} style={{
+            padding: "10px 20px", borderRadius: 8, border: `1.5px solid ${BORDER}`,
+            background: "#fff", color: "#334", fontWeight: 600, fontSize: 14, cursor: "pointer",
+          }}>Cancel</button>
+          <button onClick={save} disabled={saving} style={{
+            padding: "10px 22px", borderRadius: 8, border: "none",
+            background: saving ? "#9CA3AF" : BRAND, color: "#fff",
+            fontWeight: 600, fontSize: 14, cursor: saving ? "default" : "pointer",
+          }}>{saving ? "Saving…" : "Update status"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Delete Employee — destructive confirm (per spec Screen 4)
+// ============================================================================
+
+function DeleteEmployeeModal({ employee, onClose, onDeleted }) {
+  const [deleting, setDeleting] = React.useState(false);
+  const [err, setErr] = React.useState("");
+
+  const doDelete = async () => {
+    setDeleting(true); setErr("");
+    try {
+      const r = await fetch(`${API_URL}/api/v1/payroll/employees/${employee.id}?permanent=true`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+      if (!r.ok) {
+        const e = await r.json().catch(() => ({ detail: `HTTP ${r.status}` }));
+        throw new Error(e.detail || `HTTP ${r.status}`);
+      }
+      onDeleted();
+    } catch (e) {
+      setErr(e.message);
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div style={modalBackdrop}>
+      <div style={{ ...modalCard, width: 460, padding: "40px 36px 30px", textAlign: "center" }} className="nv-card">
+        <button onClick={onClose} aria-label="Close" style={modalClose}>
+          <XIcon size={18} strokeWidth={2.2} />
+        </button>
+
+        <div style={{
+          width: 72, height: 72, borderRadius: 22, margin: "4px auto 22px",
+          display: "grid", placeItems: "center",
+          background: "radial-gradient(120% 120% at 30% 20%, #FEEEEC 0%, #FBDDDA 100%)",
+          border: "1px solid rgba(217,69,60,0.20)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7), 0 10px 22px -12px rgba(217,69,60,0.45)",
+        }}>
+          <AlertTriangle size={32} strokeWidth={2} color="#D9453C" />
+        </div>
+
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#0E1A1A", margin: "0 0 10px 0", letterSpacing: "-0.01em" }}>
+          Permanently delete {employee.first_name}
+        </h2>
+        <p style={{ fontSize: 14.5, color: "#5B6B6B", lineHeight: 1.55, margin: "0 auto 22px auto", maxWidth: 360 }}>
+          Deleting this employee will erase all their data. This can't be undone. If they've already started working, select Cancel and change their status to Inactive or Terminated instead.
+        </p>
+
+        {err && (
+          <div style={{ background: "#FDECEB", color: "#D9453C", padding: 12, borderRadius: 8, marginBottom: 16, fontSize: 13, textAlign: "left" }}>
+            {err}
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+          <button onClick={onClose} disabled={deleting} style={{
+            padding: "11px 26px", borderRadius: 10, border: `1.5px solid ${BORDER}`,
+            background: "#fff", color: "#334", fontWeight: 600, fontSize: 14.5,
+            cursor: deleting ? "default" : "pointer",
+          }}>Cancel</button>
+          <button onClick={doDelete} disabled={deleting} style={{
+            padding: "11px 26px", borderRadius: 10, border: "none",
+            background: deleting ? "#9CA3AF" : "#D9453C", color: "#fff",
+            fontWeight: 700, fontSize: 14.5, cursor: deleting ? "default" : "pointer",
+            boxShadow: deleting ? "none" : "0 8px 20px -8px rgba(217,69,60,0.6)",
+          }}>{deleting ? "Deleting…" : "Delete employee"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const modalBackdrop = {
+  position: "fixed", inset: 0, display: "grid", placeItems: "center",
+  background: "rgba(14,26,26,0.45)", backdropFilter: "blur(6px)", padding: 20,
+  zIndex: 10001, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+};
+
+const modalCard = {
+  background: "#fff", borderRadius: 20, padding: "32px 36px 28px", position: "relative",
+  border: "1px solid rgba(14,26,26,0.05)",
+  boxShadow: "0 1px 2px rgba(16,24,40,0.06), 0 32px 64px -24px rgba(11,55,57,0.35)",
+};
+
+const modalClose = {
+  position: "absolute", top: 14, right: 14, width: 34, height: 34, borderRadius: 999,
+  border: "none", background: "transparent", color: "#5B6B6B", display: "grid",
+  placeItems: "center", cursor: "pointer",
 };
 
 
