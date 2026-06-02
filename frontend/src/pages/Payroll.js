@@ -1427,7 +1427,7 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
 
             <ProfileCard
               title="Time off"
-              action={{ label: "Start", onClick: () => alert("Time off policies — coming next") }}
+              action={{ label: "Start", onClick: () => setShowTimeOff(true)}}
               helper="Set up time off policies like sick pay and vacation for eligible employees."
             />
 
