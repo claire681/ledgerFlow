@@ -15,11 +15,12 @@ from app.services.scheduler import run_scheduler, run_followup_scheduler
 from app.models import models  # noqa: F401
 
 # Import all routers
-from app.api.routes import (, feedback
+from app.api.routes import (
     auth, documents, transactions, agents,
     analytics, integrations, budgets, invoices, team,
     customers,
 )
+from app.api.routes import feedback
 from app.api.routes import (
     company, tax_reports, scenarios,
     ai_context, snapshots, preferences, followup,
