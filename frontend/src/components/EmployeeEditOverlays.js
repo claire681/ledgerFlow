@@ -37,13 +37,13 @@ export function EditOverlayShell({ title, onCancel, onSave, saving, error, child
         </div>
       </div>
       <div style={shellBody}>
-        <div style={{ maxWidth: 720, margin: "0 auto", padding: "36px 40px 140px 40px" }}>
+        <div style={{ maxWidth: 1100, margin: 0, padding: "36px 40px 140px 40px" }}>
           {error && <div style={errorBanner}>{error}</div>}
           {children}
         </div>
       </div>
       <div style={shellFooter}>
-        <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 40px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ padding: "0 40px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <button className="nv-overlay-cancel" onClick={onCancel} style={cancelBtn}>Cancel</button>
           {!hideSave && (
             <button className="nv-overlay-save" onClick={onSave} disabled={saving} style={{
@@ -540,7 +540,7 @@ export function EditDeductionsContributions({ employee, onClose, onSaved }) {
         What deductions, contributions does {employee.first_name} have?
       </h1>
 
-      <a href="#" onClick={e => e.preventDefault()} style={{ color: BRAND, fontWeight: 600, fontSize: 14, textDecoration: "none", display: "inline-block", marginBottom: 28 }}>
+      <a href="#" onClick={e => e.preventDefault()} style={{ color: BRAND, fontWeight: 600, fontSize: 14, textDecoration: "none", display: "block", marginBottom: 28 }}>
         View inactive items
       </a>
 
@@ -550,7 +550,7 @@ export function EditDeductionsContributions({ employee, onClose, onSaved }) {
       <p style={{ fontSize: 14, color: SUB, lineHeight: 1.55, margin: "0 0 6px 0" }}>
         These may include health insurance, retirement plans, loan repayments, and more.
       </p>
-      <a href="#" onClick={e => e.preventDefault()} style={{ color: BRAND, fontWeight: 600, fontSize: 14, textDecoration: "none", display: "inline-block", marginBottom: 16 }}>
+      <a href="#" onClick={e => e.preventDefault()} style={{ color: BRAND, fontWeight: 600, fontSize: 14, textDecoration: "none", display: "block", marginBottom: 16 }}>
         Learn about deductions and contributions
       </a>
 
@@ -576,7 +576,7 @@ export function EditDeductionsContributions({ employee, onClose, onSaved }) {
       )}
 
       <button onClick={() => setShowAddDrawer(true)} style={{
-        display: "inline-flex", alignItems: "center", gap: 6,
+        display: "flex", alignItems: "center", gap: 6,
         background: "transparent", border: "none", color: BRAND,
         fontWeight: 700, fontSize: 14.5, cursor: "pointer", padding: 0,
         marginBottom: 32,
