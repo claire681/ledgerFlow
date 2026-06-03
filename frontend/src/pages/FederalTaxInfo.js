@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import { X, HelpCircle } from "lucide-react";
 import NovalaVerifyModal from "../components/NovalaVerifyModal";
+import { SaveChangesDialog } from "../components/SaveChangesDialog";
 
 const BRAND = "#0F5959";
 const TEAL_LINK = "#0F9599";
