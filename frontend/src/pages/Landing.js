@@ -13,20 +13,20 @@ import {
 } from "lucide-react";
 
 const C = {
-  bg:         "#08090D",
-  bgCard:     "rgba(255,255,255,0.04)",
-  bgCardHov:  "rgba(255,255,255,0.07)",
-  border:     "rgba(255,255,255,0.08)",
-  borderHov:  "rgba(0,255,178,0.35)",
-  accent:     "#00FFB2",
-  accentDim:  "#00D4A4",
-  accentGlow: "rgba(0,255,178,0.18)",
+  bg:         "#FFFFFF",
+  bgCard:     "#F5F7F7",
+  bgCardHov:  "#EDF1F1",
+  border:     "rgba(14,26,26,0.08)",
+  borderHov:  "rgba(15,149,153,0.35)",
+  accent:     "#0F9599",
+  accentDim:  "#0B7377",
+  accentGlow: "rgba(15,149,153,0.18)",
   cyan:       "#22D3EE",
   cyanGlow:   "rgba(34,211,238,0.15)",
   text:       "#F0F4F8",
   textSub:    "#94A3B8",
   textMuted:  "#475569",
-  navy:       "#0A2540",
+  navy:       "#0E1A1A",
 };
 
 function useInView(threshold = 0.12) {
@@ -117,15 +117,15 @@ function FAQ({ q, a, icon }) {
   return (
     <div onClick={() => setOpen(!open)} style={{
       borderRadius: 14,
-      border: `1px solid ${open ? "rgba(0,255,178,0.25)" : C.border}`,
-      background: open ? "rgba(0,255,178,0.04)" : C.bgCard,
+      border: `1px solid ${open ? "rgba(15,149,153,0.25)" : C.border}`,
+      background: open ? "rgba(15,149,153,0.04)" : C.bgCard,
       marginBottom: 10, cursor: "pointer", transition: "all 0.3s ease", overflow: "hidden",
       backdropFilter: "blur(12px)",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 22px", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
           {icon && (
-            <div style={{ width: 32, height: 32, borderRadius: 9, background: open ? "rgba(0,255,178,0.12)" : "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.3s ease" }}>
+            <div style={{ width: 32, height: 32, borderRadius: 9, background: open ? "rgba(15,149,153,0.12)" : "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.3s ease" }}>
               {icon}
             </div>
           )}
@@ -158,7 +158,7 @@ function FeatureCard({ icon, title, desc, bullets, accent = C.accent, delay = 0,
         }}
       >
         {badge && (
-          <div style={{ position: "absolute", top: 16, right: 16, fontSize: 9, fontWeight: 700, color: C.accent, background: "rgba(0,255,178,0.1)", border: "1px solid rgba(0,255,178,0.3)", padding: "3px 10px", borderRadius: 20, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+          <div style={{ position: "absolute", top: 16, right: 16, fontSize: 9, fontWeight: 700, color: C.accent, background: "rgba(15,149,153,0.1)", border: "1px solid rgba(15,149,153,0.3)", padding: "3px 10px", borderRadius: 20, letterSpacing: "0.08em", textTransform: "uppercase" }}>
             {badge}
           </div>
         )}
@@ -193,10 +193,10 @@ function PricingCard({ plan, price, desc, features, cta, popular, onSignUp, icon
       style={{
         borderRadius: 24, padding: "34px 30px", width: "100%", maxWidth: 340,
         border: popular ? `1px solid ${C.accent}50` : `1px solid ${C.border}`,
-        background: popular ? `linear-gradient(135deg, rgba(0,255,178,0.08), rgba(34,211,238,0.05))` : C.bgCard,
+        background: popular ? `linear-gradient(135deg, rgba(15,149,153,0.08), rgba(34,211,238,0.05))` : C.bgCard,
         position: "relative",
         transform: hov ? "translateY(-10px)" : popular ? "translateY(-6px)" : "none",
-        boxShadow: popular ? `0 24px 70px rgba(0,255,178,0.12), 0 0 0 1px rgba(0,255,178,0.2)` : hov ? `0 20px 60px rgba(0,0,0,0.4)` : "none",
+        boxShadow: popular ? `0 24px 70px rgba(15,149,153,0.12), 0 0 0 1px rgba(15,149,153,0.2)` : hov ? `0 20px 60px rgba(0,0,0,0.4)` : "none",
         transition: "all 0.4s cubic-bezier(0.16,1,0.3,1)",
         backdropFilter: "blur(20px)",
       }}
@@ -215,7 +215,7 @@ function PricingCard({ plan, price, desc, features, cta, popular, onSignUp, icon
       <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 20, marginBottom: 24 }}>
         {features.map((f, i) => (
           <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 11 }}>
-            <div style={{ width: 18, height: 18, borderRadius: "50%", background: "rgba(0,255,178,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+            <div style={{ width: 18, height: 18, borderRadius: "50%", background: "rgba(15,149,153,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
               <Check size={10} color={C.accent} strokeWidth={3}/>
             </div>
             <span style={{ fontSize: 13, color: C.textSub, lineHeight: 1.4 }}>{f}</span>
@@ -223,7 +223,7 @@ function PricingCard({ plan, price, desc, features, cta, popular, onSignUp, icon
         ))}
       </div>
       <button onClick={onSignUp}
-        style={{ width: "100%", padding: "14px 0", borderRadius: 12, background: popular ? C.accent : "rgba(255,255,255,0.08)", color: popular ? C.navy : C.text, border: popular ? "none" : `1px solid ${C.border}`, cursor: "pointer", fontSize: 14, fontWeight: 700, transition: "all 0.25s cubic-bezier(0.16,1,0.3,1)", boxShadow: popular ? `0 4px 20px ${C.accentGlow}` : "none", fontFamily: "inherit" }}
+        style={{ width: "100%", padding: "14px 0", borderRadius: 12, background: popular ? C.accent : "rgba(14,26,26,0.08)", color: popular ? C.navy : C.text, border: popular ? "none" : `1px solid ${C.border}`, cursor: "pointer", fontSize: 14, fontWeight: 700, transition: "all 0.25s cubic-bezier(0.16,1,0.3,1)", boxShadow: popular ? `0 4px 20px ${C.accentGlow}` : "none", fontFamily: "inherit" }}
         onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.02)"; e.currentTarget.style.boxShadow = popular ? `0 8px 32px ${C.accentGlow}` : "none"; }}
         onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = popular ? `0 4px 20px ${C.accentGlow}` : "none"; }}>
         {cta}
@@ -235,11 +235,11 @@ function PricingCard({ plan, price, desc, features, cta, popular, onSignUp, icon
 function OrbitalAnimation() {
   const ORBIT_ICONS = [
     { Icon: FileText,   color: "#22D3EE", label: "Invoice"   },
-    { Icon: Receipt,    color: "#00FFB2", label: "Receipt"   },
+    { Icon: Receipt,    color: "#0F9599", label: "Receipt"   },
     { Icon: BarChart3,  color: "#8b5cf6", label: "Reports"   },
     { Icon: GitMerge,   color: "#f59e0b", label: "Reconcile" },
     { Icon: CreditCard, color: "#ef4444", label: "Bill Pay"  },
-    { Icon: Calculator, color: "#00FFB2", label: "Tax"       },
+    { Icon: Calculator, color: "#0F9599", label: "Tax"       },
     { Icon: ScanLine,   color: "#22D3EE", label: "Scanner"   },
     { Icon: Repeat,     color: "#8b5cf6", label: "Recurring" },
   ];
@@ -262,8 +262,8 @@ function OrbitalAnimation() {
 
   return (
     <div style={{ position: "relative", width: size, height: size, margin: "0 auto" }}>
-      <div style={{ position: "absolute", inset: -40, borderRadius: "50%", background: "radial-gradient(circle, rgba(0,255,178,0.06) 0%, rgba(34,211,238,0.03) 50%, transparent 70%)", pointerEvents: "none" }}/>
-      <div style={{ position: "absolute", top: cx - R2, left: cx - R2, width: R2 * 2, height: R2 * 2, borderRadius: "50%", border: "1px solid rgba(0,255,178,0.12)", boxShadow: "0 0 40px rgba(0,255,178,0.04) inset" }}/>
+      <div style={{ position: "absolute", inset: -40, borderRadius: "50%", background: "radial-gradient(circle, rgba(15,149,153,0.06) 0%, rgba(34,211,238,0.03) 50%, transparent 70%)", pointerEvents: "none" }}/>
+      <div style={{ position: "absolute", top: cx - R2, left: cx - R2, width: R2 * 2, height: R2 * 2, borderRadius: "50%", border: "1px solid rgba(15,149,153,0.12)", boxShadow: "0 0 40px rgba(15,149,153,0.04) inset" }}/>
       <div style={{ position: "absolute", top: cx - R1, left: cx - R1, width: R1 * 2, height: R1 * 2, borderRadius: "50%", border: "1px solid rgba(34,211,238,0.18)", boxShadow: "0 0 30px rgba(34,211,238,0.06) inset" }}/>
 
       <div style={{
@@ -308,12 +308,12 @@ function OrbitalAnimation() {
         );
       })}
 
-      <div style={{ position: "absolute", left: cx - 56, top: cx - 56, width: 112, height: 112, borderRadius: 30, background: "linear-gradient(135deg, rgba(0,255,178,0.15) 0%, rgba(8,9,13,0.95) 60%)", border: "1px solid rgba(0,255,178,0.3)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", boxShadow: "0 0 60px rgba(0,255,178,0.2), 0 0 120px rgba(0,255,178,0.08), 0 8px 32px rgba(0,0,0,0.6)", zIndex: 10, backdropFilter: "blur(20px)" }}>
+      <div style={{ position: "absolute", left: cx - 56, top: cx - 56, width: 112, height: 112, borderRadius: 30, background: "linear-gradient(135deg, rgba(15,149,153,0.15) 0%, rgba(8,9,13,0.95) 60%)", border: "1px solid rgba(15,149,153,0.3)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", boxShadow: "0 0 60px rgba(15,149,153,0.2), 0 0 120px rgba(15,149,153,0.08), 0 8px 32px rgba(0,0,0,0.6)", zIndex: 10, backdropFilter: "blur(20px)" }}>
         <svg width="34" height="34" viewBox="0 0 22 22" fill="none" style={{ marginBottom: 5 }}>
           <path d="M3 16 L7 7 L11 12 L15 5 L19 9" stroke={C.accent} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
           <circle cx="19" cy="9" r="2" fill={C.accent}/>
         </svg>
-        <span style={{ fontSize: 13, fontWeight: 800, color: "#fff", letterSpacing: "-0.03em" }}>No<span style={{ color: C.accent }}>vala</span></span>
+        <span style={{ fontSize: 13, fontWeight: 800, color: C.accent, letterSpacing: "-0.03em" }}>No<span style={{ color: C.accent }}>vala</span></span>
       </div>
     </div>
   );
@@ -384,10 +384,10 @@ export default function NovalaLanding() {
         * { box-sizing:border-box; margin:0; padding:0; }
         html { scroll-behavior:smooth; }
         ::-webkit-scrollbar { width:5px; }
-        ::-webkit-scrollbar-thumb { background:#00FFB2; border-radius:99px; }
+        ::-webkit-scrollbar-thumb { background:#0F9599; border-radius:99px; }
         @keyframes float      { 0%,100%{transform:translateY(0)}           50%{transform:translateY(-12px)} }
         @keyframes floatSlow  { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-8px) rotate(1.5deg)} }
-        @keyframes pulse-glow { 0%,100%{box-shadow:0 0 30px rgba(0,255,178,0.2)} 50%{box-shadow:0 0 70px rgba(0,255,178,0.55)} }
+        @keyframes pulse-glow { 0%,100%{box-shadow:0 0 30px rgba(15,149,153,0.2)} 50%{box-shadow:0 0 70px rgba(15,149,153,0.55)} }
         @keyframes pulse-cyan { 0%,100%{box-shadow:0 0 20px rgba(34,211,238,0.2)} 50%{box-shadow:0 0 50px rgba(34,211,238,0.5)} }
         @keyframes ping       { 0%{transform:scale(1);opacity:1} 75%,100%{transform:scale(2.2);opacity:0} }
 
@@ -402,13 +402,13 @@ export default function NovalaLanding() {
         @keyframes float-badge { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-10px) rotate(1deg)} }
         @keyframes glow-line  { 0%,100%{opacity:0.4} 50%{opacity:1} }
         .cta-primary {
-          background: linear-gradient(135deg, #00FFB2, #00D4A4);
-          color: #08090D; border:none;
+          background: linear-gradient(135deg, #0F9599, #0B7377);
+          color: #FFFFFF; border:none;
           padding:14px 30px; border-radius:13px; font-size:15px; font-weight:800;
-          cursor:pointer; box-shadow:0 6px 30px rgba(0,255,178,0.35), 0 0 0 1px rgba(0,255,178,0.2);
+          cursor:pointer; box-shadow:0 6px 30px rgba(15,149,153,0.35), 0 0 0 1px rgba(15,149,153,0.2);
           transition:all 0.25s cubic-bezier(0.16,1,0.3,1); font-family:inherit; white-space:nowrap;
         }
-        .cta-primary:hover  { transform:translateY(-2px) scale(1.02); box-shadow:0 12px 40px rgba(0,255,178,0.5), 0 0 0 1px rgba(0,255,178,0.3); }
+        .cta-primary:hover  { transform:translateY(-2px) scale(1.02); box-shadow:0 12px 40px rgba(15,149,153,0.5), 0 0 0 1px rgba(15,149,153,0.3); }
         .cta-primary:active { transform:scale(0.97); }
         .cta-secondary {
           background: rgba(255,255,255,0.06); color: #F0F4F8;
@@ -417,15 +417,15 @@ export default function NovalaLanding() {
           transition:all 0.25s cubic-bezier(0.16,1,0.3,1); font-family:inherit; white-space:nowrap;
           backdrop-filter: blur(12px);
         }
-        .cta-secondary:hover { transform:translateY(-2px); background:rgba(255,255,255,0.1); border-color:rgba(0,255,178,0.3); box-shadow:0 8px 28px rgba(0,0,0,0.3); }
+        .cta-secondary:hover { transform:translateY(-2px); background:rgba(255,255,255,0.1); border-color:rgba(15,149,153,0.3); box-shadow:0 8px 28px rgba(0,0,0,0.3); }
         .step-card { transition:all 0.4s cubic-bezier(0.16,1,0.3,1); cursor:default; backdrop-filter:blur(12px); }
         .step-card:hover { transform:translateY(-8px) !important; }
         .step-card:hover .step-icon { transform:scale(1.15) rotate(5deg); }
         .step-icon { transition:all 0.35s cubic-bezier(0.16,1,0.3,1); }
         .stat-item { transition:all 0.3s cubic-bezier(0.16,1,0.3,1); padding:24px 20px; border-radius:18px; cursor:default; }
-        .stat-item:hover { transform:translateY(-5px) scale(1.04); background:rgba(0,255,178,0.05); box-shadow:0 0 40px rgba(0,255,178,0.08); }
+        .stat-item:hover { transform:translateY(-5px) scale(1.04); background:rgba(15,149,153,0.05); box-shadow:0 0 40px rgba(15,149,153,0.08); }
         .nav-link { position:relative; display:flex; align-items:center; gap:6px; }
-        .nav-link::after { content:''; position:absolute; bottom:-4px; left:0; right:0; height:1px; background:linear-gradient(90deg,#00FFB2,#22D3EE); transform:scaleX(0); transition:transform 0.25s ease; border-radius:99px; }
+        .nav-link::after { content:''; position:absolute; bottom:-4px; left:0; right:0; height:1px; background:linear-gradient(90deg,#0F9599,#22D3EE); transform:scaleX(0); transition:transform 0.25s ease; border-radius:99px; }
         .nav-link:hover::after { transform:scaleX(1); }
         .desktop-only { display:flex !important; }
         .mobile-only  { display:none  !important; }
@@ -456,7 +456,7 @@ export default function NovalaLanding() {
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:16, marginBottom:40 }}>
                 {allFeatures.map((f,i) => <FeatureCard key={i} {...f} delay={i*0.04}/>)}
               </div>
-              <div style={{ background:"linear-gradient(135deg,rgba(0,255,178,0.08),rgba(34,211,238,0.05))", border:`1px solid rgba(0,255,178,0.2)`, borderRadius:20, padding:"clamp(24px,4vw,40px)", textAlign:"center" }}>
+              <div style={{ background:"linear-gradient(135deg,rgba(15,149,153,0.08),rgba(34,211,238,0.05))", border:`1px solid rgba(15,149,153,0.2)`, borderRadius:20, padding:"clamp(24px,4vw,40px)", textAlign:"center" }}>
                 <h3 style={{ fontSize:"clamp(22px,3vw,32px)", fontWeight:800, color:C.text, marginBottom:12, letterSpacing:"-0.03em" }}>Ready to get started?</h3>
                 <p style={{ fontSize:15, color:C.textSub, marginBottom:28 }}>Join hundreds of businesses already using Novala.</p>
                 <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap" }}>
@@ -473,7 +473,7 @@ export default function NovalaLanding() {
       <nav style={{ position:"fixed", top:0, left:0, right:0, zIndex:100, background: scrollY>40 ? "rgba(8,9,13,0.95)" : "transparent", backdropFilter: scrollY>40 ? "blur(24px)" : "none", borderBottom: scrollY>40 ? `1px solid ${C.border}` : "none", transition:"all 0.3s ease", padding:`0 ${px}` }}>
         <div style={{ maxWidth:1200, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", height:66 }}>
           <div style={{ display:"flex", alignItems:"center", gap:9, flexShrink:0 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,rgba(0,255,178,0.15),rgba(8,9,13,0.9))", border:`1px solid rgba(0,255,178,0.3)`, display:"flex", alignItems:"center", justifyContent:"center", boxShadow:`0 0 20px rgba(0,255,178,0.2)`, flexShrink:0 }}>
+            <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,rgba(15,149,153,0.15),rgba(8,9,13,0.9))", border:`1px solid rgba(15,149,153,0.3)`, display:"flex", alignItems:"center", justifyContent:"center", boxShadow:`0 0 20px rgba(15,149,153,0.2)`, flexShrink:0 }}>
               <svg width="17" height="17" viewBox="0 0 22 22" fill="none">
                 <path d="M3 16 L7 7 L11 12 L15 5 L19 9" stroke={C.accent} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
                 <circle cx="19" cy="9" r="2" fill={C.accent}/>
@@ -499,7 +499,7 @@ export default function NovalaLanding() {
           </div>
           <button className="mobile-only" onClick={() => setMenuOpen(o => !o)}
             style={{ background:"rgba(255,255,255,0.06)", border:`1px solid ${C.border}`, borderRadius:10, cursor:"pointer", color:C.text, alignItems:"center", justifyContent:"center", padding:8, transition:"background 0.2s" }}
-            onMouseEnter={e => e.currentTarget.style.background="rgba(0,255,178,0.08)"}
+            onMouseEnter={e => e.currentTarget.style.background="rgba(15,149,153,0.08)"}
             onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.06)"}>
             {menuOpen ? <X size={22}/> : <Menu size={22}/>}
           </button>
@@ -525,15 +525,15 @@ export default function NovalaLanding() {
       </nav>
 
       {/* HERO */}
-      <section style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding:`100px ${px} 60px`, background:`radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,255,178,0.07) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 50%, rgba(34,211,238,0.04) 0%, transparent 60%), ${C.bg}`, position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", inset:0, backgroundImage:`linear-gradient(rgba(0,255,178,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,178,0.03) 1px, transparent 1px)`, backgroundSize:"60px 60px", pointerEvents:"none" }}/>
-        <div style={{ position:"absolute", top:"20%", right:"10%", width:400, height:400, borderRadius:"50%", background:"radial-gradient(circle,rgba(0,255,178,0.06),transparent)", filter:"blur(60px)", pointerEvents:"none" }}/>
+      <section style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding:`100px ${px} 60px`, background:`radial-gradient(ellipse 80% 60% at 50% -10%, rgba(15,149,153,0.07) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 50%, rgba(34,211,238,0.04) 0%, transparent 60%), ${C.bg}`, position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"absolute", inset:0, backgroundImage:`linear-gradient(rgba(15,149,153,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(15,149,153,0.03) 1px, transparent 1px)`, backgroundSize:"60px 60px", pointerEvents:"none" }}/>
+        <div style={{ position:"absolute", top:"20%", right:"10%", width:400, height:400, borderRadius:"50%", background:"radial-gradient(circle,rgba(15,149,153,0.06),transparent)", filter:"blur(60px)", pointerEvents:"none" }}/>
         <div style={{ position:"absolute", bottom:"20%", left:"5%", width:300, height:300, borderRadius:"50%", background:"radial-gradient(circle,rgba(34,211,238,0.05),transparent)", filter:"blur(60px)", pointerEvents:"none" }}/>
         <div style={{ maxWidth:1200, margin:"0 auto", width:"100%", position:"relative" }}>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))", gap:60, alignItems:"center" }}>
             <div style={{ textAlign:"left" }}>
               <Reveal delay={0}>
-                <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(0,255,178,0.08)", border:"1px solid rgba(0,255,178,0.25)", borderRadius:99, padding:"6px 18px", marginBottom:30 }}>
+                <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(15,149,153,0.08)", border:"1px solid rgba(15,149,153,0.25)", borderRadius:99, padding:"6px 18px", marginBottom:30 }}>
                   <div style={{ width:7, height:7, borderRadius:"50%", background:C.accent, animation:"pulse-glow 2s infinite" }}/>
                   <span style={{ fontSize:11, fontWeight:700, color:C.accent, letterSpacing:"0.1em", textTransform:"uppercase" }}>Financial Intelligence Platform</span>
                 </div>
@@ -573,7 +573,7 @@ export default function NovalaLanding() {
       </section>
 
       {/* STATS */}
-      <section style={{ padding:`52px ${px}`, background:`linear-gradient(180deg, rgba(0,255,178,0.03), transparent)`, borderTop:`1px solid ${C.border}`, borderBottom:`1px solid ${C.border}` }}>
+      <section style={{ padding:`52px ${px}`, background:`linear-gradient(180deg, rgba(15,149,153,0.03), transparent)`, borderTop:`1px solid ${C.border}`, borderBottom:`1px solid ${C.border}` }}>
         <div style={{ maxWidth:960, margin:"0 auto" }}>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:"clamp(16px,4vw,40px)" }}>
             {[
@@ -597,12 +597,12 @@ export default function NovalaLanding() {
       </section>
 
       {/* FEATURES */}
-      <section id="features" style={{ padding:`88px ${px}`, background:`linear-gradient(180deg, ${C.bg}, rgba(0,255,178,0.02))`, position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", top:"30%", left:"50%", transform:"translateX(-50%)", width:800, height:400, background:"radial-gradient(ellipse,rgba(0,255,178,0.04),transparent)", pointerEvents:"none" }}/>
+      <section id="features" style={{ padding:`88px ${px}`, background:`linear-gradient(180deg, ${C.bg}, rgba(15,149,153,0.02))`, position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"absolute", top:"30%", left:"50%", transform:"translateX(-50%)", width:800, height:400, background:"radial-gradient(ellipse,rgba(15,149,153,0.04),transparent)", pointerEvents:"none" }}/>
         <div style={{ maxWidth:1200, margin:"0 auto", position:"relative" }}>
           <Reveal>
             <div style={{ textAlign:"center", marginBottom:56 }}>
-              <div style={{ display:"inline-flex", alignItems:"center", gap:8, fontSize:11, fontWeight:700, color:C.accent, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:14, background:"rgba(0,255,178,0.08)", border:`1px solid rgba(0,255,178,0.2)`, padding:"6px 16px", borderRadius:99 }}>
+              <div style={{ display:"inline-flex", alignItems:"center", gap:8, fontSize:11, fontWeight:700, color:C.accent, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:14, background:"rgba(15,149,153,0.08)", border:`1px solid rgba(15,149,153,0.2)`, padding:"6px 16px", borderRadius:99 }}>
                 <Layers size={13} color={C.accent}/> Everything You Need
               </div>
               <h2 style={{ fontSize:"clamp(28px,5vw,52px)", fontWeight:800, letterSpacing:"-0.035em", color:C.text, marginBottom:14, lineHeight:1.08 }}>
@@ -617,10 +617,10 @@ export default function NovalaLanding() {
             {allFeatures.slice(0,6).map((f,i) => <FeatureCard key={i} {...f} delay={i*0.07}/>)}
           </div>
           <Reveal delay={0.1}>
-            <div style={{ background:"linear-gradient(135deg,rgba(0,255,178,0.06),rgba(34,211,238,0.04))", border:`1px solid rgba(0,255,178,0.15)`, borderRadius:24, padding:"clamp(28px,4vw,48px)", marginBottom:36, display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:32, alignItems:"center", position:"relative", overflow:"hidden", backdropFilter:"blur(12px)" }}>
-              <div style={{ position:"absolute", top:0, right:0, width:400, height:400, background:"radial-gradient(circle,rgba(0,255,178,0.06),transparent)", filter:"blur(60px)", pointerEvents:"none" }}/>
+            <div style={{ background:"linear-gradient(135deg,rgba(15,149,153,0.06),rgba(34,211,238,0.04))", border:`1px solid rgba(15,149,153,0.15)`, borderRadius:24, padding:"clamp(28px,4vw,48px)", marginBottom:36, display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:32, alignItems:"center", position:"relative", overflow:"hidden", backdropFilter:"blur(12px)" }}>
+              <div style={{ position:"absolute", top:0, right:0, width:400, height:400, background:"radial-gradient(circle,rgba(15,149,153,0.06),transparent)", filter:"blur(60px)", pointerEvents:"none" }}/>
               <div style={{ position:"relative" }}>
-                <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(0,255,178,0.1)", border:"1px solid rgba(0,255,178,0.3)", borderRadius:99, padding:"4px 14px", marginBottom:16 }}>
+                <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(15,149,153,0.1)", border:"1px solid rgba(15,149,153,0.3)", borderRadius:99, padding:"4px 14px", marginBottom:16 }}>
                   <Repeat size={11} color={C.accent}/>
                   <span style={{ fontSize:10, fontWeight:700, color:C.accent, letterSpacing:"0.1em", textTransform:"uppercase" }}>Coming Soon</span>
                 </div>
@@ -638,13 +638,13 @@ export default function NovalaLanding() {
                     { icon:<PieChart size={14} color={C.accent}/>,      text:"Predictable monthly revenue reports"  },
                   ].map((item,i) => (
                     <div key={i} style={{ display:"flex", alignItems:"center", gap:10 }}>
-                      <div style={{ width:28, height:28, borderRadius:8, background:"rgba(0,255,178,0.1)", border:"1px solid rgba(0,255,178,0.2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{item.icon}</div>
+                      <div style={{ width:28, height:28, borderRadius:8, background:"rgba(15,149,153,0.1)", border:"1px solid rgba(15,149,153,0.2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{item.icon}</div>
                       <span style={{ fontSize:13.5, color:C.textSub, fontWeight:500 }}>{item.text}</span>
                     </div>
                   ))}
                 </div>
               </div>
-              <div style={{ background:"rgba(0,0,0,0.3)", border:`1px solid rgba(0,255,178,0.15)`, borderRadius:20, padding:28, backdropFilter:"blur(20px)", position:"relative" }}>
+              <div style={{ background:"rgba(0,0,0,0.3)", border:`1px solid rgba(15,149,153,0.15)`, borderRadius:20, padding:28, backdropFilter:"blur(20px)", position:"relative" }}>
                 <div style={{ fontSize:11, fontWeight:700, color:C.accent, marginBottom:16, display:"flex", alignItems:"center", gap:8 }}>
                   <div style={{ width:7, height:7, borderRadius:"50%", background:C.accent, animation:"pulse-glow 2s infinite" }}/>
                   Recurring Billing Preview
@@ -666,7 +666,7 @@ export default function NovalaLanding() {
                     </div>
                   </div>
                 ))}
-                <div style={{ marginTop:16, padding:"10px 14px", borderRadius:10, background:"rgba(0,255,178,0.08)", border:"1px solid rgba(0,255,178,0.2)", display:"flex", justifyContent:"space-between" }}>
+                <div style={{ marginTop:16, padding:"10px 14px", borderRadius:10, background:"rgba(15,149,153,0.08)", border:"1px solid rgba(15,149,153,0.2)", display:"flex", justifyContent:"space-between" }}>
                   <span style={{ fontSize:12, color:C.accent, fontWeight:700 }}>Monthly Recurring</span>
                   <span style={{ fontSize:13, color:C.accent, fontWeight:800 }}>$8,350</span>
                 </div>
@@ -676,9 +676,9 @@ export default function NovalaLanding() {
           <Reveal delay={0.2}>
             <div style={{ textAlign:"center" }}>
               <button onClick={() => setShowAllFeatures(true)}
-                style={{ display:"inline-flex", alignItems:"center", gap:8, padding:"14px 32px", borderRadius:13, background:"rgba(0,255,178,0.06)", border:`1px solid rgba(0,255,178,0.2)`, color:C.accent, fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"inherit", transition:"all 0.25s ease" }}
-                onMouseEnter={e => { e.currentTarget.style.background="rgba(0,255,178,0.12)"; e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow=`0 8px 30px rgba(0,255,178,0.15)`; }}
-                onMouseLeave={e => { e.currentTarget.style.background="rgba(0,255,178,0.06)"; e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="none"; }}>
+                style={{ display:"inline-flex", alignItems:"center", gap:8, padding:"14px 32px", borderRadius:13, background:"rgba(15,149,153,0.06)", border:`1px solid rgba(15,149,153,0.2)`, color:C.accent, fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"inherit", transition:"all 0.25s ease" }}
+                onMouseEnter={e => { e.currentTarget.style.background="rgba(15,149,153,0.12)"; e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow=`0 8px 30px rgba(15,149,153,0.15)`; }}
+                onMouseLeave={e => { e.currentTarget.style.background="rgba(15,149,153,0.06)"; e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="none"; }}>
                 View All 12 Features <ArrowRight size={16}/>
               </button>
             </div>
@@ -720,8 +720,8 @@ export default function NovalaLanding() {
       </section>
 
       {/* HOW IT WORKS ENGINE */}
-      <section id="how-it-works-engine" style={{ padding:`88px ${px}`, background:`linear-gradient(140deg,rgba(0,255,178,0.04) 0%,${C.bg} 40%,rgba(34,211,238,0.03) 100%)`, position:"relative", overflow:"hidden", borderTop:`1px solid ${C.border}`, borderBottom:`1px solid ${C.border}` }}>
-        <div style={{ position:"absolute", top:"15%", left:"8%", width:360, height:360, borderRadius:"50%", background:"radial-gradient(circle,rgba(0,255,178,0.07),transparent)", filter:"blur(80px)", pointerEvents:"none" }}/>
+      <section id="how-it-works-engine" style={{ padding:`88px ${px}`, background:`linear-gradient(140deg,rgba(15,149,153,0.04) 0%,${C.bg} 40%,rgba(34,211,238,0.03) 100%)`, position:"relative", overflow:"hidden", borderTop:`1px solid ${C.border}`, borderBottom:`1px solid ${C.border}` }}>
+        <div style={{ position:"absolute", top:"15%", left:"8%", width:360, height:360, borderRadius:"50%", background:"radial-gradient(circle,rgba(15,149,153,0.07),transparent)", filter:"blur(80px)", pointerEvents:"none" }}/>
         <div style={{ position:"absolute", bottom:"15%", right:"8%", width:280, height:280, borderRadius:"50%", background:"radial-gradient(circle,rgba(34,211,238,0.06),transparent)", filter:"blur(60px)", pointerEvents:"none" }}/>
         <div style={{ maxWidth:1100, margin:"0 auto", position:"relative" }}>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(290px,1fr))", gap:"clamp(32px,6vw,72px)", alignItems:"center" }}>
@@ -744,7 +744,7 @@ export default function NovalaLanding() {
                   <div key={i} style={{ display:"flex", alignItems:"center", gap:12, marginBottom:13, transition:"transform 0.2s ease" }}
                     onMouseEnter={e => e.currentTarget.style.transform="translateX(6px)"}
                     onMouseLeave={e => e.currentTarget.style.transform="none"}>
-                    <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(0,255,178,0.08)", border:`1px solid rgba(0,255,178,0.15)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{f.icon}</div>
+                    <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(15,149,153,0.08)", border:`1px solid rgba(15,149,153,0.15)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{f.icon}</div>
                     <span style={{ fontSize:13.5, color:C.textSub, fontWeight:500 }}>{f.text}</span>
                   </div>
                 ))}
@@ -753,7 +753,7 @@ export default function NovalaLanding() {
             </Reveal>
             <Reveal direction="right">
               <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-                <div style={{ background:"rgba(0,0,0,0.4)", border:`1px solid rgba(0,255,178,0.15)`, borderRadius:20, padding:"clamp(18px,3vw,26px)", backdropFilter:"blur(20px)", animation:"float 5s ease-in-out infinite" }}>
+                <div style={{ background:"rgba(0,0,0,0.4)", border:`1px solid rgba(15,149,153,0.15)`, borderRadius:20, padding:"clamp(18px,3vw,26px)", backdropFilter:"blur(20px)", animation:"float 5s ease-in-out infinite" }}>
                   <div style={{ fontSize:11, fontWeight:700, color:C.accent, marginBottom:18, display:"flex", alignItems:"center", gap:8 }}>
                     <div style={{ width:7, height:7, borderRadius:"50%", background:C.accent, animation:"pulse-glow 2s infinite" }}/>
                     Processing Engine
@@ -815,7 +815,12 @@ export default function NovalaLanding() {
               { plan:"Enterprise", price:"Custom", color:"#8b5cf6", icon:<Briefcase size={20} color="#8b5cf6"/>,   desc:"For teams needing scale, compliance, and control.", features:["Everything in Premium","Multi-user & roles","White-label option","API access","Custom integrations","Accountant portal","Dedicated success manager"], cta:"Contact Sales",    popular:false },
             ].map((p,i) => (
               <Reveal key={i} delay={i*0.1} pop={true}>
-                <PricingCard {...p} onSignUp={p.price==="Custom" ? () => window.location.href="mailto:support@getnovala.com" : goToSignUp}/>
+                {/* Pricing teaser removed - users navigate to /pricing for full plans */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18, padding: "72px 24px", textAlign: "center", maxWidth: 560, margin: "0 auto" }}>
+                  <h3 style={{ fontSize: 30, fontWeight: 700, color: C.text, margin: 0, letterSpacing: "-0.02em" }}>Find the plan that fits</h3>
+                  <p style={{ fontSize: 16, color: C.textSub, lineHeight: 1.6, margin: 0 }}>Compare features side by side and pick the tier that's right for your business.</p>
+                  <a href="/pricing" style={{ background: C.accent, color: "#fff", padding: "14px 32px", borderRadius: 12, textDecoration: "none", fontSize: 15, fontWeight: 700, marginTop: 8 }}>See pricing</a>
+                </div>
               </Reveal>
             ))}
           </div>
@@ -824,11 +829,11 @@ export default function NovalaLanding() {
 
       {/* FAQ */}
       <section id="faq" style={{ padding:`88px ${px}`, background:C.bg, position:"relative" }}>
-        <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:500, height:300, background:"radial-gradient(ellipse,rgba(0,255,178,0.03),transparent)", pointerEvents:"none" }}/>
+        <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:500, height:300, background:"radial-gradient(ellipse,rgba(15,149,153,0.03),transparent)", pointerEvents:"none" }}/>
         <div style={{ maxWidth:700, margin:"0 auto", position:"relative" }}>
           <Reveal>
             <div style={{ textAlign:"center", marginBottom:52 }}>
-              <div style={{ display:"inline-flex", alignItems:"center", gap:8, fontSize:11, fontWeight:700, color:C.accent, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:14, background:"rgba(0,255,178,0.08)", border:`1px solid rgba(0,255,178,0.2)`, padding:"6px 16px", borderRadius:99 }}>
+              <div style={{ display:"inline-flex", alignItems:"center", gap:8, fontSize:11, fontWeight:700, color:C.accent, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:14, background:"rgba(15,149,153,0.08)", border:`1px solid rgba(15,149,153,0.2)`, padding:"6px 16px", borderRadius:99 }}>
                 <HelpCircle size={13} color={C.accent}/> FAQ
               </div>
               <h2 style={{ fontSize:"clamp(26px,5vw,44px)", fontWeight:800, letterSpacing:"-0.035em", color:C.text, lineHeight:1.12 }}>Common questions</h2>
@@ -841,11 +846,11 @@ export default function NovalaLanding() {
       </section>
 
       {/* FINAL CTA */}
-      <section style={{ padding:`88px ${px}`, background:`linear-gradient(135deg, rgba(0,255,178,0.06), rgba(34,211,238,0.04), ${C.bg})`, position:"relative", overflow:"hidden", borderTop:`1px solid ${C.border}` }}>
-        <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse 70% 60% at 50% 50%,rgba(0,255,178,0.06),transparent)", pointerEvents:"none" }}/>
+      <section style={{ padding:`88px ${px}`, background:`linear-gradient(135deg, rgba(15,149,153,0.06), rgba(34,211,238,0.04), ${C.bg})`, position:"relative", overflow:"hidden", borderTop:`1px solid ${C.border}` }}>
+        <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse 70% 60% at 50% 50%,rgba(15,149,153,0.06),transparent)", pointerEvents:"none" }}/>
         <div style={{ maxWidth:660, margin:"0 auto", textAlign:"center", position:"relative" }}>
           <Reveal>
-            <div style={{ width:72, height:72, borderRadius:20, background:"linear-gradient(135deg,rgba(0,255,178,0.2),rgba(34,211,238,0.1))", border:`1px solid rgba(0,255,178,0.3)`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 28px", boxShadow:`0 0 60px rgba(0,255,178,0.3), 0 0 120px rgba(0,255,178,0.1)`, animation:"pulse-glow 3s infinite" }}>
+            <div style={{ width:72, height:72, borderRadius:20, background:"linear-gradient(135deg,rgba(15,149,153,0.2),rgba(34,211,238,0.1))", border:`1px solid rgba(15,149,153,0.3)`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 28px", boxShadow:`0 0 60px rgba(15,149,153,0.3), 0 0 120px rgba(15,149,153,0.1)`, animation:"pulse-glow 3s infinite" }}>
               <svg width="32" height="32" viewBox="0 0 22 22" fill="none">
                 <path d="M3 16 L7 7 L11 12 L15 5 L19 9" stroke={C.accent} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
                 <circle cx="19" cy="9" r="2" fill={C.accent}/>
@@ -860,7 +865,7 @@ export default function NovalaLanding() {
             <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap", marginBottom:24 }}>
               <button className="cta-primary" onClick={goToSignUp} style={{ fontSize:15, padding:"16px 38px" }}>Create Free Account →</button>
               <button onClick={goToApp} style={{ fontSize:15, padding:"16px 32px", borderRadius:13, background:"rgba(255,255,255,0.06)", color:C.text, border:`1px solid ${C.border}`, cursor:"pointer", fontFamily:"inherit", fontWeight:600, transition:"all 0.25s ease", backdropFilter:"blur(12px)" }}
-                onMouseEnter={e => { e.currentTarget.style.background="rgba(255,255,255,0.1)"; e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.borderColor="rgba(0,255,178,0.3)"; }}
+                onMouseEnter={e => { e.currentTarget.style.background="rgba(255,255,255,0.1)"; e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.borderColor="rgba(15,149,153,0.3)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background="rgba(255,255,255,0.06)"; e.currentTarget.style.transform="none"; e.currentTarget.style.borderColor=C.border; }}>
                 Sign In
               </button>
@@ -882,7 +887,7 @@ export default function NovalaLanding() {
               { icon:<Star size={13}/>,     label:"99.9% Uptime",             sub:"SLA Guaranteed"       },
             ].map(b => (
               <div key={b.label} style={{ display:"flex", alignItems:"center", gap:10, background:C.bgCard, border:`1px solid ${C.border}`, borderRadius:12, padding:"10px 16px", transition:"all 0.2s ease", backdropFilter:"blur(12px)" }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor="rgba(0,255,178,0.25)"; e.currentTarget.style.background="rgba(0,255,178,0.06)"; }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor="rgba(15,149,153,0.25)"; e.currentTarget.style.background="rgba(15,149,153,0.06)"; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor=C.border; e.currentTarget.style.background=C.bgCard; }}>
                 <div style={{ color:C.accent }}>{b.icon}</div>
                 <div>
@@ -895,7 +900,7 @@ export default function NovalaLanding() {
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:"clamp(24px,4vw,44px)", marginBottom:44 }}>
             <div style={{ gridColumn:"span 1" }}>
               <div style={{ display:"flex", alignItems:"center", gap:9, marginBottom:16 }}>
-                <div style={{ width:32, height:32, borderRadius:9, background:"linear-gradient(135deg,rgba(0,255,178,0.15),transparent)", border:`1px solid rgba(0,255,178,0.3)`, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <div style={{ width:32, height:32, borderRadius:9, background:"linear-gradient(135deg,rgba(15,149,153,0.15),transparent)", border:`1px solid rgba(15,149,153,0.3)`, display:"flex", alignItems:"center", justifyContent:"center" }}>
                   <svg width="15" height="15" viewBox="0 0 22 22" fill="none">
                     <path d="M3 16 L7 7 L11 12 L15 5 L19 9" stroke={C.accent} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
@@ -906,7 +911,7 @@ export default function NovalaLanding() {
               <div style={{ display:"flex", gap:8, marginTop:18 }}>
                 {["𝕏","in","gh"].map(s => (
                   <div key={s} style={{ width:32, height:32, borderRadius:9, background:C.bgCard, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", fontSize:12, color:C.textMuted, fontWeight:700, transition:"all 0.2s ease" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor="rgba(0,255,178,0.3)"; e.currentTarget.style.color=C.accent; e.currentTarget.style.boxShadow=`0 0 16px rgba(0,255,178,0.15)`; }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor="rgba(15,149,153,0.3)"; e.currentTarget.style.color=C.accent; e.currentTarget.style.boxShadow=`0 0 16px rgba(15,149,153,0.15)`; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor=C.border; e.currentTarget.style.color=C.textMuted; e.currentTarget.style.boxShadow="none"; }}>
                     {s}
                   </div>
