@@ -18,7 +18,7 @@ const ROWS = [
   { id: "federal_tax", label: "Federal tax",
     description: "Enter info such as CRA payroll number, deposit schedule, and filing requirement" },
   { id: "auto_payroll", label: "Auto Payroll",
-    descNode: (<>Automatically pay your employees. <a href="#" onClick={(e) => e.preventDefault()} style={{color: BRAND, fontWeight: 600, textDecoration: "underline"}}>Learn more</a></>),
+    descNode: (<>Automatically pay your employees. <a href="/help/auto-payroll" target="_blank" rel="noreferrer" style={{color: BRAND, fontWeight: 600, textDecoration: "underline"}}>Learn more</a></>),
     value: "No employees enrolled" },
   { id: "work_locations", label: "Work locations",
     description: "Manage all work locations" },
