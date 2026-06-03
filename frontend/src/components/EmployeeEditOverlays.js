@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { X as XIcon, HelpCircle, ChevronDown, Pencil, Info, Plus, Trash2, Calendar } from "lucide-react";
 import { FeedbackWidget } from "./FeedbackWidget";
+import { PayrollSettings } from "../pages/PayrollSettings";
 
 const BRAND = "#0F5959";
 const BRAND_DARK = "#0A4040";
@@ -469,6 +470,7 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
   const [hoursPerDay, setHoursPerDay] = useState(employee.hours_per_day || "");
   const [daysPerWeek, setDaysPerWeek] = useState(employee.days_per_week || "");
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showPayrollSettings, setShowPayrollSettings] = useState(false);
   const [effectiveOption, setEffectiveOption] = useState(employee.effective_date ? "specific_date" : "immediately");
   const [effectiveDate, setEffectiveDate] = useState((employee.effective_date || "").slice(0, 10));
   const [saving, setSaving] = useState(false);
@@ -560,7 +562,7 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
               <Field label="Rate per hour" required>
                 <MoneyInput value={hourlyRate} onChange={e => setHourlyRate(e.target.value)} placeholder="0.00" />
               </Field>
-              <AccountMappingField value={accountMapping} onChange={setAccountMapping} />
+              <AccountMappingField value={accountMapping} onChange={setAccountMapping} onOpenSettings={() => setShowPayrollSettings(true)} />
               <div style={{ height: 1, background: BORDER, margin: "20px 0 20px 0" }} />
               <h4 style={{ fontSize: 15, fontWeight: 700, color: INK, margin: "0 0 6px 0" }}>Default working hours (optional)</h4>
               <p style={{ fontSize: 13.5, color: SUB, lineHeight: 1.55, margin: "0 0 16px 0" }}>
@@ -588,7 +590,7 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
                   <MoneyInput value={salaryAmount} onChange={e => setSalaryAmount(e.target.value)} placeholder="0.00" />
                 </Field>
               </div>
-              <AccountMappingField value={accountMapping} onChange={setAccountMapping} />
+              <AccountMappingField value={accountMapping} onChange={setAccountMapping} onOpenSettings={() => setShowPayrollSettings(true)} />
               <div style={{ height: 1, background: BORDER, margin: "20px 0 20px 0" }} />
               <h4 style={{ fontSize: 15, fontWeight: 700, color: INK, margin: "0 0 6px 0" }}>Default working hours</h4>
               <p style={{ fontSize: 13.5, color: SUB, lineHeight: 1.55, margin: "0 0 16px 0" }}>
@@ -610,7 +612,7 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
               <InfoBox>
                 Overtime, stat pay, and time-off policies are not available for commission-only employees.
               </InfoBox>
-              <AccountMappingField value={accountMapping} onChange={setAccountMapping} />
+              <AccountMappingField value={accountMapping} onChange={setAccountMapping} onOpenSettings={() => setShowPayrollSettings(true)} />
             </div>
           )}
 
@@ -981,7 +983,7 @@ const dentalTd = {
   fontSize: 13.5, color: INK, lineHeight: 1.5,
 };
 
-function AccountMappingField({ value, onChange }) {
+function AccountMappingField({ value, onChange, onOpenSettings }) {
   return (
     <div style={{ marginBottom: 20 }}>
       <label style={{ fontSize: 13, fontWeight: 600, color: SUB, marginBottom: 6, display: "block" }}>
@@ -992,9 +994,11 @@ function AccountMappingField({ value, onChange }) {
       </Select>
       <div style={{ fontSize: 13, color: SUB, marginTop: 6, lineHeight: 1.55 }}>
         Used to categorize and map your payroll transactions. To edit, see Accounting under{" "}
-        <a href="/payroll?tab=settings" style={{ color: BRAND, fontWeight: 600, textDecoration: "underline" }}>
-          Payroll settings
-        </a>.
+        <button
+          type="button"
+          onClick={(e) => { e.preventDefault(); if (onOpenSettings) onOpenSettings(); }}
+          style={{ background: "none", border: "none", padding: 0, color: BRAND, fontWeight: 600, textDecoration: "underline", cursor: "pointer", font: "inherit" }}
+        >Payroll settings</button>.
       </div>
     </div>
   );
