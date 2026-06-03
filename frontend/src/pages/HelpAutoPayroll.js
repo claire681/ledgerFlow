@@ -264,6 +264,7 @@ export default function HelpAutoPayroll() {
         }}>
           <div style={{display: "flex", alignItems: "center", gap: 24}}>
             
+              <a
               href="#"
               onMouseEnter={() => setHoverSupport(true)}
               onMouseLeave={() => setHoverSupport(false)}
