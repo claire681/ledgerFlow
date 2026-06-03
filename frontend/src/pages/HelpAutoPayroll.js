@@ -47,7 +47,7 @@ const RELATED_LINKS = [
   "Set up voluntary deductions",
 ];
 
-const linkStyle = { color: LINK_BLUE, textDecoration: "none", fontWeight: 600 };
+const linkStyle = { color: TEAL, textDecoration: "none", fontWeight: 600 };
 const ulStyle = { margin: "8px 0", paddingLeft: 22, lineHeight: 1.8 };
 const olStyle = { margin: "8px 0", paddingLeft: 22, lineHeight: 1.8 };
 
@@ -118,7 +118,7 @@ function NavMenu({ label, items, openMenu, setOpenMenu }) {
       <button style={{
         background: "none", border: "none", cursor: "pointer",
         display: "flex", alignItems: "center", gap: 4,
-        color: LINK_BLUE, fontWeight: 500, fontSize: 14,
+        color: INK, fontWeight: 500, fontSize: 14,
         fontFamily: "inherit", padding: "6px 8px",
         borderBottom: isOpen ? `2px solid ${TEAL}` : "2px solid transparent",
         transition: "border-color 0.15s",
@@ -140,7 +140,7 @@ function NavMenu({ label, items, openMenu, setOpenMenu }) {
           {items.map((it, i) => (
             <a key={i} href={it.href} style={{
               display: "block", padding: "10px 16px",
-              color: LINK_BLUE, textDecoration: "none", fontSize: 14,
+              color: INK, textDecoration: "none", fontSize: 14,
             }}
             onMouseEnter={(e) => e.currentTarget.style.background = "#F1F5F5"}
             onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -241,8 +241,8 @@ export default function HelpAutoPayroll() {
             <span style={{color: "#0F9599", fontWeight: 800, fontSize: 24, letterSpacing: "-0.015em", fontFamily: "inherit"}}>Novala</span>
           </a>
           <div style={{display: "flex", alignItems: "center", gap: 24}}>
-            <a href="/pricing" style={{color: LINK_BLUE, textDecoration: "none", fontWeight: 500}}>Plans & Pricing</a>
-            <a href="/support" style={{color: LINK_BLUE, textDecoration: "none", fontWeight: 500}}>Support</a>
+            <a href="/pricing" style={{color: INK, textDecoration: "none", fontWeight: 500}}>Plans & Pricing</a>
+            <a href="/support" style={{color: INK, textDecoration: "none", fontWeight: 500}}>Support</a>
             <span style={{color: SUB, display: "flex", alignItems: "center", gap: 6}}>
               <Phone size={14} strokeWidth={2} />
               <span>1-800-NOVALA</span>
@@ -269,7 +269,7 @@ export default function HelpAutoPayroll() {
               onMouseLeave={() => setHoverSupport(false)}
               style={{
                 fontSize: 18, fontWeight: 700,
-                color: LINK_BLUE, textDecoration: "none",
+                color: INK, textDecoration: "none",
                 borderBottom: hoverSupport ? `2px solid ${TEAL}` : "2px solid transparent",
                 paddingBottom: 4,
                 transition: "border-color 0.15s",
