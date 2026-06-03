@@ -181,7 +181,7 @@ export default function HelpAutoPayroll() {
       </div>
 
       {/* Support nav row */}
-      <div style={{borderBottom: `1px solid ${BORDER}`, padding: "16px 32px"}}>
+      <div style={{borderBottom: `1px solid ${BORDER}`, padding: "16px 32px", position: "sticky", top: 0, zIndex: 40, background: "#fff"}}>
         <div style={{
           maxWidth: CONTENT_MAX, margin: "0 auto",
           display: "flex", alignItems: "center", justifyContent: "space-between",
