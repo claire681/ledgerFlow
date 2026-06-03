@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, ChevronDown, Phone, Globe } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, Phone, Globe } from "lucide-react";
 
 const TEAL = "#0F9599";
 const TEAL_DARK = "#0B7377";
@@ -65,17 +65,88 @@ function LocaleIcon({ locale, large }) {
   return <Globe size={size} strokeWidth={1.8} style={{ flexShrink: 0, color: SUB }} />;
 }
 
-function NavMenu({ label }) {
+const MENUS = {
+  "Get Started": [
+    { label: "Get Started hub", href: "#" },
+    { label: "Onboarding programs", href: "#" },
+  ],
+  "Topics": [
+    { label: "Account management", href: "#" },
+    { label: "Accounting", href: "#" },
+    { label: "Banking", href: "#" },
+    { label: "Expenses and suppliers", href: "#" },
+    { label: "Get started", href: "#" },
+    { label: "Invoices and payments", href: "#" },
+    { label: "Payroll", href: "#" },
+    { label: "Reports", href: "#" },
+    { label: "Sales and customers", href: "#" },
+    { label: "Taxes", href: "#" },
+    { label: "View all help", href: "#" },
+    { label: "Year End Resources", href: "#" },
+  ],
+  "Training": [
+    { label: "Tutorials (Videos)", href: "#" },
+    { label: "Webinars", href: "#" },
+    { label: "Novala Courses", href: "#" },
+  ],
+  "Community": [
+    { label: "Community Home", href: "#" },
+    { label: "Novala Q&A", href: "#" },
+    { label: "Community Basics", href: "#" },
+    { label: "Champions Program", href: "#" },
+    { label: "Ask the Community", href: "#" },
+  ],
+  "Resources": [
+    { label: "Find an Expert", href: "#" },
+    { label: "Novala Blog", href: "#" },
+    { label: "Product Updates", href: "#" },
+    { label: "Novala Status page", href: "#" },
+    { label: "Novala Toolkits", href: "#" },
+  ],
+};
+
+function NavMenu({ label, items, openMenu, setOpenMenu }) {
+  const isOpen = openMenu === label;
   return (
-    <button style={{
-      background: "none", border: "none", cursor: "pointer",
-      display: "flex", alignItems: "center", gap: 4,
-      color: INK, fontWeight: 500, fontSize: 14,
-      fontFamily: "inherit", padding: "6px 8px",
-    }}>
-      {label}
-      <ChevronDown size={14} strokeWidth={2} />
-    </button>
+    <div
+      onMouseEnter={() => setOpenMenu(label)}
+      onMouseLeave={() => setOpenMenu(null)}
+      style={{ position: "relative" }}
+    >
+      <button style={{
+        background: "none", border: "none", cursor: "pointer",
+        display: "flex", alignItems: "center", gap: 4,
+        color: INK, fontWeight: 500, fontSize: 14,
+        fontFamily: "inherit", padding: "6px 8px",
+        borderBottom: isOpen ? `2px solid ${TEAL}` : "2px solid transparent",
+        transition: "border-color 0.15s",
+      }}>
+        {label}
+        {isOpen
+          ? <ChevronUp size={14} strokeWidth={2} />
+          : <ChevronDown size={14} strokeWidth={2} />
+        }
+      </button>
+      {isOpen && (
+        <div style={{
+          position: "absolute", top: "100%", left: 0,
+          background: "#fff", border: `1px solid ${BORDER}`,
+          borderRadius: 10, minWidth: 220, padding: "8px 0",
+          boxShadow: "0 10px 30px -10px rgba(0,0,0,0.18)",
+          zIndex: 50,
+        }}>
+          {items.map((it, i) => (
+            <a key={i} href={it.href} style={{
+              display: "block", padding: "10px 16px",
+              color: INK, textDecoration: "none", fontSize: 14,
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "#F1F5F5"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+            >{it.label}</a>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -126,6 +197,7 @@ function FooterCol({ title, items }) {
 export default function HelpAutoPayroll() {
   const [locale, setLocale] = useState("en-CA");
   const [showNavLocale, setShowNavLocale] = useState(false);
+  const [openMenu, setOpenMenu] = useState(null);
   const [showFooterLocale, setShowFooterLocale] = useState(false);
   const [search, setSearch] = useState("");
   const navLocaleRef = useRef(null);
@@ -187,12 +259,10 @@ export default function HelpAutoPayroll() {
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <div style={{display: "flex", alignItems: "center", gap: 24}}>
-            <h2 style={{margin: 0, fontSize: 18, fontWeight: 700}}>Novala Support</h2>
-            <NavMenu label="Get Started" />
-            <NavMenu label="Topics" />
-            <NavMenu label="Training" />
-            <NavMenu label="Community" />
-            <NavMenu label="Resources" />
+            <a href="#" style={{fontSize: 18, fontWeight: 700, color: INK, textDecoration: "none", borderBottom: `3px solid ${TEAL}`, paddingBottom: 4}}>Novala Support</a>
+            {Object.entries(MENUS).map(([name, items]) => (
+              <NavMenu key={name} label={name} items={items} openMenu={openMenu} setOpenMenu={setOpenMenu} />
+            ))}
           </div>
 
           <div ref={navLocaleRef} style={{position: "relative"}}>
