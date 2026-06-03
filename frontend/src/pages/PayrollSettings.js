@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import { X, Pencil } from "lucide-react";
 import { GeneralTaxInfo } from "./GeneralTaxInfo";
+import { FederalTaxInfo } from "./FederalTaxInfo";
 
 const BRAND = "#0F5959";
 const INK = "#0E1A1A";
@@ -53,9 +54,11 @@ const ROWS = [
 
 export function PayrollSettings({ onClose }) {
   const [showGeneralTax, setShowGeneralTax] = useState(false);
+  const [showFederalTax, setShowFederalTax] = useState(false);
 
   const onEditFor = (rowId, label) => {
     if (rowId === "general_tax") return () => setShowGeneralTax(true);
+    if (rowId === "federal_tax") return () => setShowFederalTax(true);
     return () => alert(`Edit ${label} — coming soon.`);
   };
 
@@ -111,6 +114,7 @@ export function PayrollSettings({ onClose }) {
         </button>
       </div>
       {showGeneralTax && <GeneralTaxInfo onClose={() => setShowGeneralTax(false)} />}
+      {showFederalTax && <FederalTaxInfo onClose={() => setShowFederalTax(false)} />}
     </div>
   );
 
