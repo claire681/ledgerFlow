@@ -629,6 +629,7 @@ export function BasePayDrawer({ employee, onClose, onSaved }) {
           }}>{saving ? "Saving…" : "Save"}</button>
         </div>
       {showFeedback && <FeedbackWidget onClose={() => setShowFeedback(false)} source="base_pay_drawer" />}
+      {showPayrollSettings && <PayrollSettings onClose={() => setShowPayrollSettings(false)} />}
       </div>
     </div>
   );
