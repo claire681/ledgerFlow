@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import { X, HelpCircle } from "lucide-react";
+import { SaveChangesDialog } from "../components/SaveChangesDialog";
 
 const BRAND = "#0F5959";
 const INK = "#0E1A1A";
@@ -10,6 +11,7 @@ const BORDER = "#DDE5E5";
 // Frontend-only persistence stub. TODO: wire to a /company-settings backend endpoint
 // once the payroll_settings table is extended to hold these fields.
 const LS_KEY = "novala_general_tax_info";
+const TAX_BODY = "You haven't saved the changes you made to your tax info. If any numbers are missing or incorrect, it can result in late payments or notices.";
 
 const PROVINCES = [
   ["AB", "Alberta"], ["BC", "British Columbia"], ["MB", "Manitoba"],
@@ -37,12 +39,21 @@ const iconBtnStyle = {
 export function GeneralTaxInfo({ onClose }) {
   const [f, setF] = useState(loadDefaults);
   const [saving, setSaving] = useState(false);
-  const set = (k, v) => setF(p => ({ ...p, [k]: v }));
+  const [dirty, setDirty] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const set = (k, v) => { setF(p => ({ ...p, [k]: v })); setDirty(true); };
+
+  const handleClose = () => {
+    if (dirty) setShowSaveDialog(true);
+    else onClose();
+  };
 
   const save = () => {
     setSaving(true);
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(f));
+      setDirty(false);
+      setShowSaveDialog(false);
       setTimeout(() => onClose(), 250);
     } catch (e) {
       setSaving(false);
@@ -82,7 +93,7 @@ export function GeneralTaxInfo({ onClose }) {
           <button aria-label="Help" title="Help" style={iconBtnStyle}>
             <HelpCircle size={20} strokeWidth={1.9} />
           </button>
-          <button onClick={onClose} aria-label="Close" style={iconBtnStyle}>
+          <button onClick={handleClose} aria-label="Close" style={iconBtnStyle}>
             <X size={20} strokeWidth={2.1} />
           </button>
         </div>
@@ -170,7 +181,7 @@ export function GeneralTaxInfo({ onClose }) {
         padding: "16px 40px", display: "flex", justifyContent: "space-between", alignItems: "center",
         zIndex: 99501,
       }}>
-        <button onClick={onClose} style={{
+        <button onClick={handleClose} style={{
           background: "none", border: "none", color: INK,
           fontWeight: 600, fontSize: 15, cursor: "pointer", padding: "10px 12px",
         }}>
@@ -185,6 +196,14 @@ export function GeneralTaxInfo({ onClose }) {
           {saving ? "Saving…" : "Save"}
         </button>
       </div>
+      {/* Unsaved-changes guard — fires on X/Cancel when dirty */}
+      <SaveChangesDialog
+        open={showSaveDialog}
+        bodyText={TAX_BODY}
+        onClose={() => setShowSaveDialog(false)}
+        onDontSave={() => { setShowSaveDialog(false); setDirty(false); onClose(); }}
+        onSave={() => { setShowSaveDialog(false); save(); }}
+      />
     </div>
   );
 

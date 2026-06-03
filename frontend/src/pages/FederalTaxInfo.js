@@ -15,6 +15,7 @@ const RED = "#D9453C";
 const LS_KEY = "novala_federal_tax_info";
 // TODO: replace with real OTP send + server-side verification against current user
 const DEMO_CODE = "123456";
+const TAX_BODY = "You haven't saved the changes you made to your tax info. If any numbers are missing or incorrect, it can result in late payments or notices.";
 
 const FORM_OPTIONS = ["PD7A", "PD7A-RB", "PD7A(TM)"];
 const FREQUENCY_OPTIONS = ["Monthly", "Quarterly", "Annually", "Bi-weekly", "Semi-monthly"];
@@ -79,8 +80,10 @@ export function FederalTaxInfo({ onClose }) {
   const [showVerify, setShowVerify] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
 
-  const set = (k, v) => setF(p => ({ ...p, [k]: v }));
+  const set = (k, v) => { setF(p => ({ ...p, [k]: v })); setDirty(true); };
 
   const handleVerified = () => {
     setVerified(true);
@@ -89,12 +92,20 @@ export function FederalTaxInfo({ onClose }) {
 
   const deleteSchedule = (idx) => {
     setF(p => ({ ...p, schedules: p.schedules.filter((_, i) => i !== idx) }));
+    setDirty(true);
+  };
+
+  const handleClose = () => {
+    if (dirty) setShowSaveDialog(true);
+    else onClose();
   };
 
   const save = () => {
     setSaving(true);
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(f));
+      setDirty(false);
+      setShowSaveDialog(false);
       setTimeout(() => onClose(), 250);
     } catch (e) {
       setSaving(false);
@@ -122,7 +133,7 @@ export function FederalTaxInfo({ onClose }) {
           <button aria-label="Help" title="Help" style={iconBtnStyle}>
             <HelpCircle size={20} strokeWidth={1.9} />
           </button>
-          <button onClick={onClose} aria-label="Close" style={iconBtnStyle}>
+          <button onClick={handleClose} aria-label="Close" style={iconBtnStyle}>
             <X size={20} strokeWidth={2.1} />
           </button>
         </div>
@@ -273,7 +284,7 @@ export function FederalTaxInfo({ onClose }) {
         padding: "16px 40px", display: "flex", justifyContent: "space-between", alignItems: "center",
         zIndex: 99501,
       }}>
-        <button onClick={onClose} style={{
+        <button onClick={handleClose} style={{
           background: "none", border: "none", color: INK,
           fontWeight: 600, fontSize: 15, cursor: "pointer", padding: "10px 12px",
         }}>
@@ -288,6 +299,15 @@ export function FederalTaxInfo({ onClose }) {
           {saving ? "Saving…" : "Save"}
         </button>
       </div>
+
+      {/* Unsaved-changes guard — fires on X/Cancel when dirty */}
+      <SaveChangesDialog
+        open={showSaveDialog}
+        bodyText={TAX_BODY}
+        onClose={() => setShowSaveDialog(false)}
+        onDontSave={() => { setShowSaveDialog(false); setDirty(false); onClose(); }}
+        onSave={() => { setShowSaveDialog(false); save(); }}
+      />
 
       {/* Verification modal — reused from Screen 2b. Stacks on top per §0.5. */}
       {showVerify && (
