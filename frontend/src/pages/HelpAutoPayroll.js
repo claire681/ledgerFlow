@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, ChevronDown, ChevronUp, Phone, Globe } from "lucide-react";
 
 const TEAL = "#0F9599";
@@ -199,6 +200,8 @@ export default function HelpAutoPayroll() {
   const [locale, setLocale] = useState("en-CA");
   const [showNavLocale, setShowNavLocale] = useState(false);
   const [openMenu, setOpenMenu] = useState(null);
+  const [hoverSupport, setHoverSupport] = useState(false);
+  const navigate = useNavigate();
   const [showFooterLocale, setShowFooterLocale] = useState(false);
   const [search, setSearch] = useState("");
   const navLocaleRef = useRef(null);
@@ -260,7 +263,18 @@ export default function HelpAutoPayroll() {
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <div style={{display: "flex", alignItems: "center", gap: 24}}>
-            <a href="#" style={{fontSize: 18, fontWeight: 700, color: LINK_BLUE, textDecoration: "none", borderBottom: `3px solid ${TEAL}`, paddingBottom: 4}}>Novala Support</a>
+            
+              href="#"
+              onMouseEnter={() => setHoverSupport(true)}
+              onMouseLeave={() => setHoverSupport(false)}
+              style={{
+                fontSize: 18, fontWeight: 700,
+                color: LINK_BLUE, textDecoration: "none",
+                borderBottom: hoverSupport ? `2px solid ${TEAL}` : "2px solid transparent",
+                paddingBottom: 4,
+                transition: "border-color 0.15s",
+              }}
+            >Novala Support</a>
             {Object.entries(MENUS).map(([name, items]) => (
               <NavMenu key={name} label={name} items={items} openMenu={openMenu} setOpenMenu={setOpenMenu} />
             ))}
@@ -317,26 +331,35 @@ export default function HelpAutoPayroll() {
         padding: "56px 32px",
       }}>
         <div style={{maxWidth: CONTENT_MAX, margin: "0 auto"}}>
-          <div style={{
-            display: "flex", width: "100%", maxWidth: 560,
-            background: "#fff", borderRadius: 12, overflow: "hidden",
-            boxShadow: "0 10px 30px -10px rgba(0,0,0,0.25)",
-          }}>
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const q = search.trim();
+              if (!q) return;
+              // TODO: /help/search results page needs to be built. Decide help-only vs global search.
+              navigate(`/help/search?q=${encodeURIComponent(q)}`);
+            }}
+            style={{
+              display: "flex", width: "100%", maxWidth: 560,
+              background: "#fff", borderRadius: 12, overflow: "hidden",
+              boxShadow: "0 10px 30px -10px rgba(0,0,0,0.25)",
+            }}
+          >
+            <input type="text" name="q" value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Search questions, keywords or topics"
               style={{
                 flex: 1, padding: "14px 18px", border: "none", outline: "none",
                 fontSize: 15, fontFamily: "inherit", color: INK,
               }}
             />
-            <button style={{
+            <button type="submit" style={{
               padding: "0 24px", background: TEAL, color: "#fff",
               border: "none", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
               <Search size={20} strokeWidth={2} />
             </button>
-          </div>
+          </form>
         </div>
       </div>
 
