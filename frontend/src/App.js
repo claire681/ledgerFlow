@@ -44,6 +44,7 @@ import Businesses          from './pages/Businesses';
 import ResetPassword from './pages/ResetPassword';
 import AcceptInvite from './pages/AcceptInvite';
 import HelpAutoPayroll from "./pages/HelpAutoPayroll";
+import Pricing from "./pages/Pricing";
 
 
 const ACCENT = '#0AB98A';
@@ -145,6 +146,7 @@ function AppLayout({ onLogout }) {
         <main  style={{ flex:1, overflowY:'auto', position:'relative', minWidth:0, marginLeft: 0 }}>
           <Routes>
             <Route path="/help/auto-payroll" element={<HelpAutoPayroll />} />
+          <Route path="/pricing" element={<Pricing />} />
             <Route path="/accept-invite/:token" element={<AcceptInvite />} />
           <Route path="/payroll/*" element={<Payroll />} />
             <Route path="/"               element={<Dashboard />}          />
