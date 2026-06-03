@@ -153,9 +153,9 @@ const FAQS = [
     q: "Which Novala plan is best for a small business?",
     intro: "Novala's plans scale from solo operators to growing teams. Pick the tier that matches your current stage:",
     bullets: [
-      { lead: "Starter", body: "for sole proprietors and freelancers — core invoicing, expense tracking, and reporting for one user." },
-      { lead: "Growth", body: "for small teams (up to 5 users) — adds bill management, time tracking, and multi-currency support." },
-      { lead: "Scale", body: "for businesses with employees or inventory; supports up to 25 users and includes project profitability tracking." },
+      { lead: "Starter", body: "for sole proprietors and freelancers. Core invoicing, expense tracking, and reporting for one user." },
+      { lead: "Growth", body: "for small teams (up to 5 users). Adds bill management, time tracking, and multi-currency support." },
+      { lead: "Scale", body: "for businesses with employees or inventory. Supports up to 25 users and includes project profitability tracking." },
     ],
   },
   {
@@ -171,7 +171,7 @@ const FAQS = [
   },
   {
     q: "How do I access Novala, and does it work on any device?",
-    intro: "Novala is fully cloud-based — sign in from any modern browser on desktop, tablet, or phone.",
+    intro: "Novala is fully cloud-based. Sign in from any modern browser on desktop, tablet, or phone.",
     bullets: [
       { lead: "Automatic updates", body: "new features and security patches roll out without you lifting a finger." },
       { lead: "Secure backups", body: "your data is continuously backed up and encrypted in transit and at rest." },
@@ -185,16 +185,16 @@ const FAQS = [
     intro: "Yes. Moving to Novala doesn't mean starting from scratch.",
     bullets: [
       { lead: "CSV import", body: "bring in your existing transactions, customers, vendors, and chart of accounts." },
-      { lead: "Bank reconnection", body: "link the same bank accounts you used elsewhere — Novala pulls fresh history automatically." },
+      { lead: "Bank reconnection", body: "link the same bank accounts you used elsewhere. Novala pulls fresh history automatically." },
       { lead: "Guided setup", body: "our onboarding flow walks you through importing and mapping data step by step." },
     ],
   },
   {
     q: "Can I try Novala before buying?",
-    intro: 'Yes — every plan offers a 30-day free trial. Switch the billing toggle above to "Free trial for 30 days" to get started.',
+    intro: 'Yes. Every plan offers a 30-day free trial. Switch the billing toggle above to "Free trial for 30 days" to get started.',
     bullets: [
       { lead: "Credit card", body: "not required to start your trial." },
-      { lead: "Discount trade-off", body: "the free trial and the promotional discount are mutually exclusive — pick one or the other." },
+      { lead: "Discount trade-off", body: "the free trial and the promotional discount are mutually exclusive, so pick one or the other." },
       { lead: "Onboarding", body: "Scale-plan trials include a complimentary onboarding session with a product specialist." },
     ],
   },
@@ -204,7 +204,7 @@ const FAQS = [
     bullets: [
       { lead: "Savings vary by plan", body: "compare both options in the pricing cards above." },
       { lead: "Single invoice", body: "one invoice per year simplifies reconciliation and expense tracking." },
-      { lead: "Rate lock", body: "your price is fixed for 12 months — protects you from any mid-year price changes." },
+      { lead: "Rate lock", body: "your price is fixed for 12 months, which protects you from any mid-year price changes." },
     ],
   },
   {
@@ -223,12 +223,12 @@ const FAQS = [
     bullets: [
       { lead: "Switching", body: "upgrades take effect immediately; downgrades take effect at the start of the next billing cycle." },
       { lead: "Data retention", body: "after canceling, your account stays read-only for 30 days so you can export anything you need." },
-      { lead: "Data ownership", body: "your data is always yours — export lists and reports any time before that window closes." },
+      { lead: "Data ownership", body: "your data is always yours. Export lists and reports any time before that window closes." },
     ],
   },
   {
     q: "Can I upgrade or downgrade my Novala plan?",
-    intro: "Yes — Novala scales with your business.",
+    intro: "Yes. Novala scales with your business.",
     bullets: [
       { lead: "Upgrading", body: "move to a higher tier instantly; billing is prorated for the remainder of your current cycle." },
       { lead: "Downgrading", body: "takes effect at the start of the next billing cycle so you keep premium access until then." },
@@ -322,7 +322,7 @@ export default function Pricing() {
       <section style={{ maxWidth: CONTENT_MAX, margin: "0 auto", padding: "64px 32px 24px", textAlign: "center" }}>
         <h1 style={{ margin: 0, fontSize: 44, fontWeight: 700, letterSpacing: "-0.02em", color: INK }}>Find a plan that's right for you</h1>
         <div style={{ marginTop: 24, display: "flex", justifyContent: "center", gap: 36, flexWrap: "wrap" }}>
-          {["AI-powered bookkeeping", "Free email + chat support", "No contracts — cancel anytime"].map((t, i) => (
+          {["AI-powered bookkeeping", "Free email + chat support", "No contracts, cancel anytime"].map((t, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, color: SUB, fontSize: 15 }}>
               <Check size={18} color={TEAL} strokeWidth={3} />
               <span>{t}</span>
@@ -386,8 +386,8 @@ export default function Pricing() {
         <h2 style={{ margin: "0 0 32px 0", fontSize: 28, fontWeight: 700, color: INK, textAlign: "center", letterSpacing: "-0.01em" }}>All plans include</h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20 }}>
           {[
-            { Icon: Smartphone, title: "Free mobile apps", body: "Manage your business on the go — iOS and Android. Same features, same data, anywhere." },
-            { Icon: MessageSquare, title: "Live support", body: "Real humans, real fast — email and live chat are included on every plan." },
+            { Icon: Smartphone, title: "Free mobile apps", body: "Manage your business on the go, iOS and Android. Same features, same data, anywhere." },
+            { Icon: MessageSquare, title: "Live support", body: "Real humans, real fast, email and live chat are included on every plan." },
             { Icon: Plug, title: "App integrations", body: "Connect 200+ tools you already use, from Stripe to Shopify to your favorite CRM." },
           ].map((f, i) => (
             <div key={i} style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 14, padding: 24 }}>
@@ -446,7 +446,7 @@ export default function Pricing() {
                   {f.bullets && (
                     <ul style={{ margin: 0, paddingLeft: 22, display: "flex", flexDirection: "column", gap: 8 }}>
                       {f.bullets.map((b, bi) => (
-                        <li key={bi}><strong style={{ color: INK }}>{b.lead}</strong> — {b.body}</li>
+                        <li key={bi}><strong style={{ color: INK }}>{b.lead}</strong>: {b.body}</li>
                       ))}
                     </ul>
                   )}
