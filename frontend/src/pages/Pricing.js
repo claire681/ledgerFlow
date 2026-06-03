@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, ChevronDown, ChevronUp, Sparkles, Star, ShieldCheck, MessageSquare, Smartphone, Plug } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Sparkles, Star, ShieldCheck, MessageSquare, Smartphone, Plug, Globe, Linkedin, Twitter, Facebook, Youtube, Instagram } from "lucide-react";
 
 const TEAL = "#0F9599";
 const TEAL_DARK = "#0B7377";
@@ -246,12 +246,44 @@ const FAQS = [
   },
 ];
 
+const FOOTER_LOCALES = [
+  { code: "en-AU", flagSrc: "https://flagcdn.com/w80/au.png", label: "Australia" },
+  { code: "pt-BR", flagSrc: "https://flagcdn.com/w80/br.png", label: "Brazil" },
+  { code: "en-CA", flagSrc: "https://flagcdn.com/w80/ca.png", label: "Canada (English)" },
+  { code: "fr-CA", flagSrc: "https://flagcdn.com/w80/ca.png", label: "Canada (French)" },
+  { code: "fr-FR", flagSrc: "https://flagcdn.com/w80/fr.png", label: "France" },
+  { code: "en-IN", flagSrc: "https://flagcdn.com/w80/in.png", label: "India" },
+  { code: "en-GB", flagSrc: "https://flagcdn.com/w80/gb.png", label: "United Kingdom" },
+  { code: "es-MX", flagSrc: "https://flagcdn.com/w80/mx.png", label: "Mexico" },
+  { code: "other", flagSrc: null, label: "Other Countries" },
+];
+
+const FOOTER_COLUMNS = [
+  { title: "Product",   items: ["Receipt scanner (Nova AI)", "AI bookkeeping", "Invoicing & invoice generator", "Transactions", "Documents", "Dashboard", "Tax", "Nova AI assistant", "Pricing & plans", "See all features"] },
+  { title: "Features",  items: ["Auto receipt capture & scan", "Expense tracking", "Bank feed / transactions", "Reports", "Document storage", "Sales tax tracking", "Team / multi-user access", "See all features"] },
+  { title: "Resources", items: ["Help centre", "Getting started guide", "Invoice templates", "Blog / updates", "Status page", "Contact support"] },
+  { title: "Company",   items: ["About Novala", "Support", "Tutorials", "Product updates", "Careers", "Contact"] },
+];
+
 export default function Pricing() {
   const navigate = useNavigate();
   const [billingMode, setBillingMode] = useState("promo");
   const [openCategories, setOpenCategories] = useState(() => Object.fromEntries(COMPARISON.map(c => [c.category, true])));
   const [openFaqs, setOpenFaqs] = useState({});
   const [hoverFaq, setHoverFaq] = useState(null);
+  const [locale, setLocale] = useState("en-CA");
+  const [showFooterLocale, setShowFooterLocale] = useState(false);
+  const footerLocaleRef = useRef(null);
+
+  const currentFooterLocale = FOOTER_LOCALES.find(l => l.code === locale) || FOOTER_LOCALES[2];
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (footerLocaleRef.current && !footerLocaleRef.current.contains(e.target)) setShowFooterLocale(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
   const [faqShowAll, setFaqShowAll] = useState(false);
 
   const toggleCategory = (name) => setOpenCategories(s => ({ ...s, [name]: !s[name] }));
@@ -430,24 +462,68 @@ export default function Pricing() {
         )}
       </section>
 
-      <footer style={{ background: FOOTER_DARK, color: "#fff", padding: "48px 32px 32px" }}>
+      <footer style={{ background: FOOTER_DARK, color: "#fff", padding: "56px 32px 32px" }}>
         <div style={{ maxWidth: CONTENT_MAX, margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 40, marginBottom: 32 }}>
-            {[
-              { title: "Product", items: ["Features", "Pricing", "Security", "Integrations"] },
-              { title: "Company", items: ["About", "Blog", "Careers", "Contact"] },
-              { title: "Resources", items: ["Help Center", "Community", "Training", "Status"] },
-              { title: "Legal", items: ["Privacy", "Terms", "Cookies"] },
-            ].map((col, i) => (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 40, marginBottom: 40 }}>
+            {FOOTER_COLUMNS.map((col, i) => (
               <div key={i}>
-                <h4 style={{ margin: "0 0 14px 0", fontSize: 14, fontWeight: 700, color: "#fff" }}>{col.title}</h4>
+                <h4 style={{ margin: "0 0 16px 0", fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: "0.01em" }}>{col.title}</h4>
                 <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
-                  {col.items.map((it, j) => <li key={j}><a href="#" style={{ color: "rgba(255,255,255,0.78)", textDecoration: "none", fontSize: 14 }}>{it}</a></li>)}
+                  {col.items.map((it, j) => (
+                    <li key={j}>
+                      <a href="#" onMouseEnter={(e) => { e.currentTarget.style.color = TEAL; }} onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.78)"; }} style={{ color: "rgba(255,255,255,0.78)", textDecoration: "none", fontSize: 14, transition: "color 0.15s" }}>{it}</a>
+                    </li>
+                  ))}
                 </ul>
               </div>
             ))}
           </div>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 24, fontSize: 13, color: "rgba(255,255,255,0.78)" }}>© 2026 Novala · BrightCare Home Healthcare Services Inc.</div>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.15)", borderBottom: "1px solid rgba(255,255,255,0.15)", padding: "20px 0", flexWrap: "wrap", gap: 20 }}>
+            <a href="#" onMouseEnter={(e) => { e.currentTarget.style.color = TEAL; }} onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.78)"; }} style={{ color: "rgba(255,255,255,0.78)", textDecoration: "none", fontSize: 13, transition: "color 0.15s" }}>Sitemap</a>
+
+            <div ref={footerLocaleRef} style={{ position: "relative" }}>
+              <button onClick={() => setShowFooterLocale(s => !s)} style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontFamily: "inherit", fontSize: 13 }}>
+                {currentFooterLocale.flagSrc
+                  ? <img src={currentFooterLocale.flagSrc} alt={currentFooterLocale.label} style={{ width: 24, height: 16, objectFit: "cover", borderRadius: 2, display: "block", border: "1px solid rgba(255,255,255,0.2)" }} />
+                  : <Globe size={16} strokeWidth={1.8} />}
+                <span>{currentFooterLocale.label}</span>
+                <ChevronDown size={14} strokeWidth={2} />
+              </button>
+              {showFooterLocale && (
+                <div style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 10, minWidth: 240, boxShadow: "0 10px 30px -10px rgba(0,0,0,0.25)", zIndex: 50, overflow: "hidden" }}>
+                  {FOOTER_LOCALES.map(l => (
+                    <button key={l.code} onClick={() => { setLocale(l.code); setShowFooterLocale(false); }} onMouseEnter={(e) => { if (l.code !== locale) e.currentTarget.style.background = "#F9FAFA"; }} onMouseLeave={(e) => { if (l.code !== locale) e.currentTarget.style.background = "#fff"; }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "10px 14px", minHeight: 42, background: l.code === locale ? "#F1F5F5" : "#fff", border: "none", cursor: "pointer", fontSize: 14, color: INK, fontFamily: "inherit", textAlign: "left" }}>
+                      {l.flagSrc
+                        ? <img src={l.flagSrc} alt={l.label} style={{ width: 28, height: 20, objectFit: "cover", borderRadius: 2, display: "block", border: "1px solid rgba(0,0,0,0.1)", flexShrink: 0 }} />
+                        : <Globe size={22} strokeWidth={1.8} style={{ color: SUB, flexShrink: 0 }} />}
+                      <span>{l.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+              {[{ Icon: Linkedin, label: "LinkedIn" }, { Icon: Twitter, label: "X" }, { Icon: Facebook, label: "Facebook" }, { Icon: Youtube, label: "YouTube" }, { Icon: Instagram, label: "Instagram" }].map((s, i) => (
+                <a key={i} href="#" aria-label={s.label} onMouseEnter={(e) => { e.currentTarget.style.color = TEAL; }} onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.78)"; }} style={{ color: "rgba(255,255,255,0.78)", textDecoration: "none", display: "inline-flex", transition: "color 0.15s" }}>
+                  <s.Icon size={18} strokeWidth={1.8} />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ paddingTop: 28, display: "flex", flexDirection: "column", gap: 16 }}>
+            <span style={{ color: "#fff", fontWeight: 800, fontSize: 22, letterSpacing: "-0.015em" }}>Novala</span>
+            <p style={{ margin: 0, fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.65, maxWidth: 900 }}>
+              © {new Date().getFullYear()} Novala. All rights reserved. Novala and the Novala logo are trademarks of BrightCare Home Healthcare Services Inc. By accessing and using this page you agree to the Terms and Conditions.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 18, fontSize: 13 }}>
+              {["Legal", "Privacy", "Security", "Terms and conditions", "About", "Careers", "Manage Cookies"].map((it, i) => (
+                <a key={i} href="#" onMouseEnter={(e) => { e.currentTarget.style.color = TEAL; }} onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.78)"; }} style={{ color: "rgba(255,255,255,0.78)", textDecoration: "none", transition: "color 0.15s" }}>{it}</a>
+              ))}
+            </div>
+          </div>
         </div>
       </footer>
     </div>
