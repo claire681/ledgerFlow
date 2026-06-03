@@ -3,6 +3,7 @@ import { Search, ChevronDown, ChevronUp, Phone, Globe } from "lucide-react";
 
 const TEAL = "#0F9599";
 const TEAL_DARK = "#0B7377";
+const LINK_BLUE = "#0077C5"; // QuickBooks link blue — all text links on this page
 const INK = "#0E1A1A";
 const SUB = "#5B6B6B";
 const BORDER = "#DDE5E5";
@@ -45,7 +46,7 @@ const RELATED_LINKS = [
   "Set up voluntary deductions",
 ];
 
-const linkStyle = { color: TEAL, textDecoration: "none", fontWeight: 600 };
+const linkStyle = { color: LINK_BLUE, textDecoration: "none", fontWeight: 600 };
 const ulStyle = { margin: "8px 0", paddingLeft: 22, lineHeight: 1.8 };
 const olStyle = { margin: "8px 0", paddingLeft: 22, lineHeight: 1.8 };
 
@@ -116,7 +117,7 @@ function NavMenu({ label, items, openMenu, setOpenMenu }) {
       <button style={{
         background: "none", border: "none", cursor: "pointer",
         display: "flex", alignItems: "center", gap: 4,
-        color: INK, fontWeight: 500, fontSize: 14,
+        color: LINK_BLUE, fontWeight: 500, fontSize: 14,
         fontFamily: "inherit", padding: "6px 8px",
         borderBottom: isOpen ? `2px solid ${TEAL}` : "2px solid transparent",
         transition: "border-color 0.15s",
@@ -138,7 +139,7 @@ function NavMenu({ label, items, openMenu, setOpenMenu }) {
           {items.map((it, i) => (
             <a key={i} href={it.href} style={{
               display: "block", padding: "10px 16px",
-              color: INK, textDecoration: "none", fontSize: 14,
+              color: LINK_BLUE, textDecoration: "none", fontSize: 14,
             }}
             onMouseEnter={(e) => e.currentTarget.style.background = "#F1F5F5"}
             onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
@@ -237,15 +238,15 @@ export default function HelpAutoPayroll() {
             <span style={{color: "#0F9599", fontWeight: 800, fontSize: 24, letterSpacing: "-0.015em", fontFamily: "inherit"}}>Novala</span>
           </a>
           <div style={{display: "flex", alignItems: "center", gap: 24}}>
-            <a href="/pricing" style={{color: INK, textDecoration: "none", fontWeight: 500}}>Plans & Pricing</a>
-            <a href="/support" style={{color: INK, textDecoration: "none", fontWeight: 500}}>Support</a>
+            <a href="/pricing" style={{color: LINK_BLUE, textDecoration: "none", fontWeight: 500}}>Plans & Pricing</a>
+            <a href="/support" style={{color: LINK_BLUE, textDecoration: "none", fontWeight: 500}}>Support</a>
             <span style={{color: SUB, display: "flex", alignItems: "center", gap: 6}}>
               <Phone size={14} strokeWidth={2} />
               <span>1-800-NOVALA</span>
             </span>
             <a href="/login" style={{
               padding: "8px 18px", borderRadius: 8,
-              background: "#fff", color: TEAL, border: `1.5px solid ${TEAL}`,
+              background: "#fff", color: LINK_BLUE, border: `1.5px solid ${LINK_BLUE}`,
               fontWeight: 600, fontSize: 14, textDecoration: "none",
             }}>Sign In</a>
           </div>
@@ -259,7 +260,7 @@ export default function HelpAutoPayroll() {
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <div style={{display: "flex", alignItems: "center", gap: 24}}>
-            <a href="#" style={{fontSize: 18, fontWeight: 700, color: INK, textDecoration: "none", borderBottom: `3px solid ${TEAL}`, paddingBottom: 4}}>Novala Support</a>
+            <a href="#" style={{fontSize: 18, fontWeight: 700, color: LINK_BLUE, textDecoration: "none", borderBottom: `3px solid ${TEAL}`, paddingBottom: 4}}>Novala Support</a>
             {Object.entries(MENUS).map(([name, items]) => (
               <NavMenu key={name} label={name} items={items} openMenu={openMenu} setOpenMenu={setOpenMenu} />
             ))}
