@@ -54,14 +54,14 @@ export function PayrollSettings({ onClose }) {
   const node = (
     <div style={{
       position: "fixed", inset: 0, background: "#fff",
-      zIndex: 9000, overflow: "auto",
+      zIndex: 99000, overflow: "auto",
       fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
       animation: "psIn 0.28s cubic-bezier(0.16,1,0.3,1)",
     }}>
       <style>{`@keyframes psIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }`}</style>
 
       <div style={{
-        position: "sticky", top: 0, background: "#fff", zIndex: 2,
+        position: "sticky", top: 0, background: "#fff", zIndex: 99001,
         borderBottom: `1px solid ${BORDER}`,
         padding: "20px 40px", display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
@@ -89,7 +89,7 @@ export function PayrollSettings({ onClose }) {
         position: "fixed", bottom: 0, left: 0, right: 0,
         background: "#fff", borderTop: `1px solid ${BORDER}`,
         padding: "16px 40px", display: "flex", justifyContent: "flex-end",
-        zIndex: 2,
+        zIndex: 99001,
       }}>
         <button onClick={onClose} style={{
           padding: "11px 28px", borderRadius: 10, border: "none",
