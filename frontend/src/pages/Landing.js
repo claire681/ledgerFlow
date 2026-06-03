@@ -11,6 +11,7 @@ import {
   DollarSign, PieChart, ArrowUpCircle, Briefcase,
   LayoutGrid, Info, Tag,
 } from "lucide-react";
+import MarketingHeader from "../components/MarketingHeader";
 
 const C = {
   bg:         "#08090D",
@@ -38,7 +39,8 @@ function useInView(threshold = 0.12) {
       { threshold }
     );
     if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
+    return () =>
+      <MarketingHeader /> obs.disconnect();
   }, [threshold]);
   return [ref, inView];
 }
