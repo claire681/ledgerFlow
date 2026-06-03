@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import { X, Pencil } from "lucide-react";
+import { GeneralTaxInfo } from "./GeneralTaxInfo";
 
 const BRAND = "#0F5959";
 const INK = "#0E1A1A";
@@ -51,6 +52,13 @@ const ROWS = [
 ];
 
 export function PayrollSettings({ onClose }) {
+  const [showGeneralTax, setShowGeneralTax] = useState(false);
+
+  const onEditFor = (rowId, label) => {
+    if (rowId === "general_tax") return () => setShowGeneralTax(true);
+    return () => alert(`Edit ${label} — coming soon.`);
+  };
+
   const node = (
     <div style={{
       position: "fixed", inset: 0, background: "#fff",
@@ -81,7 +89,7 @@ export function PayrollSettings({ onClose }) {
 
       <div style={{maxWidth: 1100, padding: "32px 40px 120px", margin: 0}}>
         {ROWS.map(row => (
-          <PSRow key={row.id} row={row} onEdit={stub(row.label)} />
+          <PSRow key={row.id} row={row} onEdit={onEditFor(row.id, row.label)} />
         ))}
       </div>
 
@@ -102,6 +110,7 @@ export function PayrollSettings({ onClose }) {
           Done
         </button>
       </div>
+      {showGeneralTax && <GeneralTaxInfo onClose={() => setShowGeneralTax(false)} />}
     </div>
   );
 
