@@ -1,23 +1,41 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, ChevronDown, Phone } from "lucide-react";
+import { Search, ChevronDown, Phone, Globe } from "lucide-react";
 
 const TEAL = "#0F9599";
 const TEAL_DARK = "#0B7377";
 const INK = "#0E1A1A";
 const SUB = "#5B6B6B";
 const BORDER = "#DDE5E5";
-// Landing-page dark teal — NOT pure black, per Claire's spec note.
-// TODO: swap for the exact landing-page footer token once located.
+// Landing-page dark teal — NOT pure black. TODO: swap for the exact landing-page footer token.
 const FOOTER_DARK = "#0B3D3D";
 const BG_PROMO = "#F1F5F5";
 const CONTENT_MAX = 1200;
 
-// Real SVG flags from flagcdn.com — renders consistently on Windows/Mac/Linux.
-// (Emoji flags break on Windows: it shows the 2-letter regional indicator codes as text,
-//  which is why the previous build displayed "CA" instead of the Canada flag.)
-const LOCALES = [
+// Real flag SVGs from flagcdn.com — emoji flags don't render on Windows.
+const NAV_LOCALES = [
+  { code: "en-AU", flagSrc: "https://flagcdn.com/au.svg", label: "Australia" },
   { code: "en-CA", flagSrc: "https://flagcdn.com/ca.svg", label: "Canada (English)" },
   { code: "fr-CA", flagSrc: "https://flagcdn.com/ca.svg", label: "Canada (French)" },
+  { code: "en-US", flagSrc: "https://flagcdn.com/us.svg", label: "United States" },
+  { code: "en-GB", flagSrc: "https://flagcdn.com/gb.svg", label: "United Kingdom" },
+  { code: "en-SG", flagSrc: "https://flagcdn.com/sg.svg", label: "Singapore" },
+  { code: "en-ZA", flagSrc: "https://flagcdn.com/za.svg", label: "South Africa" },
+  { code: "en-IE", flagSrc: "https://flagcdn.com/ie.svg", label: "Ireland" },
+  { code: "global-en", flagSrc: null, label: "Global (English)" },
+  { code: "global-es", flagSrc: null, label: "Global (Spanish)" },
+];
+
+const FOOTER_LOCALES = [
+  { code: "en-AU", flagSrc: "https://flagcdn.com/au.svg", label: "Australia" },
+  { code: "pt-BR", flagSrc: "https://flagcdn.com/br.svg", label: "Brasil" },
+  { code: "en-CA", flagSrc: "https://flagcdn.com/ca.svg", label: "Canada (English)" },
+  { code: "fr-CA", flagSrc: "https://flagcdn.com/ca.svg", label: "Canada (French)" },
+  { code: "fr-FR", flagSrc: "https://flagcdn.com/fr.svg", label: "France" },
+  { code: "en-IN", flagSrc: "https://flagcdn.com/in.svg", label: "India" },
+  { code: "en-GB", flagSrc: "https://flagcdn.com/gb.svg", label: "United Kingdom" },
+  { code: "en-ZA", flagSrc: "https://flagcdn.com/za.svg", label: "South Africa" },
+  { code: "en-SG", flagSrc: "https://flagcdn.com/sg.svg", label: "Singapore" },
+  { code: "other", flagSrc: null, label: "Other Countries" },
 ];
 
 const RELATED_LINKS = [
@@ -31,18 +49,20 @@ const linkStyle = { color: TEAL, textDecoration: "none", fontWeight: 600 };
 const ulStyle = { margin: "8px 0", paddingLeft: 22, lineHeight: 1.8 };
 const olStyle = { margin: "8px 0", paddingLeft: 22, lineHeight: 1.8 };
 
-function FlagImg({ src, alt, large }) {
-  const dims = large ? { width: 28, height: 20 } : { width: 24, height: 16 };
-  return (
-    <img src={src} alt={alt} style={{
-      ...dims,
-      objectFit: "cover",
-      borderRadius: 2,
-      border: "1px solid rgba(0,0,0,0.1)",
-      display: "block",
-      flexShrink: 0,
-    }} />
-  );
+function LocaleIcon({ locale, large }) {
+  if (locale.flagSrc) {
+    const dims = large ? { width: 28, height: 20 } : { width: 24, height: 16 };
+    return (
+      <img src={locale.flagSrc} alt={locale.label} style={{
+        ...dims, objectFit: "cover", borderRadius: 2,
+        border: "1px solid rgba(0,0,0,0.1)",
+        display: "block", flexShrink: 0,
+      }} />
+    );
+  }
+  // Globe icon for "Global (English/Spanish)" and "Other Countries"
+  const size = large ? 22 : 18;
+  return <Globe size={size} strokeWidth={1.8} style={{ flexShrink: 0, color: SUB }} />;
 }
 
 function NavMenu({ label }) {
@@ -71,7 +91,7 @@ function LocaleRow({ locale, isSelected, onClick }) {
     onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "#F9FAFA"; }}
     onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "#fff"; }}
     >
-      <FlagImg src={locale.flagSrc} alt={locale.label} large />
+      <LocaleIcon locale={locale} large />
       <span>{locale.label}</span>
     </button>
   );
@@ -95,9 +115,7 @@ function FooterCol({ title, items }) {
       <ul style={{margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 10}}>
         {items.map((it, i) => (
           <li key={i}>
-            <a href="#" style={{color: "rgba(255,255,255,0.78)", textDecoration: "none", fontSize: 14}}>
-              {it}
-            </a>
+            <a href="#" style={{color: "rgba(255,255,255,0.78)", textDecoration: "none", fontSize: 14}}>{it}</a>
           </li>
         ))}
       </ul>
@@ -113,9 +131,9 @@ export default function HelpAutoPayroll() {
   const navLocaleRef = useRef(null);
   const footerLocaleRef = useRef(null);
 
-  const currentLocale = LOCALES.find(l => l.code === locale) || LOCALES[0];
+  const currentNavLocale = NAV_LOCALES.find(l => l.code === locale) || NAV_LOCALES[1];
+  const currentFooterLocale = FOOTER_LOCALES.find(l => l.code === locale) || FOOTER_LOCALES[2];
 
-  // Click outside closes dropdowns
   useEffect(() => {
     const handler = (e) => {
       if (navLocaleRef.current && !navLocaleRef.current.contains(e.target)) setShowNavLocale(false);
@@ -137,17 +155,14 @@ export default function HelpAutoPayroll() {
       fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
       color: INK,
     }}>
-      {/* Top utility bar */}
+      {/* Top utility row */}
       <div style={{borderBottom: `1px solid ${BORDER}`, padding: "12px 32px"}}>
         <div style={{
           maxWidth: CONTENT_MAX, margin: "0 auto",
           display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 14,
         }}>
-          <a href="/" style={{textDecoration: "none"}}>
-            <div style={{
-              background: TEAL, color: "#fff", padding: "6px 14px", borderRadius: 6,
-              fontWeight: 800, letterSpacing: "0.04em", fontSize: 14,
-            }}>NOVALA</div>
+          <a href="/" style={{textDecoration: "none", display: "inline-flex", alignItems: "center"}}>
+            <span style={{color: "#0F9599", fontWeight: 800, fontSize: 24, letterSpacing: "-0.015em", fontFamily: "inherit"}}>Novala</span>
           </a>
           <div style={{display: "flex", alignItems: "center", gap: 24}}>
             <a href="/pricing" style={{color: INK, textDecoration: "none", fontWeight: 500}}>Plans & Pricing</a>
@@ -165,7 +180,7 @@ export default function HelpAutoPayroll() {
         </div>
       </div>
 
-      {/* Help nav bar — Novala Support + menu items + flag selector (far-right, baseline-aligned) */}
+      {/* Support nav row */}
       <div style={{borderBottom: `1px solid ${BORDER}`, padding: "16px 32px"}}>
         <div style={{
           maxWidth: CONTENT_MAX, margin: "0 auto",
@@ -187,7 +202,7 @@ export default function HelpAutoPayroll() {
               padding: "4px 6px", borderRadius: 4, cursor: "pointer",
               fontFamily: "inherit", color: INK,
             }}>
-              <FlagImg src={currentLocale.flagSrc} alt={currentLocale.label} />
+              <LocaleIcon locale={currentNavLocale} />
               <ChevronDown size={14} strokeWidth={2} />
             </button>
             {showNavLocale && (
@@ -198,7 +213,7 @@ export default function HelpAutoPayroll() {
                 boxShadow: "0 10px 30px -10px rgba(0,0,0,0.18)",
                 zIndex: 50, overflow: "hidden",
               }}>
-                {LOCALES.map(l => (
+                {NAV_LOCALES.map(l => (
                   <LocaleRow key={l.code} locale={l} isSelected={l.code === locale} onClick={() => selectLocale(l.code)} />
                 ))}
               </div>
@@ -207,7 +222,7 @@ export default function HelpAutoPayroll() {
         </div>
       </div>
 
-      {/* Promo strip — message LEFT, button RIGHT, same row */}
+      {/* Promo strip — message left, button right */}
       <div style={{background: BG_PROMO, padding: "20px 32px"}}>
         <div style={{
           maxWidth: CONTENT_MAX, margin: "0 auto",
@@ -225,20 +240,14 @@ export default function HelpAutoPayroll() {
         </div>
       </div>
 
-      {/* Search band — content-gutter aligned, search box lines up with nav above */}
+      {/* Search band — NO heading, LEFT-aligned search box (~half width) per QB reference */}
       <div style={{
         background: `linear-gradient(135deg, ${TEAL} 0%, ${TEAL_DARK} 100%)`,
         padding: "56px 32px",
       }}>
-        <div style={{
-          maxWidth: CONTENT_MAX, margin: "0 auto",
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 18,
-        }}>
-          <h1 style={{margin: 0, fontSize: 28, fontWeight: 700, color: "#fff", textAlign: "center"}}>
-            How can we help you?
-          </h1>
+        <div style={{maxWidth: CONTENT_MAX, margin: "0 auto"}}>
           <div style={{
-            display: "flex", width: "100%", maxWidth: 880,
+            display: "flex", width: "100%", maxWidth: 560,
             background: "#fff", borderRadius: 12, overflow: "hidden",
             boxShadow: "0 10px 30px -10px rgba(0,0,0,0.25)",
           }}>
@@ -385,8 +394,7 @@ export default function HelpAutoPayroll() {
         </aside>
       </div>
 
-      {/* Footer — landing-page dark teal, NOT black */}
-      {/* TODO: swap this for the actual landing-page Footer component once located. */}
+      {/* Footer — landing-page dark teal */}
       <footer style={{background: FOOTER_DARK, color: "#fff", padding: "48px 32px 32px"}}>
         <div style={{maxWidth: CONTENT_MAX, margin: "0 auto"}}>
           <div style={{
@@ -416,7 +424,7 @@ export default function HelpAutoPayroll() {
                 padding: "6px 12px", borderRadius: 6,
                 cursor: "pointer", fontFamily: "inherit", fontSize: 13,
               }}>
-                <FlagImg src={currentLocale.flagSrc} alt={currentLocale.label} />
+                <LocaleIcon locale={currentFooterLocale} />
                 <span>Select a Country</span>
                 <ChevronDown size={14} strokeWidth={2} />
               </button>
@@ -428,7 +436,7 @@ export default function HelpAutoPayroll() {
                   boxShadow: "0 10px 30px -10px rgba(0,0,0,0.25)",
                   zIndex: 50, overflow: "hidden",
                 }}>
-                  {LOCALES.map(l => (
+                  {FOOTER_LOCALES.map(l => (
                     <LocaleRow key={l.code} locale={l} isSelected={l.code === locale} onClick={() => selectLocale(l.code)} />
                   ))}
                 </div>
