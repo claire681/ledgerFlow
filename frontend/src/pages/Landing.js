@@ -313,7 +313,7 @@ function OrbitalAnimation() {
           <path d="M3 16 L7 7 L11 12 L15 5 L19 9" stroke={C.accent} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
           <circle cx="19" cy="9" r="2" fill={C.accent}/>
         </svg>
-        <span style={{ fontSize: 13, fontWeight: 800, color: "#fff", letterSpacing: "-0.03em" }}>No<span style={{ color: C.accent }}>vala</span></span>
+        <span style={{ fontSize: 13, fontWeight: 800, color: C.accent, letterSpacing: "-0.03em" }}>No<span style={{ color: C.accent }}>vala</span></span>
       </div>
     </div>
   );
