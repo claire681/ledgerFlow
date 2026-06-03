@@ -13,28 +13,28 @@ const BG_PROMO = "#F1F5F5";
 const CONTENT_MAX = 1200;
 
 const NAV_LOCALES = [
-  { code: "en-AU", flagSrc: "https://flagcdn.com/au.svg", label: "Australia" },
-  { code: "en-CA", flagSrc: "https://flagcdn.com/ca.svg", label: "Canada (English)" },
-  { code: "fr-CA", flagSrc: "https://flagcdn.com/ca.svg", label: "Canada (French)" },
-  { code: "en-US", flagSrc: "https://flagcdn.com/us.svg", label: "United States" },
-  { code: "en-GB", flagSrc: "https://flagcdn.com/gb.svg", label: "United Kingdom" },
-  { code: "en-SG", flagSrc: "https://flagcdn.com/sg.svg", label: "Singapore" },
-  { code: "en-ZA", flagSrc: "https://flagcdn.com/za.svg", label: "South Africa" },
-  { code: "en-IE", flagSrc: "https://flagcdn.com/ie.svg", label: "Ireland" },
+  { code: "en-AU", flagSrc: "https://flagcdn.com/w80/au.png", label: "Australia" },
+  { code: "en-CA", flagSrc: "https://flagcdn.com/w80/ca.png", label: "Canada (English)" },
+  { code: "fr-CA", flagSrc: "https://flagcdn.com/w80/ca.png", label: "Canada (French)" },
+  { code: "en-US", flagSrc: "https://flagcdn.com/w80/us.png", label: "United States" },
+  { code: "en-GB", flagSrc: "https://flagcdn.com/w80/gb.png", label: "United Kingdom" },
+  { code: "en-SG", flagSrc: "https://flagcdn.com/w80/sg.png", label: "Singapore" },
+  { code: "en-ZA", flagSrc: "https://flagcdn.com/w80/za.png", label: "South Africa" },
+  { code: "en-IE", flagSrc: "https://flagcdn.com/w80/ie.png", label: "Ireland" },
   { code: "global-en", flagSrc: null, label: "Global (English)" },
   { code: "global-es", flagSrc: null, label: "Global (Spanish)" },
 ];
 
 const FOOTER_LOCALES = [
-  { code: "en-AU", flagSrc: "https://flagcdn.com/au.svg", label: "Australia" },
-  { code: "pt-BR", flagSrc: "https://flagcdn.com/br.svg", label: "Brasil" },
-  { code: "en-CA", flagSrc: "https://flagcdn.com/ca.svg", label: "Canada (English)" },
-  { code: "fr-CA", flagSrc: "https://flagcdn.com/ca.svg", label: "Canada (French)" },
-  { code: "fr-FR", flagSrc: "https://flagcdn.com/fr.svg", label: "France" },
-  { code: "en-IN", flagSrc: "https://flagcdn.com/in.svg", label: "India" },
-  { code: "en-GB", flagSrc: "https://flagcdn.com/gb.svg", label: "United Kingdom" },
-  { code: "en-ZA", flagSrc: "https://flagcdn.com/za.svg", label: "South Africa" },
-  { code: "en-SG", flagSrc: "https://flagcdn.com/sg.svg", label: "Singapore" },
+  { code: "en-AU", flagSrc: "https://flagcdn.com/w80/au.png", label: "Australia" },
+  { code: "pt-BR", flagSrc: "https://flagcdn.com/w80/br.png", label: "Brasil" },
+  { code: "en-CA", flagSrc: "https://flagcdn.com/w80/ca.png", label: "Canada (English)" },
+  { code: "fr-CA", flagSrc: "https://flagcdn.com/w80/ca.png", label: "Canada (French)" },
+  { code: "fr-FR", flagSrc: "https://flagcdn.com/w80/fr.png", label: "France" },
+  { code: "en-IN", flagSrc: "https://flagcdn.com/w80/in.png", label: "India" },
+  { code: "en-GB", flagSrc: "https://flagcdn.com/w80/gb.png", label: "United Kingdom" },
+  { code: "en-ZA", flagSrc: "https://flagcdn.com/w80/za.png", label: "South Africa" },
+  { code: "en-SG", flagSrc: "https://flagcdn.com/w80/sg.png", label: "Singapore" },
   { code: "other", flagSrc: null, label: "Other Countries" },
 ];
 
@@ -62,7 +62,7 @@ const MENUS = {
 };
 
 const RELATED_LINKS = ["Get started with Novala Payroll", "Set up time tracking", "Set up pay schedules", "Set up voluntary deductions"];
-const linkStyle = { color: TEAL, textDecoration: "none", fontWeight: 600 };
+const linkStyle = { color: LINK_BLUE, textDecoration: "none", fontWeight: 600 };
 const ulStyle = { margin: "8px 0", paddingLeft: 22, lineHeight: 1.8 };
 const olStyle = { margin: "8px 0", paddingLeft: 22, lineHeight: 1.8 };
 
@@ -231,7 +231,7 @@ export default function HelpAutoPayroll() {
           <Section title="Set default hours for hourly employees">
             <p>For hourly employees who work the same hours each day, set default hours to make them eligible:</p>
             <ol style={olStyle}>
-              <li>Go to Payroll, then <strong>Employees</strong>.</li>
+              <li>Go to <strong>All Apps</strong>, select <strong>Payroll</strong>, then select <strong>Employees</strong>. <a href="#" style={linkStyle}>(Take me there)</a></li>
               <li>Select the employee.</li>
               <li>From <strong>Base pay</strong>, select <strong>Start</strong> or <strong>Edit</strong>.</li>
               <li>Enter <strong>Hours per day</strong> and <strong>Days per week</strong>.</li>
@@ -251,8 +251,8 @@ export default function HelpAutoPayroll() {
           <Section id="one-time" title="Make a one-time change to an upcoming auto paycheque">
             <p>Changes must be made <strong>3 business days before the cheque date, by 8 PM ET</strong>.</p>
             <ol style={olStyle}>
-              <li>Go to Payroll, then <strong>Employees</strong>.</li>
-              <li>Select <strong>Run payroll</strong> (pick a schedule if you have several).</li>
+              <li>Go to <strong>All Apps</strong>, select <strong>Payroll</strong>, then select <strong>Employees</strong>. <a href="#" style={linkStyle}>(Take me there)</a></li>
+              <li>Select <strong>Run payroll</strong>.<div style={{ color: SUB, fontSize: 14, marginTop: 4 }}><strong>Note:</strong> If there are multiple pay schedules, pick one and select <strong>Continue</strong>.</div></li>
               <li>Select <strong>Make updates to upcoming pay period</strong>.</li>
               <li>In the <strong>Actions</strong> column, open the more menu, then <strong>Edit paycheque</strong>.</li>
               <li>Edit the items, then <strong>Save</strong>.</li>
@@ -262,8 +262,8 @@ export default function HelpAutoPayroll() {
           <Section id="manual" title="Pay an employee manually for one pay period">
             <p>Pauses Auto Payroll for a single period; it resumes the next scheduled run.</p>
             <ol style={olStyle}>
-              <li>Go to Payroll, then <strong>Employees</strong>.</li>
-              <li>Select <strong>Run payroll</strong>.</li>
+              <li>Go to <strong>All Apps</strong>, select <strong>Payroll</strong>, then select <strong>Employees</strong>. <a href="#" style={linkStyle}>(Take me there)</a></li>
+              <li>Select <strong>Run payroll</strong>.<div style={{ color: SUB, fontSize: 14, marginTop: 4 }}><strong>Note:</strong> If there are multiple pay schedules, pick one and select <strong>Continue</strong>.</div></li>
               <li>Select <strong>Pay manually this period</strong> on the relevant employees.</li>
               <li>Enter a <strong>Pay date</strong> and edit any pay items.</li>
               <li>Select <strong>Preview payroll</strong>, pick an account, then <strong>Submit payroll</strong>.</li>
