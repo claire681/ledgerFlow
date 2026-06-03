@@ -45,6 +45,7 @@ import ResetPassword from './pages/ResetPassword';
 import AcceptInvite from './pages/AcceptInvite';
 import HelpAutoPayroll from "./pages/HelpAutoPayroll";
 import Pricing from "./pages/Pricing";
+import Checkout from "./pages/Checkout";
 
 
 const ACCENT = '#0AB98A';
@@ -147,6 +148,7 @@ function AppLayout({ onLogout }) {
           <Routes>
             <Route path="/help/auto-payroll" element={<HelpAutoPayroll />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/checkout" element={<Checkout />} />
             <Route path="/accept-invite/:token" element={<AcceptInvite />} />
           <Route path="/payroll/*" element={<Payroll />} />
             <Route path="/"               element={<Dashboard />}          />
@@ -241,6 +243,7 @@ const handleOnboardingComplete = () => {
               <Route path="/login"   element={<LoginPage onLogin={handleLogin} />}                  />
               <Route path="/register"element={<Onboarding onComplete={handleOnboardingComplete} />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/checkout" element={<Checkout />} />
               <Route path="/help/auto-payroll" element={<HelpAutoPayroll />} />
               <Route path="*"        element={<Navigate to="/" />}                                  />
             </>

@@ -291,7 +291,7 @@ export default function Pricing() {
 
   const choosePlan = (planId) => {
     // TODO: wire to the real next-step route once Claire answers spec §9 Q2/Q3 (add-ons step vs straight to checkout)
-    navigate(`/signup?plan=${planId}`);
+    navigate(`/checkout?plan=${planId}&billing=${billingMode}`);
   };
 
   const scrollToCompare = () => {
