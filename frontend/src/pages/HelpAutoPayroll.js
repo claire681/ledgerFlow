@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, ChevronDown, Phone } from "lucide-react";
 
 const TEAL = "#0F9599";
@@ -7,13 +7,17 @@ const INK = "#0E1A1A";
 const SUB = "#5B6B6B";
 const BORDER = "#DDE5E5";
 // Landing-page dark teal — NOT pure black, per Claire's spec note.
-// TODO: replace placeholder with the exact landing-page footer token once located.
+// TODO: swap for the exact landing-page footer token once located.
 const FOOTER_DARK = "#0B3D3D";
 const BG_PROMO = "#F1F5F5";
+const CONTENT_MAX = 1200;
 
+// Real SVG flags from flagcdn.com — renders consistently on Windows/Mac/Linux.
+// (Emoji flags break on Windows: it shows the 2-letter regional indicator codes as text,
+//  which is why the previous build displayed "CA" instead of the Canada flag.)
 const LOCALES = [
-  { flag: "🇨🇦", code: "en-CA", label: "Canada (English)" },
-  { flag: "🇨🇦", code: "fr-CA", label: "Canada (French)" },
+  { code: "en-CA", flagSrc: "https://flagcdn.com/ca.svg", label: "Canada (English)" },
+  { code: "fr-CA", flagSrc: "https://flagcdn.com/ca.svg", label: "Canada (French)" },
 ];
 
 const RELATED_LINKS = [
@@ -27,6 +31,20 @@ const linkStyle = { color: TEAL, textDecoration: "none", fontWeight: 600 };
 const ulStyle = { margin: "8px 0", paddingLeft: 22, lineHeight: 1.8 };
 const olStyle = { margin: "8px 0", paddingLeft: 22, lineHeight: 1.8 };
 
+function FlagImg({ src, alt, large }) {
+  const dims = large ? { width: 28, height: 20 } : { width: 24, height: 16 };
+  return (
+    <img src={src} alt={alt} style={{
+      ...dims,
+      objectFit: "cover",
+      borderRadius: 2,
+      border: "1px solid rgba(0,0,0,0.1)",
+      display: "block",
+      flexShrink: 0,
+    }} />
+  );
+}
+
 function NavMenu({ label }) {
   return (
     <button style={{
@@ -37,6 +55,24 @@ function NavMenu({ label }) {
     }}>
       {label}
       <ChevronDown size={14} strokeWidth={2} />
+    </button>
+  );
+}
+
+function LocaleRow({ locale, isSelected, onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      display: "flex", alignItems: "center", gap: 12,
+      width: "100%", padding: "10px 14px", minHeight: 42,
+      background: isSelected ? "#F1F5F5" : "#fff",
+      border: "none", cursor: "pointer",
+      fontSize: 14, color: INK, fontFamily: "inherit", textAlign: "left",
+    }}
+    onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "#F9FAFA"; }}
+    onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "#fff"; }}
+    >
+      <FlagImg src={locale.flagSrc} alt={locale.label} large />
+      <span>{locale.label}</span>
     </button>
   );
 }
@@ -71,9 +107,29 @@ function FooterCol({ title, items }) {
 
 export default function HelpAutoPayroll() {
   const [locale, setLocale] = useState("en-CA");
-  const [showLocale, setShowLocale] = useState(false);
+  const [showNavLocale, setShowNavLocale] = useState(false);
+  const [showFooterLocale, setShowFooterLocale] = useState(false);
   const [search, setSearch] = useState("");
+  const navLocaleRef = useRef(null);
+  const footerLocaleRef = useRef(null);
+
   const currentLocale = LOCALES.find(l => l.code === locale) || LOCALES[0];
+
+  // Click outside closes dropdowns
+  useEffect(() => {
+    const handler = (e) => {
+      if (navLocaleRef.current && !navLocaleRef.current.contains(e.target)) setShowNavLocale(false);
+      if (footerLocaleRef.current && !footerLocaleRef.current.contains(e.target)) setShowFooterLocale(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const selectLocale = (code) => {
+    setLocale(code);
+    setShowNavLocale(false);
+    setShowFooterLocale(false);
+  };
 
   return (
     <div style={{
@@ -82,136 +138,131 @@ export default function HelpAutoPayroll() {
       color: INK,
     }}>
       {/* Top utility bar */}
-      <div style={{
-        borderBottom: `1px solid ${BORDER}`,
-        padding: "12px 32px",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        fontSize: 14,
-      }}>
-        <a href="/" style={{textDecoration: "none"}}>
-          <div style={{
-            background: TEAL, color: "#fff",
-            padding: "6px 14px", borderRadius: 6,
-            fontWeight: 800, letterSpacing: "0.04em", fontSize: 14,
-          }}>NOVALA</div>
-        </a>
-        <div style={{display: "flex", alignItems: "center", gap: 24}}>
-          <a href="/pricing" style={{color: INK, textDecoration: "none", fontWeight: 500}}>Plans & Pricing</a>
-          <a href="/support" style={{color: INK, textDecoration: "none", fontWeight: 500}}>Support</a>
-          <span style={{color: SUB, display: "flex", alignItems: "center", gap: 6}}>
-            <Phone size={14} strokeWidth={2} />
-            <span>1-800-NOVALA</span>
-          </span>
-          <a href="/login" style={{
-            padding: "8px 18px", borderRadius: 8,
-            background: "#fff", color: TEAL,
-            border: `1.5px solid ${TEAL}`,
-            fontWeight: 600, fontSize: 14, textDecoration: "none",
-          }}>Sign In</a>
-        </div>
-      </div>
-
-      {/* Help nav bar */}
-      <div style={{
-        borderBottom: `1px solid ${BORDER}`,
-        padding: "16px 32px",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-      }}>
-        <div style={{display: "flex", alignItems: "center", gap: 24}}>
-          <h2 style={{margin: 0, fontSize: 18, fontWeight: 700}}>Novala Support</h2>
-          <NavMenu label="Get Started" />
-          <NavMenu label="Topics" />
-          <NavMenu label="Training" />
-          <NavMenu label="Community" />
-          <NavMenu label="Resources" />
-        </div>
-
-        <div style={{position: "relative"}}>
-          <button onClick={() => setShowLocale(s => !s)} style={{
-            display: "flex", alignItems: "center", gap: 8,
-            background: "#fff", border: `1px solid ${BORDER}`,
-            padding: "6px 12px", borderRadius: 6, cursor: "pointer",
-            fontSize: 14, fontWeight: 500, color: INK, fontFamily: "inherit",
-          }}>
-            <span style={{fontSize: 18}}>{currentLocale.flag}</span>
-            <ChevronDown size={14} strokeWidth={2} />
-          </button>
-          {showLocale && (
+      <div style={{borderBottom: `1px solid ${BORDER}`, padding: "12px 32px"}}>
+        <div style={{
+          maxWidth: CONTENT_MAX, margin: "0 auto",
+          display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 14,
+        }}>
+          <a href="/" style={{textDecoration: "none"}}>
             <div style={{
-              position: "absolute", top: "calc(100% + 6px)", right: 0,
-              background: "#fff", border: `1px solid ${BORDER}`,
-              borderRadius: 10, minWidth: 220,
-              boxShadow: "0 10px 30px -10px rgba(0,0,0,0.15)",
-              zIndex: 10, overflow: "hidden",
-            }}>
-              {LOCALES.map(l => (
-                <button key={l.code} onClick={() => { setLocale(l.code); setShowLocale(false); }} style={{
-                  display: "flex", alignItems: "center", gap: 12,
-                  width: "100%", padding: "10px 16px",
-                  background: l.code === locale ? "#F1F5F5" : "#fff",
-                  border: "none", cursor: "pointer",
-                  fontSize: 14, color: INK, fontFamily: "inherit", textAlign: "left",
-                }}>
-                  <span style={{fontSize: 20}}>{l.flag}</span>
-                  <span>{l.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
+              background: TEAL, color: "#fff", padding: "6px 14px", borderRadius: 6,
+              fontWeight: 800, letterSpacing: "0.04em", fontSize: 14,
+            }}>NOVALA</div>
+          </a>
+          <div style={{display: "flex", alignItems: "center", gap: 24}}>
+            <a href="/pricing" style={{color: INK, textDecoration: "none", fontWeight: 500}}>Plans & Pricing</a>
+            <a href="/support" style={{color: INK, textDecoration: "none", fontWeight: 500}}>Support</a>
+            <span style={{color: SUB, display: "flex", alignItems: "center", gap: 6}}>
+              <Phone size={14} strokeWidth={2} />
+              <span>1-800-NOVALA</span>
+            </span>
+            <a href="/login" style={{
+              padding: "8px 18px", borderRadius: 8,
+              background: "#fff", color: TEAL, border: `1.5px solid ${TEAL}`,
+              fontWeight: 600, fontSize: 14, textDecoration: "none",
+            }}>Sign In</a>
+          </div>
         </div>
       </div>
 
-      {/* Promo strip */}
-      <div style={{
-        background: BG_PROMO,
-        padding: "20px 32px",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        gap: 24, fontSize: 15,
-      }}>
-        <span style={{color: INK}}>Explore our Novala training videos and learn at your own pace</span>
-        <button style={{
-          padding: "10px 22px", borderRadius: 8,
-          background: TEAL, color: "#fff", border: "none",
-          fontWeight: 700, fontSize: 14, cursor: "pointer",
-          fontFamily: "inherit",
-          boxShadow: "0 6px 14px -6px rgba(15,149,153,0.6)",
-        }}>Master Novala today</button>
+      {/* Help nav bar — Novala Support + menu items + flag selector (far-right, baseline-aligned) */}
+      <div style={{borderBottom: `1px solid ${BORDER}`, padding: "16px 32px"}}>
+        <div style={{
+          maxWidth: CONTENT_MAX, margin: "0 auto",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div style={{display: "flex", alignItems: "center", gap: 24}}>
+            <h2 style={{margin: 0, fontSize: 18, fontWeight: 700}}>Novala Support</h2>
+            <NavMenu label="Get Started" />
+            <NavMenu label="Topics" />
+            <NavMenu label="Training" />
+            <NavMenu label="Community" />
+            <NavMenu label="Resources" />
+          </div>
+
+          <div ref={navLocaleRef} style={{position: "relative"}}>
+            <button onClick={() => setShowNavLocale(s => !s)} style={{
+              display: "flex", alignItems: "center", gap: 6,
+              background: "transparent", border: "none",
+              padding: "4px 6px", borderRadius: 4, cursor: "pointer",
+              fontFamily: "inherit", color: INK,
+            }}>
+              <FlagImg src={currentLocale.flagSrc} alt={currentLocale.label} />
+              <ChevronDown size={14} strokeWidth={2} />
+            </button>
+            {showNavLocale && (
+              <div style={{
+                position: "absolute", top: "calc(100% + 6px)", right: 0,
+                background: "#fff", border: `1px solid ${BORDER}`,
+                borderRadius: 10, minWidth: 240,
+                boxShadow: "0 10px 30px -10px rgba(0,0,0,0.18)",
+                zIndex: 50, overflow: "hidden",
+              }}>
+                {LOCALES.map(l => (
+                  <LocaleRow key={l.code} locale={l} isSelected={l.code === locale} onClick={() => selectLocale(l.code)} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Search band — brand-tinted gradient */}
+      {/* Promo strip — message LEFT, button RIGHT, same row */}
+      <div style={{background: BG_PROMO, padding: "20px 32px"}}>
+        <div style={{
+          maxWidth: CONTENT_MAX, margin: "0 auto",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          gap: 24, fontSize: 15,
+        }}>
+          <span style={{color: INK}}>Explore our Novala training videos and learn at your own pace</span>
+          <button style={{
+            padding: "10px 22px", borderRadius: 8,
+            background: TEAL, color: "#fff", border: "none",
+            fontWeight: 700, fontSize: 14, cursor: "pointer",
+            fontFamily: "inherit", flexShrink: 0,
+            boxShadow: "0 6px 14px -6px rgba(15,149,153,0.6)",
+          }}>Master Novala today</button>
+        </div>
+      </div>
+
+      {/* Search band — content-gutter aligned, search box lines up with nav above */}
       <div style={{
         background: `linear-gradient(135deg, ${TEAL} 0%, ${TEAL_DARK} 100%)`,
         padding: "56px 32px",
-        display: "flex", flexDirection: "column", alignItems: "center", gap: 18,
       }}>
-        <h1 style={{margin: 0, fontSize: 28, fontWeight: 700, color: "#fff", textAlign: "center"}}>
-          How can we help you?
-        </h1>
         <div style={{
-          display: "flex", width: "100%", maxWidth: 720,
-          background: "#fff", borderRadius: 12, overflow: "hidden",
-          boxShadow: "0 10px 30px -10px rgba(0,0,0,0.2)",
+          maxWidth: CONTENT_MAX, margin: "0 auto",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 18,
         }}>
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search questions, keywords or topics"
-            style={{
-              flex: 1, padding: "14px 18px", border: "none", outline: "none",
-              fontSize: 15, fontFamily: "inherit", color: INK,
-            }}
-          />
-          <button style={{
-            padding: "0 24px", background: TEAL, color: "#fff",
-            border: "none", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
+          <h1 style={{margin: 0, fontSize: 28, fontWeight: 700, color: "#fff", textAlign: "center"}}>
+            How can we help you?
+          </h1>
+          <div style={{
+            display: "flex", width: "100%", maxWidth: 880,
+            background: "#fff", borderRadius: 12, overflow: "hidden",
+            boxShadow: "0 10px 30px -10px rgba(0,0,0,0.25)",
           }}>
-            <Search size={20} strokeWidth={2} />
-          </button>
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search questions, keywords or topics"
+              style={{
+                flex: 1, padding: "14px 18px", border: "none", outline: "none",
+                fontSize: 15, fontFamily: "inherit", color: INK,
+              }}
+            />
+            <button style={{
+              padding: "0 24px", background: TEAL, color: "#fff",
+              border: "none", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Search size={20} strokeWidth={2} />
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Article body + sidebar */}
       <div style={{
-        maxWidth: 1200, margin: "0 auto",
+        maxWidth: CONTENT_MAX, margin: "0 auto",
         padding: "48px 32px 80px",
         display: "grid", gridTemplateColumns: "1fr 280px", gap: 60,
       }}>
@@ -337,7 +388,7 @@ export default function HelpAutoPayroll() {
       {/* Footer — landing-page dark teal, NOT black */}
       {/* TODO: swap this for the actual landing-page Footer component once located. */}
       <footer style={{background: FOOTER_DARK, color: "#fff", padding: "48px 32px 32px"}}>
-        <div style={{maxWidth: 1200, margin: "0 auto"}}>
+        <div style={{maxWidth: CONTENT_MAX, margin: "0 auto"}}>
           <div style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
@@ -356,17 +407,33 @@ export default function HelpAutoPayroll() {
             gap: 16, fontSize: 13, color: "rgba(255,255,255,0.78)",
           }}>
             <div>© 2026 Novala · BrightCare Home Healthcare Services Inc.</div>
-            <button style={{
-              display: "flex", alignItems: "center", gap: 8,
-              background: "transparent", color: "#fff",
-              border: "1px solid rgba(255,255,255,0.3)",
-              padding: "6px 12px", borderRadius: 6,
-              cursor: "pointer", fontFamily: "inherit", fontSize: 13,
-            }}>
-              <span style={{fontSize: 16}}>{currentLocale.flag}</span>
-              <span>Select a Country</span>
-              <ChevronDown size={14} strokeWidth={2} />
-            </button>
+
+            <div ref={footerLocaleRef} style={{position: "relative"}}>
+              <button onClick={() => setShowFooterLocale(s => !s)} style={{
+                display: "flex", alignItems: "center", gap: 8,
+                background: "transparent", color: "#fff",
+                border: "1px solid rgba(255,255,255,0.3)",
+                padding: "6px 12px", borderRadius: 6,
+                cursor: "pointer", fontFamily: "inherit", fontSize: 13,
+              }}>
+                <FlagImg src={currentLocale.flagSrc} alt={currentLocale.label} />
+                <span>Select a Country</span>
+                <ChevronDown size={14} strokeWidth={2} />
+              </button>
+              {showFooterLocale && (
+                <div style={{
+                  position: "absolute", bottom: "calc(100% + 6px)", right: 0,
+                  background: "#fff", border: `1px solid ${BORDER}`,
+                  borderRadius: 10, minWidth: 240,
+                  boxShadow: "0 10px 30px -10px rgba(0,0,0,0.25)",
+                  zIndex: 50, overflow: "hidden",
+                }}>
+                  {LOCALES.map(l => (
+                    <LocaleRow key={l.code} locale={l} isSelected={l.code === locale} onClick={() => selectLocale(l.code)} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </footer>
