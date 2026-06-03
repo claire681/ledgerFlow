@@ -149,12 +149,101 @@ const COMPARISON = [
 ];
 
 const FAQS = [
-  { q: "Can I cancel anytime?", a: "Yes. Novala is month-to-month and you can cancel from your Billing settings — no contracts or termination fees." },
-  { q: "What happens after the promo period?", a: "Your plan continues at the regular monthly price. We'll email you before the price changes so there are no surprises." },
-  { q: "Can I switch plans later?", a: "Anytime. Upgrades take effect immediately and we prorate the difference. Downgrades take effect at the end of your current billing cycle." },
-  { q: "Do you offer a free trial?", a: "Yes. Switch the billing toggle to \"Free trial for 30 days\" to get full access to your chosen plan with no credit card required up front." },
-  { q: "Is my data secure?", a: "Novala uses bank-level encryption in transit and at rest, with continuous monitoring and audited backups. Your data is yours — export any time." },
-  { q: "Can my accountant access Novala?", a: "Yes. On Growth and Scale you can invite your accountant or bookkeeper as a user at no extra seat cost." },
+  {
+    q: "Which Novala plan is best for a small business?",
+    intro: "Novala's plans scale from solo operators to growing teams. Pick the tier that matches your current stage:",
+    bullets: [
+      { lead: "Starter", body: "for sole proprietors and freelancers — core invoicing, expense tracking, and reporting for one user." },
+      { lead: "Growth", body: "for small teams (up to 5 users) — adds bill management, time tracking, and multi-currency support." },
+      { lead: "Scale", body: "for businesses with employees or inventory; supports up to 25 users and includes project profitability tracking." },
+    ],
+  },
+  {
+    q: "Which Novala plan is right for a growing or mid-sized business?",
+    intro: "For businesses that need more than bookkeeping, Scale is Novala's most capable tier, built to grow with your team while keeping your financial data organized and accessible:",
+    bullets: [
+      { lead: "Expanded access", body: "up to 25 users with customizable permissions." },
+      { lead: "Workflow automation", body: "automated triggers for reminders, approvals, and batch transactions." },
+      { lead: "Advanced insights", body: "customizable KPI dashboards and deep financial reports." },
+      { lead: "Business analytics", body: "cash-flow forecasting and trend analysis." },
+      { lead: "Priority support", body: "fast-lane email and live chat from real humans." },
+    ],
+  },
+  {
+    q: "How do I access Novala, and does it work on any device?",
+    intro: "Novala is fully cloud-based — sign in from any modern browser on desktop, tablet, or phone.",
+    bullets: [
+      { lead: "Automatic updates", body: "new features and security patches roll out without you lifting a finger." },
+      { lead: "Secure backups", body: "your data is continuously backed up and encrypted in transit and at rest." },
+      { lead: "AI-assisted workflows", body: "Novala Intelligence handles categorization, receipt matching, and insights." },
+      { lead: "App integrations", body: "connect 200+ tools you already use, from Stripe to Shopify." },
+      { lead: "Remote accountant access", body: "invite your bookkeeper to collaborate from anywhere." },
+    ],
+  },
+  {
+    q: "Can I import my data from another accounting tool?",
+    intro: "Yes. Moving to Novala doesn't mean starting from scratch.",
+    bullets: [
+      { lead: "CSV import", body: "bring in your existing transactions, customers, vendors, and chart of accounts." },
+      { lead: "Bank reconnection", body: "link the same bank accounts you used elsewhere — Novala pulls fresh history automatically." },
+      { lead: "Guided setup", body: "our onboarding flow walks you through importing and mapping data step by step." },
+    ],
+  },
+  {
+    q: "Can I try Novala before buying?",
+    intro: 'Yes — every plan offers a 30-day free trial. Switch the billing toggle above to "Free trial for 30 days" to get started.',
+    bullets: [
+      { lead: "Credit card", body: "not required to start your trial." },
+      { lead: "Discount trade-off", body: "the free trial and the promotional discount are mutually exclusive — pick one or the other." },
+      { lead: "Onboarding", body: "Scale-plan trials include a complimentary onboarding session with a product specialist." },
+    ],
+  },
+  {
+    q: "Is there an annual billing option, and does it save money?",
+    intro: "Yes. Annual billing typically saves about 20% compared to paying monthly.",
+    bullets: [
+      { lead: "Savings vary by plan", body: "compare both options in the pricing cards above." },
+      { lead: "Single invoice", body: "one invoice per year simplifies reconciliation and expense tracking." },
+      { lead: "Rate lock", body: "your price is fixed for 12 months — protects you from any mid-year price changes." },
+    ],
+  },
+  {
+    q: "Are there any additional costs beyond the subscription price?",
+    intro: "Your subscription covers core accounting and bookkeeping. A few optional extras may apply depending on your needs:",
+    bullets: [
+      { lead: "Payroll", body: "available as a monthly add-on with CRA-compliant tax filings and direct deposit." },
+      { lead: "Payment processing", body: "Novala Payments charges a per-transaction fee only when you accept a payment." },
+      { lead: "User limits", body: "each plan includes a set number of seats; growing past it requires upgrading to a higher tier." },
+      { lead: "Third-party apps", body: "some integrations carry their own separate subscriptions billed by the vendor." },
+    ],
+  },
+  {
+    q: "Can I switch plans or cancel at any time?",
+    intro: "Yes. Novala is month-to-month with no contracts, no termination fees, and no questions asked.",
+    bullets: [
+      { lead: "Switching", body: "upgrades take effect immediately; downgrades take effect at the start of the next billing cycle." },
+      { lead: "Data retention", body: "after canceling, your account stays read-only for 30 days so you can export anything you need." },
+      { lead: "Data ownership", body: "your data is always yours — export lists and reports any time before that window closes." },
+    ],
+  },
+  {
+    q: "Can I upgrade or downgrade my Novala plan?",
+    intro: "Yes — Novala scales with your business.",
+    bullets: [
+      { lead: "Upgrading", body: "move to a higher tier instantly; billing is prorated for the remainder of your current cycle." },
+      { lead: "Downgrading", body: "takes effect at the start of the next billing cycle so you keep premium access until then." },
+      { lead: "Feature considerations", body: "downgrading may remove access to higher-tier features like inventory tracking, project tools, or extra seats. Export related reports first." },
+    ],
+  },
+  {
+    q: "Can I add my accountant or bookkeeper to my account?",
+    intro: "Yes. Growth and Scale plans let you invite one accounting professional to collaborate at no extra charge.",
+    bullets: [
+      { lead: "Dedicated seat", body: "your accountant gets their own secure login that does not count toward your plan's user limit." },
+      { lead: "Real-time collaboration", body: "they can review transactions, fix errors, and run reports without exporting files." },
+      { lead: "Total control", body: "adjust their permissions or remove access at any time from your team settings." },
+    ],
+  },
 ];
 
 export default function Pricing() {
@@ -162,6 +251,7 @@ export default function Pricing() {
   const [billingMode, setBillingMode] = useState("promo");
   const [openCategories, setOpenCategories] = useState(() => Object.fromEntries(COMPARISON.map(c => [c.category, true])));
   const [openFaqs, setOpenFaqs] = useState({});
+  const [hoverFaq, setHoverFaq] = useState(null);
   const [faqShowAll, setFaqShowAll] = useState(false);
 
   const toggleCategory = (name) => setOpenCategories(s => ({ ...s, [name]: !s[name] }));
@@ -307,11 +397,29 @@ export default function Pricing() {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {visibleFaqs.map((f, i) => (
             <div key={i} style={{ border: `1px solid ${BORDER}`, borderRadius: 12, overflow: "hidden", background: "#fff" }}>
-              <button onClick={() => toggleFaq(i)} style={{ width: "100%", padding: "18px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
-                <span style={{ fontWeight: 600, fontSize: 16, color: INK }}>{f.q}</span>
-                {openFaqs[i] ? <ChevronUp size={20} color={SUB} /> : <ChevronDown size={20} color={SUB} />}
+              <button
+                onClick={() => toggleFaq(i)}
+                onMouseEnter={() => setHoverFaq(i)}
+                onMouseLeave={() => setHoverFaq(null)}
+                style={{ width: "100%", padding: "18px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}
+              >
+                <span style={{ fontWeight: 600, fontSize: 16, color: (hoverFaq === i || openFaqs[i]) ? TEAL : INK, transition: "color 0.15s" }}>{f.q}</span>
+                {openFaqs[i]
+                  ? <ChevronUp size={20} color={(hoverFaq === i || openFaqs[i]) ? TEAL : SUB} />
+                  : <ChevronDown size={20} color={(hoverFaq === i || openFaqs[i]) ? TEAL : SUB} />}
               </button>
-              {openFaqs[i] && <div style={{ padding: "0 20px 18px 20px", color: SUB, fontSize: 15, lineHeight: 1.6 }}>{f.a}</div>}
+              {openFaqs[i] && (
+                <div style={{ padding: "0 20px 20px 20px", color: SUB, fontSize: 15, lineHeight: 1.65 }}>
+                  {f.intro && <p style={{ margin: "0 0 12px 0" }}>{f.intro}</p>}
+                  {f.bullets && (
+                    <ul style={{ margin: 0, paddingLeft: 22, display: "flex", flexDirection: "column", gap: 8 }}>
+                      {f.bullets.map((b, bi) => (
+                        <li key={bi}><strong style={{ color: INK }}>{b.lead}</strong> — {b.body}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>
