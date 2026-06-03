@@ -240,6 +240,8 @@ const handleOnboardingComplete = () => {
               <Route path="/"        element={<Landing />}                                          />
               <Route path="/login"   element={<LoginPage onLogin={handleLogin} />}                  />
               <Route path="/register"element={<Onboarding onComplete={handleOnboardingComplete} />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/help/auto-payroll" element={<HelpAutoPayroll />} />
               <Route path="*"        element={<Navigate to="/" />}                                  />
             </>
           ) : (
