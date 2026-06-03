@@ -241,30 +241,7 @@ export default function HelpAutoPayroll() {
             <span style={{color: "#0F9599", fontWeight: 800, fontSize: 24, letterSpacing: "-0.015em", fontFamily: "inherit"}}>Novala</span>
           </a>
           <div style={{display: "flex", alignItems: "center", gap: 24}}>
-            <a href="/pricing" style={{color: INK, textDecoration: "none", fontWeight: 500}}>Plans & Pricing</a>
-            <a href="/support" style={{color: INK, textDecoration: "none", fontWeight: 500}}>Support</a>
-            <span style={{color: SUB, display: "flex", alignItems: "center", gap: 6}}>
-              <Phone size={14} strokeWidth={2} />
-              <span>1-800-NOVALA</span>
-            </span>
-            <a href="/login" style={{
-              padding: "8px 18px", borderRadius: 8,
-              background: "#fff", color: LINK_BLUE, border: `1.5px solid ${LINK_BLUE}`,
-              fontWeight: 600, fontSize: 14, textDecoration: "none",
-            }}>Sign In</a>
-          </div>
-        </div>
-      </div>
-
-      {/* Support nav row */}
-      <div style={{borderBottom: `1px solid ${BORDER}`, padding: "16px 32px", position: "sticky", top: 0, zIndex: 40, background: "#fff"}}>
-        <div style={{
-          maxWidth: CONTENT_MAX, margin: "0 auto",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-        }}>
-          <div style={{display: "flex", alignItems: "center", gap: 24}}>
             
-              <a
               href="#"
               onMouseEnter={() => setHoverSupport(true)}
               onMouseLeave={() => setHoverSupport(false)}
