@@ -283,3 +283,30 @@ async def reset_password(
     await db.commit()
 
     return {"message": "Password updated successfully."}
+
+
+@router.delete("/account")
+async def delete_account(
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete the current user account and cascade-delete all related rows."""
+    user_id = current_user.id
+    result = await db.execute(text("""
+        SELECT tc.table_name AS tname, kcu.column_name AS cname
+        FROM information_schema.table_constraints AS tc
+        JOIN information_schema.key_column_usage AS kcu
+            ON tc.constraint_name = kcu.constraint_name
+        JOIN information_schema.constraint_column_usage AS ccu
+            ON ccu.constraint_name = tc.constraint_name
+        WHERE tc.constraint_type = 'FOREIGN KEY'
+            AND ccu.table_name = 'users'
+    """))
+    for row in result.fetchall():
+        await db.execute(
+            text(f'DELETE FROM "{row.tname}" WHERE "{row.cname}" = :uid'),
+            {"uid": user_id}
+        )
+    await db.execute(text("DELETE FROM users WHERE id = :uid"), {"uid": user_id})
+    await db.commit()
+    return {"detail": "Account deleted successfully."}

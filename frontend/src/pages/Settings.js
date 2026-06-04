@@ -544,7 +544,22 @@ export default function Settings() {
                     style={{ width: '100%', padding: '10px 12px', background: '#fff', border: '1px solid rgba(239,68,68,0.3)', borderRadius: L.radiusSm, color: L.text, fontSize: 13, fontFamily: L.font, outline: 'none', boxSizing: 'border-box' }}/>
                 </div>
                 <button disabled={deleteConfirm !== 'DELETE'}
-                  onClick={() => { if (deleteConfirm === 'DELETE') alert('Account deletion coming soon. Please contact novala.support@gmail.com'); }}
+                  onClick={async () => { if (deleteConfirm === 'DELETE') try {
+                    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+                    const res = await fetch('https://api.getnovala.com/api/v1/auth/account', {
+                      method: 'DELETE',
+                      headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    if (!res.ok) {
+                      const err = await res.json().catch(() => ({ detail: 'Failed' }));
+                      alert('Could not delete account: ' + (err.detail || res.statusText));
+                      return;
+                    }
+                    localStorage.clear();
+                    window.location.replace('/');
+                  } catch (e) {
+                    alert('Network error: ' + e.message);
+                  } }}
                   style={{ padding: '10px 20px', borderRadius: L.radiusSm, background: deleteConfirm === 'DELETE' ? '#EF4444' : '#CBD5E1', color: '#fff', border: 'none', cursor: deleteConfirm === 'DELETE' ? 'pointer' : 'not-allowed', fontSize: 13, fontWeight: 600, fontFamily: L.font }}>
                   Delete My Account
                 </button>
