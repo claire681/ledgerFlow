@@ -11,7 +11,7 @@ function NovalaLogo({ size = 32, color = "#0E1A1A", showWordmark = true }) {
     <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
       <img src="/logo512.png" alt="Novala" style={{ width: size, height: size, objectFit: "contain", display: "block" }} />
       {showWordmark && (
-        <span onClick={() => navigate("/")} style={{ cursor: "pointer" }}><NovalaLogo size={32} /></span>
+        <span style={{ color: color, fontWeight: 800, fontSize: Math.round(size * 0.75), letterSpacing: "-0.02em" }}>Novala</span>
       )}
     </span>
   );
