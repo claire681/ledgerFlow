@@ -1,14 +1,28 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, ChevronDown, ChevronUp, Sparkles, Star, ShieldCheck, MessageSquare, Smartphone, Plug, Globe } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Sparkles, Star, ShieldCheck, MessageSquare, Smartphone, Plug, Globe,
+  Layers, Wallet, HelpCircle
+} from "lucide-react";
 
-const TEAL = "#00D4A4";
+
+// === Novala logo (real /logo512.png) ===
+function NovalaLogo({ size = 32, color = "#0E1A1A", showWordmark = true }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+      <img src="/logo512.png" alt="Novala" style={{ width: size, height: size, objectFit: "contain", display: "block" }} />
+      {showWordmark && (
+        <span onClick={() => navigate("/")} style={{ cursor: "pointer" }}><NovalaLogo size={32} /></span>
+      )}
+    </span>
+  );
+}
+const TEAL = "#0F9599";
 const TEAL_DARK = "#00B388";
-const INK = "#F1F5F9";
-const SUB = "#64748B";
-const BORDER = "#1E2D4A";
-const BG = "#0F1729";
-const FOOTER_DARK = "#1A2540";
+const INK = "#0E1A1A";
+const SUB = "#5B6B6B";
+const BORDER = "#E2E8E8";
+const BG = "#FFFFFF";
+const FOOTER_DARK = "#0B3D3D";
 const CONTENT_MAX = 1280;
 const NAV_H = 64;
 
@@ -302,17 +316,17 @@ export default function Pricing() {
   const visibleFaqs = faqShowAll ? FAQS : FAQS.slice(0, 4);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#162035", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", color: INK }}>
+    <div style={{ minHeight: "100vh", background: "#FFFFFF", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", color: INK }}>
 
-      <header style={{ position: "sticky", top: 0, zIndex: 50, background: "#162035", borderBottom: `1px solid ${BORDER}`, height: NAV_H }}>
+      <header style={{ position: "sticky", top: 0, zIndex: 50, background: "#FFFFFF", borderBottom: `1px solid ${BORDER}`, height: NAV_H }}>
         <div style={{ maxWidth: CONTENT_MAX, margin: "0 auto", padding: "0 32px", height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <a href="/" style={{ textDecoration: "none" }}>
-            <span style={{ color: TEAL, fontWeight: 800, fontSize: 24, letterSpacing: "-0.015em" }}>Novala</span>
+            <span onClick={() => navigate("/")} style={{ cursor: "pointer" }}><NovalaLogo size={32} /></span>
           </a>
           <nav style={{ display: "flex", alignItems: "center", gap: 28, fontSize: 14 }}>
-            <a href="#" style={{ color: INK, textDecoration: "none", fontWeight: 500 }}>Features</a>
-            <a href="/pricing" style={{ color: TEAL, textDecoration: "none", fontWeight: 600 }}>Pricing</a>
-            <a href="#" style={{ color: INK, textDecoration: "none", fontWeight: 500 }}>Support</a>
+            <a href="#" style={{ color: INK, textDecoration: "none", fontWeight: 500 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Layers size={15} strokeWidth={2} color="#0F9599" /> Features</span></a>
+            <a href="/pricing" style={{ color: TEAL, textDecoration: "none", fontWeight: 600 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Wallet size={15} strokeWidth={2} color="#0F9599" /> Pricing</span></a>
+            <a href="#" style={{ color: INK, textDecoration: "none", fontWeight: 500 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><HelpCircle size={15} strokeWidth={2} color="#0F9599" /> Support</span></a>
             <a href="/login" style={{ color: INK, textDecoration: "none", fontWeight: 500 }}>Sign in</a>
             <button onClick={() => choosePlan("growth")} style={{ padding: "10px 18px", borderRadius: 8, background: TEAL, color: "#fff", border: "none", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Get started</button>
           </nav>
@@ -365,7 +379,7 @@ export default function Pricing() {
             <div style={{ display: "grid", gridTemplateColumns: "1.4fr repeat(3, 1fr)", gap: 16 }}>
               <div></div>
               {PLANS.map(p => (
-                <div key={p.id} style={{ background: "#162035", borderRadius: 10, padding: "12px 14px", border: p.featured ? `2px solid ${TEAL}` : `1px solid ${BORDER}`, textAlign: "center" }}>
+                <div key={p.id} style={{ background: "#FFFFFF", borderRadius: 10, padding: "12px 14px", border: p.featured ? `2px solid ${TEAL}` : `1px solid ${BORDER}`, textAlign: "center" }}>
                   <div style={{ fontWeight: 700, fontSize: 15, color: INK }}>{p.name}</div>
                   <div style={{ fontSize: 13, color: SUB, marginTop: 2 }}>${p.promoPrice}/mo</div>
                   <button onClick={() => choosePlan(p.id)} style={{ marginTop: 8, width: "100%", padding: "8px 0", borderRadius: 6, background: TEAL, color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Choose plan</button>
@@ -374,7 +388,7 @@ export default function Pricing() {
             </div>
           </div>
 
-          <div style={{ background: "#162035", borderRadius: 14, overflow: "hidden", border: `1px solid ${BORDER}` }}>
+          <div style={{ background: "#FFFFFF", borderRadius: 14, overflow: "hidden", border: `1px solid ${BORDER}` }}>
             {COMPARISON.map((cat, ci) => (
               <CategoryPanel key={cat.category} category={cat} plans={PLANS} isOpen={openCategories[cat.category]} onToggle={() => toggleCategory(cat.category)} isLast={ci === COMPARISON.length - 1} />
             ))}
@@ -390,8 +404,8 @@ export default function Pricing() {
             { Icon: MessageSquare, title: "Live support", body: "Real humans, real fast, email and live chat are included on every plan." },
             { Icon: Plug, title: "App integrations", body: "Connect 200+ tools you already use, from Stripe to Shopify to your favorite CRM." },
           ].map((f, i) => (
-            <div key={i} style={{ background: "#162035", border: `1px solid ${BORDER}`, borderRadius: 14, padding: 24 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: "#E6F6F6", border: "1px solid rgba(0,212,164,0.18)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+            <div key={i} style={{ background: "#FFFFFF", border: `1px solid ${BORDER}`, borderRadius: 14, padding: 24 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: "#E6F6F6", border: "1px solid rgba(15,149,153,0.18)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
                 <f.Icon size={22} color={TEAL} strokeWidth={1.9} />
               </div>
               <div style={{ fontWeight: 700, fontSize: 17, color: INK, marginBottom: 6 }}>{f.title}</div>
@@ -428,7 +442,7 @@ export default function Pricing() {
         <h2 style={{ margin: "0 0 32px 0", fontSize: 28, fontWeight: 700, color: INK, textAlign: "center", letterSpacing: "-0.01em" }}>Frequently asked questions</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {visibleFaqs.map((f, i) => (
-            <div key={i} style={{ border: `1px solid ${BORDER}`, borderRadius: 12, overflow: "hidden", background: "#162035" }}>
+            <div key={i} style={{ border: `1px solid ${BORDER}`, borderRadius: 12, overflow: "hidden", background: "#FFFFFF" }}>
               <button
                 onClick={() => toggleFaq(i)}
                 onMouseEnter={() => setHoverFaq(i)}
@@ -491,7 +505,7 @@ export default function Pricing() {
                 <ChevronDown size={14} strokeWidth={2} />
               </button>
               {showFooterLocale && (
-                <div style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, background: "#162035", border: `1px solid ${BORDER}`, borderRadius: 10, minWidth: 240, boxShadow: "0 10px 30px -10px rgba(0,0,0,0.25)", zIndex: 50, overflow: "hidden" }}>
+                <div style={{ position: "absolute", bottom: "calc(100% + 6px)", left: 0, background: "#FFFFFF", border: `1px solid ${BORDER}`, borderRadius: 10, minWidth: 240, boxShadow: "0 10px 30px -10px rgba(0,0,0,0.25)", zIndex: 50, overflow: "hidden" }}>
                   {FOOTER_LOCALES.map(l => (
                     <button key={l.code} onClick={() => { setLocale(l.code); setShowFooterLocale(false); }} onMouseEnter={(e) => { if (l.code !== locale) e.currentTarget.style.background = "#F9FAFA"; }} onMouseLeave={(e) => { if (l.code !== locale) e.currentTarget.style.background = "#fff"; }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "10px 14px", minHeight: 42, background: l.code === locale ? "#F1F5F5" : "#fff", border: "none", cursor: "pointer", fontSize: 14, color: INK, fontFamily: "inherit", textAlign: "left" }}>
                       {l.flagSrc
@@ -520,7 +534,7 @@ export default function Pricing() {
           </div>
 
           <div style={{ paddingTop: 28, display: "flex", flexDirection: "column", gap: 16 }}>
-            <span style={{ color: "#fff", fontWeight: 800, fontSize: 22, letterSpacing: "-0.015em" }}>Novala</span>
+            <NovalaLogo size={28} color="#fff" />
             <p style={{ margin: 0, fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.65, maxWidth: 900 }}>
               © {new Date().getFullYear()} Novala. All rights reserved. Novala and the Novala logo are trademarks of BrightCare Home Healthcare Services Inc. By accessing and using this page you agree to the Terms and Conditions.
             </p>
@@ -548,7 +562,7 @@ function Step({ n, label, active }) {
 function PlanCard({ plan, billingMode, onChoose, onSeeFeatures }) {
   const isPromo = billingMode === "promo";
   return (
-    <div style={{ position: "relative", background: "#162035", border: plan.featured ? `2px solid ${TEAL}` : `1px solid ${BORDER}`, borderRadius: 16, padding: 28, display: "flex", flexDirection: "column", boxShadow: plan.featured ? "0 24px 48px -24px rgba(0,212,164,0.35)" : "0 6px 18px -10px rgba(0,0,0,0.08)" }}>
+    <div style={{ position: "relative", background: "#FFFFFF", border: plan.featured ? `2px solid ${TEAL}` : `1px solid ${BORDER}`, borderRadius: 16, padding: 28, display: "flex", flexDirection: "column", boxShadow: plan.featured ? "0 24px 48px -24px rgba(15,149,153,0.35)" : "0 6px 18px -10px rgba(0,0,0,0.08)" }}>
       {plan.ribbon && (
         <div style={{ position: "absolute", top: -1, left: -1, right: -1, background: plan.featured ? TEAL : INK, color: "#fff", padding: "8px 16px", borderTopLeftRadius: 14, borderTopRightRadius: 14, fontSize: 11, fontWeight: 800, letterSpacing: "0.08em", textAlign: "center" }}>{plan.ribbon}</div>
       )}
@@ -573,7 +587,7 @@ function PlanCard({ plan, billingMode, onChoose, onSeeFeatures }) {
             </div>
           </>
         )}
-        <button onClick={onChoose} style={{ width: "100%", marginTop: 20, padding: "13px 20px", borderRadius: 10, background: TEAL, color: "#fff", border: "none", fontWeight: 700, fontSize: 15, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 14px -6px rgba(0,212,164,0.5)" }}>Choose plan</button>
+        <button onClick={onChoose} style={{ width: "100%", marginTop: 20, padding: "13px 20px", borderRadius: 10, background: TEAL, color: "#fff", border: "none", fontWeight: 700, fontSize: 15, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 14px -6px rgba(15,149,153,0.5)" }}>Choose plan</button>
         <div style={{ fontSize: 13, color: SUB, marginTop: 14, textAlign: "center" }}>Up to <strong>{plan.seats}</strong> {plan.seats === 1 ? "user" : "users"}</div>
       </div>
 
