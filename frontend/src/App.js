@@ -48,6 +48,8 @@ import Pricing from "./pages/Pricing";
 import Checkout from "./pages/Checkout";
 
 
+import AddPayroll from "./pages/AddPayroll";
+import Cart from "./pages/Cart";
 const ACCENT = '#0AB98A';
 
 function PromoBanner() {
@@ -148,7 +150,9 @@ function AppLayout({ onLogout }) {
           <Routes>
             <Route path="/help/auto-payroll" element={<HelpAutoPayroll />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/add-payroll" element={<AddPayroll />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/cart" element={<Cart />} />
             <Route path="/accept-invite/:token" element={<AcceptInvite />} />
           <Route path="/payroll/*" element={<Payroll />} />
             <Route path="/"               element={<Dashboard />}          />
@@ -243,7 +247,9 @@ const handleOnboardingComplete = () => {
               <Route path="/login"   element={<LoginPage onLogin={handleLogin} />}                  />
               <Route path="/register"element={<Onboarding onComplete={handleOnboardingComplete} />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/add-payroll" element={<AddPayroll />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/cart" element={<Cart />} />
               <Route path="/help/auto-payroll" element={<HelpAutoPayroll />} />
               <Route path="*"        element={<Navigate to="/" />}                                  />
             </>
