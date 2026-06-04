@@ -11,6 +11,8 @@ from app.db.database import get_db
 from app.models.models import User
 from app.schemas.schemas import UserRegister, UserLogin, TokenResponse, UserOut
 from app.core.security import hash_password, verify_password, create_access_token, get_current_user
+import secrets
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -310,3 +312,81 @@ async def delete_account(
     await db.execute(text("DELETE FROM users WHERE id = :uid"), {"uid": user_id})
     await db.commit()
     return {"detail": "Account deleted successfully."}
+
+
+def _send_verification_email(to_email, code):
+    """Send a 6-digit verification code via the existing SendGrid setup."""
+    import sendgrid
+    from sendgrid.helpers.mail import Mail
+    from app.core.config import settings
+    sg = sendgrid.SendGridAPIClient(api_key=settings.sendgrid_api_key)
+    msg = Mail(
+        from_email="support@getnovala.com",
+        to_emails=to_email,
+        subject="Your Novala verification code",
+        html_content=f"""
+        <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #0E1A1A;">
+          <h2 style="margin: 0 0 12px;">Your Novala verification code</h2>
+          <p style="color: #5B6B6B; margin: 0 0 18px;">Enter this code to verify your email and finish setting up your account.</p>
+          <p style="font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #0F9599; background: #F1F5F5; padding: 18px; text-align: center; border-radius: 12px; margin: 0 0 18px;">{code}</p>
+          <p style="color: #9AA8A8; font-size: 13px; margin: 0;">This code expires in 10 minutes. If you did not request it, you can ignore this email.</p>
+        </div>
+        """
+    )
+    sg.send(msg)
+
+
+class _VerifyCodeRequest(BaseModel):
+    code: str
+
+
+@router.post("/send-verification-code")
+async def send_verification_code(
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate a 6-digit code, store it on the user with a 10-minute expiry, email it."""
+    code = "".join([str(secrets.randbelow(10)) for _ in range(6)])
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+    await db.execute(
+        text("UPDATE users SET verification_code = :code, verification_code_expires_at = :exp WHERE id = :uid"),
+        {"code": code, "exp": expires_at, "uid": current_user.id}
+    )
+    await db.commit()
+    try:
+        _send_verification_email(current_user.email, code)
+    except Exception as e:
+        import logging
+        logging.error(f"[verify] failed to send email to {current_user.email}: {e}")
+        raise HTTPException(status_code=500, detail="Could not send verification email. Please try again.")
+    return {"detail": "Verification code sent.", "expires_in_seconds": 600}
+
+
+@router.post("/verify-code")
+async def verify_code(
+    body: _VerifyCodeRequest,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Check the code, mark verified on success."""
+    result = await db.execute(
+        text("SELECT verification_code, verification_code_expires_at FROM users WHERE id = :uid"),
+        {"uid": current_user.id}
+    )
+    row = result.fetchone()
+    if not row or not row.verification_code:
+        raise HTTPException(status_code=400, detail="No verification code on file. Request a new one.")
+    if row.verification_code != body.code.strip():
+        raise HTTPException(status_code=400, detail="Incorrect code.")
+    expires_at = row.verification_code_expires_at
+    if expires_at:
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > expires_at:
+            raise HTTPException(status_code=400, detail="Code expired. Request a new one.")
+    await db.execute(
+        text("UPDATE users SET is_verified = TRUE, verification_code = NULL, verification_code_expires_at = NULL WHERE id = :uid"),
+        {"uid": current_user.id}
+    )
+    await db.commit()
+    return {"detail": "Verified.", "is_verified": True}
