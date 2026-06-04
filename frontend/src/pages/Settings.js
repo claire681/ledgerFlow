@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { L, card, page, topBar } from '../styles/light';
 import { getFirstName } from '../utils/userDisplay';
+import VerifyModalTestButton from "../components/VerifyModalTestButton";
 
 const BASE     = 'https://api.getnovala.com/api/v1';
 const ACCENT   = '#0AB98A';
@@ -132,7 +133,8 @@ function Alert({ type, message }) {
   return (
     <div style={{ padding: '10px 14px', borderRadius: L.radiusSm, background: isSuccess ? L.accentSoft : 'rgba(239,68,68,0.08)', border: '1px solid ' + (isSuccess ? L.accentBorder : 'rgba(239,68,68,0.2)'), color: isSuccess ? ACCENT : '#EF4444', fontSize: 12, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
       {isSuccess ? <CheckCircle size={13} /> : <AlertCircle size={13} />}{message}
-    </div>
+    <VerifyModalTestButton />
+      </div>
   );
 }
 
