@@ -335,7 +335,7 @@ export default function Onboarding({ onComplete }) {
     padding:'13px 16px',
     borderRadius:10,
     border:'1px solid ' + BORDER,
-    background:'#0D1526',
+    background:'#FFFFFF',
     color:WHITE,
     fontSize:14,
     fontFamily:FONT,
@@ -346,7 +346,7 @@ export default function Onboarding({ onComplete }) {
 
   const pageStyle = {
     minHeight:'100vh',
-    background:`linear-gradient(160deg, ${DARK} 0%, ${DARK2} 100%)`,
+    background:'#F9FAFA',
     display:'flex',
     alignItems:'center',
     justifyContent:'center',
@@ -364,14 +364,14 @@ export default function Onboarding({ onComplete }) {
             <div style={{ width:36, height:36, borderRadius:10, background:MINT, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 16px rgba(15,149,153,0.3)' }}>
               <TrendingUp size={18} color="#FFFFFF"/>
             </div>
-            <span style={{ fontSize:22, fontWeight:800, color:'#fff', letterSpacing:'-0.02em' }}>
+            <span style={{ fontSize:22, fontWeight:800, color:'#0E1A1A', letterSpacing:'-0.02em' }}>
               No<span style={{ color:MINT }}>vala</span>
             </span>
           </div>
         </div>
 
         {/* Card */}
-        <div style={{ background:CARD, borderRadius:20, padding:'36px', border:'1px solid '+BORDER, boxShadow:'0 24px 64px rgba(0,0,0,0.4)' }}>
+        <div style={{ background:CARD, borderRadius:20, padding:'36px', border:'1px solid '+BORDER, boxShadow:'0 8px 32px rgba(15,149,153,0.08)' }}>
 
           <ProgressBar step={step} total={6}/>
 
@@ -379,7 +379,7 @@ export default function Onboarding({ onComplete }) {
           {step === 1 && (
             <div style={{ animation:'fadeUp 0.2s ease' }}>
               <StepLabel current={1} total={6} label="Welcome"/>
-              <div style={{ fontSize:26, fontWeight:800, color:'#fff', marginBottom:8, letterSpacing:'-0.03em', lineHeight:1.2 }}>
+              <div style={{ fontSize:26, fontWeight:800, color:'#0E1A1A', marginBottom:8, letterSpacing:'-0.03em', lineHeight:1.2 }}>
                 Welcome to Novala!
               </div>
               <div style={{ fontSize:14, color:MUTED, marginBottom:28, lineHeight:1.7 }}>
@@ -416,7 +416,7 @@ export default function Onboarding({ onComplete }) {
                 ].map(f => {
                   const Icon = f.icon;
                   return (
-                    <div key={f.text} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 13px', background:'#0D1526', borderRadius:12, border:'1px solid '+BORDER }}>
+                    <div key={f.text} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 13px', background:'#FFFFFF', borderRadius:12, border:'1px solid '+BORDER }}>
                       <Icon size={15} color={MINT}/>
                       <span style={{ fontSize:12, color:'#94A3B8' }}>{f.text}</span>
                     </div>
@@ -439,7 +439,7 @@ export default function Onboarding({ onComplete }) {
           {step === 2 && (
             <div style={{ animation:'fadeUp 0.2s ease' }}>
               <StepLabel current={2} total={6} label="Business Profile"/>
-              <div style={{ fontSize:24, fontWeight:800, color:'#fff', marginBottom:8, letterSpacing:'-0.02em' }}>
+              <div style={{ fontSize:24, fontWeight:800, color:'#0E1A1A', marginBottom:8, letterSpacing:'-0.02em' }}>
                 Tell us about your business
               </div>
               <div style={{ fontSize:14, color:MUTED, marginBottom:24, lineHeight:1.6 }}>
@@ -514,7 +514,7 @@ export default function Onboarding({ onComplete }) {
           {step === 3 && (
             <div style={{ animation:'fadeUp 0.2s ease' }}>
               <StepLabel current={3} total={6} label="Your Goals"/>
-              <div style={{ fontSize:24, fontWeight:800, color:'#fff', marginBottom:8, letterSpacing:'-0.02em' }}>
+              <div style={{ fontSize:24, fontWeight:800, color:'#0E1A1A', marginBottom:8, letterSpacing:'-0.02em' }}>
                 What do you want to do with Novala?
               </div>
               <div style={{ fontSize:14, color:MUTED, marginBottom:20, lineHeight:1.6 }}>
@@ -562,7 +562,7 @@ export default function Onboarding({ onComplete }) {
           {step === 4 && (
             <div style={{ animation:'fadeUp 0.2s ease' }}>
               <StepLabel current={4} total={6} label="Your Team"/>
-              <div style={{ fontSize:24, fontWeight:800, color:'#fff', marginBottom:8, letterSpacing:'-0.02em' }}>
+              <div style={{ fontSize:24, fontWeight:800, color:'#0E1A1A', marginBottom:8, letterSpacing:'-0.02em' }}>
                 How big is your team?
               </div>
               <div style={{ fontSize:14, color:MUTED, marginBottom:24, lineHeight:1.6 }}>
@@ -603,14 +603,14 @@ export default function Onboarding({ onComplete }) {
           {step === 5 && (
             <div style={{ animation:'fadeUp 0.2s ease' }}>
               <StepLabel current={5} total={6} label="Bank Connection"/>
-              <div style={{ fontSize:24, fontWeight:800, color:'#fff', marginBottom:8, letterSpacing:'-0.02em' }}>
+              <div style={{ fontSize:24, fontWeight:800, color:'#0E1A1A', marginBottom:8, letterSpacing:'-0.02em' }}>
                 Connect your bank account
               </div>
               <div style={{ fontSize:14, color:MUTED, marginBottom:24, lineHeight:1.6 }}>
                 Sync transactions automatically. We use 256 bit encryption. Your credentials are never stored.
               </div>
 
-              <div style={{ padding:'28px 24px', borderRadius:16, border:'1px dashed '+BORDER, background:'#0D1526', textAlign:'center', marginBottom:20 }}>
+              <div style={{ padding:'28px 24px', borderRadius:16, border:'1px dashed '+BORDER, background:'#FFFFFF', textAlign:'center', marginBottom:20 }}>
                 <div style={{ width:56, height:56, borderRadius:14, background:MINTDIM, border:'1px solid rgba(15,149,153,0.2)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px' }}>
                   <Landmark size={28} color={MINT}/>
                 </div>
@@ -639,7 +639,7 @@ export default function Onboarding({ onComplete }) {
           {step === 6 && (
             <div style={{ animation:'fadeUp 0.2s ease' }}>
               <StepLabel current={6} total={6} label="Create Account"/>
-              <div style={{ fontSize:24, fontWeight:800, color:'#fff', marginBottom:8, letterSpacing:'-0.02em' }}>
+              <div style={{ fontSize:24, fontWeight:800, color:'#0E1A1A', marginBottom:8, letterSpacing:'-0.02em' }}>
                 Almost there! Create your account
               </div>
               <div style={{ fontSize:14, color:MUTED, marginBottom:24, lineHeight:1.6 }}>
