@@ -163,6 +163,8 @@ export default function Onboarding({ onComplete }) {
   const inviteToken = _inviteParams.get('invite_token');
   const invitedEmail = _inviteParams.get('email');
   const isInvitedTeamMember = Boolean(inviteToken);
+  const fromCheckout = _inviteParams.get('fromCheckout') === 'true';
+  const totalSteps = fromCheckout ? 4 : 6;
   const [step, setStep] = useState(isInvitedTeamMember ? 5 : 1);
   const [companyName,  setCompanyName]  = useState('');
   const [bizType,      setBizType]      = useState('');
@@ -226,13 +228,41 @@ export default function Onboarding({ onComplete }) {
     setStep(4);
   };
 
-  const handleStep4Continue = () => {
+  const handleStep4Continue = async () => {
     if (!teamSize) {
       setError('Please select your team size, or press Skip.');
       return;
     }
     setError('');
-    setStep(5);
+    if (fromCheckout) {
+      // User already created account in Checkout. Just save business details and finish.
+      setSaving(true);
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+        const savedPhone = localStorage.getItem('signup_phone') || '';
+        await fetch('https://api.getnovala.com/api/v1/onboarding/update', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            step: 6,
+            completed: true,
+            company_name: companyName,
+            business_type: bizType,
+            industry: effectiveIndustry,
+            features_selected: features,
+            team_size: teamSize,
+            phone: savedPhone,
+          }),
+        });
+        onComplete();
+      } catch (e) {
+        setError('Could not save your business details. Please try again.');
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      setStep(5);
+    }
   };
 
   const handleRegister = async () => {
@@ -373,12 +403,12 @@ export default function Onboarding({ onComplete }) {
         {/* Card */}
         <div style={{ background:CARD, borderRadius:20, padding:'36px', border:'1px solid '+BORDER, boxShadow:'0 8px 32px rgba(15,149,153,0.08)' }}>
 
-          <ProgressBar step={step} total={6}/>
+          <ProgressBar step={step} total={totalSteps}/>
 
           {/* ── STEP 1 ── */}
           {step === 1 && (
             <div style={{ animation:'fadeUp 0.2s ease' }}>
-              <StepLabel current={1} total={6} label="Welcome"/>
+              <StepLabel current={1} total={totalSteps} label="Welcome"/>
               <div style={{ fontSize:26, fontWeight:800, color:'#0E1A1A', marginBottom:8, letterSpacing:'-0.03em', lineHeight:1.2 }}>
                 Welcome to Novala!
               </div>
@@ -438,7 +468,7 @@ export default function Onboarding({ onComplete }) {
           {/* ── STEP 2 ── */}
           {step === 2 && (
             <div style={{ animation:'fadeUp 0.2s ease' }}>
-              <StepLabel current={2} total={6} label="Business Profile"/>
+              <StepLabel current={2} total={totalSteps} label="Business Profile"/>
               <div style={{ fontSize:24, fontWeight:800, color:'#0E1A1A', marginBottom:8, letterSpacing:'-0.02em' }}>
                 Tell us about your business
               </div>
@@ -513,7 +543,7 @@ export default function Onboarding({ onComplete }) {
           {/* ── STEP 3 ── */}
           {step === 3 && (
             <div style={{ animation:'fadeUp 0.2s ease' }}>
-              <StepLabel current={3} total={6} label="Your Goals"/>
+              <StepLabel current={3} total={totalSteps} label="Your Goals"/>
               <div style={{ fontSize:24, fontWeight:800, color:'#0E1A1A', marginBottom:8, letterSpacing:'-0.02em' }}>
                 What do you want to do with Novala?
               </div>
@@ -561,7 +591,7 @@ export default function Onboarding({ onComplete }) {
           {/* ── STEP 4 ── */}
           {step === 4 && (
             <div style={{ animation:'fadeUp 0.2s ease' }}>
-              <StepLabel current={4} total={6} label="Your Team"/>
+              <StepLabel current={4} total={totalSteps} label="Your Team"/>
               <div style={{ fontSize:24, fontWeight:800, color:'#0E1A1A', marginBottom:8, letterSpacing:'-0.02em' }}>
                 How big is your team?
               </div>
@@ -602,7 +632,7 @@ export default function Onboarding({ onComplete }) {
           {/* ── STEP 5 ── */}
           {step === 5 && (
             <div style={{ animation:'fadeUp 0.2s ease' }}>
-              <StepLabel current={5} total={6} label="Bank Connection"/>
+              <StepLabel current={5} total={totalSteps} label="Bank Connection"/>
               <div style={{ fontSize:24, fontWeight:800, color:'#0E1A1A', marginBottom:8, letterSpacing:'-0.02em' }}>
                 Connect your bank account
               </div>
@@ -638,7 +668,7 @@ export default function Onboarding({ onComplete }) {
           {/* ── STEP 6 — Create Account ── */}
           {step === 6 && (
             <div style={{ animation:'fadeUp 0.2s ease' }}>
-              <StepLabel current={6} total={6} label="Create Account"/>
+              <StepLabel current={6} total={totalSteps} label="Create Account"/>
               <div style={{ fontSize:24, fontWeight:800, color:'#0E1A1A', marginBottom:8, letterSpacing:'-0.02em' }}>
                 Almost there! Create your account
               </div>
@@ -764,7 +794,7 @@ export default function Onboarding({ onComplete }) {
         </div>
 
         <div style={{ textAlign:'center', marginTop:20, fontSize:12, color:'#334155' }}>
-          Step {step} of 6 · Your progress is saved locally
+          Step {step} of {totalSteps} · Your progress is saved locally
         </div>
       </div>
 
