@@ -189,7 +189,7 @@ function AppLayout({ onLogout }) {
             <Route path="/businesses"     element={<Businesses />}         />
             <Route path="/search"         element={<SmartSearch />}        />
             <Route path="*"               element={<Navigate to="/" />}    />
-            <Route path="/register"element={<Onboarding onComplete={handleOnboardingComplete} />} />
+            <Route path="/register"element={<Onboarding onComplete={() => window.location.replace("/")} />} />
           </Routes>
         </main>
       </div>
