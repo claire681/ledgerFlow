@@ -30,29 +30,17 @@ const CONTENT_MAX = 1240;
 const NAV_H       = 72;
 const FONT        = "'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
-// === Novala logo mark (SVG) ===
-function NovalaLogoMark({ size = 32 }) {
-  const gradId = "novalaLogoGrad_" + size;
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="Novala">
-      <defs>
-        <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#0F9599" />
-          <stop offset="100%" stopColor="#0B7377" />
-        </linearGradient>
-      </defs>
-      <rect width="32" height="32" rx="8" fill={`url(#${gradId})`} />
-      <path d="M9.5 22.5V9.5h2.6l7.8 8.6V9.5h2.6v13h-2.6L12.1 13.9V22.5z" fill="#fff" />
-    </svg>
-  );
-}
-
-function NovalaLogo({ size = 32, color = "#0F9599", showWordmark = true }) {
+// === Novala logo (uses real /public/logo512.png) ===
+function NovalaLogo({ size = 32, color = INK, showWordmark = true }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-      <NovalaLogoMark size={size} />
+      <img
+        src="/logo512.png"
+        alt="Novala"
+        style={{ width: size, height: size, objectFit: "contain", display: "block" }}
+      />
       {showWordmark && (
-        <span style={{ color, fontWeight: 800, fontSize: Math.round(size * 0.75), letterSpacing: "-0.02em" }}>Novala</span>
+        <span style={{ color: color, fontWeight: 800, fontSize: Math.round(size * 0.75), letterSpacing: "-0.02em" }}>Novala</span>
       )}
     </span>
   );
