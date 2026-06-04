@@ -166,6 +166,8 @@ export default function Onboarding({ onComplete }) {
   const fromCheckout = _inviteParams.get('fromCheckout') === 'true';
   const totalSteps = fromCheckout ? 4 : 6;
   const [step, setStep] = useState(isInvitedTeamMember ? 5 : 1);
+  const _storedFirstName = typeof window !== 'undefined' ? (localStorage.getItem('first_name') || '') : '';
+  const _storedEmail = typeof window !== 'undefined' ? (localStorage.getItem('user_email') || '') : '';
   const [companyName,  setCompanyName]  = useState('');
   const [bizType,      setBizType]      = useState('');
   const [industry,     setIndustry]     = useState('');
@@ -400,6 +402,15 @@ export default function Onboarding({ onComplete }) {
           </div>
         </div>
 
+        {fromCheckout && (
+          <div style={{ display:'flex', alignItems:'center', gap:8, justifyContent:'center', marginBottom:16 }}>
+            <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'7px 14px', background:'rgba(15,149,153,0.10)', border:'1px solid rgba(15,149,153,0.25)', borderRadius:999, fontSize:12.5, color:MINT, fontWeight:600 }}>
+              <CheckCircle size={14} strokeWidth={2.5} />
+              <span>Account created{_storedEmail ? ' \u00b7 ' + _storedEmail : ''}</span>
+            </div>
+          </div>
+        )}
+
         {/* Card */}
         <div style={{ background:CARD, borderRadius:20, padding:'36px', border:'1px solid '+BORDER, boxShadow:'0 8px 32px rgba(15,149,153,0.08)' }}>
 
@@ -408,12 +419,12 @@ export default function Onboarding({ onComplete }) {
           {/* ── STEP 1 ── */}
           {step === 1 && (
             <div style={{ animation:'fadeUp 0.2s ease' }}>
-              <StepLabel current={1} total={totalSteps} label="Welcome"/>
+              <StepLabel current={1} total={totalSteps} label={fromCheckout ? "Business setup" : "Welcome"}/>
               <div style={{ fontSize:26, fontWeight:800, color:'#0E1A1A', marginBottom:8, letterSpacing:'-0.03em', lineHeight:1.2 }}>
-                Welcome to Novala!
+                {fromCheckout ? (_storedFirstName ? `Welcome, ${_storedFirstName}!` : 'You are all signed up!') : 'Welcome to Novala!'}
               </div>
               <div style={{ fontSize:14, color:MUTED, marginBottom:28, lineHeight:1.7 }}>
-                Let's get your workspace ready in under 2 minutes.
+                {fromCheckout ? "Your account is ready. Now tell us about your business so Novala can customize itself for you." : "Let's get your workspace ready in under 2 minutes."}
               </div>
 
               <div style={{ marginBottom:8 }}>
