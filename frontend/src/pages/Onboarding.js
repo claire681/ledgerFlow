@@ -14,8 +14,8 @@ const DARK2    = '#1A2540';
 const CARD     = '#162035';
 const BORDER   = '#1E2D4A';
 const MINT     = '#00D4A4';
-const MINTDIM  = 'rgba(0,212,164,0.12)';
-const MINTGLOW = '0 0 0 3px rgba(0,212,164,0.15)';
+const MINTDIM  = 'rgba(15,149,153,0.12)';
+const MINTGLOW = '0 0 0 3px rgba(15,149,153,0.15)';
 const WHITE    = '#F1F5F9';
 const MUTED    = '#64748B';
 const FONT     = "'Inter', -apple-system, sans-serif";
@@ -74,7 +74,7 @@ function ProgressBar({ step, total }) {
           flex:1, height:3, borderRadius:99,
           background: i < step ? MINT : BORDER,
           transition:'background 0.4s ease',
-          boxShadow: i < step ? '0 0 8px rgba(0,212,164,0.4)' : 'none',
+          boxShadow: i < step ? '0 0 8px rgba(15,149,153,0.4)' : 'none',
         }}/>
       ))}
     </div>
@@ -108,11 +108,11 @@ function PrimaryBtn({ onClick, disabled, children, fullWidth }) {
       justifyContent:'center',
       gap:8,
       transition:'all 0.2s',
-      boxShadow: disabled ? 'none' : '0 4px 20px rgba(0,212,164,0.3)',
+      boxShadow: disabled ? 'none' : '0 4px 20px rgba(15,149,153,0.3)',
       flexShrink:0,
     }}
-      onMouseEnter={e => { if (!disabled) e.currentTarget.style.boxShadow='0 8px 32px rgba(0,212,164,0.45)'; }}
-      onMouseLeave={e => { if (!disabled) e.currentTarget.style.boxShadow='0 4px 20px rgba(0,212,164,0.3)'; }}
+      onMouseEnter={e => { if (!disabled) e.currentTarget.style.boxShadow='0 8px 32px rgba(15,149,153,0.45)'; }}
+      onMouseLeave={e => { if (!disabled) e.currentTarget.style.boxShadow='0 4px 20px rgba(15,149,153,0.3)'; }}
     >
       {children}
     </button>
@@ -361,8 +361,8 @@ export default function Onboarding({ onComplete }) {
         {/* Logo */}
         <div style={{ textAlign:'center', marginBottom:36 }}>
           <div style={{ display:'inline-flex', alignItems:'center', gap:10 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:MINT, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 16px rgba(0,212,164,0.3)' }}>
-              <TrendingUp size={18} color="#0F1729"/>
+            <div style={{ width:36, height:36, borderRadius:10, background:MINT, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 16px rgba(15,149,153,0.3)' }}>
+              <TrendingUp size={18} color="#FFFFFF"/>
             </div>
             <span style={{ fontSize:22, fontWeight:800, color:'#fff', letterSpacing:'-0.02em' }}>
               No<span style={{ color:MINT }}>vala</span>
@@ -532,7 +532,7 @@ export default function Onboarding({ onComplete }) {
                       {f.soon && (
                         <div style={{ position:'absolute', top:8, right:8, fontSize:9, fontWeight:700, color:'#0F1729', background:MINT, padding:'2px 7px', borderRadius:20 }}>SOON</div>
                       )}
-                      <div style={{ width:32, height:32, borderRadius:8, background:selected?'rgba(0,212,164,0.15)':'#1E2D4A', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:8 }}>
+                      <div style={{ width:32, height:32, borderRadius:8, background:selected?'rgba(15,149,153,0.15)':'#1E2D4A', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:8 }}>
                         <Icon size={16} color={selected?MINT:MUTED}/>
                       </div>
                       <div style={{ fontSize:12, fontWeight:600, color:selected?MINT:WHITE, marginBottom:3 }}>{f.label}</div>
@@ -611,14 +611,14 @@ export default function Onboarding({ onComplete }) {
               </div>
 
               <div style={{ padding:'28px 24px', borderRadius:16, border:'1px dashed '+BORDER, background:'#0D1526', textAlign:'center', marginBottom:20 }}>
-                <div style={{ width:56, height:56, borderRadius:14, background:MINTDIM, border:'1px solid rgba(0,212,164,0.2)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px' }}>
+                <div style={{ width:56, height:56, borderRadius:14, background:MINTDIM, border:'1px solid rgba(15,149,153,0.2)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px' }}>
                   <Landmark size={28} color={MINT}/>
                 </div>
                 <div style={{ fontSize:15, fontWeight:700, color:WHITE, marginBottom:8 }}>Bank connection coming soon</div>
                 <div style={{ fontSize:13, color:MUTED, marginBottom:16, lineHeight:1.6 }}>
                   We are integrating with Plaid to support 10,000 plus banks. Connect from Settings once available.
                 </div>
-                <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:20, background:MINTDIM, border:'1px solid rgba(0,212,164,0.2)' }}>
+                <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:20, background:MINTDIM, border:'1px solid rgba(15,149,153,0.2)' }}>
                   <Shield size={12} color={MINT}/>
                   <span style={{ fontSize:11, fontWeight:600, color:MINT }}>256 bit encrypted · Read only access</span>
                 </div>
