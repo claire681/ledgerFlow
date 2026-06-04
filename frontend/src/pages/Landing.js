@@ -10,6 +10,7 @@ import {
   CreditCard, Bell, Calendar, Percent, Download, Search,
 } from "lucide-react";
 
+import MarketingHeader from "../components/MarketingHeader";
 // === Design tokens ===
 const TEAL        = "#0F9599";
 const TEAL_DARK   = "#0B7377";
@@ -291,21 +292,7 @@ function AllFeaturesModal({ open, onClose, onSeePricing }) {
         onClick={(e) => e.stopPropagation()}
         style={{ background: BG, borderRadius: 20, maxWidth: 1040, width: "100%", maxHeight: "88vh", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 40px 80px -20px rgba(0,0,0,0.45)", fontFamily: FONT }}
       >
-        <header style={{ padding: "22px 32px", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: INK, letterSpacing: "-0.02em" }}>All Novala features</h2>
-            <p style={{ margin: "4px 0 0", fontSize: 14, color: SUB }}>Everything you can do with Novala, in one place.</p>
-          </div>
-          <button
-            onClick={onClose}
-            onMouseEnter={(e) => { e.currentTarget.style.background = BG_TINT; e.currentTarget.style.color = INK; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = SUB; }}
-            style={{ background: "transparent", border: "none", color: SUB, padding: 8, borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
-            aria-label="Close"
-          >
-            <X size={22} />
-          </button>
-        </header>
+        <MarketingHeader />
         <div style={{ flex: 1, overflowY: "auto", padding: "28px 32px" }}>
           {ALL_FEATURE_CATEGORIES.map((cat, ci) => (
             <section key={cat.title} style={{ marginBottom: ci === ALL_FEATURE_CATEGORIES.length - 1 ? 0 : 36 }}>

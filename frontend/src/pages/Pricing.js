@@ -5,6 +5,7 @@ import { Check, ChevronDown, ChevronUp, Sparkles, Star, ShieldCheck, MessageSqua
 } from "lucide-react";
 
 
+import MarketingHeader from "../components/MarketingHeader";
 // === Novala logo (real /logo512.png) ===
 function NovalaLogo({ size = 32, color = "#0E1A1A", showWordmark = true }) {
   return (
@@ -318,20 +319,7 @@ export default function Pricing() {
   return (
     <div style={{ minHeight: "100vh", background: "#FFFFFF", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", color: INK }}>
 
-      <header style={{ position: "sticky", top: 0, zIndex: 50, background: "#FFFFFF", borderBottom: `1px solid ${BORDER}`, height: NAV_H }}>
-        <div style={{ maxWidth: CONTENT_MAX, margin: "0 auto", padding: "0 32px", height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <a href="/" style={{ textDecoration: "none" }}>
-            <span onClick={() => navigate("/")} style={{ cursor: "pointer" }}><NovalaLogo size={32} /></span>
-          </a>
-          <nav style={{ display: "flex", alignItems: "center", gap: 28, fontSize: 14 }}>
-            <a href="#" style={{ color: INK, textDecoration: "none", fontWeight: 500 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Layers size={15} strokeWidth={2} color="#0F9599" /> Features</span></a>
-            <a href="/pricing" style={{ color: TEAL, textDecoration: "none", fontWeight: 600 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Wallet size={15} strokeWidth={2} color="#0F9599" /> Pricing</span></a>
-            <a href="#" style={{ color: INK, textDecoration: "none", fontWeight: 500 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><HelpCircle size={15} strokeWidth={2} color="#0F9599" /> Support</span></a>
-            <a href="/login" style={{ color: INK, textDecoration: "none", fontWeight: 500 }}>Sign in</a>
-            <button onClick={() => choosePlan("growth")} style={{ padding: "10px 18px", borderRadius: 8, background: TEAL, color: "#fff", border: "none", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Get started</button>
-          </nav>
-        </div>
-      </header>
+      <MarketingHeader />
 
       <section style={{ maxWidth: CONTENT_MAX, margin: "0 auto", padding: "64px 32px 24px", textAlign: "center" }}>
         <h1 style={{ margin: 0, fontSize: 44, fontWeight: 700, letterSpacing: "-0.02em", color: INK }}>Find a plan that's right for you</h1>
