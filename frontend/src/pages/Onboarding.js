@@ -9,15 +9,15 @@ import {
 } from 'lucide-react';
 import { register } from '../services/api';
 
-const DARK     = '#0F1729';
-const DARK2    = '#1A2540';
-const CARD     = '#162035';
-const BORDER   = '#1E2D4A';
-const MINT     = '#00D4A4';
+const DARK     = '#FFFFFF';
+const DARK2    = '#0B3D3D';
+const CARD     = '#FFFFFF';
+const BORDER   = '#E2E8E8';
+const MINT     = '#0F9599';
 const MINTDIM  = 'rgba(15,149,153,0.12)';
 const MINTGLOW = '0 0 0 3px rgba(15,149,153,0.15)';
-const WHITE    = '#F1F5F9';
-const MUTED    = '#64748B';
+const WHITE    = '#0E1A1A';
+const MUTED    = '#5B6B6B';
 const FONT     = "'Inter', -apple-system, sans-serif";
 
 const BUSINESS_TYPES = [
@@ -96,8 +96,8 @@ function PrimaryBtn({ onClick, disabled, children, fullWidth }) {
       width: fullWidth ? '100%' : 'auto',
       padding:'13px 24px',
       borderRadius:12,
-      background: disabled ? '#1E2D4A' : MINT,
-      color: disabled ? MUTED : '#0F1729',
+      background: disabled ? '#E2E8E8' : MINT,
+      color: disabled ? MUTED : '#FFFFFF',
       border:'none',
       cursor: disabled ? 'not-allowed' : 'pointer',
       fontSize:14,
@@ -530,9 +530,9 @@ export default function Onboarding({ onComplete }) {
                       onClick={() => { if (!f.soon) { toggleFeature(f.id); clearError(); } }}
                       style={{ padding:'14px', borderRadius:12, border:'1px solid '+(selected?MINT:BORDER), background:selected?MINTDIM:'#0D1526', cursor:f.soon?'default':'pointer', transition:'all 0.2s', position:'relative', opacity:f.soon?0.5:1, boxShadow:selected?MINTGLOW:'none' }}>
                       {f.soon && (
-                        <div style={{ position:'absolute', top:8, right:8, fontSize:9, fontWeight:700, color:'#0F1729', background:MINT, padding:'2px 7px', borderRadius:20 }}>SOON</div>
+                        <div style={{ position:'absolute', top:8, right:8, fontSize:9, fontWeight:700, color:'#FFFFFF', background:MINT, padding:'2px 7px', borderRadius:20 }}>SOON</div>
                       )}
-                      <div style={{ width:32, height:32, borderRadius:8, background:selected?'rgba(15,149,153,0.15)':'#1E2D4A', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:8 }}>
+                      <div style={{ width:32, height:32, borderRadius:8, background:selected?'rgba(15,149,153,0.15)':'#E2E8E8', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:8 }}>
                         <Icon size={16} color={selected?MINT:MUTED}/>
                       </div>
                       <div style={{ fontSize:12, fontWeight:600, color:selected?MINT:WHITE, marginBottom:3 }}>{f.label}</div>
@@ -776,7 +776,7 @@ export default function Onboarding({ onComplete }) {
         * { box-sizing: border-box; }
         input::placeholder { color: #334155; }
         select { appearance: none; }
-        select option { background: #162035; color: #F1F5F9; }
+        select option { background: #FFFFFF; color: #0E1A1A; }
       `}</style>
     </div>
   );
