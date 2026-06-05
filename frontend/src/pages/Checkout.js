@@ -118,7 +118,7 @@ export default function Checkout() {
       localStorage.setItem("signup_marketing_opt_in", marketing ? "1" : "0");
       const qs = new URLSearchParams({ fromCheckout: "true", plan: planId, billing });
       if (payrollId) qs.set("payroll", payrollId);
-      navigate("/register?" + qs.toString());
+      navigate("/verify-code?" + qs.toString());
     } catch (err) {
       const detail = err.response?.data?.detail;
       if (typeof detail === "string") {
