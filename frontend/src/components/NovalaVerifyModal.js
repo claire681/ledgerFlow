@@ -32,9 +32,12 @@ export default function NovalaVerifyModal({
   email = "",
   correctCode = "123456",
   onClose = () => {},
-  onVerified = () => {}
+  onVerified = () => {},
+  onCodeSubmit = null,
+  onResend = null,
+  defaultMethod = "text"
 }) {
-  const [method, setMethod] = useState("text");
+  const [method, setMethod] = useState(defaultMethod);
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [status, setStatus] = useState("idle");
   const inputRefs = useRef([]);
@@ -58,8 +61,22 @@ export default function NovalaVerifyModal({
       setStatus((prev) => (prev === "success" || prev === "error") ? "idle" : prev);
       return;
     }
-    setStatus((prev) => prev === "verified" ? prev : (isMatch ? "success" : "error"));
-  }, [codeStr, isFull, isMatch]);
+    let cancelled = false;
+    (async () => {
+      if (typeof onCodeSubmit === "function") {
+        try {
+          const ok = await onCodeSubmit(codeStr);
+          if (!cancelled) setStatus((prev) => prev === "verified" ? prev : (ok ? "success" : "error"));
+        } catch (e) {
+          if (!cancelled) setStatus((prev) => prev === "verified" ? prev : "error");
+        }
+      } else {
+        const ok = codeStr === String(correctCode);
+        if (!cancelled) setStatus((prev) => prev === "verified" ? prev : (ok ? "success" : "error"));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [codeStr, isFull]);
 
   const resetCode = () => {
     setCode(["", "", "", "", "", ""]);
@@ -114,6 +131,9 @@ export default function NovalaVerifyModal({
 
   const handleResend = () => {
     resetCode();
+    if (typeof onResend === "function") {
+      onResend();
+    }
   };
 
   const handleContinue = () => {

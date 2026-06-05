@@ -50,6 +50,7 @@ import Checkout from "./pages/Checkout";
 
 import AddPayroll from "./pages/AddPayroll";
 import Cart from "./pages/Cart";
+import Verify from "./pages/Verify";
 const ACCENT = '#0AB98A';
 
 function PromoBanner() {
@@ -190,6 +191,7 @@ function AppLayout({ onLogout }) {
             <Route path="/search"         element={<SmartSearch />}        />
             <Route path="*"               element={<Navigate to="/" />}    />
             <Route path="/register"element={<Onboarding onComplete={() => window.location.replace("/")} />} />
+            <Route path="/verify-code" element={<Verify />} />
           </Routes>
         </main>
       </div>
@@ -247,6 +249,7 @@ const handleOnboardingComplete = () => {
               <Route path="/"        element={<Landing />}                                          />
               <Route path="/login"   element={<LoginPage onLogin={handleLogin} />}                  />
               <Route path="/register"element={<Onboarding onComplete={() => window.location.replace("/")} />} />
+              <Route path="/verify-code" element={<Verify />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/add-payroll" element={<AddPayroll />} />
               <Route path="/checkout" element={<Checkout />} />
