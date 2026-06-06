@@ -184,7 +184,7 @@ export default function Checkout() {
 
             <Field label="Phone number">
               <div style={{ display: "flex", gap: 8 }}>
-                <CountrySelect mode="phone" value={iso} onChange={(c) => setIso(c.code)} defaultCode="CA" />
+                <div style={{ width: 170, flexShrink: 0 }}><CountrySelect mode="phone" value={iso} onChange={(c) => setIso(c.code)} defaultCode="CA" /></div>
                 <input type="tel" value={phone} onChange={e => setPhone(e.target.value.replace(/[^\d\s\-]/g, ""))} placeholder="555 123 4567"
                   style={{ ...inputStyle, flex: 1 }}
                   onFocus={e => { e.target.style.borderColor = TEAL; e.target.style.boxShadow = "0 0 0 3px rgba(15,149,153,0.12)"; }}
