@@ -110,6 +110,7 @@ export default function Verify() {
         phone={phone}
         email={email}
         defaultMethod="email"
+        availableMethods={["email"]}
         onCodeSubmit={handleCodeSubmit}
         onVerified={handleVerified}
         onResend={handleResend}

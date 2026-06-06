@@ -35,15 +35,17 @@ export default function NovalaVerifyModal({
   onVerified = () => {},
   onCodeSubmit = null,
   onResend = null,
-  defaultMethod = "text"
+  defaultMethod = "text",
+  availableMethods = ["text", "email", "call"]
 }) {
-  const [method, setMethod] = useState(defaultMethod);
+  const [method, setMethod] = useState(availableMethods.includes(defaultMethod) ? defaultMethod : availableMethods[0]);
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [status, setStatus] = useState("idle");
   const inputRefs = useRef([]);
 
   const activeMethod = METHODS.find((m) => m.key === method);
-  const activeIndex = METHODS.findIndex((m) => m.key === method);
+  const visibleMethods = METHODS.filter((m) => availableMethods.includes(m.key));
+  const activeIndex = visibleMethods.findIndex((m) => m.key === method);
   const ActiveIcon = activeMethod.Icon;
 
   const destination = useMemo(() => {
@@ -291,17 +293,17 @@ export default function NovalaVerifyModal({
             </div>
 
             <div style={{
-              position: "relative", display: "flex",
+              position: "relative", display: visibleMethods.length > 1 ? "flex" : "none",
               background: "#F1F5F5", borderRadius: 14, padding: 4, marginBottom: 20
             }}>
               <div style={{
                 position: "absolute", top: 4, bottom: 4, left: 4,
-                width: "calc((100% - 8px) / 3)", borderRadius: 10,
+                width: "calc((100% - 8px) / " + visibleMethods.length + ")", borderRadius: 10,
                 background: "#fff", boxShadow: "0 1px 3px rgba(16,24,40,0.12)",
                 transform: "translateX(" + (activeIndex * 100) + "%)",
                 transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)"
               }} />
-              {METHODS.map((m) => (
+              {visibleMethods.map((m) => (
                 <button
                   key={m.key}
                   type="button"
@@ -410,7 +412,7 @@ export default function NovalaVerifyModal({
               {activeMethod.resendLabel}
             </button>
 
-            {method !== "call" && (
+            {method !== "call" && availableMethods.includes("call") && (
               <div style={{ textAlign: "center", marginTop: 16 }}>
                 <button
                   type="button"
