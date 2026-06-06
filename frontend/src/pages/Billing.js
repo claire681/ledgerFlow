@@ -319,13 +319,30 @@ export default function Billing() {
 
           {paymentMethod === "paypal" && (
             <div style={{
-              padding: 16, background: ORDER_BG, borderRadius: 12,
-              fontSize: 14, color: SUB, marginBottom: 28
+              display: "flex", flexDirection: "column", alignItems: "center",
+              gap: 18, marginTop: 16, marginBottom: 16
             }}>
-              You will be redirected to PayPal to complete payment after clicking Subscribe.
+              <div style={{ fontSize: 15, fontWeight: 600, color: INK }}>Sign in to PayPal.com</div>
+              <button
+                type="button"
+                onClick={() => alert("PayPal flow is not yet wired. Real Stripe + PayPal integration is the next backend task.")}
+                style={{
+                  background: "#FFC439", border: "none", borderRadius: 24,
+                  padding: "14px 44px", fontSize: 20, fontWeight: 800, fontStyle: "italic",
+                  fontFamily: "Helvetica, Arial, sans-serif", cursor: "pointer",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.12)", letterSpacing: "-0.6px"
+                }}
+              >
+                <span style={{ color: "#003087" }}>Pay</span><span style={{ color: "#009CDE" }}>Pal</span>
+              </button>
+              <div style={{ fontSize: 12, color: MUTED, textAlign: "center", maxWidth: 280, lineHeight: 1.55 }}>
+                You'll be redirected to PayPal to sign in and authorize the subscription.
+              </div>
             </div>
           )}
 
+          {paymentMethod === "card" && (
+          <>
           <div style={{ fontSize: 16, fontWeight: 700, color: INK, marginBottom: 12 }}>
             Billing Address
           </div>
@@ -402,6 +419,8 @@ export default function Billing() {
             }}>
             {submitting ? "Processing..." : "Subscribe"}
           </button>
+          </>
+          )}
         </div>
 
         <aside style={{
