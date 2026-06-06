@@ -5,7 +5,7 @@ import uuid
 import random
 import string
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.db.database import get_db
 from app.models.models import User
