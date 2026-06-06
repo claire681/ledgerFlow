@@ -191,6 +191,7 @@ function AppLayout({ onLogout }) {
             <Route path="/businesses"     element={<Businesses />}         />
             <Route path="/search"         element={<SmartSearch />}        />
             <Route path="*"               element={<Navigate to="/" />}    />
+            <Route path="/billing" element={<Billing />} />
             <Route path="/register"element={<Onboarding onComplete={() => window.location.replace("/")} />} />
             <Route path="/verify-code" element={<Verify />} />
           </Routes>
@@ -250,6 +251,7 @@ const handleOnboardingComplete = () => {
             <>
               <Route path="/"        element={<Landing />}                                          />
               <Route path="/login"   element={<LoginPage onLogin={handleLogin} />}                  />
+              <Route path="/billing" element={<Billing />} />
               <Route path="/register"element={<Onboarding onComplete={() => window.location.replace("/")} />} />
               <Route path="/verify-code" element={<Verify />} />
               <Route path="/pricing" element={<Pricing />} />

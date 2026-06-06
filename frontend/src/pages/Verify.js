@@ -69,7 +69,7 @@ export default function Verify() {
     if (plan) params.set("plan", plan);
     if (billing) params.set("billing", billing);
     if (payroll) params.set("payroll", payroll);
-    navigate("/register?" + params.toString());
+    navigate("/billing?" + params.toString());
   };
 
   const handleResend = () => {
