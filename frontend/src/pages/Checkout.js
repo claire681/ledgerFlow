@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Check, ArrowRight, Eye, EyeOff, Lock, Mail, User, ArrowLeft } from "lucide-react";
 import MarketingHeader from "../components/MarketingHeader";
 import CountrySelect from "../components/CountrySelect";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { findByIso } from "../data/countries";
 import { getPlan, getPayroll } from "../data/plans";
 import { register } from "../services/api";
@@ -100,7 +101,13 @@ export default function Checkout() {
     setSubmitting(true);
     try {
       const country = findByIso(iso);
-      const fullPhone = country.dial + phone.trim();
+      const parsed = parsePhoneNumberFromString(phone.trim(), iso);
+      if (!parsed || !parsed.isValid()) {
+        setError("That number does not look valid for " + country.name + ". Check the country or fix the number.");
+        setSubmitting(false);
+        return;
+      }
+      const fullPhone = parsed.format("E.164");
       const res = await register(email.trim(), password, fullName.trim(), "");
       const token = res.data.access_token;
       localStorage.setItem("token", token);
