@@ -49,6 +49,45 @@ const PAYROLL = {
   elite:   { name: "Payroll Elite",   priceMonthly: 80, originalPrice: 160, perEmployee: 9 }
 };
 
+function VisaLogo() {
+  return (
+    <svg width="38" height="24" viewBox="0 0 38 24" xmlns="http://www.w3.org/2000/svg">
+      <rect width="38" height="24" rx="4" fill="#1A1F71" />
+      <text x="50%" y="50%" textAnchor="middle" dominantBaseline="central" fill="#FFFFFF" fontFamily="Arial, sans-serif" fontWeight="900" fontStyle="italic" fontSize="11">VISA</text>
+    </svg>
+  );
+}
+
+function MastercardLogo() {
+  return (
+    <svg width="38" height="24" viewBox="0 0 38 24" xmlns="http://www.w3.org/2000/svg">
+      <rect width="38" height="24" rx="4" fill="#FFFFFF" stroke="#E5E5E5" strokeWidth="1" />
+      <circle cx="16" cy="12" r="7" fill="#EB001B" />
+      <circle cx="23" cy="12" r="7" fill="#F79E1B" fillOpacity="0.92" />
+    </svg>
+  );
+}
+
+function AmexLogo() {
+  return (
+    <svg width="38" height="24" viewBox="0 0 38 24" xmlns="http://www.w3.org/2000/svg">
+      <rect width="38" height="24" rx="4" fill="#2E77BB" />
+      <text x="50%" y="50%" textAnchor="middle" dominantBaseline="central" fill="#FFFFFF" fontFamily="Arial, sans-serif" fontWeight="800" fontSize="7.5" letterSpacing="0.4">AMEX</text>
+    </svg>
+  );
+}
+
+function CvvCardIcon() {
+  return (
+    <svg width="32" height="22" viewBox="0 0 32 22" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="2" width="30" height="18" rx="2.5" fill="#FFFFFF" stroke="#9AA8A8" strokeWidth="1.4" />
+      <rect x="1" y="5" width="30" height="3" fill="#9AA8A8" />
+      <rect x="19" y="12" width="10" height="4.5" rx="1" fill="#E8EDED" stroke="#9AA8A8" strokeWidth="0.8" />
+      <text x="24" y="15.5" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="3.4" fill="#5B6B6B" fontWeight="700">123</text>
+    </svg>
+  );
+}
+
 export default function Billing() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -218,10 +257,10 @@ export default function Billing() {
                     className="nv-billing-input"
                     style={{ ...inputStyle, paddingRight: 110 }} />
                   <div style={{
-                    position: "absolute", top: "50%", right: 12, transform: "translateY(-50%)",
-                    display: "flex", gap: 6, fontSize: 11, fontWeight: 700, color: MUTED
+                    position: "absolute", top: "50%", right: 10, transform: "translateY(-50%)",
+                    display: "flex", gap: 5, alignItems: "center", pointerEvents: "none"
                   }}>
-                    <span>VISA</span><span>MC</span><span>AMEX</span>
+                    <VisaLogo /><MastercardLogo /><AmexLogo />
                   </div>
                 </div>
               </div>
@@ -251,10 +290,20 @@ export default function Billing() {
                 </div>
                 <div>
                   <label style={labelStyle}>CVV</label>
-                  <input type="text" inputMode="numeric" autoComplete="cc-csc"
-                    value={cvv}
-                    onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                    placeholder="123" className="nv-billing-input" style={inputStyle} />
+                  <div style={{ position: "relative" }}>
+                    <input type="text" inputMode="numeric" autoComplete="cc-csc"
+                      value={cvv}
+                      onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="3 digits"
+                      className="nv-billing-input"
+                      style={{ ...inputStyle, paddingRight: 44 }} />
+                    <div style={{
+                      position: "absolute", top: "50%", right: 8, transform: "translateY(-50%)",
+                      pointerEvents: "none"
+                    }}>
+                      <CvvCardIcon />
+                    </div>
+                  </div>
                 </div>
               </div>
 
