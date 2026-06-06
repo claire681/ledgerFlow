@@ -307,7 +307,7 @@ async def delete_account(
     for row in result.fetchall():
         # delete user transactions first so the generic cascade can delete documents
         # without hitting transactions_document_id_fkey
-        await db.execute(text("DELETE FROM transactions WHERE user_id = :uid::uuid"), {"uid": str(current_user.id)})
+        await db.execute(text("DELETE FROM transactions WHERE user_id = CAST(:uid AS UUID)"), {"uid": str(current_user.id)})
         await db.execute(
             text(f'DELETE FROM "{row.tname}" WHERE "{row.cname}" = :uid'),
             {"uid": user_id}
