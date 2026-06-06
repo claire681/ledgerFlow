@@ -390,3 +390,16 @@ async def verify_code(
     )
     await db.commit()
     return {"detail": "Verified.", "is_verified": True}
+
+
+@router.get("/me")
+async def get_me(current_user=Depends(get_current_user)):
+    """Return the current user's account snapshot. Used by the frontend verification guard."""
+    return {
+        "id": str(current_user.id),
+        "email": current_user.email,
+        "full_name": getattr(current_user, "full_name", None),
+        "is_verified": bool(getattr(current_user, "is_verified", False)),
+        "onboarding_completed": bool(getattr(current_user, "onboarding_completed", False)),
+        "subscription_status": getattr(current_user, "subscription_status", None)
+    }

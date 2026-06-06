@@ -51,6 +51,7 @@ import Checkout from "./pages/Checkout";
 import AddPayroll from "./pages/AddPayroll";
 import Cart from "./pages/Cart";
 import Verify from "./pages/Verify";
+import VerificationGuard from "./components/VerificationGuard";
 const ACCENT = '#0AB98A';
 
 function PromoBanner() {
@@ -242,7 +243,8 @@ const handleOnboardingComplete = () => {
  return (
     <Router>
       <AIProvider>
-        <Routes>
+        <VerificationGuard />
+            <Routes>
           <Route path="/reset-password" element={<ResetPassword />}/>
           {!token ? (
             <>
