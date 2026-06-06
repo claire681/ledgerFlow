@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Check, ArrowRight, Eye, EyeOff, Lock, Mail, User, ArrowLeft } from "lucide-react";
 import MarketingHeader from "../components/MarketingHeader";
-import PhoneCountrySelect from "../components/PhoneCountrySelect";
+import CountrySelect from "../components/CountrySelect";
 import { findByIso } from "../data/countries";
 import { getPlan, getPayroll } from "../data/plans";
 import { register } from "../services/api";
@@ -177,7 +177,7 @@ export default function Checkout() {
 
             <Field label="Phone number">
               <div style={{ display: "flex", gap: 8 }}>
-                <PhoneCountrySelect value={iso} onChange={setIso} />
+                <CountrySelect mode="phone" value={iso} onChange={(c) => setIso(c.code)} defaultCode="CA" />
                 <input type="tel" value={phone} onChange={e => setPhone(e.target.value.replace(/[^\d\s\-]/g, ""))} placeholder="555 123 4567"
                   style={{ ...inputStyle, flex: 1 }}
                   onFocus={e => { e.target.style.borderColor = TEAL; e.target.style.boxShadow = "0 0 0 3px rgba(15,149,153,0.12)"; }}
