@@ -279,3 +279,8 @@ export function getCountry(code) {
   if (!code || typeof code !== "string") return null;
   return BY_CODE[code.toUpperCase()] || null;
 }
+
+// Backward-compat alias used by older callers.
+export const findByIso = getCountry;
+
+export default COUNTRIES;
