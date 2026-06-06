@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { ShoppingCart, Info } from "lucide-react";
+import CountrySelect from "../components/CountrySelect";
 
 const TEAL = "#0F9599";
 const TEAL_DARK = "#0B7377";
@@ -110,6 +111,7 @@ export default function Billing() {
   const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("AB");
+  const [billingCountry, setBillingCountry] = useState({ code: "CA", name: "Canada", dialCode: "+1", flag: "🇨🇦" });
   const [useAsBusinessAddress, setUseAsBusinessAddress] = useState(true);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -366,6 +368,10 @@ export default function Billing() {
             </div>
           </div>
 
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>Country</label>
+            <CountrySelect mode="country" value={billingCountry.code} onChange={(c) => setBillingCountry(c)} defaultCode="CA" />
+          </div>
           <div style={{ marginBottom: 20 }}>
             <label style={labelStyle}>Province/Territory</label>
             <select value={province} onChange={(e) => setProvince(e.target.value)}
