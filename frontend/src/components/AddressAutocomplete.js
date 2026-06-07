@@ -1,18 +1,21 @@
 // src/components/AddressAutocomplete.js
 // Google Places address autocomplete using the NEW programmatic API
-// (AutocompleteSuggestion + AutocompleteSessionToken + Place), not the deprecated widget.
-// Lazy-loads Maps JS on first focus. Gracefully degrades to a plain input
-// if REACT_APP_GOOGLE_MAPS_KEY is missing or the script fails to load.
+// (AutocompleteSuggestion + AutocompleteSessionToken + Place).
+// Uses Google's inline bootstrap loader so window.google.maps.importLibrary is available.
+// Falls back to a plain text input if the API key is missing or the script fails to load.
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 const GOOGLE_MAPS_KEY = process.env.REACT_APP_GOOGLE_MAPS_KEY;
-const SCRIPT_ID = "novala-google-maps";
+const DEBOUNCE_MS = 250;
+const MIN_QUERY_LEN = 3;
 
-let mapsLoadPromise = null;
+// Diagnostic: log once on module load so we can confirm the build picked up the env var.
+if (typeof window !== "undefined") {
+  console.log("[AddressAutocomplete] module loaded; key present:", !!GOOGLE_MAPS_KEY);
+}
 
 function loadGoogleMaps() {
-  const GOOGLE_MAPS_KEY = process.env.REACT_APP_GOOGLE_MAPS_KEY;
   if (window.google && window.google.maps && typeof window.google.maps.importLibrary === "function") {
     return Promise.resolve();
   }
@@ -21,9 +24,6 @@ function loadGoogleMaps() {
 
   window.__novalaMapsLoadPromise = new Promise(function (resolve, reject) {
     try {
-      // Google's official inline bootstrap loader. The classic script tag
-      // (maps/api/js?libraries=places) does NOT expose importLibrary, which
-      // the new AutocompleteSuggestion / Place API requires.
       (function (g) {
         var h, a, k, p = "The Google Maps JavaScript API",
             c = "google", l = "importLibrary", q = "__ib__",
@@ -66,209 +66,215 @@ function loadGoogleMaps() {
   return window.__novalaMapsLoadPromise;
 }
 
-function parseAddressComponents(components) {
+function parseAddressComponents(place) {
   const out = { street: "", city: "", postalCode: "", provinceCode: "", country: "" };
-  if (!components || !Array.isArray(components)) return out;
+  if (!place || !place.addressComponents) return out;
   let streetNumber = "";
   let route = "";
-  let locality = "";
   let postalTown = "";
-  for (const c of components) {
-    const types = c.types || [];
-    if (types.includes("street_number")) streetNumber = c.longText || "";
-    else if (types.includes("route")) route = c.longText || "";
-    else if (types.includes("locality")) locality = c.longText || "";
-    else if (types.includes("postal_town")) postalTown = c.longText || "";
-    else if (types.includes("postal_code")) out.postalCode = c.longText || "";
-    else if (types.includes("administrative_area_level_1")) out.provinceCode = c.shortText || "";
-    else if (types.includes("country")) out.country = c.shortText || "";
+  for (const comp of place.addressComponents) {
+    const types = comp.types || [];
+    if (types.includes("street_number")) streetNumber = comp.longText || comp.shortText || "";
+    else if (types.includes("route")) route = comp.longText || comp.shortText || "";
+    else if (types.includes("locality")) out.city = comp.longText || comp.shortText || "";
+    else if (types.includes("postal_town")) postalTown = comp.longText || comp.shortText || "";
+    else if (types.includes("postal_code")) out.postalCode = comp.longText || comp.shortText || "";
+    else if (types.includes("administrative_area_level_1")) out.provinceCode = comp.shortText || "";
+    else if (types.includes("country")) out.country = comp.shortText || "";
   }
-  out.street = [streetNumber, route].filter(Boolean).join(" ");
-  out.city = locality || postalTown || "";
+  out.street = [streetNumber, route].filter(Boolean).join(" ").trim();
+  if (!out.city) out.city = postalTown;
   return out;
 }
+
+const PIN_SVG = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F9599" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
+
+const GOOGLE_LOGO_URL = "https://developers.google.com/static/maps/documentation/images/google_on_white.png";
 
 export default function AddressAutocomplete({
   value,
   onChange,
   onAddressSelect,
-  country,
+  country = "CA",
   placeholder,
-  style,
   className,
+  style,
 }) {
   const [predictions, setPredictions] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [highlight, setHighlight] = useState(0);
+  const [open, setOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [loadError, setLoadError] = useState(!GOOGLE_MAPS_KEY);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const sessionTokenRef = useRef(null);
+  const debounceTimerRef = useRef(null);
+  const wrapperRef = useRef(null);
 
-  const tokenRef = useRef(null);
-  const debounceRef = useRef(null);
-  const wrapRef = useRef(null);
-  const placesRef = useRef(null);
+  useEffect(() => {
+    function onDocClick(e) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
 
   const ensureLoaded = useCallback(async () => {
-    if (loadError) return false;
-    if (loaded && placesRef.current) return true;
+    if (loaded) return true;
     try {
       await loadGoogleMaps();
-      const lib = await window.google.maps.importLibrary("places");
-      placesRef.current = {
-        AutocompleteSuggestion: lib.AutocompleteSuggestion,
-        AutocompleteSessionToken: lib.AutocompleteSessionToken,
-      };
+      if (!sessionTokenRef.current) {
+        const { AutocompleteSessionToken } = await window.google.maps.importLibrary("places");
+        sessionTokenRef.current = new AutocompleteSessionToken();
+      }
       setLoaded(true);
       return true;
     } catch (err) {
-      console.warn("[AddressAutocomplete] Maps load failed:", err && err.message);
-      setLoadError(true);
+      console.error("[AddressAutocomplete] Maps load failed:", err && err.message ? err.message : err);
       return false;
     }
-  }, [loaded, loadError]);
+  }, [loaded]);
 
-  useEffect(() => {
-    if (!showDropdown) return undefined;
-    function handle(e) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
-        setShowDropdown(false);
-      }
-    }
-    document.addEventListener("mousedown", handle);
-    return () => document.removeEventListener("mousedown", handle);
-  }, [showDropdown]);
+  const handleFocus = useCallback(() => {
+    console.log("[AddressAutocomplete] focus");
+    ensureLoaded();
+  }, [ensureLoaded]);
 
-  async function handleInput(e) {
-    const next = e.target.value;
-    if (typeof onChange === "function") onChange(next);
-
-    if (loadError || !GOOGLE_MAPS_KEY) {
+  const fetchPredictions = useCallback(async (query) => {
+    if (!query || query.length < MIN_QUERY_LEN) {
       setPredictions([]);
-      setShowDropdown(false);
+      setOpen(false);
       return;
     }
-    if (next.length < 3) {
-      setPredictions([]);
-      setShowDropdown(false);
-      return;
-    }
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
-      const ok = await ensureLoaded();
-      if (!ok) return;
-      try {
-        const { AutocompleteSuggestion, AutocompleteSessionToken } = placesRef.current;
-        if (!tokenRef.current) tokenRef.current = new AutocompleteSessionToken();
-        const request = { input: next, sessionToken: tokenRef.current };
-        const cc = (country || "").toString().trim();
-        if (cc) request.includedRegionCodes = [cc.toLowerCase()];
-        const result = await AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
-        const list = (result && result.suggestions) || [];
-        setPredictions(list);
-        setShowDropdown(list.length > 0);
-        setHighlight(0);
-      } catch (err) {
-        console.warn("[AddressAutocomplete] fetch failed:", err && err.message);
-        setPredictions([]);
-        setShowDropdown(false);
-      }
-    }, 250);
-  }
-
-  async function selectPrediction(s) {
+    const ok = await ensureLoaded();
+    if (!ok) return;
     try {
-      const place = s.placePrediction.toPlace();
-      await place.fetchFields({ fields: ["addressComponents", "formattedAddress"] });
-      const parsed = parseAddressComponents(place.addressComponents);
-      if (typeof onAddressSelect === "function") onAddressSelect(parsed);
-      setPredictions([]);
-      setShowDropdown(false);
-      tokenRef.current = null;
+      const { AutocompleteSuggestion } = await window.google.maps.importLibrary("places");
+      const request = { input: query, sessionToken: sessionTokenRef.current };
+      if (country) request.includedRegionCodes = [String(country).toLowerCase()];
+      const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+      const placePredictions = (suggestions || []).map((s) => s.placePrediction).filter(Boolean);
+      setPredictions(placePredictions);
+      setOpen(placePredictions.length > 0);
+      setActiveIndex(-1);
     } catch (err) {
-      console.warn("[AddressAutocomplete] place fetch failed:", err && err.message);
+      console.error("[AddressAutocomplete] suggestions failed:", err && err.message ? err.message : err);
     }
-  }
+  }, [country, ensureLoaded]);
 
-  function handleKeyDown(e) {
-    if (!showDropdown || predictions.length === 0) return;
-    if (e.key === "ArrowDown") { e.preventDefault(); setHighlight((h) => Math.min(predictions.length - 1, h + 1)); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); setHighlight((h) => Math.max(0, h - 1)); }
-    else if (e.key === "Enter") { e.preventDefault(); if (predictions[highlight]) selectPrediction(predictions[highlight]); }
-    else if (e.key === "Escape") { setShowDropdown(false); }
-  }
+  const handleChange = useCallback((e) => {
+    const next = e.target.value;
+    if (onChange) onChange(next);
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => fetchPredictions(next), DEBOUNCE_MS);
+  }, [onChange, fetchPredictions]);
+
+  const handleSelect = useCallback(async (prediction) => {
+    setOpen(false);
+    try {
+      const place = prediction.toPlace();
+      await place.fetchFields({ fields: ["addressComponents", "formattedAddress"] });
+      const fields = parseAddressComponents(place);
+      if (onAddressSelect) onAddressSelect(fields);
+      const { AutocompleteSessionToken } = await window.google.maps.importLibrary("places");
+      sessionTokenRef.current = new AutocompleteSessionToken();
+    } catch (err) {
+      console.error("[AddressAutocomplete] place fetch failed:", err && err.message ? err.message : err);
+    }
+  }, [onAddressSelect]);
+
+  const handleKeyDown = useCallback((e) => {
+    if (!open || predictions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => (i + 1) % predictions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => (i <= 0 ? predictions.length - 1 : i - 1));
+    } else if (e.key === "Enter") {
+      if (activeIndex >= 0 && activeIndex < predictions.length) {
+        e.preventDefault();
+        handleSelect(predictions[activeIndex]);
+      }
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  }, [open, predictions, activeIndex, handleSelect]);
 
   return (
-    <div ref={wrapRef} style={{ position: "relative" }}>
+    <div ref={wrapperRef} style={{ position: "relative" }}>
       <input
         type="text"
-        value={value}
-        onChange={handleInput}
-        onFocus={() => {
-          ensureLoaded();
-          if (predictions.length > 0) setShowDropdown(true);
-        }}
+        value={value || ""}
+        onChange={handleChange}
+        onFocus={handleFocus}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         className={className}
         style={style}
         autoComplete="off"
+        spellCheck={false}
       />
-      {showDropdown && predictions.length > 0 ? (
-        <div style={{
-          position: "absolute",
-          top: "calc(100% + 4px)",
-          left: 0,
-          right: 0,
-          background: "#fff",
-          border: "1px solid rgba(14,26,26,0.06)",
-          borderRadius: 11,
-          boxShadow: "0 1px 2px rgba(16,24,40,0.06), 0 16px 40px -12px rgba(11,55,57,0.25)",
-          zIndex: 60,
-          overflow: "hidden",
-          maxHeight: 340,
-          overflowY: "auto",
-          fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
-        }}>
-          {predictions.map((s, idx) => {
-            const text = (s.placePrediction && s.placePrediction.text && s.placePrediction.text.text) || "";
-            const isHi = idx === highlight;
+      {open && predictions.length > 0 && (
+        <div
+          role="listbox"
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            right: 0,
+            marginTop: 4,
+            background: "#fff",
+            border: "1.6px solid #DDE5E5",
+            borderRadius: 13,
+            boxShadow: "0 8px 24px rgba(14,26,26,0.10)",
+            zIndex: 1000,
+            maxHeight: 320,
+            overflowY: "auto",
+          }}
+        >
+          {predictions.map((pred, idx) => {
+            const text = pred.text && pred.text.toString ? pred.text.toString() : "";
+            const isActive = idx === activeIndex;
             return (
               <div
-                key={idx}
-                onMouseEnter={() => setHighlight(idx)}
-                onMouseDown={(e) => { e.preventDefault(); selectPrediction(s); }}
+                key={pred.placeId || idx}
+                role="option"
+                aria-selected={isActive}
+                onMouseDown={(e) => { e.preventDefault(); handleSelect(pred); }}
+                onMouseEnter={() => setActiveIndex(idx)}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 10,
                   padding: "10px 14px",
                   cursor: "pointer",
-                  background: isHi ? "#F1F5F5" : "transparent",
+                  background: isActive ? "#F9FAFA" : "#fff",
+                  borderBottom: "1px solid #EEF2F2",
                   fontSize: 14,
                   color: "#0E1A1A",
-                  transition: "background 0.1s",
                 }}
               >
-                <span style={{ color: "#0F9599", flexShrink: 0, display: "inline-flex" }} aria-hidden="true">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/>
-                    <circle cx="12" cy="10" r="3"/>
-                  </svg>
-                </span>
-                <span>{text}</span>
+                {PIN_SVG}
+                <span style={{ flex: 1 }}>{text}</span>
               </div>
             );
           })}
-          <div style={{ display: "flex", justifyContent: "flex-end", padding: "6px 12px", borderTop: "1px solid #EEF2F2", background: "#F9FAFA" }}>
-            <img
-              src="https://maps.gstatic.com/mapfiles/api-3/images/powered-by-google-on-white3.png"
-              alt="powered by Google"
-              height="14"
-              style={{ display: "block" }}
-            />
+          <div style={{ padding: "8px 14px", display: "flex", justifyContent: "flex-end", background: "#fff" }}>
+            <img src={GOOGLE_LOGO_URL} alt="powered by Google" height="14" style={{ height: 14, width: "auto" }} />
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
