@@ -12,6 +12,7 @@ const SCRIPT_ID = "novala-google-maps";
 let mapsLoadPromise = null;
 
 function loadGoogleMaps() {
+  const GOOGLE_MAPS_KEY = process.env.REACT_APP_GOOGLE_MAPS_KEY;
   if (window.google && window.google.maps && typeof window.google.maps.importLibrary === "function") {
     return Promise.resolve();
   }
