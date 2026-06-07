@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { ShoppingCart, Info } from "lucide-react";
 import { getSubdivisions } from "../data/subdivisions";
+import AddressAutocomplete from "../components/AddressAutocomplete";
 
 const TEAL = "#0F9599";
 const TEAL_DARK = "#0B7377";
@@ -352,8 +353,20 @@ export default function Billing() {
 
           <div style={{ marginBottom: 16 }}>
             <label style={labelStyle}>Address</label>
-            <input type="text" value={address} onChange={(e) => setAddress(e.target.value)}
-              placeholder="Street address" className="nv-billing-input" style={inputStyle} />
+            <AddressAutocomplete
+              value={address}
+              onChange={setAddress}
+              onAddressSelect={(fields) => {
+                if (fields.street) setAddress(fields.street);
+                if (fields.city) setCity(fields.city);
+                if (fields.postalCode) setPostalCode(fields.postalCode);
+                if (fields.provinceCode) setProvince(fields.provinceCode);
+              }}
+              country={typeof billingCountry === "string" ? billingCountry : (billingCountry && billingCountry.code) || "CA"}
+              placeholder="Street address"
+              className="nv-billing-input"
+              style={inputStyle}
+            />
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
