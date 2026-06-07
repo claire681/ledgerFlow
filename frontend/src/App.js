@@ -150,50 +150,40 @@ function AppLayout({ onLogout }) {
 
         <main  style={{ flex:1, overflowY:'auto', position:'relative', minWidth:0, marginLeft: 0 }}>
           <Routes>
-            <Route path="/help/auto-payroll" element={<HelpAutoPayroll />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/add-payroll" element={<AddPayroll />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/cart" element={<Cart />} />
-            <Route path="/accept-invite/:token" element={<AcceptInvite />} />
           <Route path="/payroll/*" element={<Payroll />} />
-            <Route path="/"               element={<Dashboard />}          />
-            <Route path="/documents"      element={<Documents />}          />
-            <Route path="/transactions"   element={<Transactions />}       />
-            <Route path="/budgets"        element={<Budgets />}            />
-            <Route path="/invoices/all" element={<InvoicesAll />} />
-            <Route path="/invoices"       element={<Invoices />}           />
-            <Route path="/invoices/new" element={<Invoices />} />
-            <Route path="/invoices/:id/edit" element={<Invoices />} />
-            <Route path="/invoices/:id/qb-edit" element={<InvoiceEditor />} />
-            <Route path="/invoices/new-qb" element={<InvoiceEditor />} />
-        <Route path="/invoices/:id/send" element={<InvoiceReviewSend />} />
-            <Route path="/tax"            element={<TaxCalculator />}      />
-            <Route path="/vendors"        element={<VendorAnalytics />}    />
-            <Route path="/currency"       element={<Currency />}           />
-            <Route path="/receipts"       element={<ReceiptScanner />}     />
-            <Route path="/agents"         element={<Agents />}             />
-            <Route path="/team"           element={<Team />}               />
-            <Route path="/integrations"   element={<Integrations />}       />
-            <Route path="/reports"        element={<FinancialReports />}   />
-            <Route path="/reconciliation" element={<Reconciliation />}     />
-            <Route path="/billpay"        element={<BillPay />}            />
-            <Route path="/variance"       element={<VarianceReports />}    />
-            <Route path="/ledger"         element={<LedgerView />}         />
-            <Route path="/comparison"     element={<DocumentComparison />} />
-            <Route path="/billing"        element={<Billing />}            />
-            <Route path="/help"           element={<Help />}               />
-            <Route path="/settings"       element={<Settings />}           />
-            <Route path="/landing"        element={<Landing />}            />
-            <Route path="/customers"      element={<Customers />}          />
-            <Route path="/inventory"      element={<Inventory />}          />
-            <Route path="/api-access"     element={<APIAccess />}          />
-            <Route path="/businesses"     element={<Businesses />}         />
-            <Route path="/search"         element={<SmartSearch />}        />
-            <Route path="*"               element={<Navigate to="/" />}    />
-            <Route path="/billing" element={<Billing />} />
-            <Route path="/register"element={<Onboarding onComplete={() => window.location.replace("/")} />} />
-            <Route path="/verify-code" element={<Verify />} />
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/documents" element={<Documents />} />
+          <Route path="/transactions" element={<Transactions />} />
+          <Route path="/budgets" element={<Budgets />} />
+          <Route path="/invoices/all" element={<InvoicesAll />} />
+          <Route path="/invoices" element={<Invoices />} />
+          <Route path="/invoices/new" element={<Invoices />} />
+          <Route path="/invoices/:id/edit" element={<Invoices />} />
+          <Route path="/invoices/:id/qb-edit" element={<InvoiceEditor />} />
+          <Route path="/invoices/new-qb" element={<InvoiceEditor />} />
+          <Route path="/invoices/:id/send" element={<InvoiceReviewSend />} />
+          <Route path="/tax" element={<TaxCalculator />} />
+          <Route path="/vendors" element={<VendorAnalytics />} />
+          <Route path="/currency" element={<Currency />} />
+          <Route path="/receipts" element={<ReceiptScanner />} />
+          <Route path="/agents" element={<Agents />} />
+          <Route path="/team" element={<Team />} />
+          <Route path="/integrations" element={<Integrations />} />
+          <Route path="/reports" element={<FinancialReports />} />
+          <Route path="/reconciliation" element={<Reconciliation />} />
+          <Route path="/billpay" element={<BillPay />} />
+          <Route path="/variance" element={<VarianceReports />} />
+          <Route path="/ledger" element={<LedgerView />} />
+          <Route path="/comparison" element={<DocumentComparison />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/landing" element={<Landing />} />
+          <Route path="/customers" element={<Customers />} />
+          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/api-access" element={<APIAccess />} />
+          <Route path="/businesses" element={<Businesses />} />
+          <Route path="/search" element={<SmartSearch />} />
+          <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
       </div>
@@ -246,24 +236,19 @@ const handleOnboardingComplete = () => {
       <AIProvider>
         <VerificationGuard />
             <Routes>
-          <Route path="/reset-password" element={<ResetPassword />}/>
-          {!token ? (
-            <>
-              <Route path="/"        element={<Landing />}                                          />
-              <Route path="/login"   element={<LoginPage onLogin={handleLogin} />}                  />
-              <Route path="/billing" element={<Billing />} />
-              <Route path="/register"element={<Onboarding onComplete={() => window.location.replace("/")} />} />
-              <Route path="/verify-code" element={<Verify />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/add-payroll" element={<AddPayroll />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/help/auto-payroll" element={<HelpAutoPayroll />} />
-              <Route path="*"        element={<Navigate to="/" />}                                  />
-            </>
-          ) : (
-            <Route path="*" element={<AppLayout onLogout={handleLogout} />}/>
-          )}
+          <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+          <Route path="/billing" element={<Billing />} />
+          <Route path="/register" element={<Onboarding onComplete={() => window.location.replace("/")} />} />
+          <Route path="/verify-code" element={<Verify />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/add-payroll" element={<AddPayroll />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/help/auto-payroll" element={<HelpAutoPayroll />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/accept-invite/:token" element={<AcceptInvite />} />
+          <Route path="/" element={token ? <AppLayout onLogout={handleLogout} /> : <Landing />} />
+          <Route path="*" element={token ? <AppLayout onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
         </Routes>
       </AIProvider>
     </Router>
