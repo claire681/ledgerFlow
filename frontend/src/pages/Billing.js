@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { ShoppingCart, Info } from "lucide-react";
-import CountrySelect from "../components/CountrySelect";
+import { getSubdivisions } from "../data/subdivisions";
 
 const TEAL = "#0F9599";
 const TEAL_DARK = "#0B7377";
@@ -110,8 +110,9 @@ export default function Billing() {
   const [address, setAddress] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
-  const [province, setProvince] = useState("AB");
-  const [billingCountry, setBillingCountry] = useState({ code: "CA", name: "Canada", dialCode: "+1", flag: "🇨🇦" });
+  const billingCountry = ((typeof window !== "undefined" && (localStorage.getItem("business_country") || localStorage.getItem("signup_country_iso"))) || "CA").toUpperCase();
+  const subdivision = getSubdivisions(billingCountry);
+  const [province, setProvince] = useState(subdivision ? subdivision.options[0].value : "");
   const [useAsBusinessAddress, setUseAsBusinessAddress] = useState(true);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -367,17 +368,17 @@ export default function Billing() {
                 placeholder="Edmonton" className="nv-billing-input" style={inputStyle} />
             </div>
           </div>
-
           <div style={{ marginBottom: 20 }}>
-            <label style={labelStyle}>Country</label>
-            <CountrySelect mode="country" value={billingCountry.code} onChange={(c) => setBillingCountry(c)} defaultCode="CA" />
-          </div>
-          <div style={{ marginBottom: 20 }}>
-            <label style={labelStyle}>Province/Territory</label>
-            <select value={province} onChange={(e) => setProvince(e.target.value)}
-              className="nv-billing-input" style={inputStyle}>
-              {PROVINCES.map((pp) => <option key={pp} value={pp}>{pp}</option>)}
-            </select>
+            <label style={labelStyle}>{subdivision ? subdivision.label : "Region"}</label>
+            {subdivision ? (
+              <select value={province} onChange={(e) => setProvince(e.target.value)} className="nv-billing-input" style={inputStyle}>
+                {subdivision.options.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            ) : (
+              <input type="text" value={province} onChange={(e) => setProvince(e.target.value)} placeholder="Enter your region" className="nv-billing-input" style={inputStyle} />
+            )}
           </div>
 
           <label style={{
