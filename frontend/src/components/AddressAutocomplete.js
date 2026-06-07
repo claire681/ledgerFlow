@@ -12,35 +12,57 @@ const SCRIPT_ID = "novala-google-maps";
 let mapsLoadPromise = null;
 
 function loadGoogleMaps() {
-  if (typeof window === "undefined") return Promise.reject(new Error("no window"));
-  if (!GOOGLE_MAPS_KEY) return Promise.reject(new Error("REACT_APP_GOOGLE_MAPS_KEY not set"));
-  if (window.google && window.google.maps && window.google.maps.importLibrary) {
+  if (window.google && window.google.maps && typeof window.google.maps.importLibrary === "function") {
     return Promise.resolve();
   }
-  if (mapsLoadPromise) return mapsLoadPromise;
+  if (window.__novalaMapsLoadPromise) return window.__novalaMapsLoadPromise;
+  if (!GOOGLE_MAPS_KEY) return Promise.reject(new Error("Missing REACT_APP_GOOGLE_MAPS_KEY"));
 
-  mapsLoadPromise = new Promise((resolve, reject) => {
-    if (document.getElementById(SCRIPT_ID)) {
-      const check = setInterval(() => {
-        if (window.google && window.google.maps && window.google.maps.importLibrary) {
-          clearInterval(check);
-          resolve();
-        }
-      }, 50);
-      setTimeout(() => { clearInterval(check); reject(new Error("Maps load timeout")); }, 10000);
-      return;
+  window.__novalaMapsLoadPromise = new Promise(function (resolve, reject) {
+    try {
+      // Google's official inline bootstrap loader. The classic script tag
+      // (maps/api/js?libraries=places) does NOT expose importLibrary, which
+      // the new AutocompleteSuggestion / Place API requires.
+      (function (g) {
+        var h, a, k, p = "The Google Maps JavaScript API",
+            c = "google", l = "importLibrary", q = "__ib__",
+            m = document, b = window;
+        b = b[c] || (b[c] = {});
+        var d = b.maps || (b.maps = {}),
+            r = new Set(),
+            e = new URLSearchParams(),
+            u = function () {
+              return h || (h = new Promise(function (f, n) {
+                a = m.createElement("script");
+                e.set("libraries", Array.from(r).join(","));
+                for (k in g) e.set(k.replace(/[A-Z]/g, function (t) { return "_" + t[0].toLowerCase(); }), g[k]);
+                e.set("callback", c + ".maps." + q);
+                a.src = "https://maps." + c + "apis.com/maps/api/js?" + e;
+                d[q] = f;
+                a.onerror = function () { n(new Error(p + " could not load.")); };
+                a.nonce = (m.querySelector("script[nonce]") || {}).nonce || "";
+                a.id = "novala-google-maps";
+                m.head.append(a);
+              }));
+            };
+        if (d[l]) return;
+        d[l] = function (f) {
+          var n = Array.prototype.slice.call(arguments, 1);
+          return r.add(f) && u().then(function () { return d[l].apply(d, [f].concat(n)); });
+        };
+      })({ key: GOOGLE_MAPS_KEY, v: "weekly" });
+
+      if (window.google && window.google.maps && typeof window.google.maps.importLibrary === "function") {
+        resolve();
+      } else {
+        reject(new Error("Bootstrap loader did not install importLibrary"));
+      }
+    } catch (err) {
+      reject(err);
     }
-    const s = document.createElement("script");
-    s.id = SCRIPT_ID;
-    s.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(GOOGLE_MAPS_KEY) + "&v=weekly&libraries=places&loading=async";
-    s.async = true;
-    s.defer = true;
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("Maps script load failed"));
-    document.head.appendChild(s);
   });
 
-  return mapsLoadPromise;
+  return window.__novalaMapsLoadPromise;
 }
 
 function parseAddressComponents(components) {
