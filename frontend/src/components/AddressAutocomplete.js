@@ -94,8 +94,6 @@ const PIN_SVG = (
   </svg>
 );
 
-const GOOGLE_LOGO_URL = "https://developers.google.com/static/maps/documentation/images/google_on_white.png";
-
 export default function AddressAutocomplete({
   value,
   onChange,
@@ -270,8 +268,8 @@ export default function AddressAutocomplete({
               </div>
             );
           })}
-          <div style={{ padding: "8px 14px", display: "flex", justifyContent: "flex-end", background: "#fff" }}>
-            <img src={GOOGLE_LOGO_URL} alt="powered by Google" height="14" style={{ height: 14, width: "auto" }} />
+          <div style={{ padding: "8px 14px", display: "flex", alignItems: "center", justifyContent: "flex-end", background: "#fff", borderTop: "1px solid #EEF2F2" }}>
+            <span style={{ fontSize: 11, color: "#5B6B6B", letterSpacing: 0.2 }}>Powered by Google</span>
           </div>
         </div>
       )}
