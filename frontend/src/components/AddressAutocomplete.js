@@ -10,11 +10,6 @@ const GOOGLE_MAPS_KEY = process.env.REACT_APP_GOOGLE_MAPS_KEY;
 const DEBOUNCE_MS = 250;
 const MIN_QUERY_LEN = 3;
 
-// Diagnostic: log once on module load so we can confirm the build picked up the env var.
-if (typeof window !== "undefined") {
-  console.log("[AddressAutocomplete] module loaded; key present:", !!GOOGLE_MAPS_KEY);
-}
-
 function loadGoogleMaps() {
   if (window.google && window.google.maps && typeof window.google.maps.importLibrary === "function") {
     return Promise.resolve();
@@ -144,7 +139,6 @@ export default function AddressAutocomplete({
   }, [loaded]);
 
   const handleFocus = useCallback(() => {
-    console.log("[AddressAutocomplete] focus");
     ensureLoaded();
   }, [ensureLoaded]);
 

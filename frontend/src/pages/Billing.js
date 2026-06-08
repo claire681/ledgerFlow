@@ -251,75 +251,16 @@ export default function Billing() {
           </div>
 
           {paymentMethod === "card" && (
-            <>
-              <div style={{ marginBottom: 16 }}>
-                <label style={labelStyle}>Credit or debit card number</label>
-                <div style={{ position: "relative" }}>
-                  <input type="text" inputMode="numeric" autoComplete="cc-number"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                    placeholder="1234 5678 9012 3456"
-                    className="nv-billing-input"
-                    style={{ ...inputStyle, paddingRight: 110 }} />
-                  <div style={{
-                    position: "absolute", top: "50%", right: 10, transform: "translateY(-50%)",
-                    display: "flex", gap: 5, alignItems: "center", pointerEvents: "none"
-                  }}>
-                    <VisaLogo /><MastercardLogo /><AmexLogo />
-                  </div>
-                </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, marginTop: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: 13, color: "#5B6B6B", textAlign: "center", maxWidth: 320, lineHeight: 1.5 }}>
+                Pay securely with your credit or debit card. Card details are entered directly with PayPal's PCI-compliant processor.
               </div>
-
-              <div style={{ marginBottom: 16 }}>
-                <label style={labelStyle}>Card nickname (optional)</label>
-                <input type="text" value={cardNickname} onChange={(e) => setCardNickname(e.target.value)}
-                  placeholder="Card nickname" className="nv-billing-input" style={inputStyle} />
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
-                <div>
-                  <label style={labelStyle}>Month</label>
-                  <select value={expMonth} onChange={(e) => setExpMonth(e.target.value)}
-                    className="nv-billing-input" style={inputStyle}>
-                    <option value="">MM</option>
-                    {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={labelStyle}>Year</label>
-                  <select value={expYear} onChange={(e) => setExpYear(e.target.value)}
-                    className="nv-billing-input" style={inputStyle}>
-                    <option value="">YYYY</option>
-                    {getYears().map((y) => <option key={y} value={y}>{y}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={labelStyle}>CVV</label>
-                  <div style={{ position: "relative" }}>
-                    <input type="text" inputMode="numeric" autoComplete="cc-csc"
-                      value={cvv}
-                      onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                      placeholder="3 digits"
-                      className="nv-billing-input"
-                      style={{ ...inputStyle, paddingRight: 44 }} />
-                    <div style={{
-                      position: "absolute", top: "50%", right: 8, transform: "translateY(-50%)",
-                      pointerEvents: "none"
-                    }}>
-                      <CvvCardIcon />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: 28 }}>
-                <label style={labelStyle}>Name on card</label>
-                <input type="text" autoComplete="cc-name"
-                  value={nameOnCard} onChange={(e) => setNameOnCard(e.target.value)}
-                  placeholder="Full name as it appears on card"
-                  className="nv-billing-input" style={inputStyle} />
-              </div>
-            </>
+              <PayPalSubscribeButton
+                fundingSource="card"
+                onSuccess={(sub) => { window.location.href = "/dashboard?subscribed=" + ((sub && sub.plan_slug) || ""); }}
+                onError={(err) => { alert("Payment failed: " + ((err && err.message) || err)); }}
+              />
+            </div>
           )}
 
           {paymentMethod === "paypal" && (

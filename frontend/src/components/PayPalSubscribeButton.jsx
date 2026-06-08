@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import { PayPalScriptProvider, PayPalButtons, FUNDING } from "@paypal/react-paypal-js";
 
 const PAYPAL_CLIENT_ID = process.env.REACT_APP_PAYPAL_CLIENT_ID;
 const API_BASE = process.env.REACT_APP_API_BASE || "https://api.getnovala.com";
 
-export default function PayPalSubscribeButton({ planSlug, onSuccess, onError }) {
+export default function PayPalSubscribeButton({ planSlug, fundingSource = "paypal", onSuccess, onError }) {
   const effectivePlanSlug =
     planSlug ||
     localStorage.getItem("selected_plan_slug") ||
@@ -23,9 +23,7 @@ export default function PayPalSubscribeButton({ planSlug, onSuccess, onError }) 
       })
       .then(function (data) {
         if (cancelled) return;
-        const match = (data.plans || []).find(function (p) {
-          return p.slug === effectivePlanSlug;
-        });
+        const match = (data.plans || []).find(function (p) { return p.slug === effectivePlanSlug; });
         if (!match) {
           setLoadError("Plan '" + effectivePlanSlug + "' not found");
         } else {
@@ -38,33 +36,20 @@ export default function PayPalSubscribeButton({ planSlug, onSuccess, onError }) 
         setLoadError("Could not load plans: " + err.message);
         setLoading(false);
       });
-    return function () {
-      cancelled = true;
-    };
+    return function () { cancelled = true; };
   }, [effectivePlanSlug]);
 
   if (!PAYPAL_CLIENT_ID) {
-    return (
-      <div style={{ padding: 16, color: "#D9453C", fontSize: 13 }}>
-        PayPal is not configured (REACT_APP_PAYPAL_CLIENT_ID missing).
-      </div>
-    );
+    return <div style={{ padding: 16, color: "#D9453C", fontSize: 13 }}>PayPal is not configured.</div>;
   }
+  if (loading) return <div style={{ padding: 16, color: "#5B6B6B", fontSize: 13 }}>Loading...</div>;
+  if (loadError) return <div style={{ padding: 16, color: "#D9453C", fontSize: 13 }}>{loadError}</div>;
+  if (!planId) return <div style={{ padding: 16, color: "#D9453C", fontSize: 13 }}>No matching plan.</div>;
 
-  if (loading) {
-    return <div style={{ padding: 16, color: "#5B6B6B", fontSize: 13 }}>Loading PayPal...</div>;
-  }
-
-  if (loadError) {
-    return <div style={{ padding: 16, color: "#D9453C", fontSize: 13 }}>{loadError}</div>;
-  }
-
-  if (!planId) {
-    return <div style={{ padding: 16, color: "#D9453C", fontSize: 13 }}>No matching plan.</div>;
-  }
+  const fundingValue = FUNDING[String(fundingSource).toUpperCase()] || FUNDING.PAYPAL;
 
   return (
-    <div style={{ minWidth: 240, maxWidth: 320 }}>
+    <div style={{ minWidth: 240, maxWidth: 320, margin: "0 auto" }}>
       <PayPalScriptProvider
         options={{
           clientId: PAYPAL_CLIENT_ID,
@@ -73,6 +58,7 @@ export default function PayPalSubscribeButton({ planSlug, onSuccess, onError }) 
         }}
       >
         <PayPalButtons
+          fundingSource={fundingValue}
           style={{
             layout: "vertical",
             color: "gold",
@@ -104,18 +90,12 @@ export default function PayPalSubscribeButton({ planSlug, onSuccess, onError }) 
                 throw new Error("Backend activate failed: " + res.status + " - " + txt);
               }
               const sub = await res.json();
-              if (onSuccess) {
-                onSuccess(sub);
-              } else {
-                window.location.href = "/dashboard?subscribed=" + effectivePlanSlug;
-              }
+              if (onSuccess) onSuccess(sub);
+              else window.location.href = "/dashboard?subscribed=" + effectivePlanSlug;
             } catch (err) {
               console.error("[PayPalSubscribeButton] onApprove failed:", err);
-              if (onError) {
-                onError(err);
-              } else {
-                alert("Subscription failed: " + err.message);
-              }
+              if (onError) onError(err);
+              else alert("Subscription failed: " + err.message);
             }
           }}
           onError={function (err) {
