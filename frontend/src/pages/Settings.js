@@ -10,6 +10,7 @@ import { L, card, page, topBar } from '../styles/light';
 import { getFirstName } from '../utils/userDisplay';
 import VerifyModalTestButton from "../components/VerifyModalTestButton";
 
+import BillingPanel from '../components/BillingPanel';
 const BASE     = 'https://api.getnovala.com/api/v1';
 const ACCENT   = '#0AB98A';
 const FONT     = "'Inter', -apple-system, sans-serif";
@@ -499,34 +500,7 @@ export default function Settings() {
           )}
 
           {activeTab === 'billing' && (
-            <Section title="Billing & Plan" desc="Manage your subscription and payment details">
-              <div style={{ padding: '16px', borderRadius: L.radiusSm, background: L.pageBg, border: '1px solid ' + L.border, marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: L.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Current Plan</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: L.text, marginBottom: 4, textTransform: 'capitalize' }}>
-                  {billingStatus?.plan || 'Trial'} Plan
-                </div>
-                <div style={{ fontSize: 12, color: L.textMuted }}>
-                  {billingStatus?.subscription_status === 'active' ? 'Active subscription — renews monthly'
-                    : billingStatus?.subscription_status === 'trialing' ? 'In trial period'
-                    : trialDaysLeft() + ' days left in free trial'}
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <button onClick={() => navigate('/billing')}
-                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: L.radiusSm, background: ACCENT, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: L.font }}>
-                  <CreditCard size={13} /> Manage Billing
-                </button>
-                {billingStatus?.subscription_status === 'active' && (
-                  <button onClick={async () => {
-                    const res  = await fetch(BASE + '/billing/portal', { method: 'POST', headers: { Authorization: 'Bearer ' + getToken() } });
-                    const data = await res.json();
-                    if (data.url) window.location.href = data.url;
-                  }} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: L.radiusSm, background: 'transparent', border: '1px solid ' + L.border, color: L.textMuted, cursor: 'pointer', fontSize: 13, fontFamily: L.font }}>
-                    <ArrowRight size={13} /> Manage Subscription
-                  </button>
-                )}
-              </div>
-            </Section>
+            <BillingPanel />
           )}
 
           {activeTab === 'danger' && (
