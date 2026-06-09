@@ -11,13 +11,13 @@ DELETE /payroll/runs/{id}           Delete a draft run
 """
 
 from decimal import Decimal
-from datetime import date
-from typing import List, Optional
+from datetime import date, datetime, timezone
+from typing import List, Optional, Dict, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from pydantic import BaseModel
 
 from app.db.database import get_db
@@ -25,6 +25,7 @@ from app.core.security import get_current_user
 
 from app.models.models import (
     User, PayRun, PayStub, Employee, PayrollSettings,
+    YTDBalance, PayrollAuditLog,
 )
 from app.payroll.service import PayrollService
 from app.payroll.types import (
@@ -305,3 +306,444 @@ async def delete_pay_run(
 
     await db.delete(run)
     await db.commit()
+
+
+# ============================================================
+# Calculate / Finalize / Void requests
+# ============================================================
+
+class CalculateRequest(BaseModel):
+    """Body for POST /runs/{id}/calculate.
+
+    employee_inputs: hours and extras per employee in the run.
+    pay_periods_per_year: override settings default if provided.
+    subnational: override settings.province_or_state if provided.
+    """
+    employee_inputs: List[PayRunEmployeeInput]
+    pay_periods_per_year: Optional[int] = None
+    subnational: Optional[str] = None
+
+
+class VoidRequest(BaseModel):
+    reason: str
+
+
+# ============================================================
+# Helpers
+# ============================================================
+
+PAY_FREQUENCY_TO_PERIODS = {
+    "weekly": 52,
+    "bi_weekly": 26,
+    "biweekly": 26,
+    "semi_monthly": 24,
+    "semimonthly": 24,
+    "monthly": 12,
+}
+
+
+def _periods_per_year(settings, override: Optional[int]) -> int:
+    if override:
+        return override
+    if settings and settings.default_pay_schedule:
+        return PAY_FREQUENCY_TO_PERIODS.get(settings.default_pay_schedule.lower(), 26)
+    return 26
+
+
+def _jurisdiction_key(country: str, subnational: Optional[str]) -> str:
+    return f"{country}-{subnational}" if subnational else country
+
+
+def _ytd_to_dict(ytd: Optional[YTDBalance]) -> Dict[str, Any]:
+    if ytd is None:
+        return {}
+    return {
+        "ytd_gross": ytd.ytd_gross,
+        "ytd_federal_tax": ytd.ytd_federal_tax,
+        "ytd_provincial_or_state_tax": ytd.ytd_provincial_or_state_tax,
+        "ytd_social_security_employee": ytd.ytd_social_security_employee,
+        "ytd_social_security_employer": ytd.ytd_social_security_employer,
+        "ytd_unemployment_employee": ytd.ytd_unemployment_employee,
+        "ytd_unemployment_employer": ytd.ytd_unemployment_employer,
+        "ytd_pensionable_earnings": ytd.ytd_pensionable_earnings,
+        "ytd_insurable_earnings": ytd.ytd_insurable_earnings,
+    }
+
+
+def _apply_ytd_delta(ytd: YTDBalance, stub: PayStub) -> None:
+    """Add this pay stub's amounts to the YTD balance."""
+    ytd.ytd_gross = (ytd.ytd_gross or Decimal("0")) + stub.gross_pay
+    ytd.ytd_federal_tax = (ytd.ytd_federal_tax or Decimal("0")) + stub.federal_tax
+    ytd.ytd_provincial_or_state_tax = (
+        (ytd.ytd_provincial_or_state_tax or Decimal("0"))
+        + stub.provincial_or_state_tax
+    )
+    ytd.ytd_social_security_employee = (
+        (ytd.ytd_social_security_employee or Decimal("0"))
+        + stub.social_security_employee
+    )
+    ytd.ytd_social_security_employer = (
+        (ytd.ytd_social_security_employer or Decimal("0"))
+        + stub.social_security_employer
+    )
+    ytd.ytd_unemployment_employee = (
+        (ytd.ytd_unemployment_employee or Decimal("0"))
+        + stub.unemployment_employee
+    )
+    ytd.ytd_unemployment_employer = (
+        (ytd.ytd_unemployment_employer or Decimal("0"))
+        + stub.unemployment_employer
+    )
+    # Pensionable + insurable from snapshot (engine-dependent)
+    snap = stub.calculation_snapshot or {}
+    pensionable_after = (
+        snap.get("cpp", {}).get("ytd_pensionable_after")
+        if isinstance(snap.get("cpp"), dict) else None
+    )
+    if pensionable_after:
+        ytd.ytd_pensionable_earnings = Decimal(str(pensionable_after))
+
+    insurable_after = (
+        (snap.get("ei", {}) or {}).get("ytd_insurable_after")
+        or (snap.get("fica", {}) or {}).get("new_ytd_medicare")
+    )
+    if insurable_after:
+        ytd.ytd_insurable_earnings = Decimal(str(insurable_after))
+
+
+def _reverse_ytd_delta(ytd: YTDBalance, stub: PayStub) -> None:
+    """Subtract this stub's amounts from YTD (used on void)."""
+    ytd.ytd_gross = (ytd.ytd_gross or Decimal("0")) - stub.gross_pay
+    ytd.ytd_federal_tax = (ytd.ytd_federal_tax or Decimal("0")) - stub.federal_tax
+    ytd.ytd_provincial_or_state_tax = (
+        (ytd.ytd_provincial_or_state_tax or Decimal("0"))
+        - stub.provincial_or_state_tax
+    )
+    ytd.ytd_social_security_employee = (
+        (ytd.ytd_social_security_employee or Decimal("0"))
+        - stub.social_security_employee
+    )
+    ytd.ytd_social_security_employer = (
+        (ytd.ytd_social_security_employer or Decimal("0"))
+        - stub.social_security_employer
+    )
+    ytd.ytd_unemployment_employee = (
+        (ytd.ytd_unemployment_employee or Decimal("0"))
+        - stub.unemployment_employee
+    )
+    ytd.ytd_unemployment_employer = (
+        (ytd.ytd_unemployment_employer or Decimal("0"))
+        - stub.unemployment_employer
+    )
+
+
+# ============================================================
+# POST /runs/{id}/calculate
+# ============================================================
+
+@router.post("/runs/{run_id}/calculate")
+async def calculate_pay_run(
+    run_id: UUID,
+    body: CalculateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Calculate a pay run and persist pay stubs as draft.
+
+    Idempotent: re-running replaces existing stubs for this run.
+    Cannot be called on finalized or voided runs.
+    """
+    # Load run
+    run_result = await db.execute(
+        select(PayRun).where(
+            PayRun.id == run_id, PayRun.owner_id == current_user.id
+        )
+    )
+    run = run_result.scalar_one_or_none()
+    if not run:
+        raise HTTPException(404, "Pay run not found")
+    if run.status != "draft":
+        raise HTTPException(
+            400, f"Cannot calculate a run with status '{run.status}' (must be draft)"
+        )
+
+    # Load settings
+    settings_result = await db.execute(
+        select(PayrollSettings).where(PayrollSettings.owner_id == current_user.id)
+    )
+    settings = settings_result.scalar_one_or_none()
+
+    pay_periods = _periods_per_year(settings, body.pay_periods_per_year)
+    subnational = body.subnational or (
+        settings.province_or_state if settings else None
+    )
+
+    jurisdiction = JurisdictionContext(
+        country=run.country,
+        subnational=subnational,
+        pay_period_start=run.pay_period_start,
+        pay_period_end=run.pay_period_end,
+        pay_date=run.pay_date,
+        pay_periods_per_year=pay_periods,
+    )
+
+    # Load employees
+    employee_ids = [inp.employee_id for inp in body.employee_inputs]
+    emp_result = await db.execute(
+        select(Employee).where(
+            Employee.id.in_(employee_ids),
+            Employee.owner_id == current_user.id,
+        )
+    )
+    employees = emp_result.scalars().all()
+    employees_by_id = {str(e.id): _employee_to_dict(e) for e in employees}
+
+    # Load YTD balances (calendar year for v1)
+    tax_year = run.pay_period_start.year
+    jurisdiction_key = _jurisdiction_key(run.country, subnational)
+
+    ytd_result = await db.execute(
+        select(YTDBalance).where(
+            YTDBalance.employee_id.in_(employee_ids),
+            YTDBalance.tax_year == tax_year,
+            YTDBalance.jurisdiction == jurisdiction_key,
+        )
+    )
+    ytd_by_emp = {str(y.employee_id): _ytd_to_dict(y) for y in ytd_result.scalars().all()}
+
+    # Calculate
+    service = PayrollService()
+    try:
+        preview = service.preview_run(
+            employees_by_id=employees_by_id,
+            ytd_by_employee_id=ytd_by_emp,
+            employee_inputs=body.employee_inputs,
+            jurisdiction=jurisdiction,
+            pay_run_id=str(run.id),
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+    # Wipe existing pay stubs for this run, then insert fresh
+    await db.execute(delete(PayStub).where(PayStub.pay_run_id == run_id))
+
+    for stub in preview.pay_stubs:
+        new_stub = PayStub(
+            pay_run_id=run.id,
+            employee_id=UUID(stub.employee_id),
+            employee_name=stub.employee_name,
+            employee_email=stub.employee_email,
+            position_title=stub.position_title,
+            pay_type=stub.pay_type,
+            hourly_rate=stub.hourly_rate,
+            salary_amount=stub.salary_amount,
+            currency=stub.currency,
+            hours_regular=stub.hours_regular,
+            hours_overtime=stub.hours_overtime,
+            hours_stat_holiday=stub.hours_stat_holiday,
+            hours_vacation=stub.hours_vacation,
+            hours_sick=stub.hours_sick,
+            hours_evening=stub.hours_evening,
+            hours_overnight=stub.hours_overnight,
+            hours_weekend=stub.hours_weekend,
+            hours_on_call=stub.hours_on_call,
+            hours_travel=stub.hours_travel,
+            gross_pay=stub.gross_pay,
+            bonus=stub.bonus,
+            commission=stub.commission,
+            reimbursement=stub.reimbursement,
+            federal_tax=stub.federal_tax,
+            provincial_or_state_tax=stub.provincial_or_state_tax,
+            local_tax=stub.local_tax,
+            social_security_employee=stub.social_security_employee,
+            social_security_2_employee=stub.social_security_2_employee,
+            unemployment_employee=stub.unemployment_employee,
+            other_employee_deductions=dict(stub.other_employee_deductions),
+            total_employee_deductions=stub.total_employee_deductions,
+            social_security_employer=stub.social_security_employer,
+            unemployment_employer=stub.unemployment_employer,
+            workers_comp_employer=stub.workers_comp_employer,
+            other_employer_contributions=dict(stub.other_employer_contributions),
+            total_employer_contributions=stub.total_employer_contributions,
+            net_pay=stub.net_pay,
+            calculation_snapshot=dict(stub.calculation_snapshot),
+        )
+        db.add(new_stub)
+
+    # Update run totals
+    run.total_gross = preview.total_gross
+    run.total_deductions = preview.total_employee_deductions
+    run.total_net = preview.total_net
+    run.total_employer_contributions = preview.total_employer_contributions
+    run.total_remittance_owed = preview.total_remittance_owed
+    run.employee_count = preview.employee_count
+
+    await db.commit()
+    await db.refresh(run)
+
+    return _run_to_response(run)
+
+
+# ============================================================
+# POST /runs/{id}/finalize
+# ============================================================
+
+@router.post("/runs/{run_id}/finalize", response_model=PayRunResponse)
+async def finalize_pay_run(
+    run_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Finalize a pay run: lock it, update YTD balances, write audit log."""
+    run_result = await db.execute(
+        select(PayRun).where(
+            PayRun.id == run_id, PayRun.owner_id == current_user.id
+        )
+    )
+    run = run_result.scalar_one_or_none()
+    if not run:
+        raise HTTPException(404, "Pay run not found")
+    if run.status != "draft":
+        raise HTTPException(
+            400, f"Only draft runs can be finalized (current: '{run.status}')"
+        )
+
+    stubs_result = await db.execute(
+        select(PayStub).where(PayStub.pay_run_id == run_id)
+    )
+    stubs = stubs_result.scalars().all()
+    if not stubs:
+        raise HTTPException(
+            400, "No pay stubs found. Call /calculate first."
+        )
+
+    tax_year = run.pay_period_start.year
+
+    for stub in stubs:
+        snap = stub.calculation_snapshot or {}
+        country = snap.get("country", run.country)
+        subnational = snap.get("subnational")
+        jurisdiction_key = _jurisdiction_key(country, subnational)
+
+        ytd_result = await db.execute(
+            select(YTDBalance).where(
+                YTDBalance.employee_id == stub.employee_id,
+                YTDBalance.tax_year == tax_year,
+                YTDBalance.jurisdiction == jurisdiction_key,
+            )
+        )
+        ytd = ytd_result.scalar_one_or_none()
+
+        if ytd is None:
+            ytd = YTDBalance(
+                employee_id=stub.employee_id,
+                tax_year=tax_year,
+                jurisdiction=jurisdiction_key,
+            )
+            db.add(ytd)
+
+        _apply_ytd_delta(ytd, stub)
+        ytd.last_pay_run_id = run.id
+
+    # Lock the run
+    run.status = "finalized"
+    run.finalized_at = datetime.now(timezone.utc)
+    run.finalized_by_user_id = current_user.id
+
+    # Audit
+    audit = PayrollAuditLog(
+        owner_id=current_user.id,
+        entity_type="pay_run",
+        entity_id=run.id,
+        action="finalized",
+        actor_user_id=current_user.id,
+        actor_role="admin",
+        before_state={"status": "draft"},
+        after_state={
+            "status": "finalized",
+            "employee_count": run.employee_count,
+            "total_net": str(run.total_net),
+        },
+        notes=f"Finalized {len(stubs)} pay stubs",
+    )
+    db.add(audit)
+
+    await db.commit()
+    await db.refresh(run)
+    return _run_to_response(run)
+
+
+# ============================================================
+# POST /runs/{id}/void
+# ============================================================
+
+@router.post("/runs/{run_id}/void", response_model=PayRunResponse)
+async def void_pay_run(
+    run_id: UUID,
+    body: VoidRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Void a pay run. If finalized, reverses YTD updates."""
+    run_result = await db.execute(
+        select(PayRun).where(
+            PayRun.id == run_id, PayRun.owner_id == current_user.id
+        )
+    )
+    run = run_result.scalar_one_or_none()
+    if not run:
+        raise HTTPException(404, "Pay run not found")
+    if run.status == "voided":
+        raise HTTPException(400, "Pay run is already voided")
+
+    was_finalized = run.status == "finalized"
+
+    if was_finalized:
+        # Reverse YTD updates
+        stubs_result = await db.execute(
+            select(PayStub).where(PayStub.pay_run_id == run_id)
+        )
+        stubs = stubs_result.scalars().all()
+
+        tax_year = run.pay_period_start.year
+        for stub in stubs:
+            snap = stub.calculation_snapshot or {}
+            country = snap.get("country", run.country)
+            subnational = snap.get("subnational")
+            jurisdiction_key = _jurisdiction_key(country, subnational)
+
+            ytd_result = await db.execute(
+                select(YTDBalance).where(
+                    YTDBalance.employee_id == stub.employee_id,
+                    YTDBalance.tax_year == tax_year,
+                    YTDBalance.jurisdiction == jurisdiction_key,
+                )
+            )
+            ytd = ytd_result.scalar_one_or_none()
+            if ytd:
+                _reverse_ytd_delta(ytd, stub)
+
+    # Mark voided
+    prior_status = run.status
+    run.status = "voided"
+    run.voided_at = datetime.now(timezone.utc)
+    run.void_reason = body.reason
+
+    # Audit
+    audit = PayrollAuditLog(
+        owner_id=current_user.id,
+        entity_type="pay_run",
+        entity_id=run.id,
+        action="voided",
+        actor_user_id=current_user.id,
+        actor_role="admin",
+        before_state={"status": prior_status},
+        after_state={"status": "voided", "reason": body.reason},
+        notes=f"Voided pay run (prior status: {prior_status})",
+    )
+    db.add(audit)
+
+    await db.commit()
+    await db.refresh(run)
+    return _run_to_response(run)
+
