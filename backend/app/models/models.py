@@ -140,6 +140,7 @@ class User(Base):
     upload_jobs        = relationship("UploadJob",         back_populates="user", cascade="all, delete-orphan")
 
 
+    subscriptions = relationship("Subscription", back_populates="user", cascade="all, delete-orphan")
 # ══════════════════════════════════════════════════════════════════════════
 # DOCUMENT
 # ══════════════════════════════════════════════════════════════════════════
@@ -743,6 +744,14 @@ class PayRun(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     approved_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Multi-country engine fields
+    total_employer_contributions = Column(Numeric(14, 2), nullable=False, default=0)
+    total_remittance_owed = Column(Numeric(14, 2), nullable=False, default=0)
+    finalized_at = Column(DateTime(timezone=True), nullable=True)
+    finalized_by_user_id = Column(UUID(as_uuid=True), nullable=True)
+    voided_at = Column(DateTime(timezone=True), nullable=True)
+    void_reason = Column(Text, nullable=True)
+
 
 class PayStub(Base):
     __tablename__ = "pay_stubs"
@@ -751,22 +760,146 @@ class PayStub(Base):
     pay_run_id = Column(UUID(as_uuid=True), ForeignKey("pay_runs.id", ondelete="CASCADE"), nullable=False, index=True)
     employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False, index=True)
 
-    # Snapshot of employee details at time of pay run (so historical stubs survive employee edits)
-    employee_name = Column(String, nullable=True)
-    employee_email = Column(String, nullable=True)
-    position_title = Column(String, nullable=True)
+    # Employee snapshot at time of run
+    employee_name = Column(String(200), nullable=True)
+    employee_email = Column(String(255), nullable=True)
+    position_title = Column(String(200), nullable=True)
 
-    # Pay detail
-    pay_type = Column(String, nullable=True)
-    hours_worked = Column(Numeric(8, 2), nullable=True)
-    hourly_rate = Column(Numeric(12, 2), nullable=True)
+    # Hour breakdown by category
+    hours_regular = Column(Numeric(8, 2), nullable=False, default=0)
+    hours_overtime = Column(Numeric(8, 2), nullable=False, default=0)
+    hours_stat_holiday = Column(Numeric(8, 2), nullable=False, default=0)
+    hours_vacation = Column(Numeric(8, 2), nullable=False, default=0)
+    hours_sick = Column(Numeric(8, 2), nullable=False, default=0)
+    hours_evening = Column(Numeric(8, 2), nullable=False, default=0)
+    hours_overnight = Column(Numeric(8, 2), nullable=False, default=0)
+    hours_weekend = Column(Numeric(8, 2), nullable=False, default=0)
+    hours_on_call = Column(Numeric(8, 2), nullable=False, default=0)
+    hours_travel = Column(Numeric(8, 2), nullable=False, default=0)
 
-    # Money
-    gross = Column(Numeric(12, 2), nullable=False)
-    deductions = Column(JSONB, nullable=True, default=dict)
-    deductions_total = Column(Numeric(12, 2), nullable=False, default=0)
-    net = Column(Numeric(12, 2), nullable=False)
+    # Pay basis
+    pay_type = Column(String(20), nullable=True)
+    hourly_rate = Column(Numeric(10, 2), nullable=True)
+    salary_amount = Column(Numeric(10, 2), nullable=False, default=0)
 
-    currency = Column(String, nullable=False, default="CAD")
+    # Earnings
+    gross_pay = Column(Numeric(12, 2), nullable=False, default=0)
+    bonus = Column(Numeric(10, 2), nullable=False, default=0)
+    commission = Column(Numeric(10, 2), nullable=False, default=0)
+    reimbursement = Column(Numeric(10, 2), nullable=False, default=0)
+
+    # Employee deductions (country-agnostic)
+    federal_tax = Column(Numeric(10, 2), nullable=False, default=0)
+    provincial_or_state_tax = Column(Numeric(10, 2), nullable=False, default=0)
+    local_tax = Column(Numeric(10, 2), nullable=False, default=0)
+    social_security_employee = Column(Numeric(10, 2), nullable=False, default=0)
+    social_security_2_employee = Column(Numeric(10, 2), nullable=False, default=0)
+    unemployment_employee = Column(Numeric(10, 2), nullable=False, default=0)
+    other_employee_deductions = Column(JSONB, nullable=True)
+    total_employee_deductions = Column(Numeric(12, 2), nullable=False, default=0)
+
+    # Employer contributions
+    social_security_employer = Column(Numeric(10, 2), nullable=False, default=0)
+    unemployment_employer = Column(Numeric(10, 2), nullable=False, default=0)
+    workers_comp_employer = Column(Numeric(10, 2), nullable=False, default=0)
+    other_employer_contributions = Column(JSONB, nullable=True)
+    total_employer_contributions = Column(Numeric(12, 2), nullable=False, default=0)
+
+    # Net
+    net_pay = Column(Numeric(12, 2), nullable=False, default=0)
+
+    # Audit + artifacts
+    calculation_snapshot = Column(JSONB, nullable=True)
+    paystub_pdf_s3_key = Column(String(500), nullable=True)
+    paid_at = Column(DateTime(timezone=True), nullable=True)
+    currency = Column(String(3), nullable=False, default="CAD")
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    paypal_subscription_id = Column(String, unique=True, nullable=True, index=True)
+    paypal_plan_id = Column(String, nullable=False)
+    plan_slug = Column(String, nullable=False)
+
+    status = Column(String, default="APPROVAL_PENDING", nullable=False, index=True)
+
+    approval_url = Column(String(2048), nullable=True)
+
+    current_period_start = Column(DateTime(timezone=True), nullable=True)
+    current_period_end = Column(DateTime(timezone=True), nullable=True)
+    last_payment_at = Column(DateTime(timezone=True), nullable=True)
+    cancelled_at = Column(DateTime(timezone=True), nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    user = relationship("User", back_populates="subscriptions")
+
+
+# === PAYROLL ENGINE MODELS (Phase 2) ===
+
+class YTDBalance(Base):
+    __tablename__ = "ytd_balances"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    tax_year = Column(Integer, nullable=False, index=True)
+    jurisdiction = Column(String(20), nullable=False)
+
+    ytd_gross = Column(Numeric(14, 2), nullable=False, default=0)
+    ytd_federal_tax = Column(Numeric(14, 2), nullable=False, default=0)
+    ytd_provincial_or_state_tax = Column(Numeric(14, 2), nullable=False, default=0)
+    ytd_social_security_employee = Column(Numeric(14, 2), nullable=False, default=0)
+    ytd_social_security_employer = Column(Numeric(14, 2), nullable=False, default=0)
+    ytd_unemployment_employee = Column(Numeric(14, 2), nullable=False, default=0)
+    ytd_unemployment_employer = Column(Numeric(14, 2), nullable=False, default=0)
+    ytd_pensionable_earnings = Column(Numeric(14, 2), nullable=False, default=0)
+    ytd_insurable_earnings = Column(Numeric(14, 2), nullable=False, default=0)
+    ytd_other_deductions = Column(JSONB, nullable=True)
+
+    last_pay_run_id = Column(UUID(as_uuid=True), nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class TaxTable(Base):
+    __tablename__ = "tax_tables"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    country = Column(String(2), nullable=False)
+    subnational = Column(String(20), nullable=True)
+    tax_year = Column(Integer, nullable=False)
+    table_type = Column(String(50), nullable=False)
+    effective_from = Column(Date, nullable=False)
+    effective_to = Column(Date, nullable=True)
+    data = Column(JSONB, nullable=False)
+    source_url = Column(String(500), nullable=True)
+    source_document_hash = Column(String(128), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_by_user_id = Column(UUID(as_uuid=True), nullable=True)
+
+
+class PayrollAuditLog(Base):
+    __tablename__ = "payroll_audit_log"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    entity_type = Column(String(50), nullable=False)
+    entity_id = Column(UUID(as_uuid=True), nullable=False)
+    action = Column(String(50), nullable=False)
+    actor_user_id = Column(UUID(as_uuid=True), nullable=True)
+    actor_role = Column(String(50), nullable=True)
+    before_state = Column(JSONB, nullable=True)
+    after_state = Column(JSONB, nullable=True)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    ai_session_id = Column(UUID(as_uuid=True), nullable=True)
+    ai_was_overridden = Column(Boolean, nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
