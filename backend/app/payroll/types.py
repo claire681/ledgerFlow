@@ -140,3 +140,83 @@ class PayCalculationResult(BaseModel):
     # Full audit trail
     deduction_lines: List[DeductionLine]
     calculation_snapshot: Dict[str, Any]
+
+
+# ============================================================
+# Service-layer input types (used by orchestrator and API)
+# ============================================================
+
+class PayRunEmployeeInput(BaseModel):
+    """Per-employee input for a pay run (from UI or import)."""
+
+    employee_id: str
+    hours: HoursWorked = Field(default_factory=HoursWorked)
+    bonus: Decimal = Decimal("0")
+    commission: Decimal = Decimal("0")
+    reimbursement: Decimal = Decimal("0")
+
+
+class CalculatedPayStub(BaseModel):
+    """Compiled pay_stubs row data, ready for DB insert.
+
+    Combines the PayCalculationResult with employee metadata so the
+    persistence layer has everything in one shape.
+    """
+    employee_id: str
+    pay_run_id: Optional[str] = None
+    employee_name: str
+    employee_email: Optional[str] = None
+    position_title: Optional[str] = None
+    pay_type: Optional[str] = None
+    hourly_rate: Optional[Decimal] = None
+    salary_amount: Decimal = Decimal("0")
+    currency: str = "CAD"
+
+    hours_regular: Decimal = Decimal("0")
+    hours_overtime: Decimal = Decimal("0")
+    hours_stat_holiday: Decimal = Decimal("0")
+    hours_vacation: Decimal = Decimal("0")
+    hours_sick: Decimal = Decimal("0")
+    hours_evening: Decimal = Decimal("0")
+    hours_overnight: Decimal = Decimal("0")
+    hours_weekend: Decimal = Decimal("0")
+    hours_on_call: Decimal = Decimal("0")
+    hours_travel: Decimal = Decimal("0")
+
+    gross_pay: Decimal
+    bonus: Decimal = Decimal("0")
+    commission: Decimal = Decimal("0")
+    reimbursement: Decimal = Decimal("0")
+
+    federal_tax: Decimal
+    provincial_or_state_tax: Decimal
+    local_tax: Decimal
+    social_security_employee: Decimal
+    social_security_2_employee: Decimal
+    unemployment_employee: Decimal
+    other_employee_deductions: Dict[str, Decimal]
+    total_employee_deductions: Decimal
+
+    social_security_employer: Decimal
+    unemployment_employer: Decimal
+    workers_comp_employer: Decimal
+    other_employer_contributions: Dict[str, Decimal]
+    total_employer_contributions: Decimal
+
+    net_pay: Decimal
+
+    calculation_snapshot: Dict[str, Any]
+
+
+class PayRunPreviewResult(BaseModel):
+    """Result of previewing or calculating a full pay run."""
+
+    pay_run_id: Optional[str] = None
+    total_gross: Decimal
+    total_employee_deductions: Decimal
+    total_employer_contributions: Decimal
+    total_net: Decimal
+    total_remittance_owed: Decimal  # employee deductions + employer contributions
+    employee_count: int
+    pay_stubs: List[CalculatedPayStub]
+
