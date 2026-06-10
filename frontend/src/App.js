@@ -5,6 +5,7 @@ import {
 import InvoiceEditor from "./pages/InvoiceEditor";
 import InvoiceReviewSend from "./pages/InvoiceReviewSend";
 import Payroll from "./pages/Payroll";
+import PayRuns from "./pages/PayRuns";
 import { AIProvider }      from './context/AIContext';
 import useAI from './hooks/useAI';
 import Sidebar             from './components/Sidebar';
