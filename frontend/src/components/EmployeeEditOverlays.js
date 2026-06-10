@@ -3,7 +3,7 @@ import { X as XIcon, HelpCircle, ChevronDown, Pencil, Info, Plus, Trash2, Calend
 import { FeedbackWidget } from "./FeedbackWidget";
 import { PayrollSettings } from "../pages/PayrollSettings";
 
-const BRAND = "#0F5959";
+const BRAND = "#0F9599";
 const BRAND_DARK = "#0A4040";
 const BORDER = "#DDE5E5";
 const INK = "#0E1A1A";

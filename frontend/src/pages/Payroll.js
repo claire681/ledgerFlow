@@ -6,10 +6,10 @@ import { EditPersonalInfo, EditEmploymentDetails, EditPaymentMethod, BasePayDraw
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
 // Novala tokens — keep brand color consistent
-const BRAND = "#0F5959";
-const BRAND_DARK = "#0A4747";
+const BRAND = "#0F9599";
+const BRAND_DARK = "#0C7B7E";
 const LINK = "#0077C5";
-const QB_GREEN = "#2CA01C";
+const QB_GREEN = "#16A34A";
 const BG = "#FFFFFF";
 const BG_SOFT = "#FAFBFC";
 const BORDER = "#D4D7DC";
