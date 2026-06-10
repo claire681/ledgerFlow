@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, User, Phone, Briefcase, CreditCard, DollarSign, PlusCircle, Plus, Receipt, Wallet,
-  Calendar as CalIcon, MinusCircle, Edit2, AlertCircle, Info, ChevronRight, Trash2,
+  Calendar as CalIcon, MinusCircle, Edit2, AlertCircle, Info, ChevronRight, ChevronDown, Trash2,
 } from "lucide-react";
 import {
   Button, Card, CardHeader, StatusPill, Spinner, Drawer, Input, Select, Checkbox,
   colors, typography, spacing, radius,
 } from "../design-system";
+import { getTaxDefaults } from "../utils/taxDefaults";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -104,7 +105,7 @@ const isSectionFilled = (sectionId, emp) => {
     case "time_off":
       return !!(emp.vacation_policy || emp.sick_pay_policy || emp.sick_pay || emp.unpaid_time_off_policy || emp.unpaid_time_off);
     case "tax":
-      return !!(emp.country || emp.province_or_state || emp.province_of_employment || emp.federal_claim_amount || emp.federal_credit_amount);
+      return !!(emp.federal_td1_amount || emp.federal_claim_amount || emp.federal_credit_amount || emp.provincial_claim_amount || emp.provincial_credit_amount || emp.cpp_exempt || emp.ei_exempt || emp.federal_income_tax_exempt);
     case "banking":
       return !!(emp.bank_name || emp.account_number);
     case "deductions":
@@ -183,7 +184,7 @@ const SECTIONS = [
   { id: "base_pay", label: "Base pay", Icon: DollarSign, drawerTitle: "Edit base pay" },
   { id: "additional_pay", label: "Additional pay types", Icon: PlusCircle, Plus, drawerTitle: "Edit additional pay types" },
   { id: "time_off", label: "Time off", Icon: CalIcon, drawerTitle: "Edit time off" },
-  { id: "tax", label: "Tax info", Icon: Receipt, drawerTitle: "Edit tax info" },
+  { id: "tax", label: "Tax withholdings", Icon: Receipt, drawerTitle: "Edit tax withholdings" },
   { id: "banking", label: "Direct deposit", Icon: Wallet, drawerTitle: "Edit direct deposit" },
   { id: "deductions", label: "Deductions and contributions", Icon: MinusCircle, drawerTitle: "Edit deductions and contributions" },
 ];
@@ -200,6 +201,8 @@ export default function EmployeeProfile() {
   const [draft, setDraft] = useState({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [taxSections, setTaxSections] = useState({ federal: true, provincial: true, exemptions: true });
+  const toggleTaxSection = (key) => setTaxSections((p) => ({ ...p, [key]: !p[key] }));
 
   const load = async () => {
     setLoading(true);
@@ -230,7 +233,24 @@ export default function EmployeeProfile() {
 
   useEffect(() => { load(); }, [id]);
 
-  const openEditor = (section) => { setDraft({ ...employee }); setSaveError(null); setEditing(section); };
+  const openEditor = (section) => {
+    let newDraft = { ...employee };
+    if (section === "tax") {
+      const defaults = getTaxDefaults(employee.country || "CA", employee.province_or_state || employee.province_of_employment || employee.province || "AB");
+      if (!newDraft.federal_td1_amount && !newDraft.federal_claim_amount && !newDraft.federal_credit_amount) {
+        newDraft.federal_td1_amount = defaults.federal;
+      }
+      if (!newDraft.provincial_claim_amount && !newDraft.provincial_credit_amount) {
+        newDraft.provincial_claim_amount = defaults.provincial;
+      }
+      if (newDraft.additional_federal_tax === undefined || newDraft.additional_federal_tax === null) {
+        newDraft.additional_federal_tax = 0;
+      }
+    }
+    setDraft(newDraft);
+    setSaveError(null);
+    setEditing(section);
+  };
   const closeEditor = () => { if (saving) return; setEditing(null); setDraft({}); setSaveError(null); };
   const set = (field, value) => setDraft((p) => ({ ...p, [field]: value }));
 
@@ -435,16 +455,18 @@ export default function EmployeeProfile() {
       </>
     );
   } else if (activeSection === "tax") {
+    const provinceCode = (employee.province_or_state || employee.province_of_employment || employee.province || "").toUpperCase();
+    const fedAmount = employee.federal_td1_amount || employee.federal_claim_amount || employee.federal_credit_amount;
+    const provAmount = employee.provincial_claim_amount || employee.provincial_credit_amount;
     sectionContent = (
       <>
-        <DetailRow label="Country" value={country} />
-        <DetailRow label="Province of employment" value={employee.province_of_employment || employee.province_or_state || employee.province} />
-        <DetailRow label="Federal claim amount" value={employee.federal_claim_amount > 0 ? formatCurrency(employee.federal_claim_amount, employee.currency) : (employee.federal_credit_amount > 0 ? formatCurrency(employee.federal_credit_amount, employee.currency) : "")} mono />
-        <DetailRow label="Provincial claim amount" value={employee.provincial_claim_amount > 0 ? formatCurrency(employee.provincial_claim_amount, employee.currency) : (employee.provincial_credit_amount > 0 ? formatCurrency(employee.provincial_credit_amount, employee.currency) : "")} mono />
+        <DetailRow label="Province" value={provinceCode} />
+        <DetailRow label="Federal TD1 amount" value={fedAmount > 0 ? formatCurrency(fedAmount, employee.currency) : ""} mono />
         <DetailRow label="Additional federal tax (per pay)" value={employee.additional_federal_tax > 0 ? formatCurrency(employee.additional_federal_tax, employee.currency) : ""} mono />
-        <DetailRow label="Additional provincial tax (per pay)" value={employee.additional_provincial_tax > 0 ? formatCurrency(employee.additional_provincial_tax, employee.currency) : ""} mono />
-        <DetailRow label="CPP/QPP exempt" value={employee.cpp_exempt === true ? "Yes" : "No"} />
-        <DetailRow last label="EI exempt" value={employee.ei_exempt === true ? "Yes" : "No"} />
+        <DetailRow label="Provincial claim amount" value={provAmount > 0 ? formatCurrency(provAmount, employee.currency) : ""} mono />
+        <DetailRow label="CPP exempt" value={employee.cpp_exempt === true ? "Yes" : "No"} />
+        <DetailRow label="EI exempt" value={employee.ei_exempt === true ? "Yes" : "No"} />
+        <DetailRow last label="Federal income tax exempt" value={employee.federal_income_tax_exempt === true ? "Yes" : "No"} />
       </>
     );
   } else if (activeSection === "banking") {
@@ -1004,28 +1026,250 @@ export default function EmployeeProfile() {
         />
       </EditDrawer>
 
-      {/* 8. Tax info drawer */}
-      <EditDrawer open={editing === "tax"} onClose={closeEditor} title="Edit tax info" onSave={save} saving={saving} saveError={saveError}>
-        <Select label="Country" value={draft.country || "CA"} onChange={(e) => set("country", e.target.value)} options={[
-          { value: "CA", label: "Canada" },
-          { value: "US", label: "United States" },
-          { value: "GB", label: "United Kingdom" },
-          { value: "AU", label: "Australia" },
-          { value: "IE", label: "Ireland" },
-        ]} />
-        <Input label="Province of employment" value={draft.province_of_employment || draft.province_or_state || ""} onChange={(e) => set("province_of_employment", e.target.value)} placeholder="e.g. AB, ON, NY, CA" />
-        <Input label="Federal claim amount" type="number" step="0.01" value={draft.federal_claim_amount || draft.federal_credit_amount || ""} onChange={(e) => set("federal_claim_amount", e.target.value)} placeholder="e.g. 14156.00" />
-        <Input label="Provincial claim amount" type="number" step="0.01" value={draft.provincial_claim_amount || draft.provincial_credit_amount || ""} onChange={(e) => set("provincial_claim_amount", e.target.value)} />
-        <Input label="Additional federal tax (per pay)" type="number" step="0.01" value={draft.additional_federal_tax || ""} onChange={(e) => set("additional_federal_tax", e.target.value)} placeholder="0.00" />
-        <Input label="Additional provincial tax (per pay)" type="number" step="0.01" value={draft.additional_provincial_tax || ""} onChange={(e) => set("additional_provincial_tax", e.target.value)} placeholder="0.00" />
-        <Select label="CPP/QPP exempt" value={draft.cpp_exempt === true ? "yes" : "no"} onChange={(e) => set("cpp_exempt", e.target.value === "yes")} options={[
-          { value: "no", label: "No" },
-          { value: "yes", label: "Yes" },
-        ]} />
-        <Select label="EI exempt" value={draft.ei_exempt === true ? "yes" : "no"} onChange={(e) => set("ei_exempt", e.target.value === "yes")} options={[
-          { value: "no", label: "No" },
-          { value: "yes", label: "Yes" },
-        ]} />
+      {/* 8. Tax withholdings drawer */}
+      <EditDrawer open={editing === "tax"} onClose={closeEditor} title="Edit tax withholdings" onSave={save} saving={saving} saveError={saveError}>
+        <h2 style={drawerH1Style}>
+          What are {employee.first_name || "this employee"}&rsquo;s withholdings?
+        </h2>
+
+        {/* Federal withholding */}
+        <div style={{ borderTop: `1px solid ${colors.borderDefault}` }}>
+          <button
+            type="button"
+            onClick={() => toggleTaxSection("federal")}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              width: "100%", background: "none", border: "none", cursor: "pointer",
+              padding: `${spacing[4]}px 0`,
+              fontFamily: typography.fontFamily,
+            }}
+          >
+            <span style={{ fontSize: 16, fontWeight: 700, color: colors.textPrimary, letterSpacing: "-0.01em" }}>
+              Federal withholding
+            </span>
+            <ChevronDown size={20} style={{
+              transform: taxSections.federal ? "rotate(0)" : "rotate(-90deg)",
+              transition: "transform 150ms ease",
+              color: colors.textSecondary,
+            }} />
+          </button>
+          {taxSections.federal && (
+            <div style={{ paddingBottom: spacing[5] }}>
+              <p style={{
+                fontSize: 13, color: colors.textSecondary,
+                lineHeight: 1.55, margin: `0 0 ${spacing[4]}px 0`,
+              }}>
+                The information for this page is on {employee.first_name || "the employee"}&rsquo;s TD-1 form.{" "}
+                <a href="https://www.canada.ca/en/revenue-agency/services/forms-publications/forms/td1.html" target="_blank" rel="noopener noreferrer" style={{ color: colors.brandPrimary, textDecoration: "underline" }}>
+                  Need a blank TD-1 form?
+                </a>
+                {" "}If the TD-1 form is not available, the federal TD1 amount is set to the basic personal claim amount for now and can be updated later.
+              </p>
+
+              <div style={{ marginBottom: spacing[4] }}>
+                <label style={{
+                  display: "block", ...typography.bodySm, fontWeight: 500,
+                  color: colors.textPrimary, marginBottom: 6,
+                }}>
+                  Federal TD1 amount (total claim amount)
+                </label>
+                <div style={{ position: "relative", maxWidth: 240 }}>
+                  <span style={{
+                    position: "absolute", left: 14, top: "50%",
+                    transform: "translateY(-50%)",
+                    color: colors.textSecondary,
+                    fontSize: 15, fontWeight: 600,
+                    pointerEvents: "none", zIndex: 1,
+                  }}>$</span>
+                  <input
+                    type="number" step="0.01"
+                    value={draft.federal_td1_amount !== undefined && draft.federal_td1_amount !== null && draft.federal_td1_amount !== "" ? draft.federal_td1_amount : (draft.federal_claim_amount || draft.federal_credit_amount || "")}
+                    onChange={(e) => set("federal_td1_amount", e.target.value)}
+                    placeholder="0.00"
+                    style={{
+                      width: "100%", padding: "10px 14px 10px 28px",
+                      fontSize: 15, fontFamily: typography.fontFamily,
+                      color: colors.textPrimary, background: colors.bgCard,
+                      border: `1px solid ${colors.borderDefault}`,
+                      borderRadius: 8, outline: "none", boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{
+                  display: "block", ...typography.bodySm, fontWeight: 500,
+                  color: colors.textPrimary, marginBottom: 6,
+                }}>
+                  Additional income tax amount you want deducted from each paycheque
+                </label>
+                <div style={{ position: "relative", maxWidth: 240 }}>
+                  <span style={{
+                    position: "absolute", left: 14, top: "50%",
+                    transform: "translateY(-50%)",
+                    color: colors.textSecondary,
+                    fontSize: 15, fontWeight: 600,
+                    pointerEvents: "none", zIndex: 1,
+                  }}>$</span>
+                  <input
+                    type="number" step="0.01"
+                    value={draft.additional_federal_tax !== undefined && draft.additional_federal_tax !== null && draft.additional_federal_tax !== "" ? draft.additional_federal_tax : 0}
+                    onChange={(e) => set("additional_federal_tax", e.target.value)}
+                    placeholder="0.00"
+                    style={{
+                      width: "100%", padding: "10px 14px 10px 28px",
+                      fontSize: 15, fontFamily: typography.fontFamily,
+                      color: colors.textPrimary, background: colors.bgCard,
+                      border: `1px solid ${colors.borderDefault}`,
+                      borderRadius: 8, outline: "none", boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Provincial withholding */}
+        <div style={{ borderTop: `1px solid ${colors.borderDefault}` }}>
+          <button
+            type="button"
+            onClick={() => toggleTaxSection("provincial")}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              width: "100%", background: "none", border: "none", cursor: "pointer",
+              padding: `${spacing[4]}px 0`,
+              fontFamily: typography.fontFamily,
+            }}
+          >
+            <span style={{ fontSize: 16, fontWeight: 700, color: colors.textPrimary, letterSpacing: "-0.01em" }}>
+              Provincial withholding
+            </span>
+            <ChevronDown size={20} style={{
+              transform: taxSections.provincial ? "rotate(0)" : "rotate(-90deg)",
+              transition: "transform 150ms ease",
+              color: colors.textSecondary,
+            }} />
+          </button>
+          {taxSections.provincial && (
+            <div style={{ paddingBottom: spacing[5] }}>
+              <p style={{
+                fontSize: 13, color: colors.textSecondary,
+                lineHeight: 1.55, margin: `0 0 ${spacing[4]}px 0`,
+              }}>
+                We use the basic personal amount for the province {employee.first_name || "the employee"} currently works in.
+              </p>
+
+              <div style={{ marginBottom: spacing[4] }}>
+                <label style={{
+                  display: "block", ...typography.bodySm, fontWeight: 500,
+                  color: colors.textPrimary, marginBottom: 6,
+                }}>
+                  Province
+                </label>
+                <div style={{
+                  padding: "10px 14px",
+                  background: colors.bgCardActive,
+                  border: `1px solid ${colors.borderDefault}`,
+                  borderRadius: 8,
+                  fontSize: 15,
+                  fontWeight: 600,
+                  color: colors.textPrimary,
+                  maxWidth: 120,
+                }}>
+                  {(employee.province_or_state || employee.province_of_employment || employee.province || "AB").toUpperCase()}
+                </div>
+              </div>
+
+              <div>
+                <label style={{
+                  display: "block", ...typography.bodySm, fontWeight: 500,
+                  color: colors.textPrimary, marginBottom: 6,
+                }}>
+                  Provincial claim amount
+                </label>
+                <div style={{ position: "relative", maxWidth: 240 }}>
+                  <span style={{
+                    position: "absolute", left: 14, top: "50%",
+                    transform: "translateY(-50%)",
+                    color: colors.textSecondary,
+                    fontSize: 15, fontWeight: 600,
+                    pointerEvents: "none", zIndex: 1,
+                  }}>$</span>
+                  <input
+                    type="number" step="0.01"
+                    value={draft.provincial_claim_amount !== undefined && draft.provincial_claim_amount !== null && draft.provincial_claim_amount !== "" ? draft.provincial_claim_amount : (draft.provincial_credit_amount || "")}
+                    onChange={(e) => set("provincial_claim_amount", e.target.value)}
+                    placeholder="0.00"
+                    style={{
+                      width: "100%", padding: "10px 14px 10px 28px",
+                      fontSize: 15, fontFamily: typography.fontFamily,
+                      color: colors.textPrimary, background: colors.bgCard,
+                      border: `1px solid ${colors.borderDefault}`,
+                      borderRadius: 8, outline: "none", boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Tax exemptions */}
+        <div style={{ borderTop: `1px solid ${colors.borderDefault}`, borderBottom: `1px solid ${colors.borderDefault}` }}>
+          <button
+            type="button"
+            onClick={() => toggleTaxSection("exemptions")}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              width: "100%", background: "none", border: "none", cursor: "pointer",
+              padding: `${spacing[4]}px 0`,
+              fontFamily: typography.fontFamily,
+            }}
+          >
+            <span style={{ fontSize: 16, fontWeight: 700, color: colors.textPrimary, letterSpacing: "-0.01em" }}>
+              Tax exemptions
+            </span>
+            <ChevronDown size={20} style={{
+              transform: taxSections.exemptions ? "rotate(0)" : "rotate(-90deg)",
+              transition: "transform 150ms ease",
+              color: colors.textSecondary,
+            }} />
+          </button>
+          {taxSections.exemptions && (
+            <div style={{ paddingBottom: spacing[5] }}>
+              <p style={{
+                fontSize: 13, color: colors.textSecondary,
+                lineHeight: 1.55, margin: `0 0 ${spacing[4]}px 0`,
+              }}>
+                Tax exemptions are not common. Certain government criteria must be met. Contact a tax expert or the applicable tax agency if unsure.{" "}
+                <a href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/payroll-deductions-contributions.html" target="_blank" rel="noopener noreferrer" style={{ color: colors.brandPrimary, textDecoration: "underline" }}>
+                  Get more info on tax exemptions
+                </a>
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: spacing[3] }}>
+                {[
+                  { id: "cpp_exempt", label: "Canada Pension Plan (CPP)" },
+                  { id: "ei_exempt", label: "Employment Insurance (EI)" },
+                  { id: "federal_income_tax_exempt", label: "Federal Income Tax" },
+                ].map((opt) => (
+                  <div key={opt.id} style={{
+                    display: "flex", alignItems: "center", gap: spacing[3],
+                    padding: `${spacing[2]}px 0`,
+                  }}>
+                    <Checkbox
+                      checked={draft[opt.id] === true}
+                      onChange={() => set(opt.id, !draft[opt.id])}
+                    />
+                    <div style={{ ...typography.body, color: colors.textPrimary }}>{opt.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </EditDrawer>
 
       {/* 9. Direct deposit drawer */}
