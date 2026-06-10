@@ -109,7 +109,7 @@ const isSectionFilled = (sectionId, emp) => {
       return !!(emp.emergency_name || emp.emergency_home_phone || emp.emergency_mobile_phone || emp.emergency_email);
     case "employment":
       return !!(emp.hire_date || emp.work_location || emp.job_title || emp.employee_id);
-    case "payment":
+    case "payment_method":
       return !!emp.payment_method;
     case "base_pay":
       return !!emp.pay_type && (parseFloat(emp.hourly_rate) > 0 || parseFloat(emp.salary_amount) > 0);
@@ -193,7 +193,7 @@ const SECTIONS = [
   { id: "personal", label: "Personal info", Icon: User, drawerTitle: "Edit personal info" },
   { id: "emergency", label: "Emergency contact", Icon: Phone, drawerTitle: "Edit emergency contact" },
   { id: "employment", label: "Employment details", Icon: Briefcase, drawerTitle: "Edit employment details" },
-  { id: "payment", label: "Payment method", Icon: CreditCard, drawerTitle: "Edit payment method" },
+  { id: "payment_method", label: "Payment method", Icon: CreditCard, drawerTitle: "Edit payment method" },
   { id: "base_pay", label: "Base pay", Icon: DollarSign, drawerTitle: "Edit base pay" },
   { id: "additional_pay", label: "Additional pay types", Icon: PlusCircle, Plus, drawerTitle: "Edit additional pay types" },
   { id: "time_off", label: "Time off", Icon: CalIcon, drawerTitle: "Edit time off" },
@@ -254,7 +254,6 @@ export default function EmployeeProfile() {
   useEffect(() => { load(); }, [id]);
 
   const openEditor = (section) => {
-    console.log("[DIAG] openEditor called with:", section, "current editing:", editing);
     let newDraft = { ...employee };
     if (section === "tax") {
       const defaults = getTaxDefaults(employee.country || "CA", employee.province_or_state || employee.province_of_employment || employee.province || "AB");
@@ -463,7 +462,7 @@ export default function EmployeeProfile() {
         <DetailRow last label="Employment type" value={(employee.employment_type || "").replace("_", " ")} />
       </>
     );
-  } else if (activeSection === "payment") {
+  } else if (activeSection === "payment_method") {
     sectionContent = (
       <DetailRow last label="Payment method" value={(employee.payment_method || "").replace("_", " ")} />
     );
