@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, User, Phone, Briefcase, CreditCard, DollarSign, PlusCircle, Plus, Receipt, Wallet,
   Calendar as CalIcon, MinusCircle, Edit2, AlertCircle, Info, ChevronRight, ChevronDown, Trash2,
@@ -32,6 +32,19 @@ const getEmployeeName = (emp) =>
   emp.name || emp.full_name ||
   [emp.first_name, emp.last_name].filter(Boolean).join(" ") ||
   emp.email || "Unnamed";
+
+const getSetupStatus = (emp) => {
+  if (!emp) return "draft";
+  const sin = emp.sin || emp.social_insurance_number;
+  return sin ? "active" : "draft";
+};
+
+const maskSin = (sin) => {
+  if (!sin) return "";
+  const cleaned = String(sin).replace(/[^0-9]/g, "");
+  if (cleaned.length < 3) return "***-***-***";
+  return `XXX-XXX-${cleaned.slice(-3)}`;
+};
 
 const getInitials = (name) =>
   name.split(" ").map((s) => s[0]).filter(Boolean).join("").slice(0, 2).toUpperCase();
@@ -109,7 +122,42 @@ const isSectionFilled = (sectionId, emp) => {
     case "banking":
       return !!(emp.bank_name || emp.account_number);
     case "deductions":
-      return (Array.isArray(emp.deductions) && emp.deductions.length > 0) || !!emp.t4_dental_benefits_codes;
+      const handlePhotoSelect = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setSaveError("Please select an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setSaveError("Image must be under 5MB");
+      return;
+    }
+    setPhotoUploading(true);
+    setSaveError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`${API_URL}/api/v1/payroll/employees/${id}/photo`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Photo upload failed");
+      }
+      const data = await res.json();
+      setEmployee((prev) => ({ ...prev, photo_url: data.photo_url || data.url || prev.photo_url }));
+    } catch (err) {
+      setSaveError(err.message || "Photo upload failed");
+    } finally {
+      setPhotoUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  return (Array.isArray(emp.deductions) && emp.deductions.length > 0) || !!emp.t4_dental_benefits_codes;
     default:
       return false;
   }
@@ -203,6 +251,13 @@ export default function EmployeeProfile() {
   const [saveError, setSaveError] = useState(null);
   const [taxSections, setTaxSections] = useState({ federal: true, provincial: true, exemptions: true });
   const toggleTaxSection = (key) => setTaxSections((p) => ({ ...p, [key]: !p[key] }));
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "profile";
+  const setActiveTab = (tab) => setSearchParams({ tab });
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [penHovered, setPenHovered] = useState(false);
+  const fileInputRef = useRef(null);
 
   const load = async () => {
     setLoading(true);
@@ -351,7 +406,7 @@ export default function EmployeeProfile() {
   }
 
   const name = getEmployeeName(employee);
-  const status = (employee.status || "active").toLowerCase();
+  const setupStatus = getSetupStatus(employee);
   const payType = (employee.pay_type || "hourly").toLowerCase();
   const country = (employee.country || "CA").toUpperCase();
   const fullName = [employee.title, employee.first_name, employee.middle_initial || employee.m_i, employee.last_name].filter(Boolean).join(" ");
@@ -378,7 +433,7 @@ export default function EmployeeProfile() {
         <DetailRow label="Mailing address" value={mailingAddress} />
         <DetailRow label="Birth date" value={employee.birth_date} />
         <DetailRow label="Gender" value={employee.gender} />
-        <DetailRow last label="Social insurance number" value={(employee.sin || employee.social_insurance_number) ? "Set" : ""} />
+        <DetailRow last label="Social insurance number" value={maskSin(employee.sin || employee.social_insurance_number)} mono />
       </>
     );
   } else if (activeSection === "emergency") {
@@ -523,7 +578,7 @@ export default function EmployeeProfile() {
         <div style={{ flex: 1, minWidth: 240 }}>
           <div style={{ display: "flex", alignItems: "center", gap: spacing[3], flexWrap: "wrap" }}>
             <h1 style={{ ...typography.displaySm, color: colors.textPrimary, margin: 0 }}>{name}</h1>
-            <StatusPill status={status} />
+            <StatusPill status={setupStatus} />
           </div>
           <p style={{ ...typography.body, color: colors.textSecondary, margin: `${spacing[1]}px 0 0` }}>
             {employee.job_title || "Employee"}
@@ -588,6 +643,80 @@ export default function EmployeeProfile() {
           </Card>
         </div>
       </div>
+
+      )}
+
+      {activeTab === "paycheques" && (
+        <div style={{
+          background: colors.bgCard,
+          border: `1px solid ${colors.borderDefault}`,
+          borderRadius: radius.lg,
+          padding: `${spacing[10]}px ${spacing[8]}px`,
+          textAlign: "center",
+        }}>
+          <Receipt size={48} color={colors.textMuted} style={{ marginBottom: spacing[3] }} />
+          <h3 style={{ fontSize: 18, fontWeight: 700, color: colors.textPrimary, margin: `0 0 ${spacing[2]}px 0` }}>
+            No paycheques yet
+          </h3>
+          <p style={{ ...typography.body, color: colors.textSecondary, margin: 0 }}>
+            Pay stubs from completed payrolls will show here.
+          </p>
+        </div>
+      )}
+
+      {activeTab === "documents" && (
+        <div style={{
+          background: colors.bgCard,
+          border: `1px solid ${colors.borderDefault}`,
+          borderRadius: radius.lg,
+          padding: `${spacing[10]}px ${spacing[8]}px`,
+          textAlign: "center",
+        }}>
+          <Wallet size={48} color={colors.textMuted} style={{ marginBottom: spacing[3] }} />
+          <h3 style={{ fontSize: 18, fontWeight: 700, color: colors.textPrimary, margin: `0 0 ${spacing[2]}px 0` }}>
+            Documents coming soon
+          </h3>
+          <p style={{ ...typography.body, color: colors.textSecondary, margin: 0 }}>
+            Upload contracts, tax forms, and other employee documents here.
+          </p>
+        </div>
+      )}
+
+      {activeTab === "notes" && (
+        <div style={{
+          background: colors.bgCard,
+          border: `1px solid ${colors.borderDefault}`,
+          borderRadius: radius.lg,
+          padding: `${spacing[10]}px ${spacing[8]}px`,
+          textAlign: "center",
+        }}>
+          <Edit2 size={48} color={colors.textMuted} style={{ marginBottom: spacing[3] }} />
+          <h3 style={{ fontSize: 18, fontWeight: 700, color: colors.textPrimary, margin: `0 0 ${spacing[2]}px 0` }}>
+            No notes yet
+          </h3>
+          <p style={{ ...typography.body, color: colors.textSecondary, margin: 0 }}>
+            Add internal notes about this employee here.
+          </p>
+        </div>
+      )}
+
+      {activeTab === "permissions" && (
+        <div style={{
+          background: colors.bgCard,
+          border: `1px solid ${colors.borderDefault}`,
+          borderRadius: radius.lg,
+          padding: `${spacing[10]}px ${spacing[8]}px`,
+          textAlign: "center",
+        }}>
+          <User size={48} color={colors.textMuted} style={{ marginBottom: spacing[3] }} />
+          <h3 style={{ fontSize: 18, fontWeight: 700, color: colors.textPrimary, margin: `0 0 ${spacing[2]}px 0` }}>
+            Permissions coming soon
+          </h3>
+          <p style={{ ...typography.body, color: colors.textSecondary, margin: 0 }}>
+            Manage what this employee can see and do in Novala.
+          </p>
+        </div>
+      )}
 
       {/* 1. Personal info drawer */}
       <EditDrawer open={editing === "personal"} onClose={closeEditor} title="Edit personal info" onSave={save} saving={saving} saveError={saveError}>
