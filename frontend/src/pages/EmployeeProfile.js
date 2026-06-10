@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, User, Briefcase, CreditCard, DollarSign, Receipt, Wallet,
-  Calendar as CalIcon, MinusCircle, Edit2, AlertCircle, ChevronRight,
+  ArrowLeft, User, Phone, Briefcase, CreditCard, DollarSign, PlusCircle, Receipt, Wallet,
+  Calendar as CalIcon, MinusCircle, Edit2, AlertCircle, ChevronRight, Trash2,
 } from "lucide-react";
 import {
-  Button, Card, CardHeader, StatusPill, Spinner, Drawer, Input, Select,
+  Button, Card, CardHeader, StatusPill, Spinner, Drawer, Input, Select, Checkbox,
   colors, typography, spacing, radius,
 } from "../design-system";
 
@@ -39,6 +39,33 @@ const iconWrapStyle = {
   width: 38, height: 38, background: colors.brandSoft, borderRadius: radius.lg,
   display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
 };
+
+const ADDITIONAL_PAY_OPTIONS = [
+  { id: "vacation_pay", label: "Vacation pay" },
+  { id: "stat_holiday_pay", label: "Stat holiday pay" },
+  { id: "sick_pay", label: "Sick pay" },
+  { id: "bonus", label: "Bonus" },
+  { id: "commission", label: "Commission" },
+  { id: "overtime", label: "Overtime" },
+  { id: "double_overtime", label: "Double overtime" },
+  { id: "allowance", label: "Allowance" },
+  { id: "reimbursement", label: "Reimbursement" },
+];
+
+const DEDUCTION_TYPE_OPTIONS = [
+  { value: "", label: "Select type" },
+  { value: "rrsp", label: "RRSP" },
+  { value: "group_rrsp", label: "Group RRSP" },
+  { value: "dental", label: "Dental" },
+  { value: "vision", label: "Vision" },
+  { value: "extended_health", label: "Extended health" },
+  { value: "life_insurance", label: "Life insurance" },
+  { value: "long_term_disability", label: "Long-term disability" },
+  { value: "short_term_disability", label: "Short-term disability" },
+  { value: "union_dues", label: "Union dues" },
+  { value: "charitable_donation", label: "Charitable donation" },
+  { value: "other", label: "Other" },
+];
 
 function DetailRow({ label, value, mono, last }) {
   return (
@@ -95,12 +122,14 @@ function Req() { return <span style={{ color: colors.danger, fontWeight: 600 }}>
 
 const SECTIONS = [
   { id: "personal", label: "Personal info", Icon: User, drawerTitle: "Edit personal info" },
+  { id: "emergency", label: "Emergency contact", Icon: Phone, drawerTitle: "Edit emergency contact" },
   { id: "employment", label: "Employment details", Icon: Briefcase, drawerTitle: "Edit employment details" },
   { id: "payment", label: "Payment method", Icon: CreditCard, drawerTitle: "Edit payment method" },
   { id: "base_pay", label: "Base pay", Icon: DollarSign, drawerTitle: "Edit base pay" },
+  { id: "additional_pay", label: "Additional pay types", Icon: PlusCircle, drawerTitle: "Edit additional pay types" },
+  { id: "time_off", label: "Time off", Icon: CalIcon, drawerTitle: "Edit time off" },
   { id: "tax", label: "Tax info", Icon: Receipt, drawerTitle: "Edit tax info" },
   { id: "banking", label: "Direct deposit", Icon: Wallet, drawerTitle: "Edit direct deposit" },
-  { id: "time_off", label: "Time off", Icon: CalIcon, drawerTitle: "Edit time off" },
   { id: "deductions", label: "Deductions and contributions", Icon: MinusCircle, drawerTitle: "Edit deductions and contributions" },
 ];
 
@@ -149,6 +178,35 @@ export default function EmployeeProfile() {
   const openEditor = (section) => { setDraft({ ...employee }); setSaveError(null); setEditing(section); };
   const closeEditor = () => { if (saving) return; setEditing(null); setDraft({}); setSaveError(null); };
   const set = (field, value) => setDraft((p) => ({ ...p, [field]: value }));
+
+  const addDeduction = () => {
+    setDraft((p) => ({
+      ...p,
+      deductions: [...(p.deductions || []), { type: "", effective_pay_period: "", date: "" }],
+    }));
+  };
+  const removeDeduction = (idx) => {
+    setDraft((p) => ({
+      ...p,
+      deductions: (p.deductions || []).filter((_, i) => i !== idx),
+    }));
+  };
+  const setDeductionField = (idx, field, value) => {
+    setDraft((p) => ({
+      ...p,
+      deductions: (p.deductions || []).map((d, i) => i === idx ? { ...d, [field]: value } : d),
+    }));
+  };
+
+  const toggleAdditionalPay = (typeId) => {
+    setDraft((p) => {
+      const current = p.additional_pay_types || [];
+      const next = current.includes(typeId)
+        ? current.filter((t) => t !== typeId)
+        : [...current, typeId];
+      return { ...p, additional_pay_types: next };
+    });
+  };
 
   const save = async () => {
     setSaving(true);
@@ -221,14 +279,16 @@ export default function EmployeeProfile() {
   const status = (employee.status || "active").toLowerCase();
   const payType = (employee.pay_type || "hourly").toLowerCase();
   const country = (employee.country || "CA").toUpperCase();
-
   const fullName = [employee.title, employee.first_name, employee.middle_initial || employee.m_i, employee.last_name].filter(Boolean).join(" ");
   const homeAddress = [employee.street_address, employee.address_line_2, employee.city, employee.province, employee.postal_code].filter(Boolean).join(", ");
   const mailingAddress = [employee.mailing_street_address, employee.mailing_address_line_2, employee.mailing_city, employee.mailing_province, employee.mailing_postal_code].filter(Boolean).join(", ");
+  const emergencyAddress = [employee.emergency_address_line, employee.emergency_city, employee.emergency_province, employee.emergency_postal_code].filter(Boolean).join(", ");
+
+  const enabledPayTypes = employee.additional_pay_types || [];
+  const enabledLabels = ADDITIONAL_PAY_OPTIONS.filter((o) => enabledPayTypes.includes(o.id)).map((o) => o.label).join(", ");
 
   const currentSection = SECTIONS.find((s) => s.id === activeSection);
 
-  // --- Render content for active section ---
   let sectionContent = null;
   if (activeSection === "personal") {
     sectionContent = (
@@ -244,6 +304,17 @@ export default function EmployeeProfile() {
         <DetailRow label="Birth date" value={employee.birth_date} />
         <DetailRow label="Gender" value={employee.gender} />
         <DetailRow last label="Social insurance number" value={(employee.sin || employee.social_insurance_number) ? "Set" : ""} />
+      </>
+    );
+  } else if (activeSection === "emergency") {
+    sectionContent = (
+      <>
+        <DetailRow label="Name" value={employee.emergency_name} />
+        <DetailRow label="Relationship" value={employee.emergency_relationship} />
+        <DetailRow label="Home phone number" value={employee.emergency_home_phone} />
+        <DetailRow label="Mobile phone number" value={employee.emergency_mobile_phone} />
+        <DetailRow label="Email" value={employee.emergency_email} />
+        <DetailRow last label="Address" value={emergencyAddress} />
       </>
     );
   } else if (activeSection === "employment") {
@@ -280,10 +351,21 @@ export default function EmployeeProfile() {
           <>
             <DetailRow label="Rate per hour" value={employee.hourly_rate > 0 ? formatCurrency(employee.hourly_rate, employee.currency) : ""} mono />
             <DetailRow label="Hours per day" value={employee.hours_per_day} mono />
-            <DetailRow label="Pay frequency" value={employee.pay_frequency} />
-            <DetailRow last label="Overtime eligible" value={employee.overtime_eligible === false ? "No" : "Yes"} />
+            <DetailRow last label="Pay frequency" value={employee.pay_frequency} />
           </>
         )}
+      </>
+    );
+  } else if (activeSection === "additional_pay") {
+    sectionContent = (
+      <DetailRow last label="Enabled pay types" value={enabledLabels} />
+    );
+  } else if (activeSection === "time_off") {
+    sectionContent = (
+      <>
+        <DetailRow label="Vacation policy" value={employee.vacation_policy} />
+        <DetailRow label="Sick pay" value={employee.sick_pay} />
+        <DetailRow last label="Unpaid time off" value={employee.unpaid_time_off} />
       </>
     );
   } else if (activeSection === "tax") {
@@ -308,18 +390,18 @@ export default function EmployeeProfile() {
         <DetailRow last label="Account type" value={employee.account_type} />
       </>
     );
-  } else if (activeSection === "time_off") {
-    sectionContent = (
-      <>
-        <DetailRow label="Vacation policy" value={employee.vacation_policy} />
-        <DetailRow label="Sick pay" value={employee.sick_pay} />
-        <DetailRow last label="Unpaid time off" value={employee.unpaid_time_off} />
-      </>
-    );
   } else if (activeSection === "deductions") {
+    const deds = Array.isArray(employee.deductions) ? employee.deductions : [];
     sectionContent = (
       <>
-        <DetailRow label="Deductions on file" value={Array.isArray(employee.deductions) ? `${employee.deductions.length}` : "0"} />
+        <DetailRow label="Deductions and contributions on file" value={`${deds.length}`} />
+        {deds.map((d, idx) => (
+          <DetailRow
+            key={idx}
+            label={DEDUCTION_TYPE_OPTIONS.find((o) => o.value === d.type)?.label || d.type || "Deduction"}
+            value={[d.effective_pay_period, d.date].filter(Boolean).join(" · ")}
+          />
+        ))}
         <DetailRow last label="T4 dental benefits codes" value={employee.t4_dental_benefits_codes} />
       </>
     );
@@ -362,12 +444,10 @@ export default function EmployeeProfile() {
         </div>
       </div>
 
-      {/* Two-column: left sub-nav + active section content */}
       <div style={{ display: "flex", gap: spacing[6], alignItems: "flex-start", flexWrap: "wrap" }}>
 
-        {/* Left sub-nav */}
         <nav style={{
-          width: 240, minWidth: 240,
+          width: 260, minWidth: 260,
           background: colors.bgCard,
           border: `1px solid ${colors.borderDefault}`,
           borderRadius: radius.lg,
@@ -388,8 +468,7 @@ export default function EmployeeProfile() {
                   ...typography.bodyMd,
                   color: isActive ? colors.brandPrimary : colors.textPrimary,
                   fontWeight: isActive ? 600 : 500,
-                  textAlign: "left",
-                  fontFamily: typography.fontFamily,
+                  textAlign: "left", fontFamily: typography.fontFamily,
                   transition: "background 150ms ease, color 150ms ease",
                 }}
                 onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = colors.bgCardHover; }}
@@ -403,7 +482,6 @@ export default function EmployeeProfile() {
           })}
         </nav>
 
-        {/* Active section content */}
         <div style={{ flex: 1, minWidth: 320 }}>
           <Card>
             <div style={{
@@ -459,7 +537,30 @@ export default function EmployeeProfile() {
         <Input label={<>Social insurance number<Req /></>} value={draft.sin || draft.social_insurance_number || ""} onChange={(e) => set("sin", e.target.value)} placeholder="123-456-789" />
       </EditDrawer>
 
-      {/* 2. Employment details drawer */}
+      {/* 2. Emergency contact drawer */}
+      <EditDrawer open={editing === "emergency"} onClose={closeEditor} title="Edit emergency contact" onSave={save} saving={saving} saveError={saveError}>
+        <Input label="Name" value={draft.emergency_name || ""} onChange={(e) => set("emergency_name", e.target.value)} placeholder="Full name" />
+        <Select label="Relationship" value={draft.emergency_relationship || ""} onChange={(e) => set("emergency_relationship", e.target.value)} options={[
+          { value: "", label: "Select" },
+          { value: "spouse", label: "Spouse" },
+          { value: "parent", label: "Parent" },
+          { value: "child", label: "Child" },
+          { value: "sibling", label: "Sibling" },
+          { value: "partner", label: "Partner" },
+          { value: "friend", label: "Friend" },
+          { value: "other", label: "Other" },
+        ]} />
+        <Input label="Home phone number" type="tel" value={draft.emergency_home_phone || ""} onChange={(e) => set("emergency_home_phone", e.target.value)} placeholder="(780) 555-0100" />
+        <Input label="Mobile phone number" type="tel" value={draft.emergency_mobile_phone || ""} onChange={(e) => set("emergency_mobile_phone", e.target.value)} placeholder="(780) 555-0100" />
+        <Input label="Email" type="email" value={draft.emergency_email || ""} onChange={(e) => set("emergency_email", e.target.value)} />
+        <SubHeading>Address</SubHeading>
+        <Input label="Street Address" value={draft.emergency_address_line || ""} onChange={(e) => set("emergency_address_line", e.target.value)} placeholder="123 Main Street" />
+        <Input label="City" value={draft.emergency_city || ""} onChange={(e) => set("emergency_city", e.target.value)} />
+        <Input label="Province" value={draft.emergency_province || ""} onChange={(e) => set("emergency_province", e.target.value)} />
+        <Input label="Postal code" value={draft.emergency_postal_code || ""} onChange={(e) => set("emergency_postal_code", e.target.value)} placeholder="T0B 4A0" />
+      </EditDrawer>
+
+      {/* 3. Employment details drawer */}
       <EditDrawer open={editing === "employment"} onClose={closeEditor} title="Edit employment details" onSave={save} saving={saving} saveError={saveError}>
         <Select label={<>Status<Req /></>} value={draft.status || "active"} onChange={(e) => set("status", e.target.value)} options={[
           { value: "active", label: "Active" },
@@ -487,7 +588,7 @@ export default function EmployeeProfile() {
         ]} />
       </EditDrawer>
 
-      {/* 3. Payment method drawer */}
+      {/* 4. Payment method drawer */}
       <EditDrawer open={editing === "payment"} onClose={closeEditor} title="Edit payment method" onSave={save} saving={saving} saveError={saveError}>
         <Select label="Payment method" value={draft.payment_method || "direct_deposit"} onChange={(e) => set("payment_method", e.target.value)} options={[
           { value: "direct_deposit", label: "Direct deposit" },
@@ -496,7 +597,7 @@ export default function EmployeeProfile() {
         ]} />
       </EditDrawer>
 
-      {/* 4. Base pay drawer */}
+      {/* 5. Base pay drawer - legacy wording */}
       <EditDrawer open={editing === "base_pay"} onClose={closeEditor} title={employee.pay_type ? "Edit base pay" : "Add base pay"} onSave={save} saving={saving} saveError={saveError}>
         <Select label="Pay type" value={draft.pay_type || "hourly"} onChange={(e) => set("pay_type", e.target.value)} options={[
           { value: "hourly", label: "Hourly" },
@@ -512,10 +613,6 @@ export default function EmployeeProfile() {
               { value: "biweekly", label: "Biweekly" },
               { value: "semi_monthly", label: "Semi-monthly" },
               { value: "monthly", label: "Monthly" },
-            ]} />
-            <Select label="Overtime eligible" value={draft.overtime_eligible === false ? "no" : "yes"} onChange={(e) => set("overtime_eligible", e.target.value === "yes")} options={[
-              { value: "yes", label: "Yes" },
-              { value: "no", label: "No" },
             ]} />
           </>
         )}
@@ -536,7 +633,34 @@ export default function EmployeeProfile() {
         )}
       </EditDrawer>
 
-      {/* 5. Tax info drawer (CRA-standard wording) */}
+      {/* 6. Additional pay types drawer */}
+      <EditDrawer open={editing === "additional_pay"} onClose={closeEditor} title="Edit additional pay types" onSave={save} saving={saving} saveError={saveError}>
+        <div style={{ ...typography.bodySm, color: colors.textSecondary, marginBottom: spacing[2] }}>
+          Select which additional pay types apply to this employee.
+        </div>
+        {ADDITIONAL_PAY_OPTIONS.map((option) => {
+          const isChecked = (draft.additional_pay_types || []).includes(option.id);
+          return (
+            <div key={option.id} style={{
+              display: "flex", alignItems: "center", gap: spacing[3],
+              padding: `${spacing[2]}px 0`,
+              borderBottom: `1px solid ${colors.borderSubtle}`,
+            }}>
+              <Checkbox checked={isChecked} onChange={() => toggleAdditionalPay(option.id)} />
+              <div style={{ ...typography.body, color: colors.textPrimary }}>{option.label}</div>
+            </div>
+          );
+        })}
+      </EditDrawer>
+
+      {/* 7. Time off drawer */}
+      <EditDrawer open={editing === "time_off"} onClose={closeEditor} title="Edit time off" onSave={save} saving={saving} saveError={saveError}>
+        <Input label="Vacation policy" value={draft.vacation_policy || ""} onChange={(e) => set("vacation_policy", e.target.value)} />
+        <Input label="Sick pay" value={draft.sick_pay || ""} onChange={(e) => set("sick_pay", e.target.value)} />
+        <Input label="Unpaid time off" value={draft.unpaid_time_off || ""} onChange={(e) => set("unpaid_time_off", e.target.value)} />
+      </EditDrawer>
+
+      {/* 8. Tax info drawer */}
       <EditDrawer open={editing === "tax"} onClose={closeEditor} title="Edit tax info" onSave={save} saving={saving} saveError={saveError}>
         <Select label="Country" value={draft.country || "CA"} onChange={(e) => set("country", e.target.value)} options={[
           { value: "CA", label: "Canada" },
@@ -560,7 +684,7 @@ export default function EmployeeProfile() {
         ]} />
       </EditDrawer>
 
-      {/* 6. Direct deposit drawer */}
+      {/* 9. Direct deposit drawer */}
       <EditDrawer open={editing === "banking"} onClose={closeEditor} title="Edit direct deposit" onSave={save} saving={saving} saveError={saveError}>
         <Input label="Bank name" value={draft.bank_name || ""} onChange={(e) => set("bank_name", e.target.value)} />
         <Input label={country === "US" ? "Routing number" : "Transit number"} value={draft.transit_number || draft.routing_number || ""} onChange={(e) => set("transit_number", e.target.value)} />
@@ -571,21 +695,56 @@ export default function EmployeeProfile() {
         ]} />
       </EditDrawer>
 
-      {/* 7. Time off drawer */}
-      <EditDrawer open={editing === "time_off"} onClose={closeEditor} title="Edit time off" onSave={save} saving={saving} saveError={saveError}>
-        <Input label="Vacation policy" value={draft.vacation_policy || ""} onChange={(e) => set("vacation_policy", e.target.value)} />
-        <Input label="Sick pay" value={draft.sick_pay || ""} onChange={(e) => set("sick_pay", e.target.value)} />
-        <Input label="Unpaid time off" value={draft.unpaid_time_off || ""} onChange={(e) => set("unpaid_time_off", e.target.value)} />
-      </EditDrawer>
-
-      {/* 8. Deductions and contributions drawer */}
+      {/* 10. Deductions and contributions drawer - legacy wording */}
       <EditDrawer open={editing === "deductions"} onClose={closeEditor} title="Edit deductions and contributions" onSave={save} saving={saving} saveError={saveError}>
         <Input label="T4 dental benefits codes" value={draft.t4_dental_benefits_codes || ""} onChange={(e) => set("t4_dental_benefits_codes", e.target.value)} />
-        <div style={{ ...typography.bodySm, color: colors.textSecondary, padding: `${spacing[3]}px ${spacing[4]}px`, background: colors.bgCardActive, borderRadius: radius.md }}>
-          To add or remove specific deductions and contributions in detail, use the legacy management screen for now (we are rebuilding the add/remove flow next).
-        </div>
-        <Button variant="secondary" onClick={() => navigate("/payroll")}>
-          Manage deductions in detail
+
+        <SubHeading>Deductions and contributions</SubHeading>
+        {(draft.deductions || []).length === 0 && (
+          <div style={{ ...typography.bodySm, color: colors.textSecondary, padding: `${spacing[3]}px 0` }}>
+            No deductions or contributions yet. Click below to add one.
+          </div>
+        )}
+        {(draft.deductions || []).map((d, idx) => (
+          <div key={idx} style={{
+            padding: spacing[4],
+            border: `1px solid ${colors.borderDefault}`,
+            borderRadius: radius.md,
+            display: "flex", flexDirection: "column", gap: spacing[3],
+            position: "relative",
+          }}>
+            <button
+              onClick={() => removeDeduction(idx)}
+              title="Remove"
+              style={{
+                position: "absolute", top: spacing[2], right: spacing[2],
+                background: "none", border: "none", cursor: "pointer",
+                padding: 4, color: colors.textSecondary,
+              }}
+            >
+              <Trash2 size={14} />
+            </button>
+            <Select
+              label={<>Deduction/contribution type<Req /></>}
+              value={d.type || ""}
+              onChange={(e) => setDeductionField(idx, "type", e.target.value)}
+              options={DEDUCTION_TYPE_OPTIONS}
+            />
+            <Input
+              label="Effective pay period"
+              value={d.effective_pay_period || ""}
+              onChange={(e) => setDeductionField(idx, "effective_pay_period", e.target.value)}
+            />
+            <Input
+              label={<>Date<Req /></>}
+              type="date"
+              value={d.date || ""}
+              onChange={(e) => setDeductionField(idx, "date", e.target.value)}
+            />
+          </div>
+        ))}
+        <Button variant="secondary" onClick={addDeduction} iconLeft={<PlusCircle size={14} />}>
+          Add deduction/contribution
         </Button>
       </EditDrawer>
     </div>
