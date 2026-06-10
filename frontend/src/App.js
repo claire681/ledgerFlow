@@ -9,6 +9,8 @@ import PayRuns from "./pages/PayRuns";
 import NewPayRun from "./pages/NewPayRun";
 import PayRunDetail from "./pages/PayRunDetail";
 import PayStubDetail from "./pages/PayStubDetail";
+import EmployeesList from "./pages/EmployeesList";
+import EmployeeProfile from "./pages/EmployeeProfile";
 import { AIProvider }      from './context/AIContext';
 import useAI from './hooks/useAI';
 import Sidebar             from './components/Sidebar';
@@ -154,6 +156,8 @@ function AppLayout({ onLogout }) {
 
         <main  style={{ flex:1, overflowY:'auto', position:'relative', minWidth:0, marginLeft: 0 }}>
           <Routes>
+          <Route path="/payroll/employees" element={<EmployeesList />} />
+          <Route path="/payroll/employees/:id" element={<EmployeeProfile />} />
           <Route path="/payroll/runs/new" element={<NewPayRun />} />
           <Route path="/payroll/runs/:runId/stubs/:stubId" element={<PayStubDetail />} />
           <Route path="/payroll/runs/:id" element={<PayRunDetail />} />
