@@ -164,16 +164,16 @@ export default function EditPayTypeDrawer({
             }}>
               {accountMapping || "Payroll Expenses:Wages"}
             </div>
-            <p style={{ fontSize: 12, color: MUTED, marginTop: 8, lineHeight: 1.5 }}>
-              Used to categorize and map payroll transactions. Edit this under Accounting in{" "}
+            <div style={{ fontSize: 12, color: MUTED, marginTop: 8, lineHeight: 1.5 }}>
+              Used to categorize and map payroll transactions. Edit under Accounting in
               
                 href="#"
                 onClick={(e) => e.preventDefault()}
-                style={{ color: TEAL, textDecoration: "none", fontWeight: 500 }}
+                style={{ color: TEAL, textDecoration: "none", fontWeight: 500, marginLeft: 4 }}
               >
                 Payroll settings
-              </a>.
-            </p>
+              </a>
+            </div>
           </div>
 
           {/* 3. Tax settings (collapsible) */}
