@@ -1,22 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, FileText, CheckCircle, XCircle, Clock, AlertCircle, RefreshCw } from "lucide-react";
+import { Plus, FileText, RefreshCw, AlertCircle } from "lucide-react";
+import {
+  Button, Card, StatusPill, EmptyState, Spinner,
+  colors, typography, spacing,
+} from "../design-system";
 
-const TEAL = "#0F9599";
-const FONT_FAMILY = '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif';
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
 const getToken = () =>
   localStorage.getItem("access_token") ||
   localStorage.getItem("token") ||
   "";
-
-const STATUS_CONFIG = {
-  draft: { label: "Draft", color: "#92400E", bg: "#FEF3C7", Icon: Clock },
-  calculated: { label: "Calculated", color: "#1E40AF", bg: "#DBEAFE", Icon: FileText },
-  finalized: { label: "Finalized", color: "#065F46", bg: "#D1FAE5", Icon: CheckCircle },
-  voided: { label: "Voided", color: "#991B1B", bg: "#FEE2E2", Icon: XCircle },
-};
 
 const formatCurrency = (value, currency) => {
   if (value === null || value === undefined) return "";
@@ -45,19 +40,17 @@ const formatDate = (dateStr) => {
   }
 };
 
-const headerCell = {
+const thStyle = {
   textAlign: "left",
   padding: "12px 20px",
-  fontSize: "11px",
-  fontWeight: "600",
-  color: "#6B7280",
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
+  ...typography.labelUppercase,
+  color: colors.textMuted,
+  whiteSpace: "nowrap",
 };
 
-const bodyCell = {
+const tdStyle = {
   padding: "16px 20px",
-  fontSize: "14px",
+  ...typography.body,
 };
 
 export default function PayRuns() {
@@ -82,7 +75,7 @@ export default function PayRuns() {
       });
       if (!response.ok) {
         const errBody = await response.json().catch(() => ({}));
-        throw new Error(errBody.detail || `Request failed with status ${response.status}`);
+        throw new Error(errBody.detail || `Request failed (HTTP ${response.status})`);
       }
       const data = await response.json();
       setRuns(Array.isArray(data) ? data : []);
@@ -97,252 +90,158 @@ export default function PayRuns() {
     fetchRuns();
   }, []);
 
-  const containerStyle = {
-    fontFamily: FONT_FAMILY,
-    padding: "32px 40px",
-    maxWidth: "1280px",
-    margin: "0 auto",
-    color: "#111827",
-    minHeight: "calc(100vh - 64px)",
-    background: "#FFFFFF",
-  };
-
-  const primaryButton = {
-    background: TEAL,
-    color: "#FFFFFF",
-    border: "none",
-    borderRadius: "8px",
-    padding: "10px 20px",
-    fontSize: "14px",
-    fontWeight: "600",
-    fontFamily: FONT_FAMILY,
-    cursor: "pointer",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "8px",
-    transition: "background 0.15s",
-  };
-
-  const secondaryButton = {
-    background: "#FFFFFF",
-    color: "#374151",
-    border: "1px solid #E5E7EB",
-    borderRadius: "8px",
-    padding: "9px 16px",
-    fontSize: "14px",
-    fontWeight: "500",
-    fontFamily: FONT_FAMILY,
-    cursor: "pointer",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "8px",
-  };
-
   return (
-    <div style={containerStyle}>
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        marginBottom: "32px",
-        flexWrap: "wrap",
-        gap: "16px",
-      }}>
-        <div>
-          <h1 style={{
-            fontSize: "28px",
-            fontWeight: "700",
-            margin: "0 0 8px 0",
-            color: "#111827",
-          }}>
-            Pay Runs
-          </h1>
-          <p style={{
-            fontSize: "14px",
-            color: "#6B7280",
-            margin: 0,
-          }}>
-            Manage payroll cycles for your team
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button onClick={fetchRuns} style={secondaryButton} title="Refresh">
-            <RefreshCw size={14} />
-            Refresh
-          </button>
-          <button
-            onClick={() => navigate("/payroll/runs/new")}
-            style={primaryButton}
-          >
-            <Plus size={16} />
-            New Pay Run
-          </button>
-        </div>
-      </div>
+    <div style={{
+      background: colors.bgPage,
+      minHeight: "100vh",
+      fontFamily: typography.fontFamily,
+      padding: `${spacing[8]}px ${spacing[10]}px`,
+      boxSizing: "border-box",
+    }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
 
-      {loading && (
         <div style={{
-          padding: "80px 0",
-          textAlign: "center",
-          color: "#6B7280",
-          fontSize: "14px",
-        }}>
-          Loading pay runs...
-        </div>
-      )}
-
-      {error && !loading && (
-        <div style={{
-          background: "#FEF2F2",
-          border: "1px solid #FECACA",
-          borderRadius: "12px",
-          padding: "20px 24px",
           display: "flex",
+          justifyContent: "space-between",
           alignItems: "flex-start",
-          gap: "12px",
-          color: "#991B1B",
+          marginBottom: spacing[8],
+          flexWrap: "wrap",
+          gap: spacing[4],
         }}>
-          <AlertCircle size={20} style={{ flexShrink: 0, marginTop: "2px" }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
-              Could not load pay runs
-            </div>
-            <div style={{ fontSize: "13px", color: "#7F1D1D" }}>{error}</div>
+          <div>
+            <h1 style={{
+              ...typography.displaySm,
+              color: colors.textPrimary,
+              margin: 0,
+              marginBottom: spacing[1],
+            }}>
+              Pay runs
+            </h1>
+            <p style={{
+              ...typography.body,
+              color: colors.textSecondary,
+              margin: 0,
+            }}>
+              Manage payroll cycles for your team
+            </p>
           </div>
-          <button onClick={fetchRuns} style={{
-            ...secondaryButton,
-            color: "#991B1B",
-            borderColor: "#FECACA",
-          }}>
-            Try again
-          </button>
-        </div>
-      )}
-
-      {!loading && !error && runs.length === 0 && (
-        <div style={{
-          background: "#FFFFFF",
-          border: "1px solid #E5E7EB",
-          borderRadius: "12px",
-          padding: "80px 40px",
-          textAlign: "center",
-        }}>
-          <div style={{
-            width: "64px",
-            height: "64px",
-            background: "#F0FDFA",
-            borderRadius: "50%",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: "20px",
-          }}>
-            <FileText size={28} color={TEAL} />
+          <div style={{ display: "flex", gap: spacing[2] }}>
+            <Button variant="secondary" size="md" onClick={fetchRuns} iconLeft={<RefreshCw size={14} />}>
+              Refresh
+            </Button>
+            <Button variant="primary" size="md" onClick={() => navigate("/payroll/runs/new")} iconLeft={<Plus size={16} />}>
+              New pay run
+            </Button>
           </div>
-          <h2 style={{
-            fontSize: "18px",
-            fontWeight: "600",
-            margin: "0 0 8px 0",
-            color: "#111827",
-          }}>
-            No pay runs yet
-          </h2>
-          <p style={{
-            fontSize: "14px",
-            color: "#6B7280",
-            maxWidth: "440px",
-            margin: "0 auto 24px",
-            lineHeight: "1.5",
-          }}>
-            Create your first pay run to calculate gross pay, taxes, and net pay for your team in one cycle.
-          </p>
-          <button
-            onClick={() => navigate("/payroll/runs/new")}
-            style={primaryButton}
-          >
-            <Plus size={16} />
-            Create your first pay run
-          </button>
         </div>
-      )}
 
-      {!loading && !error && runs.length > 0 && (
-        <div style={{
-          background: "#FFFFFF",
-          border: "1px solid #E5E7EB",
-          borderRadius: "12px",
-          overflow: "hidden",
-        }}>
-          <table style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            fontFamily: FONT_FAMILY,
+        {loading && (
+          <div style={{ padding: `${spacing[12]}px 0`, textAlign: "center" }}>
+            <Spinner size={20} label="Loading pay runs..." inline />
+          </div>
+        )}
+
+        {error && !loading && (
+          <Card style={{
+            background: colors.dangerSoft,
+            border: `1px solid ${colors.danger}40`,
+            display: "flex",
+            alignItems: "flex-start",
+            gap: spacing[3],
           }}>
-            <thead>
-              <tr style={{
-                background: "#F9FAFB",
-                borderBottom: "1px solid #E5E7EB",
+            <AlertCircle size={20} color={colors.danger} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{
+                ...typography.bodyStrong,
+                color: colors.dangerText,
+                marginBottom: 4,
               }}>
-                <th style={headerCell}>Pay Period</th>
-                <th style={headerCell}>Pay Date</th>
-                <th style={headerCell}>Employees</th>
-                <th style={{ ...headerCell, textAlign: "right" }}>Net Total</th>
-                <th style={headerCell}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {runs.map((run) => {
-                const config = STATUS_CONFIG[run.status] || STATUS_CONFIG.draft;
-                const Icon = config.Icon;
-                return (
+                Could not load pay runs
+              </div>
+              <div style={{ ...typography.caption, color: colors.dangerText }}>
+                {error}
+              </div>
+            </div>
+            <Button variant="secondary" size="sm" onClick={fetchRuns}>
+              Try again
+            </Button>
+          </Card>
+        )}
+
+        {!loading && !error && runs.length === 0 && (
+          <Card noPadding>
+            <EmptyState
+              icon={<FileText />}
+              title="No pay runs yet"
+              description="Create your first pay run to calculate gross pay, taxes, and net pay for your team in one cycle."
+              action={{
+                label: "Create your first pay run",
+                onClick: () => navigate("/payroll/runs/new"),
+                icon: <Plus size={16} />,
+              }}
+            />
+          </Card>
+        )}
+
+        {!loading && !error && runs.length > 0 && (
+          <Card noPadding>
+            <table style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              fontFamily: typography.fontFamily,
+            }}>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${colors.borderSubtle}` }}>
+                  <th style={thStyle}>Pay period</th>
+                  <th style={thStyle}>Pay date</th>
+                  <th style={thStyle}>Employees</th>
+                  <th style={{ ...thStyle, textAlign: "right" }}>Net total</th>
+                  <th style={thStyle}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {runs.map((run, idx) => (
                   <tr
                     key={run.id}
                     onClick={() => navigate(`/payroll/runs/${run.id}`)}
                     style={{
-                      borderBottom: "1px solid #F3F4F6",
+                      borderBottom: idx < runs.length - 1 ? `1px solid ${colors.borderSubtle}` : "none",
                       cursor: "pointer",
-                      transition: "background 0.15s",
+                      transition: "background 150ms ease",
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#F9FAFB")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "#FFFFFF")}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = colors.bgCardHover; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = colors.bgCard; }}
                   >
-                    <td style={bodyCell}>
-                      <div style={{ fontWeight: "500", color: "#111827" }}>
+                    <td style={tdStyle}>
+                      <div style={{ ...typography.bodyMd, color: colors.textPrimary }}>
                         {formatDate(run.pay_period_start)} to {formatDate(run.pay_period_end)}
                       </div>
                     </td>
-                    <td style={{ ...bodyCell, color: "#374151" }}>
+                    <td style={{ ...tdStyle, color: colors.textSecondary }}>
                       {formatDate(run.pay_date)}
                     </td>
-                    <td style={{ ...bodyCell, color: "#374151" }}>
+                    <td style={{ ...tdStyle, color: colors.textSecondary }}>
                       {run.employee_count || 0}
                     </td>
-                    <td style={{ ...bodyCell, textAlign: "right", fontWeight: "600", color: "#111827" }}>
+                    <td style={{
+                      ...tdStyle,
+                      textAlign: "right",
+                      ...typography.bodyStrong,
+                      color: colors.textPrimary,
+                      fontFeatureSettings: '"tnum" 1',
+                    }}>
                       {formatCurrency(run.total_net, run.currency)}
                     </td>
-                    <td style={bodyCell}>
-                      <span style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        background: config.bg,
-                        color: config.color,
-                        padding: "4px 10px",
-                        borderRadius: "12px",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                      }}>
-                        <Icon size={12} />
-                        {config.label}
-                      </span>
+                    <td style={tdStyle}>
+                      <StatusPill status={run.status} />
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
