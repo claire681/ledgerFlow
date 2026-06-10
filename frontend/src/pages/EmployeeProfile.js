@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, User, Briefcase, CreditCard, DollarSign, Receipt, Wallet,
-  Calendar as CalIcon, MinusCircle, Edit2, AlertCircle,
+  Calendar as CalIcon, MinusCircle, Edit2, AlertCircle, ChevronRight,
 } from "lucide-react";
 import {
   Button, Card, CardHeader, StatusPill, Spinner, Drawer, Input, Select,
@@ -13,7 +13,6 @@ const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
 const getToken = () =>
   localStorage.getItem("access_token") || localStorage.getItem("token") || "";
-
 const authHeaders = () => ({
   "Authorization": `Bearer ${getToken()}`,
   "Content-Type": "application/json",
@@ -59,23 +58,6 @@ function DetailRow({ label, value, mono, last }) {
   );
 }
 
-function SectionCard({ title, subtitle, icon, onEdit, children }) {
-  return (
-    <Card>
-      <div style={{
-        display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-        marginBottom: spacing[3], gap: spacing[3],
-      }}>
-        <CardHeader title={title} subtitle={subtitle} icon={icon} />
-        <Button variant="ghost" size="sm" onClick={onEdit} iconLeft={<Edit2 size={14} />}>
-          Edit
-        </Button>
-      </div>
-      <div>{children}</div>
-    </Card>
-  );
-}
-
 function EditDrawer({ open, onClose, title, children, onSave, saving, saveError }) {
   const footer = (
     <div style={{ display: "flex", justifyContent: "flex-end", gap: spacing[2] }}>
@@ -87,15 +69,11 @@ function EditDrawer({ open, onClose, title, children, onSave, saving, saveError 
   );
   return (
     <Drawer isOpen={open} onClose={onClose} title={title} footer={footer}>
-      <div style={{ display: "flex", flexDirection: "column", gap: spacing[4] }}>
-        {children}
-      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: spacing[4] }}>{children}</div>
       {saveError && (
         <div style={{
-          background: colors.dangerSoft,
-          padding: spacing[3], borderRadius: radius.md,
-          marginTop: spacing[4],
-          border: `1px solid ${colors.danger}40`,
+          background: colors.dangerSoft, padding: spacing[3], borderRadius: radius.md,
+          marginTop: spacing[4], border: `1px solid ${colors.danger}40`,
         }}>
           <div style={{ ...typography.bodySm, color: colors.dangerText }}>{saveError}</div>
         </div>
@@ -108,15 +86,23 @@ function SubHeading({ children }) {
   return (
     <h3 style={{
       fontSize: 15, fontWeight: 700, color: colors.textPrimary,
-      margin: `${spacing[4]}px 0 ${spacing[1]}px 0`,
-      letterSpacing: "-0.01em",
+      margin: `${spacing[4]}px 0 ${spacing[1]}px 0`, letterSpacing: "-0.01em",
     }}>{children}</h3>
   );
 }
 
-function Req() {
-  return <span style={{ color: colors.danger, fontWeight: 600 }}> *</span>;
-}
+function Req() { return <span style={{ color: colors.danger, fontWeight: 600 }}> *</span>; }
+
+const SECTIONS = [
+  { id: "personal", label: "Personal info", Icon: User, drawerTitle: "Edit personal info" },
+  { id: "employment", label: "Employment details", Icon: Briefcase, drawerTitle: "Edit employment details" },
+  { id: "payment", label: "Payment method", Icon: CreditCard, drawerTitle: "Edit payment method" },
+  { id: "base_pay", label: "Base pay", Icon: DollarSign, drawerTitle: "Edit base pay" },
+  { id: "tax", label: "Tax info", Icon: Receipt, drawerTitle: "Edit tax info" },
+  { id: "banking", label: "Direct deposit", Icon: Wallet, drawerTitle: "Edit direct deposit" },
+  { id: "time_off", label: "Time off", Icon: CalIcon, drawerTitle: "Edit time off" },
+  { id: "deductions", label: "Deductions and contributions", Icon: MinusCircle, drawerTitle: "Edit deductions and contributions" },
+];
 
 export default function EmployeeProfile() {
   const { id } = useParams();
@@ -125,6 +111,7 @@ export default function EmployeeProfile() {
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeSection, setActiveSection] = useState("personal");
   const [editing, setEditing] = useState(null);
   const [draft, setDraft] = useState({});
   const [saving, setSaving] = useState(false);
@@ -208,8 +195,7 @@ export default function EmployeeProfile() {
           background: "none", border: "none", cursor: "pointer",
           display: "inline-flex", alignItems: "center", gap: 6,
           ...typography.bodySm, color: colors.textSecondary,
-          padding: 0, marginBottom: spacing[5],
-          fontFamily: typography.fontFamily,
+          padding: 0, marginBottom: spacing[5], fontFamily: typography.fontFamily,
         }}>
           <ArrowLeft size={16} /> Employees
         </button>
@@ -240,170 +226,200 @@ export default function EmployeeProfile() {
   const homeAddress = [employee.street_address, employee.address_line_2, employee.city, employee.province, employee.postal_code].filter(Boolean).join(", ");
   const mailingAddress = [employee.mailing_street_address, employee.mailing_address_line_2, employee.mailing_city, employee.mailing_province, employee.mailing_postal_code].filter(Boolean).join(", ");
 
+  const currentSection = SECTIONS.find((s) => s.id === activeSection);
+
+  // --- Render content for active section ---
+  let sectionContent = null;
+  if (activeSection === "personal") {
+    sectionContent = (
+      <>
+        <DetailRow label="Name" value={fullName} />
+        <DetailRow label="Preferred first name" value={employee.preferred_first_name} />
+        <DetailRow label="Email" value={employee.email} />
+        <DetailRow label="Home phone number" value={employee.home_phone} />
+        <DetailRow label="Work phone number" value={employee.work_phone} />
+        <DetailRow label="Mobile phone number" value={employee.mobile_phone} />
+        <DetailRow label="Home address" value={homeAddress} />
+        <DetailRow label="Mailing address" value={mailingAddress} />
+        <DetailRow label="Birth date" value={employee.birth_date} />
+        <DetailRow label="Gender" value={employee.gender} />
+        <DetailRow last label="Social insurance number" value={(employee.sin || employee.social_insurance_number) ? "Set" : ""} />
+      </>
+    );
+  } else if (activeSection === "employment") {
+    sectionContent = (
+      <>
+        <DetailRow label="Status" value={(employee.status || "").replace("_", " ")} />
+        <DetailRow label="Hire date" value={employee.hire_date} />
+        <DetailRow label="Pay schedule" value={(employee.pay_schedule || "").replace("_", " ")} />
+        <DetailRow label="Work location" value={employee.work_location} />
+        <DetailRow label="Manager" value={employee.manager} />
+        <DetailRow label="Department" value={employee.department} />
+        <DetailRow label="Job title" value={employee.job_title} />
+        <DetailRow label="Employee ID" value={employee.employee_id} />
+        <DetailRow last label="Employment type" value={(employee.employment_type || "").replace("_", " ")} />
+      </>
+    );
+  } else if (activeSection === "payment") {
+    sectionContent = (
+      <DetailRow last label="Payment method" value={(employee.payment_method || "").replace("_", " ")} />
+    );
+  } else if (activeSection === "base_pay") {
+    sectionContent = (
+      <>
+        <DetailRow label="Pay type" value={payType === "salary" ? "Salary" : payType === "commission" ? "Commission only" : "Hourly"} />
+        {payType === "salary" ? (
+          <>
+            <DetailRow label="Salary" value={employee.salary_amount > 0 ? formatCurrency(employee.salary_amount, employee.currency) : ""} mono />
+            <DetailRow label="Hours per day" value={employee.hours_per_day} mono />
+            <DetailRow last label="Days per week" value={employee.days_per_week} mono />
+          </>
+        ) : payType === "commission" ? (
+          <DetailRow last label="Pay frequency" value={employee.pay_frequency} />
+        ) : (
+          <>
+            <DetailRow label="Rate per hour" value={employee.hourly_rate > 0 ? formatCurrency(employee.hourly_rate, employee.currency) : ""} mono />
+            <DetailRow label="Hours per day" value={employee.hours_per_day} mono />
+            <DetailRow label="Pay frequency" value={employee.pay_frequency} />
+            <DetailRow last label="Overtime eligible" value={employee.overtime_eligible === false ? "No" : "Yes"} />
+          </>
+        )}
+      </>
+    );
+  } else if (activeSection === "tax") {
+    sectionContent = (
+      <>
+        <DetailRow label="Country" value={country} />
+        <DetailRow label="Province of employment" value={employee.province_of_employment || employee.province_or_state || employee.province} />
+        <DetailRow label="Federal claim amount" value={employee.federal_claim_amount > 0 ? formatCurrency(employee.federal_claim_amount, employee.currency) : (employee.federal_credit_amount > 0 ? formatCurrency(employee.federal_credit_amount, employee.currency) : "")} mono />
+        <DetailRow label="Provincial claim amount" value={employee.provincial_claim_amount > 0 ? formatCurrency(employee.provincial_claim_amount, employee.currency) : (employee.provincial_credit_amount > 0 ? formatCurrency(employee.provincial_credit_amount, employee.currency) : "")} mono />
+        <DetailRow label="Additional federal tax (per pay)" value={employee.additional_federal_tax > 0 ? formatCurrency(employee.additional_federal_tax, employee.currency) : ""} mono />
+        <DetailRow label="Additional provincial tax (per pay)" value={employee.additional_provincial_tax > 0 ? formatCurrency(employee.additional_provincial_tax, employee.currency) : ""} mono />
+        <DetailRow label="CPP/QPP exempt" value={employee.cpp_exempt === true ? "Yes" : "No"} />
+        <DetailRow last label="EI exempt" value={employee.ei_exempt === true ? "Yes" : "No"} />
+      </>
+    );
+  } else if (activeSection === "banking") {
+    sectionContent = (
+      <>
+        <DetailRow label="Bank" value={employee.bank_name} />
+        <DetailRow label={country === "US" ? "Routing number" : "Transit number"} value={(employee.transit_number || employee.routing_number) ? "Set" : ""} />
+        <DetailRow label="Account" value={employee.account_number ? "Set" : ""} />
+        <DetailRow last label="Account type" value={employee.account_type} />
+      </>
+    );
+  } else if (activeSection === "time_off") {
+    sectionContent = (
+      <>
+        <DetailRow label="Vacation policy" value={employee.vacation_policy} />
+        <DetailRow label="Sick pay" value={employee.sick_pay} />
+        <DetailRow last label="Unpaid time off" value={employee.unpaid_time_off} />
+      </>
+    );
+  } else if (activeSection === "deductions") {
+    sectionContent = (
+      <>
+        <DetailRow label="Deductions on file" value={Array.isArray(employee.deductions) ? `${employee.deductions.length}` : "0"} />
+        <DetailRow last label="T4 dental benefits codes" value={employee.t4_dental_benefits_codes} />
+      </>
+    );
+  }
+
   return (
     <div style={{
       background: colors.bgPage, fontFamily: typography.fontFamily,
       padding: `${spacing[6]}px ${spacing[8]}px`,
       width: "100%", minHeight: "100%", boxSizing: "border-box",
     }}>
-      <div style={{ width: "100%" }}>
+      <button onClick={() => navigate("/payroll/employees")} style={{
+        background: "none", border: "none", cursor: "pointer",
+        display: "inline-flex", alignItems: "center", gap: 6,
+        ...typography.bodySm, color: colors.textSecondary,
+        padding: 0, marginBottom: spacing[3], fontFamily: typography.fontFamily,
+      }}>
+        <ArrowLeft size={16} /> Employees
+      </button>
 
-        <button onClick={() => navigate("/payroll/employees")} style={{
-          background: "none", border: "none", cursor: "pointer",
-          display: "inline-flex", alignItems: "center", gap: 6,
-          ...typography.bodySm, color: colors.textSecondary,
-          padding: 0, marginBottom: spacing[3],
-          fontFamily: typography.fontFamily,
-        }}>
-          <ArrowLeft size={16} /> Employees
-        </button>
-
+      <div style={{
+        display: "flex", alignItems: "center", gap: spacing[4],
+        marginBottom: spacing[6], flexWrap: "wrap",
+      }}>
         <div style={{
-          display: "flex", alignItems: "center", gap: spacing[4],
-          marginBottom: spacing[6], flexWrap: "wrap",
-        }}>
-          <div style={{
-            width: 64, height: 64, borderRadius: radius.pill,
-            background: colors.brandSoft,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 22, fontWeight: 700, color: colors.brandPrimary,
-            flexShrink: 0,
-          }}>{getInitials(name)}</div>
-          <div style={{ flex: 1, minWidth: 240 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: spacing[3], flexWrap: "wrap" }}>
-              <h1 style={{ ...typography.displaySm, color: colors.textPrimary, margin: 0 }}>{name}</h1>
-              <StatusPill status={status} />
-            </div>
-            <p style={{ ...typography.body, color: colors.textSecondary, margin: `${spacing[1]}px 0 0` }}>
-              {employee.job_title || "Employee"}
-              {employee.email && (<>{" · "}{employee.email}</>)}
-            </p>
+          width: 64, height: 64, borderRadius: radius.pill,
+          background: colors.brandSoft,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 22, fontWeight: 700, color: colors.brandPrimary, flexShrink: 0,
+        }}>{getInitials(name)}</div>
+        <div style={{ flex: 1, minWidth: 240 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: spacing[3], flexWrap: "wrap" }}>
+            <h1 style={{ ...typography.displaySm, color: colors.textPrimary, margin: 0 }}>{name}</h1>
+            <StatusPill status={status} />
           </div>
+          <p style={{ ...typography.body, color: colors.textSecondary, margin: `${spacing[1]}px 0 0` }}>
+            {employee.job_title || "Employee"}
+            {employee.email && (<>{" · "}{employee.email}</>)}
+          </p>
         </div>
+      </div>
 
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))",
-          gap: spacing[5],
+      {/* Two-column: left sub-nav + active section content */}
+      <div style={{ display: "flex", gap: spacing[6], alignItems: "flex-start", flexWrap: "wrap" }}>
+
+        {/* Left sub-nav */}
+        <nav style={{
+          width: 240, minWidth: 240,
+          background: colors.bgCard,
+          border: `1px solid ${colors.borderDefault}`,
+          borderRadius: radius.lg,
+          padding: spacing[2],
+          display: "flex", flexDirection: "column", gap: 2,
         }}>
+          {SECTIONS.map((s) => {
+            const isActive = activeSection === s.id;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setActiveSection(s.id)}
+                style={{
+                  display: "flex", alignItems: "center", gap: spacing[3],
+                  padding: `${spacing[3]}px ${spacing[3]}px`,
+                  background: isActive ? colors.brandSoft : "transparent",
+                  border: "none", cursor: "pointer", borderRadius: radius.md,
+                  ...typography.bodyMd,
+                  color: isActive ? colors.brandPrimary : colors.textPrimary,
+                  fontWeight: isActive ? 600 : 500,
+                  textAlign: "left",
+                  fontFamily: typography.fontFamily,
+                  transition: "background 150ms ease, color 150ms ease",
+                }}
+                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = colors.bgCardHover; }}
+                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+              >
+                <s.Icon size={16} style={{ flexShrink: 0 }} />
+                <span style={{ flex: 1 }}>{s.label}</span>
+                {isActive && <ChevronRight size={14} />}
+              </button>
+            );
+          })}
+        </nav>
 
-          {/* 1. Personal info */}
-          <SectionCard
-            title="Personal info"
-            icon={<div style={iconWrapStyle}><User size={18} color={colors.brandPrimary} /></div>}
-            onEdit={() => openEditor("personal")}
-          >
-            <DetailRow label="Name" value={fullName} />
-            <DetailRow label="Preferred first name" value={employee.preferred_first_name} />
-            <DetailRow label="Email" value={employee.email} />
-            <DetailRow label="Home phone number" value={employee.home_phone} />
-            <DetailRow label="Work phone number" value={employee.work_phone} />
-            <DetailRow label="Mobile phone number" value={employee.mobile_phone} />
-            <DetailRow label="Home address" value={homeAddress} />
-            <DetailRow label="Mailing address" value={mailingAddress} />
-            <DetailRow label="Birth date" value={employee.birth_date} />
-            <DetailRow label="Gender" value={employee.gender} />
-            <DetailRow last label="Social insurance number" value={(employee.sin || employee.social_insurance_number) ? "Set" : ""} />
-          </SectionCard>
-
-          {/* 2. Employment details */}
-          <SectionCard
-            title="Employment details"
-            icon={<div style={iconWrapStyle}><Briefcase size={18} color={colors.brandPrimary} /></div>}
-            onEdit={() => openEditor("employment")}
-          >
-            <DetailRow label="Status" value={(employee.status || "").replace("_", " ")} />
-            <DetailRow label="Hire date" value={employee.hire_date} />
-            <DetailRow label="Pay schedule" value={(employee.pay_schedule || "").replace("_", " ")} />
-            <DetailRow label="Work location" value={employee.work_location} />
-            <DetailRow label="Manager" value={employee.manager} />
-            <DetailRow label="Department" value={employee.department} />
-            <DetailRow label="Job title" value={employee.job_title} />
-            <DetailRow label="Employee ID" value={employee.employee_id} />
-            <DetailRow last label="Employment type" value={(employee.employment_type || "").replace("_", " ")} />
-          </SectionCard>
-
-          {/* 3. Payment method */}
-          <SectionCard
-            title="Payment method"
-            icon={<div style={iconWrapStyle}><CreditCard size={18} color={colors.brandPrimary} /></div>}
-            onEdit={() => openEditor("payment")}
-          >
-            <DetailRow last label="Payment method" value={(employee.payment_method || "").replace("_", " ")} />
-          </SectionCard>
-
-          {/* 4. Base pay */}
-          <SectionCard
-            title="Base pay"
-            icon={<div style={iconWrapStyle}><DollarSign size={18} color={colors.brandPrimary} /></div>}
-            onEdit={() => openEditor("base_pay")}
-          >
-            <DetailRow label="Pay type" value={payType === "salary" ? "Salary" : payType === "commission" ? "Commission only" : "Hourly"} />
-            {payType === "salary" ? (
-              <>
-                <DetailRow label="Salary" value={employee.salary_amount > 0 ? formatCurrency(employee.salary_amount, employee.currency) : ""} mono />
-                <DetailRow label="Hours per day" value={employee.hours_per_day} mono />
-                <DetailRow last label="Days per week" value={employee.days_per_week} mono />
-              </>
-            ) : payType === "commission" ? (
-              <DetailRow last label="Pay frequency" value={employee.pay_frequency} />
-            ) : (
-              <>
-                <DetailRow label="Rate per hour" value={employee.hourly_rate > 0 ? formatCurrency(employee.hourly_rate, employee.currency) : ""} mono />
-                <DetailRow label="Hours per day" value={employee.hours_per_day} mono />
-                <DetailRow label="Pay frequency" value={employee.pay_frequency} />
-                <DetailRow last label="Overtime eligible" value={employee.overtime_eligible === false ? "No" : "Yes"} />
-              </>
-            )}
-          </SectionCard>
-
-          {/* 5. Tax info */}
-          <SectionCard
-            title="Tax info"
-            subtitle="Jurisdiction and credits"
-            icon={<div style={iconWrapStyle}><Receipt size={18} color={colors.brandPrimary} /></div>}
-            onEdit={() => openEditor("tax")}
-          >
-            <DetailRow label="Country" value={country} />
-            <DetailRow label="Province or state" value={employee.province_or_state || employee.province} />
-            <DetailRow label="Federal credit amount" value={employee.federal_credit_amount > 0 ? formatCurrency(employee.federal_credit_amount, employee.currency) : ""} mono />
-            <DetailRow last label="Provincial credit amount" value={employee.provincial_credit_amount > 0 ? formatCurrency(employee.provincial_credit_amount, employee.currency) : ""} mono />
-          </SectionCard>
-
-          {/* 6. Direct deposit */}
-          <SectionCard
-            title="Direct deposit"
-            subtitle="Where pay is deposited"
-            icon={<div style={iconWrapStyle}><Wallet size={18} color={colors.brandPrimary} /></div>}
-            onEdit={() => openEditor("banking")}
-          >
-            <DetailRow label="Bank" value={employee.bank_name} />
-            <DetailRow label={country === "US" ? "Routing number" : "Transit number"} value={(employee.transit_number || employee.routing_number) ? "Set" : ""} />
-            <DetailRow label="Account" value={employee.account_number ? "Set" : ""} />
-            <DetailRow last label="Account type" value={employee.account_type} />
-          </SectionCard>
-
-          {/* 7. Time off */}
-          <SectionCard
-            title="Time off"
-            subtitle="Manage time off policies"
-            icon={<div style={iconWrapStyle}><CalIcon size={18} color={colors.brandPrimary} /></div>}
-            onEdit={() => openEditor("time_off")}
-          >
-            <DetailRow label="Vacation policy" value={employee.vacation_policy} />
-            <DetailRow label="Sick pay" value={employee.sick_pay} />
-            <DetailRow last label="Unpaid time off" value={employee.unpaid_time_off} />
-          </SectionCard>
-
-          {/* 8. Deductions and contributions */}
-          <SectionCard
-            title="Deductions and contributions"
-            icon={<div style={iconWrapStyle}><MinusCircle size={18} color={colors.brandPrimary} /></div>}
-            onEdit={() => openEditor("deductions")}
-          >
-            <DetailRow label="Deductions on file" value={Array.isArray(employee.deductions) ? `${employee.deductions.length}` : "0"} />
-            <DetailRow last label="T4 dental benefits codes" value={employee.t4_dental_benefits_codes} />
-          </SectionCard>
+        {/* Active section content */}
+        <div style={{ flex: 1, minWidth: 320 }}>
+          <Card>
+            <div style={{
+              display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+              marginBottom: spacing[4], gap: spacing[3],
+            }}>
+              <CardHeader
+                title={currentSection?.label || ""}
+                icon={<div style={iconWrapStyle}>{currentSection && <currentSection.Icon size={18} color={colors.brandPrimary} />}</div>}
+              />
+              <Button variant="primary" size="sm" onClick={() => openEditor(activeSection)} iconLeft={<Edit2 size={14} />}>
+                Edit
+              </Button>
+            </div>
+            <div>{sectionContent}</div>
+          </Card>
         </div>
       </div>
 
@@ -420,21 +436,18 @@ export default function EmployeeProfile() {
         <Input label="Work phone number" type="tel" value={draft.work_phone || ""} onChange={(e) => set("work_phone", e.target.value)} placeholder="(780) 555-0100" />
         <Input label="ext." value={draft.work_phone_ext || ""} onChange={(e) => set("work_phone_ext", e.target.value)} />
         <Input label="Mobile phone number" type="tel" value={draft.mobile_phone || ""} onChange={(e) => set("mobile_phone", e.target.value)} placeholder="(780) 555-0100" />
-
         <SubHeading>Home address</SubHeading>
         <Input label={<>Street Address<Req /></>} value={draft.street_address || ""} onChange={(e) => set("street_address", e.target.value)} placeholder="123 Main Street" />
         <Input label="Address line 2" value={draft.address_line_2 || ""} onChange={(e) => set("address_line_2", e.target.value)} placeholder="Apt, suite, unit" />
         <Input label={<>City<Req /></>} value={draft.city || ""} onChange={(e) => set("city", e.target.value)} />
         <Input label={<>Province<Req /></>} value={draft.province || ""} onChange={(e) => set("province", e.target.value)} />
         <Input label={<>Postal code<Req /></>} value={draft.postal_code || ""} onChange={(e) => set("postal_code", e.target.value)} placeholder="T0B 4A0" />
-
         <SubHeading>Mailing address</SubHeading>
         <Input label={<>Street Address<Req /></>} value={draft.mailing_street_address || ""} onChange={(e) => set("mailing_street_address", e.target.value)} placeholder="123 Main Street" />
         <Input label="Address line 2" value={draft.mailing_address_line_2 || ""} onChange={(e) => set("mailing_address_line_2", e.target.value)} placeholder="Apt, suite, unit" />
         <Input label={<>City<Req /></>} value={draft.mailing_city || ""} onChange={(e) => set("mailing_city", e.target.value)} />
         <Input label={<>Province<Req /></>} value={draft.mailing_province || ""} onChange={(e) => set("mailing_province", e.target.value)} />
         <Input label={<>Postal code<Req /></>} value={draft.mailing_postal_code || ""} onChange={(e) => set("mailing_postal_code", e.target.value)} placeholder="T0B 4A0" />
-
         <Input label={<>Birth date<Req /></>} type="date" value={draft.birth_date || ""} onChange={(e) => set("birth_date", e.target.value)} />
         <Select label="Gender" value={draft.gender || ""} onChange={(e) => set("gender", e.target.value)} options={[
           { value: "", label: "Select" },
@@ -523,7 +536,7 @@ export default function EmployeeProfile() {
         )}
       </EditDrawer>
 
-      {/* 5. Tax info drawer */}
+      {/* 5. Tax info drawer (CRA-standard wording) */}
       <EditDrawer open={editing === "tax"} onClose={closeEditor} title="Edit tax info" onSave={save} saving={saving} saveError={saveError}>
         <Select label="Country" value={draft.country || "CA"} onChange={(e) => set("country", e.target.value)} options={[
           { value: "CA", label: "Canada" },
@@ -532,9 +545,19 @@ export default function EmployeeProfile() {
           { value: "AU", label: "Australia" },
           { value: "IE", label: "Ireland" },
         ]} />
-        <Input label="Province or state code" value={draft.province_or_state || ""} onChange={(e) => set("province_or_state", e.target.value)} placeholder="e.g. AB, ON, NY, CA" />
-        <Input label="Federal credit amount" type="number" step="0.01" value={draft.federal_credit_amount || ""} onChange={(e) => set("federal_credit_amount", e.target.value)} />
-        <Input label="Provincial or state credit amount" type="number" step="0.01" value={draft.provincial_credit_amount || ""} onChange={(e) => set("provincial_credit_amount", e.target.value)} />
+        <Input label="Province of employment" value={draft.province_of_employment || draft.province_or_state || ""} onChange={(e) => set("province_of_employment", e.target.value)} placeholder="e.g. AB, ON, NY, CA" />
+        <Input label="Federal claim amount" type="number" step="0.01" value={draft.federal_claim_amount || draft.federal_credit_amount || ""} onChange={(e) => set("federal_claim_amount", e.target.value)} placeholder="e.g. 14156.00" />
+        <Input label="Provincial claim amount" type="number" step="0.01" value={draft.provincial_claim_amount || draft.provincial_credit_amount || ""} onChange={(e) => set("provincial_claim_amount", e.target.value)} />
+        <Input label="Additional federal tax (per pay)" type="number" step="0.01" value={draft.additional_federal_tax || ""} onChange={(e) => set("additional_federal_tax", e.target.value)} placeholder="0.00" />
+        <Input label="Additional provincial tax (per pay)" type="number" step="0.01" value={draft.additional_provincial_tax || ""} onChange={(e) => set("additional_provincial_tax", e.target.value)} placeholder="0.00" />
+        <Select label="CPP/QPP exempt" value={draft.cpp_exempt === true ? "yes" : "no"} onChange={(e) => set("cpp_exempt", e.target.value === "yes")} options={[
+          { value: "no", label: "No" },
+          { value: "yes", label: "Yes" },
+        ]} />
+        <Select label="EI exempt" value={draft.ei_exempt === true ? "yes" : "no"} onChange={(e) => set("ei_exempt", e.target.value === "yes")} options={[
+          { value: "no", label: "No" },
+          { value: "yes", label: "Yes" },
+        ]} />
       </EditDrawer>
 
       {/* 6. Direct deposit drawer */}
