@@ -171,7 +171,7 @@ export default function PayRuns() {
             Refresh
           </button>
           <button
-            onClick={() => alert("New Pay Run wizard coming next. Backend is ready.")}
+            onClick={() => navigate("/payroll/runs/new")}
             style={primaryButton}
           >
             <Plus size={16} />
@@ -257,7 +257,7 @@ export default function PayRuns() {
             Create your first pay run to calculate gross pay, taxes, and net pay for your team in one cycle.
           </p>
           <button
-            onClick={() => alert("New Pay Run wizard coming next. Backend is ready.")}
+            onClick={() => navigate("/payroll/runs/new")}
             style={primaryButton}
           >
             <Plus size={16} />
