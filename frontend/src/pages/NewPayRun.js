@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Calendar, Users, AlertCircle, RefreshCw, Plus,
-  CheckCircle, UserX,
+  ArrowLeft, Calendar, Users, AlertCircle, RefreshCw, Plus, CheckCircle, UserX,
 } from "lucide-react";
+import {
+  Button, Card, CardHeader, Input, Select, Checkbox, Spinner,
+  colors, typography, spacing, radius,
+} from "../design-system";
 
-const TEAL = "#0F9599";
-const TEAL_LIGHT = "#F0FDFA";
-const TEAL_DARK = "#0C7C7F";
-const FONT_FAMILY = '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif';
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
 const getToken = () =>
@@ -36,12 +35,8 @@ const formatCurrency = (value, currency) => {
 };
 
 const PAY_SCHEDULE_TO_PERIODS = {
-  weekly: 52,
-  bi_weekly: 26,
-  biweekly: 26,
-  semi_monthly: 24,
-  semimonthly: 24,
-  monthly: 12,
+  weekly: 52, bi_weekly: 26, biweekly: 26,
+  semi_monthly: 24, semimonthly: 24, monthly: 12,
 };
 
 const today = () => new Date().toISOString().split("T")[0];
@@ -52,124 +47,75 @@ const addDays = (dateStr, days) => {
 };
 
 const getEmployeeName = (emp) =>
-  emp.name ||
-  emp.full_name ||
+  emp.name || emp.full_name ||
   [emp.first_name, emp.last_name].filter(Boolean).join(" ") ||
-  emp.email ||
-  "Unnamed employee";
-
+  emp.email || "Unnamed employee";
 const getEmployeeRate = (emp) => parseFloat(emp.hourly_rate || emp.pay_rate || 0) || 0;
 const getEmployeeSalary = (emp) => parseFloat(emp.salary_amount || emp.salary || 0) || 0;
 const getPayType = (emp) => (emp.pay_type || emp.employment_type || "hourly").toLowerCase();
 
-const containerStyle = {
-  fontFamily: FONT_FAMILY,
-  padding: "32px 40px 120px",
-  maxWidth: "1280px",
-  margin: "0 auto",
-  color: "#111827",
-  minHeight: "100vh",
-  background: "#FFFFFF",
-};
-
-const cardStyle = {
-  background: "#FFFFFF",
-  border: "1px solid #E5E7EB",
-  borderRadius: "12px",
-  padding: "24px",
-  marginBottom: "20px",
-};
-
-const cardTitle = {
-  fontSize: "16px",
-  fontWeight: "700",
-  color: "#111827",
-  margin: "0 0 4px 0",
+const iconWrapStyle = {
+  width: 38, height: 38,
+  background: colors.brandSoft,
+  borderRadius: radius.lg,
   display: "flex",
   alignItems: "center",
-  gap: "8px",
+  justifyContent: "center",
+  flexShrink: 0,
 };
 
-const cardSubtitle = {
-  fontSize: "13px",
-  color: "#6B7280",
-  margin: "0 0 20px 0",
-};
-
-const labelStyle = {
-  display: "block",
-  fontSize: "12px",
-  fontWeight: "600",
-  color: "#374151",
-  marginBottom: "6px",
-  textTransform: "uppercase",
-  letterSpacing: "0.03em",
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "10px 12px",
-  fontSize: "14px",
-  fontFamily: FONT_FAMILY,
-  border: "1px solid #D1D5DB",
-  borderRadius: "8px",
-  background: "#FFFFFF",
-  color: "#111827",
-  outline: "none",
-  boxSizing: "border-box",
-};
-
-const numberInputStyle = {
-  ...inputStyle,
-  width: "70px",
-  padding: "6px 8px",
-  fontSize: "13px",
-  textAlign: "right",
-};
-
-const primaryBtn = {
-  background: TEAL,
-  color: "#FFFFFF",
-  border: "none",
-  borderRadius: "8px",
-  padding: "10px 20px",
-  fontSize: "14px",
-  fontWeight: "600",
-  fontFamily: FONT_FAMILY,
-  cursor: "pointer",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "8px",
-};
-
-const secondaryBtn = {
-  background: "#FFFFFF",
-  color: "#374151",
-  border: "1px solid #D1D5DB",
-  borderRadius: "8px",
-  padding: "9px 16px",
-  fontSize: "14px",
-  fontWeight: "500",
-  fontFamily: FONT_FAMILY,
-  cursor: "pointer",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "8px",
-};
-
-const ghostBtn = {
-  background: "transparent",
-  color: "#6B7280",
-  border: "none",
+const colHeaderStyle = {
+  textAlign: "left",
   padding: "8px 12px",
-  fontSize: "14px",
-  fontWeight: "500",
-  fontFamily: FONT_FAMILY,
-  cursor: "pointer",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "6px",
+  ...typography.labelUppercase,
+  color: colors.textMuted,
+  whiteSpace: "nowrap",
 };
+
+function ErrorBlock({ title, message }) {
+  return (
+    <Card style={{
+      background: colors.dangerSoft,
+      border: `1px solid ${colors.danger}40`,
+      display: "flex",
+      alignItems: "flex-start",
+      gap: spacing[3],
+      marginBottom: spacing[5],
+    }}>
+      <AlertCircle size={20} color={colors.danger} style={{ flexShrink: 0, marginTop: 2 }} />
+      <div style={{ flex: 1 }}>
+        <div style={{ ...typography.bodyStrong, color: colors.dangerText, marginBottom: 4 }}>
+          {title || "Something went wrong"}
+        </div>
+        <div style={{ ...typography.caption, color: colors.dangerText }}>{message}</div>
+      </div>
+    </Card>
+  );
+}
+
+function SummaryStat({ label, value, emphasis }) {
+  return (
+    <div>
+      <div style={{
+        ...typography.tiny,
+        color: colors.textMuted,
+        textTransform: "uppercase",
+        marginBottom: 6,
+      }}>
+        {label}
+      </div>
+      <div style={{
+        fontSize: emphasis ? 22 : 18,
+        fontWeight: 700,
+        color: emphasis ? colors.brandPrimary : colors.textPrimary,
+        fontFeatureSettings: '"tnum" 1',
+        letterSpacing: "-0.01em",
+      }}>
+        {value}
+      </div>
+    </div>
+  );
+}
 
 export default function NewPayRun() {
   const navigate = useNavigate();
@@ -193,7 +139,6 @@ export default function NewPayRun() {
   const [previewing, setPreviewing] = useState(false);
   const [preview, setPreview] = useState(null);
   const [previewError, setPreviewError] = useState(null);
-
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
@@ -201,21 +146,14 @@ export default function NewPayRun() {
     const load = async () => {
       try {
         const token = getToken();
-        if (!token) {
-          throw new Error("Not signed in. Please sign in first.");
-        }
+        if (!token) throw new Error("Not signed in. Please sign in first.");
         const [empRes, setRes] = await Promise.all([
           fetch(`${API_URL}/api/v1/payroll/employees`, { headers: authHeaders() }),
           fetch(`${API_URL}/api/v1/payroll/settings`, { headers: authHeaders() }),
         ]);
-
-        if (!empRes.ok) {
-          throw new Error(`Could not load employees (HTTP ${empRes.status})`);
-        }
+        if (!empRes.ok) throw new Error(`Could not load employees (HTTP ${empRes.status})`);
         const empData = await empRes.json();
-        const empList = Array.isArray(empData)
-          ? empData
-          : (empData.employees || empData.data || []);
+        const empList = Array.isArray(empData) ? empData : (empData.employees || empData.data || []);
         setEmployees(empList);
 
         if (setRes.ok) {
@@ -272,15 +210,15 @@ export default function NewPayRun() {
 
   const estimateRowGross = (emp, vals) => {
     const payType = getPayType(emp);
-    if (payType === "salary") {
-      return getEmployeeSalary(emp) / (form.pay_periods_per_year || 26);
-    }
+    if (payType === "salary") return getEmployeeSalary(emp) / (form.pay_periods_per_year || 26);
     const rate = getEmployeeRate(emp);
-    const regular = (vals.regular || 0) * rate;
-    const overtime = (vals.overtime || 0) * rate * 1.5;
-    const vacation = (vals.vacation || 0) * rate;
-    const sick = (vals.sick || 0) * rate;
-    return regular + overtime + vacation + sick + (vals.bonus || 0);
+    return (
+      (vals.regular || 0) * rate +
+      (vals.overtime || 0) * rate * 1.5 +
+      (vals.vacation || 0) * rate +
+      (vals.sick || 0) * rate +
+      (vals.bonus || 0)
+    );
   };
 
   const buildBody = () => {
@@ -293,11 +231,7 @@ export default function NewPayRun() {
           stat_holiday: 0,
           vacation: vals.vacation || 0,
           sick: vals.sick || 0,
-          evening: 0,
-          overnight: 0,
-          weekend: 0,
-          on_call: 0,
-          travel: 0,
+          evening: 0, overnight: 0, weekend: 0, on_call: 0, travel: 0,
         },
         bonus: vals.bonus || 0,
         commission: 0,
@@ -305,7 +239,6 @@ export default function NewPayRun() {
       },
       deductions: [],
     }));
-
     return {
       pay_period_start: form.pay_period_start,
       pay_period_end: form.pay_period_end,
@@ -323,20 +256,15 @@ export default function NewPayRun() {
     setPreviewError(null);
     try {
       const body = buildBody();
-      if (body.employee_inputs.length === 0) {
-        throw new Error("Select at least one employee");
-      }
+      if (body.employee_inputs.length === 0) throw new Error("Select at least one employee");
       const res = await fetch(`${API_URL}/api/v1/payroll/runs/preview`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify(body),
+        method: "POST", headers: authHeaders(), body: JSON.stringify(body),
       });
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
         throw new Error(errBody.detail || `Preview failed (HTTP ${res.status})`);
       }
-      const data = await res.json();
-      setPreview(data);
+      setPreview(await res.json());
     } catch (err) {
       setPreviewError(err.message);
     } finally {
@@ -349,13 +277,10 @@ export default function NewPayRun() {
     setSubmitError(null);
     try {
       const body = buildBody();
-      if (body.employee_inputs.length === 0) {
-        throw new Error("Select at least one employee");
-      }
+      if (body.employee_inputs.length === 0) throw new Error("Select at least one employee");
 
       const createRes = await fetch(`${API_URL}/api/v1/payroll/runs`, {
-        method: "POST",
-        headers: authHeaders(),
+        method: "POST", headers: authHeaders(),
         body: JSON.stringify({
           pay_period_start: body.pay_period_start,
           pay_period_end: body.pay_period_end,
@@ -370,8 +295,7 @@ export default function NewPayRun() {
       const run = await createRes.json();
 
       const calcRes = await fetch(`${API_URL}/api/v1/payroll/runs/${run.id}/calculate`, {
-        method: "POST",
-        headers: authHeaders(),
+        method: "POST", headers: authHeaders(),
         body: JSON.stringify({
           employee_inputs: body.employee_inputs,
           pay_periods_per_year: body.pay_periods_per_year,
@@ -382,7 +306,6 @@ export default function NewPayRun() {
         const errBody = await calcRes.json().catch(() => ({}));
         throw new Error(errBody.detail || `Could not calculate (HTTP ${calcRes.status})`);
       }
-
       navigate("/payroll/runs");
     } catch (err) {
       setSubmitError(err.message);
@@ -392,7 +315,6 @@ export default function NewPayRun() {
   };
 
   const selectedCount = Object.keys(selectedEmployees).length;
-
   let estimatedGross = 0;
   Object.entries(selectedEmployees).forEach(([empId, vals]) => {
     const emp = employees.find((e) => e.id === empId);
@@ -400,495 +322,318 @@ export default function NewPayRun() {
   });
 
   const canSubmit =
-    selectedCount > 0 &&
-    form.pay_period_start &&
-    form.pay_period_end &&
-    form.pay_date &&
-    !submitting;
+    selectedCount > 0 && form.pay_period_start && form.pay_period_end && form.pay_date && !submitting;
 
   return (
-    <div style={containerStyle}>
-      <button
-        onClick={() => navigate("/payroll/runs")}
-        style={{ ...ghostBtn, marginBottom: "16px", paddingLeft: 0 }}
-      >
-        <ArrowLeft size={16} />
-        Back to Pay Runs
-      </button>
+    <div style={{
+      background: colors.bgPage,
+      minHeight: "100vh",
+      fontFamily: typography.fontFamily,
+      padding: `${spacing[8]}px ${spacing[10]}px ${120}px`,
+      boxSizing: "border-box",
+    }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
 
-      <h1 style={{
-        fontSize: "28px",
-        fontWeight: "700",
-        margin: "0 0 8px 0",
-        color: "#111827",
-      }}>
-        New Pay Run
-      </h1>
-      <p style={{
-        fontSize: "14px",
-        color: "#6B7280",
-        margin: "0 0 32px 0",
-      }}>
-        Set the pay period, select employees, enter hours, then preview before saving.
-      </p>
+        {/* Back link + title */}
+        <button
+          onClick={() => navigate("/payroll/runs")}
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            display: "inline-flex", alignItems: "center", gap: 6,
+            ...typography.bodySm, color: colors.textSecondary,
+            padding: 0, marginBottom: spacing[3],
+            fontFamily: typography.fontFamily,
+          }}
+        >
+          <ArrowLeft size={16} />
+          Pay runs
+        </button>
 
-      {loading && (
-        <div style={{ padding: "80px 0", textAlign: "center", color: "#6B7280" }}>
-          Loading employees and settings...
-        </div>
-      )}
-
-      {loadError && !loading && (
-        <div style={{
-          background: "#FEF2F2",
-          border: "1px solid #FECACA",
-          borderRadius: "12px",
-          padding: "20px 24px",
-          display: "flex",
-          alignItems: "flex-start",
-          gap: "12px",
-          color: "#991B1B",
-          marginBottom: "20px",
+        <h1 style={{
+          ...typography.displaySm,
+          color: colors.textPrimary,
+          margin: `0 0 ${spacing[1]}px 0`,
         }}>
-          <AlertCircle size={20} style={{ flexShrink: 0, marginTop: "2px" }} />
-          <div>
-            <div style={{ fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
-              Could not load data
-            </div>
-            <div style={{ fontSize: "13px", color: "#7F1D1D" }}>{loadError}</div>
+          New pay run
+        </h1>
+        <p style={{
+          ...typography.body,
+          color: colors.textSecondary,
+          margin: `0 0 ${spacing[8]}px 0`,
+        }}>
+          Set the pay period, choose employees, enter hours, then save as draft.
+        </p>
+
+        {loading && (
+          <div style={{ padding: `${spacing[12]}px 0`, textAlign: "center" }}>
+            <Spinner size={20} label="Loading employees and settings..." inline />
           </div>
-        </div>
-      )}
+        )}
 
-      {!loading && !loadError && (
-        <>
-          {/* Pay Period Card */}
-          <div style={cardStyle}>
-            <h2 style={cardTitle}>
-              <Calendar size={18} color={TEAL} />
-              Pay Period
-            </h2>
-            <p style={cardSubtitle}>
-              The date range this pay run covers and when employees will be paid.
-            </p>
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-              gap: "16px",
-            }}>
-              <div>
-                <label style={labelStyle}>Period Start</label>
-                <input
-                  type="date"
-                  value={form.pay_period_start}
-                  onChange={(e) => updateForm("pay_period_start", e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>Period End</label>
-                <input
-                  type="date"
-                  value={form.pay_period_end}
-                  onChange={(e) => updateForm("pay_period_end", e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>Pay Date</label>
-                <input
-                  type="date"
-                  value={form.pay_date}
-                  onChange={(e) => updateForm("pay_date", e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>Pay Periods Per Year</label>
-                <select
-                  value={form.pay_periods_per_year}
-                  onChange={(e) => updateForm("pay_periods_per_year", parseInt(e.target.value, 10))}
-                  style={inputStyle}
-                >
-                  <option value={52}>Weekly (52)</option>
-                  <option value={26}>Biweekly (26)</option>
-                  <option value={24}>Semi-monthly (24)</option>
-                  <option value={12}>Monthly (12)</option>
-                </select>
-              </div>
-            </div>
-          </div>
+        {loadError && !loading && <ErrorBlock title="Could not load data" message={loadError} />}
 
-          {/* Employees Card */}
-          <div style={cardStyle}>
-            <h2 style={cardTitle}>
-              <Users size={18} color={TEAL} />
-              Employees and Hours
-              <span style={{
-                marginLeft: "auto",
-                fontSize: "13px",
-                color: "#6B7280",
-                fontWeight: "500",
-              }}>
-                {selectedCount} of {employees.length} selected
-              </span>
-            </h2>
-            <p style={cardSubtitle}>
-              Check employees to include in this run, then enter their hours.
-            </p>
-
-            {employees.length === 0 ? (
-              <div style={{
-                padding: "40px 20px",
-                textAlign: "center",
-                background: "#F9FAFB",
-                borderRadius: "8px",
-                color: "#6B7280",
-              }}>
-                <UserX size={32} style={{ margin: "0 auto 12px", color: "#9CA3AF" }} />
-                <div style={{ fontWeight: "600", marginBottom: "4px", color: "#374151" }}>
-                  No employees yet
-                </div>
-                <div style={{ fontSize: "13px", marginBottom: "16px" }}>
-                  Add employees first on the Payroll page.
-                </div>
-                <button
-                  onClick={() => navigate("/payroll")}
-                  style={secondaryBtn}
-                >
-                  Go to Payroll
-                </button>
-              </div>
-            ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  fontFamily: FONT_FAMILY,
-                  minWidth: "780px",
-                }}>
-                  <thead>
-                    <tr style={{
-                      background: "#F9FAFB",
-                      borderBottom: "1px solid #E5E7EB",
-                    }}>
-                      <th style={thStyle}>Employee</th>
-                      <th style={thStyle}>Type</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>Reg</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>OT</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>Vac</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>Sick</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>Bonus</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>Est. Gross</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {employees.map((emp) => {
-                      const sel = selectedEmployees[emp.id];
-                      const isSelected = !!sel;
-                      const payType = getPayType(emp);
-                      const isSalary = payType === "salary";
-                      const rate = getEmployeeRate(emp);
-                      const salary = getEmployeeSalary(emp);
-                      const rowGross = isSelected ? estimateRowGross(emp, sel) : 0;
-                      return (
-                        <tr
-                          key={emp.id}
-                          style={{
-                            borderBottom: "1px solid #F3F4F6",
-                            background: isSelected ? "#F0FDFA" : "#FFFFFF",
-                          }}
-                        >
-                          <td style={tdStyle}>
-                            <label style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "10px",
-                              cursor: "pointer",
-                            }}>
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => toggleEmployee(emp)}
-                                style={{
-                                  width: "16px",
-                                  height: "16px",
-                                  accentColor: TEAL,
-                                  cursor: "pointer",
-                                }}
-                              />
-                              <div>
-                                <div style={{ fontWeight: "500", color: "#111827", fontSize: "14px" }}>
-                                  {getEmployeeName(emp)}
-                                </div>
-                                <div style={{ fontSize: "12px", color: "#6B7280" }}>
-                                  {isSalary
-                                    ? `${formatCurrency(salary, emp.currency)} / yr`
-                                    : `${formatCurrency(rate, emp.currency)} / hr`}
-                                </div>
-                              </div>
-                            </label>
-                          </td>
-                          <td style={{ ...tdStyle, color: "#6B7280", fontSize: "12px" }}>
-                            {payType === "salary" ? "Salary" : "Hourly"}
-                          </td>
-                          <td style={{ ...tdStyle, textAlign: "right" }}>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.25"
-                              disabled={!isSelected || isSalary}
-                              value={sel?.regular ?? ""}
-                              onChange={(e) => updateField(emp.id, "regular", e.target.value)}
-                              style={{
-                                ...numberInputStyle,
-                                background: !isSelected || isSalary ? "#F9FAFB" : "#FFFFFF",
-                              }}
-                              placeholder="0"
-                            />
-                          </td>
-                          <td style={{ ...tdStyle, textAlign: "right" }}>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.25"
-                              disabled={!isSelected || isSalary}
-                              value={sel?.overtime ?? ""}
-                              onChange={(e) => updateField(emp.id, "overtime", e.target.value)}
-                              style={{
-                                ...numberInputStyle,
-                                background: !isSelected || isSalary ? "#F9FAFB" : "#FFFFFF",
-                              }}
-                              placeholder="0"
-                            />
-                          </td>
-                          <td style={{ ...tdStyle, textAlign: "right" }}>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.25"
-                              disabled={!isSelected || isSalary}
-                              value={sel?.vacation ?? ""}
-                              onChange={(e) => updateField(emp.id, "vacation", e.target.value)}
-                              style={{
-                                ...numberInputStyle,
-                                background: !isSelected || isSalary ? "#F9FAFB" : "#FFFFFF",
-                              }}
-                              placeholder="0"
-                            />
-                          </td>
-                          <td style={{ ...tdStyle, textAlign: "right" }}>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.25"
-                              disabled={!isSelected || isSalary}
-                              value={sel?.sick ?? ""}
-                              onChange={(e) => updateField(emp.id, "sick", e.target.value)}
-                              style={{
-                                ...numberInputStyle,
-                                background: !isSelected || isSalary ? "#F9FAFB" : "#FFFFFF",
-                              }}
-                              placeholder="0"
-                            />
-                          </td>
-                          <td style={{ ...tdStyle, textAlign: "right" }}>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              disabled={!isSelected}
-                              value={sel?.bonus ?? ""}
-                              onChange={(e) => updateField(emp.id, "bonus", e.target.value)}
-                              style={{
-                                ...numberInputStyle,
-                                background: !isSelected ? "#F9FAFB" : "#FFFFFF",
-                              }}
-                              placeholder="0"
-                            />
-                          </td>
-                          <td style={{
-                            ...tdStyle,
-                            textAlign: "right",
-                            fontWeight: "600",
-                            color: isSelected ? "#111827" : "#9CA3AF",
-                          }}>
-                            {isSelected ? formatCurrency(rowGross, emp.currency) : ""}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Preview Card */}
-          {preview && (
-            <div style={{
-              ...cardStyle,
-              background: TEAL_LIGHT,
-              borderColor: "#A7F3D0",
-            }}>
-              <h2 style={cardTitle}>
-                <CheckCircle size={18} color={TEAL_DARK} />
-                Preview Totals
-              </h2>
-              <p style={cardSubtitle}>
-                Calculations from the engine. Save as draft to persist these pay stubs.
-              </p>
+        {!loading && !loadError && (
+          <>
+            {/* Pay Period */}
+            <Card style={{ marginBottom: spacing[5] }}>
+              <CardHeader
+                title="Pay period"
+                subtitle="The date range this run covers and when employees will be paid"
+                icon={<div style={iconWrapStyle}><Calendar size={18} color={colors.brandPrimary} /></div>}
+              />
               <div style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                gap: "16px",
+                gap: spacing[4],
               }}>
-                <SummaryStat label="Employees" value={preview.employee_count} />
-                <SummaryStat label="Total Gross" value={formatCurrency(preview.total_gross, preview.currency)} />
-                <SummaryStat label="Deductions" value={formatCurrency(preview.total_employee_deductions, preview.currency)} />
-                <SummaryStat label="Total Net" value={formatCurrency(preview.total_net, preview.currency)} emphasis />
-                <SummaryStat label="Employer Cost" value={formatCurrency(preview.total_employer_contributions, preview.currency)} />
-                <SummaryStat label="Remittance" value={formatCurrency(preview.total_remittance_owed, preview.currency)} />
+                <Input
+                  type="date"
+                  label="Period start"
+                  value={form.pay_period_start}
+                  onChange={(e) => updateForm("pay_period_start", e.target.value)}
+                />
+                <Input
+                  type="date"
+                  label="Period end"
+                  value={form.pay_period_end}
+                  onChange={(e) => updateForm("pay_period_end", e.target.value)}
+                />
+                <Input
+                  type="date"
+                  label="Pay date"
+                  value={form.pay_date}
+                  onChange={(e) => updateForm("pay_date", e.target.value)}
+                />
+                <Select
+                  label="Pay periods per year"
+                  value={form.pay_periods_per_year}
+                  onChange={(e) => updateForm("pay_periods_per_year", parseInt(e.target.value, 10))}
+                  options={[
+                    { value: 52, label: "Weekly (52)" },
+                    { value: 26, label: "Biweekly (26)" },
+                    { value: 24, label: "Semi-monthly (24)" },
+                    { value: 12, label: "Monthly (12)" },
+                  ]}
+                />
               </div>
-            </div>
-          )}
+            </Card>
 
-          {previewError && (
-            <ErrorBlock message={previewError} title="Preview failed" />
-          )}
-          {submitError && (
-            <ErrorBlock message={submitError} title="Save failed" />
-          )}
-        </>
-      )}
+            {/* Employees */}
+            <Card style={{ marginBottom: spacing[5] }} noPadding>
+              <div style={{ padding: spacing[6], borderBottom: `1px solid ${colors.borderSubtle}` }}>
+                <CardHeader
+                  title="Employees and hours"
+                  subtitle={`${selectedCount} of ${employees.length} selected`}
+                  icon={<div style={iconWrapStyle}><Users size={18} color={colors.brandPrimary} /></div>}
+                />
+                <p style={{ ...typography.bodySm, color: colors.textSecondary, margin: `${spacing[1]}px 0 0` }}>
+                  Tick the employees to include and enter their hours. Untick to exclude.
+                </p>
+              </div>
+
+              {employees.length === 0 ? (
+                <div style={{ padding: `${spacing[10]}px ${spacing[8]}px`, textAlign: "center" }}>
+                  <div style={{
+                    width: 56, height: 56, background: colors.bgCardActive,
+                    borderRadius: radius.pill,
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    marginBottom: spacing[3],
+                  }}>
+                    <UserX size={24} color={colors.textMuted} />
+                  </div>
+                  <div style={{ ...typography.bodyStrong, color: colors.textPrimary, marginBottom: spacing[1] }}>
+                    No employees yet
+                  </div>
+                  <p style={{ ...typography.bodySm, color: colors.textSecondary, margin: `0 0 ${spacing[4]}px` }}>
+                    Add employees first on the Payroll page.
+                  </p>
+                  <Button variant="secondary" onClick={() => navigate("/payroll")}>
+                    Go to Payroll
+                  </Button>
+                </div>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    fontFamily: typography.fontFamily,
+                    minWidth: 780,
+                  }}>
+                    <thead>
+                      <tr style={{
+                        background: colors.bgCardActive,
+                        borderBottom: `1px solid ${colors.borderSubtle}`,
+                      }}>
+                        <th style={colHeaderStyle}>Employee</th>
+                        <th style={colHeaderStyle}>Type</th>
+                        <th style={{ ...colHeaderStyle, textAlign: "right" }}>Reg</th>
+                        <th style={{ ...colHeaderStyle, textAlign: "right" }}>OT</th>
+                        <th style={{ ...colHeaderStyle, textAlign: "right" }}>Vac</th>
+                        <th style={{ ...colHeaderStyle, textAlign: "right" }}>Sick</th>
+                        <th style={{ ...colHeaderStyle, textAlign: "right" }}>Bonus</th>
+                        <th style={{ ...colHeaderStyle, textAlign: "right" }}>Est. gross</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {employees.map((emp, idx) => {
+                        const sel = selectedEmployees[emp.id];
+                        const isSelected = !!sel;
+                        const payType = getPayType(emp);
+                        const isSalary = payType === "salary";
+                        const rate = getEmployeeRate(emp);
+                        const salary = getEmployeeSalary(emp);
+                        const rowGross = isSelected ? estimateRowGross(emp, sel) : 0;
+                        return (
+                          <tr
+                            key={emp.id}
+                            style={{
+                              borderBottom: idx < employees.length - 1 ? `1px solid ${colors.borderSubtle}` : "none",
+                              background: isSelected ? colors.bgCardHover : colors.bgCard,
+                              opacity: isSelected ? 1 : 0.6,
+                              transition: "all 150ms ease",
+                            }}
+                          >
+                            <td style={{ padding: `${spacing[3]}px ${spacing[3]}px` }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <Checkbox checked={isSelected} onChange={() => toggleEmployee(emp)} />
+                                <div>
+                                  <div style={{ ...typography.bodyMd, color: colors.textPrimary }}>
+                                    {getEmployeeName(emp)}
+                                  </div>
+                                  <div style={{ ...typography.caption, color: colors.textSecondary }}>
+                                    {isSalary
+                                      ? `${formatCurrency(salary, emp.currency)} / yr`
+                                      : `${formatCurrency(rate, emp.currency)} / hr`}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td style={{ padding: `${spacing[3]}px ${spacing[3]}px`, ...typography.caption, color: colors.textSecondary }}>
+                              {isSalary ? "Salary" : "Hourly"}
+                            </td>
+                            <td style={{ padding: `${spacing[3]}px ${spacing[3]}px`, textAlign: "right" }}>
+                              <Input inline numeric disabled={!isSelected || isSalary} value={sel?.regular ?? ""}
+                                onChange={(e) => updateField(emp.id, "regular", e.target.value)} placeholder="0" />
+                            </td>
+                            <td style={{ padding: `${spacing[3]}px ${spacing[3]}px`, textAlign: "right" }}>
+                              <Input inline numeric disabled={!isSelected || isSalary} value={sel?.overtime ?? ""}
+                                onChange={(e) => updateField(emp.id, "overtime", e.target.value)} placeholder="0" />
+                            </td>
+                            <td style={{ padding: `${spacing[3]}px ${spacing[3]}px`, textAlign: "right" }}>
+                              <Input inline numeric disabled={!isSelected || isSalary} value={sel?.vacation ?? ""}
+                                onChange={(e) => updateField(emp.id, "vacation", e.target.value)} placeholder="0" />
+                            </td>
+                            <td style={{ padding: `${spacing[3]}px ${spacing[3]}px`, textAlign: "right" }}>
+                              <Input inline numeric disabled={!isSelected || isSalary} value={sel?.sick ?? ""}
+                                onChange={(e) => updateField(emp.id, "sick", e.target.value)} placeholder="0" />
+                            </td>
+                            <td style={{ padding: `${spacing[3]}px ${spacing[3]}px`, textAlign: "right" }}>
+                              <Input inline numeric disabled={!isSelected} value={sel?.bonus ?? ""}
+                                onChange={(e) => updateField(emp.id, "bonus", e.target.value)} placeholder="0" />
+                            </td>
+                            <td style={{
+                              padding: `${spacing[3]}px ${spacing[3]}px`,
+                              textAlign: "right",
+                              ...typography.bodyStrong,
+                              color: isSelected ? colors.textPrimary : colors.textMuted,
+                              fontFeatureSettings: '"tnum" 1',
+                            }}>
+                              {isSelected ? formatCurrency(rowGross, emp.currency) : ""}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+
+            {/* Preview totals */}
+            {preview && (
+              <Card style={{
+                background: colors.brandSoft,
+                border: `1px solid ${colors.brandSoftStrong}`,
+                marginBottom: spacing[5],
+              }}>
+                <CardHeader
+                  title="Preview totals"
+                  subtitle="From the engine. Save as draft to persist these pay stubs."
+                  icon={<div style={iconWrapStyle}><CheckCircle size={18} color={colors.brandPrimary} /></div>}
+                />
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: spacing[4],
+                }}>
+                  <SummaryStat label="Employees" value={preview.employee_count} />
+                  <SummaryStat label="Total gross" value={formatCurrency(preview.total_gross, preview.currency)} />
+                  <SummaryStat label="Deductions" value={formatCurrency(preview.total_employee_deductions, preview.currency)} />
+                  <SummaryStat label="Total net" value={formatCurrency(preview.total_net, preview.currency)} emphasis />
+                  <SummaryStat label="Employer cost" value={formatCurrency(preview.total_employer_contributions, preview.currency)} />
+                  <SummaryStat label="Remittance" value={formatCurrency(preview.total_remittance_owed, preview.currency)} />
+                </div>
+              </Card>
+            )}
+
+            {previewError && <ErrorBlock title="Preview failed" message={previewError} />}
+            {submitError && <ErrorBlock title="Save failed" message={submitError} />}
+          </>
+        )}
+      </div>
 
       {/* Sticky footer */}
       {!loading && !loadError && (
         <div style={{
           position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: "#FFFFFF",
-          borderTop: "1px solid #E5E7EB",
-          padding: "16px 40px",
+          bottom: 0, left: 0, right: 0,
+          background: colors.bgCard,
+          borderTop: `1px solid ${colors.borderDefault}`,
+          padding: `${spacing[4]}px ${spacing[10]}px`,
           display: "flex",
           alignItems: "center",
-          gap: "12px",
+          gap: spacing[3],
           zIndex: 10,
-          boxShadow: "0 -4px 20px rgba(0,0,0,0.05)",
+          boxShadow: "0 -4px 20px rgba(0,0,0,0.04)",
         }}>
-          <div style={{ flex: 1, fontSize: "13px", color: "#6B7280" }}>
+          <div style={{ flex: 1, ...typography.bodySm, color: colors.textSecondary }}>
             {selectedCount === 0 ? (
               "Select at least one employee to continue"
             ) : (
               <>
-                <strong style={{ color: "#111827" }}>{selectedCount}</strong>
-                {" employees selected"}
+                <strong style={{ color: colors.textPrimary }}>{selectedCount}</strong>{" "}
+                employees selected
                 {estimatedGross > 0 && (
                   <>
-                    {" "}
-                    estimated gross
-                    {" "}
-                    <strong style={{ color: "#111827" }}>{formatCurrency(estimatedGross)}</strong>
+                    {", estimated gross "}
+                    <strong style={{ color: colors.textPrimary, fontFeatureSettings: '"tnum" 1' }}>
+                      {formatCurrency(estimatedGross)}
+                    </strong>
                   </>
                 )}
               </>
             )}
           </div>
-          <button
-            onClick={() => navigate("/payroll/runs")}
-            style={ghostBtn}
-            disabled={submitting}
-          >
+          <Button variant="ghost" onClick={() => navigate("/payroll/runs")} disabled={submitting}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
             onClick={handlePreview}
-            style={secondaryBtn}
             disabled={selectedCount === 0 || previewing || submitting}
+            iconLeft={<RefreshCw size={14} />}
           >
-            <RefreshCw size={14} className={previewing ? "spin" : ""} />
             {previewing ? "Calculating..." : "Preview"}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleSave}
-            style={{
-              ...primaryBtn,
-              opacity: canSubmit ? 1 : 0.5,
-              cursor: canSubmit ? "pointer" : "not-allowed",
-            }}
             disabled={!canSubmit}
           >
-            {submitting ? "Saving..." : "Save as Draft"}
-          </button>
+            {submitting ? "Saving..." : "Save as draft"}
+          </Button>
         </div>
       )}
-    </div>
-  );
-}
-
-const thStyle = {
-  textAlign: "left",
-  padding: "10px 12px",
-  fontSize: "11px",
-  fontWeight: "600",
-  color: "#6B7280",
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
-  whiteSpace: "nowrap",
-};
-
-const tdStyle = {
-  padding: "12px",
-  fontSize: "14px",
-  color: "#111827",
-};
-
-function SummaryStat({ label, value, emphasis }) {
-  return (
-    <div>
-      <div style={{
-        fontSize: "11px",
-        fontWeight: "600",
-        color: "#6B7280",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-        marginBottom: "4px",
-      }}>
-        {label}
-      </div>
-      <div style={{
-        fontSize: emphasis ? "22px" : "18px",
-        fontWeight: "700",
-        color: emphasis ? TEAL_DARK : "#111827",
-      }}>
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function ErrorBlock({ message, title }) {
-  return (
-    <div style={{
-      background: "#FEF2F2",
-      border: "1px solid #FECACA",
-      borderRadius: "12px",
-      padding: "16px 20px",
-      display: "flex",
-      alignItems: "flex-start",
-      gap: "12px",
-      color: "#991B1B",
-      marginBottom: "20px",
-    }}>
-      <AlertCircle size={20} style={{ flexShrink: 0, marginTop: "2px" }} />
-      <div>
-        <div style={{ fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
-          {title || "Something went wrong"}
-        </div>
-        <div style={{ fontSize: "13px", color: "#7F1D1D" }}>{message}</div>
-      </div>
     </div>
   );
 }
