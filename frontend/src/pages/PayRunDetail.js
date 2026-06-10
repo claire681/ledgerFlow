@@ -432,7 +432,7 @@ export default function PayRunDetail() {
         )}
       </div>
 
-      <Modal open={confirm === "finalize"} onClose={() => !processing && setConfirm(null)} title="Finalize this pay run?">
+      <Modal isOpen={confirm === "finalize"} onClose={() => !processing && setConfirm(null)} title="Finalize this pay run?">
         <p style={{ ...typography.body, color: colors.textSecondary, margin: `0 0 ${spacing[5]}px` }}>
           Once finalized, this run is locked and the pay stubs become a source of truth for T4s, ROEs, and remittance reports. You cannot edit hours or amounts afterwards.
         </p>
@@ -444,7 +444,7 @@ export default function PayRunDetail() {
         </div>
       </Modal>
 
-      <Modal open={confirm === "void"} onClose={() => !processing && setConfirm(null)} title="Void this pay run?">
+      <Modal isOpen={confirm === "void"} onClose={() => !processing && setConfirm(null)} title="Void this pay run?">
         <p style={{ ...typography.body, color: colors.textSecondary, margin: `0 0 ${spacing[5]}px` }}>
           Voiding marks this run inactive. The pay stubs remain in the audit trail but are excluded from current totals. This cannot be reverted.
         </p>
@@ -456,7 +456,7 @@ export default function PayRunDetail() {
         </div>
       </Modal>
 
-      <Modal open={confirm === "delete"} onClose={() => !processing && setConfirm(null)} title="Delete this pay run?">
+      <Modal isOpen={confirm === "delete"} onClose={() => !processing && setConfirm(null)} title="Delete this pay run?">
         <p style={{ ...typography.body, color: colors.textSecondary, margin: `0 0 ${spacing[5]}px` }}>
           This pay run and its pay stubs will be permanently removed. This cannot be undone. Only drafts and unfinalized runs can be deleted.
         </p>

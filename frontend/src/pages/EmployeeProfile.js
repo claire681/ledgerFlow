@@ -81,8 +81,16 @@ function SectionCard({ title, subtitle, icon, onEdit, children }) {
 }
 
 function EditDrawer({ open, onClose, title, children, onSave, saving, saveError }) {
+  const footer = (
+    <div style={{ display: "flex", justifyContent: "flex-end", gap: spacing[2] }}>
+      <Button variant="ghost" onClick={onClose} disabled={saving}>Cancel</Button>
+      <Button variant="primary" onClick={onSave} disabled={saving}>
+        {saving ? "Saving..." : "Save changes"}
+      </Button>
+    </div>
+  );
   return (
-    <Drawer open={open} onClose={onClose} title={title}>
+    <Drawer isOpen={open} onClose={onClose} title={title} footer={footer}>
       <div style={{ display: "flex", flexDirection: "column", gap: spacing[4] }}>
         {children}
       </div>
@@ -96,15 +104,6 @@ function EditDrawer({ open, onClose, title, children, onSave, saving, saveError 
           <div style={{ ...typography.bodySm, color: colors.dangerText }}>{saveError}</div>
         </div>
       )}
-      <div style={{
-        marginTop: spacing[6], display: "flex",
-        justifyContent: "flex-end", gap: spacing[2],
-      }}>
-        <Button variant="ghost" onClick={onClose} disabled={saving}>Cancel</Button>
-        <Button variant="primary" onClick={onSave} disabled={saving}>
-          {saving ? "Saving..." : "Save changes"}
-        </Button>
-      </div>
     </Drawer>
   );
 }
