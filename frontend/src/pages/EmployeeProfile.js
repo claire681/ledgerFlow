@@ -137,7 +137,7 @@ function EditDrawer({ open, onClose, title, children, onSave, saving, saveError 
     <div style={{ display: "flex", justifyContent: "flex-end", gap: spacing[2] }}>
       <Button variant="ghost" onClick={onClose} disabled={saving}>Cancel</Button>
       <Button variant="primary" onClick={onSave} disabled={saving}>
-        {saving ? "Saving..." : "Save changes"}
+        {saving ? "Saving..." : "Save"}
       </Button>
     </div>
   );
@@ -666,8 +666,30 @@ export default function EmployeeProfile() {
         ]} />
       </EditDrawer>
 
-      {/* 5. Base pay drawer - matches legacy boxes */}
-      <EditDrawer open={editing === "base_pay"} onClose={closeEditor} title={employee.pay_type ? "Edit base pay" : "Add base pay"} onSave={save} saving={saving} saveError={saveError}>
+      {/* 5. Base pay drawer - matches spec */}
+      <EditDrawer
+        open={editing === "base_pay"}
+        onClose={closeEditor}
+        title={employee.pay_type ? "Edit base pay" : "Add base pay"}
+        onSave={() => {
+          const pt = draft.pay_type || "hourly";
+          if (pt === "hourly" && (!draft.hourly_rate || parseFloat(draft.hourly_rate) <= 0)) {
+            setSaveError("Rate is required");
+            return;
+          }
+          if (pt === "salary") {
+            if (!draft.pay_frequency) { setSaveError("Pay frequency is required"); return; }
+            if (!draft.salary_amount || parseFloat(draft.salary_amount) <= 0) { setSaveError("Salary is required"); return; }
+          }
+          if (draft.effective_option === "specific_date" && !draft.effective_date) {
+            setSaveError("Date is required when Specific date is selected");
+            return;
+          }
+          save();
+        }}
+        saving={saving}
+        saveError={saveError}
+      >
 
         <h3 style={{
           fontSize: 18, fontWeight: 700, color: colors.textPrimary,
@@ -676,7 +698,7 @@ export default function EmployeeProfile() {
           Select compensation type
         </h3>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: spacing[6] }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {[
             { value: "hourly", label: "Hourly" },
             { value: "salary", label: "Salary" },
@@ -716,16 +738,58 @@ export default function EmployeeProfile() {
           })}
         </div>
 
-        {(draft.pay_type || "hourly") === "hourly" && (
-          <div>
-            <div style={{ height: 1, background: colors.borderDefault, margin: `0 0 ${spacing[5]}px 0` }} />
+        <div style={{ height: 1, background: colors.borderDefault, margin: "24px 0" }} />
 
-            <div style={{ maxWidth: 220, marginBottom: spacing[4] }}>
+        {/* 2. Amount fields */}
+        {(draft.pay_type || "hourly") === "hourly" && (
+          <div style={{ maxWidth: 220 }}>
+            <label style={{
+              display: "block", ...typography.bodySm, fontWeight: 500,
+              color: colors.textPrimary, marginBottom: 6,
+            }}>
+              Rate<Req />
+            </label>
+            <div style={{ position: "relative" }}>
+              <span style={{
+                position: "absolute", left: 14, top: "50%",
+                transform: "translateY(-50%)",
+                color: colors.textSecondary,
+                fontSize: 15, fontWeight: 600,
+                pointerEvents: "none", zIndex: 1,
+              }}>$</span>
+              <input
+                type="number" step="0.01"
+                value={draft.hourly_rate || ""}
+                onChange={(e) => set("hourly_rate", e.target.value)}
+                placeholder="0.00"
+                style={{
+                  width: "100%", padding: "10px 14px 10px 28px",
+                  fontSize: 15, fontFamily: typography.fontFamily,
+                  color: colors.textPrimary, background: colors.bgCard,
+                  border: `1px solid ${colors.borderDefault}`,
+                  borderRadius: 8, outline: "none", boxSizing: "border-box",
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {(draft.pay_type === "salary") && (
+          <div style={{
+            display: "grid", gridTemplateColumns: "1.4fr 1fr",
+            gap: 14, maxWidth: 420,
+          }}>
+            <Select label={<>Pay frequency<Req /></>} value={draft.pay_frequency || "per_year"} onChange={(e) => set("pay_frequency", e.target.value)} options={[
+              { value: "per_year", label: "per year" },
+              { value: "per_month", label: "per month" },
+              { value: "per_pay_period", label: "per pay period" },
+            ]} />
+            <div>
               <label style={{
                 display: "block", ...typography.bodySm, fontWeight: 500,
                 color: colors.textPrimary, marginBottom: 6,
               }}>
-                Rate per hour<Req />
+                Salary<Req />
               </label>
               <div style={{ position: "relative" }}>
                 <span style={{
@@ -736,9 +800,9 @@ export default function EmployeeProfile() {
                   pointerEvents: "none", zIndex: 1,
                 }}>$</span>
                 <input
-                  type="number" step="0.01"
-                  value={draft.hourly_rate || ""}
-                  onChange={(e) => set("hourly_rate", e.target.value)}
+                  type="number" step="100"
+                  value={draft.salary_amount || ""}
+                  onChange={(e) => set("salary_amount", e.target.value)}
                   placeholder="0.00"
                   style={{
                     width: "100%", padding: "10px 14px 10px 28px",
@@ -750,131 +814,118 @@ export default function EmployeeProfile() {
                 />
               </div>
             </div>
-
-            <div style={{ height: 1, background: colors.borderDefault, margin: "20px 0" }} />
-
-            <h4 style={{
-              fontSize: 15, fontWeight: 700, color: colors.textPrimary,
-              margin: "0 0 6px 0",
-            }}>
-              Default working hours (optional)
-            </h4>
-            <p style={{
-              fontSize: 13.5, color: colors.textSecondary,
-              lineHeight: 1.55, margin: "0 0 16px 0",
-            }}>
-              If an employee works the same schedule every pay period, enter this info to make them eligible for Auto Payroll and calculate any time off.
-            </p>
-
-            <div style={{
-              display: "grid", gridTemplateColumns: "1fr 1fr",
-              gap: 16, maxWidth: 360,
-            }}>
-              <Input label="Hours per day" type="number" step="0.5" value={draft.hours_per_day || ""} onChange={(e) => set("hours_per_day", e.target.value)} />
-              <Input label="Days per week" type="number" step="0.5" value={draft.days_per_week || ""} onChange={(e) => set("days_per_week", e.target.value)} />
-            </div>
           </div>
         )}
 
-        {(draft.pay_type === "salary") && (
-          <div>
-            <div style={{ height: 1, background: colors.borderDefault, margin: `0 0 ${spacing[5]}px 0` }} />
-
-            <div style={{
-              display: "grid", gridTemplateColumns: "1.4fr 1fr",
-              gap: 14, maxWidth: 420,
-            }}>
-              <Select label={<>Pay frequency<Req /></>} value={draft.pay_frequency || "per_year"} onChange={(e) => set("pay_frequency", e.target.value)} options={[
-                { value: "per_year", label: "per year" },
-                { value: "per_month", label: "per month" },
-                { value: "per_pay_period", label: "per pay period" },
-              ]} />
-              <div>
-                <label style={{
-                  display: "block", ...typography.bodySm, fontWeight: 500,
-                  color: colors.textPrimary, marginBottom: 6,
-                }}>
-                  Salary<Req />
-                </label>
-                <div style={{ position: "relative" }}>
-                  <span style={{
-                    position: "absolute", left: 14, top: "50%",
-                    transform: "translateY(-50%)",
-                    color: colors.textSecondary,
-                    fontSize: 15, fontWeight: 600,
-                    pointerEvents: "none", zIndex: 1,
-                  }}>$</span>
-                  <input
-                    type="number" step="100"
-                    value={draft.salary_amount || ""}
-                    onChange={(e) => set("salary_amount", e.target.value)}
-                    placeholder="0.00"
-                    style={{
-                      width: "100%", padding: "10px 14px 10px 28px",
-                      fontSize: 15, fontFamily: typography.fontFamily,
-                      color: colors.textPrimary, background: colors.bgCard,
-                      border: `1px solid ${colors.borderDefault}`,
-                      borderRadius: 8, outline: "none", boxSizing: "border-box",
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div style={{ height: 1, background: colors.borderDefault, margin: "20px 0" }} />
-
-            <h4 style={{
-              fontSize: 15, fontWeight: 700, color: colors.textPrimary,
-              margin: "0 0 6px 0",
-            }}>
-              Default working hours
-            </h4>
-            <p style={{
-              fontSize: 13.5, color: colors.textSecondary,
-              lineHeight: 1.55, margin: "0 0 16px 0",
-            }}>
-              Used to calculate your employee&rsquo;s time off. You can always change this when you run payroll.
-            </p>
-
-            <div style={{
-              display: "grid", gridTemplateColumns: "1fr 1fr",
-              gap: 16, maxWidth: 360,
-            }}>
-              <Input label="Hours per day" type="number" step="0.5" value={draft.hours_per_day || ""} onChange={(e) => set("hours_per_day", e.target.value)} />
-              <Input label="Days per week" type="number" step="0.5" value={draft.days_per_week || ""} onChange={(e) => set("days_per_week", e.target.value)} />
-            </div>
-          </div>
+        {((draft.pay_type || "hourly") !== "commission") && (
+          <div style={{ height: 1, background: colors.borderDefault, margin: "24px 0" }} />
         )}
 
-        {(draft.pay_type === "commission") && (
-          <div>
-            <div style={{ height: 1, background: colors.borderDefault, margin: "0 0 20px 0" }} />
-
-            <div style={{
-              display: "flex", gap: 12, padding: 14, marginBottom: 16,
-              background: colors.brandSoft,
-              border: `1px solid ${colors.brandPrimary}30`,
-              borderRadius: 10,
-            }}>
-              <Info size={20} color={colors.brandPrimary} style={{ flexShrink: 0, marginTop: 2 }} />
-              <div style={{ fontSize: 13.5, color: colors.textSecondary, lineHeight: 1.55 }}>
-                A commission pay type will be automatically assigned once you save changes. You can rename this in &lsquo;Additional pay types&rsquo; from the employee profile.
-              </div>
-            </div>
-
-            <div style={{
-              display: "flex", gap: 12, padding: 14, marginBottom: 16,
-              background: colors.brandSoft,
-              border: `1px solid ${colors.brandPrimary}30`,
-              borderRadius: 10,
-            }}>
-              <Info size={20} color={colors.brandPrimary} style={{ flexShrink: 0, marginTop: 2 }} />
-              <div style={{ fontSize: 13.5, color: colors.textSecondary, lineHeight: 1.55 }}>
-                Overtime, stat pay, and time-off policies are not available for commission-only employees.
-              </div>
-            </div>
+        {/* 3. Account mapping */}
+        <div>
+          <Select label="Account mapping" value={draft.account_mapping || "payroll_expenses_wages"} onChange={(e) => set("account_mapping", e.target.value)} options={[
+            { value: "payroll_expenses_wages", label: "Payroll Expenses:Wages" },
+            { value: "payroll_expenses_salaries", label: "Payroll Expenses:Salaries" },
+            { value: "payroll_expenses_bonuses", label: "Payroll Expenses:Bonuses" },
+            { value: "payroll_expenses_commission", label: "Payroll Expenses:Commission" },
+          ]} />
+          <div style={{
+            fontSize: 13, color: colors.textSecondary,
+            marginTop: 6, lineHeight: 1.5,
+          }}>
+            Used to categorize and map your payroll transactions. To edit, see Accounting under{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/payroll")}
+              style={{
+                background: "none", border: "none", padding: 0,
+                color: colors.brandPrimary, cursor: "pointer",
+                fontFamily: typography.fontFamily, fontSize: 13,
+                textDecoration: "underline",
+              }}
+            >Payroll settings</button>.
           </div>
+        </div>
+
+        <div style={{ height: 1, background: colors.borderDefault, margin: "24px 0" }} />
+
+        {/* 4. Default working hours */}
+        <h3 style={{
+          fontSize: 18, fontWeight: 700, color: colors.textPrimary,
+          margin: "0 0 6px 0", letterSpacing: "-0.01em",
+        }}>
+          Default working hours
+        </h3>
+        <p style={{
+          fontSize: 13.5, color: colors.textSecondary,
+          lineHeight: 1.55, margin: "0 0 16px 0",
+        }}>
+          Used to calculate your employee&rsquo;s time off. You can always change this when you run payroll.
+        </p>
+        <div style={{
+          display: "grid", gridTemplateColumns: "1fr 1fr",
+          gap: 16, maxWidth: 360,
+        }}>
+          <Input
+            label="Hours per day"
+            type="number" step="0.5"
+            value={draft.hours_per_day !== undefined && draft.hours_per_day !== null && draft.hours_per_day !== "" ? draft.hours_per_day : 8}
+            onChange={(e) => set("hours_per_day", e.target.value)}
+          />
+          <Input
+            label="Days per week"
+            type="number" step="0.5"
+            value={draft.days_per_week !== undefined && draft.days_per_week !== null && draft.days_per_week !== "" ? draft.days_per_week : 5}
+            onChange={(e) => set("days_per_week", e.target.value)}
+          />
+        </div>
+
+        <div style={{ height: 1, background: colors.borderDefault, margin: "24px 0" }} />
+
+        {/* 5. Effective on */}
+        <h3 style={{
+          display: "flex", alignItems: "center", gap: 8,
+          fontSize: 18, fontWeight: 700, color: colors.textPrimary,
+          margin: "0 0 6px 0", letterSpacing: "-0.01em",
+        }}>
+          <CalIcon size={18} color={colors.textPrimary} />
+          Effective on
+        </h3>
+        <p style={{
+          fontSize: 13.5, color: colors.textSecondary,
+          lineHeight: 1.55, margin: "0 0 16px 0",
+        }}>
+          When should this change start?
+        </p>
+        <Select
+          label="Effective pay period"
+          value={draft.effective_option || "immediately"}
+          onChange={(e) => set("effective_option", e.target.value)}
+          options={[
+            { value: "immediately", label: "Immediately" },
+            { value: "specific_date", label: "Specific date" },
+          ]}
+        />
+        {draft.effective_option === "specific_date" && (
+          <Input
+            label={<>Date<Req /></>}
+            type="date"
+            value={draft.effective_date || ""}
+            onChange={(e) => set("effective_date", e.target.value)}
+          />
         )}
+
+        <div style={{
+          display: "flex", gap: 12, padding: 14, marginTop: 12,
+          background: colors.brandSoft,
+          border: `1px solid ${colors.brandPrimary}30`,
+          borderRadius: 10,
+        }}>
+          <Info size={20} color={colors.brandPrimary} style={{ flexShrink: 0, marginTop: 2 }} />
+          <div style={{ fontSize: 13.5, color: colors.textSecondary, lineHeight: 1.55 }}>
+            The change applies to all payrolls processed from now on, even if dated in the past.
+          </div>
+        </div>
 
       </EditDrawer>
 
