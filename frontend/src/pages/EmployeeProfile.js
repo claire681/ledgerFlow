@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, User, Phone, Briefcase, CreditCard, DollarSign, PlusCircle, Receipt, Wallet,
+  ArrowLeft, User, Phone, Briefcase, CreditCard, DollarSign, PlusCircle, Plus, Receipt, Wallet,
   Calendar as CalIcon, MinusCircle, Edit2, AlertCircle, ChevronRight, Trash2,
 } from "lucide-react";
 import {
@@ -67,6 +67,34 @@ const DEDUCTION_TYPE_OPTIONS = [
   { value: "other", label: "Other" },
 ];
 
+const isSectionFilled = (sectionId, emp) => {
+  if (!emp) return false;
+  switch (sectionId) {
+    case "personal":
+      return !!(emp.first_name || emp.last_name || emp.email);
+    case "emergency":
+      return !!(emp.emergency_name || emp.emergency_home_phone || emp.emergency_mobile_phone || emp.emergency_email);
+    case "employment":
+      return !!(emp.hire_date || emp.work_location || emp.job_title || emp.employee_id);
+    case "payment":
+      return !!emp.payment_method;
+    case "base_pay":
+      return !!emp.pay_type && (parseFloat(emp.hourly_rate) > 0 || parseFloat(emp.salary_amount) > 0);
+    case "additional_pay":
+      return Array.isArray(emp.additional_pay_types) && emp.additional_pay_types.length > 0;
+    case "time_off":
+      return !!(emp.vacation_policy || emp.sick_pay || emp.unpaid_time_off);
+    case "tax":
+      return !!(emp.country || emp.province_or_state || emp.province_of_employment || emp.federal_claim_amount || emp.federal_credit_amount);
+    case "banking":
+      return !!(emp.bank_name || emp.account_number);
+    case "deductions":
+      return (Array.isArray(emp.deductions) && emp.deductions.length > 0) || !!emp.t4_dental_benefits_codes;
+    default:
+      return false;
+  }
+};
+
 function DetailRow({ label, value, mono, last }) {
   return (
     <div style={{
@@ -120,13 +148,21 @@ function SubHeading({ children }) {
 
 function Req() { return <span style={{ color: colors.danger, fontWeight: 600 }}> *</span>; }
 
+const drawerH1Style = {
+  fontSize: 20,
+  fontWeight: 700,
+  color: colors.textPrimary,
+  margin: `0 0 ${spacing[2]}px 0`,
+  letterSpacing: "-0.01em",
+};
+
 const SECTIONS = [
   { id: "personal", label: "Personal info", Icon: User, drawerTitle: "Edit personal info" },
   { id: "emergency", label: "Emergency contact", Icon: Phone, drawerTitle: "Edit emergency contact" },
   { id: "employment", label: "Employment details", Icon: Briefcase, drawerTitle: "Edit employment details" },
   { id: "payment", label: "Payment method", Icon: CreditCard, drawerTitle: "Edit payment method" },
   { id: "base_pay", label: "Base pay", Icon: DollarSign, drawerTitle: "Edit base pay" },
-  { id: "additional_pay", label: "Additional pay types", Icon: PlusCircle, drawerTitle: "Edit additional pay types" },
+  { id: "additional_pay", label: "Additional pay types", Icon: PlusCircle, Plus, drawerTitle: "Edit additional pay types" },
   { id: "time_off", label: "Time off", Icon: CalIcon, drawerTitle: "Edit time off" },
   { id: "tax", label: "Tax info", Icon: Receipt, drawerTitle: "Edit tax info" },
   { id: "banking", label: "Direct deposit", Icon: Wallet, drawerTitle: "Edit direct deposit" },
@@ -492,8 +528,8 @@ export default function EmployeeProfile() {
                 title={currentSection?.label || ""}
                 icon={<div style={iconWrapStyle}>{currentSection && <currentSection.Icon size={18} color={colors.brandPrimary} />}</div>}
               />
-              <Button variant="primary" size="sm" onClick={() => openEditor(activeSection)} iconLeft={<Edit2 size={14} />}>
-                Edit
+              <Button variant="primary" size="sm" onClick={() => openEditor(activeSection)} iconLeft={isSectionFilled(activeSection, employee) ? <Edit2 size={14} /> : <Plus size={14} />}>
+                {isSectionFilled(activeSection, employee) ? "Edit" : "Start"}
               </Button>
             </div>
             <div>{sectionContent}</div>
@@ -503,6 +539,7 @@ export default function EmployeeProfile() {
 
       {/* 1. Personal info drawer */}
       <EditDrawer open={editing === "personal"} onClose={closeEditor} title="Edit personal info" onSave={save} saving={saving} saveError={saveError}>
+        <h2 style={drawerH1Style}>Tell us more about {employee.first_name || "this employee"}</h2>
         <Input label="Title" value={draft.title || ""} onChange={(e) => set("title", e.target.value)} placeholder="e.g. Mr, Ms, Dr" />
         <Input label={<>First name<Req /></>} value={draft.first_name || ""} onChange={(e) => set("first_name", e.target.value)} />
         <Input label="M.I." value={draft.middle_initial || draft.m_i || ""} onChange={(e) => set("middle_initial", e.target.value)} />
@@ -562,6 +599,7 @@ export default function EmployeeProfile() {
 
       {/* 3. Employment details drawer */}
       <EditDrawer open={editing === "employment"} onClose={closeEditor} title="Edit employment details" onSave={save} saving={saving} saveError={saveError}>
+        <h2 style={drawerH1Style}>Let’s get down to {employee.first_name || "this employee"}’s employment specifics</h2>
         <Select label={<>Status<Req /></>} value={draft.status || "active"} onChange={(e) => set("status", e.target.value)} options={[
           { value: "active", label: "Active" },
           { value: "on_leave", label: "On leave" },
@@ -590,6 +628,7 @@ export default function EmployeeProfile() {
 
       {/* 4. Payment method drawer */}
       <EditDrawer open={editing === "payment"} onClose={closeEditor} title="Edit payment method" onSave={save} saving={saving} saveError={saveError}>
+        <h2 style={drawerH1Style}>How would you like to pay {employee.first_name || "this employee"}?</h2>
         <Select label="Payment method" value={draft.payment_method || "direct_deposit"} onChange={(e) => set("payment_method", e.target.value)} options={[
           { value: "direct_deposit", label: "Direct deposit" },
           { value: "check", label: "Check" },
@@ -655,6 +694,7 @@ export default function EmployeeProfile() {
 
       {/* 7. Time off drawer */}
       <EditDrawer open={editing === "time_off"} onClose={closeEditor} title="Edit time off" onSave={save} saving={saving} saveError={saveError}>
+        <h2 style={drawerH1Style}>Manage time off policies</h2>
         <Input label="Vacation policy" value={draft.vacation_policy || ""} onChange={(e) => set("vacation_policy", e.target.value)} />
         <Input label="Sick pay" value={draft.sick_pay || ""} onChange={(e) => set("sick_pay", e.target.value)} />
         <Input label="Unpaid time off" value={draft.unpaid_time_off || ""} onChange={(e) => set("unpaid_time_off", e.target.value)} />
