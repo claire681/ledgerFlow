@@ -218,7 +218,7 @@ export default function PayStubDetail() {
 
   if (loading) {
     return (
-      <div style={{ background: colors.bgPage, minHeight: "100vh", padding: `${spacing[10]}px` }}>
+      <div style={{ background: colors.bgPage, minHeight: "100%", padding: `${spacing[10]}px` }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", textAlign: "center", paddingTop: spacing[12] }}>
           <Spinner size={20} label="Loading pay stub..." inline />
         </div>
@@ -229,12 +229,12 @@ export default function PayStubDetail() {
   if (error || !stub) {
     return (
       <div style={{
-        background: colors.bgPage, minHeight: "100vh",
+        background: colors.bgPage, minHeight: "100%",
         fontFamily: typography.fontFamily,
-        padding: `${spacing[8]}px ${spacing[10]}px`,
+        padding: `${spacing[6]}px ${spacing[8]}px`,
         boxSizing: "border-box",
       }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ width: "100%" }}>
           <button onClick={() => navigate(`/payroll/runs/${runId}`)} style={{
             background: "none", border: "none", cursor: "pointer",
             display: "inline-flex", alignItems: "center", gap: 6,
@@ -305,12 +305,12 @@ export default function PayStubDetail() {
   return (
     <div style={{
       background: colors.bgPage,
-      minHeight: "100vh",
+      minHeight: "100%",
       fontFamily: typography.fontFamily,
-      padding: `${spacing[8]}px ${spacing[10]}px ${spacing[10]}px`,
+      padding: `${spacing[6]}px ${spacing[8]}px`,
       boxSizing: "border-box",
     }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+      <div style={{ width: "100%" }}>
 
         {/* Back link */}
         <button onClick={() => navigate(`/payroll/runs/${runId}`)} style={{

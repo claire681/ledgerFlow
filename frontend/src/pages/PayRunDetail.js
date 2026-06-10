@@ -171,7 +171,7 @@ export default function PayRunDetail() {
 
   if (loading) {
     return (
-      <div style={{ background: colors.bgPage, minHeight: "100vh", padding: `${spacing[10]}px` }}>
+      <div style={{ background: colors.bgPage, minHeight: "100%", padding: `${spacing[10]}px` }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", textAlign: "center", paddingTop: spacing[12] }}>
           <Spinner size={20} label="Loading pay run..." inline />
         </div>
@@ -182,10 +182,10 @@ export default function PayRunDetail() {
   if (error) {
     return (
       <div style={{
-        background: colors.bgPage, minHeight: "100vh", fontFamily: typography.fontFamily,
-        padding: `${spacing[8]}px ${spacing[10]}px`, boxSizing: "border-box",
+        background: colors.bgPage, minHeight: "100%", fontFamily: typography.fontFamily,
+        padding: `${spacing[6]}px ${spacing[8]}px`, boxSizing: "border-box",
       }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ width: "100%" }}>
           <button onClick={() => navigate("/payroll/runs")} style={{
             background: "none", border: "none", cursor: "pointer",
             display: "inline-flex", alignItems: "center", gap: 6,
@@ -209,10 +209,10 @@ export default function PayRunDetail() {
 
   return (
     <div style={{
-      background: colors.bgPage, minHeight: "100vh", fontFamily: typography.fontFamily,
-      padding: `${spacing[8]}px ${spacing[10]}px`, boxSizing: "border-box",
+      background: colors.bgPage, minHeight: "100%", fontFamily: typography.fontFamily,
+      padding: `${spacing[6]}px ${spacing[8]}px`, boxSizing: "border-box",
     }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+      <div style={{ width: "100%" }}>
 
         <button onClick={() => navigate("/payroll/runs")} style={{
           background: "none", border: "none", cursor: "pointer",

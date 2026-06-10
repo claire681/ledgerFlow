@@ -327,12 +327,12 @@ export default function NewPayRun() {
   return (
     <div style={{
       background: colors.bgPage,
-      minHeight: "100vh",
+      minHeight: "100%",
       fontFamily: typography.fontFamily,
-      padding: `${spacing[8]}px ${spacing[10]}px ${120}px`,
+      padding: `${spacing[6]}px ${spacing[8]}px`,
       boxSizing: "border-box",
     }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+      <div style={{ width: "100%" }}>
 
         {/* Back link + title */}
         <button
@@ -585,11 +585,14 @@ export default function NewPayRun() {
       {/* Sticky footer */}
       {!loading && !loadError && (
         <div style={{
-          position: "fixed",
-          bottom: 0, left: 0, right: 0,
+          position: "sticky",
+          bottom: 0,
+          marginLeft: `-${spacing[8]}px`,
+          marginRight: `-${spacing[8]}px`,
+          marginTop: spacing[6],
           background: colors.bgCard,
           borderTop: `1px solid ${colors.borderDefault}`,
-          padding: `${spacing[4]}px ${spacing[10]}px`,
+          padding: `${spacing[4]}px ${spacing[8]}px`,
           display: "flex",
           alignItems: "center",
           gap: spacing[3],

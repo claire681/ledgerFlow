@@ -93,9 +93,9 @@ export default function PayRuns() {
   return (
     <div style={{
       background: colors.bgPage,
-      minHeight: "100vh",
+      minHeight: "100%",
       fontFamily: typography.fontFamily,
-      padding: `${spacing[8]}px ${spacing[10]}px`,
+      padding: `${spacing[6]}px ${spacing[8]}px`,
       boxSizing: "border-box",
     }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
