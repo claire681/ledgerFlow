@@ -807,7 +807,7 @@ export default function EmployeeProfile() {
         ]} />
       </EditDrawer>
 
-      {/* 4. Payment method drawer - matches spec */}
+      {/* 4. Payment method drawer */}
       <EditDrawer
         open={editing === "payment_method"}
         onClose={closeEditor}
@@ -843,21 +843,26 @@ export default function EmployeeProfile() {
         {draft.payment_method === "direct_deposit" && (
           <div style={{ marginTop: spacing[5] }}>
             <h3 style={{
-              fontSize: 16, fontWeight: 700, color: colors.textPrimary,
-              margin: `0 0 ${spacing[2]}px 0`, letterSpacing: "-0.01em",
+              fontSize: 16,
+              fontWeight: 700,
+              color: colors.textPrimary,
+              margin: `0 0 ${spacing[2]}px 0`,
+              letterSpacing: "-0.01em",
             }}>
               Bank account details
             </h3>
             <p style={{
-              fontSize: 13, color: colors.textSecondary,
-              lineHeight: 1.55, margin: `0 0 ${spacing[4]}px 0`,
+              fontSize: 13,
+              color: colors.textSecondary,
+              lineHeight: 1.55,
+              margin: `0 0 ${spacing[4]}px 0`,
             }}>
               Where should we deposit {employee.first_name || "this employee"}&rsquo;s pay?
             </p>
 
             <div style={{ marginBottom: spacing[4] }}>
               <Select
-                label={<>Account type<Req /></>}
+                label="Account type"
                 value={draft.account_type || draft.direct_deposit_account_type || "chequing"}
                 onChange={(e) => set("account_type", e.target.value)}
                 options={[
@@ -869,14 +874,14 @@ export default function EmployeeProfile() {
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: spacing[4] }}>
               <Input
-                label={<>Institution number<Req /></>}
+                label="Institution number"
                 value={draft.institution_number || draft.direct_deposit_institution_number || ""}
                 onChange={(e) => set("institution_number", e.target.value.replace(/[^0-9]/g, "").slice(0, 3))}
                 placeholder="3 digits"
                 inputMode="numeric"
               />
               <Input
-                label={<>Transit number<Req /></>}
+                label="Transit number"
                 value={draft.transit_number || draft.direct_deposit_transit_number || ""}
                 onChange={(e) => set("transit_number", e.target.value.replace(/[^0-9]/g, "").slice(0, 5))}
                 placeholder="5 digits"
@@ -885,7 +890,7 @@ export default function EmployeeProfile() {
             </div>
 
             <Input
-              label={<>Account number<Req /></>}
+              label="Account number"
               value={draft.account_number || draft.direct_deposit_account_number || ""}
               onChange={(e) => set("account_number", e.target.value.replace(/[^0-9]/g, ""))}
               placeholder=""
@@ -893,8 +898,10 @@ export default function EmployeeProfile() {
             />
 
             <div style={{
-              fontSize: 12, color: colors.textSecondary,
-              marginTop: spacing[3], lineHeight: 1.55,
+              fontSize: 12,
+              color: colors.textSecondary,
+              marginTop: spacing[3],
+              lineHeight: 1.55,
             }}>
               Bank details are stored securely and used only for payroll.
             </div>
