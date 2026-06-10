@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import NovalaVerifyModal from "../components/NovalaVerifyModal";
 import { AlertTriangle, X as XIcon } from "lucide-react";
 import { EditPersonalInfo, EditEmploymentDetails, EditPaymentMethod, BasePayDrawer, EditTimeOff, EditDeductionsContributions } from "../components/EmployeeEditOverlays";
+import AdditionalPayTypesSection from "../components/payroll/AdditionalPayTypesSection";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -1419,12 +1420,11 @@ function EmployeeProfile({ employeeId, settings, onBack }) {
               {hasBasePay && <ProfileFieldGrid fields={[["Base pay", basePayValue], ["Pay type", emp.pay_type]]} />}
             </ProfileCard>
 
-            <ProfileCard
-              title="Additional pay types"
-              action={hasBasePay ? { label: "Start", onClick: () => alert("Additional pay types: bonus, commission, overtime — coming next") } : null}
-              helper={hasBasePay ? "Add bonuses, commissions, overtime or other earnings." : "You'll need to set a base pay before you can add any additional pay types."}
-              dimmed={!hasBasePay}
-            />
+            <AdditionalPayTypesSection
+            employee={emp}
+            hasBasePay={hasBasePay}
+            country="CA"
+          />
 
             <ProfileCard
               title="Time off"
