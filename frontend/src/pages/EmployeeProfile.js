@@ -67,6 +67,25 @@ const DEDUCTION_TYPE_OPTIONS = [
   { value: "other", label: "Other" },
 ];
 
+
+const VACATION_OPTIONS = [
+  { value: "", label: "Select one" },
+  { value: "add_new", label: "+ Add vacation policy" },
+  { value: "accrue_4pct", label: "4.00% Accrue time/hrs worked" },
+  { value: "paid_out_4pct", label: "4.00% Paid out each pay period" },
+  { value: "dont_track", label: "Don't track vacation" },
+];
+
+const SICK_PAY_OPTIONS = [
+  { value: "no_policy", label: "No sick pay policy" },
+  { value: "add_new", label: "+ Add new sick pay policy" },
+];
+
+const UNPAID_TIME_OFF_OPTIONS = [
+  { value: "no_policy", label: "No unpaid time off policy" },
+  { value: "add_new", label: "+ Add new unpaid time off policy" },
+];
+
 const isSectionFilled = (sectionId, emp) => {
   if (!emp) return false;
   switch (sectionId) {
@@ -83,7 +102,7 @@ const isSectionFilled = (sectionId, emp) => {
     case "additional_pay":
       return Array.isArray(emp.additional_pay_types) && emp.additional_pay_types.length > 0;
     case "time_off":
-      return !!(emp.vacation_policy || emp.sick_pay || emp.unpaid_time_off);
+      return !!(emp.vacation_policy || emp.sick_pay_policy || emp.sick_pay || emp.unpaid_time_off_policy || emp.unpaid_time_off);
     case "tax":
       return !!(emp.country || emp.province_or_state || emp.province_of_employment || emp.federal_claim_amount || emp.federal_credit_amount);
     case "banking":
@@ -397,11 +416,22 @@ export default function EmployeeProfile() {
       <DetailRow last label="Enabled pay types" value={enabledLabels} />
     );
   } else if (activeSection === "time_off") {
+    const vacationLabel = employee.vacation_policy
+      ? (VACATION_OPTIONS.find((o) => o.value === employee.vacation_policy) || {}).label
+      : null;
+    const sickPayValue = employee.sick_pay_policy || employee.sick_pay;
+    const sickPayLabel = sickPayValue
+      ? (SICK_PAY_OPTIONS.find((o) => o.value === sickPayValue) || {}).label
+      : null;
+    const unpaidValue = employee.unpaid_time_off_policy || employee.unpaid_time_off;
+    const unpaidLabel = unpaidValue
+      ? (UNPAID_TIME_OFF_OPTIONS.find((o) => o.value === unpaidValue) || {}).label
+      : null;
     sectionContent = (
       <>
-        <DetailRow label="Vacation policy" value={employee.vacation_policy} />
-        <DetailRow label="Sick pay" value={employee.sick_pay} />
-        <DetailRow last label="Unpaid time off" value={employee.unpaid_time_off} />
+        <DetailRow label="Vacation policy" value={vacationLabel} />
+        <DetailRow label="Sick pay" value={sickPayLabel} />
+        <DetailRow last label="Unpaid time off" value={unpaidLabel} />
       </>
     );
   } else if (activeSection === "tax") {
@@ -868,12 +898,59 @@ export default function EmployeeProfile() {
         })}
       </EditDrawer>
 
-      {/* 7. Time off drawer */}
+      {/* 7. Time off drawer - matches legacy boxes */}
       <EditDrawer open={editing === "time_off"} onClose={closeEditor} title="Edit time off" onSave={save} saving={saving} saveError={saveError}>
         <h2 style={drawerH1Style}>Manage time off policies</h2>
-        <Input label="Vacation policy" value={draft.vacation_policy || ""} onChange={(e) => set("vacation_policy", e.target.value)} />
-        <Input label="Sick pay" value={draft.sick_pay || ""} onChange={(e) => set("sick_pay", e.target.value)} />
-        <Input label="Unpaid time off" value={draft.unpaid_time_off || ""} onChange={(e) => set("unpaid_time_off", e.target.value)} />
+
+        <div>
+          <Select
+            label="Vacation policy"
+            value={draft.vacation_policy || ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "add_new") {
+                alert("Custom policies are coming soon. Pick one of the standard options for now.");
+                return;
+              }
+              set("vacation_policy", v);
+            }}
+            options={VACATION_OPTIONS}
+          />
+          <div style={{
+            fontSize: 13, color: colors.textSecondary,
+            marginTop: 6, lineHeight: 1.5,
+          }}>
+            We recommend the <strong style={{ color: colors.textPrimary }}>Pay out each pay period</strong> option for part-time, hourly, and commissioned employees.
+          </div>
+        </div>
+
+        <Select
+          label="Sick pay"
+          value={draft.sick_pay_policy || draft.sick_pay || "no_policy"}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === "add_new") {
+              alert("Custom policies are coming soon. Pick one of the standard options for now.");
+              return;
+            }
+            set("sick_pay_policy", v);
+          }}
+          options={SICK_PAY_OPTIONS}
+        />
+
+        <Select
+          label="Unpaid time off"
+          value={draft.unpaid_time_off_policy || draft.unpaid_time_off || "no_policy"}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === "add_new") {
+              alert("Custom policies are coming soon. Pick one of the standard options for now.");
+              return;
+            }
+            set("unpaid_time_off_policy", v);
+          }}
+          options={UNPAID_TIME_OFF_OPTIONS}
+        />
       </EditDrawer>
 
       {/* 8. Tax info drawer */}
