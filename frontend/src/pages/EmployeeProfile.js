@@ -122,42 +122,7 @@ const isSectionFilled = (sectionId, emp) => {
     case "banking":
       return !!(emp.bank_name || emp.account_number);
     case "deductions":
-      const handlePhotoSelect = async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setSaveError("Please select an image file");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setSaveError("Image must be under 5MB");
-      return;
-    }
-    setPhotoUploading(true);
-    setSaveError(null);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch(`${API_URL}/api/v1/payroll/employees/${id}/photo`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${getToken()}` },
-        body: formData,
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Photo upload failed");
-      }
-      const data = await res.json();
-      setEmployee((prev) => ({ ...prev, photo_url: data.photo_url || data.url || prev.photo_url }));
-    } catch (err) {
-      setSaveError(err.message || "Photo upload failed");
-    } finally {
-      setPhotoUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
-  return (Array.isArray(emp.deductions) && emp.deductions.length > 0) || !!emp.t4_dental_benefits_codes;
+      return (Array.isArray(emp.deductions) && emp.deductions.length > 0) || !!emp.t4_dental_benefits_codes;
     default:
       return false;
   }
@@ -407,6 +372,41 @@ export default function EmployeeProfile() {
 
   const name = getEmployeeName(employee);
   const setupStatus = getSetupStatus(employee);
+
+  const handlePhotoSelect = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setSaveError("Please select an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setSaveError("Image must be under 5MB");
+      return;
+    }
+    setPhotoUploading(true);
+    setSaveError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`${API_URL}/api/v1/payroll/employees/${id}/photo`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Photo upload failed");
+      }
+      const data = await res.json();
+      setEmployee((prev) => ({ ...prev, photo_url: data.photo_url || data.url || prev.photo_url }));
+    } catch (err) {
+      setSaveError(err.message || "Photo upload failed");
+    } finally {
+      setPhotoUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
   const payType = (employee.pay_type || "hourly").toLowerCase();
   const country = (employee.country || "CA").toUpperCase();
   const fullName = [employee.title, employee.first_name, employee.middle_initial || employee.m_i, employee.last_name].filter(Boolean).join(" ");
