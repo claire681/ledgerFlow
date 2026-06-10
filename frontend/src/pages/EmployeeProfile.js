@@ -254,6 +254,7 @@ export default function EmployeeProfile() {
   useEffect(() => { load(); }, [id]);
 
   const openEditor = (section) => {
+    console.log("[DIAG] openEditor called with:", section, "current editing:", editing);
     let newDraft = { ...employee };
     if (section === "tax") {
       const defaults = getTaxDefaults(employee.country || "CA", employee.province_or_state || employee.province_of_employment || employee.province || "AB");
