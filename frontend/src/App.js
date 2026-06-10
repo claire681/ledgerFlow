@@ -238,7 +238,7 @@ const handleOnboardingComplete = () => {
       <AIProvider>
         <VerificationGuard />
             <Routes>
-          <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+          <Route path="/login" element={token ? <Navigate to="/" replace /> : <LoginPage onLogin={handleLogin} />} />
           <Route path="/billing" element={<Billing />} />
           <Route path="/register" element={<Onboarding onComplete={() => window.location.replace("/")} />} />
           <Route path="/verify-code" element={<Verify />} />
