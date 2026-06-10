@@ -678,14 +678,99 @@ export default function EmployeeProfile() {
         ]} />
       </EditDrawer>
 
-      {/* 4. Payment method drawer */}
-      <EditDrawer open={editing === "payment"} onClose={closeEditor} title="Edit payment method" onSave={save} saving={saving} saveError={saveError}>
-        <h2 style={drawerH1Style}>How would you like to pay {employee.first_name || "this employee"}?</h2>
-        <Select label="Payment method" value={draft.payment_method || "direct_deposit"} onChange={(e) => set("payment_method", e.target.value)} options={[
-          { value: "direct_deposit", label: "Direct deposit" },
-          { value: "check", label: "Check" },
-          { value: "cash", label: "Cash" },
-        ]} />
+      {/* 4. Payment method drawer - matches spec */}
+      <EditDrawer
+        open={editing === "payment_method"}
+        onClose={closeEditor}
+        title="Edit payment method"
+        onSave={() => {
+          if (draft.payment_method === "direct_deposit") {
+            const inst = String(draft.institution_number || draft.direct_deposit_institution_number || "");
+            const transit = String(draft.transit_number || draft.direct_deposit_transit_number || "");
+            const acct = String(draft.account_number || draft.direct_deposit_account_number || "");
+            if (!inst || inst.length !== 3) { setSaveError("Institution number must be 3 digits"); return; }
+            if (!transit || transit.length !== 5) { setSaveError("Transit number must be 5 digits"); return; }
+            if (!acct) { setSaveError("Account number is required"); return; }
+          }
+          save();
+        }}
+        saving={saving}
+        saveError={saveError}
+      >
+        <h2 style={drawerH1Style}>
+          How would you like to pay {employee.first_name || "this employee"}?
+        </h2>
+
+        <Select
+          label="Payment method"
+          value={draft.payment_method === "check" ? "paper_cheque" : (draft.payment_method || "paper_cheque")}
+          onChange={(e) => set("payment_method", e.target.value)}
+          options={[
+            { value: "paper_cheque", label: "Paper cheque" },
+            { value: "direct_deposit", label: "Direct deposit" },
+          ]}
+        />
+
+        {draft.payment_method === "direct_deposit" && (
+          <div style={{ marginTop: spacing[5] }}>
+            <h3 style={{
+              fontSize: 16, fontWeight: 700, color: colors.textPrimary,
+              margin: `0 0 ${spacing[2]}px 0`, letterSpacing: "-0.01em",
+            }}>
+              Bank account details
+            </h3>
+            <p style={{
+              fontSize: 13, color: colors.textSecondary,
+              lineHeight: 1.55, margin: `0 0 ${spacing[4]}px 0`,
+            }}>
+              Where should we deposit {employee.first_name || "this employee"}&rsquo;s pay?
+            </p>
+
+            <div style={{ marginBottom: spacing[4] }}>
+              <Select
+                label={<>Account type<Req /></>}
+                value={draft.account_type || draft.direct_deposit_account_type || "chequing"}
+                onChange={(e) => set("account_type", e.target.value)}
+                options={[
+                  { value: "chequing", label: "Chequing" },
+                  { value: "savings", label: "Savings" },
+                ]}
+              />
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: spacing[4] }}>
+              <Input
+                label={<>Institution number<Req /></>}
+                value={draft.institution_number || draft.direct_deposit_institution_number || ""}
+                onChange={(e) => set("institution_number", e.target.value.replace(/[^0-9]/g, "").slice(0, 3))}
+                placeholder="3 digits"
+                inputMode="numeric"
+              />
+              <Input
+                label={<>Transit number<Req /></>}
+                value={draft.transit_number || draft.direct_deposit_transit_number || ""}
+                onChange={(e) => set("transit_number", e.target.value.replace(/[^0-9]/g, "").slice(0, 5))}
+                placeholder="5 digits"
+                inputMode="numeric"
+              />
+            </div>
+
+            <Input
+              label={<>Account number<Req /></>}
+              value={draft.account_number || draft.direct_deposit_account_number || ""}
+              onChange={(e) => set("account_number", e.target.value.replace(/[^0-9]/g, ""))}
+              placeholder=""
+              inputMode="numeric"
+            />
+
+            <div style={{
+              fontSize: 12, color: colors.textSecondary,
+              marginTop: spacing[3], lineHeight: 1.55,
+            }}>
+              Bank details are stored securely and used only for payroll.
+            </div>
+          </div>
+        )}
       </EditDrawer>
 
       {/* 5. Base pay drawer - matches spec */}
@@ -1270,17 +1355,6 @@ export default function EmployeeProfile() {
             </div>
           )}
         </div>
-      </EditDrawer>
-
-      {/* 9. Direct deposit drawer */}
-      <EditDrawer open={editing === "banking"} onClose={closeEditor} title="Edit direct deposit" onSave={save} saving={saving} saveError={saveError}>
-        <Input label="Bank name" value={draft.bank_name || ""} onChange={(e) => set("bank_name", e.target.value)} />
-        <Input label={country === "US" ? "Routing number" : "Transit number"} value={draft.transit_number || draft.routing_number || ""} onChange={(e) => set("transit_number", e.target.value)} />
-        <Input label="Account number" value={draft.account_number || ""} onChange={(e) => set("account_number", e.target.value)} />
-        <Select label="Account type" value={draft.account_type || "checking"} onChange={(e) => set("account_type", e.target.value)} options={[
-          { value: "checking", label: "Checking" },
-          { value: "savings", label: "Savings" },
-        ]} />
       </EditDrawer>
 
       {/* 10. Deductions and contributions drawer - legacy wording */}
