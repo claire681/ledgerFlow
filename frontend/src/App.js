@@ -152,6 +152,8 @@ function AppLayout({ onLogout }) {
 
         <main  style={{ flex:1, overflowY:'auto', position:'relative', minWidth:0, marginLeft: 0 }}>
           <Routes>
+          <Route path="/payroll/runs/new" element={<NewPayRun />} />
+          <Route path="/payroll/runs" element={<PayRuns />} />
           <Route path="/payroll/*" element={<Payroll />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/documents" element={<Documents />} />
