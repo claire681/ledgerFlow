@@ -49,6 +49,21 @@ const maskSin = (sin) => {
   return `XXX-XXX-${cleaned.slice(-3)}`;
 };
 
+const STATUS_DESCRIPTIONS = {
+  active: "Actively working and receiving pay. The per-employee subscription rate applies.",
+  paid_leave: "On a temporary paid leave. The employee continues to receive pay during the leave period.",
+  unpaid_leave: "On a temporary unpaid leave. No pay during the leave period.",
+  terminated: "No longer employed. Final pay and a Record of Employment may be required.",
+  not_on_payroll: "Not currently being paid through payroll but still associated with the company.",
+  deceased: "Employee has passed away. Final pay and tax forms may apply.",
+};
+
+const normaliseStatus = (s) => {
+  if (s === "on_leave") return "paid_leave";
+  if (s === "inactive") return "not_on_payroll";
+  return s || "active";
+};
+
 const getInitials = (name) =>
   name.split(" ").map((s) => s[0]).filter(Boolean).join("").slice(0, 2).toUpperCase();
 
@@ -892,32 +907,198 @@ export default function EmployeeProfile() {
       </EditDrawer>
 
       {/* 3. Employment details drawer */}
-      <EditDrawer open={editing === "employment"} onClose={closeEditor} title="Edit employment details" onSave={save} saving={saving} saveError={saveError}>
-        <h2 style={drawerH1Style}>Let’s get down to {employee.first_name || "this employee"}’s employment specifics</h2>
-        <Select label={<>Status<Req /></>} value={draft.status || "active"} onChange={(e) => set("status", e.target.value)} options={[
-          { value: "active", label: "Active" },
-          { value: "on_leave", label: "On leave" },
-          { value: "inactive", label: "Inactive" },
-          { value: "terminated", label: "Terminated" },
-        ]} />
-        <Input label={<>Hire date<Req /></>} type="date" value={draft.hire_date || ""} onChange={(e) => set("hire_date", e.target.value)} />
-        <Select label={<>Pay schedule<Req /></>} value={draft.pay_schedule || "biweekly"} onChange={(e) => set("pay_schedule", e.target.value)} options={[
-          { value: "weekly", label: "Weekly" },
-          { value: "biweekly", label: "Biweekly" },
-          { value: "semi_monthly", label: "Semi-monthly" },
-          { value: "monthly", label: "Monthly" },
-        ]} />
-        <Input label={<>Work location<Req /></>} value={draft.work_location || ""} onChange={(e) => set("work_location", e.target.value)} placeholder="e.g. 49516 Range Road 174, Edmonton, AB" />
-        <Input label="Manager" value={draft.manager || ""} onChange={(e) => set("manager", e.target.value)} placeholder="Select a manager" />
-        <Input label="Department" value={draft.department || ""} onChange={(e) => set("department", e.target.value)} placeholder="Select a department" />
-        <Input label="Job title" value={draft.job_title || ""} onChange={(e) => set("job_title", e.target.value)} />
-        <Input label="Employee ID" value={draft.employee_id || ""} onChange={(e) => set("employee_id", e.target.value)} />
-        <Select label="Employment type" value={draft.employment_type || "full_time"} onChange={(e) => set("employment_type", e.target.value)} options={[
-          { value: "full_time", label: "Full time" },
-          { value: "part_time", label: "Part time" },
-          { value: "contract", label: "Contract" },
-          { value: "casual", label: "Casual" },
-        ]} />
+      <EditDrawer
+        open={editing === "employment"}
+        onClose={closeEditor}
+        title="Edit employment details"
+        onSave={save}
+        saving={saving}
+        saveError={saveError}
+      >
+        <h2 style={drawerH1Style}>
+          Let&rsquo;s get down to {employee.first_name || "this employee"}&rsquo;s employment specifics
+        </h2>
+
+        {/* Status */}
+        <Select
+          label={<>Status<Req /></>}
+          value={normaliseStatus(draft.status)}
+          onChange={(e) => set("status", e.target.value)}
+          options={[
+            { value: "active", label: "Active" },
+            { value: "paid_leave", label: "Paid leave of absence" },
+            { value: "unpaid_leave", label: "Unpaid leave of absence" },
+            { value: "terminated", label: "Terminated" },
+            { value: "not_on_payroll", label: "Not on payroll" },
+            { value: "deceased", label: "Deceased" },
+          ]}
+        />
+        <div style={{
+          fontSize: 13,
+          color: colors.textSecondary,
+          lineHeight: 1.55,
+          marginTop: -spacing[3],
+          marginBottom: spacing[5],
+          paddingLeft: 2,
+        }}>
+          {STATUS_DESCRIPTIONS[normaliseStatus(draft.status)]}
+        </div>
+
+        {/* Hire date with info icon */}
+        <div>
+          <label style={{
+            display: "flex", alignItems: "center", gap: 6,
+            fontSize: 14, fontWeight: 500, color: colors.textPrimary,
+            marginBottom: 6,
+          }}>
+            Hire date<Req />
+            <Info size={14} color={colors.textMuted} />
+          </label>
+          <Input
+            label=""
+            type="date"
+            value={draft.hire_date || ""}
+            onChange={(e) => set("hire_date", e.target.value)}
+          />
+        </div>
+
+        {/* Pay schedule with Add and Edit actions */}
+        <Select
+          label={<>Pay schedule<Req /></>}
+          value={draft.pay_schedule || "semi_monthly"}
+          onChange={(e) => set("pay_schedule", e.target.value)}
+          options={[
+            { value: "weekly", label: "Weekly" },
+            { value: "biweekly", label: "Biweekly" },
+            { value: "semi_monthly", label: "Semi-monthly - 15th & End of Month" },
+            { value: "monthly", label: "Monthly" },
+          ]}
+        />
+        <div style={{
+          display: "flex", gap: spacing[4],
+          marginTop: -spacing[3], marginBottom: spacing[5],
+        }}>
+          <button
+            type="button"
+            onClick={() => alert("Add pay schedule: custom pay schedules are coming soon. Pick a standard option for now.")}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 4,
+              background: "none", border: "none", padding: 0, cursor: "pointer",
+              color: colors.brandPrimary, fontFamily: typography.fontFamily,
+              fontSize: 13, fontWeight: 600,
+            }}
+          >
+            <Plus size={14} />
+            Add pay schedule
+          </button>
+          <button
+            type="button"
+            onClick={() => alert("Editing pay schedules is coming soon.")}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 4,
+              background: "none", border: "none", padding: 0, cursor: "pointer",
+              color: colors.textSecondary, fontFamily: typography.fontFamily,
+              fontSize: 13,
+            }}
+          >
+            <Pencil size={12} />
+            Edit selected
+          </button>
+        </div>
+
+        {/* Work location with Add and Edit actions */}
+        <Input
+          label={<>Work location<Req /></>}
+          value={draft.work_location || ""}
+          onChange={(e) => set("work_location", e.target.value)}
+          placeholder="e.g. 49516 Range Road 174 (AB)"
+        />
+        <div style={{
+          display: "flex", gap: spacing[4],
+          marginTop: -spacing[3], marginBottom: spacing[5],
+        }}>
+          <button
+            type="button"
+            onClick={() => alert("Add work location: managing multiple work locations is coming soon. Type the address for now and we'll capture the province from it during tax setup.")}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 4,
+              background: "none", border: "none", padding: 0, cursor: "pointer",
+              color: colors.brandPrimary, fontFamily: typography.fontFamily,
+              fontSize: 13, fontWeight: 600,
+            }}
+          >
+            <Plus size={14} />
+            Add work location
+          </button>
+          <button
+            type="button"
+            onClick={() => alert("Editing work locations is coming soon.")}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 4,
+              background: "none", border: "none", padding: 0, cursor: "pointer",
+              color: colors.textSecondary, fontFamily: typography.fontFamily,
+              fontSize: 13,
+            }}
+          >
+            <Pencil size={12} />
+            Edit selected
+          </button>
+        </div>
+
+        {/* Manager (simple input for now; searchable employee picker is coming once backend exposes a manager-eligible list) */}
+        <Input
+          label="Manager"
+          value={draft.manager || ""}
+          onChange={(e) => set("manager", e.target.value)}
+          placeholder="Select a manager"
+        />
+
+        {/* Department with Add action */}
+        <Input
+          label="Department"
+          value={draft.department || ""}
+          onChange={(e) => set("department", e.target.value)}
+          placeholder="Select a department"
+        />
+        <div style={{
+          display: "flex", flexDirection: "column", gap: spacing[2],
+          marginTop: -spacing[3], marginBottom: spacing[5],
+        }}>
+          <button
+            type="button"
+            onClick={() => alert("Add Department: custom departments are coming soon. Type a department for now.")}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 4,
+              background: "none", border: "none", padding: 0, cursor: "pointer",
+              color: colors.brandPrimary, fontFamily: typography.fontFamily,
+              fontSize: 13, fontWeight: 600,
+              alignSelf: "flex-start",
+            }}
+          >
+            <Plus size={14} />
+            Add Department
+          </button>
+          {!draft.department && (
+            <div style={{
+              fontSize: 12, color: colors.textMuted,
+              fontStyle: "italic",
+            }}>
+              No data exists
+            </div>
+          )}
+        </div>
+
+        <Input
+          label="Job title"
+          value={draft.job_title || ""}
+          onChange={(e) => set("job_title", e.target.value)}
+        />
+
+        <Input
+          label="Employee ID"
+          value={draft.employee_id || ""}
+          onChange={(e) => set("employee_id", e.target.value)}
+        />
       </EditDrawer>
 
       {/* 4. Payment method drawer */}
