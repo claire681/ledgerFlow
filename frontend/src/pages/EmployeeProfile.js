@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, User, Phone, Briefcase, CreditCard, DollarSign, PlusCircle, Plus, Receipt, Wallet,
   Calendar as CalIcon, MinusCircle, Edit2, AlertCircle, Info, ChevronRight, ChevronDown, Trash2,
+  Pencil,
 } from "lucide-react";
 import {
   Button, Card, CardHeader, StatusPill, Spinner, Drawer, Input, Select, Checkbox,
@@ -570,12 +571,66 @@ export default function EmployeeProfile() {
         display: "flex", alignItems: "center", gap: spacing[4],
         marginBottom: spacing[6], flexWrap: "wrap",
       }}>
-        <div style={{
-          width: 64, height: 64, borderRadius: radius.pill,
-          background: colors.brandSoft,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 22, fontWeight: 700, color: colors.brandPrimary, flexShrink: 0,
-        }}>{getInitials(name)}</div>
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: radius.pill,
+              background: employee.photo_url ? colors.bgCard : colors.brandSoft,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 22,
+              fontWeight: 700,
+              color: colors.brandPrimary,
+              overflow: "hidden",
+              opacity: photoUploading ? 0.5 : 1,
+              border: `1px solid ${colors.borderDefault}`,
+              transition: "opacity 200ms ease",
+            }}
+          >
+            {employee.photo_url ? (
+              <img src={employee.photo_url} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              getInitials(name)
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current && fileInputRef.current.click()}
+            onMouseEnter={() => setPenHovered(true)}
+            onMouseLeave={() => setPenHovered(false)}
+            disabled={photoUploading}
+            aria-label="Change photo"
+            style={{
+              position: "absolute",
+              bottom: -2,
+              right: -2,
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              background: colors.bgCard,
+              border: `0.5px solid ${colors.borderDefault}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: photoUploading ? "wait" : "pointer",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
+              padding: 0,
+              transition: "border-color 150ms ease",
+            }}
+          >
+            <Pencil size={14} color={penHovered ? colors.brandPrimary : colors.textSecondary} />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoSelect}
+            style={{ display: "none" }}
+          />
+        </div>
         <div style={{ flex: 1, minWidth: 240 }}>
           <div style={{ display: "flex", alignItems: "center", gap: spacing[3], flexWrap: "wrap" }}>
             <h1 style={{ ...typography.displaySm, color: colors.textPrimary, margin: 0 }}>{name}</h1>
@@ -588,7 +643,49 @@ export default function EmployeeProfile() {
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: spacing[6], alignItems: "flex-start", flexWrap: "wrap" }}>
+{/* Tab bar */}
+      <div style={{
+        display: "flex",
+        gap: spacing[6],
+        borderBottom: `1px solid ${colors.borderDefault}`,
+        marginBottom: spacing[5],
+        overflowX: "auto",
+      }}>
+        {[
+          { id: "profile", label: "Profile" },
+          { id: "paycheques", label: "Paycheque list" },
+          { id: "documents", label: "Documents" },
+          { id: "notes", label: "Notes" },
+          { id: "permissions", label: "Permissions" },
+        ].map((t) => {
+          const isTabActive = activeTab === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setActiveTab(t.id)}
+              style={{
+                padding: `${spacing[3]}px 0`,
+                background: "none",
+                border: "none",
+                borderBottom: `2px solid ${isTabActive ? colors.brandPrimary : "transparent"}`,
+                color: isTabActive ? colors.textPrimary : colors.textSecondary,
+                fontWeight: isTabActive ? 600 : 500,
+                fontSize: 14,
+                cursor: "pointer",
+                fontFamily: typography.fontFamily,
+                marginBottom: -1,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {activeTab === "profile" && (
+            <div style={{ display: "flex", gap: spacing[6], alignItems: "flex-start", flexWrap: "wrap" }}>
 
         <nav style={{
           width: 260, minWidth: 260,
