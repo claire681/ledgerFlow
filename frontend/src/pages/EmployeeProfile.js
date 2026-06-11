@@ -4,12 +4,14 @@ import {
   ArrowLeft, User, Phone, Briefcase, CreditCard, DollarSign, PlusCircle, Plus, Receipt, Wallet,
   Calendar as CalIcon, MinusCircle, Edit2, AlertCircle, Info, ChevronRight, ChevronDown, Trash2,
   Pencil,
+  X,
 } from "lucide-react";
 import {
   Button, Card, CardHeader, StatusPill, Spinner, Drawer, Input, Select, Checkbox,
   colors, typography, spacing, radius,
 } from "../design-system";
 import { getTaxDefaults } from "../utils/taxDefaults";
+import { DENTAL_CODES, DENTAL_CODE_OPTIONS } from "../utils/dentalCodes";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -147,12 +149,12 @@ function DetailRow({ label, value, mono, last }) {
   );
 }
 
-function EditDrawer({ open, onClose, title, children, onSave, saving, saveError }) {
+function EditDrawer({ open, onClose, title, children, onSave, saving, saveError, saveLabel }) {
   const footer = (
     <div style={{ display: "flex", justifyContent: "flex-end", gap: spacing[2] }}>
       <Button variant="ghost" onClick={onClose} disabled={saving}>Cancel</Button>
       <Button variant="primary" onClick={onSave} disabled={saving}>
-        {saving ? "Saving..." : "Save"}
+        {saving ? "Saving..." : (saveLabel || "Save")}
       </Button>
     </div>
   );
@@ -223,6 +225,19 @@ export default function EmployeeProfile() {
   const setActiveTab = (tab) => setSearchParams({ tab });
   const [photoUploading, setPhotoUploading] = useState(false);
   const [penHovered, setPenHovered] = useState(false);
+  const [showInactiveDeductions, setShowInactiveDeductions] = useState(false);
+  const [addingDeductionItem, setAddingDeductionItem] = useState(false);
+  const [newDeductionItem, setNewDeductionItem] = useState({
+    name: "",
+    category: "health_insurance",
+    kind: "deduction",
+    calc_type: "fixed",
+    amount: "",
+    annual_max: "",
+    account_mapping: "payroll_expenses_benefits",
+    effective_date: "",
+  });
+
   const fileInputRef = useRef(null);
 
   const load = async () => {
@@ -1591,57 +1606,314 @@ export default function EmployeeProfile() {
         </div>
       </EditDrawer>
 
-      {/* 10. Deductions and contributions drawer - legacy wording */}
-      <EditDrawer open={editing === "deductions"} onClose={closeEditor} title="Edit deductions and contributions" onSave={save} saving={saving} saveError={saveError}>
-        <Input label="T4 dental benefits codes" value={draft.t4_dental_benefits_codes || ""} onChange={(e) => set("t4_dental_benefits_codes", e.target.value)} />
-
-        <SubHeading>Deductions and contributions</SubHeading>
-        {(draft.deductions || []).length === 0 && (
-          <div style={{ ...typography.bodySm, color: colors.textSecondary, padding: `${spacing[3]}px 0` }}>
-            No deductions or contributions yet. Click below to add one.
+      {/* 9. Deductions and contributions drawer */}
+      <EditDrawer
+        open={editing === "deductions"}
+        onClose={closeEditor}
+        title="Edit deductions and contributions"
+        onSave={save}
+        saveLabel="Done"
+        saving={saving}
+        saveError={saveError}
+      >
+        {!draft.dismissed_dental_banner && (
+          <div style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: spacing[3],
+            padding: spacing[4],
+            background: colors.brandSoft,
+            border: `1px solid ${colors.brandPrimary}30`,
+            borderRadius: radius.lg,
+            marginBottom: spacing[5],
+          }}>
+            <Info size={20} color={colors.brandPrimary} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: colors.textPrimary, marginBottom: 4 }}>
+                Select a dental benefits code for each employee
+              </div>
+              <p style={{ fontSize: 13, color: colors.textSecondary, margin: 0, lineHeight: 1.55 }}>
+                As part of the Canadian Dental Care Plan, the CRA needs to know who has access to any dental benefits offered. This is required to file T4 slips.{" "}
+                <a href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/completing-filing-information-returns/t4-information-employers/special-situations.html" target="_blank" rel="noopener noreferrer" style={{ color: colors.brandPrimary, textDecoration: "underline" }}>
+                  Get more info
+                </a>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => set("dismissed_dental_banner", true)}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                padding: 4, color: colors.textMuted, flexShrink: 0,
+              }}
+              aria-label="Dismiss"
+            >
+              <X size={16} />
+            </button>
           </div>
         )}
-        {(draft.deductions || []).map((d, idx) => (
-          <div key={idx} style={{
-            padding: spacing[4],
-            border: `1px solid ${colors.borderDefault}`,
-            borderRadius: radius.md,
-            display: "flex", flexDirection: "column", gap: spacing[3],
-            position: "relative",
-          }}>
+
+        <h2 style={drawerH1Style}>
+          What deductions, contributions does {employee.first_name || "this employee"} have?
+        </h2>
+
+        <button
+          type="button"
+          onClick={() => setShowInactiveDeductions(!showInactiveDeductions)}
+          style={{
+            background: "none", border: "none", padding: 0, cursor: "pointer",
+            color: colors.brandPrimary, fontFamily: typography.fontFamily,
+            fontSize: 13.5, textDecoration: "underline", marginBottom: spacing[5],
+          }}
+        >
+          {showInactiveDeductions ? "Hide inactive items" : "View inactive items"}
+        </button>
+
+        {/* Section 1: Deductions and contributions */}
+        <div style={{ marginBottom: spacing[8] }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: colors.textPrimary, margin: `0 0 ${spacing[2]}px 0`, letterSpacing: "-0.01em" }}>
+            Deductions and contributions
+          </h3>
+          <p style={{ fontSize: 13, color: colors.textSecondary, lineHeight: 1.55, margin: `0 0 ${spacing[4]}px 0` }}>
+            These may include health insurance, retirement plans, loan repayments, and more.{" "}
+            <a href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/payroll-deductions-contributions.html" target="_blank" rel="noopener noreferrer" style={{ color: colors.brandPrimary, textDecoration: "underline" }}>
+              Learn about deductions and contributions
+            </a>
+          </p>
+
+          {(draft.deductions || [])
+            .filter((d) => showInactiveDeductions || d.active !== false)
+            .map((item) => (
+              <div key={item.id} style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: `${spacing[3]}px ${spacing[4]}px`,
+                background: item.active === false ? colors.bgPage : colors.bgCard,
+                border: `1px solid ${colors.borderDefault}`,
+                borderRadius: radius.md,
+                marginBottom: spacing[2],
+                opacity: item.active === false ? 0.6 : 1,
+              }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>{item.name}</div>
+                  <div style={{ fontSize: 12.5, color: colors.textSecondary, marginTop: 2 }}>
+                    {item.kind === "contribution" ? "Contribution" : "Deduction"}
+                    {" · "}
+                    {item.calc_type === "percent" ? `${item.amount}%` : `$${item.amount}`}
+                    {item.active === false ? " · inactive" : ""}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = (draft.deductions || []).map((d) =>
+                      d.id === item.id ? { ...d, active: d.active === false ? true : false } : d
+                    );
+                    set("deductions", next);
+                  }}
+                  style={{
+                    background: "none", border: "none", padding: 4, cursor: "pointer",
+                    color: colors.textMuted,
+                  }}
+                  aria-label={item.active === false ? "Restore" : "Remove"}
+                >
+                  <MinusCircle size={16} />
+                </button>
+              </div>
+            ))}
+
+          {!addingDeductionItem && (
             <button
-              onClick={() => removeDeduction(idx)}
-              title="Remove"
+              type="button"
+              onClick={() => setAddingDeductionItem(true)}
               style={{
-                position: "absolute", top: spacing[2], right: spacing[2],
-                background: "none", border: "none", cursor: "pointer",
-                padding: 4, color: colors.textSecondary,
+                display: "inline-flex", alignItems: "center", gap: 6,
+                background: "none", border: `1px dashed ${colors.borderDefault}`,
+                padding: `${spacing[3]}px ${spacing[4]}px`,
+                borderRadius: radius.md, cursor: "pointer",
+                color: colors.brandPrimary, fontFamily: typography.fontFamily,
+                fontSize: 14, fontWeight: 600,
+                marginTop: spacing[2],
               }}
             >
-              <Trash2 size={14} />
+              <Plus size={16} />
+              Add deduction/contribution
             </button>
-            <Select
-              label={<>Deduction/contribution type<Req /></>}
-              value={d.type || ""}
-              onChange={(e) => setDeductionField(idx, "type", e.target.value)}
-              options={DEDUCTION_TYPE_OPTIONS}
-            />
-            <Input
-              label="Effective pay period"
-              value={d.effective_pay_period || ""}
-              onChange={(e) => setDeductionField(idx, "effective_pay_period", e.target.value)}
-            />
-            <Input
-              label={<>Date<Req /></>}
-              type="date"
-              value={d.date || ""}
-              onChange={(e) => setDeductionField(idx, "date", e.target.value)}
-            />
+          )}
+
+          {addingDeductionItem && (
+            <div style={{
+              marginTop: spacing[3],
+              padding: spacing[5],
+              background: colors.bgCard,
+              border: `1px solid ${colors.borderDefault}`,
+              borderRadius: radius.lg,
+            }}>
+              <Input
+                label="Name"
+                value={newDeductionItem.name}
+                onChange={(e) => setNewDeductionItem({ ...newDeductionItem, name: e.target.value })}
+                placeholder="e.g. Group health insurance"
+              />
+              <Select
+                label="Category"
+                value={newDeductionItem.category}
+                onChange={(e) => setNewDeductionItem({ ...newDeductionItem, category: e.target.value })}
+                options={[
+                  { value: "health_insurance", label: "Health insurance" },
+                  { value: "retirement", label: "Retirement (RRSP, pension)" },
+                  { value: "loan", label: "Loan repayment" },
+                  { value: "garnishment", label: "Garnishment" },
+                  { value: "other", label: "Other" },
+                ]}
+              />
+              <Select
+                label="Kind"
+                value={newDeductionItem.kind}
+                onChange={(e) => setNewDeductionItem({ ...newDeductionItem, kind: e.target.value })}
+                options={[
+                  { value: "deduction", label: "Deduction (from employee)" },
+                  { value: "contribution", label: "Contribution (from employer)" },
+                ]}
+              />
+              <Select
+                label="Calculation type"
+                value={newDeductionItem.calc_type}
+                onChange={(e) => setNewDeductionItem({ ...newDeductionItem, calc_type: e.target.value })}
+                options={[
+                  { value: "fixed", label: "Fixed amount" },
+                  { value: "percent", label: "Percentage of gross pay" },
+                ]}
+              />
+              <Input
+                label={newDeductionItem.calc_type === "percent" ? "Percent" : "Amount"}
+                type="number"
+                step="0.01"
+                value={newDeductionItem.amount}
+                onChange={(e) => setNewDeductionItem({ ...newDeductionItem, amount: e.target.value })}
+                placeholder={newDeductionItem.calc_type === "percent" ? "0.00" : "0.00"}
+              />
+              <Input
+                label="Annual maximum (optional)"
+                type="number"
+                step="0.01"
+                value={newDeductionItem.annual_max}
+                onChange={(e) => setNewDeductionItem({ ...newDeductionItem, annual_max: e.target.value })}
+                placeholder="Leave blank for no limit"
+              />
+              <Input
+                label="Effective date"
+                type="date"
+                value={newDeductionItem.effective_date}
+                onChange={(e) => setNewDeductionItem({ ...newDeductionItem, effective_date: e.target.value })}
+              />
+              <div style={{ display: "flex", gap: spacing[3], marginTop: spacing[4] }}>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setAddingDeductionItem(false);
+                    setNewDeductionItem({
+                      name: "",
+                      category: "health_insurance",
+                      kind: "deduction",
+                      calc_type: "fixed",
+                      amount: "",
+                      annual_max: "",
+                      account_mapping: "payroll_expenses_benefits",
+                      effective_date: "",
+                    });
+                  }}
+                >Cancel</Button>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    if (!newDeductionItem.name || !newDeductionItem.amount) {
+                      setSaveError("Name and amount are required");
+                      return;
+                    }
+                    const items = [
+                      ...(draft.deductions || []),
+                      { ...newDeductionItem, id: `dc_${Date.now()}`, active: true, amount: parseFloat(newDeductionItem.amount) },
+                    ];
+                    set("deductions", items);
+                    setAddingDeductionItem(false);
+                    setNewDeductionItem({
+                      name: "",
+                      category: "health_insurance",
+                      kind: "deduction",
+                      calc_type: "fixed",
+                      amount: "",
+                      annual_max: "",
+                      account_mapping: "payroll_expenses_benefits",
+                      effective_date: "",
+                    });
+                    setSaveError(null);
+                  }}
+                >Add</Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Section 2: Dental benefits access */}
+        <div style={{ paddingTop: spacing[6], borderTop: `1px solid ${colors.borderDefault}` }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: colors.textPrimary, margin: `0 0 ${spacing[2]}px 0`, letterSpacing: "-0.01em" }}>
+            Dental benefits access
+          </h3>
+          <p style={{ fontSize: 13, color: colors.textSecondary, lineHeight: 1.55, margin: `0 0 ${spacing[4]}px 0` }}>
+            A T4 code tells the CRA who has access to any dental benefits offered as of December 31 of each year. Dental benefits can include health spending and wellness accounts. Even if employees opt out, they and their family members are still considered to have access.{" "}
+            <a href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/completing-filing-information-returns/t4-information-employers/special-situations.html" target="_blank" rel="noopener noreferrer" style={{ color: colors.brandPrimary, textDecoration: "underline" }}>
+              Get more info
+            </a>
+          </p>
+
+          <Select
+            label="T4 dental benefits codes"
+            value={draft.t4_dental_benefits_code || draft.t4_dental_benefits_codes || draft.dental_benefit_code || ""}
+            onChange={(e) => set("t4_dental_benefits_code", e.target.value)}
+            options={DENTAL_CODE_OPTIONS}
+          />
+
+          <h4 style={{ fontSize: 14, fontWeight: 700, color: colors.textPrimary, margin: `${spacing[5]}px 0 ${spacing[3]}px 0` }}>
+            What do the codes mean?
+          </h4>
+          <div style={{
+            border: `1px solid ${colors.borderDefault}`,
+            borderRadius: radius.lg,
+            overflow: "hidden",
+          }}>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "80px 1fr 1.4fr",
+              background: colors.bgPage,
+              padding: `${spacing[3]}px ${spacing[4]}px`,
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              color: colors.textSecondary,
+              borderBottom: `1px solid ${colors.borderDefault}`,
+            }}>
+              <div>Code</div>
+              <div>Access to employer-provided dental benefits</div>
+              <div>Who's covered</div>
+            </div>
+            {DENTAL_CODES.map((c, i) => (
+              <div key={c.code} style={{
+                display: "grid",
+                gridTemplateColumns: "80px 1fr 1.4fr",
+                padding: `${spacing[3]}px ${spacing[4]}px`,
+                fontSize: 13.5,
+                color: colors.textPrimary,
+                borderBottom: i < DENTAL_CODES.length - 1 ? `1px solid ${colors.borderDefault}` : "none",
+                background: colors.bgCard,
+              }}>
+                <div style={{ fontWeight: 600 }}>Code {c.code}</div>
+                <div style={{ color: colors.textSecondary }}>{c.access}</div>
+                <div style={{ color: colors.textSecondary }}>{c.who}</div>
+              </div>
+            ))}
           </div>
-        ))}
-        <Button variant="secondary" onClick={addDeduction} iconLeft={<PlusCircle size={14} />}>
-          Add deduction/contribution
-        </Button>
+        </div>
       </EditDrawer>
     </div>
   );
