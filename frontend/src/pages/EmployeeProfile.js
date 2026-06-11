@@ -13,6 +13,7 @@ import {
 import { getTaxDefaults } from "../utils/taxDefaults";
 import { DENTAL_CODES, DENTAL_CODE_OPTIONS } from "../utils/dentalCodes";
 import { generatePayPeriods, formatPeriodDate, DAY_OF_MONTH_OPTIONS, DEFAULT_SEMI_MONTHLY_SCHEDULE } from "../utils/payScheduling";
+import { subdivisionsByCountry } from "../data/subdivisions";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -165,6 +166,8 @@ function DetailRow({ label, value, mono, last }) {
   );
 }
 
+const CA_PROVINCES = (subdivisionsByCountry && subdivisionsByCountry.CA) ? subdivisionsByCountry.CA : [];
+
 function EditDrawer({ open, onClose, title, children, onSave, saving, saveError, saveLabel }) {
   const footer = (
     <div style={{ display: "flex", justifyContent: "flex-end", gap: spacing[2] }}>
@@ -242,6 +245,12 @@ export default function EmployeeProfile() {
   const [photoUploading, setPhotoUploading] = useState(false);
   const [penHovered, setPenHovered] = useState(false);
   const [payScheduleEditorOpen, setPayScheduleEditorOpen] = useState(false);
+  const [workLocations, setWorkLocations] = useState([]);
+  const [workLocationEditorOpen, setWorkLocationEditorOpen] = useState(false);
+  const [workLocationDraft, setWorkLocationDraft] = useState(null);
+  const [workLocationSaving, setWorkLocationSaving] = useState(false);
+  const [workLocationSaveError, setWorkLocationSaveError] = useState(null);
+  const [workLocationEmployeeFilter, setWorkLocationEmployeeFilter] = useState("all");
   const [paySchedule, setPaySchedule] = useState(DEFAULT_SEMI_MONTHLY_SCHEDULE);
 
   const openPayScheduleEditor = (existing) => {
@@ -253,6 +262,101 @@ export default function EmployeeProfile() {
     set("pay_schedule_config", paySchedule);
     set("pay_schedule", paySchedule.frequency);
     setPayScheduleEditorOpen(false);
+  };
+
+  const reloadWorkLocations = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/v1/work-locations`, { headers: authHeaders() });
+      if (res.ok) setWorkLocations(await res.json());
+    } catch (e) { console.error(e); }
+  };
+
+  const openWorkLocationEditor = (existing) => {
+    setWorkLocationSaveError(null);
+    if (existing) {
+      setWorkLocationDraft({ ...existing });
+    } else {
+      setWorkLocationDraft({
+        is_primary: workLocations.length === 0,
+        status: "active",
+        street_address: "",
+        municipality: "",
+        province: "",
+        postal_code: "",
+        country: "CA",
+      });
+    }
+    setWorkLocationEditorOpen(true);
+  };
+
+  const closeWorkLocationEditor = () => {
+    setWorkLocationEditorOpen(false);
+    setWorkLocationDraft(null);
+    setWorkLocationSaveError(null);
+  };
+
+  const saveWorkLocation = async () => {
+    if (!workLocationDraft) return;
+    setWorkLocationSaving(true);
+    setWorkLocationSaveError(null);
+    try {
+      const isUpdate = !!workLocationDraft.id;
+      const url = isUpdate ? `${API_URL}/api/v1/work-locations/${workLocationDraft.id}` : `${API_URL}/api/v1/work-locations`;
+      const method = isUpdate ? "PATCH" : "POST";
+      const body = JSON.stringify({
+        is_primary: workLocationDraft.is_primary,
+        status: workLocationDraft.status,
+        street_address: workLocationDraft.street_address,
+        municipality: workLocationDraft.municipality,
+        province: workLocationDraft.province,
+        postal_code: workLocationDraft.postal_code,
+        country: workLocationDraft.country || "CA",
+      });
+      const res = await fetch(url, { method, headers: { ...authHeaders(), "Content-Type": "application/json" }, body });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: "Save failed" }));
+        throw new Error(err.detail || "Save failed");
+      }
+      const saved = await res.json();
+      await reloadWorkLocations();
+      if (!isUpdate) set("work_location_id", saved.id);
+      closeWorkLocationEditor();
+    } catch (e) {
+      setWorkLocationSaveError(e.message);
+    } finally {
+      setWorkLocationSaving(false);
+    }
+  };
+
+  const deleteWorkLocation = async () => {
+    if (!workLocationDraft || !workLocationDraft.id) return;
+    if (!window.confirm("Delete this work location? This cannot be undone.")) return;
+    setWorkLocationSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/api/v1/work-locations/${workLocationDraft.id}`, { method: "DELETE", headers: authHeaders() });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: "Delete failed" }));
+        throw new Error(err.detail || "Delete failed");
+      }
+      if (draft.work_location_id === workLocationDraft.id) set("work_location_id", null);
+      await reloadWorkLocations();
+      closeWorkLocationEditor();
+    } catch (e) {
+      setWorkLocationSaveError(e.message);
+    } finally {
+      setWorkLocationSaving(false);
+    }
+  };
+
+  const toggleWorkLocationStatus = () => {
+    if (!workLocationDraft) return;
+    setWorkLocationDraft({ ...workLocationDraft, status: workLocationDraft.status === "inactive" ? "active" : "inactive" });
+  };
+
+  const formatWorkLocation = (emp) => {
+    const loc = workLocations.find(l => l.id === emp.work_location_id);
+    if (!loc) return emp.work_location || "";
+    return [loc.street_address, loc.municipality, loc.province].filter(Boolean).join(", ");
   };
   const [showInactiveDeductions, setShowInactiveDeductions] = useState(false);
   const [addingDeductionItem, setAddingDeductionItem] = useState(false);
@@ -297,6 +401,15 @@ export default function EmployeeProfile() {
   };
 
   useEffect(() => { load(); }, [id]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/v1/work-locations`, { headers: authHeaders() });
+        if (res.ok) setWorkLocations(await res.json());
+      } catch (e) { console.error("Failed to load work locations", e); }
+    })();
+  }, []);
 
   const openEditor = (section) => {
     let newDraft = { ...employee };
@@ -499,7 +612,7 @@ export default function EmployeeProfile() {
         <DetailRow label="Status" value={(employee.status || "").replace("_", " ")} />
         <DetailRow label="Hire date" value={employee.hire_date} />
         <DetailRow label="Pay schedule" value={(employee.pay_schedule || "").replace("_", " ")} />
-        <DetailRow label="Work location" value={employee.work_location} />
+        <DetailRow label="Work location" value={formatWorkLocation(employee)} />
         <DetailRow label="Manager" value={employee.manager} />
         <DetailRow label="Department" value={employee.department} />
         <DetailRow label="Job title" value={employee.job_title} />
@@ -922,7 +1035,7 @@ export default function EmployeeProfile() {
 
       {/* 3. Employment details drawer */}
       <EditDrawer
-        open={editing === "employment" && !payScheduleEditorOpen}
+        open={editing === "employment" && !payScheduleEditorOpen && !workLocationEditorOpen}
         onClose={closeEditor}
         title="Edit employment details"
         onSave={save}
@@ -1019,14 +1132,42 @@ export default function EmployeeProfile() {
             Edit selected
           </button>
         </div>
-
         {/* Work location with Add and Edit actions */}
-        <Input
-          label={<>Work location<Req /></>}
-          value={draft.work_location || ""}
-          onChange={(e) => set("work_location", e.target.value)}
-          placeholder="e.g. 49516 Range Road 174 (AB)"
-        />
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: colors.textPrimary, marginBottom: 6 }}>
+            Work location
+          </label>
+          {workLocations.filter(l => l.status === "active").length > 0 ? (
+            <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+              <div style={{ flex: 1 }}>
+                <Select
+                  value={draft.work_location_id || ""}
+                  onChange={(e) => set("work_location_id", e.target.value)}
+                  options={[{ value: "", label: "Select a work location" }, ...workLocations.filter(l => l.status === "active").map((loc) => ({ value: loc.id, label: [loc.street_address, loc.municipality].filter(Boolean).join(", ") + (loc.is_primary ? " (Primary)" : "") }))]}
+                />
+              </div>
+              {draft.work_location_id && (
+                <button
+                  type="button"
+                  onClick={() => { const loc = workLocations.find(l => l.id === draft.work_location_id); if (loc) openWorkLocationEditor(loc); }}
+                  style={{ background: "transparent", border: "1px solid #E5E7EB", borderRadius: 8, padding: "0 12px", cursor: "pointer", display: "flex", alignItems: "center" }}
+                  aria-label="Edit selected work location"
+                >
+                  <Pencil size={16} color={colors.textSecondary} />
+                </button>
+              )}
+            </div>
+          ) : (
+            <p style={{ fontSize: 13, color: colors.textSecondary, margin: "4px 0 8px 0" }}>No work locations yet</p>
+          )}
+          <button
+            type="button"
+            onClick={() => openWorkLocationEditor()}
+            style={{ background: "transparent", border: "none", color: colors.brandPrimary, cursor: "pointer", padding: "8px 0", fontSize: 13, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}
+          >
+            + Add work location
+          </button>
+        </div>
         <div style={{
           display: "flex", gap: spacing[4],
           marginTop: -spacing[3], marginBottom: spacing[5],
@@ -1113,6 +1254,98 @@ export default function EmployeeProfile() {
           value={draft.employee_id || ""}
           onChange={(e) => set("employee_id", e.target.value)}
         />
+      </EditDrawer>
+
+      {/* Work location editor */}
+      <EditDrawer
+        open={workLocationEditorOpen}
+        onClose={closeWorkLocationEditor}
+        title={workLocationDraft && workLocationDraft.id ? "Edit work location" : "Add work location"}
+        onSave={saveWorkLocation}
+        saveLabel="Save"
+        saving={workLocationSaving}
+        saveError={workLocationSaveError}
+      >
+        {workLocationDraft && (
+          <div>
+            {workLocationDraft.id && (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: colors.textPrimary, margin: 0 }}>Location Status</h3>
+                  <button
+                    type="button"
+                    disabled={workLocationDraft.is_primary || ((workLocationDraft.assigned_employees || []).filter(e => e.status === "active").length > 0)}
+                    onClick={toggleWorkLocationStatus}
+                    style={{ background: "transparent", border: "1px solid #E5E7EB", borderRadius: 8, padding: "6px 12px", fontSize: 13, fontWeight: 600, color: colors.textPrimary, cursor: workLocationDraft.is_primary ? "not-allowed" : "pointer", opacity: workLocationDraft.is_primary ? 0.5 : 1 }}
+                  >
+                    {workLocationDraft.status === "inactive" ? "Make active" : "Make inactive"}
+                  </button>
+                </div>
+                {workLocationDraft.is_primary && (
+                  <span style={{ display: "inline-block", padding: "4px 10px", background: "#DBEAFE", color: "#1E40AF", borderRadius: 12, fontSize: 11, fontWeight: 700, letterSpacing: 0.5, marginBottom: 8 }}>PRIMARY</span>
+                )}
+                <p style={{ fontSize: 12, color: colors.textSecondary, margin: 0, lineHeight: 1.5 }}>
+                  The status of a primary location, or a location with active employees, cannot be edited.
+                </p>
+              </div>
+            )}
+
+            <Input label="Street address" value={workLocationDraft.street_address || ""} onChange={(e) => setWorkLocationDraft({ ...workLocationDraft, street_address: e.target.value })} />
+            <Input label="Municipality" value={workLocationDraft.municipality || ""} onChange={(e) => setWorkLocationDraft({ ...workLocationDraft, municipality: e.target.value })} />
+            <Select
+              label="Province"
+              value={workLocationDraft.province || ""}
+              onChange={(e) => setWorkLocationDraft({ ...workLocationDraft, province: e.target.value })}
+              options={[{ value: "", label: "Select a province" }, ...CA_PROVINCES.map(p => ({ value: p.code || p.value || p, label: p.name || p.label || p }))]}
+            />
+            <Input label="Postal code" value={workLocationDraft.postal_code || ""} onChange={(e) => setWorkLocationDraft({ ...workLocationDraft, postal_code: e.target.value })} />
+
+            {workLocationDraft.id && (
+              <div style={{ marginTop: 24 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: colors.textPrimary, marginBottom: 12 }}>Assigned employees</h3>
+                <Select
+                  value={workLocationEmployeeFilter}
+                  onChange={(e) => setWorkLocationEmployeeFilter(e.target.value)}
+                  options={[{ value: "all", label: "All employees" }, { value: "active", label: "Active employees" }]}
+                />
+                <div style={{ marginTop: 12 }}>
+                  {(workLocationDraft.assigned_employees || []).filter(e => e.status === "active").map(e => (
+                    <div key={e.id} style={{ padding: "8px 0", borderBottom: "1px solid #F3F4F6", fontSize: 14, color: colors.textPrimary }}>
+                      {e.first_name} {e.last_name}
+                    </div>
+                  ))}
+                  {workLocationEmployeeFilter !== "active" && (workLocationDraft.assigned_employees || []).filter(e => e.status !== "active").length > 0 && (
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: colors.textSecondary, letterSpacing: 0.5, textTransform: "uppercase", marginTop: 16, marginBottom: 8 }}>Inactive employees</div>
+                      {(workLocationDraft.assigned_employees || []).filter(e => e.status !== "active").map(e => (
+                        <div key={e.id} style={{ padding: "8px 0", borderBottom: "1px solid #F3F4F6", fontSize: 14, color: colors.textSecondary }}>
+                          {e.first_name} {e.last_name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {(workLocationDraft.assigned_employees || []).length === 0 && (
+                    <p style={{ fontSize: 13, color: colors.textSecondary, margin: "8px 0" }}>No employees assigned to this location.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {workLocationDraft.id && (
+              <div style={{ marginTop: 32, paddingTop: 16, borderTop: "1px solid #E5E7EB" }}>
+                <button
+                  type="button"
+                  disabled={workLocationDraft.is_primary || (workLocationDraft.assigned_employees || []).length > 0}
+                  onClick={deleteWorkLocation}
+                  style={{ background: "transparent", border: "1px solid #DC2626", color: "#DC2626", borderRadius: 8, padding: "8px 14px", cursor: (workLocationDraft.is_primary || (workLocationDraft.assigned_employees || []).length > 0) ? "not-allowed" : "pointer", opacity: (workLocationDraft.is_primary || (workLocationDraft.assigned_employees || []).length > 0) ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600 }}
+                >
+                  <Trash2 size={14} />
+                  Delete work location
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </EditDrawer>
 
       {/* Pay schedule editor */}
