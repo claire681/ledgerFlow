@@ -672,6 +672,9 @@ class Employee(Base):
     account_mapping = Column(String(255))
     # Base pay effective date (Screen 4d Effective on section)
     effective_date = Column(Date)
+    # Work location
+    work_location_id = Column(UUID(as_uuid=True), ForeignKey("work_locations.id", ondelete="SET NULL"), nullable=True, index=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -902,4 +905,23 @@ class PayrollAuditLog(Base):
     ai_was_overridden = Column(Boolean, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class WorkLocation(Base):
+    __tablename__ = "work_locations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    is_primary = Column(Boolean, nullable=False, default=False)
+    status = Column(String(20), nullable=False, default="active")
+
+    # Address
+    street_address = Column(String, nullable=True)
+    municipality = Column(String, nullable=True)
+    province = Column(String(10), nullable=True)
+    postal_code = Column(String(20), nullable=True)
+    country = Column(String(2), nullable=False, default="CA")
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 

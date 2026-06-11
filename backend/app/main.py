@@ -29,6 +29,9 @@ from app.api.routes.briefing import router as briefing_router
 from app.api.routes import bills
 from app.api.routes import apikeys
 from app.api.routes import payroll
+from app.api.routes import subscriptions
+from app.api.routes import pay_runs
+from app.api.routes import work_locations
 
 
 @asynccontextmanager
@@ -99,9 +102,12 @@ app.include_router(customers.router, prefix="/api/v1")
 app.include_router(bills.router, prefix="/api/v1")
 app.include_router(apikeys.router, prefix="/api/v1")
 app.include_router(payroll.router,       prefix="/api/v1")
+app.include_router(pay_runs.router, prefix="/api/v1/payroll", tags=["payroll"])
 app.include_router(feedback.router, prefix="/api/v1", tags=["feedback"])
 
 
+app.include_router(subscriptions.router, prefix="/api/v1")
+app.include_router(work_locations.router, prefix="/api/v1")
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     return {
