@@ -12,6 +12,7 @@ import {
 } from "../design-system";
 import { getTaxDefaults } from "../utils/taxDefaults";
 import { DENTAL_CODES, DENTAL_CODE_OPTIONS } from "../utils/dentalCodes";
+import { generatePayPeriods, formatPeriodDate, DAY_OF_MONTH_OPTIONS, DEFAULT_SEMI_MONTHLY_SCHEDULE } from "../utils/payScheduling";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -240,6 +241,19 @@ export default function EmployeeProfile() {
   const setActiveTab = (tab) => setSearchParams({ tab });
   const [photoUploading, setPhotoUploading] = useState(false);
   const [penHovered, setPenHovered] = useState(false);
+  const [payScheduleEditorOpen, setPayScheduleEditorOpen] = useState(false);
+  const [paySchedule, setPaySchedule] = useState(DEFAULT_SEMI_MONTHLY_SCHEDULE);
+
+  const openPayScheduleEditor = (existing) => {
+    setPaySchedule(existing && existing.frequency ? existing : DEFAULT_SEMI_MONTHLY_SCHEDULE);
+    setPayScheduleEditorOpen(true);
+  };
+  const closePayScheduleEditor = () => setPayScheduleEditorOpen(false);
+  const savePayScheduleConfig = () => {
+    set("pay_schedule_config", paySchedule);
+    set("pay_schedule", paySchedule.frequency);
+    setPayScheduleEditorOpen(false);
+  };
   const [showInactiveDeductions, setShowInactiveDeductions] = useState(false);
   const [addingDeductionItem, setAddingDeductionItem] = useState(false);
   const [newDeductionItem, setNewDeductionItem] = useState({
@@ -908,7 +922,7 @@ export default function EmployeeProfile() {
 
       {/* 3. Employment details drawer */}
       <EditDrawer
-        open={editing === "employment"}
+        open={editing === "employment" && !payScheduleEditorOpen}
         onClose={closeEditor}
         title="Edit employment details"
         onSave={save}
@@ -980,7 +994,7 @@ export default function EmployeeProfile() {
         }}>
           <button
             type="button"
-            onClick={() => alert("Add pay schedule: custom pay schedules are coming soon. Pick a standard option for now.")}
+            onClick={() => openPayScheduleEditor()}
             style={{
               display: "inline-flex", alignItems: "center", gap: 4,
               background: "none", border: "none", padding: 0, cursor: "pointer",
@@ -993,7 +1007,7 @@ export default function EmployeeProfile() {
           </button>
           <button
             type="button"
-            onClick={() => alert("Editing pay schedules is coming soon.")}
+            onClick={() => openPayScheduleEditor(employee.pay_schedule_config)}
             style={{
               display: "inline-flex", alignItems: "center", gap: 4,
               background: "none", border: "none", padding: 0, cursor: "pointer",
@@ -1099,6 +1113,120 @@ export default function EmployeeProfile() {
           value={draft.employee_id || ""}
           onChange={(e) => set("employee_id", e.target.value)}
         />
+      </EditDrawer>
+
+      {/* Pay schedule editor */}
+      <EditDrawer
+        open={payScheduleEditorOpen}
+        onClose={closePayScheduleEditor}
+        title="Pay schedule"
+        onSave={savePayScheduleConfig}
+        saveLabel="Save"
+        saving={false}
+        saveError={null}
+      >
+        <h2 style={drawerH1Style}>
+          Choose when to pay {employee.first_name || "this employee"}
+        </h2>
+
+        <Select
+          label="Pay frequency"
+          value={paySchedule.frequency}
+          onChange={(e) => setPaySchedule({ ...paySchedule, frequency: e.target.value })}
+          options={[
+            { value: "weekly", label: "Every week" },
+            { value: "biweekly", label: "Every other week" },
+            { value: "semi_monthly", label: "Twice a month" },
+            { value: "monthly", label: "Every month" },
+          ]}
+        />
+
+        {paySchedule.frequency !== "semi_monthly" && (
+          <div style={{ padding: 16, background: colors.brandSoft, borderRadius: 10, marginTop: 16, marginBottom: 16 }}>
+            <p style={{ fontSize: 14, color: colors.textSecondary, margin: 0, lineHeight: 1.55 }}>
+              Detailed configuration for this frequency is coming soon. Pick Twice a month to fully configure a schedule.
+            </p>
+          </div>
+        )}
+
+        {paySchedule.frequency === "semi_monthly" && (
+          <div>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: colors.textPrimary, marginTop: 24, marginBottom: 12 }}>
+              First pay period of the month
+            </h3>
+            <Select
+              label="First payday of the month"
+              value={paySchedule.firstPayday}
+              onChange={(e) => setPaySchedule({ ...paySchedule, firstPayday: e.target.value })}
+              options={DAY_OF_MONTH_OPTIONS}
+            />
+            <Select
+              label="End of first pay period - month"
+              value={paySchedule.firstPeriodEnd.month}
+              onChange={(e) => setPaySchedule({ ...paySchedule, firstPeriodEnd: { ...paySchedule.firstPeriodEnd, month: e.target.value } })}
+              options={[{ value: "same", label: "Same" }, { value: "previous", label: "Previous" }]}
+            />
+            <Select
+              label="End of first pay period - day"
+              value={paySchedule.firstPeriodEnd.day}
+              onChange={(e) => setPaySchedule({ ...paySchedule, firstPeriodEnd: { ...paySchedule.firstPeriodEnd, day: e.target.value } })}
+              options={DAY_OF_MONTH_OPTIONS}
+            />
+
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: colors.textPrimary, marginTop: 24, marginBottom: 12 }}>
+              Second pay period of the month
+            </h3>
+            <Select
+              label="Second payday of the month"
+              value={paySchedule.secondPayday}
+              onChange={(e) => setPaySchedule({ ...paySchedule, secondPayday: e.target.value })}
+              options={DAY_OF_MONTH_OPTIONS}
+            />
+            <Select
+              label="End of second pay period - month"
+              value={paySchedule.secondPeriodEnd.month}
+              onChange={(e) => setPaySchedule({ ...paySchedule, secondPeriodEnd: { ...paySchedule.secondPeriodEnd, month: e.target.value } })}
+              options={[{ value: "same", label: "Same" }, { value: "previous", label: "Previous" }]}
+            />
+            <Select
+              label="End of second pay period - day"
+              value={paySchedule.secondPeriodEnd.day}
+              onChange={(e) => setPaySchedule({ ...paySchedule, secondPeriodEnd: { ...paySchedule.secondPeriodEnd, day: e.target.value } })}
+              options={DAY_OF_MONTH_OPTIONS}
+            />
+          </div>
+        )}
+
+        <Input
+          label="Pay schedule name"
+          value={paySchedule.name || ""}
+          onChange={(e) => setPaySchedule({ ...paySchedule, name: e.target.value })}
+          placeholder="e.g. Semi-monthly"
+        />
+
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 16, marginBottom: 24 }}>
+          <Checkbox
+            checked={!!paySchedule.isDefaultForNewEmployees}
+            onChange={() => setPaySchedule({ ...paySchedule, isDefaultForNewEmployees: !paySchedule.isDefaultForNewEmployees })}
+          />
+          <div style={{ fontSize: 14, color: colors.textPrimary }}>
+            Use this pay schedule for employees you add after this one
+          </div>
+        </div>
+
+        <div style={{ padding: 16, background: colors.bgCard, border: "1px solid #E5E7EB", borderRadius: 10 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 700, color: colors.textPrimary, marginTop: 0, marginBottom: 12 }}>
+            Upcoming pay periods
+          </h3>
+          {generatePayPeriods(paySchedule, 5).map((p, i) => (
+            <div key={i} style={{ marginBottom: 12, padding: 10, background: colors.bgPage, borderRadius: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: colors.textSecondary }}>Pay Period</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary }}>{formatPeriodDate(p.periodStart)} to {formatPeriodDate(p.periodEnd)}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: colors.textSecondary, marginTop: 4 }}>Pay Date</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: colors.brandPrimary }}>{formatPeriodDate(p.payDate)}</div>
+            </div>
+          ))}
+        </div>
       </EditDrawer>
 
       {/* 4. Payment method drawer */}
