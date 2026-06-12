@@ -220,7 +220,6 @@ const SECTIONS = [
   { id: "additional_pay", label: "Additional pay types", Icon: PlusCircle, Plus, drawerTitle: "Edit additional pay types" },
   { id: "time_off", label: "Time off", Icon: CalIcon, drawerTitle: "Edit time off" },
   { id: "tax", label: "Tax withholdings", Icon: Receipt, drawerTitle: "Edit tax withholdings" },
-  { id: "banking", label: "Direct deposit", Icon: Wallet, drawerTitle: "Edit direct deposit" },
   { id: "deductions", label: "Deductions and contributions", Icon: MinusCircle, drawerTitle: "Edit deductions and contributions" },
 ];
 
@@ -232,6 +231,7 @@ export default function EmployeeProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeSection, setActiveSection] = useState("personal");
+  const [expandedSections, setExpandedSections] = useState({ personal: true });
   const [editing, setEditing] = useState(null);
   const [draft, setDraft] = useState({});
   const [saving, setSaving] = useState(false);
@@ -358,6 +358,19 @@ export default function EmployeeProfile() {
     if (!loc) return emp.work_location || "";
     return [loc.street_address, loc.municipality, loc.province].filter(Boolean).join(", ");
   };
+
+  const toggleSection = (id) => {
+    setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const scrollToSection = (id) => {
+    const el = document.getElementById("section-card-" + id);
+    if (el) {
+      setExpandedSections(prev => ({ ...prev, [id]: true }));
+      setActiveSection(id);
+      setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    }
+  };
   const [showInactiveDeductions, setShowInactiveDeductions] = useState(false);
   const [addingDeductionItem, setAddingDeductionItem] = useState(false);
   const [newDeductionItem, setNewDeductionItem] = useState({
@@ -410,6 +423,25 @@ export default function EmployeeProfile() {
       } catch (e) { console.error("Failed to load work locations", e); }
     })();
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== "profile") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible.length > 0) {
+          const id = visible[0].target.id.replace("section-card-", "");
+          setActiveSection(id);
+        }
+      },
+      { rootMargin: "-15% 0px -70% 0px", threshold: 0 }
+    );
+    SECTIONS.forEach((s) => {
+      const el = document.getElementById("section-card-" + s.id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [activeTab]);
 
   const openEditor = (section) => {
     let newDraft = { ...employee };
@@ -578,8 +610,9 @@ export default function EmployeeProfile() {
 
   const currentSection = SECTIONS.find((s) => s.id === activeSection);
 
-  let sectionContent = null;
-  if (activeSection === "personal") {
+  const renderSectionDetail = (sectionId) => {
+    let sectionContent = null;
+  if (sectionId === "personal") {
     sectionContent = (
       <>
         <DetailRow label="Name" value={fullName} />
@@ -595,7 +628,7 @@ export default function EmployeeProfile() {
         <DetailRow last label="Social insurance number" value={maskSin(employee.sin || employee.social_insurance_number)} mono />
       </>
     );
-  } else if (activeSection === "emergency") {
+  } else if (sectionId === "emergency") {
     sectionContent = (
       <>
         <DetailRow label="Name" value={employee.emergency_name} />
@@ -606,7 +639,7 @@ export default function EmployeeProfile() {
         <DetailRow last label="Address" value={emergencyAddress} />
       </>
     );
-  } else if (activeSection === "employment") {
+  } else if (sectionId === "employment") {
     sectionContent = (
       <>
         <DetailRow label="Status" value={(employee.status || "").replace("_", " ")} />
@@ -620,11 +653,11 @@ export default function EmployeeProfile() {
         <DetailRow last label="Employment type" value={(employee.employment_type || "").replace("_", " ")} />
       </>
     );
-  } else if (activeSection === "payment_method") {
+  } else if (sectionId === "payment_method") {
     sectionContent = (
       <DetailRow last label="Payment method" value={(employee.payment_method || "").replace("_", " ")} />
     );
-  } else if (activeSection === "base_pay") {
+  } else if (sectionId === "base_pay") {
     sectionContent = (
       <>
         <DetailRow label="Pay type" value={payType === "salary" ? "Salary" : payType === "commission" ? "Commission only" : "Hourly"} />
@@ -645,11 +678,11 @@ export default function EmployeeProfile() {
         )}
       </>
     );
-  } else if (activeSection === "additional_pay") {
+  } else if (sectionId === "additional_pay") {
     sectionContent = (
       <DetailRow last label="Enabled pay types" value={enabledLabels} />
     );
-  } else if (activeSection === "time_off") {
+  } else if (sectionId === "time_off") {
     const vacationLabel = employee.vacation_policy
       ? (VACATION_OPTIONS.find((o) => o.value === employee.vacation_policy) || {}).label
       : null;
@@ -668,7 +701,7 @@ export default function EmployeeProfile() {
         <DetailRow last label="Unpaid time off" value={unpaidLabel} />
       </>
     );
-  } else if (activeSection === "tax") {
+  } else if (sectionId === "tax") {
     const provinceCode = (employee.province_or_state || employee.province_of_employment || employee.province || "").toUpperCase();
     const fedAmount = employee.federal_td1_amount || employee.federal_claim_amount || employee.federal_credit_amount;
     const provAmount = employee.provincial_claim_amount || employee.provincial_credit_amount;
@@ -683,7 +716,7 @@ export default function EmployeeProfile() {
         <DetailRow last label="Federal income tax exempt" value={employee.federal_income_tax_exempt === true ? "Yes" : "No"} />
       </>
     );
-  } else if (activeSection === "banking") {
+  } else if (sectionId === "banking") {
     sectionContent = (
       <>
         <DetailRow label="Bank" value={employee.bank_name} />
@@ -692,7 +725,7 @@ export default function EmployeeProfile() {
         <DetailRow last label="Account type" value={employee.account_type} />
       </>
     );
-  } else if (activeSection === "deductions") {
+  } else if (sectionId === "deductions") {
     const deds = Array.isArray(employee.deductions) ? employee.deductions : [];
     sectionContent = (
       <>
@@ -708,6 +741,8 @@ export default function EmployeeProfile() {
       </>
     );
   }
+    return sectionContent;
+  };
 
   return (
     <div style={{
@@ -857,7 +892,7 @@ export default function EmployeeProfile() {
             return (
               <button
                 key={s.id}
-                onClick={() => setActiveSection(s.id)}
+                onClick={() => scrollToSection(s.id)}
                 style={{
                   display: "flex", alignItems: "center", gap: spacing[3],
                   padding: `${spacing[3]}px ${spacing[3]}px`,
@@ -894,7 +929,27 @@ export default function EmployeeProfile() {
                 {isSectionFilled(activeSection, employee) ? "Edit" : "Start"}
               </Button>
             </div>
-            <div>{sectionContent}</div>
+            <div>{SECTIONS.map((s) => {
+          const filled = isSectionFilled(s.id, employee);
+          const editLabel = s.id === "deductions" ? "Done" : (filled ? "Edit" : "Start");
+          const isExpanded = !!expandedSections[s.id];
+          return (
+            <div key={s.id} id={"section-card-" + s.id} style={{ background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: 10, marginBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", cursor: "pointer" }} onClick={() => toggleSection(s.id)}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: colors.textPrimary }}>{s.label}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button type="button" onClick={(e) => { e.stopPropagation(); openEditor(s.id); }} style={{ fontSize: 12, color: colors.brandPrimary, background: "transparent", border: "none", cursor: "pointer", padding: "4px 10px", fontWeight: 500, borderRadius: 6 }}>{editLabel}</button>
+                  <ChevronDown size={18} color={colors.textSecondary} style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
+                </div>
+              </div>
+              {isExpanded && (
+                <div style={{ padding: "4px 18px 16px" }}>
+                  {renderSectionDetail(s.id)}
+                </div>
+              )}
+            </div>
+          );
+        })}</div>
           </Card>
         </div>
       </div>
