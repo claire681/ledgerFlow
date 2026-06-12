@@ -13,6 +13,7 @@ import {
 import { getTaxDefaults } from "../utils/taxDefaults";
 import { DENTAL_CODES, DENTAL_CODE_OPTIONS } from "../utils/dentalCodes";
 import { generatePayPeriods, formatPeriodDate, DAY_OF_MONTH_OPTIONS, DEFAULT_SEMI_MONTHLY_SCHEDULE } from "../utils/payScheduling";
+import { isSectionFilled } from "../utils/payrollReadiness";
 import { subdivisionsByCountry } from "../data/subdivisions";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -119,34 +120,6 @@ const UNPAID_TIME_OFF_OPTIONS = [
   { value: "no_policy", label: "No unpaid time off policy" },
   { value: "add_new", label: "+ Add new unpaid time off policy" },
 ];
-
-const isSectionFilled = (sectionId, emp) => {
-  if (!emp) return false;
-  switch (sectionId) {
-    case "personal":
-      return !!(emp.first_name || emp.last_name || emp.email);
-    case "emergency":
-      return !!(emp.emergency_name || emp.emergency_home_phone || emp.emergency_mobile_phone || emp.emergency_email);
-    case "employment":
-      return !!(emp.hire_date || emp.work_location || emp.job_title || emp.employee_id);
-    case "payment_method":
-      return !!emp.payment_method;
-    case "base_pay":
-      return !!emp.pay_type && (parseFloat(emp.hourly_rate) > 0 || parseFloat(emp.salary_amount) > 0);
-    case "additional_pay":
-      return Array.isArray(emp.additional_pay_types) && emp.additional_pay_types.length > 0;
-    case "time_off":
-      return !!(emp.vacation_policy || emp.sick_pay_policy || emp.sick_pay || emp.unpaid_time_off_policy || emp.unpaid_time_off);
-    case "tax":
-      return !!(emp.federal_td1_amount || emp.federal_claim_amount || emp.federal_credit_amount || emp.provincial_claim_amount || emp.provincial_credit_amount || emp.cpp_exempt || emp.ei_exempt || emp.federal_income_tax_exempt);
-    case "banking":
-      return !!(emp.bank_name || emp.account_number);
-    case "deductions":
-      return (Array.isArray(emp.deductions) && emp.deductions.length > 0) || !!emp.t4_dental_benefits_codes;
-    default:
-      return false;
-  }
-};
 
 function DetailRow({ label, value, mono, last }) {
   return (
@@ -442,6 +415,15 @@ export default function EmployeeProfile() {
     });
     return () => observer.disconnect();
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== "profile") return;
+    const section = searchParams.get("section");
+    if (section && SECTIONS.some((s) => s.id === section)) {
+      const t = setTimeout(() => scrollToSection(section), 120);
+      return () => clearTimeout(t);
+    }
+  }, [activeTab, searchParams]);
 
   const openEditor = (section) => {
     let newDraft = { ...employee };
