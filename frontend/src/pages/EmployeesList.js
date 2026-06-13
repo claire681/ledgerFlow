@@ -1,452 +1,389 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Search, Lock, RefreshCw, Plus, AlertTriangle, Check, ChevronDown,
-  ShieldCheck, MessageCircle, Sliders, ArrowUp, ArrowDown, Clock,
-  Settings as SettingsIcon,
+  Search, UserPlus, SlidersHorizontal, MoreVertical,
+  ShieldCheck, Check, AlertTriangle, ChevronDown, Clock,
+  User, UserCog, UserX, Play,
 } from "lucide-react";
-
 import { getReadiness } from "../utils/payrollReadiness";
+import { startNewPayroll } from "../utils/payrollLauncher";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
 const BRAND = "#0F9599";
 const BRAND_DARK = "#0F6E56";
 const BRAND_SOFT = "#E1F5EE";
-const BRAND_SOFT_BORDER = "#B8E2D2";
 const TEXT_PRIMARY = "#111827";
+const TEXT_INK = "#1A2B2B";
 const TEXT_SECONDARY = "#6B7280";
 const TEXT_TERTIARY = "#9CA3AF";
 const BG_CARD = "#FFFFFF";
-const BG_PAGE = "#F9FAFB";
-const BG_HOVER = "#F9FAFB";
+const BG_PAGE = "#F7F9F9";
 const BORDER = "#E5E7EB";
-const WARNING = "#D97706";
-const WARNING_DARK = "#92400E";
-const WARNING_SOFT = "#FEF3C7";
-const READY = "#10B981";
-const NEEDS = "#F59E0B";
+const BORDER_LIGHT = "#F0F4F4";
+const WARN_TEXT = "#92400E";
+const WARN_SOFT = "#FEF3C7";
+const WARN_DOT = "#E8941A";
+const SUCCESS_TEXT = "#166534";
+const SUCCESS_SOFT = "#DCFCE7";
+
+const PRIVACY_KEY = "novala_privacy";
+const AVATAR_COLORS = ["#0F9599", "#0B7377", "#185FA5", "#7C3AED", "#DB2777", "#0891B2", "#65A30D", "#B45309"];
 
 const getToken = () =>
   localStorage.getItem("access_token") || localStorage.getItem("token") || "";
+const authHeaders = () => ({ Authorization: "Bearer " + getToken(), "Content-Type": "application/json" });
 
-const authHeaders = () => ({
-  Authorization: `Bearer ${getToken()}`,
-  "Content-Type": "application/json",
-});
-
-const formatCurrency = (value, currency) => {
-  if (value === null || value === undefined) return "";
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) return "";
-  try {
-    return new Intl.NumberFormat("en-CA", {
-      style: "currency",
-      currency: currency || "CAD",
-      maximumFractionDigits: 2,
-    }).format(num);
-  } catch (e) {
-    return num.toFixed(2);
-  }
-};
-
-const getDisplayName = (emp) => {
+const employeeName = (emp) => {
+  if (!emp) return "Unknown";
   const last = (emp.last_name || "").trim();
   const first = (emp.first_name || "").trim();
   if (last && first) return last + ", " + first;
-  return emp.name || emp.full_name || first || last || emp.email || "Unnamed";
+  if (emp.full_name) return emp.full_name;
+  if (emp.name) return emp.name;
+  return emp.email || "Unnamed";
 };
 
-const getInitials = (emp) => {
+const employeeInitials = (emp) => {
+  if (!emp) return "?";
   const f = (emp.first_name || "").trim();
   const l = (emp.last_name || "").trim();
   if (f && l) return (f[0] + l[0]).toUpperCase();
-  if (f) return f.slice(0, 2).toUpperCase();
-  if (l) return l.slice(0, 2).toUpperCase();
+  if (emp.full_name) {
+    const parts = emp.full_name.split(/\s+/);
+    return parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0].slice(0, 2).toUpperCase();
+  }
   if (emp.email) return emp.email.slice(0, 2).toUpperCase();
-  return "??";
+  return "?";
 };
 
-const getPayDescription = (emp) => {
-  const hourly = parseFloat(emp.hourly_rate || 0);
-  const salary = parseFloat(emp.salary_amount || 0);
-  if (salary > 0) return formatCurrency(salary, emp.currency) + " / yr";
-  if (hourly > 0) return formatCurrency(hourly, emp.currency) + " / hr";
-  return null;
-};
-
-const getPayMethodLabel = (method) => {
-  if (method === "direct_deposit") return "Direct dep.";
-  if (method === "paper_cheque" || method === "check") return "Paper cheque";
-  return null;
-};
-
-const getVacationDisplay = (emp) => {
-  if (typeof emp.vacation_balance === "number") return emp.vacation_balance + " hrs";
-  if (emp.vacation_policy) return emp.vacation_policy;
-  return null;
-};
-
-const getPhone = (emp) => emp.phone || emp.mobile_phone || emp.home_phone || null;
-
-const AVATAR_COLORS = ["#0F9599", "#6366F1", "#DC2626", "#B45309", "#7C3AED", "#0891B2", "#DB2777", "#65A30D"];
-const getAvatarColor = (emp) => {
-  const seed = String(emp.id || emp.email || emp.first_name || "x");
+const avatarColor = (emp) => {
+  const seed = (emp.id || emp.email || "").toString();
   let hash = 0;
-  for (let i = 0; i < seed.length; i++) hash = ((hash * 31) + seed.charCodeAt(i)) | 0;
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 };
 
-const STATUS_LABELS = {
-  active: "Active",
-  draft: "Draft",
-  inactive: "Inactive",
-  paid_leave: "On leave",
-  unpaid_leave: "On leave",
-  on_leave: "On leave",
-  terminated: "Terminated",
-  not_on_payroll: "Not on payroll",
-  deceased: "Deceased",
+const formatCurrency = (value, currency) => {
+  const n = parseFloat(value) || 0;
+  return n.toLocaleString("en-CA", { style: "currency", currency: currency || "CAD", minimumFractionDigits: 2 });
 };
 
-const getStatusPillColors = (status) => {
-  if (status === "active") return { bg: BRAND_SOFT, fg: BRAND_DARK };
-  if (status === "draft") return { bg: WARNING_SOFT, fg: WARNING_DARK };
-  return { bg: "#F3F4F6", fg: TEXT_SECONDARY };
+const formatPhone = (p) => {
+  if (!p) return null;
+  const digits = p.replace(/\D/g, "");
+  if (digits.length === 10) return digits.slice(0, 3) + "-" + digits.slice(3, 6) + "-" + digits.slice(6);
+  if (digits.length === 11 && digits[0] === "1") return digits.slice(1, 4) + "-" + digits.slice(4, 7) + "-" + digits.slice(7);
+  return p;
 };
 
-const GRID = "44px 1fr 110px 90px 90px 120px 80px";
+const formatPayRate = (emp) => {
+  if (emp.pay_type === "hourly" && parseFloat(emp.hourly_rate)) return formatCurrency(emp.hourly_rate, emp.currency) + "/hour";
+  if (emp.pay_type === "salary" && parseFloat(emp.salary_amount)) return formatCurrency(emp.salary_amount, emp.currency) + "/year";
+  return null;
+};
+const getPayMethod = (emp) => {
+  if (emp.payment_method === "direct_deposit") return "Direct deposit";
+  if (emp.payment_method === "cheque" || emp.payment_method === "paper_cheque" || emp.payment_method === "check") return "Paper cheque";
+  return null;
+};
+const getPhone = (emp) => emp.phone || emp.mobile_phone || emp.home_phone || null;
+const getRole = (emp) => emp.job_title || emp.position_title || null;
+const getVacation = (emp) => (emp.vacation_balance != null && emp.vacation_balance !== "" ? (parseFloat(emp.vacation_balance) || 0).toFixed(1) + " hrs" : null);
+
+const computeNextPayrollDue = () => {
+  const today = new Date();
+  const next = new Date(today);
+  if (today.getDate() < 15) next.setDate(15);
+  else { next.setMonth(next.getMonth() + 1); next.setDate(0); }
+  return next;
+};
+const formatDueDate = (date) => {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const due = new Date(date); due.setHours(0, 0, 0, 0);
+  if (due.getTime() === today.getTime()) return "Next payroll due today";
+  const wd = due.toLocaleDateString("en-CA", { weekday: "long" });
+  const ds = due.toLocaleDateString("en-CA", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return "Next payroll due " + wd + ", " + ds;
+};
+
+const TH = { background: BG_PAGE, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", color: TEXT_SECONDARY, textAlign: "left", padding: "12px 16px", borderBottom: "0.5px solid " + BORDER, textTransform: "uppercase", whiteSpace: "nowrap" };
+const TD = { padding: "14px 16px", fontSize: 14, color: TEXT_PRIMARY, borderBottom: "0.5px solid " + BORDER_LIGHT, verticalAlign: "middle" };
+const MASK = { letterSpacing: 2, color: TEXT_TERTIARY, fontSize: 14 };
+const MISS = { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 600, color: WARN_TEXT, cursor: "pointer" };
 
 export default function EmployeesList() {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("active");
-  const [privacy, setPrivacy] = useState(localStorage.getItem("novala_privacy") === "on");
-  const [needsSetupOnly, setNeedsSetupOnly] = useState(false);
-  const [sortField, setSortField] = useState("name");
-  const [sortDir, setSortDir] = useState("asc");
+  const [privacy, setPrivacy] = useState(localStorage.getItem(PRIVACY_KEY) === "on");
+  const [activeTab, setActiveTab] = useState("list");
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [splitMenuOpen, setSplitMenuOpen] = useState(false);
+  const splitMenuRef = useRef(null);
 
   useEffect(() => { loadEmployees(); }, []);
 
   const loadEmployees = async () => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const res = await fetch(API_URL + "/api/v1/payroll/employees", { headers: authHeaders() });
       if (!res.ok) {
         if (res.status === 401) throw new Error("Invalid or expired token. Please log in again.");
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Could not load employees");
+        throw new Error("Could not load employees.");
       }
       const data = await res.json();
-      setEmployees(Array.isArray(data) ? data : (data.items || data.employees || []));
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
+      const list = Array.isArray(data) ? data : (data.items || data.employees || []);
+      setEmployees(list);
+    } catch (e) { setError(e.message); } finally { setLoading(false); }
   };
+
+  useEffect(() => {
+    if (!splitMenuOpen && openMenuId == null) return;
+    const onClick = (e) => {
+      if (splitMenuOpen && (!splitMenuRef.current || !splitMenuRef.current.contains(e.target))) setSplitMenuOpen(false);
+      setOpenMenuId(null);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [splitMenuOpen, openMenuId]);
 
   const togglePrivacy = () => {
     const next = !privacy;
     setPrivacy(next);
-    localStorage.setItem("novala_privacy", next ? "on" : "off");
+    localStorage.setItem(PRIVACY_KEY, next ? "on" : "off");
   };
 
-  const goToEmployee = (id, section) => {
-    navigate("/payroll/employees/" + id + (section ? "?section=" + section : ""));
-  };
+  const withReadiness = useMemo(() => employees.map(e => {
+    const r = getReadiness(e);
+    return { ...e, _ready: r && r.ready };
+  }), [employees]);
 
-  const setSort = (field) => {
-    if (sortField === field) setSortDir(sortDir === "asc" ? "desc" : "asc");
-    else { setSortField(field); setSortDir("asc"); }
-  };
-
-  const employeesWithReadiness = useMemo(
-    () => employees.map((e) => ({ ...e, _readiness: getReadiness(e) })),
-    [employees]
-  );
-
-  const filteredEmployees = useMemo(() => {
-    let list = employeesWithReadiness;
-    if (statusFilter === "active") {
-      list = list.filter((e) => {
-        const s = e.status || "active";
-        return s === "active" || s === "draft";
-      });
-    } else if (statusFilter === "inactive") {
-      list = list.filter((e) => ["inactive", "terminated", "not_on_payroll", "deceased"].includes(e.status));
+  const visible = useMemo(() => withReadiness.filter(emp => {
+    if (emp.status === "terminated") return false;
+    if (emp.status === "inactive") return false;
+    if (search) {
+      const name = employeeName(emp).toLowerCase();
+      if (!name.includes(search.toLowerCase())) return false;
     }
-    if (needsSetupOnly) list = list.filter((e) => !e._readiness.ready);
-    if (search.trim()) {
-      const q = search.toLowerCase().trim();
-      list = list.filter((e) =>
-        getDisplayName(e).toLowerCase().includes(q) ||
-        (e.email || "").toLowerCase().includes(q) ||
-        (e.job_title || "").toLowerCase().includes(q)
-      );
-    }
-    return list;
-  }, [employeesWithReadiness, statusFilter, needsSetupOnly, search]);
+    return true;
+  }), [withReadiness, search]);
 
-  const sortedEmployees = useMemo(() => {
-    const sorted = [...filteredEmployees];
-    sorted.sort((a, b) => {
-      let av, bv;
-      if (sortField === "name") { av = getDisplayName(a).toLowerCase(); bv = getDisplayName(b).toLowerCase(); }
-      else if (sortField === "pay_rate") {
-        av = parseFloat(a.salary_amount) > 0 ? parseFloat(a.salary_amount) : parseFloat(a.hourly_rate || 0);
-        bv = parseFloat(b.salary_amount) > 0 ? parseFloat(b.salary_amount) : parseFloat(b.hourly_rate || 0);
-      } else if (sortField === "vacation") {
-        av = parseFloat(a.vacation_balance || 0);
-        bv = parseFloat(b.vacation_balance || 0);
-      } else if (sortField === "status") { av = a.status || "active"; bv = b.status || "active"; }
-      else { av = ""; bv = ""; }
-      if (av < bv) return sortDir === "asc" ? -1 : 1;
-      if (av > bv) return sortDir === "asc" ? 1 : -1;
-      return 0;
-    });
-    return sorted;
-  }, [filteredEmployees, sortField, sortDir]);
+  const total = withReadiness.length;
+  const readyCount = withReadiness.filter(e => e._ready).length;
+  const nextDue = useMemo(() => computeNextPayrollDue(), []);
+  const dueLabel = formatDueDate(nextDue);
+  const isDueToday = dueLabel.includes("today");
 
-  const readinessStats = useMemo(() => {
-    const active = employeesWithReadiness.filter((e) => (e.status || "active") === "active");
-    const ready = active.filter((e) => e._readiness.ready);
-    return { ready: ready.length, total: active.length, needsSetup: active.length - ready.length };
-  }, [employeesWithReadiness]);
+  const renderAvatar = (emp) => {
+    const initials = employeeInitials(emp);
+    const color = avatarColor(emp);
+    const ready = emp._ready;
+    return (
+      <div style={{ position: "relative", width: 42, height: 42, flexShrink: 0 }}>
+        <div style={{ width: 42, height: 42, borderRadius: "50%", background: color, color: "white", display: "grid", placeItems: "center", fontWeight: 600, fontSize: 14 }}>{initials}</div>
+        <div style={{ position: "absolute", right: -2, bottom: -2, width: 18, height: 18, borderRadius: "50%", background: ready ? SUCCESS_TEXT : WARN_DOT, border: "2px solid white", display: "grid", placeItems: "center" }}>
+          {ready ? <Check size={10} style={{ color: "white" }} /> : <AlertTriangle size={10} style={{ color: "white" }} />}
+        </div>
+      </div>
+    );
+  };
 
-  const colHdrStyle = { fontSize: 11, fontWeight: 500, color: TEXT_SECONDARY, textTransform: "uppercase", letterSpacing: 0.4, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, userSelect: "none" };
-  const sortIcon = (field) => sortField === field ? (sortDir === "asc" ? <ArrowUp size={11} /> : <ArrowDown size={11} />) : null;
-  const missingLink = { color: WARNING, display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 500, cursor: "pointer", textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 3 };
-  const mask = { fontFamily: "monospace", color: TEXT_TERTIARY, fontSize: 13, letterSpacing: 1 };
+  const renderName = (emp) => {
+    const role = getRole(emp);
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {renderAvatar(emp)}
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 600, color: TEXT_INK, fontSize: 14, cursor: "pointer" }} onClick={() => navigate("/payroll/employees/" + emp.id)}>{employeeName(emp)}</div>
+          <div style={{ fontSize: 12, color: role ? TEXT_TERTIARY : WARN_TEXT, marginTop: 2 }}>{role || "Role not set"}</div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderPayRate = (emp) => {
+    const rate = formatPayRate(emp);
+    if (!rate) return <a onClick={() => navigate("/payroll/employees/" + emp.id + "?section=pay_types")} style={MISS}><AlertTriangle size={13} />Add pay rate</a>;
+    if (privacy) return <span style={MASK}>{"\u2022\u2022\u2022\u2022\u2022\u2022"}</span>;
+    return <span style={{ fontSize: 14, fontWeight: 600, color: TEXT_INK }}>{rate}</span>;
+  };
+
+  const renderMethod = (emp) => {
+    const m = getPayMethod(emp);
+    if (!m) return <a onClick={() => navigate("/payroll/employees/" + emp.id + "?section=payment_method")} style={MISS}><AlertTriangle size={13} />Add method</a>;
+    return <span style={{ fontSize: 14, color: TEXT_PRIMARY }}>{m}</span>;
+  };
+
+  const renderVacation = (emp) => {
+    const v = getVacation(emp);
+    if (!v) return <a onClick={() => navigate("/payroll/employees/" + emp.id + "?section=vacation")} style={MISS}><AlertTriangle size={13} />Set up</a>;
+    if (privacy) return <span style={MASK}>{"\u2022\u2022\u2022\u2022\u2022\u2022"}</span>;
+    return <span style={{ fontSize: 14, color: TEXT_PRIMARY }}>{v}</span>;
+  };
+
+  const renderPhone = (emp) => {
+    const p = getPhone(emp);
+    if (!p) return <a onClick={() => navigate("/payroll/employees/" + emp.id + "?section=personal_info")} style={MISS}><AlertTriangle size={13} />Add phone</a>;
+    return <span style={{ fontSize: 14, color: TEXT_PRIMARY }}>{formatPhone(p)}</span>;
+  };
+
+  const renderStatus = (emp) => {
+    if (emp._ready) return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, padding: "3px 9px", borderRadius: 12, background: SUCCESS_SOFT, color: SUCCESS_TEXT }}>
+          <Check size={12} />Ready
+        </span>
+        <span style={{ fontSize: 12, color: TEXT_TERTIARY }}>Active</span>
+      </div>
+    );
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, padding: "3px 9px", borderRadius: 12, background: WARN_SOFT, color: WARN_TEXT }}>
+          <AlertTriangle size={12} />Needs setup
+        </span>
+        <a style={{ fontSize: 12, color: BRAND, cursor: "pointer", fontWeight: 600 }} onClick={() => navigate("/payroll/employees/" + emp.id)}>Finish setup</a>
+      </div>
+    );
+  };
+
+  const renderActions = (emp) => {
+    const open = openMenuId === emp.id;
+    const first = (emp.first_name || "").trim() || employeeName(emp).split(",")[0];
+    const item = { display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 5, cursor: "pointer", fontSize: 12.5, color: TEXT_PRIMARY };
+    return (
+      <div style={{ position: "relative", textAlign: "center" }}>
+        <MoreVertical size={18} style={{ color: TEXT_TERTIARY, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); setOpenMenuId(open ? null : emp.id); }} />
+        {open && (
+          <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", right: 0, top: 26, zIndex: 50, background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", padding: 4, minWidth: 200 }}>
+            {emp._ready ? (
+              <>
+                <div style={item} onClick={() => { setOpenMenuId(null); navigate("/payroll/employees/" + emp.id); }}><User size={14} style={{ color: TEXT_SECONDARY }} />View profile</div>
+                <div style={item} onClick={() => { setOpenMenuId(null); startNewPayroll(navigate); }}><Play size={14} style={{ color: TEXT_SECONDARY }} />Run payroll for {first}</div>
+                <div style={item} onClick={() => { setOpenMenuId(null); alert("Make inactive coming soon"); }}><UserX size={14} style={{ color: TEXT_SECONDARY }} />Make inactive</div>
+              </>
+            ) : (
+              <>
+                <div style={item} onClick={() => { setOpenMenuId(null); navigate("/payroll/employees/" + emp.id); }}><UserCog size={14} style={{ color: TEXT_SECONDARY }} />Finish setup</div>
+                <div style={item} onClick={() => { setOpenMenuId(null); alert("Make inactive coming soon"); }}><UserX size={14} style={{ color: TEXT_SECONDARY }} />Make inactive</div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (loading) {
+    return <div style={{ background: BG_CARD, minHeight: "100vh", padding: 40, textAlign: "center", color: TEXT_SECONDARY, fontFamily: "inherit" }}>Loading employees...</div>;
+  }
 
   return (
-    <div style={{ position: "relative", padding: 24, paddingRight: 40, background: BG_PAGE, minHeight: "100vh" }}>
+    <div style={{ background: BG_CARD, minHeight: "100vh", width: "100%", fontFamily: "inherit" }}>
+      <div style={{ padding: "24px 28px 36px", width: "100%" }}>
 
-      <div onClick={() => alert("Feedback widget coming soon")} title="Send feedback" style={{ position: "fixed", right: 0, top: 300, background: BRAND, color: "white", padding: "14px 6px", borderRadius: "4px 0 0 4px", writingMode: "vertical-rl", textOrientation: "mixed", fontSize: 11, fontWeight: 500, letterSpacing: 0.4, cursor: "pointer", zIndex: 10, display: "flex", alignItems: "center", gap: 5 }}>
-        <MessageCircle size={13} />
-        Feedback
-      </div>
-
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14, marginBottom: 18 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 600, color: TEXT_PRIMARY, lineHeight: 1.2, margin: 0 }}>Employees</h1>
-          <p style={{ fontSize: 13, color: TEXT_SECONDARY, marginTop: 4, marginBottom: 0 }}>
-            Manage your team's profiles, pay, tax info, and direct deposit.
-          </p>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, flexShrink: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <span onClick={() => navigate("/payroll/runs")} style={{ fontSize: 13, color: BRAND, cursor: "pointer", fontWeight: 500 }}>Paycheque list</span>
-            <button onClick={() => alert("Payroll settings coming soon")} title="Settings" style={{ width: 32, height: 32, borderRadius: 6, background: "transparent", border: "none", color: TEXT_SECONDARY, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-              <SettingsIcon size={16} />
-            </button>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18, gap: 16, flexWrap: "wrap" }}>
+          <div>
+            <h1 style={{ fontSize: 26, fontWeight: 700, color: TEXT_INK, margin: "0 0 4px", letterSpacing: "-0.02em" }}>Employees</h1>
+            <div style={{ fontSize: 13.5, color: TEXT_SECONDARY }}>Manage your team's profiles, pay, tax info, credentials, and direct deposit.</div>
           </div>
-          <div style={{ display: "inline-flex", alignItems: "stretch", borderRadius: 6, overflow: "hidden" }}>
-            <button onClick={() => navigate("/payroll/runs/new")} style={{ background: BRAND, color: "white", border: "none", padding: "9px 16px", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>Run payroll</button>
-            <button title="More payroll options" style={{ background: BRAND, color: "white", border: "none", borderLeft: "1px solid rgba(255,255,255,0.25)", padding: "0 10px", cursor: "pointer" }}>
-              <ChevronDown size={14} />
-            </button>
-          </div>
-          <div style={{ fontSize: 11, color: TEXT_SECONDARY, display: "inline-flex", alignItems: "center", gap: 4 }}>
-            <Clock size={11} style={{ color: WARNING }} />
-            Next payroll due today
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: "flex", gap: 4, borderBottom: "0.5px solid " + BORDER, marginBottom: 14 }}>
-        <div style={{ padding: "8px 14px", fontSize: 13, color: BRAND, borderBottom: "2px solid " + BRAND, fontWeight: 500, cursor: "pointer" }}>List</div>
-        <div onClick={() => alert("Directory view coming soon")} style={{ padding: "8px 14px", fontSize: 13, color: TEXT_SECONDARY, borderBottom: "2px solid transparent", cursor: "pointer" }}>Directory</div>
-      </div>
-
-      {readinessStats.total > 0 && (
-        <div style={{ background: BRAND_SOFT, border: "0.5px solid " + BRAND_SOFT_BORDER, borderRadius: 8, padding: "10px 14px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: TEXT_PRIMARY }}>
-            <ShieldCheck size={18} style={{ color: BRAND_DARK }} />
-            <div>
-              <span style={{ fontWeight: 600 }}>{readinessStats.ready} of {readinessStats.total}</span> active employees ready for payroll
-              {readinessStats.needsSetup > 0 && (
-                <span>
-                  <span style={{ color: TEXT_SECONDARY }}> &middot; </span>
-                  <span style={{ fontWeight: 500, color: WARNING_DARK }}>{readinessStats.needsSetup} need setup</span>
-                </span>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <a onClick={() => navigate("/payroll/paycheques")} style={{ fontSize: 13, fontWeight: 600, color: BRAND_DARK, cursor: "pointer" }}>Paycheque list</a>
+              <a onClick={() => alert("Settings coming next")} style={{ fontSize: 13, fontWeight: 600, color: BRAND_DARK, cursor: "pointer" }}>Settings</a>
+            </div>
+            <div ref={splitMenuRef} style={{ position: "relative", display: "inline-flex", alignItems: "stretch" }}>
+              <button onClick={() => startNewPayroll(navigate)} style={{ background: BRAND, color: "white", fontSize: 14, fontWeight: 600, padding: "11px 18px", border: "none", borderRadius: "9px 0 0 9px", cursor: "pointer", fontFamily: "inherit" }}>Run payroll</button>
+              <button onClick={() => setSplitMenuOpen(!splitMenuOpen)} style={{ background: BRAND, color: "white", border: "none", borderLeft: "1px solid rgba(255,255,255,0.25)", borderRadius: "0 9px 9px 0", padding: "0 10px", display: "grid", placeItems: "center", cursor: "pointer" }}><ChevronDown size={16} /></button>
+              {splitMenuOpen && (
+                <div style={{ position: "absolute", right: 0, top: 46, background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", padding: 4, minWidth: 220, zIndex: 50 }}>
+                  <div style={{ padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: TEXT_PRIMARY }} onClick={() => { setSplitMenuOpen(false); startNewPayroll(navigate); }}>Regular payroll</div>
+                  <div style={{ padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: TEXT_PRIMARY }} onClick={() => { setSplitMenuOpen(false); alert("Off-cycle payroll coming soon"); }}>Off-cycle payroll</div>
+                  <div style={{ padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: TEXT_PRIMARY }} onClick={() => { setSplitMenuOpen(false); alert("Bonus payroll coming soon"); }}>Bonus payroll</div>
+                </div>
               )}
             </div>
+            <div style={{ fontSize: 12.5, color: isDueToday ? WARN_TEXT : TEXT_SECONDARY, display: "flex", alignItems: "center", gap: 6 }}>
+              <Clock size={14} />{dueLabel}
+            </div>
           </div>
-          {readinessStats.needsSetup > 0 && (
-            <button onClick={() => setNeedsSetupOnly(!needsSetupOnly)} style={{ fontSize: 12, padding: "6px 10px", borderRadius: 6, border: "1px solid " + (needsSetupOnly ? BRAND : BORDER), background: needsSetupOnly ? BRAND_SOFT : "transparent", color: needsSetupOnly ? BRAND_DARK : TEXT_PRIMARY, cursor: "pointer", fontWeight: 500, fontFamily: "inherit" }}>
-              {needsSetupOnly ? "Showing setup needed" : "Show only needs setup"}
-            </button>
-          )}
         </div>
-      )}
 
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
-        <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
-          <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: TEXT_SECONDARY }} />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find an employee" style={{ width: "100%", padding: "9px 10px 9px 32px", borderRadius: 6, border: "1px solid " + BORDER, fontSize: 13, fontFamily: "inherit", background: BG_CARD, color: TEXT_PRIMARY }} />
+        <div style={{ display: "flex", gap: 4, borderBottom: "1px solid " + BORDER, marginBottom: 18 }}>
+          <div onClick={() => setActiveTab("list")} style={{ padding: "9px 14px", fontSize: 14, fontWeight: 600, color: activeTab === "list" ? BRAND_DARK : TEXT_SECONDARY, cursor: "pointer", borderBottom: activeTab === "list" ? "2px solid " + BRAND : "2px solid transparent", marginBottom: -1 }}>List</div>
+          <div onClick={() => setActiveTab("directory")} style={{ padding: "9px 14px", fontSize: 14, fontWeight: 600, color: activeTab === "directory" ? BRAND_DARK : TEXT_SECONDARY, cursor: "pointer", borderBottom: activeTab === "directory" ? "2px solid " + BRAND : "2px solid transparent", marginBottom: -1 }}>Directory</div>
         </div>
-        <div style={{ position: "relative" }}>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ padding: "9px 28px 9px 12px", borderRadius: 6, border: "1px solid " + BORDER, fontSize: 13, fontFamily: "inherit", background: BG_CARD, color: TEXT_PRIMARY, cursor: "pointer", appearance: "none" }}>
-            <option value="active">Active employees</option>
-            <option value="inactive">Inactive employees</option>
-            <option value="all">All employees</option>
-          </select>
-          <ChevronDown size={14} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: TEXT_SECONDARY, pointerEvents: "none" }} />
-        </div>
-        <div onClick={togglePrivacy} title="Mask pay amounts and vacation balances" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 6, cursor: "pointer", userSelect: "none" }}>
-          <div style={{ width: 32, height: 18, borderRadius: 9, background: privacy ? BRAND : "#D1D5DB", position: "relative", transition: "background 0.15s" }}>
-            <div style={{ position: "absolute", top: 2, left: privacy ? 16 : 2, width: 14, height: 14, borderRadius: "50%", background: "white", transition: "left 0.15s" }} />
+
+        <div style={{ background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 10, padding: "13px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 14, fontWeight: 600, color: TEXT_INK }}>
+            <ShieldCheck size={18} style={{ color: BRAND }} />
+            <span><strong>{readyCount} of {total}</strong> employee{total === 1 ? "" : "s"} ready for payroll</span>
           </div>
-          <span style={{ fontSize: 13, color: TEXT_PRIMARY, display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 500 }}>
-            <Lock size={13} />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 220, display: "flex", alignItems: "center", gap: 9, border: "0.5px solid " + BORDER, borderRadius: 9, padding: "9px 13px", fontSize: 14 }}>
+            <Search size={16} style={{ color: TEXT_TERTIARY }} />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find an employee" style={{ flex: 1, border: "none", outline: "none", fontFamily: "inherit", fontSize: 14, color: TEXT_PRIMARY, background: "transparent" }} />
+          </div>
+          <button onClick={() => alert("Status filter coming next")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, padding: "9px 13px", border: "0.5px solid " + BORDER, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}>Active employees <ChevronDown size={14} /></button>
+          <span onClick={togglePrivacy} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, cursor: "pointer" }}>
+            <span style={{ width: 38, height: 22, borderRadius: 20, background: privacy ? BRAND : BORDER, position: "relative", transition: "0.15s" }}>
+              <span style={{ position: "absolute", top: 2, left: privacy ? 18 : 2, width: 18, height: 18, borderRadius: "50%", background: "white", transition: "0.15s" }} />
+            </span>
             Privacy
           </span>
+          <button onClick={() => alert("Edit payroll items coming next")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, padding: "9px 13px", border: "0.5px solid " + BORDER, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}><SlidersHorizontal size={16} />Edit payroll items</button>
+          <button onClick={() => navigate("/payroll/employees/new")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: BRAND_DARK, padding: "9px 13px", border: "0.5px solid " + BRAND, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}><UserPlus size={16} />Add employee</button>
         </div>
-        <button onClick={() => alert("Edit payroll items coming soon")} style={{ fontSize: 13, padding: "8px 14px", borderRadius: 6, border: "1px solid " + BORDER, background: "transparent", cursor: "pointer", color: TEXT_PRIMARY, display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 500, fontFamily: "inherit" }}>
-          <Sliders size={14} />
-          Edit payroll items
-        </button>
-        <button onClick={() => navigate("/payroll/employees/new")} style={{ fontSize: 13, padding: "8px 14px", borderRadius: 6, border: "none", background: BRAND, color: "white", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 500, fontFamily: "inherit" }}>
-          <Plus size={14} />
-          Add employee
-        </button>
-        <button onClick={loadEmployees} title="Refresh" disabled={loading} style={{ width: 36, height: 36, borderRadius: 6, background: "transparent", border: "1px solid " + BORDER, color: TEXT_SECONDARY, cursor: loading ? "wait" : "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-          <RefreshCw size={15} style={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
-        </button>
-      </div>
 
-      {error && (
-        <div style={{ padding: 12, background: "#FEE2E2", border: "0.5px solid #F87171", borderRadius: 8, color: "#991B1B", fontSize: 13, marginBottom: 14 }}>
-          <strong>Could not load employees:</strong> {error}
+        {error && (
+          <div style={{ padding: 12, background: "#FEE2E2", border: "0.5px solid #F87171", borderRadius: 8, color: "#991B1B", fontSize: 13, marginBottom: 14 }}>
+            <strong>Could not load:</strong> {error}
+          </div>
+        )}
+
+        <div style={{ border: "0.5px solid " + BORDER, borderRadius: 10, overflow: "hidden" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                <th style={{ ...TH, paddingLeft: 18 }}>Name</th>
+                <th style={TH}>Pay rate</th>
+                <th style={TH}>Method</th>
+                <th style={TH}>Vacation</th>
+                <th style={TH}>Phone</th>
+                <th style={TH}>Status</th>
+                <th style={{ ...TH, textAlign: "center", width: 54 }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.length === 0 ? (
+                <tr><td colSpan="7" style={{ padding: 40, textAlign: "center", color: TEXT_SECONDARY, fontSize: 13 }}>
+                  {total === 0 ? "No employees yet. " : "No employees match your search. "}
+                  <a onClick={() => navigate("/payroll/employees/new")} style={{ color: BRAND, cursor: "pointer", fontWeight: 600 }}>Add an employee</a> to start.
+                </td></tr>
+              ) : visible.map(emp => (
+                <tr key={emp.id}>
+                  <td style={{ ...TD, paddingLeft: 18 }}>{renderName(emp)}</td>
+                  <td style={TD}>{renderPayRate(emp)}</td>
+                  <td style={TD}>{renderMethod(emp)}</td>
+                  <td style={TD}>{renderVacation(emp)}</td>
+                  <td style={TD}>{renderPhone(emp)}</td>
+                  <td style={TD}>{renderStatus(emp)}</td>
+                  <td style={{ ...TD, textAlign: "center", width: 54 }}>{renderActions(emp)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
 
-      <div style={{ display: "grid", gridTemplateColumns: GRID, columnGap: 10, alignItems: "center", padding: "0 14px 6px" }}>
-        <div></div>
-        <div onClick={() => setSort("name")} style={colHdrStyle}>Name {sortIcon("name")}</div>
-        <div onClick={() => setSort("pay_rate")} style={colHdrStyle}>Pay rate {sortIcon("pay_rate")}</div>
-        <div style={{ ...colHdrStyle, cursor: "default" }}>Method</div>
-        <div onClick={() => setSort("vacation")} style={colHdrStyle}>Vacation {sortIcon("vacation")}</div>
-        <div style={{ ...colHdrStyle, cursor: "default" }}>Phone</div>
-        <div onClick={() => setSort("status")} style={colHdrStyle}>Status {sortIcon("status")}</div>
-      </div>
-
-      {loading && employees.length === 0 ? (
-        <div style={{ padding: 20, textAlign: "center", color: TEXT_SECONDARY, fontSize: 13 }}>Loading...</div>
-      ) : sortedEmployees.length === 0 ? (
-        <div style={{ padding: 40, textAlign: "center", color: TEXT_SECONDARY, fontSize: 13, background: BG_CARD, border: "0.5px dashed " + BORDER, borderRadius: 8 }}>
-          {employees.length === 0 ? "No employees yet. Click Add employee to start." : "No employees match your filters."}
+        <div style={{ fontSize: 12.5, color: TEXT_SECONDARY, marginTop: 12 }}>
+          Showing {visible.length} of {total} employee{total === 1 ? "" : "s"}
         </div>
-      ) : (
-        sortedEmployees.map((emp) => {
-          const status = emp.status || "active";
-          const isInactive = !["active", "draft"].includes(status);
-          const pillColors = getStatusPillColors(status);
-          const pay = getPayDescription(emp);
-          const method = getPayMethodLabel(emp.payment_method);
-          const vacation = getVacationDisplay(emp);
-          const phone = getPhone(emp);
-          const showReadinessDot = !isInactive;
-          const titleHint = emp._readiness.missing.length > 0
-            ? "Needs setup: " + emp._readiness.missing.map((m) => m.label).join(", ")
-            : "Ready for payroll";
 
-          return (
-            <div
-              key={emp.id}
-              onClick={() => goToEmployee(emp.id)}
-              title={titleHint}
-              style={{
-                display: "grid",
-                gridTemplateColumns: GRID,
-                columnGap: 10,
-                alignItems: "center",
-                background: BG_CARD,
-                border: "0.5px solid " + BORDER,
-                borderRadius: 8,
-                marginBottom: 6,
-                padding: "10px 14px",
-                cursor: "pointer",
-                opacity: isInactive ? 0.6 : 1,
-                transition: "border-color 0.15s, background 0.15s",
-              }}
-              onMouseOver={(e) => { e.currentTarget.style.borderColor = BRAND; e.currentTarget.style.background = BG_HOVER; }}
-              onMouseOut={(e) => { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.background = BG_CARD; }}
-            >
-              <div style={{ position: "relative", width: 36, height: 36 }}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: getAvatarColor(emp), color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 500 }}>
-                  {getInitials(emp)}
-                </div>
-                {showReadinessDot && (
-                  <div style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", border: "2px solid " + BG_CARD, display: "flex", alignItems: "center", justifyContent: "center", background: emp._readiness.ready ? READY : NEEDS }}>
-                    {emp._readiness.ready ? <Check size={10} color="white" /> : <AlertTriangle size={10} color="white" />}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: TEXT_PRIMARY }}>{getDisplayName(emp)}</div>
-                {emp.job_title && <div style={{ fontSize: 11, color: TEXT_SECONDARY }}>{emp.job_title}</div>}
-              </div>
-
-              <div>
-                {pay ? (
-                  privacy ? <span style={mask}>{"\u2022\u2022\u2022\u2022\u2022\u2022"}</span>
-                  : <span style={{ fontSize: 13, color: TEXT_PRIMARY }}>{pay}</span>
-                ) : (
-                  <span onClick={(e) => { e.stopPropagation(); goToEmployee(emp.id, "base_pay"); }} style={missingLink}>
-                    <AlertTriangle size={13} />Missing
-                  </span>
-                )}
-              </div>
-
-              <div>
-                {method ? <span style={{ fontSize: 13, color: TEXT_SECONDARY }}>{method}</span> : (
-                  <span onClick={(e) => { e.stopPropagation(); goToEmployee(emp.id, "payment_method"); }} style={missingLink}>
-                    <AlertTriangle size={13} />Missing
-                  </span>
-                )}
-              </div>
-
-              <div>
-                {vacation ? (
-                  privacy ? <span style={mask}>{"\u2022\u2022\u2022\u2022"}</span>
-                  : <span style={{ fontSize: 13, color: TEXT_PRIMARY }}>{vacation}</span>
-                ) : (
-                  <span onClick={(e) => { e.stopPropagation(); goToEmployee(emp.id, "time_off"); }} style={missingLink}>
-                    <AlertTriangle size={13} />Not set
-                  </span>
-                )}
-              </div>
-
-              <div>
-                {phone ? <span style={{ fontSize: 13, color: TEXT_SECONDARY }}>{phone}</span> : (
-                  <span onClick={(e) => { e.stopPropagation(); goToEmployee(emp.id, "personal"); }} style={missingLink}>
-                    <AlertTriangle size={13} />Missing
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <span style={{ display: "inline-block", padding: "3px 10px", borderRadius: 12, fontSize: 11, fontWeight: 500, background: pillColors.bg, color: pillColors.fg }}>
-                  {STATUS_LABELS[status] || status}
-                </span>
-              </div>
-            </div>
-          );
-        })
-      )}
-
-      <div style={{ fontSize: 12, color: TEXT_TERTIARY, padding: "10px 0 0" }}>
-        Showing {sortedEmployees.length} of {employees.length} employees
       </div>
-
-      <style>{"@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}"}</style>
     </div>
   );
 }
