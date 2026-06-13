@@ -197,7 +197,7 @@ export default function PayrollOverview() {
     switch (actionId) {
       case "run_payroll": return handleRunPayroll();
       case "add_employee": return navigate("/payroll/employees/new");
-      case "view_paycheque_list": return navigate("/payroll/runs");
+      case "view_paycheque_list": return navigate("/payroll/paycheques");
       case "update_payroll_settings": return alert("Payroll settings coming soon");
       case "edit_payroll_items": return alert("Edit payroll items coming soon");
       case "update_work_location": return alert("Work location editor coming soon");
@@ -324,7 +324,7 @@ export default function PayrollOverview() {
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <span onClick={() => navigate("/payroll/runs")} style={{ color: BRAND, fontSize: 13, cursor: "pointer", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
+              <span onClick={() => navigate("/payroll/paycheques")} style={{ color: BRAND, fontSize: 13, cursor: "pointer", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
                 Paycheque list <ArrowRight size={12} />
               </span>
               {scheduleLabel && <span style={{ fontSize: 12, color: TEXT_SECONDARY }}>{scheduleLabel} schedule</span>}

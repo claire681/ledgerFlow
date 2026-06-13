@@ -111,6 +111,7 @@ const ALL_APPS = [
     items: [
       { label: 'Overview',      path: '/payroll/overview'   },
       { label: 'Employees',     path: '/payroll/employees'  },
+      { label: 'Paycheque list', path: '/payroll/paycheques' },
       { label: 'Payroll taxes', path: '/payroll/taxes'      },
       { label: 'Compliance',    path: '/payroll/compliance' },
     ],

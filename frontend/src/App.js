@@ -12,6 +12,8 @@ import PayStubDetail from "./pages/PayStubDetail";
 import EmployeesList from "./pages/EmployeesList";
 import EmployeeProfile from "./pages/EmployeeProfile";
 import PayrollOverview from "./pages/PayrollOverview";
+import PaychequeList from "./pages/PaychequeList";
+import PaychequeDetail from "./pages/PaychequeDetail";
 import { AIProvider }      from './context/AIContext';
 import useAI from './hooks/useAI';
 import Sidebar             from './components/Sidebar';
@@ -164,6 +166,8 @@ function AppLayout({ onLogout }) {
           <Route path="/payroll/runs/:id" element={<PayRunDetail />} />
           <Route path="/payroll/runs" element={<PayRuns />} />
           <Route path="/payroll/overview" element={<PayrollOverview />} />
+          <Route path="/payroll/paycheques" element={<PaychequeList />} />
+          <Route path="/payroll/paycheques/:id" element={<PaychequeDetail />} />
           <Route path="/payroll/*" element={<Payroll />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/documents" element={<Documents />} />
