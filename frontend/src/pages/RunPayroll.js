@@ -10,7 +10,7 @@ import {
 import {
   totalHours, flagsFor, isSetupComplete, getReadinessCounts,
   getIssues, generateNarrative, employeeName,
-} from "../utils/payrollReadiness";
+} from "../utils/runPayrollReadiness";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
