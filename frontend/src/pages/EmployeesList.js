@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Search, UserPlus, SlidersHorizontal, MoreVertical,
   ShieldCheck, Check, AlertTriangle, ChevronDown, Clock,
-  User, UserCog, UserX, Play,
+  User, UserCog, UserX, Play, Zap, CalendarClock,
 } from "lucide-react";
 import { getReadiness } from "../utils/payrollReadiness";
 import { startNewPayroll } from "../utils/payrollLauncher";
@@ -123,6 +123,9 @@ export default function EmployeesList() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [splitMenuOpen, setSplitMenuOpen] = useState(false);
   const splitMenuRef = useRef(null);
+  const [activeFilter, setActiveFilter] = useState("Active employees");
+  const [activeMenuOpen, setActiveMenuOpen] = useState(false);
+  const activeMenuRef = useRef(null);
 
   useEffect(() => { loadEmployees(); }, []);
 
@@ -141,14 +144,15 @@ export default function EmployeesList() {
   };
 
   useEffect(() => {
-    if (!splitMenuOpen && openMenuId == null) return;
+    if (!splitMenuOpen && !activeMenuOpen && openMenuId == null) return;
     const onClick = (e) => {
       if (splitMenuOpen && (!splitMenuRef.current || !splitMenuRef.current.contains(e.target))) setSplitMenuOpen(false);
+      if (activeMenuOpen && (!activeMenuRef.current || !activeMenuRef.current.contains(e.target))) setActiveMenuOpen(false);
       setOpenMenuId(null);
     };
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
-  }, [splitMenuOpen, openMenuId]);
+  }, [splitMenuOpen, activeMenuOpen, openMenuId]);
 
   const togglePrivacy = () => {
     const next = !privacy;
@@ -162,14 +166,15 @@ export default function EmployeesList() {
   }), [employees]);
 
   const visible = useMemo(() => withReadiness.filter(emp => {
-    if (emp.status === "terminated") return false;
-    if (emp.status === "inactive") return false;
+    const inactive = emp.status === "inactive" || emp.status === "terminated";
+    if (activeFilter === "Active employees" && inactive) return false;
+    if (activeFilter === "Inactive employees" && !inactive) return false;
     if (search) {
       const name = employeeName(emp).toLowerCase();
       if (!name.includes(search.toLowerCase())) return false;
     }
     return true;
-  }), [withReadiness, search]);
+  }), [withReadiness, search, activeFilter]);
 
   const total = withReadiness.length;
   const readyCount = withReadiness.filter(e => e._ready).length;
@@ -299,9 +304,9 @@ export default function EmployeesList() {
               <button onClick={() => setSplitMenuOpen(!splitMenuOpen)} style={{ background: BRAND, color: "white", border: "none", borderLeft: "1px solid rgba(255,255,255,0.25)", borderRadius: "0 9px 9px 0", padding: "0 10px", display: "grid", placeItems: "center", cursor: "pointer" }}><ChevronDown size={16} /></button>
               {splitMenuOpen && (
                 <div style={{ position: "absolute", right: 0, top: 46, background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", padding: 4, minWidth: 220, zIndex: 50 }}>
-                  <div style={{ padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: TEXT_PRIMARY }} onClick={() => { setSplitMenuOpen(false); startNewPayroll(navigate); }}>Regular payroll</div>
-                  <div style={{ padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: TEXT_PRIMARY }} onClick={() => { setSplitMenuOpen(false); alert("Off-cycle payroll coming soon"); }}>Off-cycle payroll</div>
-                  <div style={{ padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: TEXT_PRIMARY }} onClick={() => { setSplitMenuOpen(false); alert("Bonus payroll coming soon"); }}>Bonus payroll</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: TEXT_PRIMARY }} onClick={() => { setSplitMenuOpen(false); startNewPayroll(navigate); }}><Play size={14} style={{ color: TEXT_SECONDARY }} />Run scheduled payroll</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: TEXT_PRIMARY }} onClick={() => { setSplitMenuOpen(false); alert("Off-cycle payroll coming soon"); }}><Zap size={14} style={{ color: TEXT_SECONDARY }} />Run off-cycle payroll</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: TEXT_PRIMARY }} onClick={() => { setSplitMenuOpen(false); alert("Payroll items page coming next"); }}><CalendarClock size={14} style={{ color: TEXT_SECONDARY }} />Manage pay schedules</div>
                 </div>
               )}
             </div>
@@ -328,14 +333,26 @@ export default function EmployeesList() {
             <Search size={16} style={{ color: TEXT_TERTIARY }} />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find an employee" style={{ flex: 1, border: "none", outline: "none", fontFamily: "inherit", fontSize: 14, color: TEXT_PRIMARY, background: "transparent" }} />
           </div>
-          <button onClick={() => alert("Status filter coming next")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, padding: "9px 13px", border: "0.5px solid " + BORDER, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}>Active employees <ChevronDown size={14} /></button>
+          <div ref={activeMenuRef} style={{ position: "relative" }}>
+            <button onClick={() => setActiveMenuOpen(!activeMenuOpen)} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, padding: "9px 13px", border: "0.5px solid " + BORDER, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}>{activeFilter} <ChevronDown size={14} /></button>
+            {activeMenuOpen && (
+              <div style={{ position: "absolute", top: 44, left: 0, background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", padding: 4, minWidth: 210, zIndex: 50 }}>
+                {["Active employees", "Inactive employees", "All employees"].map(opt => (
+                  <div key={opt} onClick={() => { setActiveFilter(opt); setActiveMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: activeFilter === opt ? BRAND_DARK : TEXT_PRIMARY, fontWeight: activeFilter === opt ? 600 : 400 }}>
+                    {activeFilter === opt ? <Check size={14} style={{ color: BRAND }} /> : <span style={{ width: 14, display: "inline-block" }} />}
+                    {opt}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <span onClick={togglePrivacy} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, cursor: "pointer" }}>
             <span style={{ width: 38, height: 22, borderRadius: 20, background: privacy ? BRAND : BORDER, position: "relative", transition: "0.15s" }}>
               <span style={{ position: "absolute", top: 2, left: privacy ? 18 : 2, width: 18, height: 18, borderRadius: "50%", background: "white", transition: "0.15s" }} />
             </span>
             Privacy
           </span>
-          <button onClick={() => alert("Edit payroll items coming next")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, padding: "9px 13px", border: "0.5px solid " + BORDER, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}><SlidersHorizontal size={16} />Edit payroll items</button>
+          <button onClick={() => alert("Payroll items page coming next")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, padding: "9px 13px", border: "0.5px solid " + BORDER, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}><SlidersHorizontal size={16} />Payroll items</button>
           <button onClick={() => navigate("/payroll/employees/new")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: BRAND_DARK, padding: "9px 13px", border: "0.5px solid " + BRAND, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}><UserPlus size={16} />Add employee</button>
         </div>
 
