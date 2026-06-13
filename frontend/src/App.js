@@ -10,6 +10,7 @@ import PayrollLauncher from "./utils/payrollLauncher";
 import PayRunDetail from "./pages/PayRunDetail";
 import PayStubDetail from "./pages/PayStubDetail";
 import EmployeesList from "./pages/EmployeesList";
+import PayrollItems from "./pages/PayrollItems";
 import EmployeeProfile from "./pages/EmployeeProfile";
 import PayrollOverview from "./pages/PayrollOverview";
 import PaychequeList from "./pages/PaychequeList";

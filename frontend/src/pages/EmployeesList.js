@@ -306,7 +306,7 @@ export default function EmployeesList() {
                 <div style={{ position: "absolute", right: 0, top: 46, background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", padding: 4, minWidth: 220, zIndex: 50 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: TEXT_PRIMARY }} onClick={() => { setSplitMenuOpen(false); startNewPayroll(navigate); }}><Play size={14} style={{ color: TEXT_SECONDARY }} />Run scheduled payroll</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: TEXT_PRIMARY }} onClick={() => { setSplitMenuOpen(false); alert("Off-cycle payroll coming soon"); }}><Zap size={14} style={{ color: TEXT_SECONDARY }} />Run off-cycle payroll</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: TEXT_PRIMARY }} onClick={() => { setSplitMenuOpen(false); alert("Payroll items page coming next"); }}><CalendarClock size={14} style={{ color: TEXT_SECONDARY }} />Manage pay schedules</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: TEXT_PRIMARY }} onClick={() => { setSplitMenuOpen(false); navigate("/payroll/items?expand=schedules"); }}><CalendarClock size={14} style={{ color: TEXT_SECONDARY }} />Manage pay schedules</div>
                 </div>
               )}
             </div>
@@ -352,7 +352,7 @@ export default function EmployeesList() {
             </span>
             Privacy
           </span>
-          <button onClick={() => alert("Payroll items page coming next")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, padding: "9px 13px", border: "0.5px solid " + BORDER, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}><SlidersHorizontal size={16} />Payroll items</button>
+          <button onClick={() => navigate("/payroll/items")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, padding: "9px 13px", border: "0.5px solid " + BORDER, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}><SlidersHorizontal size={16} />Payroll items</button>
           <button onClick={() => navigate("/payroll/employees/new")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: BRAND_DARK, padding: "9px 13px", border: "0.5px solid " + BRAND, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}><UserPlus size={16} />Add employee</button>
         </div>
 
