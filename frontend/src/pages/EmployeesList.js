@@ -351,9 +351,9 @@ export default function EmployeesList() {
               <tr>
                 <th style={{ ...TH, paddingLeft: 18 }}>Name</th>
                 <th style={TH}>Pay rate</th>
-                <th style={TH}>Method</th>
-                <th style={TH}>Vacation</th>
-                <th style={TH}>Phone</th>
+                <th style={TH}>Pay method</th>
+                <th style={TH}>Available vacation</th>
+                <th style={TH}>Phone number</th>
                 <th style={TH}>Status</th>
                 <th style={{ ...TH, textAlign: "center", width: 54 }}>Actions</th>
               </tr>
