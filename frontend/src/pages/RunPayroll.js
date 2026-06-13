@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   X, ChevronDown, ChevronUp, Sparkles, ArrowRight, Plus, Calendar,
   Filter, Search, Download, Settings, TrendingUp, MessageCircle,
-  HelpCircle, Map, MoreVertical, AlertTriangle, InfoCircle, Check,
+  HelpCircle, Map, MoreVertical, AlertTriangle, Info, Check,
   Building, Receipt, UserMinus, ExternalLink,
 } from "lucide-react";
 
@@ -229,7 +229,7 @@ export default function RunPayroll() {
                 <div style={{ background: BG_CARD, border: "0.5px solid " + BRAND_SOFT_BORDER, borderRadius: 6, padding: "4px 0" }}>
                   {issues.map((iss, i) => {
                     const iconColor = iss.level === "info" ? INFO_TEXT : WARN_TEXT;
-                    const Icon = iss.type === "no_hours" || iss.type === "variance_review" || iss.type === "dd_not_ready" ? AlertTriangle : iss.type === "variance_note" ? TrendingUp : iss.type === "needs_setup" ? UserMinus : InfoCircle;
+                    const Icon = iss.type === "no_hours" || iss.type === "variance_review" || iss.type === "dd_not_ready" ? AlertTriangle : iss.type === "variance_note" ? TrendingUp : iss.type === "needs_setup" ? UserMinus : Info;
                     return (
                       <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 14px", fontSize: 12, borderBottom: i < issues.length - 1 ? "0.5px solid " + BORDER_LIGHT : "none" }}>
                         <Icon size={14} style={{ color: iconColor, flexShrink: 0 }} />
@@ -431,7 +431,7 @@ export default function RunPayroll() {
         {totals.totalGross > 0 && (
           <div style={{ padding: "12px 22px", background: BRAND_SOFT_2, borderTop: "0.5px solid " + BRAND_SOFT_BORDER, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <InfoCircle size={13} style={{ color: BRAND_DARK }} />
+              <Info size={13} style={{ color: BRAND_DARK }} />
               <span style={{ fontSize: 11, color: BRAND_DARK, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4 }}>Estimated total cost</span>
             </div>
             <div style={{ display: "flex", gap: 24, fontSize: 12, color: TEXT_PRIMARY, fontVariantNumeric: "tabular-nums", flexWrap: "wrap" }}>
