@@ -4,7 +4,7 @@ import {
   X, ChevronDown, ChevronUp, Sparkles, ArrowRight, Plus, Calendar,
   Filter, Search, Download, Settings, TrendingUp, MessageCircle,
   HelpCircle, Map, MoreVertical, AlertTriangle, Info, Check,
-  Building, Receipt, UserMinus, ExternalLink,
+  Building, Receipt, UserMinus, ExternalLink, ShieldCheck, UserCog,
 } from "lucide-react";
 
 import {
@@ -33,6 +33,8 @@ const WARN_SOFT = "#FEF3C7";
 const WARN_BG = "#FFFBEB";
 const INFO_TEXT = "#1E40AF";
 const INFO_SOFT = "#DBEAFE";
+const SUCCESS_TEXT = "#166534";
+const SUCCESS_SOFT = "#DCFCE7";
 const DANGER = "#DC2626";
 
 const GRID = "30px 1fr 88px 80px 110px 80px 100px 56px 130px 36px";
@@ -196,8 +198,8 @@ export default function RunPayroll() {
   const colHdrStyle = { fontSize: 10, fontWeight: 500, color: TEXT_SECONDARY, textTransform: "uppercase", letterSpacing: 0.4 };
 
   return (
-    <div style={{ background: BG_PAGE, minHeight: "100vh", fontFamily: "inherit" }}>
-      <div style={{ background: BG_CARD, maxWidth: 1300, margin: "0 auto" }}>
+    <div style={{ background: BG_CARD, minHeight: "100vh", fontFamily: "inherit", width: "100%" }}>
+      <div style={{ width: "100%" }}>
 
         <div style={{ padding: "14px 22px", borderBottom: "0.5px solid " + BORDER, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: BG_CARD, position: "sticky", top: 0, zIndex: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
@@ -213,37 +215,52 @@ export default function RunPayroll() {
           </div>
         </div>
 
-        {issues.length > 0 && (
-          <div style={{ borderBottom: "0.5px solid " + BORDER }}>
-            <div style={{ padding: "11px 22px", background: "linear-gradient(90deg, " + BRAND_SOFT_2 + " 0%, " + BG_HOVER + " 100%)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0 }}>
-                <Sparkles size={15} style={{ color: BRAND_DARK, flexShrink: 0 }} />
-                <span style={{ fontSize: 12, color: TEXT_PRIMARY, lineHeight: 1.5 }}>{narrative}</span>
+        {linesArray.length > 0 && (
+          <div style={{ padding: "14px 22px", borderBottom: "0.5px solid " + BORDER, background: BG_CARD }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 500, color: TEXT_PRIMARY }}>
+                <ShieldCheck size={16} style={{ color: BRAND }} />
+                Payroll readiness
               </div>
-              <a onClick={() => setIssuesOpen(!issuesOpen)} style={{ fontSize: 12, color: BRAND, cursor: "pointer", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                {issuesOpen ? "Hide" : "Show all " + issues.length} issue{issues.length === 1 ? "" : "s"} {issuesOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-              </a>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 11px", borderRadius: 20, fontSize: 12, fontWeight: 500, background: counts.ready > 0 ? SUCCESS_SOFT : BORDER_LIGHT, color: counts.ready > 0 ? SUCCESS_TEXT : TEXT_TERTIARY }}>
+                  <Check size={11} />{counts.ready} ready to pay
+                </span>
+                {counts.needsSetup > 0 && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 11px", borderRadius: 20, fontSize: 12, fontWeight: 500, background: WARN_SOFT, color: WARN_TEXT }}>
+                    <UserCog size={11} />{counts.needsSetup} needs setup
+                  </span>
+                )}
+                {counts.toReview > 0 && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 11px", borderRadius: 20, fontSize: 12, fontWeight: 500, background: WARN_SOFT, color: WARN_TEXT }}>
+                    <AlertTriangle size={11} />{counts.toReview} to review
+                  </span>
+                )}
+                {counts.notes > 0 && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 11px", borderRadius: 20, fontSize: 12, fontWeight: 500, background: INFO_SOFT, color: INFO_TEXT }}>
+                    <Info size={11} />{counts.notes} note{counts.notes === 1 ? "" : "s"}
+                  </span>
+                )}
+              </div>
             </div>
-            {issuesOpen && (
-              <div style={{ background: BG_CARD, padding: "0 22px 12px" }}>
-                <div style={{ background: BG_CARD, border: "0.5px solid " + BRAND_SOFT_BORDER, borderRadius: 6, padding: "4px 0" }}>
-                  {issues.map((iss, i) => {
-                    const iconColor = iss.level === "info" ? INFO_TEXT : WARN_TEXT;
-                    const Icon = iss.type === "no_hours" || iss.type === "variance_review" || iss.type === "dd_not_ready" ? AlertTriangle : iss.type === "variance_note" ? TrendingUp : iss.type === "needs_setup" ? UserMinus : Info;
-                    return (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 14px", fontSize: 12, borderBottom: i < issues.length - 1 ? "0.5px solid " + BORDER_LIGHT : "none" }}>
-                        <Icon size={14} style={{ color: iconColor, flexShrink: 0 }} />
-                        <div style={{ flex: 1 }}>
-                          <span style={{ fontWeight: 500, color: TEXT_PRIMARY }}>{iss.nameLabel}</span>
-                          {iss.sep && <span style={{ color: TEXT_TERTIARY, margin: "0 4px" }}>{"\u00b7"}</span>}
-                          {!iss.sep && " "}
-                          <span style={{ color: TEXT_SECONDARY }}>{iss.text}</span>
-                        </div>
-                        <a style={{ color: BRAND, fontWeight: 500, cursor: "pointer", flexShrink: 0 }}>{iss.linkLabel}</a>
+            {issues.length > 0 && (
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid " + BORDER_LIGHT, display: "flex", flexDirection: "column", gap: 2 }}>
+                {issues.map((iss, i) => {
+                  const iconColor = iss.level === "info" ? INFO_TEXT : WARN_TEXT;
+                  const Icon = iss.type === "no_hours" || iss.type === "variance_review" || iss.type === "dd_not_ready" ? AlertTriangle : iss.type === "variance_note" ? TrendingUp : iss.type === "needs_setup" ? UserCog : Info;
+                  return (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 4px", fontSize: 13 }}>
+                      <Icon size={14} style={{ color: iconColor, flexShrink: 0 }} />
+                      <div style={{ flex: 1 }}>
+                        <span style={{ fontWeight: 500, color: TEXT_PRIMARY }}>{iss.nameLabel}</span>
+                        {iss.sep && <span style={{ color: TEXT_TERTIARY, margin: "0 4px" }}>{"\u00b7"}</span>}
+                        {!iss.sep && " "}
+                        <span style={{ color: TEXT_SECONDARY }}>{iss.text}</span>
                       </div>
-                    );
-                  })}
-                </div>
+                      <a style={{ color: BRAND, fontWeight: 500, cursor: "pointer", flexShrink: 0 }}>{iss.linkLabel}</a>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
