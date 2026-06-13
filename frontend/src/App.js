@@ -6,7 +6,7 @@ import InvoiceEditor from "./pages/InvoiceEditor";
 import InvoiceReviewSend from "./pages/InvoiceReviewSend";
 import Payroll from "./pages/Payroll";
 import PayRuns from "./pages/PayRuns";
-import NewPayRun from "./pages/NewPayRun";
+import PayrollLauncher from "./utils/payrollLauncher";
 import PayRunDetail from "./pages/PayRunDetail";
 import PayStubDetail from "./pages/PayStubDetail";
 import EmployeesList from "./pages/EmployeesList";
@@ -162,8 +162,9 @@ function AppLayout({ onLogout }) {
           <Routes>
           <Route path="/payroll/employees" element={<EmployeesList />} />
           <Route path="/payroll/employees/:id" element={<EmployeeProfile />} />
+          <Route path="/payroll/run" element={<PayrollLauncher />} />
           <Route path="/payroll/run/:payRunId" element={<RunPayroll />} />
-          <Route path="/payroll/runs/new" element={<NewPayRun />} />
+          <Route path="/payroll/runs/new" element={<PayrollLauncher />} />
           <Route path="/payroll/runs/:runId/stubs/:stubId" element={<PayStubDetail />} />
           <Route path="/payroll/runs/:id" element={<PayRunDetail />} />
           <Route path="/payroll/runs" element={<PayRuns />} />
