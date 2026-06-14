@@ -18,6 +18,7 @@ import PayrollOverview from "./pages/PayrollOverview";
 import PaychequeList from "./pages/PaychequeList";
 import PaychequeDetail from "./pages/PaychequeDetail";
 import RunPayroll from "./pages/RunPayroll";
+import PayrollPreview from "./pages/PayrollPreview";
 import { AIProvider }      from './context/AIContext';
 import useAI from './hooks/useAI';
 import Sidebar             from './components/Sidebar';
@@ -168,6 +169,7 @@ function AppLayout({ onLogout }) {
           <Route path="/payroll/employees/:id" element={<EmployeeProfile />} />
           <Route path="/payroll/run" element={<PayrollLauncher />} />
           <Route path="/payroll/run/:payRunId" element={<RunPayroll />} />
+          <Route path="/payroll/run/:payRunId/preview" element={<PayrollPreview />} />
           <Route path="/payroll/runs/new" element={<PayrollLauncher />} />
           <Route path="/payroll/runs/:runId/stubs/:stubId" element={<PayStubDetail />} />
           <Route path="/payroll/runs/:id" element={<PayRunDetail />} />

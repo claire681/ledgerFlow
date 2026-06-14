@@ -90,6 +90,7 @@ export default function RunPayroll() {
   const [error, setError] = useState(null);
   const [issuesOpen, setIssuesOpen] = useState(false);
   const [editing, setEditing] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => { loadAll(); }, [payRunId]);
 
@@ -186,9 +187,40 @@ export default function RunPayroll() {
     cancelEdit(id);
   };
 
-  const handlePreview = () => {
+  const handlePreview = async () => {
     if (activeLines.length === 0) return;
-    alert("Preview flow coming in next push. Active: " + activeLines.length + " employees, $" + totals.totalGross.toFixed(2) + " gross.");
+    setSubmitting(true);
+    setError(null);
+    try {
+      const employee_inputs = activeLines.map(l => ({ employee_id: l.employee_id, hours: l.hours }));
+      const reqBody = {
+        country: (run && run.country) || "CA",
+        subnational: (run && run.subnational) || "AB",
+        pay_period_start: run && run.pay_period_start,
+        pay_period_end: run && run.pay_period_end,
+        pay_date: run && run.pay_date,
+        pay_periods_per_year: 24,
+        employee_inputs,
+      };
+      const token = localStorage.getItem("access_token") || localStorage.getItem("token") || "";
+      const res = await fetch(API_URL + "/api/v1/payroll/runs/preview", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify(reqBody),
+      });
+      if (!res.ok) {
+        const eb = await res.json().catch(() => ({}));
+        const msg = typeof eb.detail === "string" ? eb.detail : Array.isArray(eb.detail) ? eb.detail.map(d => d.msg || JSON.stringify(d)).join("; ") : ("Could not preview payroll (status " + res.status + ").");
+        throw new Error(msg);
+      }
+      const data = await res.json();
+      const stubs = Array.isArray(data) ? data : (data.pay_stubs || data.stubs || []);
+      navigate("/payroll/run/" + payRunId + "/preview", { state: { stubs, run, employee_inputs } });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
   const handleSaveLater = () => alert("Save for later coming next.");
   const handleCancel = () => navigate("/payroll/overview");
@@ -491,7 +523,7 @@ export default function RunPayroll() {
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span style={{ fontSize: 12, color: TEXT_SECONDARY }}>{activeLines.length} of {linesArray.length} employee{linesArray.length === 1 ? "" : "s"} selected</span>
             <button onClick={handleSaveLater} style={{ fontSize: 12, padding: "8px 14px", borderRadius: 5, background: BG_CARD, color: BRAND, border: "0.5px solid " + BRAND, cursor: "pointer", fontWeight: 500, fontFamily: "inherit" }}>Save for later</button>
-            <button onClick={handlePreview} disabled={activeLines.length === 0} style={{ fontSize: 13, padding: "8px 18px", borderRadius: 5, background: activeLines.length === 0 ? "#9CA3AF" : BRAND, color: "white", border: "none", cursor: activeLines.length === 0 ? "not-allowed" : "pointer", fontWeight: 500, fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <button onClick={handlePreview} disabled={activeLines.length === 0 || submitting} style={{ fontSize: 13, padding: "8px 18px", borderRadius: 5, background: activeLines.length === 0 ? "#9CA3AF" : BRAND, color: "white", border: "none", cursor: activeLines.length === 0 ? "not-allowed" : "pointer", fontWeight: 500, fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}>
               Preview for {activeLines.length} employee{activeLines.length === 1 ? "" : "s"} <ArrowRight size={13} />
             </button>
           </div>
