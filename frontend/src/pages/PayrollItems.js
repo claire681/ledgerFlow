@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 
 import { PAY_TYPES, SCHEDULES, LOCATIONS, DEDUCTIONS } from "../data/payrollItemsData";
+import NovaPill from "../components/NovaPill";
 const BRAND = "#0F9599";
 const BRAND_DARK = "#0F6E56";
 const TEXT_PRIMARY = "#111827";
@@ -33,7 +34,6 @@ const CHIP_OK = { display: "inline-flex", alignItems: "center", gap: 5, fontSize
 const CHIP_WARN = { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, padding: "3px 9px", borderRadius: 12, background: WARN_SOFT, color: WARN_TEXT };
 const BADGE = { display: "inline-block", background: INFO_TEXT, color: "white", fontSize: 10.5, fontWeight: 700, letterSpacing: "0.05em", padding: "3px 9px", borderRadius: 6 };
 const BADGE_PRIMARY = { ...BADGE, background: BRAND };
-const NOVA_PILL = { display: "inline-flex", alignItems: "center", gap: 3, background: BRAND, color: "white", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20, letterSpacing: "0.02em", marginLeft: 4 };
 
 export default function PayrollItems() {
   const navigate = useNavigate();
@@ -100,7 +100,7 @@ export default function PayrollItems() {
             )}
           </div>
           <button onClick={() => alert("Spreadsheet import coming next")} style={BTN_OUT}>
-            <Sparkles size={16} style={{ color: BRAND }} />Try spreadsheet import<span style={NOVA_PILL}><Sparkles size={11} />Nova</span>
+            <Sparkles size={16} style={{ color: BRAND }} />Try spreadsheet import<NovaPill style={{ marginLeft: 4 }} />
           </button>
         </div>
       </div>

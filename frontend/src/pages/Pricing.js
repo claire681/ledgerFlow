@@ -6,6 +6,7 @@ import { Check, ChevronDown, ChevronUp, Sparkles, Star, ShieldCheck, MessageSqua
 
 
 import MarketingHeader from "../components/MarketingHeader";
+import NovaPill from "../components/NovaPill";
 // === Novala logo (real /logo512.png) ===
 function NovalaLogo({ size = 32, color = "#0E1A1A", showWordmark = true }) {
   return (
@@ -616,7 +617,7 @@ function CategoryPanel({ category, plans, isOpen, onToggle, isLast }) {
             <div key={i} style={{ display: "grid", gridTemplateColumns: "1.4fr repeat(3, 1fr)", gap: 16, padding: "12px 0", borderTop: i === 0 ? "none" : `1px solid ${BORDER}`, alignItems: "center" }}>
               <div style={{ fontSize: 14, color: INK, display: "flex", alignItems: "center", gap: 8 }}>
                 {row.label}
-                {row.beta && <span style={{ background: TEAL, color: "#fff", fontSize: 10, fontWeight: 800, padding: "2px 6px", borderRadius: 4, letterSpacing: "0.06em" }}>BETA</span>}
+                {row.beta && <NovaPill />}
               </div>
               {row.values.map((v, vi) => (
                 <div key={vi} style={{ textAlign: "center", fontSize: 14, color: INK }}>
