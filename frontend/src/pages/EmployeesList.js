@@ -353,7 +353,7 @@ export default function EmployeesList() {
             Privacy
           </span>
           <button onClick={() => navigate("/payroll/items")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, padding: "9px 13px", border: "0.5px solid " + BORDER, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}><SlidersHorizontal size={16} />Payroll items</button>
-          <button onClick={() => navigate("/payroll/employees/new")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: BRAND_DARK, padding: "9px 13px", border: "0.5px solid " + BRAND, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}><UserPlus size={16} />Add employee</button>
+          <button onClick={() => navigate("/payroll/employees/add")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: BRAND_DARK, padding: "9px 13px", border: "0.5px solid " + BRAND, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}><UserPlus size={16} />Add employee</button>
         </div>
 
         {error && (
@@ -379,7 +379,7 @@ export default function EmployeesList() {
               {visible.length === 0 ? (
                 <tr><td colSpan="7" style={{ padding: 40, textAlign: "center", color: TEXT_SECONDARY, fontSize: 13 }}>
                   {total === 0 ? "No employees yet. " : "No employees match your search. "}
-                  <a onClick={() => navigate("/payroll/employees/new")} style={{ color: BRAND, cursor: "pointer", fontWeight: 600 }}>Add an employee</a> to start.
+                  <a onClick={() => navigate("/payroll/employees/add")} style={{ color: BRAND, cursor: "pointer", fontWeight: 600 }}>Add an employee</a> to start.
                 </td></tr>
               ) : visible.map(emp => (
                 <tr key={emp.id}>
