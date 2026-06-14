@@ -89,6 +89,7 @@ export default function RunPayroll() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [issuesOpen, setIssuesOpen] = useState(false);
+  const [editing, setEditing] = useState({});
 
   useEffect(() => { loadAll(); }, [payRunId]);
 
@@ -171,6 +172,19 @@ export default function RunPayroll() {
 
   const employerTax = totals.totalGross * 0.086;
   const totalCost = totals.totalGross + employerTax;
+
+  const startEdit = (id, val) => setEditing(prev => ({ ...prev, [id]: String(val) }));
+  const cancelEdit = (id) => setEditing(prev => { const next = { ...prev }; delete next[id]; return next; });
+  const commitEdit = (id, rawValue) => {
+    const raw = rawValue !== undefined ? rawValue : editing[id];
+    if (raw == null) return;
+    const v = parseFloat(raw);
+    setLines(prev => ({
+      ...prev,
+      [id]: { ...prev[id], hours: { ...prev[id].hours, regular: isNaN(v) ? 0 : v } }
+    }));
+    cancelEdit(id);
+  };
 
   const handlePreview = () => {
     if (activeLines.length === 0) return;
@@ -407,7 +421,20 @@ export default function RunPayroll() {
                 )}
               </div>
               <div style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-                {reg.toFixed(2)}
+                {editing[line.employee_id] != null ? (
+              <input
+                type="text"
+                inputMode="decimal"
+                autoFocus
+                value={editing[line.employee_id]}
+                onChange={(e) => setEditing(prev => ({ ...prev, [line.employee_id]: e.target.value }))}
+                onKeyDown={(e) => { if (e.key === "Enter") commitEdit(line.employee_id, e.target.value); else if (e.key === "Escape") cancelEdit(line.employee_id); }}
+                onBlur={(e) => commitEdit(line.employee_id, e.target.value)}
+                style={{ width: 64, padding: "4px 6px", border: "1px solid #0F9599", borderRadius: 4, fontSize: 13, textAlign: "right", outline: "none", fontFamily: "inherit", fontVariantNumeric: "tabular-nums" }}
+              />
+            ) : (
+              <span onClick={() => startEdit(line.employee_id, reg)} style={{ cursor: "pointer", display: "inline-block", padding: "2px 4px", borderRadius: 3, minWidth: 40 }}>{reg.toFixed(2)}</span>
+            )}
                 {reg > 0 && <div style={{ fontSize: 10, color: TEXT_TERTIARY, marginTop: 1 }}>{formatCurrency(rate, currency)}/hr</div>}
               </div>
               <div style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", color: stat > 0 ? TEXT_PRIMARY : TEXT_TERTIARY }}>{stat.toFixed(2)}</div>
