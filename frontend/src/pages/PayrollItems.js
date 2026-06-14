@@ -6,6 +6,7 @@ import {
   MessageSquareText, Check,
 } from "lucide-react";
 
+import { PAY_TYPES, SCHEDULES, LOCATIONS, DEDUCTIONS } from "../data/payrollItemsData";
 const BRAND = "#0F9599";
 const BRAND_DARK = "#0F6E56";
 const TEXT_PRIMARY = "#111827";
@@ -21,26 +22,6 @@ const WARN_SOFT = "#FEF3C7";
 const SUCCESS_TEXT = "#166534";
 const SUCCESS_SOFT = "#DCFCE7";
 const INFO_TEXT = "#185FA5";
-
-const PAY_TYPES = [
-  { id: "pt1", cat: "Regular pay", name: "Salary", active: true },
-  { id: "pt2", cat: "Regular pay", name: "Hourly", active: true },
-  { id: "pt3", cat: "Hourly", name: "Hourly 2", active: true },
-  { id: "pt4", cat: "Regular pay", name: "Commission", active: true },
-  { id: "pt5", cat: "", name: "Overtime Pay", active: true },
-  { id: "pt6", cat: "", name: "Double Overtime Pay", active: true },
-  { id: "pt7", cat: "", name: "Stat Holiday Pay", active: true },
-  { id: "pt8", cat: "", name: "Bonus", active: true },
-];
-const SCHEDULES = [
-  { id: "default", isDefault: true, freq: "Twice a month", name: "Semi-monthly, 15th and End of Month", ends: "14/06/2026", payday: "15/06/2026" },
-  { id: "final1", isDefault: false, freq: "Twice a month", name: "Final Pay, Former Employee", ends: "14/06/2026", payday: "15/06/2026" },
-  { id: "final2", isDefault: false, freq: "Twice a month", name: "Final Pay, Former Employee 2", ends: "10/06/2026", payday: "15/06/2026" },
-];
-const LOCATIONS = [
-  { id: "primary", isPrimary: true, active: true, name: "Edmonton, AB", address: "49516 Range Road 174, Edmonton, AB T5H0S4" },
-];
-const DEDUCTIONS = [];
 
 const BTN_TEAL = { background: BRAND, color: "white", fontSize: 14, fontWeight: 600, padding: "10px 18px", border: "none", borderRadius: 9, cursor: "pointer", fontFamily: "inherit" };
 const BTN_TEAL_OUT = { background: BG_CARD, color: BRAND_DARK, fontSize: 13.5, fontWeight: 600, padding: "9px 14px", border: "0.5px solid " + BRAND, borderRadius: 9, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 7 };
@@ -134,7 +115,7 @@ export default function PayrollItems() {
           </div>
         </AccordionRow>
         <AccordionRow open={expanded.schedules} onToggle={() => toggle("schedules")} icon={<CalendarClock size={20} style={{ color: BRAND }} />} title="Pay schedules" count={SCHEDULES.length} chip={<span style={CHIP_OK}>Active</span>}>
-          <SchedulesBody onCardClick={(s) => alert("Pay schedule detail coming next")} />
+          <SchedulesBody onCardClick={(s) => navigate("/payroll/items/schedules/" + s.id)} />
         </AccordionRow>
         <AccordionRow open={expanded.locations} onToggle={() => toggle("locations")} icon={<MapPin size={20} style={{ color: BRAND }} />} title="Work locations" count={LOCATIONS.length} chip={<span style={CHIP_OK}>Active</span>}>
           <LocationsBody onCardClick={(l) => alert("Work location detail coming next")} />
