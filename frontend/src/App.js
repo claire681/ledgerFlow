@@ -4,7 +4,6 @@ import {
   Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import InvoiceEditor from "./pages/InvoiceEditor";
 import InvoiceReviewSend from "./pages/InvoiceReviewSend";
-import Payroll from "./pages/Payroll";
 import PayRuns from "./pages/PayRuns";
 import PayrollLauncher from "./utils/payrollLauncher";
 import PayRunDetail from "./pages/PayRunDetail";
@@ -172,7 +171,8 @@ function AppLayout({ onLogout }) {
           <Route path="/payroll/overview" element={<PayrollOverview />} />
           <Route path="/payroll/paycheques" element={<PaychequeList />} />
           <Route path="/payroll/paycheques/:id" element={<PaychequeDetail />} />
-          <Route path="/payroll/*" element={<Payroll />} />
+          <Route path="/payroll/items" element={<PayrollItems />} />
+          <Route path="/payroll/*" element={<Navigate to="/payroll/employees" replace />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/transactions" element={<Transactions />} />
