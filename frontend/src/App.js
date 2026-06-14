@@ -11,6 +11,7 @@ import PayStubDetail from "./pages/PayStubDetail";
 import EmployeesList from "./pages/EmployeesList";
 import PayrollItems from "./pages/PayrollItems";
 import PaySchedule from "./pages/PaySchedule";
+import WorkLocation from "./pages/WorkLocation";
 import EmployeeProfile from "./pages/EmployeeProfile";
 import PayrollOverview from "./pages/PayrollOverview";
 import PaychequeList from "./pages/PaychequeList";
@@ -174,6 +175,7 @@ function AppLayout({ onLogout }) {
           <Route path="/payroll/paycheques/:id" element={<PaychequeDetail />} />
           <Route path="/payroll/items" element={<PayrollItems />} />
           <Route path="/payroll/items/schedules/:id" element={<PaySchedule />} />
+          <Route path="/payroll/items/locations/:id" element={<WorkLocation />} />
           <Route path="/payroll/*" element={<Navigate to="/payroll/employees" replace />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/documents" element={<Documents />} />

@@ -118,7 +118,7 @@ export default function PayrollItems() {
           <SchedulesBody onCardClick={(s) => navigate("/payroll/items/schedules/" + s.id)} />
         </AccordionRow>
         <AccordionRow open={expanded.locations} onToggle={() => toggle("locations")} icon={<MapPin size={20} style={{ color: BRAND }} />} title="Work locations" count={LOCATIONS.length} chip={<span style={CHIP_OK}>Active</span>}>
-          <LocationsBody onCardClick={(l) => alert("Work location detail coming next")} />
+          <LocationsBody onCardClick={(l) => navigate("/payroll/items/locations/" + l.id)} />
         </AccordionRow>
       </div>
 
