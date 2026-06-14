@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, X, Search, MessageSquareText, ArrowUp } from "lucide-react";
 import { LOCATIONS } from "../data/payrollItemsData";
+import AssignEmployeesPanel from "../components/AssignEmployeesPanel";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -50,9 +51,10 @@ export default function WorkLocation() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
+  const [assignOpen, setAssignOpen] = useState(false);
 
   const goBack = () => navigate("/payroll/items");
-  const openAssign = () => alert("Assign employee(s) panel coming next");
+  const openAssign = () => setAssignOpen(true);
 
   useEffect(() => {
     if (!location) { setLoading(false); return; }
@@ -79,6 +81,8 @@ export default function WorkLocation() {
       </div>
     );
   }
+
+  const eligible = location.isPrimary ? [] : employees;
 
   const sorted = [...employees]
     .filter(e => !search || employeeName(e).toLowerCase().includes(search.toLowerCase()))
@@ -164,6 +168,8 @@ export default function WorkLocation() {
           <button onClick={goBack} style={BTN_TEAL}>Done</button>
         </div>
       </div>
+
+      <AssignEmployeesPanel open={assignOpen} onClose={() => setAssignOpen(false)} eligible={eligible} />
     </div>
   );
 }
