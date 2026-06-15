@@ -196,7 +196,7 @@ export default function PayrollOverview() {
   const handleActionClick = (actionId) => {
     switch (actionId) {
       case "run_payroll": return handleRunPayroll();
-      case "add_employee": return navigate("/payroll/employees/new");
+      case "add_employee": return navigate("/payroll/employees/add");
       case "view_paycheque_list": return navigate("/payroll/paycheques");
       case "update_payroll_settings": return alert("Payroll settings coming soon");
       case "edit_payroll_items": return alert("Edit payroll items coming soon");
@@ -318,7 +318,7 @@ export default function PayrollOverview() {
             </div>
           ) : (
             <div style={{ padding: "10px 14px", background: "rgba(255,255,255,0.75)", borderRadius: 8, marginBottom: 12, fontSize: 13, color: TEXT_SECONDARY }}>
-              No active employees on payroll yet. <span onClick={() => navigate("/payroll/employees/new")} style={{ color: BRAND, cursor: "pointer", fontWeight: 500 }}>Add your first employee</span>
+              No active employees on payroll yet. <span onClick={() => navigate("/payroll/employees/add")} style={{ color: BRAND, cursor: "pointer", fontWeight: 500 }}>Add your first employee</span>
             </div>
           )}
 

@@ -326,7 +326,7 @@ export default function RunPayroll() {
             </div>
           </div>
           <div style={{ flex: 1 }}></div>
-          <a onClick={() => navigate("/payroll/employees/new")} style={{ fontSize: 12, color: BRAND, cursor: "pointer", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <a onClick={() => navigate("/payroll/employees/add")} style={{ fontSize: 12, color: BRAND, cursor: "pointer", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 4 }}>
             <Plus size={12} />Add an employee
           </a>
         </div>
@@ -381,7 +381,7 @@ export default function RunPayroll() {
 
         {linesArray.length === 0 ? (
           <div style={{ padding: 40, textAlign: "center", color: TEXT_SECONDARY, fontSize: 13 }}>
-            No employees available. <a onClick={() => navigate("/payroll/employees/new")} style={{ color: BRAND, cursor: "pointer", fontWeight: 500 }}>Add an employee</a> to start.
+            No employees available. <a onClick={() => navigate("/payroll/employees/add")} style={{ color: BRAND, cursor: "pointer", fontWeight: 500 }}>Add an employee</a> to start.
           </div>
         ) : linesArray.map(line => {
           const emp = empById[line.employee_id];
