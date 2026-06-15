@@ -13,6 +13,14 @@ import MarketingHeader from "../components/MarketingHeader";
 import MarketingFooter from "../components/MarketingFooter";
 import FeaturesModal from "../components/FeaturesModal";
 
+import heroDashboard from "../assets/landing/hero-dashboard.jpg";
+import step1Snap from "../assets/landing/step1-snap.jpg";
+import step2Extract from "../assets/landing/step2-extract.jpg";
+import step3Books from "../assets/landing/step3-books.jpg";
+import avatarOwner from "../assets/landing/avatar-owner.jpg";
+import avatarFounder from "../assets/landing/avatar-founder.jpg";
+import avatarOps from "../assets/landing/avatar-ops.jpg";
+
 
 const BRAND = "#0F9599";
 const BRAND_DEEP = "#0E4B4D";
