@@ -272,7 +272,7 @@ export default function AddEmployee() {
             <p style={{ fontSize: 14, color: TEXT_SECONDARY, lineHeight: 1.6, margin: "0 0 8px" }}>
               Add your employee to get them paid. Add their email (mobile coming soon) to give them access to their employee portal in Novala, where they can view pay, T4s, and documents.
             </p>
-            <a onClick={() => alert("Employee portal walkthrough coming next")} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 600, color: BRAND_DARK, cursor: "pointer" }}>
+            <a onClick={() => navigate("/employee-portal")} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 600, color: BRAND_DARK, cursor: "pointer" }}>
               Learn how the employee portal works<ExternalLink size={13} />
             </a>
 
