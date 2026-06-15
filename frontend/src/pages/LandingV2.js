@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Check, FileText, Wallet, BarChart3, Receipt, BookOpen, CreditCard,
+  Star, Shield, Sparkles, Zap, Lock, User, ChevronDown,
 } from "lucide-react";
 
 import MarketingHeader from "../components/MarketingHeader";
@@ -20,6 +21,9 @@ import MarketingFooter from "../components/MarketingFooter";
 const BRAND = "#0F9599";
 const BRAND_DEEP = "#0E4B4D";
 const BRAND_TINT = "rgba(15, 149, 153, 0.10)";
+const MINT = "#2FE3BE";
+const NIGHT = "#0E3B3A";
+const NIGHT_2 = "#124A47";
 const TEXT_INK = "#0E2A2A";
 const TEXT_DARK = "#5A6970";
 const TEXT_MUTED = "#9CA3AF";
@@ -264,6 +268,235 @@ function FeaturesGrid({ onViewAll }) {
   );
 }
 
+function DarkCard({ feature }) {
+  const [hovered, setHovered] = useState(false);
+  const Icon = feature.icon;
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.05)",
+        border: "0.5px solid rgba(255,255,255,0.12)",
+        borderRadius: 16,
+        padding: 22,
+        transform: hovered ? "translateY(-4px)" : "translateY(0)",
+        transition: "transform 0.28s ease, background 0.28s ease",
+      }}
+    >
+      <div style={{
+        width: 44, height: 44, borderRadius: 12,
+        background: "rgba(47, 227, 190, 0.15)",
+        display: "grid", placeItems: "center",
+        marginBottom: 14,
+      }}>
+        <Icon size={20} color={MINT} strokeWidth={2} />
+      </div>
+      <div style={{ fontSize: 15, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-0.01em", marginBottom: 6 }}>{feature.title}</div>
+      <p style={{ fontSize: 12.5, color: "rgba(255,255,255,0.65)", lineHeight: 1.55, margin: 0 }}>{feature.note}</p>
+    </div>
+  );
+}
+
+function DarkBand() {
+  const features = [
+    { icon: BookOpen, title: "Smart bookkeeping", note: "Books that sort themselves out, automatically." },
+    { icon: CreditCard, title: "Invoicing and payments", note: "Branded invoices and online payments built in." },
+    { icon: Wallet, title: "Payroll and team", note: "Run payroll in minutes, with the right tax forms per country." },
+    { icon: Shield, title: "Tax and compliance", note: "Audit trails, year end forms, and clear records." },
+    { icon: BarChart3, title: "Reports and intelligence", note: "Live dashboards and plain English answers from Nexa AI." },
+    { icon: Sparkles, title: "Nexa assistant", note: "Ask in your own words and get the real number, with sources." },
+    { icon: Zap, title: "Integrations", note: "Connects to the banks, cards, and apps you already use." },
+    { icon: Lock, title: "Bank-grade security", note: "Encryption, role based access, continuous backups." },
+  ];
+  return (
+    <section style={{ background: "linear-gradient(180deg, " + NIGHT + " 0%, " + NIGHT_2 + " 100%)", padding: "100px 0", color: "#FFFFFF" }}>
+      <div style={CONTAINER}>
+        <div style={{ textAlign: "center", maxWidth: 740, margin: "0 auto 50px" }}>
+          <span style={{ display: "inline-block", fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: MINT, marginBottom: 12 }}>The whole back office</span>
+          <h2 style={{ fontSize: "clamp(32px, 4vw, 42px)", fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 18px" }}>
+            One login for the whole back office.
+          </h2>
+          <p style={{ fontSize: 16, color: "rgba(255,255,255,0.75)", lineHeight: 1.6, margin: 0 }}>
+            Eight tools, one source of truth. No tab juggling, no copy and paste between systems.
+          </p>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+          {features.map((f, i) => <DarkCard key={i} feature={f} />)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TestimonialCard({ data }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: "relative",
+        background: "linear-gradient(135deg, " + NIGHT + " 0%, " + NIGHT_2 + " 100%)",
+        borderRadius: 22,
+        padding: 32,
+        color: "#FFFFFF",
+        overflow: "hidden",
+        boxShadow: hovered ? "0 28px 60px rgba(8,32,31,0.25)" : "0 6px 18px rgba(8,32,31,0.10)",
+        transform: hovered ? "translateY(-6px)" : "translateY(0)",
+        transition: "transform 0.28s ease, box-shadow 0.28s ease",
+      }}
+    >
+      <div style={{ position: "absolute", top: -80, right: -80, width: 300, height: 300, borderRadius: "50%", background: "#E08A3C" }} />
+      <div style={{ position: "absolute", bottom: -100, right: 80, width: 200, height: 200, borderRadius: "50%", background: "#6E7A3F" }} />
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <div style={{ display: "flex", gap: 3, marginBottom: 20 }}>
+          {[0,1,2,3,4].map(i => (
+            <Star key={i} size={16} color="#F2B544" fill="#F2B544" />
+          ))}
+        </div>
+        <p style={{ fontSize: 15.5, lineHeight: 1.6, margin: "0 0 28px", color: "rgba(255,255,255,0.95)" }}>
+          {data.quote}
+        </p>
+        <div style={{ height: 1, background: "rgba(255,255,255,0.15)", margin: "0 0 22px" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: "50%",
+            border: "2.5px solid #E08A3C",
+            background: "linear-gradient(135deg, #D9E2E1 0%, #B5C5C4 100%)",
+            display: "grid", placeItems: "center",
+            flexShrink: 0,
+          }}>
+            <User size={22} color="#5A6970" />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-0.005em" }}>{data.name}</div>
+            <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.65)" }}>{data.role}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Testimonials() {
+  const testimonials = [
+    {
+      quote: "Novala took the receipt pile and the spreadsheet juggling off our plate. I see real numbers across all our locations in one place now, and our books close on time.",
+      name: "Owner",
+      role: "Multi-location services business",
+    },
+    {
+      quote: "I used to spend Friday nights reconciling. Now Novala does it, and I actually trust the books at month end. Nexa AI flags the weird stuff before I have to.",
+      name: "Founder",
+      role: "eCommerce brand",
+    },
+    {
+      quote: "Payroll runs in minutes and our team gets clear pay stubs. The questions about hours and deductions stopped, which is a win on its own.",
+      name: "Operations Director",
+      role: "Professional services firm",
+    },
+  ];
+  return (
+    <section style={{ background: BG_PAGE, padding: "100px 0" }}>
+      <div style={CONTAINER}>
+        <div style={{ textAlign: "center", maxWidth: 740, margin: "0 auto 50px" }}>
+          <span style={{ display: "inline-block", fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: BRAND, marginBottom: 12 }}>What teams say</span>
+          <h2 style={{ fontSize: "clamp(32px, 4vw, 42px)", fontWeight: 800, color: TEXT_INK, letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 18px" }}>
+            Trusted by businesses that ship.
+          </h2>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 22 }}>
+          {testimonials.map((t, i) => <TestimonialCard key={i} data={t} />)}
+        </div>
+        <p style={{ textAlign: "center", marginTop: 32, fontSize: 12, color: TEXT_MUTED, fontStyle: "italic" }}>
+          Quotes and faces are illustrative placeholders, replace with real, consented customers before publishing.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function BigCTA() {
+  const navigate = useNavigate();
+  return (
+    <section style={{ background: BG_PAGE, padding: "80px 0" }}>
+      <div style={CONTAINER}>
+        <div style={{
+          background: "linear-gradient(135deg, " + BRAND + " 0%, " + BRAND_DEEP + " 100%)",
+          borderRadius: 24,
+          padding: "60px 40px",
+          textAlign: "center",
+          color: "#FFFFFF",
+          boxShadow: "0 30px 60px rgba(15, 149, 153, 0.30)",
+        }}>
+          <h2 style={{ fontSize: "clamp(30px, 3.5vw, 38px)", fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.02em", lineHeight: 1.15, margin: "0 0 14px" }}>
+            Find the plan that fits.
+          </h2>
+          <p style={{ fontSize: 16, color: "rgba(255,255,255,0.85)", lineHeight: 1.5, margin: "0 auto 28px", maxWidth: 540 }}>
+            Start free, upgrade when you need more. No contracts, no hidden fees.
+          </p>
+          <button onClick={() => navigate("/pricing")} style={{
+            background: "#FFFFFF", color: BRAND_DEEP,
+            fontSize: 15, fontWeight: 700,
+            padding: "14px 30px",
+            border: "none", borderRadius: 10,
+            cursor: "pointer", fontFamily: FONT_STACK,
+            boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
+          }}>
+            See pricing
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FAQ() {
+  const [open, setOpen] = useState(null);
+  const items = [
+    { q: "What is Novala?", a: "Novala is an all in one platform for small and growing businesses. It combines accounting, payroll, invoicing, and reports with Nexa AI, so your books stay accurate and your time stays freed up for the work that actually matters." },
+    { q: "How does the receipt scanner work?", a: "Snap a photo of a receipt, upload a PDF, or forward an email. Nexa AI reads the details, categorizes the transaction, and updates your books in real time. No manual entry required." },
+    { q: "Is my financial data secure?", a: "Yes. Novala uses bank-grade encryption, role based access controls, and continuous backups. Your data is stored in audited, certified cloud infrastructure with regular security reviews." },
+    { q: "Can I try Novala before paying?", a: "Yes. Every plan starts with a 30-day free trial, no credit card required. Cancel anytime during the trial and you will not be charged." },
+    { q: "Does Novala work for my industry?", a: "Novala works well for service, professional, retail, healthcare, nonprofit, and construction businesses. The platform adapts to your country's tax rules and the type of work you do." },
+  ];
+  return (
+    <section style={{ background: "#FFFFFF", padding: "100px 0" }}>
+      <div style={{ ...CONTAINER, maxWidth: 820 }}>
+        <div style={{ textAlign: "center", marginBottom: 50 }}>
+          <span style={{ display: "inline-block", fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: BRAND, marginBottom: 12 }}>Questions</span>
+          <h2 style={{ fontSize: "clamp(32px, 4vw, 42px)", fontWeight: 800, color: TEXT_INK, letterSpacing: "-0.02em", lineHeight: 1.1, margin: 0 }}>
+            Frequently asked.
+          </h2>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {items.map((item, i) => {
+            const isOpen = open === i;
+            return (
+              <div key={i} style={{ background: "#FFFFFF", border: "0.5px solid " + BORDER, borderRadius: 14, overflow: "hidden" }}>
+                <button
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  aria-expanded={isOpen}
+                  style={{ width: "100%", background: "transparent", padding: "20px 24px", border: "none", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, fontSize: 16, fontWeight: 700, color: TEXT_INK, cursor: "pointer", textAlign: "left", fontFamily: FONT_STACK, letterSpacing: "-0.005em" }}
+                >
+                  <span>{item.q}</span>
+                  <ChevronDown size={18} color={TEXT_DARK} style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.25s ease", flexShrink: 0 }} />
+                </button>
+                {isOpen && (
+                  <div style={{ padding: "0 24px 22px", fontSize: 14.5, color: TEXT_DARK, lineHeight: 1.65 }}>
+                    {item.a}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function LandingV2() {
   const handleViewAll = () => {
     // Phase C: open Features modal here.
@@ -276,7 +509,10 @@ export default function LandingV2() {
       <StatsStrip />
       <HowItWorks />
       <FeaturesGrid onViewAll={handleViewAll} />
-      {/* TODO Phase B: Dark band, Testimonials, Big CTA, FAQ */}
+      <DarkBand />
+      <Testimonials />
+      <BigCTA />
+      <FAQ />
       <MarketingFooter />
     </div>
   );
