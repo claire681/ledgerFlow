@@ -13,6 +13,8 @@ import testimonialPhoto from "../assets/portal/testimonial.jpg";
 import cardInvitePhoto from "../assets/portal/card-invite.jpg";
 import cardAppPhoto from "../assets/portal/card-app.jpg";
 
+import MarketingHeader from "../components/MarketingHeader";
+
 // ============================================================
 // EmployeePortal: marketing page explaining the team app.
 // Path: /employee-portal
@@ -583,8 +585,8 @@ function Testimonial() {
     <section style={{ background: BG_PAGE, padding: "100px 0" }}>
       <div style={CONTAINER}>
         <div style={{ position: "relative", background: "linear-gradient(135deg, " + BRAND + " 0%, " + NIGHT + " 100%)", borderRadius: 22, padding: "60px 56px", color: "#FFFFFF", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: -80, right: -80, width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, " + ORANGE + " 0%, transparent 70%)", opacity: 0.45 }} />
-          <div style={{ position: "absolute", bottom: -120, right: 100, width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle, " + ORANGE + " 0%, transparent 70%)", opacity: 0.25 }} />
+          <div style={{ position: "absolute", top: -80, right: -80, width: 300, height: 300, borderRadius: "50%", background: "#E08A3C" }} />
+          <div style={{ position: "absolute", bottom: -100, right: 80, width: 200, height: 200, borderRadius: "50%", background: "#6E7A3F" }} />
           <div style={{ position: "relative", display: "grid", gridTemplateColumns: "180px 1fr", gap: 44, alignItems: "center" }}>
             <div>
               <div style={{ width: 160, height: 160, borderRadius: "50%", padding: 5, background: ORANGE, overflow: "hidden" }}>
@@ -612,6 +614,49 @@ function Testimonial() {
   );
 }
 
+function KnowledgeCard({ card }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: "#FFFFFF",
+        border: "0.5px solid " + BORDER,
+        borderRadius: 16,
+        overflow: "hidden",
+        cursor: "pointer",
+        transform: hovered ? "translateY(-10px)" : "translateY(0)",
+        boxShadow: hovered ? "0 26px 60px rgba(8,32,31,0.22)" : "0 1px 2px rgba(0,0,0,0.04)",
+        transition: "transform 0.25s ease, box-shadow 0.25s ease",
+      }}
+    >
+      <div style={{ height: 230, overflow: "hidden" }}>
+        <img
+          src={card.img}
+          alt={card.title}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "center 38%",
+            display: "block",
+            transform: hovered ? "scale(1.06)" : "scale(1)",
+            transition: "transform 0.25s ease",
+          }}
+        />
+      </div>
+      <div style={{ padding: 28 }}>
+        <h3 style={{ fontSize: 20, fontWeight: 700, color: TEXT_INK, letterSpacing: "-0.01em", margin: "0 0 10px" }}>{card.title}</h3>
+        <p style={{ fontSize: 14.5, color: TEXT_DARK, lineHeight: 1.6, margin: "0 0 18px" }}>{card.body}</p>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: hovered ? BRAND_DARK : BRAND, padding: "7px 14px", border: "1px solid " + (hovered ? BRAND : BORDER), borderRadius: 8, transition: "color 0.2s ease, border-color 0.2s ease" }}>
+          Learn more <ArrowRight size={14} />
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function KnowledgeCards() {
   const cards = [
     { title: "Invite your team to add their own info", body: "Send one invite. Your team adds their own banking, contact, and tax forms straight from their phone, so you do not type any of it.", img: cardInvitePhoto },
@@ -624,20 +669,7 @@ function KnowledgeCards() {
           <h2 style={{ fontSize: "clamp(30px, 3.5vw, 40px)", fontWeight: 800, color: TEXT_INK, letterSpacing: "-0.02em", margin: 0 }}>Build your knowledge</h2>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 24 }}>
-          {cards.map((c, i) => (
-            <div key={i} style={{ background: "#FFFFFF", border: "0.5px solid " + BORDER, borderRadius: 16, overflow: "hidden" }}>
-              <div style={{ height: 230 }}>
-                <img src={c.img} alt={c.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 38%", display: "block" }} />
-              </div>
-              <div style={{ padding: 28 }}>
-                <h3 style={{ fontSize: 20, fontWeight: 700, color: TEXT_INK, letterSpacing: "-0.01em", margin: "0 0 10px" }}>{c.title}</h3>
-                <p style={{ fontSize: 14.5, color: TEXT_DARK, lineHeight: 1.6, margin: "0 0 18px" }}>{c.body}</p>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: BRAND, cursor: "pointer" }}>
-                  Learn more <ArrowRight size={14} />
-                </span>
-              </div>
-            </div>
-          ))}
+          {cards.map((c, i) => <KnowledgeCard key={i} card={c} />)}
         </div>
       </div>
     </section>
@@ -756,7 +788,7 @@ function Footer() {
 export default function EmployeePortal() {
   return (
     <div style={{ fontFamily: FONT_STACK, color: TEXT_INK, background: BG_PAGE }}>
-      <Header />
+      <MarketingHeader />
       <Hero />
       <ProofBar />
       <SignatureFlow />
