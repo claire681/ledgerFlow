@@ -14,6 +14,7 @@ import cardInvitePhoto from "../assets/portal/card-invite.jpg";
 import cardAppPhoto from "../assets/portal/card-app.jpg";
 
 import MarketingHeader from "../components/MarketingHeader";
+import MarketingFooter from "../components/MarketingFooter";
 
 // ============================================================
 // EmployeePortal: marketing page explaining the team app.
@@ -492,6 +493,67 @@ function DayInLife() {
   );
 }
 
+function FeatureCard({ feature }) {
+  const [hovered, setHovered] = useState(false);
+  const Icon = feature.icon;
+  const muted = feature.comingSoon;
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: "#FFFFFF",
+        border: "0.5px solid #EAF0F0",
+        borderRadius: 18,
+        padding: 26,
+        position: "relative",
+        boxShadow: hovered ? "0 22px 48px rgba(8,32,31,0.14)" : "0 1px 2px rgba(8,32,31,0.04)",
+        transform: hovered ? "translateY(-6px)" : "translateY(0)",
+        transition: "transform 0.28s ease, box-shadow 0.28s ease",
+      }}
+    >
+      <div style={{
+        width: 50,
+        height: 50,
+        borderRadius: 14,
+        background: muted
+          ? "linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%)"
+          : "linear-gradient(135deg, #0F9599 0%, #0E4B4D 100%)",
+        boxShadow: muted
+          ? "0 8px 16px rgba(107, 114, 128, 0.18)"
+          : "0 8px 16px rgba(15, 149, 153, 0.22)",
+        display: "grid",
+        placeItems: "center",
+        marginBottom: 18,
+      }}>
+        <Icon size={22} color="#FFFFFF" strokeWidth={2} />
+      </div>
+      <div style={{ fontSize: 16.5, fontWeight: 700, color: TEXT_INK, letterSpacing: "-0.01em", lineHeight: 1.3 }}>{feature.title}</div>
+      {feature.note && (
+        <div style={{ fontSize: 13, color: TEXT_DARK, marginTop: 8, lineHeight: 1.55 }}>{feature.note}</div>
+      )}
+      {feature.comingSoon && (
+        <span style={{
+          position: "absolute",
+          top: 16,
+          right: 16,
+          padding: "3px 9px",
+          background: "#FBEAD2",
+          color: "#9A6212",
+          border: "0.5px solid rgba(154, 98, 18, 0.25)",
+          borderRadius: 999,
+          fontSize: 9.5,
+          fontWeight: 700,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+        }}>
+          Coming soon
+        </span>
+      )}
+    </div>
+  );
+}
+
 function FeatureGrid() {
   const features = [
     { icon: FileText, title: "Pay stubs and history" },
@@ -508,7 +570,7 @@ function FeatureGrid() {
     { icon: Smartphone, title: "Web and mobile" },
   ];
   return (
-    <section style={{ background: BG_PAGE, padding: "100px 0" }}>
+    <section style={{ background: "linear-gradient(180deg, #FFFFFF 0%, " + BG_SOFT + " 100%)", padding: "100px 0" }}>
       <div style={CONTAINER}>
         <div style={{ textAlign: "center", maxWidth: 740, margin: "0 auto 50px" }}>
           <span style={{ display: "inline-block", fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: BRAND, marginBottom: 12 }}>One portal, everything they need</span>
@@ -519,30 +581,13 @@ function FeatureGrid() {
             Your team gets the full set of self serve tools, with tax forms and rules that match the country they work in.
           </p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
-          {features.map((f, i) => {
-            const Icon = f.icon;
-            return (
-              <div key={i} style={{ background: "#FFFFFF", border: "0.5px solid " + BORDER, borderRadius: 12, padding: 20, position: "relative" }}>
-                <div style={{ width: 36, height: 36, borderRadius: 9, background: "rgba(15, 149, 153, 0.08)", display: "grid", placeItems: "center", marginBottom: 14 }}>
-                  <Icon size={18} color={BRAND} />
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_INK, letterSpacing: "-0.01em" }}>{f.title}</div>
-                {f.note && <div style={{ fontSize: 12, color: TEXT_DARK, marginTop: 6, lineHeight: 1.5 }}>{f.note}</div>}
-                {f.comingSoon && (
-                  <span style={{ position: "absolute", top: 16, right: 16, padding: "3px 8px", background: "rgba(242, 153, 74, 0.12)", color: "#C2691E", border: "0.5px solid rgba(242, 153, 74, 0.30)", borderRadius: 999, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                    Coming soon
-                  </span>
-                )}
-              </div>
-            );
-          })}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+          {features.map((f, i) => <FeatureCard key={i} feature={f} />)}
         </div>
       </div>
     </section>
   );
 }
-
 function TrustSection() {
   const items = [
     { icon: CheckCircle2, title: "Nothing pays without your approval", body: "Hours fill in automatically, but the pay run waits for your review. If someone misses a clock out, you fix it before pay runs." },
@@ -799,7 +844,7 @@ export default function EmployeePortal() {
       <KnowledgeCards />
       <FAQ />
       <CurvedCloser />
-      <Footer />
+      <MarketingFooter />
     </div>
   );
 }
