@@ -13,11 +13,6 @@ import MarketingHeader from "../components/MarketingHeader";
 import MarketingFooter from "../components/MarketingFooter";
 import FeaturesModal from "../components/FeaturesModal";
 
-// TODO Phase A2 (after Claire uploads images to src/assets/landing/):
-// import heroDashboard from "../assets/landing/hero-dashboard.jpg";
-// import step1Snap from "../assets/landing/step1-snap.jpg";
-// import step2Extract from "../assets/landing/step2-extract.jpg";
-// import step3Books from "../assets/landing/step3-books.jpg";
 
 const BRAND = "#0F9599";
 const BRAND_DEEP = "#0E4B4D";
