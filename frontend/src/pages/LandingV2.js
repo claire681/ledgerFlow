@@ -11,6 +11,7 @@ import {
 
 import MarketingHeader from "../components/MarketingHeader";
 import MarketingFooter from "../components/MarketingFooter";
+import FeaturesModal from "../components/FeaturesModal";
 
 // TODO Phase A2 (after Claire uploads images to src/assets/landing/):
 // import heroDashboard from "../assets/landing/hero-dashboard.jpg";
@@ -498,9 +499,13 @@ function FAQ() {
 }
 
 export default function LandingV2() {
-  const handleViewAll = () => {
-    // Phase C: open Features modal here.
-    alert("Features modal coming in Phase C.");
+  const navigate = useNavigate();
+  const [modalOpen, setModalOpen] = useState(false);
+  const handleViewAll = () => setModalOpen(true);
+  const handleClose = () => setModalOpen(false);
+  const handleSeePricing = () => {
+    setModalOpen(false);
+    navigate("/pricing");
   };
   return (
     <div style={{ fontFamily: FONT_STACK, color: TEXT_INK, background: BG_PAGE }}>
@@ -514,6 +519,7 @@ export default function LandingV2() {
       <BigCTA />
       <FAQ />
       <MarketingFooter />
+      <FeaturesModal open={modalOpen} onClose={handleClose} onSeePricing={handleSeePricing} />
     </div>
   );
 }
