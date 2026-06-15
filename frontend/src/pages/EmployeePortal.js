@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Zap, ShieldCheck, Shield, Lock, Bell, Eye, Clock,
   Check, CheckCircle2, Wallet, Umbrella, Calendar, FileText, TrendingUp,
   Receipt, Landmark, Timer, UserCheck, Folder, Smartphone, Globe,
   LayoutGrid, MoreHorizontal, Coffee, Square, Repeat, Settings,
-  HelpCircle, ChevronDown, ArrowRight, Play
+  HelpCircle, ChevronDown, ChevronRight, ArrowRight, Play
 } from "lucide-react";
 
 import heroPhoto from "../assets/portal/hero-caregiver.jpg";
@@ -397,53 +397,109 @@ function ProofBar() {
   );
 }
 
+function FlowCard({ step, stepNum, showArrow }) {
+  const [hovered, setHovered] = useState(false);
+  const Icon = step.icon;
+  const ChipIcon = step.chipIcon;
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: "relative",
+        background: "#FFFFFF",
+        border: "0.5px solid #EAF0F0",
+        borderRadius: 18,
+        padding: 28,
+        boxShadow: hovered ? "0 22px 48px rgba(8,32,31,0.14)" : "0 1px 2px rgba(8,32,31,0.04)",
+        transform: hovered ? "translateY(-6px)" : "translateY(0)",
+        transition: "transform 0.28s ease, box-shadow 0.28s ease",
+      }}
+    >
+      <div style={{ fontSize: 13, fontWeight: 700, color: BRAND, letterSpacing: "0.08em", marginBottom: 14 }}>
+        {String(stepNum).padStart(2, "0")}
+      </div>
+      <div style={{
+        width: 52,
+        height: 52,
+        borderRadius: 15,
+        background: "linear-gradient(135deg, #0F9599 0%, #0E4B4D 100%)",
+        boxShadow: "0 10px 22px rgba(15, 149, 153, 0.30)",
+        display: "grid",
+        placeItems: "center",
+        marginBottom: 18,
+      }}>
+        <Icon size={22} color="#FFFFFF" strokeWidth={2} />
+      </div>
+      <h3 style={{ fontSize: 17, fontWeight: 700, color: TEXT_INK, letterSpacing: "-0.01em", margin: "0 0 10px", lineHeight: 1.3 }}>{step.title}</h3>
+      <p style={{ fontSize: 13.5, color: TEXT_DARK, lineHeight: 1.6, margin: "0 0 18px" }}>{step.body}</p>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(15, 149, 153, 0.10)", color: "#0B5C5F", fontSize: 12.5, fontWeight: 700, padding: "6px 11px", borderRadius: 10 }}>
+        <ChipIcon size={13} />
+        <span>{step.chip}</span>
+      </div>
+      {showArrow && (
+        <div style={{
+          position: "absolute",
+          top: "50%",
+          right: -24,
+          transform: "translateY(-50%)",
+          width: 30,
+          height: 30,
+          background: "#FFFFFF",
+          borderRadius: "50%",
+          boxShadow: "0 4px 12px rgba(8, 32, 31, 0.10)",
+          display: "grid",
+          placeItems: "center",
+          zIndex: 2,
+        }}>
+          <ChevronRight size={14} color={BRAND} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SignatureFlow() {
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1000);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   const steps = [
-    { num: "01", icon: Clock, title: "Clock in, clock out", body: "Your team taps clock in and clock out. On a correct clock out the worked time is calculated.", chip: "8:00 to 3:30, auto" },
-    { num: "02", icon: Bell, title: "Hours fill themselves in", body: "Worked time drops onto the timesheet. Leave while clocked in and Novala reminds you to clock out.", chip: "Reminder sent if you forget" },
-    { num: "03", icon: ShieldCheck, title: "You approve", body: "Review anything that needs a look and fix a missed clock out before pay runs. Multiple rates and stat pay applied.", chip: "Approved for pay" },
-    { num: "04", icon: Wallet, title: "Pay lands", body: "Approved hours flow into the pay run. The worker sees the result.", chip: "$1,853.73 net" },
+    { icon: Clock, title: "Clock in, clock out", body: "Your team taps clock in and clock out. On a correct clock out the worked time is calculated.", chip: "8:00 to 3:30, auto", chipIcon: Check },
+    { icon: Bell, title: "Hours fill themselves in", body: "Worked time drops onto the timesheet. Leave while clocked in and Novala reminds you to clock out.", chip: "Reminder sent if you forget", chipIcon: Check },
+    { icon: ShieldCheck, title: "You approve", body: "Review anything that needs a look and fix a missed clock out before pay runs. Multiple rates and stat pay applied.", chip: "Approved for pay", chipIcon: Check },
+    { icon: Wallet, title: "Pay lands", body: "Approved hours flow into the pay run. The worker sees the result.", chip: "$1,853.73 net", chipIcon: Check },
   ];
+
   return (
     <section style={{ background: BG_PAGE, padding: "100px 0" }}>
       <div style={CONTAINER}>
-        <div style={{ textAlign: "center", maxWidth: 760, margin: "0 auto 50px" }}>
+        <div style={{ textAlign: "center", maxWidth: 740, margin: "0 auto 50px" }}>
           <span style={{ display: "inline-block", fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: BRAND, marginBottom: 12 }}>The Novala difference</span>
-          <h2 style={{ fontSize: "clamp(34px, 4vw, 46px)", fontWeight: 800, color: TEXT_INK, letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 20px" }}>
+          <h2 style={{ fontSize: "clamp(32px, 4vw, 42px)", fontWeight: 800, color: TEXT_INK, letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 18px" }}>
             Hours in, pay out, automatically
           </h2>
-          <p style={{ fontSize: 16, lineHeight: 1.6, color: TEXT_DARK, margin: 0 }}>
-            Generic payroll asks you to chase and key in timesheets. Novala fills hours in and carries them to a paycheque, so the numbers tie out from the worked hour to the deposit.
+          <p style={{ fontSize: 16, color: TEXT_DARK, lineHeight: 1.6, margin: 0 }}>
+            One thread runs from the moment a worker taps clock in to the moment pay lands. Every step is auditable.
           </p>
         </div>
-        <div style={{ background: BG_SOFT, border: "0.5px solid " + BORDER, borderRadius: 18, padding: 32 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 18, alignItems: "stretch" }}>
-            {steps.map(s => {
-              const Icon = s.icon;
-              return (
-                <div key={s.num} style={{ background: "#FFFFFF", border: "0.5px solid " + BORDER, borderRadius: 14, padding: "22px 18px" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: "0.08em", marginBottom: 14 }}>{s.num}</div>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(15, 149, 153, 0.08)", display: "grid", placeItems: "center", marginBottom: 14 }}>
-                    <Icon size={20} color={BRAND} />
-                  </div>
-                  <div style={{ fontSize: 15.5, fontWeight: 700, color: TEXT_INK, marginBottom: 6, letterSpacing: "-0.01em" }}>{s.title}</div>
-                  <div style={{ fontSize: 13, color: TEXT_DARK, lineHeight: 1.5, marginBottom: 16 }}>{s.body}</div>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", background: BG_SOFT, border: "0.5px solid " + BORDER, borderRadius: 999, fontSize: 11.5, fontWeight: 600, color: BRAND_DARK }}>
-                    <Check size={12} /> {s.chip}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <p style={{ fontSize: 13.5, color: TEXT_DARK, textAlign: "center", margin: "26px 0 0", fontStyle: "italic" }}>
-            One thread from worked hour to deposit, so the question "why was I paid this?" always has an answer.
-          </p>
+        <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(auto-fit, minmax(240px, 1fr))", gap: 18 }}>
+          {steps.map((s, i) => (
+            <FlowCard key={i} step={s} stepNum={i + 1} showArrow={isDesktop && i < 3} />
+          ))}
         </div>
+        <p style={{ textAlign: "center", marginTop: 34, fontSize: 14.5, color: TEXT_DARK, maxWidth: 720, marginLeft: "auto", marginRight: "auto", lineHeight: 1.6 }}>
+          One thread from worked hour to deposit, so the question "why was I paid this?" always has an answer.
+        </p>
       </div>
     </section>
   );
 }
-
 function DayInLife() {
   const blocks = [
     { eyebrow: "For your team", title: "Their whole work life, one tap away", copy: "Tap clock in. Tap clock out. The worked time becomes hours that drop straight onto the timesheet. If they leave while still clocked in, Novala reminds them so the numbers stay right.", checklist: ["Clock in and out (hours fill on a correct clock out)", "Reminder to clock out if they leave the work location", "Pay stubs and tax forms free to them"], screen: <TrackTimeScreen />, bar: "time", tab: "Track Time", reverse: false },
