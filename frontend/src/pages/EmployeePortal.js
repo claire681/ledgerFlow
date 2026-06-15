@@ -8,6 +8,11 @@ import {
   HelpCircle, ChevronDown, ArrowRight, Play
 } from "lucide-react";
 
+import heroPhoto from "../assets/portal/hero-caregiver.jpg";
+import testimonialPhoto from "../assets/portal/testimonial.jpg";
+import cardInvitePhoto from "../assets/portal/card-invite.jpg";
+import cardAppPhoto from "../assets/portal/card-app.jpg";
+
 // ============================================================
 // EmployeePortal: marketing page explaining the team app.
 // Path: /employee-portal
@@ -343,8 +348,7 @@ function Hero() {
         <div style={{ position: "relative" }}>
           <div style={{ position: "absolute", inset: -20, background: "radial-gradient(circle, rgba(47, 227, 190, 0.18) 0%, transparent 70%)", filter: "blur(20px)" }} />
           <div style={{ position: "relative", borderRadius: 20, overflow: "hidden" }}>
-            {/* TODO: replace with <img src={heroPhoto} ... /> once src/assets/portal/hero-caregiver.jpg is committed */}
-            <PhotoFrame aspectRatio="760/950" label="Hero photo" hint="hero-caregiver.jpg" accent={BRAND_DEEP} />
+            <img src={heroPhoto} alt="A caregiver checking their phone" style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
           <div style={{ position: "absolute", top: 70, left: -36, background: "#FFFFFF", color: TEXT_INK, padding: "12px 14px", borderRadius: 12, boxShadow: "0 16px 30px rgba(0,0,0,0.18)", display: "flex", alignItems: "flex-start", gap: 10, maxWidth: 230, fontSize: 12.5, fontWeight: 600, lineHeight: 1.4 }}>
             <span style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(242, 153, 74, 0.16)", display: "grid", placeItems: "center", flexShrink: 0 }}>
@@ -587,9 +591,8 @@ function Testimonial() {
           <div style={{ position: "relative", display: "grid", gridTemplateColumns: "180px 1fr", gap: 44, alignItems: "center" }}>
             <div>
               <div style={{ width: 160, height: 160, borderRadius: "50%", padding: 5, background: ORANGE, overflow: "hidden" }}>
-                {/* TODO: replace with <img src={testimonial} ... /> once src/assets/portal/testimonial.jpg is committed */}
                 <div style={{ borderRadius: "50%", overflow: "hidden", width: "100%", height: "100%" }}>
-                  <PhotoFrame aspectRatio="1/1" label="Avatar" hint="testimonial.jpg" accent={BRAND_DEEP} />
+                  <img src={testimonialPhoto} alt="Customer testimonial" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 </div>
               </div>
               <div style={{ marginTop: 16, textAlign: "center" }}>
@@ -614,8 +617,8 @@ function Testimonial() {
 
 function KnowledgeCards() {
   const cards = [
-    { title: "Invite your team to add their own info", body: "Send one invite. Your team adds their own banking, contact, and tax forms straight from their phone, so you do not type any of it.", img: "card-invite.jpg" },
-    { title: "Track time and pay in one app", body: "One app for clock in and out, the latest pay, the next shift, and year end tax documents. No second app, no extra logins.", img: "card-app.jpg" },
+    { title: "Invite your team to add their own info", body: "Send one invite. Your team adds their own banking, contact, and tax forms straight from their phone, so you do not type any of it.", img: cardInvitePhoto },
+    { title: "Track time and pay in one app", body: "One app for clock in and out, the latest pay, the next shift, and year end tax documents. No second app, no extra logins.", img: cardAppPhoto },
   ];
   return (
     <section style={{ background: BG_SOFT, padding: "100px 0" }}>
@@ -627,8 +630,7 @@ function KnowledgeCards() {
           {cards.map((c, i) => (
             <div key={i} style={{ background: "#FFFFFF", border: "0.5px solid " + BORDER, borderRadius: 16, overflow: "hidden" }}>
               <div style={{ height: 230 }}>
-                {/* TODO: replace with <img src={i===0 ? cardInvite : cardApp} alt="..." style={{ objectPosition: 'center 38%', ... }} /> */}
-                <PhotoFrame aspectRatio="900/380" label={"Card photo " + (i + 1)} hint={c.img} accent={BRAND_DEEP} />
+                <img src={c.img} alt={c.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 38%", display: "block" }} />
               </div>
               <div style={{ padding: 28 }}>
                 <h3 style={{ fontSize: 20, fontWeight: 700, color: TEXT_INK, letterSpacing: "-0.01em", margin: "0 0 10px" }}>{c.title}</h3>
