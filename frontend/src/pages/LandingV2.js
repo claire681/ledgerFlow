@@ -6,7 +6,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Check, FileText, Wallet, BarChart3, Receipt, BookOpen, CreditCard,
-  Star, Shield, Sparkles, Zap, Lock, User, ChevronDown,
+  Star, Shield, Sparkles, Zap, Lock, ChevronDown,
 } from "lucide-react";
 
 import MarketingHeader from "../components/MarketingHeader";
@@ -93,8 +93,8 @@ function Hero() {
               ))}
             </div>
           </div>
-          <div style={{ boxShadow: "0 30px 80px rgba(8, 32, 31, 0.18)" }}>
-            <ImagePlaceholder filename="hero-dashboard.jpg" label="Hero: desktop dashboard plus phone" ratio="16/11" />
+          <div style={{ boxShadow: "0 30px 80px rgba(8, 32, 31, 0.18)", borderRadius: 18, overflow: "hidden" }}>
+            <img src={heroDashboard} alt="Novala dashboard on desktop and phone" style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
         </div>
       </div>
@@ -145,9 +145,18 @@ function StepCard({ step, stepNum }) {
       }}
     >
       <div style={{ height: 170, overflow: "hidden" }}>
-        <div style={{ height: "100%", transform: hovered ? "scale(1.04)" : "scale(1)", transition: "transform 0.4s ease" }}>
-          <ImagePlaceholder filename={step.img} label={step.imgLabel} ratio="auto" />
-        </div>
+        <img
+          src={step.img}
+          alt={step.title}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            display: "block",
+            transform: hovered ? "scale(1.04)" : "scale(1)",
+            transition: "transform 0.4s ease",
+          }}
+        />
       </div>
       <div style={{ padding: 26 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: BRAND, letterSpacing: "0.08em", marginBottom: 10 }}>
@@ -166,9 +175,9 @@ function StepCard({ step, stepNum }) {
 
 function HowItWorks() {
   const steps = [
-    { title: "Snap or upload", body: "Take a photo of a receipt, upload a PDF, or forward an email. Novala handles everything from there.", img: "step1-snap.jpg", imgLabel: "Step 1: person photographing receipt" },
-    { title: "Nexa AI extracts and categorizes", body: "Nexa AI reads the details and automatically categorizes transactions for you.", img: "step2-extract.jpg", imgLabel: "Step 2: phone with extraction cards" },
-    { title: "Books updated automatically", body: "Nexa AI updates your books in real time. Everything stays organized, accurate, and up to date.", img: "step3-books.jpg", imgLabel: "Step 3: laptop with dashboard" },
+    { title: "Snap or upload", body: "Take a photo of a receipt, upload a PDF, or forward an email. Novala handles everything from there.", img: step1Snap },
+    { title: "Nexa AI extracts and categorizes", body: "Nexa AI reads the details and automatically categorizes transactions for you.", img: step2Extract },
+    { title: "Books updated automatically", body: "Nexa AI updates your books in real time. Everything stays organized, accurate, and up to date.", img: step3Books },
   ];
   return (
     <section style={{ background: "#FFFFFF", padding: "100px 0" }}>
@@ -364,11 +373,10 @@ function TestimonialCard({ data }) {
           <div style={{
             width: 52, height: 52, borderRadius: "50%",
             border: "2.5px solid #E08A3C",
-            background: "linear-gradient(135deg, #D9E2E1 0%, #B5C5C4 100%)",
-            display: "grid", placeItems: "center",
+            overflow: "hidden",
             flexShrink: 0,
           }}>
-            <User size={22} color="#5A6970" />
+            <img src={data.avatar} alt={data.role} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
           </div>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-0.005em" }}>{data.name}</div>
@@ -386,16 +394,19 @@ function Testimonials() {
       quote: "Novala took the receipt pile and the spreadsheet juggling off our plate. I see real numbers across all our locations in one place now, and our books close on time.",
       name: "Owner",
       role: "Multi-location services business",
+      avatar: avatarOwner,
     },
     {
       quote: "I used to spend Friday nights reconciling. Now Novala does it, and I actually trust the books at month end. Nexa AI flags the weird stuff before I have to.",
       name: "Founder",
       role: "eCommerce brand",
+      avatar: avatarFounder,
     },
     {
       quote: "Payroll runs in minutes and our team gets clear pay stubs. The questions about hours and deductions stopped, which is a win on its own.",
       name: "Operations Director",
       role: "Professional services firm",
+      avatar: avatarOps,
     },
   ];
   return (
