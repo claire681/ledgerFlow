@@ -509,7 +509,7 @@ export default function LandingV2() {
   };
   return (
     <div style={{ fontFamily: FONT_STACK, color: TEXT_INK, background: BG_PAGE }}>
-      <MarketingHeader />
+      <MarketingHeader onFeaturesClick={handleViewAll} />
       <Hero />
       <StatsStrip />
       <HowItWorks />

@@ -89,7 +89,7 @@ function MegaMenuPanel({ content }) {
   );
 }
 
-export default function MarketingHeader() {
+export default function MarketingHeader({ onFeaturesClick }) {
   const navigate = useNavigate();
   const [openPanel, setOpenPanel] = useState(null);
   const headerRef = useRef(null);
@@ -111,7 +111,14 @@ export default function MarketingHeader() {
     };
   }, []);
 
-  const toggle = (panel) => setOpenPanel(prev => (prev === panel ? null : panel));
+  const toggle = (panel) => {
+    if (panel === "features" && onFeaturesClick) {
+      onFeaturesClick();
+      setOpenPanel(null);
+      return;
+    }
+    setOpenPanel(prev => (prev === panel ? null : panel));
+  };
 
   const navItems = [
     { key: "product", label: "Product", hasPanel: true },
