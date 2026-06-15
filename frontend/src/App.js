@@ -19,6 +19,7 @@ import PaychequeList from "./pages/PaychequeList";
 import PaychequeDetail from "./pages/PaychequeDetail";
 import RunPayroll from "./pages/RunPayroll";
 import PayrollPreview from "./pages/PayrollPreview";
+import EmployeePortal from "./pages/EmployeePortal";
 import { AIProvider }      from './context/AIContext';
 import useAI from './hooks/useAI';
 import Sidebar             from './components/Sidebar';
@@ -271,6 +272,7 @@ const handleOnboardingComplete = () => {
           <Route path="/register" element={<Onboarding onComplete={() => window.location.replace("/")} />} />
           <Route path="/verify-code" element={<Verify />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/employee-portal" element={<EmployeePortal />} />
           <Route path="/add-payroll" element={<AddPayroll />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/cart" element={<Cart />} />
