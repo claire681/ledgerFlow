@@ -12,11 +12,17 @@ const FONT_STACK = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
 const CONTAINER = { maxWidth: 1240, margin: "0 auto", padding: "0 28px" };
 
 const COUNTRIES = [
+  { code: "en-US", label: "United States", iso: "us" },
   { code: "en-CA", label: "Canada (English)", iso: "ca" },
   { code: "fr-CA", label: "Canada (Français)", iso: "ca" },
-  { code: "en-US", label: "United States", iso: "us" },
   { code: "en-GB", label: "United Kingdom", iso: "gb" },
   { code: "en-AU", label: "Australia", iso: "au" },
+  { code: "en-NZ", label: "New Zealand", iso: "nz" },
+  { code: "en-SG", label: "Singapore", iso: "sg" },
+  { code: "ja-JP", label: "Japan", iso: "jp" },
+  { code: "de-DE", label: "Germany", iso: "de" },
+  { code: "fr-FR", label: "France", iso: "fr" },
+  { code: "en-ZA", label: "South Africa", iso: "za" },
   { code: "other", label: "Other countries", iso: null },
 ];
 
