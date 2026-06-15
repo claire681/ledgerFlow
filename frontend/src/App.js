@@ -20,7 +20,6 @@ import PaychequeDetail from "./pages/PaychequeDetail";
 import RunPayroll from "./pages/RunPayroll";
 import PayrollPreview from "./pages/PayrollPreview";
 import EmployeePortal from "./pages/EmployeePortal";
-import Landing from "./pages/Landing";
 import { AIProvider }      from './context/AIContext';
 import useAI from './hooks/useAI';
 import Sidebar             from './components/Sidebar';
@@ -53,6 +52,7 @@ import Settings            from './pages/Settings';
 import Help                from './pages/Help';
 import SmartSearch         from './pages/SmartSearch';
 import Landing             from './pages/Landing';
+import LandingV2         from './pages/LandingV2';
 import Customers           from './pages/Customers';
 import Inventory           from './pages/Inventory';
 import APIAccess           from './pages/APIAccess';
@@ -62,7 +62,6 @@ import AcceptInvite from './pages/AcceptInvite';
 import HelpAutoPayroll from "./pages/HelpAutoPayroll";
 import Pricing from "./pages/Pricing";
 import Checkout from "./pages/Checkout";
-
 
 import AddPayroll from "./pages/AddPayroll";
 import Cart from "./pages/Cart";
@@ -123,9 +122,6 @@ function AppLayout({ onLogout }) {
   
 
   const isDesktop = !isMobile && !isTablet;
-
-
-
 
   return (
     <div style={{
@@ -235,7 +231,6 @@ export default function App() {
     setLoading(false);
   }, []);
 
-
 const handleLogin = (t, email) => {
     setToken(t);
     localStorage.setItem('token', t);
@@ -274,7 +269,7 @@ const handleOnboardingComplete = () => {
           <Route path="/verify-code" element={<Verify />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/employee-portal" element={<EmployeePortal />} />
-        <Route path="/landing-v2" element={<Landing />} />
+        <Route path="/landing-v2" element={<LandingV2 />} />
           <Route path="/add-payroll" element={<AddPayroll />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/cart" element={<Cart />} />
