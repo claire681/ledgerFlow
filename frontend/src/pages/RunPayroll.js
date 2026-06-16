@@ -4,7 +4,7 @@ import {
   X, Search, Filter, Download, Settings, Plus, Calendar,
   MoreVertical, HelpCircle, MessageCircle, Map, ArrowRight,
   ChevronDown, Check, MessageSquare, Edit3, UserMinus, UserPlus, FilePen,
-  ShieldCheck, AlertTriangle, TrendingUp
+  ShieldCheck, AlertTriangle, TrendingUp, Clock, CreditCard, Receipt
 } from "lucide-react";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -550,7 +550,7 @@ function Row({ line, checked, dismissedForLine, onToggle, onUpdate, onApplyMemoA
           <span style={{ color: BRAND, fontWeight: 600, cursor: "pointer" }}>Finish setup</span>
         </Td>
         <Td></Td>
-        <Td center><RowActions variant="needs_setup" /></Td>
+        <Td center><RowActions variant="needs_setup" lineId={line.employeeId} /></Td>
       </tr>
     );
   }
@@ -564,7 +564,7 @@ function Row({ line, checked, dismissedForLine, onToggle, onUpdate, onApplyMemoA
           <button onClick={onAdd} style={{ background: "transparent", border: "none", color: BRAND, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0, fontSize: 13 }}>Add to payroll run</button>
         </Td>
         <Td></Td>
-        <Td center><RowActions variant="skipped" onAdd={onAdd} /></Td>
+        <Td center><RowActions variant="skipped" lineId={line.employeeId} onAdd={onAdd} /></Td>
       </tr>
     );
   }
@@ -593,7 +593,7 @@ function Row({ line, checked, dismissedForLine, onToggle, onUpdate, onApplyMemoA
       <Td right>${fmtMoney(gross)}</Td>
       <Td center><MemoCell line={line} onUpdate={onUpdate} onApplyAll={onApplyMemoAll} /></Td>
       <Td><PayMethodCell line={line} onUpdate={onUpdate} /></Td>
-      <Td center><RowActions variant="active" onSkip={onSkip} /></Td>
+      <Td center><RowActions variant="active" lineId={line.employeeId} onSkip={onSkip} /></Td>
     </tr>
   );
 }
@@ -792,6 +792,7 @@ function MemoCell({ line, onUpdate, onApplyAll }) {
     <div style={{ position: "relative", display: "inline-block" }}>
       <button
         ref={triggerRef}
+        id={"memo-trigger-" + line.employeeId}
         onClick={handleOpen}
         title={hasMemo ? line.memo : ""}
         style={hasMemo ? {
@@ -937,6 +938,7 @@ function PayMethodCell({ line, onUpdate }) {
     <div style={{ position: "relative", display: "inline-block" }}>
       <button
         ref={triggerRef}
+        id={"paymethod-trigger-" + line.employeeId}
         onClick={handleToggle}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -967,38 +969,128 @@ function Option({ label, selected, onClick }) {
   );
 }
 
-function RowActions({ variant, onSkip, onAdd }) {
+function RowActions({ variant, lineId, onSkip, onAdd }) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const [vertical, setVertical] = useState("down");
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
+
   useEffect(() => {
     if (!open) return;
-    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onDoc = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target) &&
+          triggerRef.current && !triggerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
     const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
+
+  const handleToggle = () => {
+    if (open) { setOpen(false); return; }
+    if (!triggerRef.current) { setOpen(true); return; }
+    const rect = triggerRef.current.getBoundingClientRect();
+    const MH = variant === "active" ? 290 : 110;
+    const GAP = 8;
+    const spaceBelow = window.innerHeight - rect.bottom - GAP;
+    const spaceAbove = rect.top - GAP;
+    const v = spaceBelow >= MH ? "down" : (spaceAbove >= MH ? "up" : "down");
+    setVertical(v);
+    setOpen(true);
+  };
+
+  const close = () => setOpen(false);
+
+  const clickById = (id) => {
+    close();
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => { el.click(); }, 250);
+      }
+    }, 0);
+  };
+
+  const goProfile = () => {
+    close();
+    if (lineId) navigate("/payroll/employees/" + lineId);
+  };
+
+  const stubAlert = (msg) => { close(); alert(msg); };
+
+  const menuStyle = {
+    position: "absolute",
+    right: 0,
+    minWidth: 234,
+    zIndex: 60,
+    background: BG_CARD,
+    border: "1px solid " + BORDER,
+    borderRadius: 8,
+    boxShadow: "0 12px 28px rgba(15,23,42,0.14)",
+    padding: 4
+  };
+  if (vertical === "down") menuStyle.top = "calc(100% + 6px)";
+  else menuStyle.bottom = "calc(100% + 6px)";
+
   return (
-    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-      <button onClick={() => setOpen((v) => !v)} aria-label="Row actions" style={{ background: "transparent", border: "none", cursor: "pointer", color: TEXT_MUTED, padding: 4, borderRadius: 4, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <button
+        ref={triggerRef}
+        onClick={handleToggle}
+        aria-label="Row actions"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        style={{
+          background: open ? BG_HOVER : "transparent",
+          border: "none",
+          cursor: "pointer",
+          color: open ? TEXT_PRIMARY : TEXT_SECONDARY,
+          padding: 6,
+          borderRadius: 6,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transition: "background 0.12s, color 0.12s"
+        }}
+      >
         <MoreVertical size={16} />
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 50, background: BG_CARD, border: "1px solid " + BORDER, borderRadius: 8, boxShadow: "0 12px 24px rgba(15,23,42,0.12)", minWidth: 200, padding: 4 }}>
-          {variant === "active" && (<>
-            <ActionItem icon={FilePen} label="Edit paycheque" onClick={() => setOpen(false)} />
-            <ActionItem icon={UserMinus} label="Skip from payroll run" danger onClick={() => { onSkip && onSkip(); setOpen(false); }} />
-          </>)}
-          {variant === "skipped" && (<>
-            <ActionItem icon={FilePen} label="Edit paycheque" onClick={() => setOpen(false)} />
-            <ActionItem icon={UserPlus} label="Add to payroll run" onClick={() => { onAdd && onAdd(); setOpen(false); }} />
-          </>)}
-          {variant === "needs_setup" && (<ActionItem icon={Edit3} label="Finish setup" onClick={() => setOpen(false)} />)}
+        <div ref={menuRef} role="menu" style={menuStyle}>
+          {variant === "active" && (
+            <>
+              <ActionItem icon={FilePen} label="Edit paycheque" onClick={() => stubAlert("Paycheque editor is coming next.")} />
+              <ActionItem icon={Clock} label="Enter or edit hours" onClick={() => clickById("cell-" + lineId + "-regular")} />
+              <ActionItem icon={MessageSquare} label="Add memo" onClick={() => clickById("memo-trigger-" + lineId)} />
+              <ActionItem icon={CreditCard} label="Change pay method" onClick={() => clickById("paymethod-trigger-" + lineId)} />
+              <ActionItem icon={Receipt} label="Preview pay stub" onClick={() => stubAlert("Pay stub preview is coming next.")} />
+              <div role="separator" style={{ height: 1, background: BORDER_LIGHT, margin: "4px 6px" }} />
+              <ActionItem icon={UserMinus} label="Skip from this payroll run" danger onClick={() => { close(); onSkip && onSkip(); }} />
+            </>
+          )}
+          {variant === "skipped" && (
+            <>
+              <ActionItem icon={FilePen} label="Edit paycheque" onClick={() => stubAlert("Paycheque editor is coming next.")} />
+              <ActionItem icon={UserPlus} label="Add to payroll run" onClick={() => { close(); onAdd && onAdd(); }} />
+            </>
+          )}
+          {variant === "needs_setup" && (
+            <ActionItem icon={Edit3} label="Finish setup" onClick={goProfile} />
+          )}
         </div>
       )}
     </div>
   );
 }
+
 function ActionItem({ icon: Icon, label, onClick, danger }) {
   return (
     <button onClick={onClick} style={{ width: "100%", textAlign: "left", padding: "8px 10px", border: "none", background: "transparent", color: danger ? DANGER : TEXT_PRIMARY, fontSize: 13, fontWeight: 500, cursor: "pointer", borderRadius: 4, display: "flex", alignItems: "center", gap: 8, fontFamily: "inherit" }}
