@@ -54,7 +54,6 @@ import SmartSearch         from './pages/SmartSearch';
 import Landing             from './pages/Landing';
 import LandingV2         from './pages/LandingV2';
 import PricingV2         from './pages/PricingV2';
-import PricingV2         from './pages/PricingV2';
 import Customers           from './pages/Customers';
 import Inventory           from './pages/Inventory';
 import APIAccess           from './pages/APIAccess';
