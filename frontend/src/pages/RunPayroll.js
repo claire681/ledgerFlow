@@ -526,13 +526,13 @@ export default function RunPayroll() {
                 {rows.filter((r) => !r.ready).map((r) => (
                   <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14, color: C.muted, padding: "5px 0" }}>
                     <span>{r.name} needs {(r.setupMissing && r.setupMissing.length ? r.setupMissing.join(", ") : "pay types, a payment method")}.</span>
-                    <a style={{ color: C.brandDark, fontWeight: 700, cursor: "pointer" }}>Finish setup</a>
+                    <a onClick={() => navigate("/payroll/employees/" + r.id)} style={{ color: C.brandDark, fontWeight: 700, cursor: "pointer" }}>Finish setup</a>
                   </div>
                 ))}
                 {rows.filter((r) => r.ready && (parseFloat(r.regular) || 0) === 0 && (parseFloat(r.statHoliday) || 0) === 0).map((r) => (
                   <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14, color: C.muted, padding: "5px 0" }}>
                     <span>{r.name} has no hours entered for this period.</span>
-                    <a style={{ color: C.brandDark, fontWeight: 700, cursor: "pointer" }}>Add hours</a>
+                    <a onClick={() => { const row = document.getElementById("row-" + r.id); if (row) { row.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => { const input = row.querySelector("input:not([type='checkbox'])"); if (input) input.focus(); }, 300); } }} style={{ color: C.brandDark, fontWeight: 700, cursor: "pointer" }}>Add hours</a>
                   </div>
                 ))}
               </div>
@@ -587,7 +587,7 @@ export default function RunPayroll() {
                 </div>
 
                 {rows.map((r) => (
-                  <div key={r.id} style={{ display: "grid", gridTemplateColumns: gridCols, alignItems: "stretch",
+                  <div key={r.id} id={"row-" + r.id} style={{ display: "grid", gridTemplateColumns: gridCols, alignItems: "stretch",
                     borderBottom: "1px solid " + C.lineSoft, position: "relative", minHeight: 84,
                     opacity: r.skipped ? 0.5 : 1 }}>
                     <div style={{ padding: 12, display: "flex", justifyContent: "center", alignItems: "center" }}>
@@ -609,7 +609,7 @@ export default function RunPayroll() {
                       <div style={{ ...cell, gridColumn: "3 / " + (visibleCols.length + 2), justifyContent: "center" }}>
                         <span style={{ fontSize: 13.5, color: C.muted }}>
                           To pay {r.name.split(",")[0]}, you need to enter Personal info, Pay types and Payment method.{" "}
-                          <a style={{ color: C.brandDark, fontWeight: 700, cursor: "pointer" }}>Finish setup</a>
+                          <a onClick={() => navigate("/payroll/employees/" + r.id)} style={{ color: C.brandDark, fontWeight: 700, cursor: "pointer" }}>Finish setup</a>
                         </span>
                       </div>
                     ) : (
