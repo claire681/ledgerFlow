@@ -370,6 +370,14 @@ export default function RunPayroll() {
   const [error, setError] = useState("");
   const [memo, setMemo] = useState(null);
   const [hidden, setHidden] = useState({});
+  const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [customizeTab, setCustomizeTab] = useState("sort");
+  const [sortKey, setSortKey] = useState("");
+  const [sortDir, setSortDir] = useState("asc");
+  const [density, setDensity] = useState("normal");
+  const [stripe, setStripe] = useState(false);
+  const [hideSkipped, setHideSkipped] = useState(false);
+  const [onlyWithHours, setOnlyWithHours] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("access_token") || localStorage.getItem("token");
@@ -446,6 +454,36 @@ export default function RunPayroll() {
   const indeterminate = someSelected && !allSelected;
   const toggleAll = (checked) => setRows((rs) => rs.map((r) => r.ready ? { ...r, skipped: !checked } : r));
 
+  const densityHeight = density === "compact" ? 60 : density === "comfortable" ? 100 : 84;
+
+  const SORT_VAL = {
+    employees: (r) => (r.name || "").toLowerCase(),
+    regular: (r) => parseFloat(r.regular) || 0,
+    statHoliday: (r) => parseFloat(r.statHoliday) || 0,
+    statPay: (r) => parseFloat(String(r.statPay).replace(/[^0-9.]/g, "")) || 0,
+    totalHrs: (r) => (parseFloat(r.regular) || 0) + (parseFloat(r.statHoliday) || 0),
+    gross: (r) => grossOf(r),
+    memo: (r) => (r.memo || "").toLowerCase(),
+    payMethod: (r) => r.payMethod || ""
+  };
+  const sortedRows = sortKey && SORT_VAL[sortKey] ? [...rows].sort((a, b) => {
+    const va = SORT_VAL[sortKey](a), vb = SORT_VAL[sortKey](b);
+    const factor = sortDir === "desc" ? -1 : 1;
+    if (typeof va === "number" && typeof vb === "number") return (va - vb) * factor;
+    if (va < vb) return -1 * factor;
+    if (va > vb) return 1 * factor;
+    return 0;
+  }) : rows;
+  const displayRows = sortedRows.filter((r) => {
+    if (hideSkipped && r.skipped) return false;
+    if (onlyWithHours && (parseFloat(r.regular) || 0) === 0 && (parseFloat(r.statHoliday) || 0) === 0) return false;
+    return true;
+  });
+  const customizeDefaults = () => {
+    setSortKey(""); setSortDir("asc"); setDensity("normal"); setStripe(false);
+    setHideSkipped(false); setOnlyWithHours(false); setHidden({});
+  };
+
   const visibleCols = COLUMNS.filter((c) => !hidden[c.key]);
   const widthFor = (k) => k === "employees" ? "2.2fr" : k === "memo" ? "70px" : k === "payMethod" ? "1.7fr"
     : (k === "statHoliday" || k === "totalHrs") ? "1fr" : "1.2fr";
@@ -461,10 +499,10 @@ export default function RunPayroll() {
     return String(av).localeCompare(String(bv)) * dir;
   }));
   const handleColAction = (key, action) => {
-    if (action === "Sort ascending") sortRows(key, 1);
-    else if (action === "Sort descending") sortRows(key, -1);
+    if (action === "Sort ascending") { setSortKey(key); setSortDir("asc"); }
+    else if (action === "Sort descending") { setSortKey(key); setSortDir("desc"); }
     else if (action === "Hide column") setHidden((h) => ({ ...h, [key]: true }));
-    else if (action === "Customize") window.alert("Column picker is coming in the next update.");
+    else if (action === "Customize") { setCustomizeTab("columns"); setCustomizeOpen(true); }
   };
   const handleRowAction = (rowId, name, action) => {
     if (action === "Skip from this payroll run") { update(rowId, "skipped", true); return; }
@@ -558,7 +596,7 @@ export default function RunPayroll() {
                 </div>
                 <div style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
                   <button style={toolBtn}><Download size={15} />Export</button>
-                  <button style={toolBtn}><Settings size={15} />Customize</button>
+                  <button style={toolBtn} onClick={() => { setCustomizeTab("sort"); setCustomizeOpen(true); }}><Settings size={15} />Customize</button>
                 </div>
               </div>
 
@@ -586,9 +624,10 @@ export default function RunPayroll() {
                   <div />
                 </div>
 
-                {rows.map((r) => (
+                {displayRows.map((r, idx) => (
                   <div key={r.id} id={"row-" + r.id} style={{ display: "grid", gridTemplateColumns: gridCols, alignItems: "stretch",
-                    borderBottom: "1px solid " + C.lineSoft, position: "relative", minHeight: 84,
+                    borderBottom: "1px solid " + C.lineSoft, position: "relative", minHeight: densityHeight,
+                    background: stripe && idx % 2 === 1 ? "#F9FBFB" : "transparent",
                     opacity: r.skipped ? 0.5 : 1 }}>
                     <div style={{ padding: 12, display: "flex", justifyContent: "center", alignItems: "center" }}>
                       <input type="checkbox" checked={r.ready && !r.skipped} disabled={!r.ready} onChange={(e) => update(r.id, "skipped", !e.target.checked)} style={{ width: 16, height: 16, cursor: r.ready ? "pointer" : "not-allowed", accentColor: C.brand }} aria-label={"Include " + r.name} />
@@ -704,7 +743,95 @@ export default function RunPayroll() {
           </button>
         </div>
 
-      {memo && (
+      {customizeOpen && (
+        <div onClick={(e) => { if (e.target === e.currentTarget) setCustomizeOpen(false); }} style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ width: 560, background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.2)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid " + C.line }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.ink }}>Customize</div>
+              <button onClick={() => setCustomizeOpen(false)} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: C.muted }}>
+                <X size={18} />
+              </button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", minHeight: 360 }}>
+              <nav style={{ borderRight: "1px solid " + C.line, padding: "8px 0", background: C.page }}>
+                {[{ k: "sort", l: "Sort" }, { k: "rows", l: "Rows" }, { k: "columns", l: "Columns" }].map((tab) => (
+                  <button key={tab.k} onClick={() => setCustomizeTab(tab.k)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", padding: "11px 16px", background: customizeTab === tab.k ? "#fff" : "transparent", border: "none", borderLeft: "3px solid " + (customizeTab === tab.k ? C.brand : "transparent"), fontSize: 13.5, fontWeight: 600, color: C.ink, cursor: "pointer", fontFamily: FONT }}>{tab.l}</button>
+                ))}
+              </nav>
+              <div style={{ padding: "20px 24px" }}>
+                {customizeTab === "sort" && (
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.04, marginBottom: 8 }}>Sort by</div>
+                    <select value={sortKey} onChange={(e) => setSortKey(e.target.value)} style={{ width: "100%", padding: "9px 12px", border: "1px solid " + C.line, borderRadius: 9, fontSize: 13.5, background: "#fff", cursor: "pointer", marginBottom: 18, fontFamily: FONT, color: C.ink }}>
+                      <option value="">No sort</option>
+                      <option value="employees">Employees</option>
+                      <option value="regular">Regular pay</option>
+                      <option value="statHoliday">Stat holiday pay</option>
+                      <option value="statPay">Stat pay (avg)</option>
+                      <option value="totalHrs">Total hrs</option>
+                      <option value="gross">Gross pay</option>
+                      <option value="memo">Memo</option>
+                      <option value="payMethod">Pay method</option>
+                    </select>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.04, marginBottom: 8 }}>Direction</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      {[{ d: "asc", l: "Ascending", I: ArrowUp }, { d: "desc", l: "Descending", I: ArrowDown }].map((opt) => (
+                        <button key={opt.d} onClick={() => setSortDir(opt.d)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: 9, border: "1px solid " + (sortDir === opt.d ? C.brand : C.line), borderRadius: 9, background: sortDir === opt.d ? C.tint : "#fff", color: sortDir === opt.d ? C.brandDark : C.ink, fontSize: 13.5, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
+                          <opt.I size={14} />{opt.l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {customizeTab === "rows" && (
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.04, marginBottom: 8 }}>Row density</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
+                      {[{ k: "compact", l: "Compact" }, { k: "normal", l: "Normal" }, { k: "comfortable", l: "Comfortable" }].map((opt) => (
+                        <button key={opt.k} onClick={() => setDensity(opt.k)} style={{ padding: "10px 8px", border: "1px solid " + (density === opt.k ? C.brand : C.line), borderRadius: 9, background: density === opt.k ? C.tint : "#fff", color: density === opt.k ? C.brandDark : C.ink, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>{opt.l}</button>
+                      ))}
+                    </div>
+                    {[
+                      { k: "stripe", l: "Stripe alternating rows", v: stripe, s: setStripe },
+                      { k: "hideSkipped", l: "Hide skipped employees", v: hideSkipped, s: setHideSkipped },
+                      { k: "onlyWithHours", l: "Show only employees with hours", v: onlyWithHours, s: setOnlyWithHours }
+                    ].map((opt) => (
+                      <label key={opt.k} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", fontSize: 13.5, cursor: "pointer", color: C.ink }}>
+                        <input type="checkbox" checked={opt.v} onChange={(e) => opt.s(e.target.checked)} style={{ width: 16, height: 16, accentColor: C.brand, cursor: "pointer" }} />
+                        {opt.l}
+                      </label>
+                    ))}
+                  </div>
+                )}
+                {customizeTab === "columns" && (
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.04, marginBottom: 8 }}>Show columns</div>
+                    {[
+                      { k: "regular", l: "Regular pay" },
+                      { k: "statHoliday", l: "Stat holiday pay" },
+                      { k: "statPay", l: "Stat pay (avg)" },
+                      { k: "totalHrs", l: "Total hrs" },
+                      { k: "gross", l: "Gross pay" },
+                      { k: "memo", l: "Memo" },
+                      { k: "payMethod", l: "Pay method" }
+                    ].map((col) => (
+                      <label key={col.k} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", fontSize: 13.5, cursor: "pointer", color: C.ink }}>
+                        <input type="checkbox" checked={!hidden[col.k]} onChange={(e) => setHidden((h) => ({ ...h, [col.k]: !e.target.checked }))} style={{ width: 16, height: 16, accentColor: C.brand, cursor: "pointer" }} />
+                        {col.l}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 20px", borderTop: "1px solid " + C.line }}>
+              <button onClick={customizeDefaults} style={{ background: "transparent", border: "none", padding: "8px 4px", fontSize: 13, fontWeight: 600, color: C.muted, cursor: "pointer", fontFamily: FONT }}>Reset to defaults</button>
+              <button onClick={() => setCustomizeOpen(false)} style={{ background: C.brand, border: "none", borderRadius: 10, padding: "9px 22px", fontSize: 13.5, fontWeight: 700, color: "#fff", cursor: "pointer", fontFamily: FONT }}>Done</button>
+            </div>
+          </div>
+        </div>
+      )}
+            {memo && (
         <MemoPopover anchorRect={memo.rect} name={memo.name} initial={memo.initial}
           onSave={saveMemo} onClose={() => setMemo(null)} />
       )}
