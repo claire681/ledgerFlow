@@ -1,123 +1,253 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ShieldCheck, Wrench, X } from "lucide-react";
+import { AlertTriangle, Wrench, X } from "lucide-react";
 
 const BRAND = "#0F9599";
-const BRAND_DARK = "#0F6E56";
-const BRAND_SOFT = "#E1F5EE";
 const TEXT_PRIMARY = "#111827";
 const TEXT_SECONDARY = "#6B7280";
 const BORDER = "#E5E7EB";
-const WARNING = "#D97706";
+const WARN_TEXT = "#92400E";
+const WARN_SOFT = "#FEF3C7";
 
-const AVATAR_COLORS = ["#0F9599", "#6366F1", "#DC2626", "#B45309", "#7C3AED", "#0891B2", "#DB2777", "#65A30D"];
-const avatarColor = (emp) => {
-  const seed = String(emp.id || emp.email || "x");
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) hash = ((hash * 31) + seed.charCodeAt(i)) | 0;
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-};
-
-const initials = (emp) => {
-  const f = (emp.first_name || "").trim();
-  const l = (emp.last_name || "").trim();
-  if (f && l) return (f[0] + l[0]).toUpperCase();
-  if (f) return f.slice(0, 2).toUpperCase();
-  if (l) return l.slice(0, 2).toUpperCase();
-  return "??";
-};
-
-const displayName = (emp) => {
-  const last = (emp.last_name || "").trim();
-  const first = (emp.first_name || "").trim();
-  if (last && first) return last + ", " + first;
-  return emp.email || "Unnamed";
-};
-
-export default function RunPayrollGuardModal({ open, onClose, blockingEmployees = [], readyCount = 0, totalCount = 0 }) {
+export default function RunPayrollGuardModal({
+  open,
+  onClose,
+  blockingEmployees = [],
+  readyCount = 0,
+  totalCount = 0
+}) {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (e) => { if (e.key === "Escape" && onClose) onClose(); };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
   if (!open) return null;
 
   const fixEmployee = (emp) => {
-    const missing = (emp._readiness && emp._readiness.missing) || [];
-    const section = (missing[0] && missing[0].section) || "personal";
+    if (!emp) return;
+    if (onClose) onClose();
+    const section = emp.missingSection || "profile";
     navigate("/payroll/employees/" + emp.id + "?section=" + section);
-    onClose();
   };
 
   const fixAndContinue = () => {
-    if (blockingEmployees[0]) fixEmployee(blockingEmployees[0]);
+    if (blockingEmployees.length > 0) fixEmployee(blockingEmployees[0]);
   };
 
   const runAnyway = () => {
-    onClose();
+    if (onClose) onClose();
     navigate("/payroll/runs/new");
   };
 
-  const n = blockingEmployees.length;
+  const empLabel = (emp) => {
+    if (!emp) return "Employee";
+    if (emp.name) return emp.name;
+    const first = emp.first_name || "";
+    const last = emp.last_name || "";
+    const combined = (first + " " + last).trim();
+    return combined || ("Employee " + (emp.id || ""));
+  };
+
+  const missingLabel = (emp) => {
+    if (!emp || !emp.missing) return null;
+    if (Array.isArray(emp.missing)) return emp.missing.length > 0 ? emp.missing.join(", ") : null;
+    return String(emp.missing);
+  };
 
   return (
     <div
       onClick={onClose}
-      style={{ position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(15, 23, 42, 0.5)",
+        zIndex: 1000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+        fontFamily: "inherit"
+      }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ background: "white", width: 460, maxWidth: "100%", borderRadius: 10, fontFamily: "inherit" }}
+        style={{
+          background: "#fff",
+          borderRadius: 12,
+          maxWidth: 540,
+          width: "100%",
+          maxHeight: "90vh",
+          overflow: "auto",
+          boxShadow: "0 24px 48px rgba(15,23,42,0.18)",
+          position: "relative"
+        }}
       >
-        <div style={{ padding: "18px 22px 14px" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
-            <div style={{ width: 38, height: 38, borderRadius: "50%", background: "#FEF3C7", color: "#92400E", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <AlertTriangle size={19} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 500, color: TEXT_PRIMARY, margin: 0 }}>
-                {n} employee{n === 1 ? " isn't" : "s aren't"} ready
-              </h2>
-              <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 3 }}>Running now means missing or wrong pay for them.</div>
-            </div>
-            <X size={16} style={{ color: TEXT_SECONDARY, cursor: "pointer", flexShrink: 0 }} onClick={onClose} />
-          </div>
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          style={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            padding: 6,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 6,
+            color: TEXT_SECONDARY,
+            fontFamily: "inherit"
+          }}
+        >
+          <X size={18} />
+        </button>
 
-          <div style={{ background: "#F9FAFB", border: "0.5px solid " + BORDER, borderRadius: 8, padding: 6, marginBottom: 12, maxHeight: 220, overflowY: "auto" }}>
-            {blockingEmployees.map((emp) => {
-              const missing = ((emp._readiness && emp._readiness.missing) || []).map((m) => m.label).join(", ");
-              return (
-                <div key={emp.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 6px" }}>
-                  <div style={{ position: "relative", width: 32, height: 32, flexShrink: 0 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: avatarColor(emp), color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 500 }}>
-                      {initials(emp)}
-                    </div>
-                    <div style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "#F59E0B", border: "2px solid white", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <AlertTriangle size={7} color="white" />
-                    </div>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, color: TEXT_PRIMARY, fontWeight: 500 }}>{displayName(emp)}</div>
-                    <div style={{ fontSize: 11, color: WARNING }}>Missing {missing}</div>
-                  </div>
-                  <span onClick={() => fixEmployee(emp)} style={{ fontSize: 12, color: BRAND, fontWeight: 500, cursor: "pointer", flexShrink: 0 }}>Fix profile</span>
-                </div>
-              );
-            })}
+        <div style={{ padding: "24px 24px 0" }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 52,
+            height: 52,
+            borderRadius: 12,
+            background: WARN_SOFT,
+            color: WARN_TEXT,
+            marginBottom: 14
+          }}>
+            <AlertTriangle size={26} />
           </div>
-
-          {readyCount > 0 && (
-            <div style={{ background: BRAND_SOFT, borderRadius: 8, padding: "10px 12px", display: "flex", alignItems: "center", gap: 8 }}>
-              <ShieldCheck size={16} style={{ color: BRAND_DARK, flexShrink: 0 }} />
-              <div style={{ fontSize: 12, color: BRAND_DARK }}>
-                {readyCount} of {totalCount} employees are ready and can still be paid on time.
-              </div>
-            </div>
-          )}
+          <h2 style={{ margin: "0 0 6px", fontSize: 20, fontWeight: 700, color: TEXT_PRIMARY }}>
+            Some employees are not ready
+          </h2>
+          <p style={{ margin: "0 0 16px", fontSize: 14, color: TEXT_SECONDARY, lineHeight: 1.5 }}>
+            {readyCount} of {totalCount} employees are ready to be paid. Fix the missing setup below, or run payroll only for the ready ones.
+          </p>
         </div>
 
-        <div style={{ padding: "12px 22px 16px", borderTop: "0.5px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-          <span onClick={runAnyway} style={{ fontSize: 12, color: TEXT_SECONDARY, cursor: "pointer" }}>Run anyway</span>
+        {blockingEmployees.length > 0 && (
+          <div style={{ padding: "0 24px 16px" }}>
+            <div style={{ border: "1px solid " + BORDER, borderRadius: 10 }}>
+              {blockingEmployees.map((emp, i) => {
+                const missing = missingLabel(emp);
+                return (
+                  <div key={(emp && emp.id) || i} style={{
+                    padding: "12px 14px",
+                    borderBottom: i < blockingEmployees.length - 1 ? "1px solid " + BORDER : "none",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    gap: 12
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: TEXT_PRIMARY }}>
+                        {empLabel(emp)}
+                      </div>
+                      {missing && (
+                        <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 2 }}>
+                          Missing: {missing}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => fixEmployee(emp)}
+                      style={{
+                        background: "transparent",
+                        border: "1px solid " + BRAND,
+                        color: BRAND,
+                        padding: "5px 12px",
+                        borderRadius: 6,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0
+                      }}
+                    >
+                      Fix profile
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div style={{
+          padding: "14px 24px",
+          borderTop: "1px solid " + BORDER,
+          display: "flex",
+          gap: 10,
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          alignItems: "center"
+        }}>
+          <button
+            onClick={runAnyway}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: TEXT_SECONDARY,
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              textDecoration: "underline",
+              padding: 0
+            }}
+          >
+            Run for ready employees only
+          </button>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={onClose} style={{ fontSize: 13, padding: "8px 16px", borderRadius: 6, background: "white", color: TEXT_PRIMARY, border: "0.5px solid " + BORDER, cursor: "pointer", fontWeight: 500, fontFamily: "inherit" }}>Cancel</button>
-            <button onClick={fixAndContinue} style={{ fontSize: 13, padding: "8px 18px", borderRadius: 6, background: BRAND, color: "white", border: "none", cursor: "pointer", fontWeight: 500, fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <Wrench size={13} />
+            <button
+              onClick={onClose}
+              style={{
+                background: "transparent",
+                border: "1px solid " + BORDER,
+                color: TEXT_PRIMARY,
+                padding: "9px 16px",
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "inherit"
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={fixAndContinue}
+              disabled={blockingEmployees.length === 0}
+              style={{
+                background: BRAND,
+                border: "none",
+                color: "#fff",
+                padding: "9px 16px",
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: blockingEmployees.length === 0 ? "not-allowed" : "pointer",
+                fontFamily: "inherit",
+                opacity: blockingEmployees.length === 0 ? 0.5 : 1,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6
+              }}
+            >
+              <Wrench size={14} />
               Fix and continue
             </button>
           </div>
