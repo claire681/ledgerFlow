@@ -80,7 +80,7 @@ export default function AddPayrollV2() {
 
   const goCart = (payrollId) => {
     const params = new URLSearchParams({ plan: planId, billing: billing, payroll: payrollId });
-    navigate("/cart?" + params.toString());
+    navigate("/cart-v2?" + params.toString());
   };
 
   const goBack = () => {
