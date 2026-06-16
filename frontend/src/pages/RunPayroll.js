@@ -705,43 +705,151 @@ function MemoCell({ line, onUpdate, onApplyAll }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(line.memo || "");
   const [applyAll, setApplyAll] = useState(false);
-  const ref = useRef(null);
+  const [position, setPosition] = useState({ horizontal: "right", vertical: "top" });
+  const triggerRef = useRef(null);
+  const popoverRef = useRef(null);
+
   useEffect(() => { setDraft(line.memo || ""); }, [line.memo]);
+
   useEffect(() => {
     if (!open) return;
-    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onDoc = (e) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target) &&
+          triggerRef.current && !triggerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
     const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
-  const save = () => {
+
+  const handleOpen = () => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const PW = 340;
+    const PH = 320;
+    const GAP = 16;
+    const spaceRight = window.innerWidth - rect.right - GAP;
+    const spaceLeft = rect.left - GAP;
+    const horizontal = spaceRight >= PW ? "right" : (spaceLeft >= PW ? "left" : "right");
+    const spaceBelow = window.innerHeight - rect.top - GAP;
+    const spaceAbove = rect.bottom - GAP;
+    const vertical = spaceBelow >= PH ? "top" : (spaceAbove >= PH ? "bottom" : "top");
+    setPosition({ horizontal, vertical });
+    setOpen(true);
+  };
+
+  const handleSave = () => {
     if (applyAll) onApplyAll(draft); else onUpdate({ memo: draft });
     setOpen(false); setApplyAll(false);
   };
+
   const remaining = 250 - draft.length;
   const hasMemo = (line.memo || "").length > 0;
+
+  const popoverStyle = {
+    position: "absolute",
+    width: 320,
+    zIndex: 60,
+    background: BG_CARD,
+    border: "1px solid " + BORDER,
+    borderRadius: 10,
+    boxShadow: "0 16px 36px rgba(15,23,42,0.15)",
+    padding: 16,
+    textAlign: "left",
+    boxSizing: "border-box"
+  };
+  if (position.horizontal === "right") popoverStyle.left = "calc(100% + 12px)";
+  else popoverStyle.right = "calc(100% + 12px)";
+  if (position.vertical === "top") popoverStyle.top = 0;
+  else popoverStyle.bottom = 0;
+
+  const arrowStyle = {
+    position: "absolute",
+    width: 10,
+    height: 10,
+    background: BG_CARD,
+    transform: "rotate(45deg)"
+  };
+  if (position.horizontal === "right") {
+    arrowStyle.left = -5;
+    arrowStyle.borderTop = "1px solid " + BORDER;
+    arrowStyle.borderLeft = "1px solid " + BORDER;
+  } else {
+    arrowStyle.right = -5;
+    arrowStyle.borderTop = "1px solid " + BORDER;
+    arrowStyle.borderRight = "1px solid " + BORDER;
+  }
+  if (position.vertical === "top") arrowStyle.top = 14;
+  else arrowStyle.bottom = 14;
+
   return (
-    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-      {hasMemo ? (
-        <button onClick={() => setOpen(true)} title={line.memo} style={{ background: BRAND_SOFT, border: "1px solid " + BRAND_SOFT_BORDER, color: BRAND_DARK, width: 30, height: 28, borderRadius: 6, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}><MessageSquare size={14} /></button>
-      ) : (
-        <button onClick={() => setOpen(true)} style={{ background: "transparent", border: "1px dashed " + BORDER, color: TEXT_MUTED, width: 30, height: 28, borderRadius: 6, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Plus size={14} /></button>
-      )}
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <button
+        ref={triggerRef}
+        onClick={handleOpen}
+        title={hasMemo ? line.memo : ""}
+        style={hasMemo ? {
+          background: BRAND_SOFT, border: "1px solid " + BRAND_SOFT_BORDER,
+          color: BRAND_DARK, width: 30, height: 28, borderRadius: 6, cursor: "pointer",
+          display: "inline-flex", alignItems: "center", justifyContent: "center"
+        } : {
+          background: "transparent", border: "1px dashed " + BORDER,
+          color: TEXT_MUTED, width: 30, height: 28, borderRadius: 6, cursor: "pointer",
+          display: "inline-flex", alignItems: "center", justifyContent: "center"
+        }}
+      >
+        {hasMemo ? <MessageSquare size={14} /> : <Plus size={14} />}
+      </button>
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 50, background: BG_CARD, border: "1px solid " + BORDER, borderRadius: 10, boxShadow: "0 12px 24px rgba(15,23,42,0.12)", width: 320, padding: 14, textAlign: "left" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 4 }}>Memo</div>
-          <div style={{ fontSize: 11, color: TEXT_SECONDARY, marginBottom: 10 }}>{line.displayName} will see this on their pay stub.</div>
-          <textarea value={draft} onChange={(e) => setDraft(e.target.value.slice(0, 250))} placeholder="Add a note for this pay stub" rows={3}
-            style={{ width: "100%", padding: 8, fontSize: 13, fontFamily: "inherit", border: "1px solid " + BORDER, borderRadius: 6, resize: "vertical", color: TEXT_PRIMARY, outline: "none", boxSizing: "border-box" }} />
-          <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 4, textAlign: "right" }}>{remaining} characters left</div>
-          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: TEXT_SECONDARY, marginTop: 8, cursor: "pointer" }}>
-            <input type="checkbox" checked={applyAll} onChange={(e) => setApplyAll(e.target.checked)} />
+        <div ref={popoverRef} style={popoverStyle}>
+          <div style={arrowStyle} />
+          <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 4 }}>Memo</div>
+          <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginBottom: 12, lineHeight: 1.4 }}>
+            {line.displayName} will see this on their pay stub.
+          </div>
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value.slice(0, 250))}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") { e.preventDefault(); setOpen(false); }
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSave(); }
+            }}
+            placeholder="Add a note for this pay stub"
+            rows={4}
+            autoFocus
+            style={{
+              width: "100%", padding: 10, fontSize: 13, fontFamily: "inherit",
+              border: "1px solid " + BORDER, borderRadius: 8, resize: "vertical",
+              color: TEXT_PRIMARY, outline: "none", boxSizing: "border-box",
+              minHeight: 84
+            }}
+          />
+          <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 4, textAlign: "right" }}>
+            {remaining} characters left
+          </div>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: TEXT_SECONDARY, marginTop: 10, cursor: "pointer" }}>
+            <input type="checkbox" checked={applyAll} onChange={(e) => setApplyAll(e.target.checked)} style={{ cursor: "pointer" }} />
             Apply to all employees
           </label>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginTop: 12 }}>
-            <button onClick={() => setOpen(false)} style={{ background: "transparent", border: "1px solid " + BORDER, color: TEXT_PRIMARY, padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-            <button onClick={save} style={{ background: BRAND, color: "#fff", border: "none", padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Save</button>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14, paddingTop: 12, borderTop: "1px solid " + BORDER_LIGHT }}>
+            <button
+              onClick={() => setOpen(false)}
+              style={{ background: "transparent", border: "none", color: TEXT_SECONDARY, padding: "8px 12px", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              style={{ background: "#0E3B3A", color: "#fff", border: "none", padding: "8px 18px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+            >
+              Save
+            </button>
           </div>
         </div>
       )}
