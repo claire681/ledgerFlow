@@ -452,33 +452,9 @@ export default function RunPayroll() {
   const reviewCount = rows.filter((r) => r.ready && (parseFloat(r.regular) || 0) === 0 && (parseFloat(r.statHoliday) || 0) === 0).length;
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "84px 1fr", height: "100vh", font: FONT,
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", font: FONT,
       color: C.text, background: "#fff" }}>
       <style>{".np-no-spin::-webkit-inner-spin-button,.np-no-spin::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}"}</style>
-      <Sidebar />
-
-      <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
-        {/* top bar */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "12px 22px", borderBottom: "1px solid " + C.line }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 14,
-            color: C.ink, border: "1px solid " + C.line, borderRadius: 10, padding: "8px 12px" }}>
-            BrightCare Home Healthcare <ChevronDown size={14} />
-          </div>
-          <div style={{ flex: 1, maxWidth: 640, margin: "0 auto", display: "flex", alignItems: "center",
-            gap: 10, background: C.page, border: "1px solid " + C.line, borderRadius: 24, padding: "10px 16px",
-            color: C.muted, fontSize: 13.5 }}>
-            <Search size={16} />Search transactions, contacts, help, reports, and more...
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, color: C.muted }}>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600 }}>
-              <Users size={19} />Contact experts
-            </span>
-            <Bell size={19} /><Settings size={19} /><HelpCircle size={19} />
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: C.brand, color: "#fff",
-              display: "grid", placeItems: "center", fontWeight: 800, fontSize: 13 }}>C</div>
-          </div>
-        </div>
-
         {/* run header */}
         <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 26px", borderBottom: "1px solid " + C.lineSoft }}>
           <h1 style={{ fontSize: 21, fontWeight: 800, color: C.ink }}>Run payroll</h1>
@@ -683,7 +659,6 @@ export default function RunPayroll() {
             Preview for {selectedCount} employees <ArrowRight size={16} />
           </button>
         </div>
-      </div>
 
       {memo && (
         <MemoPopover anchorRect={memo.rect} name={memo.name} initial={memo.initial}
