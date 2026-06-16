@@ -5,10 +5,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, Sparkles, ChevronDown } from "lucide-react";
+import { Check, Sparkles, ChevronDown, Smartphone, MessageCircle, Zap, Star, Shield } from "lucide-react";
 
 import MarketingHeader from "../components/MarketingHeader";
 import MarketingFooter from "../components/MarketingFooter";
+import FeaturesModal from "../components/FeaturesModal";
 
 const BRAND = "#0F9599";
 const BRAND_DEEP = "#0E4B4D";
@@ -605,21 +606,218 @@ function CompareTable({ billing }) {
   );
 }
 
+function PromoNotice() {
+  return (
+    <div style={{ background: BG_PAGE, padding: "0 0 28px", textAlign: "center" }}>
+      <div style={CONTAINER}>
+        <span style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          padding: "5px 12px",
+          background: "#FBEAD2",
+          color: "#9A6212",
+          border: "0.5px solid rgba(154, 98, 18, 0.30)",
+          borderRadius: 999,
+          fontSize: 10.5, fontWeight: 800,
+          letterSpacing: "0.06em", textTransform: "uppercase",
+          marginBottom: 8,
+        }}>
+          Launch promo: starts soon
+        </span>
+        <p style={{ fontSize: 12.5, color: TEXT_DARK, margin: 0, fontStyle: "italic" }}>
+          Promotional pricing below launches with our first wave of customers.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PerksCard({ item }) {
+  const [hovered, setHovered] = useState(false);
+  const Icon = item.icon;
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: "#FFFFFF",
+        border: "0.5px solid " + BORDER,
+        borderRadius: 18,
+        padding: 26,
+        textAlign: "center",
+        boxShadow: hovered ? "0 22px 48px rgba(8,32,31,0.14)" : "0 1px 2px rgba(8,32,31,0.04)",
+        transform: hovered ? "translateY(-6px)" : "translateY(0)",
+        transition: "transform 0.28s ease, box-shadow 0.28s ease",
+      }}
+    >
+      <div style={{
+        width: 50, height: 50, borderRadius: 14,
+        background: "linear-gradient(135deg, " + BRAND + " 0%, " + BRAND_DEEP + " 100%)",
+        boxShadow: "0 10px 22px rgba(15, 149, 153, 0.30)",
+        display: "grid", placeItems: "center",
+        margin: "0 auto 18px",
+      }}>
+        <Icon size={22} color="#FFFFFF" strokeWidth={2} />
+      </div>
+      <div style={{ fontSize: 16.5, fontWeight: 700, color: TEXT_INK, letterSpacing: "-0.01em", lineHeight: 1.3, marginBottom: 8 }}>{item.title}</div>
+      <p style={{ fontSize: 13, color: TEXT_DARK, lineHeight: 1.55, margin: 0 }}>{item.note}</p>
+    </div>
+  );
+}
+
+function AllPlansInclude() {
+  const items = [
+    { icon: Smartphone, title: "Free mobile apps", note: "Run Novala from iOS and Android, anytime." },
+    { icon: MessageCircle, title: "Live support", note: "Email and chat support included on every plan." },
+    { icon: Zap, title: "App integrations", note: "Connects to the banks, cards, and apps you already use." },
+  ];
+  return (
+    <section style={{ background: BG_PAGE, padding: "80px 0" }}>
+      <div style={CONTAINER}>
+        <h2 style={{ textAlign: "center", fontSize: "clamp(28px, 4vw, 36px)", fontWeight: 800, color: TEXT_INK, letterSpacing: "-0.02em", margin: "0 0 44px" }}>
+          All plans include
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 18, maxWidth: 920, margin: "0 auto" }}>
+          {items.map(item => <PerksCard key={item.title} item={item} />)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TrustItem({ icon, stars, title }) {
+  const Icon = icon;
+  return (
+    <div style={{ position: "relative", textAlign: "center", padding: "14px 12px 0" }}>
+      <span style={{
+        position: "absolute",
+        top: -10,
+        right: 0,
+        padding: "3px 9px",
+        background: "#FBEAD2",
+        color: "#9A6212",
+        border: "0.5px solid rgba(154, 98, 18, 0.30)",
+        borderRadius: 999,
+        fontSize: 9.5,
+        fontWeight: 800,
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+      }}>
+        Coming soon
+      </span>
+      {Icon && (
+        <div style={{ marginBottom: 14, display: "flex", justifyContent: "center" }}>
+          <Icon size={28} color={MINT} strokeWidth={2} />
+        </div>
+      )}
+      {stars && (
+        <div style={{ marginBottom: 14, display: "flex", justifyContent: "center", gap: 3 }}>
+          {Array.from({ length: stars }, (_, i) => (
+            <Star key={i} size={18} color="#F5B301" fill="#F5B301" />
+          ))}
+        </div>
+      )}
+      <div style={{ fontSize: 15.5, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-0.005em", lineHeight: 1.4 }}>
+        {title}
+      </div>
+    </div>
+  );
+}
+
+function TrustBand() {
+  return (
+    <section style={{ background: "linear-gradient(180deg, " + NIGHT + " 0%, " + NIGHT_2 + " 100%)", padding: "80px 0", color: "#FFFFFF" }}>
+      <div style={CONTAINER}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 40 }}>
+          <TrustItem title="50,000+ businesses trust Novala" />
+          <TrustItem stars={5} title="4.8 across 12,000+ reviews" />
+          <TrustItem icon={Shield} title="SOC 2 certified, bank-level security and encryption" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FAQ() {
+  const [showAll, setShowAll] = useState(false);
+  const [open, setOpen] = useState(null);
+  const items = [
+    { q: "What is Novala?", a: "Novala is an all in one platform for small and growing businesses. It combines accounting, payroll, invoicing, and reports with Nexa AI to keep your books accurate and your team paid on time. Everything lives in one login, so the data you enter in one place flows through every report." },
+    { q: "Can I change plans later?", a: "Yes. You can upgrade or downgrade at any time from your account settings. Upgrades take effect immediately and are prorated for the rest of your billing cycle. Downgrades take effect at the start of your next cycle, so you keep the features you paid for through the end of the current month." },
+    { q: "What payment methods do you accept?", a: "All major credit and debit cards (Visa, Mastercard, American Express) and direct bank transfer (ACH) for annual plans. Payment processing is handled by Stripe with full PCI compliance. We do not store card details ourselves." },
+    { q: "Do you offer annual billing discounts?", a: "Yes. Switching to annual billing saves the equivalent of two months compared to paying monthly. [Confirm exact annual prices and discount before publishing.]" },
+    { q: "Can I get a refund?", a: "Yes. We offer a 30-day refund window from your first payment, no questions asked. Email support and we will process the refund within 5 business days. After 30 days, you can cancel anytime to stop future charges; past payments are not refunded." },
+    { q: "Are there transaction or processing fees?", a: "Novala itself does not charge platform transaction fees. When you accept customer payments through Novala, standard Stripe processing fees apply (2.9% plus 30 cents per card transaction). Bank transfers and ACH have lower fees. All fees are shown clearly before each transaction." },
+    { q: "What data can I import?", a: "CSV files of transactions, customers, and vendors from QuickBooks, Xero, Wave, and most accounting tools. Once you connect a bank account, the historical bank feed comes in automatically. Bulk receipt and bill uploads work via drag-and-drop or email forwarding." },
+    { q: "How does multi-user access work?", a: "Each plan has a user limit (Starter 1 user, Growth 5 users, Scale 25 users). Add team members from your settings and assign roles (admin, accountant, viewer, or custom roles on Scale). Each user gets their own login and an audit trail records who changed what." },
+    { q: "Do you support multi-currency?", a: "Yes, on Growth and Scale plans. Invoices, expenses, and bank accounts can be set per currency. Daily exchange rates update automatically from a trusted provider. Reports can be viewed in your home currency or per-currency." },
+    { q: "What kind of support do you offer?", a: "Every plan includes email and chat support during business hours. Scale customers get priority routing and a dedicated account manager. Most first responses arrive within 4 business hours, and complex tickets get a written summary after resolution so you can refer back to it later." },
+  ];
+  const visible = showAll ? items : items.slice(0, 4);
+  return (
+    <section style={{ background: "#FFFFFF", padding: "80px 0 100px" }}>
+      <div style={{ ...CONTAINER, maxWidth: 820 }}>
+        <h2 style={{ textAlign: "center", fontSize: "clamp(28px, 4vw, 36px)", fontWeight: 800, color: TEXT_INK, letterSpacing: "-0.02em", margin: "0 0 44px" }}>
+          Frequently asked questions
+        </h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {visible.map((item, i) => {
+            const isOpen = open === i;
+            return (
+              <div key={i} style={{ background: "#FFFFFF", border: "0.5px solid " + BORDER, borderRadius: 14, overflow: "hidden" }}>
+                <button
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  aria-expanded={isOpen}
+                  style={{ width: "100%", background: "transparent", padding: "20px 24px", border: "none", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, minHeight: 60, fontSize: 16, fontWeight: 700, color: TEXT_INK, cursor: "pointer", textAlign: "left", fontFamily: FONT_STACK, letterSpacing: "-0.005em" }}
+                >
+                  <span>{item.q}</span>
+                  <ChevronDown size={18} color={TEXT_DARK} style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.25s ease", flexShrink: 0 }} />
+                </button>
+                {isOpen && (
+                  <div style={{ padding: "0 24px 22px", fontSize: 14.5, color: TEXT_DARK, lineHeight: 1.65 }}>
+                    {item.a}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {!showAll && (
+          <div style={{ textAlign: "center", marginTop: 30 }}>
+            <button onClick={() => setShowAll(true)} style={{
+              background: "transparent", color: BRAND,
+              fontSize: 14, fontWeight: 700,
+              padding: "12px 24px",
+              border: "1.5px solid " + BRAND, borderRadius: 10,
+              cursor: "pointer", fontFamily: FONT_STACK,
+            }}>
+              Load more questions
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default function PricingV2() {
   const [billing, setBilling] = useState("monthly");
   const [whoAmI, setWhoAmI] = useState(null);
-  const handleViewAll = () => {
-    // Phase C will open FeaturesModal here.
-    alert("Features modal wiring coming in Phase C.");
-  };
+  const [modalOpen, setModalOpen] = useState(false);
+  const handleViewAll = () => setModalOpen(true);
+  const handleClose = () => setModalOpen(false);
+  const handleSeePricing = () => setModalOpen(false);
   return (
     <div style={{ fontFamily: FONT_STACK, color: TEXT_INK, background: BG_PAGE, minHeight: "100vh" }}>
-      <MarketingHeader />
+      <MarketingHeader onFeaturesClick={handleViewAll} />
       <Hero billing={billing} setBilling={setBilling} whoAmI={whoAmI} setWhoAmI={setWhoAmI} />
+      <PromoNotice />
       <PlanCards billing={billing} whoAmI={whoAmI} onViewAll={handleViewAll} />
       <CompareTable billing={billing} />
-      {/* TODO Phase C: All plans include, Trust band (with Coming soon pills), FAQ, FeaturesModal mount */}
+      <AllPlansInclude />
+      <TrustBand />
+      <FAQ />
       <MarketingFooter />
+      <FeaturesModal open={modalOpen} onClose={handleClose} onSeePricing={handleSeePricing} />
     </div>
   );
 }
