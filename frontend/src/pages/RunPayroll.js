@@ -440,11 +440,16 @@ export default function RunPayroll() {
     + (parseFloat(String(r.statPay).replace(/[^0-9.]/g, "")) || 0);
   const totalGross = activeRows.reduce((s, r) => s + grossOf(r), 0);
   const selectedCount = activeRows.length;
+  const readyRows = rows.filter((r) => r.ready);
+  const allSelected = readyRows.length > 0 && readyRows.every((r) => !r.skipped);
+  const someSelected = readyRows.some((r) => !r.skipped);
+  const indeterminate = someSelected && !allSelected;
+  const toggleAll = (checked) => setRows((rs) => rs.map((r) => r.ready ? { ...r, skipped: !checked } : r));
 
   const visibleCols = COLUMNS.filter((c) => !hidden[c.key]);
   const widthFor = (k) => k === "employees" ? "2.2fr" : k === "memo" ? "70px" : k === "payMethod" ? "1.7fr"
     : (k === "statHoliday" || k === "totalHrs") ? "1fr" : "1.2fr";
-  const gridCols = visibleCols.map((c) => widthFor(c.key)).join(" ") + " 44px";
+  const gridCols = "42px " + visibleCols.map((c) => widthFor(c.key)).join(" ") + " 44px";
 
   const sortRows = (key, dir) => setRows((rs) => [...rs].sort((a, b) => {
     const get = (r) => key === "employees" ? r.name : key === "gross" ? grossOf(r)
@@ -570,6 +575,9 @@ export default function RunPayroll() {
                 <div style={{ display: "grid", gridTemplateColumns: gridCols, alignItems: "center",
                   background: C.page, borderBottom: "1px solid " + C.line, fontSize: 11.5, fontWeight: 800,
                   letterSpacing: ".04em", color: C.muted, textTransform: "uppercase" }}>
+                  <div style={{ padding: 12, display: "flex", justifyContent: "center", alignItems: "center" }}>
+                    <input type="checkbox" checked={allSelected} ref={(el) => { if (el) el.indeterminate = indeterminate; }} onChange={(e) => toggleAll(e.target.checked)} style={{ width: 16, height: 16, cursor: "pointer", accentColor: C.brand }} aria-label="Select all employees" />
+                  </div>
                   {visibleCols.map((col) => (
                     <div key={col.key} style={{ padding: "14px 14px" }}>
                       <ColumnHeader col={{ ...col, label: col.key === "employees" ? "Employees \u00b7 " + selectedCount + " of " + rows.length : col.label }} onAction={handleColAction} />
@@ -582,6 +590,9 @@ export default function RunPayroll() {
                   <div key={r.id} style={{ display: "grid", gridTemplateColumns: gridCols, alignItems: "stretch",
                     borderBottom: "1px solid " + C.lineSoft, position: "relative", minHeight: 84,
                     opacity: r.skipped ? 0.5 : 1 }}>
+                    <div style={{ padding: 12, display: "flex", justifyContent: "center", alignItems: "center" }}>
+                      <input type="checkbox" checked={r.ready && !r.skipped} disabled={!r.ready} onChange={(e) => update(r.id, "skipped", !e.target.checked)} style={{ width: 16, height: 16, cursor: r.ready ? "pointer" : "not-allowed", accentColor: C.brand }} aria-label={"Include " + r.name} />
+                    </div>
                     <div style={cell}>
                       <span style={{ fontWeight: 700, color: C.brandDark, fontSize: 14.5, cursor: "pointer" }}>{r.name}</span>
                       <span style={{ fontSize: 12.5, color: C.muted }}>{r.type}</span>
@@ -595,7 +606,7 @@ export default function RunPayroll() {
                     </div>
 
                     {!r.ready ? (
-                      <div style={{ ...cell, gridColumn: "2 / " + (visibleCols.length + 1), justifyContent: "center" }}>
+                      <div style={{ ...cell, gridColumn: "3 / " + (visibleCols.length + 2), justifyContent: "center" }}>
                         <span style={{ fontSize: 13.5, color: C.muted }}>
                           To pay {r.name.split(",")[0]}, you need to enter Personal info, Pay types and Payment method.{" "}
                           <a style={{ color: C.brandDark, fontWeight: 700, cursor: "pointer" }}>Finish setup</a>
@@ -664,6 +675,7 @@ export default function RunPayroll() {
                 {/* total */}
                 <div style={{ display: "grid", gridTemplateColumns: gridCols, alignItems: "center",
                   background: C.page, fontWeight: 800, color: C.ink }}>
+                  <div></div>
                   <div style={{ padding: "16px 14px" }}>Total</div>
                   {!hidden.regular && <div style={{ padding: "16px 14px", textAlign: "center" }}>{hrs(totalRegular)}</div>}
                   {!hidden.statHoliday && <div style={{ padding: "16px 14px", textAlign: "center" }}>{hrs(totalStatHoliday)}</div>}
