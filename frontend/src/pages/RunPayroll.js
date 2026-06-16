@@ -43,6 +43,26 @@ const fmtMoney = (n) => { const num = typeof n === "number" ? n : parseFloat(n |
 const fmtHours = (n) => { const num = typeof n === "number" ? n : parseFloat(n || 0); return num.toLocaleString("en-CA", { maximumFractionDigits: 2 }); };
 const fmtDate = (d) => { if (!d) return ""; const date = new Date(d); if (isNaN(date.getTime())) return d; return date.toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" }); };
 
+const moneyOnly = (s) => String(s == null ? "" : s).replace(/[^0-9.]/g, "");
+const formatMoneyLive = (raw) => {
+  let s = moneyOnly(raw);
+  const parts = s.split(".");
+  if (parts.length > 2) s = parts[0] + "." + parts.slice(1).join("");
+  const [intP, decP] = s.split(".");
+  const intStr = intP ? parseInt(intP, 10).toLocaleString("en-US") : "";
+  if (decP != null) return intStr + "." + decP.slice(0, 2);
+  return intStr;
+};
+const formatMoneyBlur = (raw) => {
+  const num = parseFloat(moneyOnly(raw) || 0);
+  if (isNaN(num)) return "0.00";
+  return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+const parseMoneyToNumber = (raw) => {
+  const num = parseFloat(moneyOnly(raw) || 0);
+  return isNaN(num) ? 0 : num;
+};
+
 const empName = (e) => {
   if (!e) return "Employee";
   if (e.displayName) return e.displayName;
@@ -514,7 +534,7 @@ function Th({ children, right, center, width }) {
   return <th style={{ padding: "10px 12px", textAlign: right ? "right" : (center ? "center" : "left"), fontSize: 11, fontWeight: 600, color: TEXT_SECONDARY, textTransform: "uppercase", letterSpacing: 0.4, width: width || "auto", whiteSpace: "nowrap" }}>{children}</th>;
 }
 function Td({ children, right, center, muted, width, colSpan, style }) {
-  return <td colSpan={colSpan} style={{ padding: "12px", textAlign: right ? "right" : (center ? "center" : "left"), fontSize: 13, color: muted ? TEXT_MUTED : TEXT_PRIMARY, width: width || "auto", verticalAlign: "middle", borderBottom: "1px solid " + BORDER_LIGHT, fontVariantNumeric: right ? "tabular-nums" : "normal", ...(style || {}) }}>{children}</td>;
+  return <td colSpan={colSpan} style={{ padding: "14px 12px 26px 12px", textAlign: right ? "right" : (center ? "center" : "left"), fontSize: 13, color: muted ? TEXT_MUTED : TEXT_PRIMARY, width: width || "auto", verticalAlign: "middle", borderBottom: "1px solid " + BORDER_LIGHT, fontVariantNumeric: right ? "tabular-nums" : "normal", ...(style || {}) }}>{children}</td>;
 }
 
 function Row({ line, checked, dismissedForLine, onToggle, onUpdate, onApplyMemoAll, onSkip, onAdd }) {
@@ -580,39 +600,103 @@ function Row({ line, checked, dismissedForLine, onToggle, onUpdate, onApplyMemoA
 
 function EditableCell({ id, value, onCommit, type, rate }) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(String(value || 0));
-  useEffect(() => { setDraft(String(value || 0)); }, [value]);
-  const start = () => { setDraft(String(value || 0)); setEditing(true); };
+  const [hovered, setHovered] = useState(false);
+  const [draft, setDraft] = useState("");
+  const inputRef = useRef(null);
+
+  const start = () => {
+    if (type === "dollar") setDraft(formatMoneyBlur(value));
+    else { const n = parseFloat(value || 0); setDraft(n === 0 ? "" : String(n)); }
+    setEditing(true);
+  };
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+      try { inputRef.current.select(); } catch (e) {}
+    }
+  }, [editing]);
+
   const commit = () => {
-    const parsed = parseFloat(draft);
-    const final = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+    let final;
+    if (type === "dollar") final = parseMoneyToNumber(draft);
+    else { final = parseFloat(draft); if (isNaN(final) || final < 0) final = 0; }
     if (final !== parseFloat(value || 0)) onCommit(final);
     setEditing(false);
   };
-  const cancel = () => { setDraft(String(value || 0)); setEditing(false); };
-  if (editing) {
-    return (
-      <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
-        <input autoFocus type="number" step="0.01" min="0" value={draft}
-          onChange={(e) => setDraft(e.target.value)} onBlur={commit}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } if (e.key === "Escape") { e.preventDefault(); cancel(); } }}
-          onFocus={(e) => e.target.select()}
-          style={{ width: 88, padding: "6px 8px", textAlign: "right", border: "2px solid " + BRAND, borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", color: TEXT_PRIMARY }}
-        />
-        {type === "hours" && rate > 0 && <div style={{ fontSize: 10, color: TEXT_MUTED }}>${fmtMoney(rate)}/hr</div>}
-      </div>
-    );
-  }
+  const cancel = () => { setDraft(""); setEditing(false); };
+
+  const handleChange = (e) => {
+    if (type === "dollar") setDraft(formatMoneyLive(e.target.value));
+    else {
+      const cleaned = e.target.value.replace(/[^0-9.]/g, "");
+      const parts = cleaned.split(".");
+      const trimmed = parts.length > 1 ? parts[0] + "." + parts.slice(1).join("").slice(0, 2) : cleaned;
+      setDraft(trimmed);
+    }
+  };
+
+  const showBox = editing || hovered;
+  const boxStyle = {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: type === "dollar" ? "space-between" : "flex-end",
+    minWidth: 118,
+    height: 40,
+    padding: "0 12px",
+    borderRadius: 9,
+    border: editing ? "1px solid " + BRAND : (showBox ? "1px solid " + BORDER : "1px solid transparent"),
+    background: showBox ? "#fff" : "transparent",
+    boxShadow: editing ? "0 0 0 3px rgba(15,149,153,0.12)" : "none",
+    cursor: "text",
+    transition: "border 0.12s, box-shadow 0.12s, background 0.12s",
+    boxSizing: "border-box",
+    gap: 6
+  };
+
+  const onBoxClick = () => {
+    if (!editing) start();
+    else if (inputRef.current) inputRef.current.focus();
+  };
+
   const isZero = !value || parseFloat(value) === 0;
-  const displayValue = type === "dollar" ? "$" + fmtMoney(value || 0) : fmtHours(value || 0);
+  const dollarText = fmtMoney(value || 0);
+  const hoursText = parseFloat(value || 0) === 0 ? "0" : fmtHours(value || 0);
+
+  const showRateHint = type === "hours" && rate > 0 && (editing || parseFloat(value || 0) > 0);
+
   return (
-    <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end" }}>
-      <span id={id} onClick={start} title="Click to edit"
-        style={{ cursor: "pointer", color: isZero ? TEXT_MUTED : TEXT_PRIMARY, padding: "4px 6px", borderRadius: 4 }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = BG_HOVER; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-      >{displayValue}</span>
-      {type === "hours" && rate > 0 && parseFloat(value || 0) > 0 && <div style={{ fontSize: 10, color: TEXT_MUTED, paddingRight: 6 }}>${fmtMoney(rate)}/hr</div>}
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <div id={id} onClick={onBoxClick} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} style={boxStyle}>
+        {type === "dollar" && (
+          <span style={{ color: TEXT_SECONDARY, fontWeight: 500, fontSize: 14, flexShrink: 0 }}>$</span>
+        )}
+        {editing ? (
+          <input
+            ref={inputRef}
+            type="text"
+            inputMode="decimal"
+            value={draft}
+            onChange={handleChange}
+            onBlur={commit}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } if (e.key === "Escape") { e.preventDefault(); cancel(); } }}
+            placeholder={type === "dollar" ? "0.00" : "0"}
+            style={{ border: "none", outline: "none", background: "transparent", fontSize: 14, fontFamily: "inherit", color: TEXT_PRIMARY, textAlign: "right", width: type === "dollar" ? "100%" : "auto", minWidth: 40, padding: 0, MozAppearance: "textfield" }}
+          />
+        ) : (
+          <span style={{ color: isZero ? TEXT_MUTED : TEXT_PRIMARY, fontSize: 14 }}>
+            {type === "dollar" ? dollarText : hoursText}
+          </span>
+        )}
+        {type === "hours" && (
+          <span style={{ color: TEXT_SECONDARY, fontWeight: 500, fontSize: 14, flexShrink: 0 }}>h</span>
+        )}
+      </div>
+      {showRateHint && (
+        <div style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, fontSize: 11, color: TEXT_MUTED, whiteSpace: "nowrap", pointerEvents: "none" }}>
+          ${fmtMoney(rate)}/hr
+        </div>
+      )}
     </div>
   );
 }
