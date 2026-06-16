@@ -53,6 +53,8 @@ import Help                from './pages/Help';
 import SmartSearch         from './pages/SmartSearch';
 import Landing             from './pages/Landing';
 import LandingV2         from './pages/LandingV2';
+import PricingV2         from './pages/PricingV2';
+import PricingV2         from './pages/PricingV2';
 import Customers           from './pages/Customers';
 import Inventory           from './pages/Inventory';
 import APIAccess           from './pages/APIAccess';
@@ -270,6 +272,7 @@ const handleOnboardingComplete = () => {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/employee-portal" element={<EmployeePortal />} />
         <Route path="/landing-v2" element={<LandingV2 />} />
+        <Route path="/pricing-v2" element={<PricingV2 />} />
           <Route path="/add-payroll" element={<AddPayroll />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/cart" element={<Cart />} />
