@@ -339,7 +339,7 @@ function PlanCard({ plan, billing, highlighted, dimmed, onViewAll }) {
 
       <div style={{ padding: "0 28px 28px" }}>
         <button
-          onClick={() => navigate("/register?plan=" + plan.id)}
+          onClick={() => navigate("/add-payroll?plan=" + plan.id + "&billing=" + billing)}
           style={{
             width: "100%",
             background: BRAND,
@@ -521,7 +521,7 @@ function CompareTable({ billing }) {
                   <div style={{ fontSize: 22, fontWeight: 800, color: TEXT_INK, letterSpacing: "-0.02em", marginBottom: 10, lineHeight: 1 }}>
                     ${price}<span style={{ fontSize: 11, color: TEXT_DARK, fontWeight: 600 }}>/mo</span>
                   </div>
-                  <button onClick={() => navigate("/register?plan=" + p.id)} style={{
+                  <button onClick={() => navigate("/add-payroll?plan=" + p.id + "&billing=" + billing)} style={{
                     background: BRAND, color: "#FFFFFF",
                     fontSize: 12, fontWeight: 700,
                     padding: "8px 12px",
