@@ -65,6 +65,7 @@ import Pricing from "./pages/Pricing";
 import Checkout from "./pages/Checkout";
 
 import AddPayroll from "./pages/AddPayroll";
+import AddPayrollV2      from './pages/AddPayrollV2';
 import Cart from "./pages/Cart";
 import Verify from "./pages/Verify";
 import VerificationGuard from "./components/VerificationGuard";
@@ -273,6 +274,7 @@ const handleOnboardingComplete = () => {
         <Route path="/landing-v2" element={<LandingV2 />} />
         <Route path="/pricing-v2" element={<PricingV2 />} />
           <Route path="/add-payroll" element={<AddPayroll />} />
+          <Route path="/add-payroll-v2" element={<AddPayrollV2 />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/help/auto-payroll" element={<HelpAutoPayroll />} />
