@@ -207,7 +207,7 @@ export default function RunPayroll() {
           payMethod: e.payment_method || e.payMethod || "direct_deposit",
           payMethodReady: e.payMethodReady !== false,
           priorPeriodHours: parseFloat(e.priorPeriodHours || 0),
-          memo: "", hoursSource: { type: "manual" }
+          memo: "", hoursSource: e.hoursSource || e.hours_source || { type: "manual" }
         }));
         if (!mounted) return;
         setRun(runData); setLines(initial);
@@ -395,6 +395,24 @@ function Pill({ label, tone }) {
     : { bg: BG_HOVER, c: TEXT_SECONDARY, b: BORDER };
   return <div style={{ background: palette.bg, color: palette.c, border: "1px solid " + palette.b, padding: "4px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600 }}>{label}</div>;
 }
+function VisitSourceCaption({ hoursSource, totalHours }) {
+  if (hoursSource && hoursSource.type === "visits" && hoursSource.visitCount > 0) {
+    const onClick = () => {
+      // Visit list drawer for this employee and period lands in a later step.
+    };
+    const word = hoursSource.visitCount === 1 ? "visit" : "visits";
+    return (
+      <button onClick={onClick} title="View visits" style={{ background: "transparent", border: "none", padding: 0, marginTop: 2, color: BRAND, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textDecoration: "underline", lineHeight: 1.2, whiteSpace: "nowrap" }}>
+        from {hoursSource.visitCount} {word}
+      </button>
+    );
+  }
+  if (!totalHours) {
+    return <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2, whiteSpace: "nowrap" }}>no time imported</div>;
+  }
+  return <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2, whiteSpace: "nowrap" }}>manual entry</div>;
+}
+
 function FlagChip({ flag }) {
   const isWarn = flag.level === "warn";
   const palette = isWarn ? { bg: WARN_BG, c: WARN_TX } : { bg: INFO_BG, c: INFO_TX };
@@ -532,9 +550,6 @@ function Row({ line, checked, dismissedForLine, onToggle, onUpdate, onApplyMemoA
   }
   const tHrs = totalHours(line);
   const gross = grossPay(line);
-  const visitCaption = line.hoursSource && line.hoursSource.type === "visits" && line.hoursSource.visitCount
-    ? "from " + line.hoursSource.visitCount + " visits"
-    : (tHrs === 0 ? "no time imported" : "manual entry");
   const flags = flagsFor(line, true, dismissedForLine);
   return (
     <tr id={"row-" + line.employeeId} style={{ background: BG_CARD }}>
@@ -553,7 +568,7 @@ function Row({ line, checked, dismissedForLine, onToggle, onUpdate, onApplyMemoA
       <Td right><EditableCell id={"cell-" + line.employeeId + "-statavg"} value={line.statAvgPay} type="dollar" onCommit={(v) => onUpdate({ statAvgPay: v })} /></Td>
       <Td right>
         <div style={{ fontWeight: 600 }}>{fmtHours(tHrs)}</div>
-        <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>{visitCaption}</div>
+        <VisitSourceCaption hoursSource={line.hoursSource} totalHours={tHrs} />
       </Td>
       <Td right>${fmtMoney(gross)}</Td>
       <Td center><MemoCell line={line} onUpdate={onUpdate} onApplyAll={onApplyMemoAll} /></Td>
