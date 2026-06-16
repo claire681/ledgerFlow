@@ -3,9 +3,9 @@
 // Phase B will add the compare-all-features table. Phase C will add all-plans-include, trust band,
 // FAQ, and wire the FeaturesModal to the "See all features" links under each plan card.
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, ChevronDown } from "lucide-react";
 
 import MarketingHeader from "../components/MarketingHeader";
 import MarketingFooter from "../components/MarketingFooter";
@@ -395,6 +395,216 @@ function PlanCards({ billing, whoAmI, onViewAll }) {
   );
 }
 
+function FadeInRow({ children }) {
+  const [visible, setVisible] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setVisible(true);
+        obs.disconnect();
+      }
+    }, { threshold: 0.1 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <div ref={ref} style={{
+      opacity: visible ? 1 : 0,
+      transform: visible ? "translateY(0)" : "translateY(10px)",
+      transition: "opacity 0.45s ease, transform 0.45s ease",
+    }}>
+      {children}
+    </div>
+  );
+}
+
+const COMPARE_CATEGORIES = [
+  {
+    label: "Nexa AI",
+    rows: [
+      { name: "Auto-categorize transactions", values: [true, true, true] },
+      { name: "AI receipt scanner", values: [true, true, true] },
+      { name: "Document AI for vendor bills", values: [false, true, true] },
+      { name: "AI bookkeeping insights", values: [false, true, true], aiPill: true },
+      { name: "Anomaly detection", values: [false, false, true] },
+      { name: "AI-drafted month-end close", values: [false, false, true], aiPill: true },
+    ],
+  },
+  {
+    label: "Accounting",
+    rows: [
+      { name: "Track income and expenses", values: [true, true, true] },
+      { name: "Bank reconciliation", values: [true, true, true] },
+      { name: "Multi-currency", values: [false, true, true] },
+      { name: "Custom fields", values: [false, "8", "25"] },
+      { name: "Users", values: ["1", "5", "25"] },
+    ],
+  },
+  {
+    label: "Sales and get paid",
+    rows: [
+      { name: "Send invoices", values: [true, true, true] },
+      { name: "Accept online payments", values: [true, true, true] },
+      { name: "Recurring invoices", values: [false, true, true] },
+      { name: "Custom invoice branding", values: ["Basic", "Full", "Full"] },
+      { name: "Payment plans", values: [false, false, true] },
+    ],
+  },
+  {
+    label: "Expenses",
+    rows: [
+      { name: "Receipt capture", values: [true, true, true] },
+      { name: "Mileage tracking", values: [false, true, true] },
+      { name: "Bill pay", values: [false, true, true] },
+      { name: "Approval workflows", values: [false, false, true] },
+    ],
+  },
+  {
+    label: "Reports",
+    rows: [
+      { name: "Report depth", values: ["Standard", "Enhanced", "Comprehensive"] },
+      { name: "Custom report builder", values: [false, false, true] },
+      { name: "Cash flow forecast", values: [false, true, true] },
+    ],
+  },
+];
+
+function CompareTable({ billing }) {
+  const navigate = useNavigate();
+  const [openCats, setOpenCats] = useState({
+    "Nexa AI": true,
+    "Accounting": true,
+    "Sales and get paid": true,
+    "Expenses": true,
+    "Reports": true,
+  });
+  const toggle = (label) => setOpenCats(prev => ({ ...prev, [label]: !prev[label] }));
+
+  const planCols = [
+    { name: "Starter", id: "starter", monthly: 9, annual: 8 },
+    { name: "Growth", id: "growth", monthly: 29, annual: 24, mostPopular: true },
+    { name: "Scale", id: "scale", monthly: 99, annual: 83 },
+  ];
+
+  const gridCols = "minmax(0, 2fr) repeat(3, minmax(0, 1fr))";
+
+  return (
+    <section style={{ background: "#FFFFFF", padding: "80px 0" }}>
+      <div style={CONTAINER}>
+        <h2 style={{ textAlign: "center", fontSize: "clamp(28px, 4vw, 36px)", fontWeight: 800, color: TEXT_INK, letterSpacing: "-0.02em", margin: "0 0 44px" }}>
+          Compare all features
+        </h2>
+
+        <div style={{
+          position: "sticky", top: 0, zIndex: 20,
+          background: "rgba(255, 255, 255, 0.92)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          borderBottom: "0.5px solid " + BORDER,
+          padding: "26px 0 16px",
+          marginBottom: 14,
+        }}>
+          <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: 16, alignItems: "end" }}>
+            <div></div>
+            {planCols.map(p => {
+              const price = billing === "monthly" ? p.monthly : p.annual;
+              return (
+                <div key={p.id} style={{ position: "relative", textAlign: "center", padding: "0 4px" }}>
+                  {p.mostPopular && (
+                    <div style={{ position: "absolute", top: -18, left: "50%", transform: "translateX(-50%)", padding: "3px 10px", background: BRAND, color: "#FFFFFF", fontSize: 9.5, fontWeight: 800, borderRadius: 999, letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                      Most popular
+                    </div>
+                  )}
+                  <div style={{ fontSize: 15, fontWeight: 700, color: TEXT_INK, marginBottom: 4 }}>{p.name}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: TEXT_INK, letterSpacing: "-0.02em", marginBottom: 10, lineHeight: 1 }}>
+                    ${price}<span style={{ fontSize: 11, color: TEXT_DARK, fontWeight: 600 }}>/mo</span>
+                  </div>
+                  <button onClick={() => navigate("/register?plan=" + p.id)} style={{
+                    background: BRAND, color: "#FFFFFF",
+                    fontSize: 12, fontWeight: 700,
+                    padding: "8px 12px",
+                    border: "none", borderRadius: 7,
+                    cursor: "pointer", fontFamily: FONT_STACK,
+                    width: "100%",
+                  }}>
+                    Choose plan
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          {COMPARE_CATEGORIES.map(cat => {
+            const isOpen = openCats[cat.label];
+            return (
+              <div key={cat.label} style={{ marginBottom: 10 }}>
+                <button
+                  onClick={() => toggle(cat.label)}
+                  aria-expanded={isOpen}
+                  style={{
+                    width: "100%",
+                    background: BG_SOFT,
+                    border: "0.5px solid " + BORDER,
+                    borderRadius: 12,
+                    padding: "16px 20px",
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    fontSize: 15.5, fontWeight: 700, color: TEXT_INK,
+                    cursor: "pointer", fontFamily: FONT_STACK,
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  <span>{cat.label}</span>
+                  <ChevronDown size={18} color={TEXT_DARK} style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.25s ease" }} />
+                </button>
+                {isOpen && (
+                  <div style={{ marginTop: 4 }}>
+                    {cat.rows.map((row, idx) => (
+                      <FadeInRow key={row.name}>
+                        <div style={{
+                          display: "grid",
+                          gridTemplateColumns: gridCols,
+                          gap: 16,
+                          padding: "14px 20px",
+                          borderBottom: "0.5px solid " + BORDER,
+                          alignItems: "center",
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, color: TEXT_INK, fontWeight: 500 }}>
+                            <span>{row.name}</span>
+                            {row.aiPill && (
+                              <span style={{ fontSize: 9, fontWeight: 800, padding: "2px 6px", background: BRAND_TINT, color: BRAND_DEEP, borderRadius: 4, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                                Nexa AI
+                              </span>
+                            )}
+                          </div>
+                          {row.values.map((v, j) => (
+                            <div key={j} style={{
+                              textAlign: "center",
+                              background: j === 1 ? "rgba(15, 149, 153, 0.05)" : "transparent",
+                              borderRadius: 6,
+                              padding: "6px 4px",
+                            }}>
+                              {v === true && <Check size={18} color={BRAND} strokeWidth={2.5} style={{ verticalAlign: "middle" }} />}
+                              {v === false && <span style={{ color: TEXT_MUTED, fontSize: 16 }}>—</span>}
+                              {typeof v === "string" && <span style={{ fontSize: 13, color: TEXT_INK, fontWeight: 600 }}>{v}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      </FadeInRow>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function PricingV2() {
   const [billing, setBilling] = useState("monthly");
   const [whoAmI, setWhoAmI] = useState(null);
@@ -407,7 +617,7 @@ export default function PricingV2() {
       <MarketingHeader />
       <Hero billing={billing} setBilling={setBilling} whoAmI={whoAmI} setWhoAmI={setWhoAmI} />
       <PlanCards billing={billing} whoAmI={whoAmI} onViewAll={handleViewAll} />
-      {/* TODO Phase B: Compare all features table */}
+      <CompareTable billing={billing} />
       {/* TODO Phase C: All plans include, Trust band (with Coming soon pills), FAQ, FeaturesModal mount */}
       <MarketingFooter />
     </div>
