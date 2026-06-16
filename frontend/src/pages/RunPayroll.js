@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   X, Search, Filter, Download, Settings, Plus, Calendar,
   MoreVertical, HelpCircle, MessageCircle, Map, ArrowRight,
-  Receipt, ChevronDown
+  Receipt, ChevronDown, Check, MessageSquare, Edit3, UserMinus, UserPlus, FilePen
 } from "lucide-react";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -20,23 +20,13 @@ const BG_PAGE = "#F9FAFB";
 const BG_HOVER = "#FAFBFC";
 const BORDER = "#E5E7EB";
 const BORDER_LIGHT = "#F3F4F6";
+const DANGER = "#DC2626";
 
-const PAY_SCHEDULE_LABELS = {
-  weekly: "Weekly", bi_weekly: "Bi-weekly",
-  semi_monthly: "Semi-monthly", monthly: "Monthly"
-};
-const SCHEDULE_DETAIL = {
-  weekly: "Every Friday", bi_weekly: "Every other Friday",
-  semi_monthly: "15th and end of month", monthly: "End of month"
-};
+const PAY_SCHEDULE_LABELS = { weekly: "Weekly", bi_weekly: "Bi-weekly", semi_monthly: "Semi-monthly", monthly: "Monthly" };
+const SCHEDULE_DETAIL = { weekly: "Every Friday", bi_weekly: "Every other Friday", semi_monthly: "15th and end of month", monthly: "End of month" };
 
-const getToken = () =>
-  localStorage.getItem("access_token") || localStorage.getItem("token") || "";
-
-const authHeaders = () => ({
-  Authorization: "Bearer " + getToken(),
-  "Content-Type": "application/json"
-});
+const getToken = () => localStorage.getItem("access_token") || localStorage.getItem("token") || "";
+const authHeaders = () => ({ Authorization: "Bearer " + getToken(), "Content-Type": "application/json" });
 
 const fmtMoney = (n) => {
   const num = typeof n === "number" ? n : parseFloat(n || 0);
@@ -56,11 +46,9 @@ const fmtDate = (d) => {
 const empName = (e) => {
   if (!e) return "Employee";
   if (e.displayName) return e.displayName;
-  const f = e.first_name || "";
-  const l = e.last_name || "";
+  const f = e.first_name || ""; const l = e.last_name || "";
   if (l && f) return l + ", " + f;
-  if (f) return f;
-  if (l) return l;
+  if (f) return f; if (l) return l;
   return e.email || "Employee";
 };
 const empFirst = (e) => {
@@ -89,7 +77,6 @@ const lineSetupMissing = (e) => {
 };
 const totalHours = (l) => parseFloat(l.regularHours || 0) + parseFloat(l.statHolidayHours || 0);
 const grossPay = (l) => {
-  if (l.grossPay != null && l.grossPay !== 0) return parseFloat(l.grossPay);
   const r = parseFloat(l.rate || 0);
   return parseFloat(l.regularHours || 0) * r + parseFloat(l.statHolidayHours || 0) * r + parseFloat(l.statAvgPay || 0);
 };
@@ -107,8 +94,7 @@ export default function RunPayroll() {
     let mounted = true;
     async function load() {
       try {
-        setLoading(true);
-        setError(null);
+        setLoading(true); setError(null);
         const runRes = await fetch(API_URL + "/api/v1/payroll/runs/" + payRunId, { headers: authHeaders() });
         if (!runRes.ok) throw new Error("Could not load pay run (" + runRes.status + ")");
         const runData = await runRes.json();
@@ -117,22 +103,16 @@ export default function RunPayroll() {
         const empsData = await empsRes.json();
         const employees = Array.isArray(empsData) ? empsData : (empsData.items || empsData.employees || []);
         const initial = employees.map((e) => ({
-          employeeId: e.id,
-          employee: e,
-          displayName: empName(e),
-          payTypeLabel: e.pay_type_label || "Hourly",
+          employeeId: e.id, employee: e,
+          displayName: empName(e), payTypeLabel: e.pay_type_label || "Hourly",
           rate: parseFloat(e.rate || e.hourly_rate || 0),
-          regularHours: 0, statHolidayHours: 0, statAvgPay: 0, grossPay: 0,
-          inRun: true,
-          setupComplete: isLineSetupComplete(e),
-          setupMissing: lineSetupMissing(e),
+          regularHours: 0, statHolidayHours: 0, statAvgPay: 0,
+          inRun: true, setupComplete: isLineSetupComplete(e), setupMissing: lineSetupMissing(e),
           payMethod: e.payment_method || e.payMethod || "direct_deposit",
-          memo: "",
-          hoursSource: { type: "manual" }
+          memo: "", hoursSource: { type: "manual" }
         }));
         if (!mounted) return;
-        setRun(runData);
-        setLines(initial);
+        setRun(runData); setLines(initial);
         const sel = {};
         initial.forEach((l) => { sel[l.employeeId] = l.inRun && l.setupComplete; });
         setSelected(sel);
@@ -146,6 +126,15 @@ export default function RunPayroll() {
     load();
     return () => { mounted = false; };
   }, [payRunId]);
+
+  const updateLine = (id, patch) => {
+    setLines((ls) => ls.map((l) => l.employeeId === id ? { ...l, ...patch } : l));
+  };
+  const applyMemoToAll = (memo) => {
+    setLines((ls) => ls.map((l) => selected[l.employeeId] && l.setupComplete ? { ...l, memo } : l));
+  };
+  const skipLine = (id) => setSelected((s) => ({ ...s, [id]: false }));
+  const addLine = (id) => setSelected((s) => ({ ...s, [id]: true }));
 
   const handleCancel = () => navigate("/payroll/overview");
   const handleSaveLater = () => alert("Save for later coming next.");
@@ -181,9 +170,20 @@ export default function RunPayroll() {
         <PeriodControls run={run} />
         <SummaryCards activeCount={active.length} total={lines.length} totalHrs={totalHrs} totalGross={totalGross} />
         <Toolbar />
-        <Table lines={lines} selected={selected} allChecked={allChecked} someChecked={someChecked} onToggleAll={toggleAll} onToggleOne={toggleOne} active={active} />
+        <Table
+          lines={lines} selected={selected}
+          allChecked={allChecked} someChecked={someChecked}
+          onToggleAll={toggleAll} onToggleOne={toggleOne}
+          active={active}
+          onUpdateLine={updateLine}
+          onApplyMemoAll={applyMemoToAll}
+          onSkip={skipLine} onAdd={addLine}
+        />
       </div>
-      <Footer selectedCount={active.length} totalCount={lines.length} onCancel={handleCancel} onSaveLater={handleSaveLater} onPreview={handlePreview} />
+      <Footer
+        selectedCount={active.length} totalCount={lines.length}
+        onCancel={handleCancel} onSaveLater={handleSaveLater} onPreview={handlePreview}
+      />
     </div>
   );
 }
@@ -235,7 +235,6 @@ function PeriodControls({ run }) {
     </div>
   );
 }
-
 function Field({ label, value, icon: Icon }) {
   return (
     <div style={{ background: BG_CARD, border: "1px solid " + BORDER, borderRadius: 10, padding: "10px 14px", minWidth: 220 }}>
@@ -246,7 +245,6 @@ function Field({ label, value, icon: Icon }) {
     </div>
   );
 }
-
 function SummaryCards({ activeCount, total, totalHrs, totalGross }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 16 }}>
@@ -264,7 +262,6 @@ function Card({ label, value }) {
     </div>
   );
 }
-
 function Toolbar() {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
@@ -283,7 +280,7 @@ function Toolbar() {
   );
 }
 
-function Table({ lines, selected, allChecked, someChecked, onToggleAll, onToggleOne, active }) {
+function Table({ lines, selected, allChecked, someChecked, onToggleAll, onToggleOne, active, onUpdateLine, onApplyMemoAll, onSkip, onAdd }) {
   if (lines.length === 0) {
     return (
       <div style={{ background: BG_CARD, border: "1px solid " + BORDER, borderRadius: 12, padding: 40, textAlign: "center", color: TEXT_SECONDARY, fontSize: 14 }}>
@@ -299,8 +296,8 @@ function Table({ lines, selected, allChecked, someChecked, onToggleAll, onToggle
     gross: active.reduce((a, l) => a + grossPay(l), 0)
   };
   return (
-    <div style={{ background: BG_CARD, border: "1px solid " + BORDER, borderRadius: 12, overflow: "hidden" }}>
-      <div style={{ overflowX: "auto" }}>
+    <div style={{ background: BG_CARD, border: "1px solid " + BORDER, borderRadius: 12, overflow: "visible" }}>
+      <div style={{ overflowX: "auto", overflowY: "visible" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 1100 }}>
           <thead>
             <tr style={{ background: BG_HOVER, borderBottom: "1px solid " + BORDER }}>
@@ -320,7 +317,16 @@ function Table({ lines, selected, allChecked, someChecked, onToggleAll, onToggle
           </thead>
           <tbody>
             {lines.map((line) => (
-              <Row key={line.employeeId} line={line} checked={!!selected[line.employeeId]} onToggle={() => onToggleOne(line.employeeId)} />
+              <Row
+                key={line.employeeId}
+                line={line}
+                checked={!!selected[line.employeeId]}
+                onToggle={() => onToggleOne(line.employeeId)}
+                onUpdate={(patch) => onUpdateLine(line.employeeId, patch)}
+                onApplyMemoAll={onApplyMemoAll}
+                onSkip={() => onSkip(line.employeeId)}
+                onAdd={() => onAdd(line.employeeId)}
+              />
             ))}
             <TotalRow totals={totals} />
           </tbody>
@@ -331,17 +337,13 @@ function Table({ lines, selected, allChecked, someChecked, onToggleAll, onToggle
 }
 
 function Th({ children, right, center, width }) {
-  return (
-    <th style={{ padding: "10px 12px", textAlign: right ? "right" : (center ? "center" : "left"), fontSize: 11, fontWeight: 600, color: TEXT_SECONDARY, textTransform: "uppercase", letterSpacing: 0.4, width: width || "auto", whiteSpace: "nowrap" }}>{children}</th>
-  );
+  return <th style={{ padding: "10px 12px", textAlign: right ? "right" : (center ? "center" : "left"), fontSize: 11, fontWeight: 600, color: TEXT_SECONDARY, textTransform: "uppercase", letterSpacing: 0.4, width: width || "auto", whiteSpace: "nowrap" }}>{children}</th>;
 }
-function Td({ children, right, center, muted, width, colSpan }) {
-  return (
-    <td colSpan={colSpan} style={{ padding: "12px", textAlign: right ? "right" : (center ? "center" : "left"), fontSize: 13, color: muted ? TEXT_MUTED : TEXT_PRIMARY, width: width || "auto", verticalAlign: "middle", borderBottom: "1px solid " + BORDER_LIGHT, fontVariantNumeric: right ? "tabular-nums" : "normal" }}>{children}</td>
-  );
+function Td({ children, right, center, muted, width, colSpan, style }) {
+  return <td colSpan={colSpan} style={{ padding: "12px", textAlign: right ? "right" : (center ? "center" : "left"), fontSize: 13, color: muted ? TEXT_MUTED : TEXT_PRIMARY, width: width || "auto", verticalAlign: "middle", borderBottom: "1px solid " + BORDER_LIGHT, fontVariantNumeric: right ? "tabular-nums" : "normal", ...(style || {}) }}>{children}</td>;
 }
 
-function Row({ line, checked, onToggle }) {
+function Row({ line, checked, onToggle, onUpdate, onApplyMemoAll, onSkip, onAdd }) {
   const first = empFirst(line.employee || line);
   if (!line.setupComplete) {
     const missing = line.setupMissing.length > 0 ? line.setupMissing.join(", ") : "personal info, pay types and a payment method";
@@ -351,10 +353,10 @@ function Row({ line, checked, onToggle }) {
         <Td muted>{line.displayName}<div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>{line.payTypeLabel}</div></Td>
         <Td colSpan={6}>
           <span style={{ color: TEXT_SECONDARY }}>Add {missing} to pay {first}. </span>
-          <a href="#finish" style={{ color: BRAND, fontWeight: 600, textDecoration: "none" }}>Finish setup</a>
+          <span style={{ color: BRAND, fontWeight: 600, cursor: "pointer" }}>Finish setup</span>
         </Td>
         <Td></Td>
-        <Td center><button style={{ background: "transparent", border: "none", cursor: "pointer", color: TEXT_MUTED, padding: 4 }}><MoreVertical size={16} /></button></Td>
+        <Td center><RowActions variant="needs_setup" /></Td>
       </tr>
     );
   }
@@ -365,10 +367,10 @@ function Row({ line, checked, onToggle }) {
         <Td>{line.displayName}<div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>{line.payTypeLabel}</div></Td>
         <Td colSpan={6}>
           <span style={{ color: TEXT_SECONDARY }}>{first} is skipped from this payroll run. </span>
-          <a href="#add" onClick={(e) => { e.preventDefault(); onToggle(); }} style={{ color: BRAND, fontWeight: 600, textDecoration: "none" }}>Add to payroll run</a>
+          <button onClick={onAdd} style={{ background: "transparent", border: "none", color: BRAND, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0, fontSize: 13 }}>Add to payroll run</button>
         </Td>
         <Td></Td>
-        <Td center><button style={{ background: "transparent", border: "none", cursor: "pointer", color: TEXT_MUTED, padding: 4 }}><MoreVertical size={16} /></button></Td>
+        <Td center><RowActions variant="skipped" onAdd={onAdd} /></Td>
       </tr>
     );
   }
@@ -384,27 +386,217 @@ function Row({ line, checked, onToggle }) {
         <div style={{ color: BRAND, fontWeight: 600 }}>{line.displayName}</div>
         <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>{line.payTypeLabel}</div>
       </Td>
-      <Td right>{tHrs > 0 ? fmtHours(line.regularHours) : <span style={{ color: TEXT_MUTED }}>0</span>}</Td>
-      <Td right>{line.statHolidayHours > 0 ? fmtHours(line.statHolidayHours) : <span style={{ color: TEXT_MUTED }}>0</span>}</Td>
-      <Td right>{line.statAvgPay > 0 ? "$" + fmtMoney(line.statAvgPay) : <span style={{ color: TEXT_MUTED }}>$0.00</span>}</Td>
+      <Td right><EditableCell value={line.regularHours} type="hours" rate={line.rate} onCommit={(v) => onUpdate({ regularHours: v, hoursSource: { type: "manual" }})} /></Td>
+      <Td right><EditableCell value={line.statHolidayHours} type="hours" onCommit={(v) => onUpdate({ statHolidayHours: v, hoursSource: { type: "manual" }})} /></Td>
+      <Td right><EditableCell value={line.statAvgPay} type="dollar" onCommit={(v) => onUpdate({ statAvgPay: v })} /></Td>
       <Td right>
         <div style={{ fontWeight: 600 }}>{fmtHours(tHrs)}</div>
         <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2 }}>{visitCaption}</div>
       </Td>
       <Td right>${fmtMoney(gross)}</Td>
-      <Td center>
-        <button style={{ background: "transparent", border: "1px dashed " + BORDER, color: TEXT_MUTED, padding: "4px 8px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>
-          <Plus size={12} style={{ verticalAlign: "-1px", marginRight: 2 }} />
-        </button>
-      </Td>
-      <Td>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: TEXT_PRIMARY, fontSize: 13 }}>
-          {line.payMethod === "direct_deposit" ? "Direct deposit" : "Paper cheque"}
-          <ChevronDown size={13} color={TEXT_MUTED} />
-        </div>
-      </Td>
-      <Td center><button style={{ background: "transparent", border: "none", cursor: "pointer", color: TEXT_MUTED, padding: 4 }}><MoreVertical size={16} /></button></Td>
+      <Td center><MemoCell line={line} onUpdate={onUpdate} onApplyAll={onApplyMemoAll} /></Td>
+      <Td><PayMethodCell line={line} onUpdate={onUpdate} /></Td>
+      <Td center><RowActions variant="active" onSkip={onSkip} /></Td>
     </tr>
+  );
+}
+
+function EditableCell({ value, onCommit, type, rate }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(value || 0));
+  useEffect(() => { setDraft(String(value || 0)); }, [value]);
+
+  const start = () => { setDraft(String(value || 0)); setEditing(true); };
+  const commit = () => {
+    const parsed = parseFloat(draft);
+    const final = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+    if (final !== parseFloat(value || 0)) onCommit(final);
+    setEditing(false);
+  };
+  const cancel = () => { setDraft(String(value || 0)); setEditing(false); };
+
+  if (editing) {
+    return (
+      <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+        <input
+          autoFocus type="number" step="0.01" min="0" value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } if (e.key === "Escape") { e.preventDefault(); cancel(); } }}
+          onFocus={(e) => e.target.select()}
+          style={{ width: 88, padding: "6px 8px", textAlign: "right", border: "2px solid " + BRAND, borderRadius: 6, fontSize: 13, fontFamily: "inherit", outline: "none", color: TEXT_PRIMARY }}
+        />
+        {type === "hours" && rate > 0 && (
+          <div style={{ fontSize: 10, color: TEXT_MUTED }}>${fmtMoney(rate)}/hr</div>
+        )}
+      </div>
+    );
+  }
+  const isZero = !value || parseFloat(value) === 0;
+  const displayValue = type === "dollar" ? "$" + fmtMoney(value || 0) : fmtHours(value || 0);
+  return (
+    <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end" }}>
+      <span
+        onClick={start}
+        title="Click to edit"
+        style={{ cursor: "pointer", color: isZero ? TEXT_MUTED : TEXT_PRIMARY, padding: "4px 6px", borderRadius: 4, transition: "background 0.12s" }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = BG_HOVER; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+      >
+        {displayValue}
+      </span>
+      {type === "hours" && rate > 0 && parseFloat(value || 0) > 0 && (
+        <div style={{ fontSize: 10, color: TEXT_MUTED, paddingRight: 6 }}>${fmtMoney(rate)}/hr</div>
+      )}
+    </div>
+  );
+}
+
+function MemoCell({ line, onUpdate, onApplyAll }) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(line.memo || "");
+  const [applyAll, setApplyAll] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => { setDraft(line.memo || ""); }, [line.memo]);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+
+  const save = () => {
+    if (applyAll) onApplyAll(draft);
+    else onUpdate({ memo: draft });
+    setOpen(false); setApplyAll(false);
+  };
+
+  const remaining = 250 - draft.length;
+  const hasMemo = (line.memo || "").length > 0;
+
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      {hasMemo ? (
+        <button onClick={() => setOpen(true)} title={line.memo} style={{ background: BRAND_SOFT, border: "1px solid " + BRAND_SOFT_BORDER, color: BRAND_DARK, width: 30, height: 28, borderRadius: 6, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+          <MessageSquare size={14} />
+        </button>
+      ) : (
+        <button onClick={() => setOpen(true)} style={{ background: "transparent", border: "1px dashed " + BORDER, color: TEXT_MUTED, width: 30, height: 28, borderRadius: 6, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+          <Plus size={14} />
+        </button>
+      )}
+      {open && (
+        <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 50, background: BG_CARD, border: "1px solid " + BORDER, borderRadius: 10, boxShadow: "0 12px 24px rgba(15,23,42,0.12)", width: 320, padding: 14, textAlign: "left" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY, marginBottom: 4 }}>Memo</div>
+          <div style={{ fontSize: 11, color: TEXT_SECONDARY, marginBottom: 10 }}>{line.displayName} will see this on their pay stub.</div>
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value.slice(0, 250))}
+            placeholder="Add a note for this pay stub"
+            rows={3}
+            style={{ width: "100%", padding: 8, fontSize: 13, fontFamily: "inherit", border: "1px solid " + BORDER, borderRadius: 6, resize: "vertical", color: TEXT_PRIMARY, outline: "none", boxSizing: "border-box" }}
+          />
+          <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 4, textAlign: "right" }}>{remaining} characters left</div>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: TEXT_SECONDARY, marginTop: 8, cursor: "pointer" }}>
+            <input type="checkbox" checked={applyAll} onChange={(e) => setApplyAll(e.target.checked)} />
+            Apply to all employees
+          </label>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginTop: 12 }}>
+            <button onClick={() => setOpen(false)} style={{ background: "transparent", border: "1px solid " + BORDER, color: TEXT_PRIMARY, padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+            <button onClick={save} style={{ background: BRAND, color: "#fff", border: "none", padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Save</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PayMethodCell({ line, onUpdate }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+  const label = line.payMethod === "direct_deposit" ? "Direct deposit" : "Paper cheque";
+  const choose = (val) => { onUpdate({ payMethod: val }); setOpen(false); };
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <button onClick={() => setOpen((v) => !v)} style={{ background: "transparent", border: "1px solid " + BORDER, color: TEXT_PRIMARY, padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontFamily: "inherit", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6 }}>
+        {label} <ChevronDown size={13} color={TEXT_MUTED} />
+      </button>
+      {open && (
+        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 50, background: BG_CARD, border: "1px solid " + BORDER, borderRadius: 8, boxShadow: "0 12px 24px rgba(15,23,42,0.12)", minWidth: 180, padding: 4 }}>
+          <Option label="Direct deposit" selected={line.payMethod === "direct_deposit"} onClick={() => choose("direct_deposit")} />
+          <Option label="Paper cheque" selected={line.payMethod === "paper_cheque"} onClick={() => choose("paper_cheque")} />
+        </div>
+      )}
+    </div>
+  );
+}
+function Option({ label, selected, onClick }) {
+  return (
+    <button onClick={onClick} style={{ width: "100%", textAlign: "left", padding: "8px 10px", border: "none", background: "transparent", color: TEXT_PRIMARY, fontSize: 13, fontWeight: 500, cursor: "pointer", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: "inherit" }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = BG_HOVER; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+      <span>{label}</span>
+      {selected && <Check size={14} color={BRAND} />}
+    </button>
+  );
+}
+
+function RowActions({ variant, onSkip, onAdd }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <button onClick={() => setOpen((v) => !v)} aria-label="Row actions" style={{ background: "transparent", border: "none", cursor: "pointer", color: TEXT_MUTED, padding: 4, borderRadius: 4, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+        <MoreVertical size={16} />
+      </button>
+      {open && (
+        <div style={{ position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 50, background: BG_CARD, border: "1px solid " + BORDER, borderRadius: 8, boxShadow: "0 12px 24px rgba(15,23,42,0.12)", minWidth: 200, padding: 4 }}>
+          {variant === "active" && (
+            <>
+              <ActionItem icon={FilePen} label="Edit paycheque" onClick={() => setOpen(false)} />
+              <ActionItem icon={UserMinus} label="Skip from payroll run" danger onClick={() => { onSkip && onSkip(); setOpen(false); }} />
+            </>
+          )}
+          {variant === "skipped" && (
+            <>
+              <ActionItem icon={FilePen} label="Edit paycheque" onClick={() => setOpen(false)} />
+              <ActionItem icon={UserPlus} label="Add to payroll run" onClick={() => { onAdd && onAdd(); setOpen(false); }} />
+            </>
+          )}
+          {variant === "needs_setup" && (
+            <ActionItem icon={Edit3} label="Finish setup" onClick={() => setOpen(false)} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+function ActionItem({ icon: Icon, label, onClick, danger }) {
+  return (
+    <button onClick={onClick} style={{ width: "100%", textAlign: "left", padding: "8px 10px", border: "none", background: "transparent", color: danger ? DANGER : TEXT_PRIMARY, fontSize: 13, fontWeight: 500, cursor: "pointer", borderRadius: 4, display: "flex", alignItems: "center", gap: 8, fontFamily: "inherit" }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = BG_HOVER; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+      <Icon size={14} />
+      <span>{label}</span>
+    </button>
   );
 }
 
@@ -418,9 +610,7 @@ function TotalRow({ totals }) {
       <Td right>${fmtMoney(totals.statAvg)}</Td>
       <Td right>{fmtHours(totals.hours)}</Td>
       <Td right>${fmtMoney(totals.gross)}</Td>
-      <Td></Td>
-      <Td></Td>
-      <Td></Td>
+      <Td></Td><Td></Td><Td></Td>
     </tr>
   );
 }
