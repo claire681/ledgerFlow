@@ -859,24 +859,96 @@ function MemoCell({ line, onUpdate, onApplyAll }) {
 
 function PayMethodCell({ line, onUpdate }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const [hovered, setHovered] = useState(false);
+  const [vertical, setVertical] = useState("down");
+  const triggerRef = useRef(null);
+  const dropdownRef = useRef(null);
+
   useEffect(() => {
     if (!open) return;
-    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onDoc = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target) &&
+          triggerRef.current && !triggerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
     const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
+
+  const handleToggle = () => {
+    if (open) { setOpen(false); return; }
+    if (!triggerRef.current) { setOpen(true); return; }
+    const rect = triggerRef.current.getBoundingClientRect();
+    const DH = 110;
+    const GAP = 8;
+    const spaceBelow = window.innerHeight - rect.bottom - GAP;
+    const spaceAbove = rect.top - GAP;
+    const v = spaceBelow >= DH ? "down" : (spaceAbove >= DH ? "up" : "down");
+    setVertical(v);
+    setOpen(true);
+  };
+
   const label = line.payMethod === "direct_deposit" ? "Direct deposit" : "Paper cheque";
   const choose = (val) => { onUpdate({ payMethod: val }); setOpen(false); };
+
+  const borderColor = open ? BRAND : (hovered ? TEXT_MUTED : BORDER);
+  const triggerStyle = {
+    background: "#fff",
+    border: "1px solid " + borderColor,
+    color: TEXT_PRIMARY,
+    padding: "8px 12px",
+    borderRadius: 8,
+    cursor: "pointer",
+    fontFamily: "inherit",
+    fontSize: 13,
+    fontWeight: 500,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    minWidth: 156,
+    height: 38,
+    boxShadow: open ? "0 0 0 3px rgba(15,149,153,0.12)" : "none",
+    transition: "border-color 0.12s, box-shadow 0.12s",
+    boxSizing: "border-box"
+  };
+
+  const dropdownStyle = {
+    position: "absolute",
+    left: 0,
+    minWidth: 180,
+    zIndex: 60,
+    background: BG_CARD,
+    border: "1px solid " + BORDER,
+    borderRadius: 8,
+    boxShadow: "0 12px 28px rgba(15,23,42,0.14)",
+    padding: 4
+  };
+  if (vertical === "down") dropdownStyle.top = "calc(100% + 6px)";
+  else dropdownStyle.bottom = "calc(100% + 6px)";
+
   return (
-    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-      <button onClick={() => setOpen((v) => !v)} style={{ background: "transparent", border: "1px solid " + BORDER, color: TEXT_PRIMARY, padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontFamily: "inherit", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 6 }}>
-        {label} <ChevronDown size={13} color={TEXT_MUTED} />
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <button
+        ref={triggerRef}
+        onClick={handleToggle}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        style={triggerStyle}
+      >
+        <span>{label}</span>
+        <ChevronDown size={15} color={TEXT_SECONDARY} style={{ transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.15s", flexShrink: 0 }} />
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 50, background: BG_CARD, border: "1px solid " + BORDER, borderRadius: 8, boxShadow: "0 12px 24px rgba(15,23,42,0.12)", minWidth: 180, padding: 4 }}>
+        <div ref={dropdownRef} role="listbox" style={dropdownStyle}>
           <Option label="Direct deposit" selected={line.payMethod === "direct_deposit"} onClick={() => choose("direct_deposit")} />
           <Option label="Paper cheque" selected={line.payMethod === "paper_cheque"} onClick={() => choose("paper_cheque")} />
         </div>
@@ -884,6 +956,7 @@ function PayMethodCell({ line, onUpdate }) {
     </div>
   );
 }
+
 function Option({ label, selected, onClick }) {
   return (
     <button onClick={onClick} style={{ width: "100%", textAlign: "left", padding: "8px 10px", border: "none", background: "transparent", color: TEXT_PRIMARY, fontSize: 13, fontWeight: 500, cursor: "pointer", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: "inherit" }}
