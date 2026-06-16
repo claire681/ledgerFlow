@@ -373,33 +373,57 @@ export default function RunPayroll() {
 
   useEffect(() => {
     const token = localStorage.getItem("access_token") || localStorage.getItem("token");
-    fetch(API + "/api/v1/payroll/runs/" + payRunId, { headers: { Authorization: "Bearer " + token } })
-      .then((r) => { if (!r.ok) throw new Error("Could not load this payroll run (HTTP " + r.status + ")."); return r.json(); })
-      .then((raw) => {
-        console.log("[RunPayroll] raw API response:", raw);
-        const data = raw && raw.data ? raw.data : raw;
-        const linesArr = data.lines || data.pay_lines || data.pay_run_lines || data.entries || data.items || [];
-        console.log("[RunPayroll] lines count:", linesArr.length, "first line:", linesArr[0]);
+    const auth = { headers: { Authorization: "Bearer " + token } };
+    Promise.all([
+      fetch(API + "/api/v1/payroll/runs/" + payRunId, auth).then((r) => {
+        if (!r.ok) throw new Error("Could not load pay run (HTTP " + r.status + ").");
+        return r.json();
+      }),
+      fetch(API + "/api/v1/payroll/employees", auth).then((r) => {
+        if (!r.ok) throw new Error("Could not load employees (HTTP " + r.status + ").");
+        return r.json();
+      }),
+    ])
+      .then(([runData, empResp]) => {
+        console.log("[RunPayroll] run:", runData);
+        console.log("[RunPayroll] employees:", empResp);
+        const data = runData && runData.data ? runData.data : runData;
+        const empArr = Array.isArray(empResp) ? empResp : (empResp.items || empResp.data || []);
         setRun(data);
-        const pick = (l, ...keys) => {
-          for (const k of keys) { if (l[k] !== undefined && l[k] !== null) return l[k]; }
+        const pick = (o, ...keys) => {
+          for (const k of keys) { if (o && o[k] !== undefined && o[k] !== null) return o[k]; }
           return undefined;
         };
-        setRows(linesArr.map((l) => ({
-          id: pick(l, "employeeId", "employee_id", "id") || "",
-          name: pick(l, "displayName", "display_name", "name", "employee_name", "full_name") || "",
-          type: pick(l, "payTypeLabel", "pay_type_label", "payType", "pay_type") || "Hourly",
-          ready: pick(l, "setupComplete", "setup_complete", "ready") !== false,
-          setupMissing: pick(l, "setupMissing", "setup_missing") || [],
-          regular: String(pick(l, "regularHours", "regular_hours") != null ? pick(l, "regularHours", "regular_hours") : 0),
-          statHoliday: String(pick(l, "statHolidayHours", "stat_holiday_hours") != null ? pick(l, "statHolidayHours", "stat_holiday_hours") : 0),
-          statPay: formatMoneyBlur(pick(l, "statAvgPay", "stat_avg_pay", "statPay") != null ? pick(l, "statAvgPay", "stat_avg_pay", "statPay") : 0),
-          rateHint: pick(l, "rate", "hourly_rate") != null ? money(pick(l, "rate", "hourly_rate")) + "/hr" : "",
-          payMethod: pick(l, "payMethod", "pay_method") || "Direct deposit",
-          memo: pick(l, "memo") || "",
-          hoursSource: pick(l, "hoursSource", "hours_source") || null,
-          skipped: false,
-        })));
+        const linesByEmp = {};
+        const linesArr = data.lines || data.pay_lines || data.pay_run_lines || data.entries || data.items || [];
+        linesArr.forEach((ln) => {
+          const eid = pick(ln, "employee_id", "employeeId");
+          if (eid) linesByEmp[eid] = ln;
+        });
+        setRows(empArr.map((e) => {
+          const eid = pick(e, "id", "employee_id", "employeeId");
+          const line = linesByEmp[eid] || {};
+          const first = pick(e, "preferred_name", "first_name", "firstName") || "";
+          const last = pick(e, "last_name", "lastName") || "";
+          const fullName = (last && first) ? (last + ", " + first) : (first || last || "Unnamed");
+          const rate = pick(e, "hourly_rate", "pay_rate", "rate", "hourlyRate", "payRate");
+          const empType = pick(e, "employment_type", "pay_type", "payType");
+          return {
+            id: eid || "",
+            name: fullName,
+            type: empType === "salaried" ? "Salaried" : "Hourly",
+            ready: pick(e, "setup_complete", "setupComplete") !== false,
+            setupMissing: pick(e, "setup_missing", "setupMissing") || [],
+            regular: String(pick(line, "regular_hours", "regularHours") != null ? pick(line, "regular_hours", "regularHours") : 0),
+            statHoliday: String(pick(line, "stat_holiday_hours", "statHolidayHours") != null ? pick(line, "stat_holiday_hours", "statHolidayHours") : 0),
+            statPay: formatMoneyBlur(pick(line, "stat_avg_pay", "statAvgPay") != null ? pick(line, "stat_avg_pay", "statAvgPay") : 0),
+            rateHint: rate != null ? money(rate) + "/hr" : "",
+            payMethod: pick(line, "pay_method", "payMethod") || pick(e, "default_pay_method", "pay_method") || "Direct deposit",
+            memo: pick(line, "memo") || "",
+            hoursSource: pick(line, "hours_source", "hoursSource") || null,
+            skipped: false,
+          };
+        }));
         setLoading(false);
       })
       .catch((e) => { console.error("[RunPayroll] fetch error:", e); setError(e.message); setLoading(false); });
