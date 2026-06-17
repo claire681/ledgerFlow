@@ -149,49 +149,6 @@ function TrendSparkline({ points, height }) {
       <circle cx={endX} cy={endY} r="4.5" fill="#ffffff" stroke="#15A08C" strokeWidth="2.4" />
     </svg>
   );
-}) {
-  if (!points || points.length < 2) return null;
-  const H = height || 110;
-  const W = 1000;
-  const pad = 10;
-  const min = Math.min.apply(null, points);
-  const max = Math.max.apply(null, points);
-  const range = (max - min) || 1;
-  const xAt = (i) => pad + (i * ((W - pad * 2) / (points.length - 1)));
-  const yAt = (v) => (max === min) ? (pad + (H - pad * 2) * (1 - Math.min(v / 5000, 0.95))) : (pad + ((H - pad * 2) * (1 - (v - min) / range)));
-  const baselineY = H - pad;
-  const pts = points.map((p, i) => ({ x: xAt(i), y: yAt(p) }));
-  const tension = 0.16;
-  let linePath = "M " + pts[0].x.toFixed(1) + "," + pts[0].y.toFixed(1);
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = i > 0 ? pts[i - 1] : pts[i];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = i < pts.length - 2 ? pts[i + 2] : pts[i + 1];
-    const cp1x = p1.x + (p2.x - p0.x) * tension;
-    const cp1y = p1.y + (p2.y - p0.y) * tension;
-    const cp2x = p2.x - (p3.x - p1.x) * tension;
-    const cp2y = p2.y - (p3.y - p1.y) * tension;
-    linePath += " C " + cp1x.toFixed(1) + "," + cp1y.toFixed(1) + " " + cp2x.toFixed(1) + "," + cp2y.toFixed(1) + " " + p2.x.toFixed(1) + "," + p2.y.toFixed(1);
-  }
-  const areaPath = linePath + " L " + pts[pts.length - 1].x.toFixed(1) + "," + baselineY + " L " + pts[0].x.toFixed(1) + "," + baselineY + " Z";
-  const endX = pts[pts.length - 1].x.toFixed(1);
-  const endY = pts[pts.length - 1].y.toFixed(1);
-  const gradId = "spark-grad-payroll-preview";
-  return (
-    <svg viewBox={"0 0 " + W + " " + H} width="100%" height={H} preserveAspectRatio="none" style={{ display: "block" }}>
-      <defs>
-        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#15A08C" stopOpacity="0.18" />
-          <stop offset="1" stopColor="#15A08C" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <line x1="0" y1={baselineY} x2={W} y2={baselineY} stroke="#E7EAF0" strokeWidth="1" />
-      <path d={areaPath} fill={"url(#" + gradId + ")"} />
-      <path d={linePath} fill="none" stroke="#15A08C" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-      <circle cx={endX} cy={endY} r="5" fill="#fff" stroke="#15A08C" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
-    </svg>
-  );
 }
 
 function DetailCell({ label, value, sub, last, narrow }) {
