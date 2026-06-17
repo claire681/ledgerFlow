@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { X, HelpCircle, Check, ChevronDown, AlertTriangle, Info, ArrowDown, ArrowUp } from "lucide-react";
 
 const C = {
@@ -151,6 +151,7 @@ function DetailCell({ label, value, sub, last, narrow }) {
 export default function PayrollPreview() {
   const { payRunId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const narrow = useNarrowScreen(1000);
 
   const [run, setRun] = useState(null);
@@ -174,31 +175,62 @@ export default function PayrollPreview() {
         setRun(runRes);
         const runLines = (runRes && runRes.lines) || [];
         const emps = Array.isArray(employeesRes) ? employeesRes : (employeesRes && employeesRes.items) || [];
-        const linesArr = Array.isArray(runLines) && runLines.length > 0
-          ? runLines.map((l) => ({
-              employee_id: l.employee_id || l.id,
-              name: l.name || ((l.last_name || "") + ", " + (l.preferred_name || l.first_name || "")).trim().replace(/^,\s*/, ""),
-              classification: l.classification || (l.employment_type === "salaried" ? "Salary" : "Hourly"),
-              payment_method: l.payment_method || "Direct deposit",
-              total_hours: Number(l.total_hours || l.hours || 0),
-              gross_pay: Number(l.gross_pay || l.gross || 0),
-              employee_taxes: Number(l.employee_taxes || l.ee_tax || 0),
-              net_pay: Number(l.net_pay || l.net || 0),
-              employer_taxes: Number(l.employer_taxes || l.er_tax || 0),
-              change_in_gross_pct: l.change_in_gross_pct != null ? Number(l.change_in_gross_pct) : null,
-            }))
-          : emps.map((e) => ({
-              employee_id: e.id,
-              name: ((e.last_name || "") + ", " + (e.preferred_name || e.first_name || "")).trim().replace(/^,\s*/, ""),
-              classification: e.employment_type === "salaried" ? "Salary" : "Hourly",
-              payment_method: "Direct deposit",
-              total_hours: 0,
-              gross_pay: 0,
-              employee_taxes: 0,
-              net_pay: 0,
-              employer_taxes: 0,
-              change_in_gross_pct: null,
-            }));
+        const passedState = (location && location.state) || {};
+        const passedCalc = passedState.calculation;
+        const passedRows = passedState.rows;
+        const calcLines = passedCalc && (passedCalc.lines || passedCalc.employee_lines || passedCalc.employees || passedCalc.results || passedCalc.line_items);
+        if (passedCalc && typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+          console.log("[PayrollPreview] received calculation from RunPayroll:", passedCalc);
+        }
+        const mapApiLine = (l) => ({
+          employee_id: l.employee_id || l.id,
+          name: l.name || l.employee_name || ((l.last_name || "") + ", " + (l.preferred_name || l.first_name || "")).trim().replace(/^,\s*/, ""),
+          classification: l.classification || (l.employment_type === "salaried" ? "Salary" : "Hourly"),
+          payment_method: l.payment_method || "Direct deposit",
+          total_hours: Number(l.total_hours || l.hours || l.hours_total || 0),
+          gross_pay: Number(l.gross_pay || l.gross || l.total_gross || 0),
+          employee_taxes: Number(l.employee_taxes || l.ee_tax || l.deductions || l.total_deductions || 0),
+          net_pay: Number(l.net_pay || l.net || l.take_home || l.total_net || 0),
+          employer_taxes: Number(l.employer_taxes || l.er_tax || l.employer_total || 0),
+          change_in_gross_pct: l.change_in_gross_pct != null ? Number(l.change_in_gross_pct) : null,
+        });
+        const mapPassedRow = (r) => {
+          const hours = (Number(r.regular) || 0) + (Number(r.statHoliday) || 0);
+          const gross = hours * (Number(r.rate) || 0) + (Number(r.statPay) || 0);
+          return {
+            employee_id: r.id,
+            name: r.name || "",
+            classification: r.empType === "salaried" ? "Salary" : "Hourly",
+            payment_method: r.payMethod || "Direct deposit",
+            total_hours: hours,
+            gross_pay: gross,
+            employee_taxes: 0,
+            net_pay: gross,
+            employer_taxes: 0,
+            change_in_gross_pct: null,
+          };
+        };
+        let linesArr;
+        if (Array.isArray(calcLines) && calcLines.length > 0) {
+          linesArr = calcLines.map(mapApiLine);
+        } else if (Array.isArray(runLines) && runLines.length > 0) {
+          linesArr = runLines.map(mapApiLine);
+        } else if (Array.isArray(passedRows) && passedRows.length > 0) {
+          linesArr = passedRows.map(mapPassedRow);
+        } else {
+          linesArr = emps.map((e) => ({
+            employee_id: e.id,
+            name: ((e.last_name || "") + ", " + (e.preferred_name || e.first_name || "")).trim().replace(/^,\s*/, ""),
+            classification: e.employment_type === "salaried" ? "Salary" : "Hourly",
+            payment_method: "Direct deposit",
+            total_hours: 0,
+            gross_pay: 0,
+            employee_taxes: 0,
+            net_pay: 0,
+            employer_taxes: 0,
+            change_in_gross_pct: null,
+          }));
+        }
         setLines(linesArr);
 
         const allRuns = Array.isArray(runsRes) ? runsRes : (runsRes && runsRes.items) || [];

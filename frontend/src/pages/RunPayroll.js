@@ -558,7 +558,25 @@ export default function RunPayroll() {
         setPreviewing(false);
         return;
       }
-      navigate("/payroll/run/" + payRunId + "/preview");
+      const calculation = await res.json().catch(() => ({}));
+      navigate("/payroll/run/" + payRunId + "/preview", {
+        state: {
+          calculation: calculation,
+          inputs: inputs,
+          rows: rows.filter((r) => r.ready && !r.skipped).map((r) => ({
+            id: r.id,
+            name: r.name,
+            regular: parseFloat(r.regular) || 0,
+            statHoliday: parseFloat(r.statHoliday) || 0,
+            statPay: parseFloat(String(r.statPay == null ? "" : r.statPay).replace(/[^0-9.]/g, "")) || 0,
+            payMethod: r.payMethod,
+            memo: r.memo || "",
+            rate: parseFloat(String(r.rateHint == null ? "" : r.rateHint).replace(/[^0-9.]/g, "")) || 0,
+            empType: r.empType,
+            position: r.position
+          }))
+        }
+      });
     } catch (e) {
       window.alert("Network error: " + ((e && e.message) ? e.message : String(e)));
       setPreviewing(false);
