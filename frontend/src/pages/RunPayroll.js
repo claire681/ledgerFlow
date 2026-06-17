@@ -1030,7 +1030,7 @@ export default function RunPayroll() {
           <button style={ghostBtn} onClick={() => navigate(-1)}>Cancel</button>
           <span style={{ marginLeft: "auto", fontSize: 13.5, color: C.muted }}>{selectedCount} of {rows.length} employees selected</span>
           <button style={ghostBtn}>Save for later</button>
-          <button style={{ background: C.brand, color: "#fff", border: "none", borderRadius: 10,
+          <button onClick={() => navigate("/payroll/run/" + payRunId + "/preview")} style={{ background: C.brand, color: "#fff", border: "none", borderRadius: 10,
             padding: "11px 24px", font: FONT, fontWeight: 700, fontSize: 14, cursor: "pointer",
             display: "inline-flex", alignItems: "center", gap: 8 }}>
             Preview for {selectedCount} employees <ArrowRight size={16} />
