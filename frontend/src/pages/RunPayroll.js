@@ -396,11 +396,11 @@ export default function RunPayroll() {
   const TOUR_STEPS = [
     { id: null, title: "Welcome to Run Payroll", body: "This is where you turn employee hours into paycheques. Let's quickly walk through what each part of the page does." },
     { id: "tour-pay-period", title: "Pick your pay period", body: "Click the date to scroll through past and upcoming pay periods. The current one is checkmarked. Next pay date is the day employees see the deposit." },
-    { id: null, title: "Setup status", body: "The readiness card tells you who is good to go and who still needs setup. Yellow means setup is incomplete; teal means everyone is ready." },
-    { id: null, title: "Run totals", body: "The KPI cards above the table update live as you enter hours so you always know where the run stands." },
-    { id: null, title: "Enter hours", body: "Click any cell in the table to edit. Tick the checkbox to include or skip an employee. Use the row menu for pay method and memo." },
+    { id: "tour-readiness", title: "Setup status", body: "The readiness card tells you who is good to go and who still needs setup. Yellow means setup is incomplete; teal means everyone is ready." },
+    { id: "tour-kpis", title: "Run totals", body: "The KPI cards above the table update live as you enter hours so you always know where the run stands." },
+    { id: "tour-table", title: "Enter hours", body: "Click any cell in the table to edit. Tick the checkbox to include or skip an employee. Use the row menu for pay method and memo." },
     { id: "tour-toolbar", title: "Find and filter", body: "Search by name or position. Narrow the list with Filters. Hide rows or columns with Customize. Download with Export." },
-    { id: null, title: "Preview and finalize", body: "When the numbers look right, hit Preview in the sticky footer to review, then Finalize to lock the run." }
+    { id: "tour-footer", title: "Preview and finalize", body: "When the numbers look right, hit Preview in the sticky footer to review, then Finalize to lock the run." }
   ];
 
   useEffect(() => {
@@ -590,7 +590,8 @@ export default function RunPayroll() {
       setTourTargetRect({ top: r.top, left: r.left, width: r.width, height: r.height });
     };
     const el = document.getElementById(step.id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (!el) { setTourTargetRect(null); return; }
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
     const t = setTimeout(updateTourRect, 400);
     window.addEventListener("resize", updateTourRect);
     window.addEventListener("scroll", updateTourRect, true);
@@ -712,7 +713,7 @@ export default function RunPayroll() {
           {!loading && !error && (
             <>
               {/* readiness */}
-              <div style={{ border: "1px solid " + C.line, borderRadius: 14, padding: "18px 20px", marginBottom: 20 }}>
+              <div id="tour-readiness" style={{ border: "1px solid " + C.line, borderRadius: 14, padding: "18px 20px", marginBottom: 20 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
                   <Shield size={20} color={C.brand} />
                   <b style={{ fontSize: 16, color: C.ink, fontWeight: 800 }}>Payroll readiness</b>
@@ -902,7 +903,7 @@ export default function RunPayroll() {
               )}
 
               {/* table */}
-              <div style={{ border: "1px solid " + C.line, borderRadius: 14, overflow: "visible" }}>
+              <div id="tour-table" style={{ border: "1px solid " + C.line, borderRadius: 14, overflow: "visible" }}>
                 <div style={{ display: "grid", gridTemplateColumns: gridCols, alignItems: "center",
                   background: C.page, borderBottom: "1px solid " + C.line, fontSize: 11.5, fontWeight: 800,
                   letterSpacing: ".04em", color: C.muted, textTransform: "uppercase" }}>
@@ -1024,7 +1025,7 @@ export default function RunPayroll() {
         </div>
 
         {/* footer */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 26px",
+        <div id="tour-footer" style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 26px",
           borderTop: "1px solid " + C.line, background: "#fff" }}>
           <button style={ghostBtn} onClick={() => navigate(-1)}>Cancel</button>
           <span style={{ marginLeft: "auto", fontSize: 13.5, color: C.muted }}>{selectedCount} of {rows.length} employees selected</span>
