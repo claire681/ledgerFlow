@@ -315,14 +315,16 @@ export default function PayrollPreview() {
   const trendAbs = trendPct == null ? null : Math.abs(trendPct);
 
   const sparklinePoints = useMemo(() => {
-    if (priorCount < 1 || totals.total_cost <= 0) return null;
+    if (totals.total_cost <= 0) return null;
     const pts = priorRuns
       .map((r) => Number(r.total_payroll_cost || r.total_cost || r.total_gross || 0))
       .filter((v) => v > 0);
-    if (pts.length < 1) return null;
     pts.push(totals.total_cost);
+    if (pts.length === 1) {
+      pts.unshift(pts[0]);
+    }
     return pts;
-  }, [priorRuns, priorCount, totals.total_cost]);
+  }, [priorRuns, totals.total_cost]);
 
   if (loading) {
     return (
@@ -395,12 +397,12 @@ export default function PayrollPreview() {
 
               {sparklinePoints ? (
                 <>
-                  <div style={{ marginTop: 22 }} role="img" aria-label={"Payroll cost trend over the last " + sparklinePoints.length + " runs, " + (trendDir === "down" ? "down" : "up") + " " + trendAbs + " percent versus the previous run."}>
+                  <div style={{ marginTop: 22 }} role="img" aria-label={priorCount === 0 ? "First payroll run with a total cost of " + fmtMoney(totals.total_cost, currency) + ". Trend will build over time." : "Payroll cost trend over the last " + sparklinePoints.length + " runs, " + (trendDir === "down" ? "down" : "up") + " " + trendAbs + " percent versus the previous run."}>
                     <TrendSparkline points={sparklinePoints} height={110} />
                   </div>
                   <div style={{ fontSize: 12, color: C.muted, marginTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span>Cash-out, last {sparklinePoints.length} pay runs</span>
-                    <span style={{ color: "#51627A", fontWeight: 600 }}>{trendDir === "down" ? "Down" : "Up"} {trendAbs}% vs last run</span>
+                    <span>{priorCount === 0 ? "This is your first payroll run" : "Cash-out, last " + sparklinePoints.length + " pay runs"}</span>
+                    <span style={{ color: priorCount === 0 ? C.faint : "#51627A", fontWeight: priorCount === 0 ? 500 : 600 }}>{priorCount === 0 ? "Trend will build from here" : (trendDir === "down" ? "Down" : "Up") + " " + trendAbs + "% vs last run"}</span>
                   </div>
                 </>
               ) : (
