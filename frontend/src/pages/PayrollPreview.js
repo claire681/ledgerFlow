@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { X, HelpCircle, Check, ChevronDown, AlertTriangle, Info, ArrowDown, ArrowUp } from "lucide-react";
+import { X, HelpCircle, Check, ChevronDown, AlertTriangle, Info, ArrowDown, ArrowUp, Search, BarChart3 } from "lucide-react";
 
 const C = {
   ink: "#12262B",
@@ -169,6 +169,229 @@ function DetailCell({ label, value, sub, last, narrow }) {
   );
 }
 
+function PayStubDrawer({ employee, run, onClose, currency }) {
+  useEffect(() => {
+    const h = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
+  if (!employee) return null;
+
+  const e = employee;
+  const regHrs = Math.max(0, Number(e.total_hours||0) - Number(e.statHoliday||0));
+  const shHrs = Number(e.statHoliday||0);
+  const rate = Number(e.rate||0);
+  const stat = Number(e.statPay||0);
+  const gross = Number(e.gross_pay||0);
+  const empTax = Number(e.employee_taxes||0);
+  const net = Number(e.net_pay || (gross - empTax));
+  const erTax = Number(e.employer_taxes||0);
+  const isDD = e.payment_method === "Direct deposit";
+
+  const tH = { textAlign:"right", padding:"7px 4px", fontWeight:500, color:C.faint, fontSize:11 };
+  const tHL = { ...tH, textAlign:"left" };
+  const tD = { padding:"7px 4px", color:C.text };
+  const tDR = { padding:"7px 4px", color:C.text, textAlign:"right", fontVariantNumeric:"tabular-nums" };
+  const tDash = { padding:"7px 4px", color:C.faint, textAlign:"right" };
+  const tT = { padding:"8px 4px", fontWeight:600, color:C.ink };
+  const tTR = { padding:"8px 4px", fontWeight:600, color:C.ink, textAlign:"right", fontVariantNumeric:"tabular-nums" };
+  const rB = { borderBottom:"1px solid " + C.lineSoft };
+  const sH = { fontSize:10.5, fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", color:C.faint, marginBottom:8 };
+  const meta = { color:C.faint, marginBottom:2, fontSize:10.5, fontWeight:500, textTransform:"uppercase", letterSpacing:"0.06em" };
+  const metaV = { color:C.text, fontWeight:500 };
+  const metaVN = { color:C.text, fontWeight:500, fontVariantNumeric:"tabular-nums" };
+
+  return (
+    <>
+      <div onClick={onClose} aria-hidden="true" style={{ position:"fixed", top:0, left:0, right:0, bottom:0, background:"rgba(8,32,31,0.45)", zIndex:100 }} />
+      <div role="dialog" aria-label="Paycheck details" style={{ position:"fixed", top:0, right:0, bottom:0, width:"min(620px, 100vw)", background:"#fff", boxShadow:"-8px 0 24px rgba(16,26,43,0.18)", zIndex:101, fontFamily:FONT, color:C.text, overflow:"auto", display:"flex", flexDirection:"column" }}>
+
+        <div style={{ position:"sticky", top:0, background:"#fff", padding:"18px 22px", borderBottom:"1px solid "+C.line, display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:16, zIndex:1 }}>
+          <div style={{ minWidth:0, flex:1 }}>
+            <div style={{ fontSize:10.5, fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:C.faint, marginBottom:6 }}>Paycheck details</div>
+            <div style={{ fontSize:17, fontWeight:600, color:C.ink }}>{e.name || "Unnamed"}</div>
+            <div style={{ display:"flex", gap:8, marginTop:8, alignItems:"center" }}>
+              <span style={{ fontSize:11, fontWeight:600, padding:"3px 8px", borderRadius:5, background:isDD?C.tealSoft:"#EEF1F5", color:isDD?C.tealInk:"#51627A" }}>{e.payment_method || "Direct deposit"}</span>
+              <span style={{ fontSize:12, color:C.faint }}>{e.classification || (e.empType==="salaried"?"Salary":"Hourly")}</span>
+            </div>
+          </div>
+          <div style={{ textAlign:"right", flexShrink:0 }}>
+            <div style={{ fontSize:10.5, fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:C.faint, marginBottom:4 }}>Net pay</div>
+            <div style={{ fontSize:24, fontWeight:600, color:C.ink, letterSpacing:"-0.02em", lineHeight:1, fontVariantNumeric:"tabular-nums" }}>{fmtMoney(net, currency)}</div>
+          </div>
+          <button onClick={onClose} aria-label="Close" style={{ background:"none", border:"none", color:C.faint, cursor:"pointer", padding:4, alignSelf:"flex-start", display:"inline-flex" }}><X size={18} /></button>
+        </div>
+
+        <div style={{ padding:"14px 22px", borderBottom:"1px solid "+C.lineSoft, display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px 24px", fontSize:12 }}>
+          <div><div style={meta}>Pay date</div><div style={metaVN}>{fmtDate(run && run.pay_date)}</div></div>
+          <div><div style={meta}>Pay period</div><div style={metaVN}>{fmtDate(run && run.pay_period_start)} to {fmtDate(run && run.pay_period_end)}</div></div>
+          <div><div style={meta}>Paid from</div><div style={metaV}>{(run && run.posting_account_name) || "BrightCare RBC Chequing"}</div></div>
+          <div><div style={meta}>Paid by</div><div style={metaV}>{(e.payment_method || "Direct deposit")} ({fmtMoney(net, currency)})</div></div>
+          <div style={{ gridColumn:"span 2" }}><div style={meta}>Employee address</div><div style={metaV}>{e.address || "-"}</div></div>
+        </div>
+
+        <div style={{ margin:"16px 22px", background:C.rightPanelBg, border:"1px solid "+C.line, borderRadius:10, padding:"13px 16px" }}>
+          <div style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", fontSize:13 }}><span style={{ color:C.muted }}>Gross pay</span><span style={{ fontWeight:600, color:C.ink, fontVariantNumeric:"tabular-nums" }}>{fmtMoney(gross, currency)}</span></div>
+          <div style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", fontSize:13 }}><span style={{ color:C.muted }}>Employee taxes &amp; deductions</span><span style={{ fontWeight:600, color:C.ink, fontVariantNumeric:"tabular-nums" }}>-{fmtMoney(empTax, currency)}</span></div>
+          <div style={{ height:1, background:C.line, margin:"4px 0" }} />
+          <div style={{ display:"flex", justifyContent:"space-between", padding:"5px 0" }}><span style={{ fontWeight:600, color:C.ink, fontSize:13.5 }}>Net pay</span><span style={{ fontWeight:700, color:C.teal, fontVariantNumeric:"tabular-nums", fontSize:14 }}>{fmtMoney(net, currency)}</span></div>
+          <div style={{ marginTop:8, fontSize:11, color:C.faint, lineHeight:1.5 }}>Employer cost this run: {fmtMoney(erTax, currency)}, paid by you and not deducted from the employee's pay.</div>
+        </div>
+
+        <div style={{ padding:"0 22px 14px" }}>
+          <div style={sH}>Pay</div>
+          <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+            <thead><tr style={{ borderBottom:"1px solid "+C.line }}><th style={tHL}>Type</th><th style={tH}>Hours</th><th style={tH}>Rate</th><th style={tH}>Current</th><th style={tH}>YTD</th></tr></thead>
+            <tbody>
+              <tr style={rB}><td style={tD}>Regular Pay</td><td style={tDR}>{regHrs}</td><td style={tDR}>{fmtMoney(rate, currency)}</td><td style={tDR}>{fmtMoney(regHrs*rate, currency)}</td><td style={tDR}>{fmtMoney(0, currency)}</td></tr>
+              <tr style={rB}><td style={tD}>Stat Holiday Pay</td><td style={tDR}>{shHrs}</td><td style={tDR}>{fmtMoney(rate, currency)}</td><td style={tDR}>{fmtMoney(shHrs*rate, currency)}</td><td style={tDR}>{fmtMoney(0, currency)}</td></tr>
+              <tr style={rB}><td style={tD}>Stat pay (average daily wage)</td><td style={tDash}>-</td><td style={tDash}>-</td><td style={tDR}>{fmtMoney(stat, currency)}</td><td style={tDR}>{fmtMoney(0, currency)}</td></tr>
+              <tr><td style={tT}>Total</td><td style={tTR}>{regHrs+shHrs}</td><td style={{ padding:"8px 4px" }}></td><td style={tTR}>{fmtMoney(regHrs*rate + shHrs*rate + stat, currency)}</td><td style={tTR}>{fmtMoney(0, currency)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ padding:"0 22px 14px" }}>
+          <div style={sH}>Employee taxes &amp; deductions</div>
+          <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+            <thead><tr style={{ borderBottom:"1px solid "+C.line }}><th style={tHL}>Type</th><th style={tH}>Current</th><th style={tH}>YTD</th></tr></thead>
+            <tbody>
+              <tr style={rB}><td style={tD}>Income Tax</td><td style={tDR}>{fmtMoney(0, currency)}</td><td style={tDR}>{fmtMoney(0, currency)}</td></tr>
+              <tr style={rB}><td style={tD}>Employment Insurance</td><td style={tDR}>{fmtMoney(empTax, currency)}</td><td style={tDR}>{fmtMoney(empTax, currency)}</td></tr>
+              <tr style={rB}><td style={tD}>Canada Pension Plan</td><td style={tDR}>{fmtMoney(0, currency)}</td><td style={tDR}>{fmtMoney(0, currency)}</td></tr>
+              <tr style={rB}><td style={tD}>Second Canada Pension Plan</td><td style={tDR}>{fmtMoney(0, currency)}</td><td style={tDR}>{fmtMoney(0, currency)}</td></tr>
+              <tr><td style={tT}>Total</td><td style={tTR}>{fmtMoney(empTax, currency)}</td><td style={tTR}>{fmtMoney(empTax, currency)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ padding:"0 22px 18px" }}>
+          <div style={sH}>Employer taxes &amp; contributions</div>
+          <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+            <thead><tr style={{ borderBottom:"1px solid "+C.line }}><th style={tHL}>Type</th><th style={tH}>Current</th><th style={tH}>YTD</th></tr></thead>
+            <tbody>
+              <tr style={rB}><td style={tD}>Employment Insurance Employer</td><td style={tDR}>{fmtMoney(erTax, currency)}</td><td style={tDR}>{fmtMoney(erTax, currency)}</td></tr>
+              <tr style={rB}><td style={tD}>Canada Pension Plan Employer</td><td style={tDR}>{fmtMoney(0, currency)}</td><td style={tDR}>{fmtMoney(0, currency)}</td></tr>
+              <tr style={rB}><td style={tD}>Second Canada Pension Plan Employer</td><td style={tDR}>{fmtMoney(0, currency)}</td><td style={tDR}>{fmtMoney(0, currency)}</td></tr>
+              <tr><td style={tT}>Total</td><td style={tTR}>{fmtMoney(erTax, currency)}</td><td style={tTR}>{fmtMoney(erTax, currency)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ position:"sticky", bottom:0, padding:"14px 22px", borderTop:"1px solid "+C.line, display:"flex", justifyContent:"space-between", gap:12, background:C.rightPanelBg, marginTop:"auto" }}>
+          <button onClick={onClose} style={{ background:"none", border:"1px solid transparent", color:C.muted, padding:"8px 12px", fontWeight:600, fontSize:13, cursor:"pointer", fontFamily:FONT }}>Close</button>
+          <button style={{ background:C.teal, color:"#fff", border:"1px solid transparent", padding:"9px 18px", borderRadius:8, fontWeight:600, fontSize:13, cursor:"pointer", fontFamily:FONT }}>Edit amounts</button>
+        </div>
+      </div>
+
+      {paystubFor && (
+        <PayStubDrawer employee={paystubFor} run={run} onClose={() => setPaystubFor(null)} currency={currency} />
+      )}
+      {compareFor && (
+        <CompareModal employee={compareFor} run={run} onClose={() => setCompareFor(null)} currency={currency} />
+      )}
+    </>
+  );
+}
+
+function CompareModal({ employee, run, onClose, currency }) {
+  useEffect(() => {
+    const h = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
+  if (!employee) return null;
+
+  const e = employee;
+  const curG = Number(e.gross_pay||0);
+  const curR = Number(e.rate||0);
+  const curH = Number(e.total_hours||0);
+  const curEI = Number(e.employee_taxes||0);
+  const curN = Number(e.net_pay||0);
+  const cP = Number(e.change_in_gross_pct||0);
+  const lstG = cP !== 0 ? curG / (1 + cP) : 0;
+  const lstEI = lstG > 0 && curG > 0 ? lstG * (curEI / curG) : 0;
+  const lstN = lstG - lstEI;
+  const lstH = curR > 0 && lstG > 0 ? Math.round(lstG / curR) : 0;
+  const fOd = (v) => v > 0 ? fmtMoney(v, currency) : "-";
+  const cD = fmtDate(run && run.pay_date) || "Current";
+  const lD = "Last payday";
+
+  const cellL = { padding:"7px 8px", color:C.text };
+  const cellR = { padding:"7px 8px", color:C.text, textAlign:"right", whiteSpace:"nowrap", fontVariantNumeric:"tabular-nums" };
+  const cellDash = { padding:"6px 8px", color:C.faint, textAlign:"right", whiteSpace:"nowrap" };
+  const groupL = { padding:8, fontWeight:600, color:C.ink, textTransform:"uppercase", fontSize:11, letterSpacing:"0.05em" };
+  const groupR = { padding:8, fontWeight:600, color:C.ink, textAlign:"right", whiteSpace:"nowrap", fontVariantNumeric:"tabular-nums" };
+  const indL = { padding:"5px 8px 5px 22px", color:C.muted, fontSize:12 };
+  const indR = { padding:"5px 8px", color:C.muted, textAlign:"right", whiteSpace:"nowrap", fontVariantNumeric:"tabular-nums" };
+  const sumL = { padding:"5px 8px", fontWeight:600, color:C.ink };
+  const sumR = { padding:"5px 8px", fontWeight:600, color:C.ink, textAlign:"right", whiteSpace:"nowrap", fontVariantNumeric:"tabular-nums" };
+  const rB = { borderBottom:"1px solid " + C.lineSoft };
+  const cellText = { padding:"6px 8px", color:C.text };
+  const cellTextR = { padding:"6px 8px", color:C.text, textAlign:"right", whiteSpace:"nowrap", fontVariantNumeric:"tabular-nums" };
+
+  return (
+    <div onClick={onClose} role="dialog" aria-label="Compare to last regular payday" style={{ position:"fixed", top:0, left:0, right:0, bottom:0, background:"rgba(8,32,31,0.45)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center", padding:20, fontFamily:FONT }}>
+      <div onClick={(ev) => ev.stopPropagation()} style={{ background:"#fff", border:"1px solid "+C.line, borderRadius:14, maxWidth:640, width:"100%", maxHeight:"90vh", overflow:"auto", color:C.text, boxShadow:"0 24px 48px rgba(16,26,43,0.18)" }}>
+        <div style={{ padding:"16px 20px", borderBottom:"1px solid "+C.line, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ fontSize:15, fontWeight:600, color:C.ink }}>Compare to last regular payday</div>
+          <button onClick={onClose} aria-label="Close" style={{ background:"none", border:"none", color:C.muted, cursor:"pointer", padding:4, display:"inline-flex" }}><X size={16} /></button>
+        </div>
+
+        <div style={{ padding:"4px 20px 18px", overflowX:"auto" }}>
+          <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12.5, tableLayout:"auto" }}>
+            <thead>
+              <tr style={{ borderBottom:"1px solid "+C.line }}>
+                <th style={{ textAlign:"left", padding:"12px 8px", fontWeight:500, color:C.muted }}>Employee: {e.name || "Unnamed"}</th>
+                <th style={{ textAlign:"right", padding:"12px 8px", fontWeight:500, color:C.muted, whiteSpace:"nowrap" }}>
+                  <div>Last Payday</div>
+                  <div style={{ fontWeight:400, color:C.faint, fontSize:11, fontVariantNumeric:"tabular-nums" }}>({lD})</div>
+                </th>
+                <th style={{ textAlign:"right", padding:"12px 8px", fontWeight:500, color:C.muted, whiteSpace:"nowrap" }}>
+                  <div>Current Payday</div>
+                  <div style={{ fontWeight:400, color:C.faint, fontSize:11, fontVariantNumeric:"tabular-nums" }}>({cD})</div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style={{ background:"#F7F9FB" }}>
+                <td style={groupL}>Compensation</td>
+                <td style={groupR}>{fOd(lstG)}</td>
+                <td style={groupR}>{fOd(curG)}</td>
+              </tr>
+              <tr style={rB}><td style={cellL}>Regular Pay</td><td style={cellR}>{fOd(lstG)}</td><td style={cellR}>{fOd(curG)}</td></tr>
+              <tr style={rB}><td style={indL}>Rate</td><td style={indR}>{curR > 0 ? fmtMoney(curR, currency) + "/hr" : "-"}</td><td style={indR}>{curR > 0 ? fmtMoney(curR, currency) + "/hr" : "-"}</td></tr>
+              <tr style={rB}><td style={indL}>Hours</td><td style={indR}>{lstH > 0 ? lstH : "-"}</td><td style={indR}>{curH > 0 ? curH : "-"}</td></tr>
+
+              <tr style={{ background:"#F7F9FB" }}>
+                <td style={groupL}>Taxes</td>
+                <td style={groupR}>{fOd(lstEI)}</td>
+                <td style={groupR}>{fOd(curEI)}</td>
+              </tr>
+              <tr style={rB}><td style={cellText}>Income Tax</td><td style={cellDash}>-</td><td style={cellDash}>-</td></tr>
+              <tr style={rB}><td style={cellText}>Employment Insurance</td><td style={cellTextR}>{fOd(lstEI)}</td><td style={cellTextR}>{fOd(curEI)}</td></tr>
+              <tr style={rB}><td style={cellText}>Canada Pension Plan</td><td style={cellDash}>-</td><td style={cellDash}>-</td></tr>
+              <tr style={rB}><td style={cellText}>Second Canada Pension Plan</td><td style={cellDash}>-</td><td style={cellDash}>-</td></tr>
+
+              <tr style={{ borderTop:"1px solid "+C.line }}>
+                <td style={{ padding:"10px 8px 5px", fontWeight:600, color:C.ink }}>Total pay</td>
+                <td style={{ padding:"10px 8px 5px", fontWeight:600, color:C.ink, textAlign:"right", whiteSpace:"nowrap", fontVariantNumeric:"tabular-nums" }}>{fOd(lstG)}</td>
+                <td style={{ padding:"10px 8px 5px", fontWeight:600, color:C.ink, textAlign:"right", whiteSpace:"nowrap", fontVariantNumeric:"tabular-nums" }}>{fOd(curG)}</td>
+              </tr>
+              <tr><td style={sumL}>Taxes and deductions</td><td style={sumR}>{fOd(lstEI)}</td><td style={sumR}>{fOd(curEI)}</td></tr>
+              <tr>
+                <td style={{ padding:"5px 8px 10px", fontWeight:700, color:C.ink, fontSize:13 }}>Net pay</td>
+                <td style={{ padding:"5px 8px 10px", fontWeight:700, color:C.teal, textAlign:"right", whiteSpace:"nowrap", fontVariantNumeric:"tabular-nums", fontSize:13 }}>{fOd(lstN)}</td>
+                <td style={{ padding:"5px 8px 10px", fontWeight:700, color:C.teal, textAlign:"right", whiteSpace:"nowrap", fontVariantNumeric:"tabular-nums", fontSize:13 }}>{fOd(curN)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PayrollPreview() {
   const { payRunId } = useParams();
   const navigate = useNavigate();
@@ -179,6 +402,8 @@ export default function PayrollPreview() {
   const [lines, setLines] = useState([]);
   const [priorRuns, setPriorRuns] = useState([]);
   const [autoInjected, setAutoInjected] = useState(false);
+  const [paystubFor, setPaystubFor] = useState(null);
+  const [compareFor, setCompareFor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -523,7 +748,7 @@ export default function PayrollPreview() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5, minWidth: 760 }}>
               <thead>
                 <tr>
-                  {["Employee", "Total hours", "Gross pay", "Employee taxes & deductions", "Net pay", "Employer taxes & deductions", "Change in gross pay", "Memo"].map((h, i) => (
+                  {["Employee", "Total hours", "Gross pay", "Employee taxes & deductions", "Net pay", "Employer taxes & contributions", "Change in gross pay", "Memo"].map((h, i) => (
                     <th key={h} style={{ textAlign: i === 0 ? "left" : "right", fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: C.faint, padding: "14px 20px", background: C.thBg, borderBottom: "1px solid " + C.line, whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -547,8 +772,12 @@ export default function PayrollPreview() {
                       <td style={{ ...cellBase, textAlign: "right", ...tabular }}>{fmtMoney(r.gross_pay, currency)}</td>
                       <td style={{ ...cellBase, textAlign: "right", ...tabular }}>{fmtMoney(r.employee_taxes, currency)}</td>
                       <td style={{ ...cellBase, textAlign: "right", fontWeight: 600, ...tabular }}>
-                        {fmtMoney(r.net_pay, currency)}
-                        <span title="View breakdown" style={{ color: C.faint, marginLeft: 5, fontSize: 12, cursor: "pointer" }}>{"\u25CB"}</span>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "flex-end" }}>
+                          <span>{fmtMoney(r.net_pay, currency)}</span>
+                          <button onClick={() => setPaystubFor(r)} title="View paystub" aria-label="View paystub" style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 6, padding: "4px 6px", cursor: "pointer", color: C.muted, display: "inline-flex", alignItems: "center" }}>
+                            <Search size={12} />
+                          </button>
+                        </span>
                       </td>
                       <td style={{ ...cellBase, textAlign: "right", ...tabular }}>{fmtMoney(r.employer_taxes, currency)}</td>
                       <td style={{ ...cellBase, textAlign: "right" }}>
@@ -558,10 +787,14 @@ export default function PayrollPreview() {
                           const isDown = r.change_in_gross_pct < 0;
                           const p = Math.abs(Math.round(r.change_in_gross_pct * 100));
                           return (
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, color: isDown ? C.muted : C.tealInk }}>
-                              {isDown ? <ArrowDown size={11} /> : <ArrowUp size={11} />}
-                              {isDown ? "Down" : "Up"} {p}%
-                              <ChevronDown size={11} color={C.faint} />
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, justifyContent: "flex-end" }}>
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, color: isDown ? C.muted : C.tealInk }}>
+                                {isDown ? <ArrowDown size={11} /> : <ArrowUp size={11} />}
+                                {isDown ? "Down" : "Up"} {p}%
+                              </span>
+                              <button onClick={() => setCompareFor(r)} title="Compare to last payday" aria-label="Compare to last payday" style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 6, padding: "4px 6px", cursor: "pointer", color: C.muted, display: "inline-flex", alignItems: "center" }}>
+                                <BarChart3 size={12} />
+                              </button>
                             </span>
                           );
                         })()}
