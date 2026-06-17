@@ -393,6 +393,7 @@ export default function RunPayroll() {
   const [tourActive, setTourActive] = useState(false);
   const [tourStep, setTourStep] = useState(0);
   const [tourTargetRect, setTourTargetRect] = useState(null);
+  const [previewing, setPreviewing] = useState(false);
   const TOUR_STEPS = [
     { id: null, title: "Welcome to Run Payroll", body: "This is where you turn employee hours into paycheques. Let's quickly walk through what each part of the page does." },
     { id: "tour-pay-period", title: "Pick your pay period", body: "Click the date to scroll through past and upcoming pay periods. The current one is checkmarked. Next pay date is the day employees see the deposit." },
@@ -527,6 +528,43 @@ export default function RunPayroll() {
   const positionCount = (p) => rows.filter((r) => r.position === p).length;
   const clearFilters = () => { setFilterPayMethod([]); setFilterStatus([]); setFilterEmpType([]); setFilterPosition(""); };
   const filtersApplied = filterPayMethod.length + filterStatus.length + filterEmpType.length + (filterPosition ? 1 : 0);
+  const previewRun = async () => {
+    if (previewing) return;
+    const inputs = rows
+      .filter((r) => r.ready && !r.skipped)
+      .map((r) => ({
+        employee_id: r.id,
+        regular_hours: parseFloat(r.regular) || 0,
+        stat_holiday_hours: parseFloat(r.statHoliday) || 0,
+        stat_pay_amount: parseFloat(String(r.statPay == null ? "" : r.statPay).replace(/[^0-9.]/g, "")) || 0,
+        payment_method: r.payMethod,
+        memo: r.memo || ""
+      }));
+    if (inputs.length === 0) {
+      window.alert("No employees ready to pay. Tick at least one ready employee in the table first.");
+      return;
+    }
+    setPreviewing(true);
+    try {
+      const token = localStorage.getItem("access_token") || localStorage.getItem("token") || "";
+      const res = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/calculate", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ employee_inputs: inputs })
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        window.alert("Could not calculate payroll. HTTP " + res.status + (errText ? ": " + errText.slice(0, 300) : ""));
+        setPreviewing(false);
+        return;
+      }
+      navigate("/payroll/run/" + payRunId + "/preview");
+    } catch (e) {
+      window.alert("Network error: " + ((e && e.message) ? e.message : String(e)));
+      setPreviewing(false);
+    }
+  };
+
   const customizeDefaults = () => {
     setSortKey(""); setSortDir("asc"); setDensity("normal"); setStripe(false);
     setHideSkipped(false); setOnlyWithHours(false); setHidden({});
@@ -1030,7 +1068,7 @@ export default function RunPayroll() {
           <button style={ghostBtn} onClick={() => navigate(-1)}>Cancel</button>
           <span style={{ marginLeft: "auto", fontSize: 13.5, color: C.muted }}>{selectedCount} of {rows.length} employees selected</span>
           <button style={ghostBtn}>Save for later</button>
-          <button onClick={() => navigate("/payroll/run/" + payRunId + "/preview")} style={{ background: C.brand, color: "#fff", border: "none", borderRadius: 10,
+          <button onClick={previewRun} style={{ background: C.brand, color: "#fff", border: "none", borderRadius: 10,
             padding: "11px 24px", font: FONT, fontWeight: 700, fontSize: 14, cursor: "pointer",
             display: "inline-flex", alignItems: "center", gap: 8 }}>
             Preview for {selectedCount} employees <ArrowRight size={16} />
