@@ -34,6 +34,20 @@ const tabular = { fontVariantNumeric: "tabular-nums", fontFeatureSettings: '"tnu
 const API = "https://api.getnovala.com";
 const SIDEBAR_W = 84;
 
+const DEMO_PRIOR_RUNS = [
+  { id: "demo-1", status: "finalized", pay_date: "2026-04-15", total_payroll_cost: 4231.10 },
+  { id: "demo-2", status: "finalized", pay_date: "2026-04-30", total_payroll_cost: 4180.55 },
+  { id: "demo-3", status: "finalized", pay_date: "2026-05-15", total_payroll_cost: 4302.40 },
+  { id: "demo-4", status: "finalized", pay_date: "2026-05-31", total_payroll_cost: 4095.20 },
+  { id: "demo-5", status: "finalized", pay_date: "2026-06-15", total_payroll_cost: 4225.80 },
+];
+
+const DEMO_LINES = [
+  { employee_id: "demo-e1", name: "Achieng, Mary", classification: "Salary", payment_method: "Direct deposit", total_hours: 80, gross_pay: 2400.00, employee_taxes: 612.40, net_pay: 1787.60, employer_taxes: 246.00, change_in_gross_pct: null },
+  { employee_id: "demo-e2", name: "Okello, James", classification: "Hourly", payment_method: "Direct deposit", total_hours: 64, gross_pay: 1280.00, employee_taxes: 268.30, net_pay: 1011.70, employer_taxes: 131.20, change_in_gross_pct: 0.04 },
+  { employee_id: "demo-e3", name: "Kemanzi, Claire", classification: "Hourly", payment_method: "Cheque", total_hours: 2, gross_pay: 50.00, employee_taxes: 0.82, net_pay: 49.18, employer_taxes: 1.15, change_in_gross_pct: -0.97 },
+];
+
 function getToken() {
   return localStorage.getItem("access_token") || localStorage.getItem("token") || "";
 }
@@ -241,6 +255,11 @@ export default function PayrollPreview() {
           .filter((r) => String(r.id) !== String(payRunId))
           .sort((a, b) => String(a.pay_date || "").localeCompare(String(b.pay_date || "")));
         setPriorRuns(prior.slice(-5));
+        if (typeof window !== "undefined" && window.location.search.indexOf("demo=1") !== -1) {
+          setPriorRuns(DEMO_PRIOR_RUNS);
+          const allZero = linesArr.every((l) => Number(l.gross_pay) === 0);
+          if (allZero) setLines(DEMO_LINES);
+        }
         setLoading(false);
       } catch (e) {
         if (!cancelled) {
