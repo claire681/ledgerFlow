@@ -108,7 +108,7 @@ function TrendSparkline({ points, height }) {
   const max = Math.max.apply(null, points);
   const range = (max - min) || 1;
   const xAt = (i) => pad + (i * ((W - pad * 2) / (points.length - 1)));
-  const yAt = (v) => pad + ((H - pad * 2) * (1 - (v - min) / range));
+  const yAt = (v) => (max === min) ? (pad + (H - pad * 2) * (1 - Math.min(v / 5000, 0.95))) : (pad + ((H - pad * 2) * (1 - (v - min) / range)));
   const baselineY = H - pad;
   const pts = points.map((p, i) => ({ x: xAt(i), y: yAt(p) }));
   const tension = 0.16;
