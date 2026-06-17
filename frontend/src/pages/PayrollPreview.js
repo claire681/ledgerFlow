@@ -355,7 +355,7 @@ export default function PayrollPreview() {
     );
   }
 
-  const pagePad = narrow ? "30px 18px 110px" : "30px 40px 110px";
+  const pagePad = narrow ? "20px 16px 110px" : "24px 24px 110px";
   const h1Size = narrow ? 22 : 26;
   const totalSize = narrow ? 42 : 50;
   const panelPad = narrow ? "26px 24px" : "30px 36px";
@@ -363,7 +363,7 @@ export default function PayrollPreview() {
   return (
     <>
       <div style={{ background: C.surface, minHeight: "100vh", padding: pagePad, fontFamily: FONT, color: C.text }}>
-        <div style={{ maxWidth: 1640, margin: "0 auto" }}>
+        <div style={{ width: "100%" }}>
 
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 22, gap: 16 }}>
             <div style={{ minWidth: 0 }}>
