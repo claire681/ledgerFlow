@@ -784,6 +784,9 @@ export default function RunPayroll() {
                   )}
                 </div>
                 <div style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
+                  <button onClick={() => navigate("/payroll/employees/new")} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 14px", border: "none", borderRadius: 10, background: C.brand, color: "#fff", fontSize: 13.5, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
+                    <Plus size={15} />Add employee
+                  </button>
                   <div style={{ position: "relative" }}>
                     <button style={toolBtn} onClick={() => setExportOpen((o) => !o)}><Download size={15} />Export<ChevronDown size={13} style={{ marginLeft: -2 }} /></button>
                     {exportOpen && (
