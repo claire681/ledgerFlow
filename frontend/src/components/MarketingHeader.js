@@ -54,7 +54,11 @@ const MENU_CONTENT = {
   },
 };
 
-function MegaMenuPanel({ content }) {
+const MENU_ROUTES = {
+  "Employee portal": "/employee-portal",
+};
+
+function MegaMenuPanel({ content, onItemClick }) {
   const cols = content.columns;
   const colCount = cols.length;
   return (
@@ -66,7 +70,7 @@ function MegaMenuPanel({ content }) {
               <h3 style={{ fontSize: 11.5, fontWeight: 700, color: TEXT_TERTIARY, letterSpacing: "0.08em", textTransform: "uppercase", margin: "0 0 14px" }}>{col.title}</h3>
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
                 {col.items.map((item, j) => (
-                  <li key={j} style={{ fontSize: 13.5, fontWeight: 500, color: TEXT_INK, cursor: "pointer", padding: "5px 0", letterSpacing: "-0.005em" }}>{item}</li>
+                  <li key={j} onClick={() => onItemClick && onItemClick(item)} style={{ fontSize: 13.5, fontWeight: 500, color: TEXT_INK, cursor: "pointer", padding: "5px 0", letterSpacing: "-0.005em" }}>{item}</li>
                 ))}
               </ul>
             </div>
@@ -91,6 +95,9 @@ function MegaMenuPanel({ content }) {
 
 export default function MarketingHeader({ onFeaturesClick }) {
   const navigate = useNavigate();
+  const handleMenuItemClick = (item) => {
+    if (MENU_ROUTES[item]) navigate(MENU_ROUTES[item]);
+  };
   const [openPanel, setOpenPanel] = useState(null);
   const headerRef = useRef(null);
 
@@ -168,7 +175,7 @@ export default function MarketingHeader({ onFeaturesClick }) {
         </div>
       </div>
       {openPanel && MENU_CONTENT[openPanel] && (
-        <MegaMenuPanel content={MENU_CONTENT[openPanel]} />
+        <MegaMenuPanel content={MENU_CONTENT[openPanel]} onItemClick={handleMenuItemClick} />
       )}
     </header>
   );
