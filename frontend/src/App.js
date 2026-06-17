@@ -282,7 +282,7 @@ const handleOnboardingComplete = () => {
           <Route path="/help/auto-payroll" element={<HelpAutoPayroll />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/accept-invite/:token" element={<AcceptInvite />} />
-          <Route path="/" element={token ? <AppLayout onLogout={handleLogout} /> : <Landing />} />
+          <Route path="/" element={token ? <AppLayout onLogout={handleLogout} /> : <LandingV2 />} />
           <Route path="*" element={token ? <AppLayout onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
         </Routes>
       </AIProvider>
