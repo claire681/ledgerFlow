@@ -403,12 +403,17 @@ export default function PayrollPreview() {
                     <span style={{ color: "#51627A", fontWeight: 600 }}>{trendDir === "down" ? "Down" : "Up"} {trendAbs}% vs last run</span>
                   </div>
                 </>
-              ) : priorCount === 0 ? (
-                <div style={{ marginTop: 18, fontSize: 13, color: C.muted, display: "flex", alignItems: "center", gap: 8 }}>
-                  <Info size={15} color={C.faint} />
-                  This is your first payroll run, so there's no trend to compare yet.
+              ) : (
+                <div style={{ marginTop: 22, height: 96, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, background: "linear-gradient(180deg, rgba(231,234,240,0.22) 0%, rgba(231,234,240,0) 100%)" }} role="img" aria-label="Trend chart placeholder, your payroll cost trend will appear here after you finalize a payroll run.">
+                  <svg viewBox="0 0 1000 96" width="100%" height="96" preserveAspectRatio="none" style={{ position: "absolute", top: 0, left: 0 }}>
+                    <line x1="10" y1="48" x2="990" y2="48" stroke="#E7EAF0" strokeWidth="1.5" strokeDasharray="6 6" vectorEffect="non-scaling-stroke" />
+                  </svg>
+                  <span style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12.5, color: C.muted, background: "#fff", padding: "6px 14px", borderRadius: 999, border: "1px solid " + C.line, boxShadow: "0 1px 2px rgba(16,26,43,0.04)" }}>
+                    <Info size={13} color={C.faint} />
+                    {priorCount === 0 ? "Your trend will appear here once you finalize a payroll" : "Trend needs at least one prior payroll on this schedule"}
+                  </span>
                 </div>
-              ) : null}
+              )}
             </div>
 
             <div style={{ padding: panelPad, background: C.rightPanelBg, borderLeft: narrow ? "0" : "1px solid " + C.line, borderTop: narrow ? "1px solid " + C.line : "0" }}>
