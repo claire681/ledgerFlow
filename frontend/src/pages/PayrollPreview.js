@@ -87,18 +87,32 @@ function useNarrowScreen(threshold) {
 
 function TrendSparkline({ points, height }) {
   if (!points || points.length < 2) return null;
-  const H = height || 96;
+  const H = height || 110;
   const W = 1000;
   const pad = 10;
   const min = Math.min.apply(null, points);
   const max = Math.max.apply(null, points);
   const range = (max - min) || 1;
-  const x = (i) => pad + (i * ((W - pad * 2) / (points.length - 1)));
-  const y = (v) => pad + ((H - pad * 2) * (1 - (v - min) / range));
-  const line = points.map((p, i) => (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(p).toFixed(1)).join(" ");
-  const area = line + " L" + x(points.length - 1).toFixed(1) + "," + (H - pad) + " L" + x(0).toFixed(1) + "," + (H - pad) + " Z";
-  const lx = x(points.length - 1).toFixed(1);
-  const ly = y(points[points.length - 1]).toFixed(1);
+  const xAt = (i) => pad + (i * ((W - pad * 2) / (points.length - 1)));
+  const yAt = (v) => pad + ((H - pad * 2) * (1 - (v - min) / range));
+  const baselineY = H - pad;
+  const pts = points.map((p, i) => ({ x: xAt(i), y: yAt(p) }));
+  const tension = 0.16;
+  let linePath = "M " + pts[0].x.toFixed(1) + "," + pts[0].y.toFixed(1);
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = i > 0 ? pts[i - 1] : pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = i < pts.length - 2 ? pts[i + 2] : pts[i + 1];
+    const cp1x = p1.x + (p2.x - p0.x) * tension;
+    const cp1y = p1.y + (p2.y - p0.y) * tension;
+    const cp2x = p2.x - (p3.x - p1.x) * tension;
+    const cp2y = p2.y - (p3.y - p1.y) * tension;
+    linePath += " C " + cp1x.toFixed(1) + "," + cp1y.toFixed(1) + " " + cp2x.toFixed(1) + "," + cp2y.toFixed(1) + " " + p2.x.toFixed(1) + "," + p2.y.toFixed(1);
+  }
+  const areaPath = linePath + " L " + pts[pts.length - 1].x.toFixed(1) + "," + baselineY + " L " + pts[0].x.toFixed(1) + "," + baselineY + " Z";
+  const endX = pts[pts.length - 1].x.toFixed(1);
+  const endY = pts[pts.length - 1].y.toFixed(1);
   const gradId = "spark-grad-payroll-preview";
   return (
     <svg viewBox={"0 0 " + W + " " + H} width="100%" height={H} preserveAspectRatio="none" style={{ display: "block" }}>
@@ -108,9 +122,10 @@ function TrendSparkline({ points, height }) {
           <stop offset="1" stopColor="#15A08C" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={area} fill={"url(#" + gradId + ")"} />
-      <path d={line} fill="none" stroke="#15A08C" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-      <circle cx={lx} cy={ly} r="5" fill="#fff" stroke="#15A08C" strokeWidth="2.5" />
+      <line x1="0" y1={baselineY} x2={W} y2={baselineY} stroke="#E7EAF0" strokeWidth="1" />
+      <path d={areaPath} fill={"url(#" + gradId + ")"} />
+      <path d={linePath} fill="none" stroke="#15A08C" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      <circle cx={endX} cy={endY} r="5" fill="#fff" stroke="#15A08C" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }
@@ -330,7 +345,7 @@ export default function PayrollPreview() {
               {sparklinePoints ? (
                 <>
                   <div style={{ marginTop: 22 }} role="img" aria-label={"Payroll cost trend over the last " + sparklinePoints.length + " runs, " + (trendDir === "down" ? "down" : "up") + " " + trendAbs + " percent versus the previous run."}>
-                    <TrendSparkline points={sparklinePoints} height={96} />
+                    <TrendSparkline points={sparklinePoints} height={110} />
                   </div>
                   <div style={{ fontSize: 12, color: C.muted, marginTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <span>Cash-out, last {sparklinePoints.length} pay runs</span>
