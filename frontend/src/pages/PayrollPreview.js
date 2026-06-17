@@ -283,13 +283,6 @@ function PayStubDrawer({ employee, run, onClose, currency }) {
           <button style={{ background:C.teal, color:"#fff", border:"1px solid transparent", padding:"9px 18px", borderRadius:8, fontWeight:600, fontSize:13, cursor:"pointer", fontFamily:FONT }}>Edit amounts</button>
         </div>
       </div>
-
-      {paystubFor && (
-        <PayStubDrawer employee={paystubFor} run={run} onClose={() => setPaystubFor(null)} currency={currency} />
-      )}
-      {compareFor && (
-        <CompareModal employee={compareFor} run={run} onClose={() => setCompareFor(null)} currency={currency} />
-      )}
     </>
   );
 }
@@ -844,6 +837,13 @@ export default function PayrollPreview() {
           </span>
         </div>
       </div>
+
+      {paystubFor && (
+        <PayStubDrawer employee={paystubFor} run={run} onClose={() => setPaystubFor(null)} currency={currency} />
+      )}
+      {compareFor && (
+        <CompareModal employee={compareFor} run={run} onClose={() => setCompareFor(null)} currency={currency} />
+      )}
     </>
   );
 }
