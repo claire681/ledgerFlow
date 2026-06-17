@@ -378,6 +378,9 @@ export default function RunPayroll() {
   const [stripe, setStripe] = useState(false);
   const [hideSkipped, setHideSkipped] = useState(false);
   const [onlyWithHours, setOnlyWithHours] = useState(false);
+  const [periodStart, setPeriodStart] = useState("");
+  const [periodEnd, setPeriodEnd] = useState("");
+  const [payDate, setPayDate] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("access_token") || localStorage.getItem("token");
@@ -398,6 +401,9 @@ export default function RunPayroll() {
         const data = runData && runData.data ? runData.data : runData;
         const empArr = Array.isArray(empResp) ? empResp : (empResp.items || empResp.data || []);
         setRun(data);
+        setPeriodStart(data.pay_period_start || "");
+        setPeriodEnd(data.pay_period_end || "");
+        setPayDate(data.pay_date || "");
         const pick = (o, ...keys) => {
           for (const k of keys) { if (o && o[k] !== undefined && o[k] !== null) return o[k]; }
           return undefined;
@@ -585,6 +591,22 @@ export default function RunPayroll() {
                     <div style={{ fontSize: 26, fontWeight: 800, color: C.ink }}>{v}</div>
                   </div>
                 ))}
+              </div>
+
+              {/* pay period + pay date */}
+              <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
+                <div style={{ flex: 1, background: "#fff", border: "1px solid " + C.line, borderRadius: 12, padding: "12px 16px" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.04, marginBottom: 6 }}>Pay period</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} style={{ flex: 1, border: "1px solid " + C.line, borderRadius: 7, padding: "7px 10px", fontSize: 13.5, color: C.ink, background: "#fff", fontFamily: FONT, cursor: "pointer" }} />
+                    <span style={{ fontSize: 13, color: C.muted }}>to</span>
+                    <input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} style={{ flex: 1, border: "1px solid " + C.line, borderRadius: 7, padding: "7px 10px", fontSize: 13.5, color: C.ink, background: "#fff", fontFamily: FONT, cursor: "pointer" }} />
+                  </div>
+                </div>
+                <div style={{ flex: "0 0 240px", background: "#fff", border: "1px solid " + C.line, borderRadius: 12, padding: "12px 16px" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.04, marginBottom: 6 }}>Pay date</div>
+                  <input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} style={{ width: "100%", border: "1px solid " + C.line, borderRadius: 7, padding: "7px 10px", fontSize: 13.5, color: C.ink, background: "#fff", fontFamily: FONT, cursor: "pointer" }} />
+                </div>
               </div>
 
               {/* toolbar */}
