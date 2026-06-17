@@ -381,6 +381,14 @@ export default function RunPayroll() {
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
   const [payDate, setPayDate] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filterPayMethod, setFilterPayMethod] = useState([]);
+  const [filterStatus, setFilterStatus] = useState([]);
+  const [filterEmpType, setFilterEmpType] = useState([]);
+  const [filterPosition, setFilterPosition] = useState("");
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportChecked, setExportChecked] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("access_token") || localStorage.getItem("token");
@@ -426,6 +434,8 @@ export default function RunPayroll() {
             id: eid || "",
             name: fullName,
             type: empType === "salaried" ? "Salaried" : "Hourly",
+            position: pick(e, "position_title", "position") || "",
+            empType: empType || "",
             ready: pick(e, "setup_complete", "setupComplete") !== false,
             setupMissing: pick(e, "setup_missing", "setupMissing") || [],
             regular: String(pick(line, "regular_hours", "regularHours") != null ? pick(line, "regular_hours", "regularHours") : 0),
@@ -483,12 +493,58 @@ export default function RunPayroll() {
   const displayRows = sortedRows.filter((r) => {
     if (hideSkipped && r.skipped) return false;
     if (onlyWithHours && (parseFloat(r.regular) || 0) === 0 && (parseFloat(r.statHoliday) || 0) === 0) return false;
+    if (filterPayMethod.length > 0 && !filterPayMethod.includes(r.payMethod)) return false;
+    if (filterStatus.length > 0) {
+      const st = !r.ready ? "needs" : r.skipped ? "skipped" : "ready";
+      if (!filterStatus.includes(st)) return false;
+    }
+    if (filterEmpType.length > 0 && !filterEmpType.includes(r.empType)) return false;
+    if (filterPosition && r.position !== filterPosition) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const hay = ((r.name || "") + " " + (r.position || "")).toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
+    }
     return true;
   });
+  const distinctPositions = Array.from(new Set(rows.map((r) => r.position).filter(Boolean))).sort();
+  const payMethodCount = (pm) => rows.filter((r) => r.payMethod === pm).length;
+  const statusCount = (st) => rows.filter((r) => st === "needs" ? !r.ready : st === "skipped" ? r.skipped : (r.ready && !r.skipped)).length;
+  const empTypeCount = (et) => rows.filter((r) => r.empType === et).length;
+  const positionCount = (p) => rows.filter((r) => r.position === p).length;
+  const clearFilters = () => { setFilterPayMethod([]); setFilterStatus([]); setFilterEmpType([]); setFilterPosition(""); };
+  const filtersApplied = filterPayMethod.length + filterStatus.length + filterEmpType.length + (filterPosition ? 1 : 0);
   const customizeDefaults = () => {
     setSortKey(""); setSortDir("asc"); setDensity("normal"); setStripe(false);
     setHideSkipped(false); setOnlyWithHours(false); setHidden({});
   };
+
+  const exportCSV = () => {
+    const targets = exportChecked ? displayRows.filter((r) => !r.skipped && r.ready) : displayRows;
+    const header = ["Employee", "Position", "Pay method", "Regular hours", "Stat holiday hours", "Stat pay (avg)", "Total hours", "Gross pay", "Memo"];
+    const esc = (v) => {
+      const s = String(v == null ? "" : v);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const lines = [header.map(esc).join(",")];
+    targets.forEach((r) => {
+      const total = (parseFloat(r.regular) || 0) + (parseFloat(r.statHoliday) || 0);
+      const gross = grossOf(r);
+      lines.push([r.name, r.position, r.payMethod, r.regular, r.statHoliday, r.statPay, total, gross.toFixed(2), r.memo].map(esc).join(","));
+    });
+    const blob = new Blob([lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "payroll-run-" + (payDate || "current") + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setExportOpen(false);
+  };
+  const exportXLSX = () => { setExportOpen(false); window.alert("Excel export (.xlsx) is coming in the next update. For now, CSV opens cleanly in Excel."); };
+  const exportPDF = () => { setExportOpen(false); window.alert("PDF report is coming in the next update."); };
 
   const visibleCols = COLUMNS.filter((c) => !hidden[c.key]);
   const widthFor = (k) => k === "employees" ? "2.2fr" : k === "memo" ? "70px" : k === "payMethod" ? "1.7fr"
@@ -611,13 +667,112 @@ export default function RunPayroll() {
 
               {/* toolbar */}
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-                <button style={toolBtn}><Filter size={15} />Filters</button>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, border: "1px solid " + C.line,
-                  borderRadius: 10, padding: "9px 14px", color: C.muted, fontSize: 13.5, minWidth: 240 }}>
-                  <Search size={15} />Search employees
+                <div style={{ position: "relative" }}>
+                  <button style={{ ...toolBtn, background: filtersApplied > 0 ? C.tint : "#fff", color: filtersApplied > 0 ? C.brandDark : C.ink, borderColor: filtersApplied > 0 ? C.brand : C.line }} onClick={() => setFiltersOpen((o) => !o)}>
+                    <Filter size={15} />Filters{filtersApplied > 0 ? " (" + filtersApplied + ")" : ""}
+                  </button>
+                  {filtersOpen && (
+                    <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, width: 340, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 20px 48px rgba(8,32,31,0.14)", zIndex: 50, overflow: "hidden" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid " + C.line }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>Filters</div>
+                        <button onClick={clearFilters} style={{ background: "none", border: "none", fontSize: 12.5, fontWeight: 600, color: C.muted, cursor: "pointer", padding: "2px 4px", fontFamily: FONT }}>Clear all</button>
+                      </div>
+                      <div style={{ maxHeight: 380, overflowY: "auto" }}>
+                        <div style={{ padding: "12px 18px" }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.04, marginBottom: 10 }}>Pay method</div>
+                          {["Direct deposit", "Paper cheque"].map((pm) => (
+                            <label key={pm} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0", fontSize: 13.5, cursor: "pointer", color: C.ink }}>
+                              <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <input type="checkbox" checked={filterPayMethod.includes(pm)} onChange={(e) => setFilterPayMethod((s) => e.target.checked ? [...s, pm] : s.filter((x) => x !== pm))} style={{ width: 16, height: 16, accentColor: C.brand }} />
+                                {pm}
+                              </span>
+                              <span style={{ fontSize: 12, color: C.faint }}>{payMethodCount(pm)}</span>
+                            </label>
+                          ))}
+                        </div>
+                        <div style={{ height: 1, background: C.line, margin: "0 18px" }} />
+                        <div style={{ padding: "12px 18px" }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.04, marginBottom: 10 }}>Status</div>
+                          {[{ k: "ready", l: "Ready to pay" }, { k: "needs", l: "Needs setup" }, { k: "skipped", l: "Skipped from run" }].map((s) => (
+                            <label key={s.k} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0", fontSize: 13.5, cursor: "pointer", color: C.ink }}>
+                              <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <input type="checkbox" checked={filterStatus.includes(s.k)} onChange={(e) => setFilterStatus((x) => e.target.checked ? [...x, s.k] : x.filter((y) => y !== s.k))} style={{ width: 16, height: 16, accentColor: C.brand }} />
+                                {s.l}
+                              </span>
+                              <span style={{ fontSize: 12, color: C.faint }}>{statusCount(s.k)}</span>
+                            </label>
+                          ))}
+                        </div>
+                        <div style={{ height: 1, background: C.line, margin: "0 18px" }} />
+                        <div style={{ padding: "12px 18px" }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.04, marginBottom: 10 }}>Employment type</div>
+                          {[{ k: "full_time", l: "Full-time" }, { k: "part_time", l: "Part-time" }, { k: "contractor", l: "Contractor" }].map((et) => (
+                            <label key={et.k} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0", fontSize: 13.5, cursor: "pointer", color: C.ink }}>
+                              <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <input type="checkbox" checked={filterEmpType.includes(et.k)} onChange={(e) => setFilterEmpType((x) => e.target.checked ? [...x, et.k] : x.filter((y) => y !== et.k))} style={{ width: 16, height: 16, accentColor: C.brand }} />
+                                {et.l}
+                              </span>
+                              <span style={{ fontSize: 12, color: C.faint }}>{empTypeCount(et.k)}</span>
+                            </label>
+                          ))}
+                        </div>
+                        {distinctPositions.length > 0 && (
+                          <>
+                            <div style={{ height: 1, background: C.line, margin: "0 18px" }} />
+                            <div style={{ padding: "12px 18px 16px" }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.04, marginBottom: 10 }}>Position</div>
+                              <select value={filterPosition} onChange={(e) => setFilterPosition(e.target.value)} style={{ width: "100%", padding: "8px 10px", border: "1px solid " + C.line, borderRadius: 7, fontSize: 13, background: "#fff", cursor: "pointer", color: C.ink, fontFamily: FONT }}>
+                                <option value="">Any position</option>
+                                {distinctPositions.map((p) => (
+                                  <option key={p} value={p}>{p} ({positionCount(p)})</option>
+                                ))}
+                              </select>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 18px", borderTop: "1px solid " + C.line, background: C.page }}>
+                        <div style={{ fontSize: 12.5, color: C.muted }}>{displayRows.length} of {rows.length} match</div>
+                        <button onClick={() => setFiltersOpen(false)} style={{ background: C.brand, border: "none", borderRadius: 7, padding: "7px 16px", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", fontFamily: FONT }}>Done</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div style={{ position: "relative", minWidth: 280, flex: "0 1 320px" }}>
+                  <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: C.muted, pointerEvents: "none", display: "inline-flex" }}><Search size={15} /></span>
+                  <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by name or position" style={{ width: "100%", boxSizing: "border-box", border: "1px solid " + C.line, borderRadius: 10, padding: "9px 36px", fontSize: 13.5, color: C.ink, background: "#fff", fontFamily: FONT, outline: "none" }} />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery("")} aria-label="Clear search" style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 4, color: C.muted }}>
+                      <X size={14} />
+                    </button>
+                  )}
                 </div>
                 <div style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
-                  <button style={toolBtn}><Download size={15} />Export</button>
+                  <div style={{ position: "relative" }}>
+                    <button style={toolBtn} onClick={() => setExportOpen((o) => !o)}><Download size={15} />Export<ChevronDown size={13} style={{ marginLeft: -2 }} /></button>
+                    {exportOpen && (
+                      <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, width: 280, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 20px 48px rgba(8,32,31,0.14)", padding: 4, zIndex: 50 }}>
+                        <div style={{ padding: "10px 14px 4px", fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.04 }}>Export format</div>
+                        <button onClick={exportCSV} onMouseEnter={(e) => e.currentTarget.style.background = C.page} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "9px 12px", background: "transparent", border: "none", borderRadius: 7, fontSize: 13.5, color: C.ink, cursor: "pointer", textAlign: "left", fontFamily: FONT }}>
+                          <FileText size={16} color={C.muted} />
+                          <span>CSV<div style={{ fontSize: 11, color: C.faint, marginTop: 1 }}>For Excel, Sheets, any tool</div></span>
+                        </button>
+                        <button onClick={exportXLSX} onMouseEnter={(e) => e.currentTarget.style.background = C.page} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "9px 12px", background: "transparent", border: "none", borderRadius: 7, fontSize: 13.5, color: C.ink, cursor: "pointer", textAlign: "left", fontFamily: FONT }}>
+                          <FileText size={16} color={C.muted} />
+                          <span>Excel (.xlsx)<div style={{ fontSize: 11, color: C.faint, marginTop: 1 }}>Coming next</div></span>
+                        </button>
+                        <button onClick={exportPDF} onMouseEnter={(e) => e.currentTarget.style.background = C.page} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "9px 12px", background: "transparent", border: "none", borderRadius: 7, fontSize: 13.5, color: C.ink, cursor: "pointer", textAlign: "left", fontFamily: FONT }}>
+                          <Receipt size={16} color={C.muted} />
+                          <span>PDF report<div style={{ fontSize: 11, color: C.faint, marginTop: 1 }}>Coming next</div></span>
+                        </button>
+                        <div style={{ height: 1, background: C.line, margin: "4px 8px" }} />
+                        <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 12.5, color: C.muted, cursor: "pointer" }}>
+                          <input type="checkbox" checked={exportChecked} onChange={(e) => setExportChecked(e.target.checked)} style={{ width: 14, height: 14, accentColor: C.brand }} />
+                          Only checked employees
+                        </label>
+                      </div>
+                    )}
+                  </div>
                   <button style={toolBtn} onClick={() => { setCustomizeTab("sort"); setCustomizeOpen(true); }}><Settings size={15} />Customize</button>
                 </div>
               </div>
