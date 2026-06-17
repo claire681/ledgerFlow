@@ -390,6 +390,18 @@ export default function RunPayroll() {
   const [exportOpen, setExportOpen] = useState(false);
   const [exportChecked, setExportChecked] = useState(true);
   const [periodOpen, setPeriodOpen] = useState(false);
+  const [tourActive, setTourActive] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+  const [tourTargetRect, setTourTargetRect] = useState(null);
+  const TOUR_STEPS = [
+    { id: null, title: "Welcome to Run Payroll", body: "This is where you turn employee hours into paycheques. Let's quickly walk through what each part of the page does." },
+    { id: "tour-pay-period", title: "Pick your pay period", body: "Click the date to scroll through past and upcoming pay periods. The current one is checkmarked. Next pay date is the day employees see the deposit." },
+    { id: null, title: "Setup status", body: "The readiness card tells you who is good to go and who still needs setup. Yellow means setup is incomplete; teal means everyone is ready." },
+    { id: null, title: "Run totals", body: "The KPI cards above the table update live as you enter hours so you always know where the run stands." },
+    { id: null, title: "Enter hours", body: "Click any cell in the table to edit. Tick the checkbox to include or skip an employee. Use the row menu for pay method and memo." },
+    { id: "tour-toolbar", title: "Find and filter", body: "Search by name or position. Narrow the list with Filters. Hide rows or columns with Customize. Download with Export." },
+    { id: null, title: "Preview and finalize", body: "When the numbers look right, hit Preview in the sticky footer to review, then Finalize to lock the run." }
+  ];
 
   useEffect(() => {
     const token = localStorage.getItem("access_token") || localStorage.getItem("token");
@@ -567,6 +579,29 @@ export default function RunPayroll() {
   const exportXLSX = () => { setExportOpen(false); window.alert("Excel export (.xlsx) is coming in the next update. For now, CSV opens cleanly in Excel."); };
   const exportPDF = () => { setExportOpen(false); window.alert("PDF report is coming in the next update."); };
 
+  useEffect(() => {
+    if (!tourActive) { setTourTargetRect(null); return; }
+    const step = TOUR_STEPS[tourStep];
+    if (!step || !step.id) { setTourTargetRect(null); return; }
+    const updateTourRect = () => {
+      const el = document.getElementById(step.id);
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      setTourTargetRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+    };
+    const el = document.getElementById(step.id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    const t = setTimeout(updateTourRect, 400);
+    window.addEventListener("resize", updateTourRect);
+    window.addEventListener("scroll", updateTourRect, true);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("resize", updateTourRect);
+      window.removeEventListener("scroll", updateTourRect, true);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tourActive, tourStep]);
+
   const visibleCols = COLUMNS.filter((c) => !hidden[c.key]);
   const widthFor = (k) => k === "employees" ? "2.2fr" : k === "memo" ? "70px" : k === "payMethod" ? "1.7fr"
     : (k === "statHoliday" || k === "totalHrs") ? "1fr" : "1.2fr";
@@ -620,7 +655,49 @@ export default function RunPayroll() {
             padding: "5px 12px", borderRadius: 20 }}>{run ? run.frequency || "Semi-monthly" : "Semi-monthly"}</span>
           <span style={{ fontSize: 13.5, color: C.muted }}>{run ? run.scheduleDetail || "15th and end of month" : "15th and end of month"}</span>
           <div style={{ marginLeft: "auto", display: "flex", gap: 20, color: C.muted, fontSize: 13.5, fontWeight: 600, alignItems: "center" }}>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}><Map size={16} />Take a tour</span>
+            <span onClick={() => { setTourStep(0); setTourActive(true); }} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}><Map size={16} />Take a tour</span>
+              {tourActive && (() => {
+                const step = TOUR_STEPS[tourStep] || {};
+                const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+                const tooltipPos = !tourTargetRect
+                  ? { top: "50%", left: "50%", transform: "translate(-50%, -50%)" }
+                  : tourTargetRect.top > vh / 2
+                    ? { top: 40, left: "50%", transform: "translateX(-50%)" }
+                    : { bottom: 40, left: "50%", transform: "translateX(-50%)" };
+                return (
+                  <>
+                    <svg style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 200, pointerEvents: "none" }}>
+                      <defs>
+                        <mask id="tour-spotlight-mask">
+                          <rect width="100%" height="100%" fill="white" />
+                          {tourTargetRect && (<rect x={tourTargetRect.left - 6} y={tourTargetRect.top - 6} width={tourTargetRect.width + 12} height={tourTargetRect.height + 12} rx="10" fill="black" />)}
+                        </mask>
+                      </defs>
+                      <rect width="100%" height="100%" fill="rgba(8,32,31,0.55)" mask="url(#tour-spotlight-mask)" />
+                      {tourTargetRect && (<rect x={tourTargetRect.left - 6} y={tourTargetRect.top - 6} width={tourTargetRect.width + 12} height={tourTargetRect.height + 12} rx="10" fill="none" stroke="#fff" strokeWidth="2" />)}
+                    </svg>
+                    <div style={{ position: "fixed", ...tooltipPos, width: 340, background: "#fff", borderRadius: 12, padding: 18, boxShadow: "0 20px 48px rgba(8,32,31,0.24)", zIndex: 201, fontFamily: FONT }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                        <span style={{ fontSize: 11.5, fontWeight: 700, color: C.brand, textTransform: "uppercase", letterSpacing: 0.06 }}>Step {tourStep + 1} of {TOUR_STEPS.length}</span>
+                        <button onClick={() => setTourActive(false)} aria-label="Close tour" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: C.muted }}><X size={16} /></button>
+                      </div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: C.ink, marginBottom: 6 }}>{step.title}</div>
+                      <div style={{ fontSize: 13.5, color: C.muted, lineHeight: 1.55, marginBottom: 16 }}>{step.body}</div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <button onClick={() => setTourActive(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, color: C.faint, fontFamily: FONT }}>Skip tour</button>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => setTourStep((s) => Math.max(0, s - 1))} disabled={tourStep === 0} style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, color: tourStep === 0 ? C.faint : C.ink, cursor: tourStep === 0 ? "default" : "pointer", fontFamily: FONT, opacity: tourStep === 0 ? 0.5 : 1 }}>Back</button>
+                          {tourStep < TOUR_STEPS.length - 1 ? (
+                            <button onClick={() => setTourStep((s) => s + 1)} style={{ background: C.brand, border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", fontFamily: FONT }}>Next</button>
+                          ) : (
+                            <button onClick={() => setTourActive(false)} style={{ background: C.brand, border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", fontFamily: FONT }}>Done</button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}><MessageCircle size={16} />Give feedback</span>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}><HelpCircle size={16} />Help</span>
             <span style={{ cursor: "pointer" }} onClick={() => navigate(-1)}><X size={16} /></span>
@@ -671,7 +748,7 @@ export default function RunPayroll() {
               </div>
 
               {/* pay period + next pay date */}
-              <div style={{ display: "flex", gap: 12, alignItems: "stretch", marginBottom: 14 }}>
+              <div id="tour-pay-period" style={{ display: "flex", gap: 12, alignItems: "stretch", marginBottom: 14 }}>
                 <div style={{ position: "relative", width: 300, border: "1.5px solid " + C.night, borderRadius: 12, background: "#fff", padding: "14px 16px" }}>
                   <div style={{ fontSize: 11.5, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.08, marginBottom: 9 }}>Pay period</div>
                   <button type="button" onClick={() => setPeriodOpen((o) => !o)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "10px 12px", border: "1px solid " + C.ink, borderRadius: 8, background: "#fff", fontSize: 15, fontWeight: 500, color: C.ink, cursor: "pointer", fontFamily: FONT, textAlign: "left" }}>
@@ -702,7 +779,7 @@ export default function RunPayroll() {
               </div>
 
               {/* toolbar */}
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+              <div id="tour-toolbar" style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
                 <div style={{ position: "relative" }}>
                   <button style={{ ...toolBtn, background: filtersApplied > 0 ? C.tint : "#fff", color: filtersApplied > 0 ? C.brandDark : C.ink, borderColor: filtersApplied > 0 ? C.brand : C.line }} onClick={() => setFiltersOpen((o) => !o)}>
                     <Filter size={15} />Filters{filtersApplied > 0 ? " (" + filtersApplied + ")" : ""}
