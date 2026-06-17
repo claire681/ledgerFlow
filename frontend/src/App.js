@@ -270,15 +270,15 @@ const handleOnboardingComplete = () => {
           <Route path="/billing" element={<Billing />} />
           <Route path="/register" element={<Onboarding onComplete={() => window.location.replace("/")} />} />
           <Route path="/verify-code" element={<Verify />} />
-          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/pricing" element={<PricingV2 />} />
           <Route path="/employee-portal" element={<EmployeePortal />} />
         <Route path="/landing-v2" element={<LandingV2 />} />
         <Route path="/pricing-v2" element={<PricingV2 />} />
-          <Route path="/add-payroll" element={<AddPayroll />} />
+          <Route path="/add-payroll" element={<AddPayrollV2 />} />
           <Route path="/add-payroll-v2" element={<AddPayrollV2 />} />
           <Route path="/cart-v2" element={<CartV2 />} />
           <Route path="/checkout" element={<Checkout />} />
-          <Route path="/cart" element={<Cart />} />
+          <Route path="/cart" element={<CartV2 />} />
           <Route path="/help/auto-payroll" element={<HelpAutoPayroll />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/accept-invite/:token" element={<AcceptInvite />} />
