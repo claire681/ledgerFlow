@@ -20,6 +20,7 @@ import step3Books from "../assets/landing/step3-books.jpg";
 import avatarOwner from "../assets/landing/avatar-owner.jpg";
 import avatarFounder from "../assets/landing/avatar-founder.jpg";
 import avatarOps from "../assets/landing/avatar-ops.jpg";
+import "./LandingV2.mobile.css";
 
 
 const BRAND = "#0F9599";
@@ -522,7 +523,7 @@ export default function LandingV2() {
     navigate("/pricing");
   };
   return (
-    <div style={{ fontFamily: FONT_STACK, color: TEXT_INK, background: BG_PAGE }}>
+    <div className="landing-v2" style={{ fontFamily: FONT_STACK, color: TEXT_INK, background: BG_PAGE }}>
       <MarketingHeader onFeaturesClick={handleViewAll} />
       <Hero />
       <StatsStrip />
