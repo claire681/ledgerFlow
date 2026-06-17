@@ -523,7 +523,7 @@ export default function PayrollPreview() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5, minWidth: 760 }}>
               <thead>
                 <tr>
-                  {["Employee", "Total hours", "Gross pay", "Employee taxes", "Net pay", "Employer cost", "Change", "Memo"].map((h, i) => (
+                  {["Employee", "Total hours", "Gross pay", "Employee taxes & deductions", "Net pay", "Employer taxes & deductions", "Change in gross pay", "Memo"].map((h, i) => (
                     <th key={h} style={{ textAlign: i === 0 ? "left" : "right", fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: C.faint, padding: "14px 20px", background: C.thBg, borderBottom: "1px solid " + C.line, whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -561,6 +561,7 @@ export default function PayrollPreview() {
                             <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, color: isDown ? C.muted : C.tealInk }}>
                               {isDown ? <ArrowDown size={11} /> : <ArrowUp size={11} />}
                               {isDown ? "Down" : "Up"} {p}%
+                              <ChevronDown size={11} color={C.faint} />
                             </span>
                           );
                         })()}
