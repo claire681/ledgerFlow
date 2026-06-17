@@ -315,11 +315,11 @@ export default function PayrollPreview() {
   const trendAbs = trendPct == null ? null : Math.abs(trendPct);
 
   const sparklinePoints = useMemo(() => {
-    if (priorCount < 2 || totals.total_cost <= 0) return null;
+    if (priorCount < 1 || totals.total_cost <= 0) return null;
     const pts = priorRuns
       .map((r) => Number(r.total_payroll_cost || r.total_cost || r.total_gross || 0))
       .filter((v) => v > 0);
-    if (pts.length < 2) return null;
+    if (pts.length < 1) return null;
     pts.push(totals.total_cost);
     return pts;
   }, [priorRuns, priorCount, totals.total_cost]);
