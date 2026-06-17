@@ -389,6 +389,7 @@ export default function RunPayroll() {
   const [filterPosition, setFilterPosition] = useState("");
   const [exportOpen, setExportOpen] = useState(false);
   const [exportChecked, setExportChecked] = useState(true);
+  const [periodOpen, setPeriodOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("access_token") || localStorage.getItem("token");
@@ -518,6 +519,26 @@ export default function RunPayroll() {
     setSortKey(""); setSortDir("asc"); setDensity("normal"); setStripe(false);
     setHideSkipped(false); setOnlyWithHours(false); setHidden({});
   };
+
+  const formatPeriodLabel = (start, end) => {
+    const f = (s) => { if (!s) return ""; const p = s.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; };
+    return f(start) + " to " + f(end);
+  };
+  const periodOptions = (() => {
+    const list = [];
+    const now = new Date();
+    for (let off = -6; off <= 2; off++) {
+      const m = now.getMonth() + off;
+      const year = now.getFullYear() + Math.floor(m / 12);
+      const monthInYear = ((m % 12) + 12) % 12;
+      const mm = String(monthInYear + 1).padStart(2, "0");
+      const lastDay = new Date(year, monthInYear + 1, 0).getDate();
+      list.push({ start: year + "-" + mm + "-01", end: year + "-" + mm + "-14" });
+      list.push({ start: year + "-" + mm + "-15", end: year + "-" + mm + "-" + String(lastDay).padStart(2, "0") });
+    }
+    list.sort((a, b) => b.start.localeCompare(a.start));
+    return list;
+  })();
 
   const exportCSV = () => {
     const targets = exportChecked ? displayRows.filter((r) => !r.skipped && r.ready) : displayRows;
@@ -649,19 +670,34 @@ export default function RunPayroll() {
                 ))}
               </div>
 
-              {/* pay period + pay date */}
-              <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
-                <div style={{ flex: 1, background: "#fff", border: "1px solid " + C.line, borderRadius: 12, padding: "12px 16px" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.04, marginBottom: 6 }}>Pay period</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} style={{ flex: 1, border: "1px solid " + C.line, borderRadius: 7, padding: "7px 10px", fontSize: 13.5, color: C.ink, background: "#fff", fontFamily: FONT, cursor: "pointer" }} />
-                    <span style={{ fontSize: 13, color: C.muted }}>to</span>
-                    <input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} style={{ flex: 1, border: "1px solid " + C.line, borderRadius: 7, padding: "7px 10px", fontSize: 13.5, color: C.ink, background: "#fff", fontFamily: FONT, cursor: "pointer" }} />
-                  </div>
+              {/* pay period + next pay date */}
+              <div style={{ display: "flex", gap: 12, alignItems: "stretch", marginBottom: 14 }}>
+                <div style={{ position: "relative", width: 300, border: "1.5px solid " + C.night, borderRadius: 12, background: "#fff", padding: "14px 16px" }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.08, marginBottom: 9 }}>Pay period</div>
+                  <button type="button" onClick={() => setPeriodOpen((o) => !o)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "10px 12px", border: "1px solid " + C.ink, borderRadius: 8, background: "#fff", fontSize: 15, fontWeight: 500, color: C.ink, cursor: "pointer", fontFamily: FONT, textAlign: "left" }}>
+                    <span>{periodStart && periodEnd ? formatPeriodLabel(periodStart, periodEnd) : "Select period"}</span>
+                    <ChevronDown size={17} color={C.ink} style={{ transform: periodOpen ? "rotate(180deg)" : "none", transition: "transform 150ms" }} />
+                  </button>
+                  {periodOpen && (
+                    <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: 76, left: 16, right: 16, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 20px 48px rgba(8,32,31,0.14)", maxHeight: 248, overflowY: "auto", zIndex: 30, padding: 4 }}>
+                      {periodOptions.map((p, idx) => {
+                        const isSel = p.start === periodStart && p.end === periodEnd;
+                        return (
+                          <button key={idx} type="button" onClick={() => { setPeriodStart(p.start); setPeriodEnd(p.end); setPeriodOpen(false); }}
+                            onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.background = C.page; }}
+                            onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.background = "transparent"; }}
+                            style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 12px", background: isSel ? C.tint : "transparent", border: "none", borderRadius: 6, fontSize: 13.5, color: C.ink, cursor: "pointer", textAlign: "left", fontFamily: FONT }}>
+                            <span style={{ display: "inline-flex", width: 16, color: C.brand }}>{isSel ? <Check size={15} /> : null}</span>
+                            <span>{formatPeriodLabel(p.start, p.end)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-                <div style={{ flex: "0 0 240px", background: "#fff", border: "1px solid " + C.line, borderRadius: 12, padding: "12px 16px" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.04, marginBottom: 6 }}>Pay date</div>
-                  <input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} style={{ width: "100%", border: "1px solid " + C.line, borderRadius: 7, padding: "7px 10px", fontSize: 13.5, color: C.ink, background: "#fff", fontFamily: FONT, cursor: "pointer" }} />
+                <div style={{ flex: "0 0 220px", border: "1.5px solid " + C.night, borderRadius: 12, background: "#fff", padding: "14px 16px" }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.08, marginBottom: 9 }}>Next pay date</div>
+                  <input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", border: "1px solid " + C.ink, borderRadius: 8, background: "#fff", fontSize: 15, fontWeight: 500, color: C.ink, fontFamily: FONT, outline: "none" }} />
                 </div>
               </div>
 
