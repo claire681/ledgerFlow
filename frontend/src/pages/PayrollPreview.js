@@ -101,6 +101,56 @@ function useNarrowScreen(threshold) {
 
 function TrendSparkline({ points, height }) {
   if (!points || points.length < 2) return null;
+
+  const H = height || 108;
+  const W = 1000;
+  const pad = 10;
+
+  const min = Math.min.apply(null, points);
+  const max = Math.max.apply(null, points);
+  const range = (max - min) || 1;
+
+  const xAt = (i) => pad + (i * ((W - pad * 2) / (points.length - 1)));
+  const yAt = (v) => pad + ((H - pad * 2) * (1 - (v - min) / range));
+
+  const baselineY = H - pad;
+  const pts = points.map((p, i) => ({ x: xAt(i), y: yAt(p) }));
+  const tension = 0.16;
+
+  let linePath = "M " + pts[0].x.toFixed(1) + "," + pts[0].y.toFixed(1);
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = i > 0 ? pts[i - 1] : pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = i < pts.length - 2 ? pts[i + 2] : pts[i + 1];
+    const cp1x = p1.x + (p2.x - p0.x) * tension;
+    const cp1y = p1.y + (p2.y - p0.y) * tension;
+    const cp2x = p2.x - (p3.x - p1.x) * tension;
+    const cp2y = p2.y - (p3.y - p1.y) * tension;
+    linePath += " C " + cp1x.toFixed(1) + "," + cp1y.toFixed(1) + " " + cp2x.toFixed(1) + "," + cp2y.toFixed(1) + " " + p2.x.toFixed(1) + "," + p2.y.toFixed(1);
+  }
+
+  const areaPath = linePath + " L " + pts[pts.length - 1].x.toFixed(1) + "," + baselineY + " L " + pts[0].x.toFixed(1) + "," + baselineY + " Z";
+  const endX = pts[pts.length - 1].x.toFixed(1);
+  const endY = pts[pts.length - 1].y.toFixed(1);
+  const gradId = "spark-grad-payroll-preview";
+
+  return (
+    <svg viewBox={"0 0 " + W + " " + H} width="100%" style={{ display: "block" }}>
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#15A08C" stopOpacity="0.20" />
+          <stop offset="1" stopColor="#15A08C" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <line x1="0" y1={baselineY} x2={W} y2={baselineY} stroke="#E7EAF0" strokeWidth="1" />
+      <path d={areaPath} fill={"url(#" + gradId + ")"} />
+      <path d={linePath} fill="none" stroke="#15A08C" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={endX} cy={endY} r="4.5" fill="#ffffff" stroke="#15A08C" strokeWidth="2.4" />
+    </svg>
+  );
+}) {
+  if (!points || points.length < 2) return null;
   const H = height || 110;
   const W = 1000;
   const pad = 10;
@@ -315,16 +365,14 @@ export default function PayrollPreview() {
   const trendAbs = trendPct == null ? null : Math.abs(trendPct);
 
   const sparklinePoints = useMemo(() => {
-    if (totals.total_cost <= 0) return null;
+    if (priorCount < 2 || totals.total_cost <= 0) return null;
     const pts = priorRuns
       .map((r) => Number(r.total_payroll_cost || r.total_cost || r.total_gross || 0))
       .filter((v) => v > 0);
+    if (pts.length < 2) return null;
     pts.push(totals.total_cost);
-    if (pts.length === 1) {
-      pts.unshift(pts[0]);
-    }
     return pts;
-  }, [priorRuns, totals.total_cost]);
+  }, [priorRuns, priorCount, totals.total_cost]);
 
   if (loading) {
     return (
@@ -388,7 +436,7 @@ export default function PayrollPreview() {
               <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
                 <span style={{ fontSize: totalSize, fontWeight: 600, letterSpacing: "-0.025em", color: C.ink, lineHeight: 1, ...tabular }}>{fmtMoney(totals.total_cost, currency)}</span>
                 {trendPct != null && (
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, padding: "4px 9px", borderRadius: 999, background: C.thBg, color: "#51627A" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, padding: "4px 9px", borderRadius: 999, background: "#EEF1F5", color: "#51627A" }}>
                     {trendDir === "down" ? <ArrowDown size={12} /> : <ArrowUp size={12} />}
                     <span>{trendDir === "down" ? "Down" : "Up"} {trendAbs}%</span>
                   </span>
@@ -397,25 +445,20 @@ export default function PayrollPreview() {
 
               {sparklinePoints ? (
                 <>
-                  <div style={{ marginTop: 22 }} role="img" aria-label={priorCount === 0 ? "First payroll run with a total cost of " + fmtMoney(totals.total_cost, currency) + ". Trend will build over time." : "Payroll cost trend over the last " + sparklinePoints.length + " runs, " + (trendDir === "down" ? "down" : "up") + " " + trendAbs + " percent versus the previous run."}>
+                  <div style={{ marginTop: 22 }} role="img" aria-label={"Payroll cost trend over the last " + sparklinePoints.length + " runs, " + (trendDir === "down" ? "down" : "up") + " " + trendAbs + " percent versus the previous run."}>
                     <TrendSparkline points={sparklinePoints} height={110} />
                   </div>
                   <div style={{ fontSize: 12, color: C.muted, marginTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span>{priorCount === 0 ? "This is your first payroll run" : "Cash-out, last " + sparklinePoints.length + " pay runs"}</span>
-                    <span style={{ color: priorCount === 0 ? C.faint : "#51627A", fontWeight: priorCount === 0 ? 500 : 600 }}>{priorCount === 0 ? "Trend will build from here" : (trendDir === "down" ? "Down" : "Up") + " " + trendAbs + "% vs last run"}</span>
+                    <span>Cash-out, last {sparklinePoints.length} pay runs</span>
+                    <span style={{ color: "#51627A", fontWeight: 600 }}>{trendDir === "down" ? "Down" : "Up"} {trendAbs}% vs last run</span>
                   </div>
                 </>
-              ) : (
-                <div style={{ marginTop: 22, height: 96, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, background: "linear-gradient(180deg, rgba(231,234,240,0.22) 0%, rgba(231,234,240,0) 100%)" }} role="img" aria-label="Trend chart placeholder, your payroll cost trend will appear here after you finalize a payroll run.">
-                  <svg viewBox="0 0 1000 96" width="100%" height="96" preserveAspectRatio="none" style={{ position: "absolute", top: 0, left: 0 }}>
-                    <line x1="10" y1="48" x2="990" y2="48" stroke="#E7EAF0" strokeWidth="1.5" strokeDasharray="6 6" vectorEffect="non-scaling-stroke" />
-                  </svg>
-                  <span style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12.5, color: C.muted, background: "#fff", padding: "6px 14px", borderRadius: 999, border: "1px solid " + C.line, boxShadow: "0 1px 2px rgba(16,26,43,0.04)" }}>
-                    <Info size={13} color={C.faint} />
-                    {priorCount === 0 ? "Your trend will appear here once you finalize a payroll" : "Trend needs at least one prior payroll on this schedule"}
-                  </span>
+              ) : priorCount === 0 ? (
+                <div style={{ marginTop: 18, fontSize: 13, color: C.muted, display: "flex", alignItems: "center", gap: 8 }}>
+                  <Info size={15} color={C.faint} />
+                  This is your first payroll run, so there's no trend to compare yet.
                 </div>
-              )}
+              ) : null}
             </div>
 
             <div style={{ padding: panelPad, background: C.rightPanelBg, borderLeft: narrow ? "0" : "1px solid " + C.line, borderTop: narrow ? "1px solid " + C.line : "0" }}>
