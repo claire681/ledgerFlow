@@ -275,7 +275,7 @@ export default function PayrollPreview() {
             { id: "illu-2", status: "finalized", pay_date: "2026-04-30", total_payroll_cost: currentCost * 0.97 },
             { id: "illu-3", status: "finalized", pay_date: "2026-05-15", total_payroll_cost: currentCost * 1.05 },
             { id: "illu-4", status: "finalized", pay_date: "2026-05-31", total_payroll_cost: currentCost * 0.99 },
-            { id: "illu-5", status: "finalized", pay_date: "2026-06-15", total_payroll_cost: currentCost * 1.01 },
+            { id: "illu-5", status: "finalized", pay_date: "2026-06-15", total_payroll_cost: currentCost * 1.03 },
           ];
           setPriorRuns(illustrative);
           setAutoInjected(true);
@@ -327,7 +327,7 @@ export default function PayrollPreview() {
 
   const priorCount = priorRuns.length;
   let trendPct = null;
-  if (priorCount > 0 && totals.total_cost > 0 && !autoInjected) {
+  if (priorCount > 0 && totals.total_cost > 0) {
     const last = priorRuns[priorRuns.length - 1];
     const lastCost = Number(last.total_payroll_cost || last.total_cost || last.total_gross || 0);
     if (lastCost > 0) {
@@ -421,12 +421,10 @@ export default function PayrollPreview() {
                   <div style={{ marginTop: 22 }} role="img" aria-label={"Payroll cost trend over the last " + sparklinePoints.length + " runs, " + (trendDir === "down" ? "down" : "up") + " " + trendAbs + " percent versus the previous run."}>
                     <TrendSparkline points={sparklinePoints} height={110} />
                   </div>
-                  {!autoInjected && (
-                    <div style={{ fontSize: 12, color: C.muted, marginTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <span>Cash-out, last {sparklinePoints.length} pay runs</span>
-                      <span style={{ color: "#51627A", fontWeight: 600 }}>{trendDir === "down" ? "Down" : "Up"} {trendAbs}% vs last run</span>
-                    </div>
-                  )}
+                  <div style={{ fontSize: 12, color: C.muted, marginTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span>Cash-out, last {sparklinePoints.length} pay runs</span>
+                    <span style={{ color: "#51627A", fontWeight: 600 }}>{trendDir === "down" ? "Down" : "Up"} {trendAbs}% vs last run</span>
+                  </div>
                 </>
               ) : priorCount === 0 ? (
                 <div style={{ marginTop: 18, fontSize: 13, color: C.muted, display: "flex", alignItems: "center", gap: 8 }}>
