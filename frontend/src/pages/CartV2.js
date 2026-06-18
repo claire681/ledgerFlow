@@ -15,29 +15,44 @@ const AMBER_BG = "#FAEEDA";
 const AMBER_TX = "#633806";
 
 const PLANS = {
-  starter: {
-    name: "Starter plan",
+  essentials: {
+    name: "Essentials plan",
     tagline: "For solo founders just starting out.",
     icon: Wallet,
-    monthly: { current: 9, was: 15 },
-    annual: { current: 8, was: 13 },
-    topFeatures: ["Nexa AI bookkeeping", "Basic invoicing", "Receipt capture", "1 user seat"]
+    monthly: { current: 19 },
+    annual: { current: 19 },
+    topFeatures: [
+      "Nexa AI receipt scanner",
+      "Smart bookkeeping",
+      "Send invoices",
+      "Up to 100 transactions/mo"
+    ]
   },
-  growth: {
-    name: "Growth plan",
-    tagline: "For small teams.",
+  premium: {
+    name: "Premium plan",
+    tagline: "For small and growing teams.",
     icon: TrendingUp,
-    monthly: { current: 29, was: 39 },
-    annual: { current: 24, was: 34 },
-    topFeatures: ["Nexa AI bookkeeping", "Invoicing and online payments", "Receipt capture and scanning", "5 user seats"]
+    monthly: { current: 49 },
+    annual: { current: 49 },
+    topFeatures: [
+      "Everything in Essentials",
+      "Unlimited transactions",
+      "Multi-user team access",
+      "Up to 5 user seats"
+    ]
   },
   scale: {
     name: "Scale plan",
     tagline: "For growing businesses.",
     icon: Building2,
-    monthly: { current: 99, was: 129 },
-    annual: { current: 83, was: 114 },
-    topFeatures: ["Everything in Growth", "Advanced reports and dashboards", "Priority support", "25 user seats"]
+    monthly: { current: 99 },
+    annual: { current: 99 },
+    topFeatures: [
+      "Everything in Premium",
+      "Advanced analytics",
+      "Dedicated account manager",
+      "Up to 25 user seats"
+    ]
   }
 };
 

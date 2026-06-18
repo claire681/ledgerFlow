@@ -31,35 +31,38 @@ const CONTAINER = { maxWidth: 1240, margin: "0 auto", padding: "0 28px" };
 
 const PLANS = [
   {
-    id: "starter",
-    name: "Starter",
+    id: "essentials",
+    name: "Essentials",
     ribbon: { text: "Best to start", dark: true },
-    tagline: "Perfect for solos and side hustles",
-    monthly: { old: 19, current: 9, savingsAmount: 10, savingsLabel: "Save 52% for 6 months" },
-    annual: { current: 8, savingsLabel: "2 months free with annual billing" },
+    tagline: "Solo founders and side hustles.",
+    monthly: { current: 19 },
+    annual: { current: 19 },
     users: "Up to 1 user",
-    ai: ["Smart transaction auto-categorization", "AI receipt scanner"],
+    ai: [
+      "Smart transaction auto-categorization",
+      "Nexa AI receipt scanner"
+    ],
     features: [
       "Track income and expenses",
       "Send invoices and accept payments",
       "Connect 1 bank or credit card",
       "Run basic reports",
-      "Mobile receipt capture",
+      "Mobile receipt capture"
     ],
-    recommendedFor: "solo",
+    recommendedFor: "solo"
   },
   {
-    id: "growth",
-    name: "Growth",
+    id: "premium",
+    name: "Premium",
     ribbon: { text: "Most popular", dark: false },
-    tagline: "Built for small and growing teams",
-    monthly: { old: 59, current: 29, savingsAmount: 30, savingsLabel: "Save 51% for 6 months" },
-    annual: { current: 24, savingsLabel: "2 months free with annual billing" },
+    tagline: "Built for small and growing teams.",
+    monthly: { current: 49 },
+    annual: { current: 49 },
     users: "Up to 5 users",
     ai: [
-      "Everything in Starter plus AI bookkeeping insights",
+      "Everything in Essentials plus AI bookkeeping insights",
       "Document AI for vendor bills",
-      "Auto-match receipts to transactions",
+      "Auto-match receipts to transactions"
     ],
     features: [
       "Up to 5 users",
@@ -68,23 +71,23 @@ const PLANS = [
       "Multi-currency support",
       "Enhanced reports and custom dashboards",
       "Sales tax automation",
-      "Project tracking",
+      "Project tracking"
     ],
     recommendedFor: "small-team",
-    glow: true,
+    glow: true
   },
   {
     id: "scale",
     name: "Scale",
     ribbon: { text: "Built for scale", dark: true },
-    tagline: "For growing operations and bigger teams",
-    monthly: { old: 199, current: 99, savingsAmount: 100, savingsLabel: "Save 50% for 6 months" },
-    annual: { current: 83, savingsLabel: "2 months free with annual billing" },
+    tagline: "For growing operations and bigger teams.",
+    monthly: { current: 99 },
+    annual: { current: 99 },
     users: "Up to 25 users",
     ai: [
-      "Everything in Growth plus AI-drafted month-end close",
+      "Everything in Premium plus AI-drafted month-end close",
       "Anomaly detection on transactions",
-      "Custom workflow automations",
+      "Custom workflow automations"
     ],
     features: [
       "Up to 25 users",
@@ -93,10 +96,10 @@ const PLANS = [
       "Inventory and order management",
       "Comprehensive business intelligence",
       "Priority support",
-      "Dedicated account manager",
+      "Dedicated account manager"
     ],
-    recommendedFor: "growing",
-  },
+    recommendedFor: "growing"
+  }
 ];
 
 function WizardSteps() {
@@ -243,7 +246,7 @@ function PlanCard({ plan, billing, highlighted, dimmed, onViewAll }) {
   const savingsAmount = isMonthly ? plan.monthly.savingsAmount : null;
   const savingsLabel = isMonthly ? plan.monthly.savingsLabel : plan.annual.savingsLabel;
   const ribbonBg = plan.ribbon.dark ? NIGHT : BRAND;
-  const isGrowth = plan.id === "growth";
+  const isPremium = plan.id === "premium";
 
   return (
     <div
@@ -257,14 +260,14 @@ function PlanCard({ plan, billing, highlighted, dimmed, onViewAll }) {
         padding: 0,
         display: "flex",
         flexDirection: "column",
-        boxShadow: isGrowth
+        boxShadow: isPremium
           ? (hovered ? "0 28px 64px rgba(15, 149, 153, 0.28)" : "0 14px 36px rgba(15, 149, 153, 0.18)")
           : (hovered ? "0 22px 48px rgba(8,32,31,0.14)" : "0 1px 2px rgba(8,32,31,0.04)"),
         transform: hovered ? "translateY(-6px)" : "translateY(0)",
         transition: "transform 0.28s ease, box-shadow 0.28s ease, opacity 0.28s ease, border 0.28s ease",
         opacity: dimmed ? 0.55 : 1,
-        outline: isGrowth ? "1.5px solid " + MINT : "none",
-        outlineOffset: isGrowth ? -1 : 0,
+        outline: isPremium ? "1.5px solid " + MINT : "none",
+        outlineOffset: isPremium ? -1 : 0,
       }}
     >
       <div style={{
@@ -483,9 +486,9 @@ function CompareTable({ billing }) {
   const toggle = (label) => setOpenCats(prev => ({ ...prev, [label]: !prev[label] }));
 
   const planCols = [
-    { name: "Starter", id: "starter", monthly: 9, annual: 8 },
-    { name: "Growth", id: "growth", monthly: 29, annual: 24, mostPopular: true },
-    { name: "Scale", id: "scale", monthly: 99, annual: 83 },
+    { name: "Essentials", id: "essentials", monthly: 19, annual: 19 },
+    { name: "Premium", id: "premium", monthly: 49, annual: 49, mostPopular: true },
+    { name: "Scale", id: "scale", monthly: 99, annual: 99 },
   ];
 
   const gridCols = "minmax(0, 2fr) repeat(3, minmax(0, 1fr))";
@@ -748,8 +751,8 @@ function FAQ() {
     { q: "Can I get a refund?", a: "Yes. We offer a 30-day refund window from your first payment, no questions asked. Email support and we will process the refund within 5 business days. After 30 days, you can cancel anytime to stop future charges; past payments are not refunded." },
     { q: "Are there transaction or processing fees?", a: "Novala itself does not charge platform transaction fees. When you accept customer payments through Novala, standard Stripe processing fees apply (2.9% plus 30 cents per card transaction). Bank transfers and ACH have lower fees. All fees are shown clearly before each transaction." },
     { q: "What data can I import?", a: "CSV files of transactions, customers, and vendors from QuickBooks, Xero, Wave, and most accounting tools. Once you connect a bank account, the historical bank feed comes in automatically. Bulk receipt and bill uploads work via drag-and-drop or email forwarding." },
-    { q: "How does multi-user access work?", a: "Each plan has a user limit (Starter 1 user, Growth 5 users, Scale 25 users). Add team members from your settings and assign roles (admin, accountant, viewer, or custom roles on Scale). Each user gets their own login and an audit trail records who changed what." },
-    { q: "Do you support multi-currency?", a: "Yes, on Growth and Scale plans. Invoices, expenses, and bank accounts can be set per currency. Daily exchange rates update automatically from a trusted provider. Reports can be viewed in your home currency or per-currency." },
+    { q: "How does multi-user access work?", a: "Each plan has a user limit (Essentials 1 user, Premium 5 users, Scale 25 users). Add team members from your settings and assign roles (admin, accountant, viewer, or custom roles on Scale). Each user gets their own login and an audit trail records who changed what." },
+    { q: "Do you support multi-currency?", a: "Yes, on Premium and Scale plans. Invoices, expenses, and bank accounts can be set per currency. Daily exchange rates update automatically from a trusted provider. Reports can be viewed in your home currency or per-currency." },
     { q: "What kind of support do you offer?", a: "Every plan includes email and chat support during business hours. Scale customers get priority routing and a dedicated account manager. Most first responses arrive within 4 business hours, and complex tickets get a written summary after resolution so you can refer back to it later." },
   ];
   const visible = showAll ? items : items.slice(0, 4);

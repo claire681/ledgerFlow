@@ -59,7 +59,7 @@ const inputStyle = {
 export default function Checkout() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const planId = params.get("plan") || "growth";
+  const planId = params.get("plan") || "essentials";
   const billing = params.get("billing") || "monthly";
   const payrollId = params.get("payroll") || null;
   const plan = getPlan(planId);
@@ -86,7 +86,7 @@ export default function Checkout() {
   }, []);
 
   const total = plan.monthlyPrice + (payroll ? payroll.monthlyPrice : 0);
-  const totalOriginal = plan.originalPrice + (payroll ? payroll.originalPrice : 0);
+  const totalOriginal = (plan.originalPrice || plan.monthlyPrice) + (payroll ? (payroll.originalPrice || payroll.monthlyPrice) : 0);
   const savings = totalOriginal - total;
 
   const submit = async (e) => {
@@ -249,7 +249,9 @@ export default function Checkout() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", fontSize: 14 }}>
               <div>
                 <div style={{ color: INK, fontWeight: 600 }}>{plan.name}</div>
-                <div style={{ color: MUTED, fontSize: 12, textDecoration: "line-through" }}>${plan.originalPrice}/mo</div>
+                {plan.originalPrice && plan.originalPrice > plan.monthlyPrice && (
+                  <div style={{ color: MUTED, fontSize: 12, textDecoration: "line-through" }}>${plan.originalPrice}/mo</div>
+                )}
               </div>
               <div style={{ color: INK, fontWeight: 700 }}>${plan.monthlyPrice}/mo</div>
             </div>
@@ -258,7 +260,9 @@ export default function Checkout() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", fontSize: 14, borderTop: `1px solid ${BG_TINT}` }}>
                 <div>
                   <div style={{ color: INK, fontWeight: 600 }}>{payroll.name}</div>
-                  <div style={{ color: MUTED, fontSize: 12, textDecoration: "line-through" }}>${payroll.originalPrice}/mo</div>
+                  {payroll.originalPrice && payroll.originalPrice > payroll.monthlyPrice && (
+                    <div style={{ color: MUTED, fontSize: 12, textDecoration: "line-through" }}>${payroll.originalPrice}/mo</div>
+                  )}
                   <div style={{ color: SUB, fontSize: 12 }}>+ ${payroll.perEmployee}/employee/mo</div>
                 </div>
                 <div style={{ color: INK, fontWeight: 700 }}>${payroll.monthlyPrice}/mo</div>

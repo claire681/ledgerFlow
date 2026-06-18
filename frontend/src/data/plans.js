@@ -1,22 +1,45 @@
 // Strategy B: match QB on price, win on AI + niche
 export const PLANS = {
-  starter: {
-    id: "starter", name: "Starter",
-    monthlyPrice: 25, originalPrice: 50,
-    savings: "Save $25/mo for 3 months",
-    topFeatures: ["Receipt scanner with Nova", "Smart bookkeeping", "Live dashboards", "Up to 100 transactions/mo", "Email support"],
+  essentials: {
+    id: "essentials",
+    name: "Essentials",
+    monthlyPrice: 19,
+    topFeatures: [
+      "Nexa AI receipt scanner",
+      "Smart bookkeeping",
+      "Send invoices",
+      "Live dashboards",
+      "Up to 100 transactions/mo",
+      "Email support"
+    ],
   },
-  growth: {
-    id: "growth", name: "Growth",
-    monthlyPrice: 49, originalPrice: 99,
-    savings: "Save $50/mo for 3 months",
-    topFeatures: ["Everything in Starter", "Unlimited transactions", "Multi-user team access", "Invoicing & payments", "Custom reports", "Priority support"],
+
+  premium: {
+    id: "premium",
+    name: "Premium",
+    monthlyPrice: 49,
+    topFeatures: [
+      "Everything in Essentials",
+      "Unlimited transactions",
+      "Multi-user team access",
+      "Invoicing and online payments",
+      "Custom reports",
+      "Priority support"
+    ],
   },
+
   scale: {
-    id: "scale", name: "Scale",
-    monthlyPrice: 99, originalPrice: 199,
-    savings: "Save $100/mo for 3 months",
-    topFeatures: ["Everything in Growth", "Advanced analytics", "Dedicated account manager", "Custom integrations", "API access", "SLA & priority chat"],
+    id: "scale",
+    name: "Scale",
+    monthlyPrice: 99,
+    topFeatures: [
+      "Everything in Premium",
+      "Advanced analytics",
+      "Dedicated account manager",
+      "Custom integrations",
+      "API access",
+      "SLA and priority chat"
+    ],
   },
 };
 
@@ -80,5 +103,5 @@ export const PAYROLL_TIERS = {
   },
 };
 
-export const getPlan = (id) => PLANS[id] || PLANS.growth;
+export const getPlan = (id) => PLANS[id] || PLANS.essentials;
 export const getPayroll = (id) => id ? PAYROLL_TIERS[id] : null;
