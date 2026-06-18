@@ -61,7 +61,7 @@ export default function PayPalSubscribeButton({ planSlug, fundingSource = "paypa
           fundingSource={fundingValue}
           style={{
             layout: "vertical",
-            color: "gold",
+            color: fundingSource === "card" ? "black" : "gold",
             shape: "rect",
             label: "subscribe",
           }}
