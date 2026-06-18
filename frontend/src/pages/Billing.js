@@ -20,7 +20,14 @@ export default function Billing() {
 
   const planSlug = params.get("plan") || "essentials";
   const billingPeriod = params.get("billing") || "monthly";
-  const payrollSlug = null; // payroll add-on handled separately after onboarding
+  const payrollSlug = params.get("payroll") || null;
+
+  // PayPal subscriptions bill a single fixed amount per plan_id, so combine
+  // plan + payroll into one slug matching a pre-created combo plan
+  // (essentials_payroll_core = $44 = $19 plan + $25 payroll, etc.).
+  const combinedSlug = payrollSlug
+    ? planSlug + "_payroll_" + payrollSlug
+    : planSlug;
 
   const plan = getPlan(planSlug);
   const payroll = getPayroll(payrollSlug);
@@ -37,7 +44,7 @@ export default function Billing() {
     next.set("fromCheckout", "true");
     next.set("plan", planSlug);
     if (billingPeriod) next.set("billing", billingPeriod);
-    // payroll add-on activated separately, not part of plan subscription
+    if (payrollSlug) next.set("payroll", payrollSlug);
     navigate("/onboarding?" + next.toString());
   };
 
@@ -81,7 +88,7 @@ export default function Billing() {
             <div>
               {paymentMethod === "paypal" && (
                 <PayPalSubscribeButton
-                  planSlug={planSlug}
+                  planSlug={combinedSlug}
                   fundingSource="paypal"
                   onSuccess={handleSuccess}
                   onError={handleError}
@@ -89,7 +96,7 @@ export default function Billing() {
               )}
               {paymentMethod === "card" && (
                 <PayPalSubscribeButton
-                  planSlug={planSlug}
+                  planSlug={combinedSlug}
                   fundingSource="card"
                   onSuccess={handleSuccess}
                   onError={handleError}
@@ -124,7 +131,7 @@ export default function Billing() {
                   <div style={{ fontSize: 14, fontWeight: 600, color: INK }}>{payroll.name}</div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: INK }}>${payrollMonthly}/mo</div>
                 </div>
-                <div style={{ fontSize: 12, color: MUTED }}>Plus ${payroll.perEmployee}/employee/mo</div>
+                <div style={{ fontSize: 12, color: MUTED }}>Flat tier rate</div>
               </div>
             )}
 
