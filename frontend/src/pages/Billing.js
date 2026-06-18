@@ -20,7 +20,7 @@ export default function Billing() {
 
   const planSlug = params.get("plan") || "essentials";
   const billingPeriod = params.get("billing") || "monthly";
-  const payrollSlug = params.get("payroll") || null;
+  const payrollSlug = null; // payroll add-on handled separately after onboarding
 
   const plan = getPlan(planSlug);
   const payroll = getPayroll(payrollSlug);
@@ -37,7 +37,7 @@ export default function Billing() {
     next.set("fromCheckout", "true");
     next.set("plan", planSlug);
     if (billingPeriod) next.set("billing", billingPeriod);
-    if (payrollSlug) next.set("payroll", payrollSlug);
+    // payroll add-on activated separately, not part of plan subscription
     navigate("/onboarding?" + next.toString());
   };
 
