@@ -326,7 +326,7 @@ export default function Onboarding({ onComplete }) {
               { method: 'POST', headers: { Authorization: 'Bearer ' + _tok } }
             );
           } catch (e) { console.warn('Auto-accept failed:', e); }
-          navigate('/');
+          navigate('/dashboard');
           return;
         }
 
