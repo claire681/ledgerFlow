@@ -45,7 +45,7 @@ export default function Billing() {
     next.set("plan", planSlug);
     if (billingPeriod) next.set("billing", billingPeriod);
     if (payrollSlug) next.set("payroll", payrollSlug);
-    navigate("/onboarding?" + next.toString());
+    navigate("/register?" + next.toString());
   };
 
   const handleError = (err) => {

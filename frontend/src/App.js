@@ -268,7 +268,7 @@ const handleOnboardingComplete = () => {
             <Routes>
           <Route path="/login" element={token ? <Navigate to="/" replace /> : <LoginPage onLogin={handleLogin} />} />
           <Route path="/billing" element={<Billing />} />
-          <Route path="/register" element={<Onboarding onComplete={() => window.location.replace("/")} />} />
+          <Route path="/register" element={<Onboarding onComplete={() => window.location.replace("/dashboard")} />} />
           <Route path="/verify-code" element={<Verify />} />
           <Route path="/pricing" element={<PricingV2 />} />
           <Route path="/employee-portal" element={<EmployeePortal />} />
