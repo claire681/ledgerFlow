@@ -8,7 +8,7 @@ export default function PayPalSubscribeButton({ planSlug, fundingSource = "paypa
   const effectivePlanSlug =
     planSlug ||
     localStorage.getItem("selected_plan_slug") ||
-    "pro";
+    "essentials";
 
   const [planId, setPlanId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -71,8 +71,8 @@ export default function PayPalSubscribeButton({ planSlug, fundingSource = "paypa
           onApprove={async function (data) {
             try {
               const token =
-                localStorage.getItem("token") ||
                 localStorage.getItem("access_token") ||
+                localStorage.getItem("token") ||
                 localStorage.getItem("jwt");
               const res = await fetch(API_BASE + "/api/v1/subscriptions/activate", {
                 method: "POST",
