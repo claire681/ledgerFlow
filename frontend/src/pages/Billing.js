@@ -20,11 +20,14 @@ export default function Billing() {
 
   const planSlug = params.get("plan") || "essentials";
   const billingPeriod = params.get("billing") || "monthly";
-  const payrollSlug = params.get("payroll") || null;
+  const VALID_PAYROLL = ["core", "premium", "elite"];
+  const rawPayroll = params.get("payroll");
+  const payrollSlug = VALID_PAYROLL.includes(rawPayroll) ? rawPayroll : null;
 
   // PayPal subscriptions bill a single fixed amount per plan_id, so combine
   // plan + payroll into one slug matching a pre-created combo plan
   // (essentials_payroll_core = $44 = $19 plan + $25 payroll, etc.).
+  // "none", "", null, or any unknown value -> plan-only subscription.
   const combinedSlug = payrollSlug
     ? planSlug + "_payroll_" + payrollSlug
     : planSlug;
