@@ -30,6 +30,7 @@ from app.api.routes import bills
 from app.api.routes import apikeys
 from app.api.routes import payroll
 from app.api.routes import subscriptions
+from app.api.routes import billing
 from app.api.routes import pay_runs
 from app.api.routes import work_locations
 
@@ -107,6 +108,7 @@ app.include_router(feedback.router, prefix="/api/v1", tags=["feedback"])
 
 
 app.include_router(subscriptions.router, prefix="/api/v1")
+app.include_router(billing.router,      prefix="/api/v1")
 app.include_router(work_locations.router, prefix="/api/v1")
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health():

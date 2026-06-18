@@ -13,8 +13,8 @@ stripe.api_key = settings.stripe_secret_key
 router = APIRouter(prefix="/billing", tags=["billing"])
 
 PLANS = {
-    "essentials": {"name": "Essentials", "price": 2000, "currency": "usd", "interval": "month"},
-    "premium":    {"name": "Premium",    "price": 3000, "currency": "usd", "interval": "month"},
+    "essentials": {"name": "Essentials Monthly", "price": 1900, "currency": "usd", "interval": "month"},
+    "premium":    {"name": "Premium Monthly",    "price": 4900, "currency": "usd", "interval": "month"},
 }
 
 @router.get("/plans")
