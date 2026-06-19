@@ -18,7 +18,7 @@ const MINTDIM  = 'rgba(15,149,153,0.12)';
 const MINTGLOW = '0 0 0 3px rgba(15,149,153,0.15)';
 const WHITE    = '#0E1A1A';
 const MUTED    = '#5B6B6B';
-const FONT     = "'Inter', -apple-system, sans-serif";
+const FONT  = '"Plus Jakarta Sans", "Inter", -apple-system, sans-serif';
 
 const BUSINESS_TYPES = [
   { value: 'freelancer',      label: 'Freelancer',      icon: Briefcase  },
@@ -41,7 +41,7 @@ const FEATURES = [
   { id: 'expenses',    label: 'Expense Tracking',    icon: Receipt,    desc: 'Track and categorize expenses',  soon: false },
   { id: 'payroll',     label: 'Payroll',             icon: Users,      desc: 'Manage employee payments',       soon: false },
   { id: 'tax',         label: 'Tax Management',      icon: Percent,    desc: 'Track taxes and file returns',   soon: false },
-  { id: 'recurring',   label: 'Recurring Revenue',   icon: RefreshCw,  desc: 'Automate recurring billing',     soon: true  },
+  { id: 'recurring',   label: 'Recurring Revenue',   icon: RefreshCw,  desc: 'Automate recurring billing',     soon: false  },
   { id: 'documents',   label: 'Document Management', icon: FolderOpen, desc: 'Upload and extract documents',   soon: false },
   { id: 'team',        label: 'Team Collaboration',  icon: Users2,     desc: 'Invite and manage team members', soon: false },
 ];
@@ -124,12 +124,12 @@ function GhostBtn({ onClick, children }) {
     <button onClick={onClick} style={{
       padding:'13px 20px',
       borderRadius:12,
-      background:'transparent',
-      color:MUTED,
-      border:'1px solid ' + BORDER,
+      background:'#0E1A1A',
+      color:'#FFFFFF',
+      border:'1px solid #0E1A1A',
       cursor:'pointer',
       fontSize:14,
-      fontWeight:500,
+      fontWeight:600,
       fontFamily:FONT,
       display:'flex',
       alignItems:'center',
@@ -137,9 +137,16 @@ function GhostBtn({ onClick, children }) {
       gap:8,
       transition:'all 0.2s',
       flexShrink:0,
+      boxShadow:'0 4px 14px rgba(14,26,26,0.20)',
     }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor='#334155'; e.currentTarget.style.color=WHITE; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor=BORDER; e.currentTarget.style.color=MUTED; }}
+      onMouseEnter={e => {
+        e.currentTarget.style.background='#1F2A2A';
+        e.currentTarget.style.boxShadow='0 6px 20px rgba(14,26,26,0.30)';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.background='#0E1A1A';
+        e.currentTarget.style.boxShadow='0 4px 14px rgba(14,26,26,0.20)';
+      }}
     >
       {children}
     </button>
@@ -434,7 +441,7 @@ export default function Onboarding({ onComplete }) {
                 <input
                   autoFocus
                   type="text"
-                  placeholder="Acme Inc."
+                  placeholder="Company Name"
                   value={companyName}
                   onChange={e => { setCompanyName(e.target.value); clearError(); }}
                   onKeyDown={e => e.key === 'Enter' && handleStep1()}
@@ -459,13 +466,13 @@ export default function Onboarding({ onComplete }) {
                   return (
                     <div key={f.text} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 13px', background:'#FFFFFF', borderRadius:12, border:'1px solid '+BORDER }}>
                       <Icon size={15} color={MINT}/>
-                      <span style={{ fontSize:12, color:'#94A3B8' }}>{f.text}</span>
+                      <span style={{ fontSize:12, color:MUTED }}>{f.text}</span>
                     </div>
                   );
                 })}
               </div>
 
-              <PrimaryBtn onClick={handleStep1} fullWidth>
+              <PrimaryBtn onClick={handleStep1} fullWidth disabled={!companyName.trim()}>
                 Get started <ArrowRight size={16}/>
               </PrimaryBtn>
 
@@ -497,7 +504,7 @@ export default function Onboarding({ onComplete }) {
                     const sel  = bizType === t.value;
                     return (
                       <div key={t.value} onClick={() => { setBizType(t.value); clearError(); }}
-                        style={{ padding:'14px 10px', borderRadius:12, border:'1px solid '+(sel?MINT:BORDER), background:sel?MINTDIM:'#0D1526', cursor:'pointer', textAlign:'center', transition:'all 0.2s', boxShadow:sel?MINTGLOW:'none' }}>
+                        style={{ padding:'14px 10px', borderRadius:12, border:'1px solid '+(sel?MINT:BORDER), background:sel?MINTDIM:'#FFFFFF', cursor:'pointer', textAlign:'center', transition:'all 0.2s', boxShadow:sel?MINTGLOW:'none' }}>
                         <Icon size={24} color={sel?MINT:MUTED} style={{ marginBottom:8 }}/>
                         <div style={{ fontSize:12, fontWeight:600, color:sel?MINT:WHITE }}>{t.label}</div>
                       </div>
@@ -544,7 +551,7 @@ export default function Onboarding({ onComplete }) {
                 <GhostBtn onClick={() => { setError(''); setStep(1); }}>
                   <ArrowLeft size={15}/> Back
                 </GhostBtn>
-                <PrimaryBtn onClick={handleStep2}>
+                <PrimaryBtn onClick={handleStep2} disabled={!bizType || !industry || (industry === 'Other' && !otherIndustry.trim())}>
                   Continue <ArrowRight size={15}/>
                 </PrimaryBtn>
               </div>
@@ -569,7 +576,7 @@ export default function Onboarding({ onComplete }) {
                   return (
                     <div key={f.id}
                       onClick={() => { if (!f.soon) { toggleFeature(f.id); clearError(); } }}
-                      style={{ padding:'14px', borderRadius:12, border:'1px solid '+(selected?MINT:BORDER), background:selected?MINTDIM:'#0D1526', cursor:f.soon?'default':'pointer', transition:'all 0.2s', position:'relative', opacity:f.soon?0.5:1, boxShadow:selected?MINTGLOW:'none' }}>
+                      style={{ padding:'14px', borderRadius:12, border:'1px solid '+(selected?MINT:BORDER), background:selected?MINTDIM:'#FFFFFF', cursor:f.soon?'default':'pointer', transition:'all 0.2s', position:'relative', opacity:f.soon?0.5:1, boxShadow:selected?MINTGLOW:'none' }}>
                       {f.soon && (
                         <div style={{ position:'absolute', top:8, right:8, fontSize:9, fontWeight:700, color:'#FFFFFF', background:MINT, padding:'2px 7px', borderRadius:20 }}>SOON</div>
                       )}
@@ -589,10 +596,7 @@ export default function Onboarding({ onComplete }) {
                 <GhostBtn onClick={() => { setError(''); setStep(2); }}>
                   <ArrowLeft size={15}/> Back
                 </GhostBtn>
-                <GhostBtn onClick={() => { setError(''); setStep(4); }}>
-                  Skip
-                </GhostBtn>
-                <PrimaryBtn onClick={handleStep3Continue}>
+                <PrimaryBtn onClick={handleStep3Continue} disabled={features.length === 0}>
                   Continue <ArrowRight size={15}/>
                 </PrimaryBtn>
               </div>
@@ -616,7 +620,7 @@ export default function Onboarding({ onComplete }) {
                   return (
                     <div key={t.value}
                       onClick={() => { setTeamSize(t.value); clearError(); }}
-                      style={{ padding:'20px', borderRadius:12, border:'1px solid '+(sel?MINT:BORDER), background:sel?MINTDIM:'#0D1526', cursor:'pointer', textAlign:'center', transition:'all 0.2s', boxShadow:sel?MINTGLOW:'none' }}>
+                      style={{ padding:'20px', borderRadius:12, border:'1px solid '+(sel?MINT:BORDER), background:sel?MINTDIM:'#FFFFFF', cursor:'pointer', textAlign:'center', transition:'all 0.2s', boxShadow:sel?MINTGLOW:'none' }}>
                       <div style={{ fontSize:22, fontWeight:800, color:sel?MINT:WHITE, marginBottom:4 }}>{t.label}</div>
                       <div style={{ fontSize:11, color:MUTED }}>{t.sub}</div>
                     </div>
@@ -630,10 +634,7 @@ export default function Onboarding({ onComplete }) {
                 <GhostBtn onClick={() => { setError(''); setStep(3); }}>
                   <ArrowLeft size={15}/> Back
                 </GhostBtn>
-                <GhostBtn onClick={() => { setError(''); setStep(5); }}>
-                  Skip
-                </GhostBtn>
-                <PrimaryBtn onClick={handleStep4Continue}>
+                <PrimaryBtn onClick={handleStep4Continue} disabled={!teamSize}>
                   Continue <ArrowRight size={15}/>
                 </PrimaryBtn>
               </div>
