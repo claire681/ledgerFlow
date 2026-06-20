@@ -14,6 +14,7 @@ import {
   SlidersHorizontal, Megaphone,
 } from 'lucide-react';
 import { getFirstName } from '../utils/userDisplay';
+import TrialBanner from '../components/TrialBanner';
 
 const ACCENT  = '#0AB98A';
 const FONT    = "'Inter', -apple-system, sans-serif";
@@ -666,6 +667,8 @@ export default function Dashboard() {
         </div>
 
         {/* ── PILLS ROW ── */}
+        <TrialBanner />
+
         <PillsRow
           navigate={navigate}
           isMobile={isMobile}
