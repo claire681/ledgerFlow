@@ -26,7 +26,33 @@ async def register(
     result = await db.execute(select(User).where(User.email == body.email.lower()))
     existing = result.scalar_one_or_none()
     if existing:
-        raise HTTPException(status_code=400, detail="An account with this email already exists.")
+        # Allow resumption of incomplete signups: if the user never finished
+        # verification AND never started a paid subscription, treat this as
+        # them continuing where they left off. Update password + full_name,
+        # return a fresh token, and let the frontend continue normally.
+        sub_status = getattr(existing, "subscription_status", None) or ""
+        is_complete = (
+            existing.is_verified
+            and sub_status in ("active", "trialing", "past_due")
+        )
+        if is_complete:
+            raise HTTPException(
+                status_code=400,
+                detail="An account with this email already exists. Please log in instead.",
+            )
+        existing.full_name = body.full_name or existing.full_name
+        existing.hashed_pw = hash_password(body.password)
+        if getattr(body, "company", None):
+            existing.company = body.company
+        await db.commit()
+        await db.refresh(existing)
+        token = create_access_token(data={"sub": str(existing.id)})
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "user_id": str(existing.id),
+            "email": existing.email,
+        }
     user = User(
         id=str(uuid.uuid4()),
         email=body.email.lower(),

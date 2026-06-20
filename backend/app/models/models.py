@@ -113,6 +113,19 @@ class User(Base):
     plan            = Column(String,  default="free")
     is_active       = Column(Boolean, default=True)
     is_verified     = Column(Boolean, default=False)
+
+    # Subscription / billing state (DB columns added via alembic)
+    subscription_status = Column(String, nullable=True)
+    trial_ends_at = Column(DateTime(timezone=False), nullable=True)
+    stripe_customer_id = Column(String, nullable=True)
+
+    # Email verification
+    verification_code = Column(String, nullable=True)
+    verification_code_expires_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Onboarding wizard state
+    onboarding_completed = Column(Boolean, nullable=True)
+    onboarding_step = Column(Integer, nullable=True)
     onboarding_done = Column(Boolean, default=False)
     last_page          = Column(String,  nullable=True)
     briefing_enabled   = Column(Boolean, default=True)

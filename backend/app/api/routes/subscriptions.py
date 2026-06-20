@@ -1,12 +1,13 @@
+import uuid
 """Subscription endpoints (PayPal)."""
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 import json
 import os
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
@@ -135,6 +136,74 @@ async def activate_subscription(
         db.add(sub)
     if paypal_status in ("ACTIVE", "APPROVED"):
         current_user.plan = body.plan_slug
+        # Mark trial state. next_billing_time = first real charge date (end of
+        # trial). Fall back to now+14d if PayPal didn't provide it.
+        # users.trial_ends_at is TIMESTAMP WITHOUT TIME ZONE, so strip tzinfo.
+        trial_end = next_billing or (datetime.now(timezone.utc) + timedelta(days=14))
+        if trial_end.tzinfo is not None:
+            trial_end = trial_end.astimezone(timezone.utc).replace(tzinfo=None)
+        await db.execute(
+            text(
+                "UPDATE users SET subscription_status = 'trialing', "
+                "trial_ends_at = :te WHERE id = :uid"
+            ),
+            {"te": trial_end, "uid": str(current_user.id)},
+        )
+
+        # Schedule a trial-ending reminder email 3 days before trial ends.
+        # The followup scheduler polls scheduled_emails and sends via SendGrid.
+        try:
+            reminder_at = trial_end - timedelta(days=3)
+            reminder_at_tz = reminder_at.replace(tzinfo=timezone.utc)
+            now_tz = datetime.now(timezone.utc)
+
+            if reminder_at_tz > now_tz:
+                slug_parts = body.plan_slug.split("_payroll_")
+                if len(slug_parts) == 2:
+                    pretty_name = f"{slug_parts[0].title()} + Payroll {slug_parts[1].title()}"
+                else:
+                    pretty_name = body.plan_slug.title()
+
+                price = float(known_plan.get("price_usd", 0.0))
+                first_name = (current_user.full_name or "").split(" ")[0] or "there"
+                trial_end_str = trial_end.strftime("%B %d, %Y")
+
+                subject_line = "Your Novala trial ends in 3 days"
+                body_text = (
+                    f"Hi {first_name},\n\n"
+                    f"This is a heads up that your Novala free trial ends on "
+                    f"{trial_end_str}, in 3 days.\n\n"
+                    f"On that date, your {pretty_name} subscription will renew "
+                    f"automatically at ${price:.2f}/month, billed to the payment "
+                    f"method on file.\n\n"
+                    f"If you would like to continue, no action is needed.\n"
+                    f"To cancel before being charged, visit your billing "
+                    f"settings at https://app.getnovala.com/billing.\n\n"
+                    f"Thanks for trying Novala.\n\n"
+                    f"The Novala team"
+                )
+
+                await db.execute(
+                    text(
+                        "INSERT INTO scheduled_emails "
+                        "(id, user_id, to_email, to_name, subject, body, "
+                        "scheduled_at, status, created_at) "
+                        "VALUES (:id, :uid, :em, :nm, :sub, :bd, :sa, "
+                        "'pending', NOW())"
+                    ),
+                    {
+                        "id": str(uuid.uuid4()),
+                        "uid": str(current_user.id),
+                        "em": current_user.email,
+                        "nm": current_user.full_name or "",
+                        "sub": subject_line,
+                        "bd": body_text,
+                        "sa": reminder_at_tz,
+                    },
+                )
+        except Exception as _e:
+            print(f"[activate] failed to schedule trial reminder: {_e}")
+
     await db.commit()
     await db.refresh(sub)
     return _sub_to_out(sub)
