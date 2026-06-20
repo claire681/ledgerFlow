@@ -103,7 +103,7 @@ export default function TrialBanner() {
         </div>
       </div>
       <button
-        onClick={() => navigate("/billing")}
+        onClick={() => navigate("/account/billing")}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         style={{

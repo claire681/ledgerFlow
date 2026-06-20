@@ -183,6 +183,7 @@ function AppLayout({ onLogout }) {
           <Route path="/payroll/items/locations/:id" element={<WorkLocation />} />
           <Route path="/payroll/*" element={<Navigate to="/payroll/employees" replace />} />
           <Route path="/" element={<Dashboard />} />
+        <Route path="/account/billing" element={<AccountBilling />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/budgets" element={<Budgets />} />
