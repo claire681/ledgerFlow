@@ -67,6 +67,7 @@ import Checkout from "./pages/Checkout";
 import AddPayroll from "./pages/AddPayroll";
 import AddPayrollV2      from './pages/AddPayrollV2';
 import CartV2            from './pages/CartV2';
+import AccountBilling   from './pages/AccountBilling';
 import Cart from "./pages/Cart";
 import Verify from "./pages/Verify";
 import VerificationGuard from "./components/VerificationGuard";
