@@ -27,9 +27,14 @@ export default function SubscriptionExpired() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         background: BG,
         fontFamily: FONT,
+        zIndex: 9999,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
