@@ -72,6 +72,7 @@ import Cart from "./pages/Cart";
 import Verify from "./pages/Verify";
 import SubscriptionExpired from './pages/SubscriptionExpired';
 import VerificationGuard from "./components/VerificationGuard";
+import AccessGate from './components/AccessGate';
 const ACCENT = '#0AB98A';
 
 function PromoBanner() {
@@ -166,6 +167,7 @@ function AppLayout({ onLogout }) {
         )}
 
         <main  style={{ flex:1, overflowY:'auto', position:'relative', minWidth:0, marginLeft: 0 }}>
+          <AccessGate />
           <Routes>
           <Route path="/payroll/employees" element={<EmployeesList />} />
           <Route path="/payroll/employees/add" element={<AddEmployee />} />
