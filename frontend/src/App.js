@@ -70,6 +70,7 @@ import CartV2            from './pages/CartV2';
 import AccountBilling   from './pages/AccountBilling';
 import Cart from "./pages/Cart";
 import Verify from "./pages/Verify";
+import SubscriptionExpired from './pages/SubscriptionExpired';
 import VerificationGuard from "./components/VerificationGuard";
 const ACCENT = '#0AB98A';
 
@@ -185,6 +186,7 @@ function AppLayout({ onLogout }) {
           <Route path="/payroll/*" element={<Navigate to="/payroll/employees" replace />} />
           <Route path="/" element={<Dashboard />} />
         <Route path="/account/billing" element={<AccountBilling />} />
+          <Route path="/subscription/expired" element={<SubscriptionExpired />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/budgets" element={<Budgets />} />
