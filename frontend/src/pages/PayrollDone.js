@@ -177,7 +177,7 @@ export default function PayrollDone() {
         </div>
       </div>
 
-      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: "#fff", borderTop: "1px solid " + C.line, padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 5, boxShadow: "0 -4px 16px rgba(16,26,43,0.05)" }}>
+      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: "#fff", borderTop: "1px solid " + C.line, padding: "16px 40px 16px 260px", display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 5, boxShadow: "0 -4px 16px rgba(16,26,43,0.05)" }}>
         <button style={btnGhost}>Download payroll reports</button>
         <button style={btnPrimary} onClick={() => navigate("/payroll/overview")}>Done</button>
       </div>
