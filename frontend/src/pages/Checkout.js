@@ -62,6 +62,22 @@ export default function Checkout() {
   const planId = params.get("plan") || "essentials";
   const billing = params.get("billing") || "monthly";
   const payrollId = params.get("payroll") || null;
+
+  // Auth-aware: if user is already logged in (e.g. re-subscribing after
+  // their trial ended), skip the signup form and forward straight to
+  // /billing for PayPal checkout. Brand new visitors keep the existing flow.
+  useEffect(() => {
+    const token =
+      localStorage.getItem("access_token") || localStorage.getItem("token");
+    if (token) {
+      const next = new URLSearchParams();
+      if (planId) next.set("plan", planId);
+      if (billing) next.set("billing", billing);
+      if (payrollId) next.set("payroll", payrollId);
+      navigate("/billing?" + next.toString(), { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const plan = getPlan(planId);
   const payroll = getPayroll(payrollId);
 
