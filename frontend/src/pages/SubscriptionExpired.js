@@ -21,7 +21,8 @@ export default function SubscriptionExpired() {
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("token");
-    navigate("/login");
+    // Hard reload so all React state, contexts, and caches are cleared
+    window.location.href = "/login";
   };
 
   return (
