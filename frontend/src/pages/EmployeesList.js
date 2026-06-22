@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import { getReadiness } from "../utils/payrollReadiness";
 import { startNewPayroll } from "../utils/payrollLauncher";
-import EmployeesDirectory from "../components/EmployeesDirectory";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -319,11 +318,8 @@ export default function EmployeesList() {
 
         <div style={{ display: "flex", gap: 4, borderBottom: "1px solid " + BORDER, marginBottom: 18 }}>
           <div onClick={() => setActiveTab("list")} style={{ padding: "9px 14px", fontSize: 14, fontWeight: 600, color: activeTab === "list" ? BRAND_DARK : TEXT_SECONDARY, cursor: "pointer", borderBottom: activeTab === "list" ? "2px solid " + BRAND : "2px solid transparent", marginBottom: -1 }}>List</div>
-          <div onClick={() => setActiveTab("directory")} style={{ padding: "9px 14px", fontSize: 14, fontWeight: 600, color: activeTab === "directory" ? BRAND_DARK : TEXT_SECONDARY, cursor: "pointer", borderBottom: activeTab === "directory" ? "2px solid " + BRAND : "2px solid transparent", marginBottom: -1 }}>Directory</div>
+          <div onClick={() => navigate("/payroll/employees/directory")} style={{ padding: "9px 14px", fontSize: 14, fontWeight: 600, color: activeTab === "directory" ? BRAND_DARK : TEXT_SECONDARY, cursor: "pointer", borderBottom: activeTab === "directory" ? "2px solid " + BRAND : "2px solid transparent", marginBottom: -1 }}>Directory</div>
         </div>
-      <>
-      {activeTab === "list" && (
-
 
         <div style={{ background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 10, padding: "13px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 14, fontWeight: 600, color: TEXT_INK }}>
@@ -405,11 +401,6 @@ export default function EmployeesList() {
         </div>
 
       </div>
-          )}
-      {activeTab === "directory" && (
-        <EmployeesDirectory employees={withReadiness} />
-      )}
-      </>
-</div>
+    </div>
   );
 }

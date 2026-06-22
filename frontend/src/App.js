@@ -9,6 +9,7 @@ import PayrollLauncher from "./utils/payrollLauncher";
 import PayRunDetail from "./pages/PayRunDetail";
 import PayStubDetail from "./pages/PayStubDetail";
 import EmployeesList from "./pages/EmployeesList";
+import EmployeesDirectoryPage from "./pages/EmployeesDirectoryPage";
 import PayrollItems from "./pages/PayrollItems";
 import PaySchedule from "./pages/PaySchedule";
 import WorkLocation from "./pages/WorkLocation";
@@ -172,6 +173,7 @@ function AppLayout({ onLogout }) {
           <Routes>
           <Route path="/payroll/employees" element={<EmployeesList />} />
           <Route path="/payroll/employees/add" element={<AddEmployee />} />
+          <Route path="/payroll/employees/directory" element={<EmployeesDirectoryPage />} />
           <Route path="/payroll/employees/:id" element={<EmployeeProfile />} />
           <Route path="/payroll/run" element={<PayrollLauncher />} />
           <Route path="/payroll/run/:payRunId" element={<RunPayroll />} />
