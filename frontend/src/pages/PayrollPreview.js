@@ -356,6 +356,18 @@ function CompareModal({ employee, run, onClose, currency }) {
               <tr style={rB}><td style={indL}>Rate</td><td style={indR}>{curR > 0 ? fmtMoney(curR, currency) + "/hr" : "-"}</td><td style={indR}>{curR > 0 ? fmtMoney(curR, currency) + "/hr" : "-"}</td></tr>
               <tr style={rB}><td style={indL}>Hours</td><td style={indR}>{lstH > 0 ? lstH : "-"}</td><td style={indR}>{curH > 0 ? curH : "-"}</td></tr>
 
+              <tr style={rB}>
+                <td style={cellL}>Stat Holiday Pay</td>
+                <td style={cellR}>{fOd(0)}</td>
+                <td style={cellR}>{fOd(0)}</td>
+              </tr>
+
+              <tr style={rB}>
+                <td style={cellL}>Stat pay (average daily wage)</td>
+                <td style={cellR}>{fOd(0)}</td>
+                <td style={cellR}>{fOd(0)}</td>
+              </tr>
+
               <tr style={{ background:"#F7F9FB" }}>
                 <td style={groupL}>Taxes</td>
                 <td style={groupR}>{fOd(lstEI)}</td>
