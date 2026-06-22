@@ -71,7 +71,7 @@ export default function PayrollDone() {
 
   return (
     <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text, paddingTop: 0, paddingBottom: 140, overflowY: "auto" }}>
-      <div style={{ maxWidth: 1640, margin: "0 auto" }}>
+      <div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 40px", borderBottom: "1px solid " + C.line, background: "#fff", position: "sticky", top: 0, zIndex: 4 }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.13em", textTransform: "uppercase", color: C.faint, marginBottom: 4 }}>Run payroll</div>
@@ -79,7 +79,7 @@ export default function PayrollDone() {
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button style={iconBtnStyle} title="Help"><HelpCircle size={17} /></button>
-            <button style={iconBtnStyle} title="Close" onClick={() => navigate("/payroll")}><X size={16} /></button>
+            <button style={iconBtnStyle} title="Close" onClick={() => navigate("/payroll/overview")}><X size={16} /></button>
           </div>
         </div>
 
@@ -174,9 +174,9 @@ export default function PayrollDone() {
         </div>
       </div>
 
-      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: "#fff", borderTop: "1px solid " + C.line, padding: "16px 40px 16px 280px", display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 5, boxShadow: "0 -4px 16px rgba(16,26,43,0.05)" }}>
+      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: "#fff", borderTop: "1px solid " + C.line, padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 5, boxShadow: "0 -4px 16px rgba(16,26,43,0.05)" }}>
         <button style={btnGhost}>Download payroll reports</button>
-        <button style={btnPrimary} onClick={() => navigate("/payroll")}>Done</button>
+        <button style={btnPrimary} onClick={() => navigate("/payroll/overview")}>Done</button>
       </div>
 
       {activePaystub && <PaystubOverlay emp={activePaystub} run={run} currency={currency}
