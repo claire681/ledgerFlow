@@ -19,7 +19,7 @@ export default function EmployeesDirectoryPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("access_token") || localStorage.getItem("token");
-    fetch(API_URL + "/api/v1/employees", { headers: token ? { Authorization: "Bearer " + token } : {} })
+    fetch(API_URL + "/api/v1/payroll/employees", { headers: token ? { Authorization: "Bearer " + token } : {} })
       .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then((data) => {
         const list = Array.isArray(data) ? data : (data.employees || data.results || []);
