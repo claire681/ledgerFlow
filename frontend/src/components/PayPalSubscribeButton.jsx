@@ -52,7 +52,7 @@ export default function PayPalSubscribeButton({ planSlug, fundingSource = "paypa
     <div style={{ minWidth: 240, maxWidth: 320, margin: "0 auto" }}>
       <PayPalScriptProvider
         options={{
-          clientId: PAYPAL_CLIENT_ID,
+          "client-id": PAYPAL_CLIENT_ID,
           vault: true,
           intent: "subscription",
         }}
