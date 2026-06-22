@@ -70,9 +70,9 @@ export default function PayrollDone() {
   const chequeWord = run.chequeCount === 1 ? "cheque" : "cheques";
 
   return (
-    <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text, paddingBottom: 120 }}>
+    <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text, paddingTop: 0, paddingBottom: 140, overflowY: "auto" }}>
       <div style={{ maxWidth: 1640, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 40px", borderBottom: "1px solid " + C.line, background: "#fff" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 40px", borderBottom: "1px solid " + C.line, background: "#fff", position: "sticky", top: 0, zIndex: 4 }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.13em", textTransform: "uppercase", color: C.faint, marginBottom: 4 }}>Run payroll</div>
             <h1 style={{ fontSize: 18, fontWeight: 600, color: C.ink, margin: 0 }}>{run.schedule}</h1>
@@ -214,12 +214,12 @@ function PaystubOverlay({ emp, run, currency, sectionsOpen, toggleSection, memo,
   const sumCurrent = (rows) => rows.reduce((s, r) => s + (r.current || 0), 0);
   const sumYtd = (rows) => rows.reduce((s, r) => s + (r.ytd || 0), 0);
   return (
-    <div style={{ position: "fixed", inset: 0, background: "#fff", zIndex: 60, display: "flex", flexDirection: "column", fontFamily: FONT }}>
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, height: "100vh", background: "#fff", zIndex: 9999, display: "flex", flexDirection: "column", fontFamily: FONT }}>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: "14px 40px", borderBottom: "1px solid " + C.line, background: "#FBFCFD" }}>
         <button style={iconBtnStyle} title="Help"><HelpCircle size={16} /></button>
         <button style={iconBtnStyle} title="Close" onClick={onClose}><X size={16} /></button>
       </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "34px 40px 40px", maxWidth: 1280, margin: "0 auto", width: "100%" }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "34px 40px 40px", maxWidth: 1280, margin: "0 auto", width: "100%" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24, flexWrap: "wrap" }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: C.faint, marginBottom: 6 }}>Pay to</div>
