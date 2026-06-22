@@ -53,6 +53,7 @@ export default function PayrollDone() {
   const [chequeNumbers, setChequeNumbers] = useState({});
   const [sectionsOpen, setSectionsOpen] = useState({ pay: true, employee: true, employer: true });
   const [memo, setMemo] = useState("");
+  const [showHeader, setShowHeader] = useState(true);
 
   useEffect(() => {
     const handler = (e) => { if (e.key === "Escape" && activePaystub) setActivePaystub(null); };
@@ -72,6 +73,7 @@ export default function PayrollDone() {
   return (
     <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text, paddingTop: 0, paddingBottom: 140, overflowY: "auto" }}>
       <div>
+        {showHeader && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 40px", borderBottom: "1px solid " + C.line, background: "#fff", position: "sticky", top: 0, zIndex: 4 }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.13em", textTransform: "uppercase", color: C.faint, marginBottom: 4 }}>Run payroll</div>
@@ -79,9 +81,10 @@ export default function PayrollDone() {
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button style={iconBtnStyle} title="Help"><HelpCircle size={17} /></button>
-            <button style={iconBtnStyle} title="Close" onClick={() => navigate("/payroll/overview")}><X size={16} /></button>
+            <button style={iconBtnStyle} title="Close" onClick={() => setShowHeader(false)}><X size={16} /></button>
           </div>
         </div>
+        )}
 
         <div style={{ background: "linear-gradient(180deg, #F0FAF7, " + C.surface + ")", padding: "46px 40px", display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
