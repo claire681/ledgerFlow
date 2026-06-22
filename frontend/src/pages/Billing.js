@@ -42,7 +42,49 @@ export default function Billing() {
   const payrollMonthly = payroll ? payroll.monthlyPrice : 0;
   const totalDueToday = planMonthly + payrollMonthly;
 
-  const handleSuccess = (sub) => {
+  const handleSuccess = async (sub) => {
+    const token =
+      localStorage.getItem("access_token") || localStorage.getItem("token");
+
+    if (token) {
+      // Authenticated user re-subscribing: activate the new PayPal sub
+      // against the existing account, then go straight to the dashboard.
+      try {
+        const API =
+          process.env.REACT_APP_API_URL || "https://api.getnovala.com";
+        const paypalSubId =
+          (sub && (sub.subscriptionID || sub.id)) || sub;
+        const response = await fetch(
+          API + "/api/v1/subscriptions/activate",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify({
+              subscription_id: paypalSubId,
+              plan_slug: combinedSlug,
+            }),
+          }
+        );
+        if (response.ok) {
+          navigate("/dashboard");
+          return;
+        }
+        const detail = await response.text();
+        setError(
+          "Subscription created but activation failed. Please contact [email protected]. (" +
+            detail.slice(0, 200) +
+            ")"
+        );
+      } catch (err) {
+        setError("Network error during activation. Please try refreshing.");
+      }
+      return;
+    }
+
+    // Brand new visitor without account: continue with the register flow.
     const next = new URLSearchParams();
     next.set("fromCheckout", "true");
     next.set("plan", planSlug);
