@@ -321,10 +321,11 @@ export default function EmployeesList() {
           <div onClick={() => setActiveTab("list")} style={{ padding: "9px 14px", fontSize: 14, fontWeight: 600, color: activeTab === "list" ? BRAND_DARK : TEXT_SECONDARY, cursor: "pointer", borderBottom: activeTab === "list" ? "2px solid " + BRAND : "2px solid transparent", marginBottom: -1 }}>List</div>
           <div onClick={() => setActiveTab("directory")} style={{ padding: "9px 14px", fontSize: 14, fontWeight: 600, color: activeTab === "directory" ? BRAND_DARK : TEXT_SECONDARY, cursor: "pointer", borderBottom: activeTab === "directory" ? "2px solid " + BRAND : "2px solid transparent", marginBottom: -1 }}>Directory</div>
         </div>
-
-        <div style={{ background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 10, padding: "13px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
       <>
       {activeTab === "list" && (
+
+
+        <div style={{ background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 10, padding: "13px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 14, fontWeight: 600, color: TEXT_INK }}>
             <ShieldCheck size={18} style={{ color: BRAND }} />
             <span><strong>{readyCount} of {total}</strong> employee{total === 1 ? "" : "s"} ready for payroll</span>
@@ -402,13 +403,13 @@ export default function EmployeesList() {
         <div style={{ fontSize: 12.5, color: TEXT_SECONDARY, marginTop: 12 }}>
           Showing {visible.length} of {total} employee{total === 1 ? "" : "s"}
         </div>
-      )}
+
+      </div>
+          )}
       {activeTab === "directory" && (
         <EmployeesDirectory employees={withReadiness} />
       )}
       </>
-
-      </div>
-    </div>
+</div>
   );
 }
