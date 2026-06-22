@@ -842,7 +842,7 @@ export default function PayrollPreview() {
           )}
           <button style={{ fontFamily: FONT, fontWeight: 600, fontSize: 14, borderRadius: 10, cursor: "pointer", border: "1px solid " + C.line, background: "#fff", color: C.ink, padding: "11px 18px" }}>Preview payroll details</button>
           <span style={{ display: "inline-flex", alignItems: "stretch", borderRadius: 10, overflow: "hidden" }}>
-            <button disabled={submitDisabled} onClick={() => !submitDisabled && navigate(`/payroll/run/${payRunId}/done`)}
+            <button disabled={submitDisabled} onClick={() => !submitDisabled && navigate("/payroll/run/" + payRunId + "/done")}
                   aria-disabled={submitDisabled} aria-describedby={submitDisabled ? "submit-hint" : undefined} style={{ fontFamily: FONT, fontWeight: 600, fontSize: 14, cursor: submitDisabled ? "not-allowed" : "pointer", border: "1px solid transparent", background: submitDisabled ? "#C3CBD6" : C.teal, color: "#fff", padding: "11px 24px", borderRadius: 0, boxShadow: submitDisabled ? "none" : "0 1px 2px rgba(21,160,140,.3)" }}>Submit payroll</button>
             <button disabled={submitDisabled} aria-label="Submit options" style={{ background: submitDisabled ? "#C3CBD6" : C.teal, color: "#fff", border: 0, borderLeft: "1px solid rgba(255,255,255,.22)", padding: "0 12px", cursor: submitDisabled ? "not-allowed" : "pointer", display: "grid", placeItems: "center" }}>
               <ChevronDown size={14} />
