@@ -1,0 +1,567 @@
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  ChevronLeft, ChevronDown, Check, User, Phone, Briefcase, CreditCard,
+  DollarSign, PlusCircle, Calendar, Receipt, MinusCircle
+} from "lucide-react";
+
+const FONT = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
+const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
+
+const C = {
+  ink: "#12262B", teal: "#15A08C", tealDark: "#0F8474", tealInk: "#0E8A78", tealSoft: "#E3F4F0",
+  text: "#1B2533", muted: "#66748B", faint: "#94A0B2",
+  line: "#E7EAF0", lineSoft: "#F1F3F7", surface: "#F4F6F8",
+  amber: "#B7791F", amberSoft: "#FBF1DD",
+  green: "#1F9D6B", greenSoft: "#E4F5EC",
+};
+
+const PROVINCES = [
+  "Alberta","British Columbia","Manitoba","New Brunswick","Newfoundland and Labrador",
+  "Nova Scotia","Northwest Territories","Nunavut","Ontario","Prince Edward Island",
+  "Quebec","Saskatchewan","Yukon"
+];
+
+function authHeaders() {
+  const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+  return token ? { Authorization: "Bearer " + token } : {};
+}
+
+const SECTIONS = [
+  { id: "personal", title: "Personal info", icon: User, required: true, fields: [
+    { k: "name", l: "Name", t: "text", req: true },
+    { k: "preferred", l: "Preferred first name", t: "text" },
+    { k: "email", l: "Email", t: "email" },
+    { k: "mobilePhone", l: "Mobile phone number", t: "tel" },
+    { k: "street", l: "Home address", t: "text", full: true },
+    { k: "city", l: "City", t: "text" },
+    { k: "province", l: "Province", t: "select", opts: PROVINCES },
+    { k: "postal", l: "Postal code", t: "text" },
+    { k: "birth", l: "Birth date", t: "date", req: true },
+    { k: "gender", l: "Gender", t: "select", opts: ["Female","Male","Non-binary","Prefer not to say"] },
+    { k: "sin", l: "Social insurance number", t: "text", req: true },
+  ]},
+  { id: "emergency", title: "Emergency contact", icon: Phone, fields: [
+    { k: "ecName", l: "Contact name", t: "text" },
+    { k: "ecRel", l: "Relationship", t: "select", opts: ["Spouse","Parent","Sibling","Child","Friend","Other"] },
+    { k: "ecPhone", l: "Phone number", t: "tel" },
+    { k: "ecEmail", l: "Email", t: "email" },
+  ]},
+  { id: "employment", title: "Employment details", icon: Briefcase, required: true, fields: [
+    { k: "empId", l: "Employee ID", t: "text" },
+    { k: "jobTitle", l: "Job title", t: "text" },
+    { k: "empType", l: "Employment type", t: "select", req: true, opts: ["Full-time","Part-time","Casual"] },
+    { k: "startDate", l: "Start date", t: "date", req: true },
+    { k: "workLocation", l: "Work location", t: "text" },
+    { k: "manager", l: "Manager", t: "text" },
+  ]},
+  { id: "payment", title: "Payment method", icon: CreditCard, required: true, fields: [
+    { k: "method", l: "Payment method", t: "select", req: true, opts: ["Direct deposit","Cheque"] },
+    { k: "institution", l: "Financial institution", t: "text", showIf: function(v){return v.method==="Direct deposit";} },
+    { k: "transit", l: "Transit number", t: "text", showIf: function(v){return v.method==="Direct deposit";} },
+    { k: "account", l: "Account number", t: "text", showIf: function(v){return v.method==="Direct deposit";} },
+  ]},
+  { id: "basepay", title: "Base pay", icon: DollarSign, required: true, fields: [
+    { k: "payType", l: "Pay type", t: "select", req: true, opts: ["Hourly","Salary"] },
+    { k: "rate", l: "Rate", t: "money", req: true },
+    { k: "standardHours", l: "Standard hours per pay period", t: "number" },
+    { k: "paySchedule", l: "Pay schedule", t: "select", opts: ["Weekly","Bi-weekly","Semi-monthly","Monthly"] },
+  ]},
+  { id: "addpay", title: "Additional pay types", icon: PlusCircle, fields: [
+    { k: "overtime", l: "Overtime", t: "select", opts: ["Enabled","Not enabled"] },
+    { k: "bonus", l: "Bonus", t: "select", opts: ["Enabled","Not enabled"] },
+    { k: "vacationPay", l: "Vacation pay", t: "select", opts: ["Enabled","Not enabled"] },
+  ]},
+  { id: "timeoff", title: "Time off", icon: Calendar, fields: [
+    { k: "vacationPolicy", l: "Vacation policy", t: "select", opts: ["Accrued by hours worked","Fixed annual","Unpaid"] },
+    { k: "accrualRate", l: "Accrual rate", t: "text" },
+    { k: "balanceHours", l: "Current balance (hours)", t: "number" },
+  ]},
+  { id: "tax", title: "Tax withholdings", icon: Receipt, required: true, fields: [
+    { k: "provinceEmp", l: "Province of employment", t: "select", req: true, opts: PROVINCES },
+    { k: "federalTD1", l: "Federal claim amount (TD1)", t: "money" },
+    { k: "provincialTD1", l: "Provincial claim amount (TD1)", t: "money" },
+    { k: "additionalTax", l: "Additional tax per pay", t: "money" },
+    { k: "cppExempt", l: "CPP exempt", t: "select", opts: ["No","Yes"] },
+    { k: "eiExempt", l: "EI exempt", t: "select", opts: ["No","Yes"] },
+  ]},
+  { id: "deductions", title: "Deductions and contributions", icon: MinusCircle, fields: [
+    { k: "deductionName", l: "Deduction name", t: "text" },
+    { k: "deductionAmount", l: "Amount per pay", t: "money" },
+  ]},
+];
+
+function isFilled(v) { return v !== undefined && v !== null && String(v).trim() !== ""; }
+
+function sectionStatus(section, values) {
+  const reqKeys = section.fields.filter(function(f){return f.req;}).map(function(f){return f.k;});
+  const anyFilled = section.fields.some(function(f){return isFilled(values[f.k]);});
+  if (reqKeys.length > 0) {
+    const allReq = reqKeys.every(function(k){return isFilled(values[k]);});
+    if (allReq) return "done";
+    return anyFilled ? "edit" : "start";
+  }
+  return anyFilled ? "done" : "start";
+}
+
+function formatDateForInput(d) {
+  if (!d) return "";
+  if (typeof d === "string" && d.length >= 10) return d.slice(0, 10);
+  return d;
+}
+
+function employeeToValues(emp) {
+  if (!emp) return {};
+  const ti = emp.tax_info || {};
+  const ded = Array.isArray(emp.deductions_list) && emp.deductions_list[0] ? emp.deductions_list[0] : {};
+  const empTypeMap = { full_time: "Full-time", part_time: "Part-time", casual: "Casual" };
+  const payScheduleMap = { weekly: "Weekly", bi_weekly: "Bi-weekly", semi_monthly: "Semi-monthly", monthly: "Monthly" };
+  const rate = emp.pay_type === "hourly" ? emp.hourly_rate : emp.salary_amount;
+  return {
+    name: [emp.first_name, emp.last_name].filter(Boolean).join(" "),
+    preferred: emp.preferred_name || "",
+    email: emp.personal_email || "",
+    mobilePhone: emp.phone || "",
+    street: emp.address_line1 || "",
+    city: emp.city || "",
+    province: emp.province_or_state || "",
+    postal: emp.postal_or_zip || "",
+    birth: formatDateForInput(emp.date_of_birth),
+    gender: emp.gender || "",
+    sin: emp.sin_or_ssn || "",
+    ecName: emp.emergency_contact_name || "",
+    ecRel: emp.emergency_contact_relationship || "",
+    ecPhone: emp.emergency_contact_phone || "",
+    ecEmail: emp.emergency_contact_email || "",
+    empId: emp.employee_number || "",
+    jobTitle: emp.position_title || "",
+    empType: empTypeMap[emp.employment_type] || emp.employment_type || "",
+    startDate: formatDateForInput(emp.start_date),
+    workLocation: emp.department || "",
+    manager: emp.manager_name || "",
+    method: emp.account_type === "direct_deposit" ? "Direct deposit" : (emp.account_type === "cheque" ? "Cheque" : ""),
+    institution: emp.bank_name || "",
+    transit: emp.transit_number || "",
+    account: emp.account_number_encrypted || "",
+    payType: emp.pay_type === "hourly" ? "Hourly" : (emp.pay_type === "salary" ? "Salary" : ""),
+    rate: rate != null ? String(rate) : "",
+    standardHours: emp.hours_per_week != null ? String(emp.hours_per_week) : "",
+    paySchedule: payScheduleMap[emp.pay_schedule] || emp.pay_schedule || "",
+    overtime: ti.overtime || "",
+    bonus: ti.bonus || "",
+    vacationPay: ti.vacation_pay_enabled || "",
+    vacationPolicy: emp.vacation_policy || "",
+    accrualRate: ti.accrual_rate || "",
+    balanceHours: ti.balance_hours != null ? String(ti.balance_hours) : "",
+    provinceEmp: ti.province_of_employment || "",
+    federalTD1: ti.federal_td1 != null ? String(ti.federal_td1) : "",
+    provincialTD1: ti.provincial_td1 != null ? String(ti.provincial_td1) : "",
+    additionalTax: ti.additional_tax_per_pay != null ? String(ti.additional_tax_per_pay) : "",
+    cppExempt: ti.cpp_exempt || "",
+    eiExempt: ti.ei_exempt || "",
+    deductionName: ded.name || "",
+    deductionAmount: ded.amount != null ? String(ded.amount) : "",
+  };
+}
+
+function valuesToPatch(sectionId, v, currentEmp) {
+  const ti = (currentEmp && currentEmp.tax_info) || {};
+  if (sectionId === "personal") {
+    const parts = (v.name || "").trim().split(/\s+/);
+    const first = parts[0] || "";
+    const last = parts.slice(1).join(" ") || "";
+    return {
+      first_name: first, last_name: last,
+      preferred_name: v.preferred || null,
+      personal_email: v.email || "",
+      phone: v.mobilePhone || null,
+      address_line1: v.street || null,
+      city: v.city || null,
+      province_or_state: v.province || null,
+      postal_or_zip: v.postal || null,
+      date_of_birth: v.birth || null,
+      gender: v.gender || null,
+      sin_or_ssn: v.sin || null,
+    };
+  }
+  if (sectionId === "emergency") {
+    return {
+      emergency_contact_name: v.ecName || null,
+      emergency_contact_relationship: v.ecRel || null,
+      emergency_contact_phone: v.ecPhone || null,
+      emergency_contact_email: v.ecEmail || null,
+    };
+  }
+  if (sectionId === "employment") {
+    const empTypeMap = { "Full-time": "full_time", "Part-time": "part_time", "Casual": "casual" };
+    return {
+      employee_number: v.empId || null,
+      position_title: v.jobTitle || null,
+      employment_type: empTypeMap[v.empType] || (v.empType || "full_time").toLowerCase().replace(/[- ]/g, "_"),
+      start_date: v.startDate || null,
+      department: v.workLocation || null,
+      manager_name: v.manager || null,
+    };
+  }
+  if (sectionId === "payment") {
+    const dd = v.method === "Direct deposit";
+    return {
+      bank_name: dd ? (v.institution || null) : null,
+      transit_number: dd ? (v.transit || null) : null,
+      account_number_encrypted: dd ? (v.account || null) : null,
+      account_type: dd ? "direct_deposit" : "cheque",
+    };
+  }
+  if (sectionId === "basepay") {
+    const isHourly = v.payType === "Hourly";
+    const rateNum = v.rate ? Number(v.rate) : null;
+    const psMap = { "Weekly": "weekly", "Bi-weekly": "bi_weekly", "Semi-monthly": "semi_monthly", "Monthly": "monthly" };
+    return {
+      pay_type: isHourly ? "hourly" : "salary",
+      hourly_rate: isHourly ? rateNum : null,
+      salary_amount: isHourly ? null : rateNum,
+      hours_per_week: v.standardHours ? Number(v.standardHours) : null,
+      pay_schedule: psMap[v.paySchedule] || (v.paySchedule || "").toLowerCase().replace(/[- ]/g, "_"),
+    };
+  }
+  if (sectionId === "addpay") {
+    return { tax_info: Object.assign({}, ti, {
+      overtime: v.overtime || null,
+      bonus: v.bonus || null,
+      vacation_pay_enabled: v.vacationPay || null,
+    })};
+  }
+  if (sectionId === "timeoff") {
+    return {
+      vacation_policy: v.vacationPolicy || null,
+      tax_info: Object.assign({}, ti, {
+        accrual_rate: v.accrualRate || null,
+        balance_hours: v.balanceHours ? Number(v.balanceHours) : null,
+      })
+    };
+  }
+  if (sectionId === "tax") {
+    return { tax_info: Object.assign({}, ti, {
+      province_of_employment: v.provinceEmp || null,
+      federal_td1: v.federalTD1 ? Number(v.federalTD1) : null,
+      provincial_td1: v.provincialTD1 ? Number(v.provincialTD1) : null,
+      additional_tax_per_pay: v.additionalTax ? Number(v.additionalTax) : null,
+      cpp_exempt: v.cppExempt || null,
+      ei_exempt: v.eiExempt || null,
+    })};
+  }
+  if (sectionId === "deductions") {
+    return {
+      deductions_list: v.deductionName ? [{
+        name: v.deductionName,
+        amount: v.deductionAmount ? Number(v.deductionAmount) : 0,
+      }] : []
+    };
+  }
+  return {};
+}
+
+function initialsFrom(name) {
+  if (!name) return "?";
+  const parts = String(name).trim().split(/\s+/);
+  const first = parts[0] && parts[0][0] || "";
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return (first + last).toUpperCase();
+}
+
+function formatMoney(v) {
+  if (!isFilled(v)) return null;
+  const n = Number(v);
+  if (!Number.isFinite(n)) return v;
+  return "$" + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatViewValue(field, value) {
+  if (!isFilled(value)) return null;
+  if (field.t === "money") return formatMoney(value);
+  return String(value);
+}
+
+export default function EmployeeProfileV2() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [employee, setEmployee] = useState(null);
+  const [values, setValues] = useState({});
+  const [draft, setDraft] = useState({});
+  const [openId, setOpenId] = useState("personal");
+  const [editingId, setEditingId] = useState(null);
+  const [savingId, setSavingId] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  useEffect(function () {
+    if (!id) return;
+    setLoading(true);
+    fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (data) {
+        const emp = data.employee || data;
+        setEmployee(emp);
+        setValues(employeeToValues(emp));
+        setLoading(false);
+      })
+      .catch(function (err) { setLoadError(err.message); setLoading(false); });
+  }, [id]);
+
+  useEffect(function () {
+    if (!toast) return;
+    const t = setTimeout(function () { setToast(null); }, 2400);
+    return function () { clearTimeout(t); };
+  }, [toast]);
+
+  const startEdit = function (sectionId) {
+    setDraft(Object.assign({}, values));
+    setEditingId(sectionId);
+    setOpenId(sectionId);
+  };
+  const cancelEdit = function () { setEditingId(null); setDraft({}); };
+  const setOpen = function (sectionId) {
+    if (editingId) return;
+    setOpenId(function (cur) { return cur === sectionId ? null : sectionId; });
+  };
+
+  const saveSection = async function (sectionId) {
+    setSavingId(sectionId);
+    const patch = valuesToPatch(sectionId, draft, employee);
+    try {
+      const res = await fetch(API_URL + "/api/v1/payroll/employees/" + id, {
+        method: "PATCH",
+        headers: Object.assign({ "Content-Type": "application/json" }, authHeaders()),
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error("Save failed (" + res.status + "): " + txt.slice(0, 200));
+      }
+      const updated = await res.json();
+      const emp = updated.employee || updated;
+      setEmployee(emp);
+      setValues(employeeToValues(emp));
+      setEditingId(null);
+      setDraft({});
+      const sec = SECTIONS.find(function (s) { return s.id === sectionId; });
+      setToast({ kind: "ok", msg: "Saved " + sec.title.toLowerCase() });
+    } catch (err) {
+      setToast({ kind: "err", msg: err.message });
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const requiredSections = SECTIONS.filter(function (s) { return s.required; });
+  const allRequiredDone = useMemo(function () {
+    return requiredSections.every(function (s) { return sectionStatus(s, values) === "done"; });
+  }, [values, requiredSections]);
+
+  if (loading) {
+    return <div style={{ padding: 40, fontFamily: FONT, color: C.muted, textAlign: "center" }}>Loading employee...</div>;
+  }
+  if (loadError) {
+    return (
+      <div style={{ padding: 40, fontFamily: FONT }}>
+        <div style={{ background: "#FEE2E2", border: "1px solid #F87171", color: "#991B1B", padding: 16, borderRadius: 10 }}>
+          Could not load employee: {loadError}
+        </div>
+        <button onClick={function () { navigate("/payroll/employees"); }} style={{ marginTop: 16, fontFamily: FONT, fontWeight: 600, fontSize: 14, color: C.tealInk, background: "none", border: 0, cursor: "pointer" }}>
+          Back to Employees
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text, padding: "26px 40px 90px", maxWidth: 1500, margin: "0 auto" }}>
+      <div onClick={function () { navigate("/payroll/employees"); }} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: C.tealInk, cursor: "pointer", marginBottom: 18 }}>
+        <ChevronLeft size={16} /> Employees
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 20 }}>
+        <div style={{ width: 64, height: 64, borderRadius: "50%", background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", fontWeight: 600, fontSize: 22, flex: "0 0 64px" }}>
+          {initialsFrom(values.name)}
+        </div>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <h1 style={{ fontSize: 25, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em" }}>{values.name || "Unnamed employee"}</h1>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "4px 11px", borderRadius: 20, background: allRequiredDone ? C.greenSoft : C.amberSoft, color: allRequiredDone ? C.green : C.amber }}>
+              {allRequiredDone ? <Check size={13} /> : <DotIcon size={13} />}
+              {allRequiredDone ? "Active" : "Draft"}
+            </span>
+          </div>
+          <div style={{ fontSize: 13.5, color: C.muted, marginTop: 2 }}>Employee</div>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "262px 1fr", gap: 26, alignItems: "start" }}>
+        <Rail values={values} openId={openId} onPick={setOpen} editingId={editingId} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {SECTIONS.map(function (s) {
+            return (
+              <Section key={s.id} section={s} values={values} draft={draft}
+                isOpen={openId === s.id} isEditing={editingId === s.id} isSaving={savingId === s.id}
+                disabledByOtherEdit={!!editingId && editingId !== s.id}
+                onToggleOpen={function () { setOpen(s.id); }}
+                onEdit={function () { startEdit(s.id); }}
+                onCancel={cancelEdit}
+                onSave={function () { saveSection(s.id); }}
+                onChange={function (k, val) { setDraft(function (d) { return Object.assign({}, d, { [k]: val }); }); }}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {toast && (
+        <div style={{ position: "fixed", bottom: 26, left: "50%", transform: "translateX(-50%)", background: toast.kind === "err" ? "#7F1D1D" : C.ink, color: "#fff", fontSize: 13, fontWeight: 500, padding: "11px 18px", borderRadius: 10, zIndex: 80, display: "flex", alignItems: "center", gap: 9, boxShadow: "0 8px 24px rgba(16,26,43,0.3)" }}>
+          {toast.kind === "ok" ? <Check size={16} color="#7FE3D2" /> : <span style={{ color: "#FCA5A5", fontWeight: 700 }}>!</span>}
+          <span>{toast.msg}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DotIcon({ size }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+    </svg>
+  );
+}
+
+function Rail({ values, openId, onPick, editingId }) {
+  return (
+    <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, padding: 8, position: "sticky", top: 20, boxShadow: "0 1px 2px rgba(16,26,43,0.04)" }}>
+      {SECTIONS.map(function (s) {
+        const st = sectionStatus(s, values);
+        const on = openId === s.id;
+        const Icon = s.icon;
+        const disabled = !!editingId && editingId !== s.id;
+        const dotColor = st === "done" ? C.green : (st === "edit" ? C.teal : C.amber);
+        return (
+          <button key={s.id} onClick={function () { onPick(s.id); }} disabled={disabled}
+            style={{ display: "flex", alignItems: "center", gap: 11, width: "100%", border: 0,
+              background: on ? C.tealSoft : "none", fontFamily: FONT, fontSize: 13.5,
+              fontWeight: on ? 600 : 500, color: on ? C.tealInk : C.text, padding: "11px 12px",
+              borderRadius: 10, cursor: disabled ? "not-allowed" : "pointer", textAlign: "left", opacity: disabled ? 0.5 : 1 }}>
+            <span style={{ width: 18, height: 18, color: on ? C.tealInk : C.faint, flex: "0 0 18px" }}>
+              <Icon size={18} />
+            </span>
+            <span style={{ flex: 1 }}>{s.title}</span>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: dotColor }} />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function Section({ section, values, draft, isOpen, isEditing, isSaving, disabledByOtherEdit, onToggleOpen, onEdit, onCancel, onSave, onChange }) {
+  const Icon = section.icon;
+  const status = sectionStatus(section, values);
+  const pill = status === "done" ? { bg: C.greenSoft, fg: C.green, label: "Done" }
+    : status === "edit" ? { bg: C.tealSoft, fg: C.tealInk, label: "In progress" }
+    : { bg: C.amberSoft, fg: C.amber, label: "Start" };
+  const actLabel = status === "start" ? "Start" : "Edit";
+  const v = isEditing ? draft : values;
+  const visibleFields = section.fields.filter(function (f) { return !f.showIf || f.showIf(v); });
+
+  return (
+    <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
+      <div onClick={function () { if (!isEditing && !disabledByOtherEdit) onToggleOpen(); }}
+        style={{ display: "flex", alignItems: "center", gap: 13, padding: "18px 22px", cursor: isEditing || disabledByOtherEdit ? "default" : "pointer" }}>
+        <span style={{ width: 30, height: 30, borderRadius: 9, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 30px" }}>
+          <Icon size={17} />
+        </span>
+        <h3 style={{ flex: 1, fontSize: 16, fontWeight: 600, color: C.ink }}>{section.title}</h3>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: pill.bg, color: pill.fg }}>
+          {status === "done" && <Check size={12} />} {pill.label}
+        </span>
+        {!isEditing && (
+          <button onClick={function (e) { e.stopPropagation(); onEdit(); }} disabled={disabledByOtherEdit}
+            style={{ fontSize: 13.5, fontWeight: 600, color: C.tealInk, background: "none", border: 0, cursor: disabledByOtherEdit ? "not-allowed" : "pointer", padding: "6px 8px", borderRadius: 8, opacity: disabledByOtherEdit ? 0.5 : 1 }}>
+            {actLabel}
+          </button>
+        )}
+        <ChevronDown size={18} color={C.muted} style={{ transform: isOpen ? "none" : "rotate(-90deg)", transition: "transform 0.2s" }} />
+      </div>
+      {isOpen && (
+        <div style={{ padding: "4px 22px 22px", borderTop: "1px solid " + C.lineSoft }}>
+          {isEditing ? (
+            <div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 18px", padding: "18px 0 4px" }}>
+                {visibleFields.map(function (f) {
+                  return (
+                    <FieldEditor key={f.k} field={f} value={draft[f.k]} onChange={function (val) { onChange(f.k, val); }} />
+                  );
+                })}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, padding: "16px 0 2px", marginTop: 6, borderTop: "1px solid " + C.lineSoft }}>
+                <button onClick={onCancel} disabled={isSaving} style={{ fontFamily: FONT, fontWeight: 600, fontSize: 14, background: "#fff", border: "1px solid " + C.line, color: C.ink, borderRadius: 10, padding: "9px 18px", cursor: isSaving ? "not-allowed" : "pointer" }}>Cancel</button>
+                <button onClick={onSave} disabled={isSaving} style={{ fontFamily: FONT, fontWeight: 600, fontSize: 14, background: isSaving ? "#C3CBD6" : C.teal, color: "#fff", border: "1px solid transparent", borderRadius: 10, padding: "9px 18px", cursor: isSaving ? "not-allowed" : "pointer", boxShadow: isSaving ? "none" : "0 1px 2px rgba(21,160,140,0.3)" }}>
+                  {isSaving ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {visibleFields.map(function (f) {
+                const display = formatViewValue(f, v[f.k]);
+                return (
+                  <div key={f.k} style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, padding: "13px 0", borderBottom: "1px solid " + C.lineSoft }}>
+                    <span style={{ fontSize: 13.5, color: C.muted }}>{f.l}</span>
+                    <span style={{ fontSize: 13.5, color: display ? C.ink : C.faint, fontWeight: display ? 500 : 400, fontStyle: display ? "normal" : "italic", textAlign: "right" }}>
+                      {display || "Not set"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FieldEditor({ field, value, onChange }) {
+  const v = value == null ? "" : value;
+  const common = {
+    border: "1px solid " + C.line, borderRadius: 10, padding: "10px 12px",
+    fontFamily: FONT, fontSize: 14, color: C.ink, background: "#fff", width: "100%",
+  };
+  let control;
+  if (field.t === "select") {
+    control = (
+      <select value={v} onChange={function (e) { onChange(e.target.value); }} style={Object.assign({}, common, { cursor: "pointer" })}>
+        <option value="">Select</option>
+        {field.opts.map(function (o) { return <option key={o} value={o}>{o}</option>; })}
+      </select>
+    );
+  } else if (field.t === "money") {
+    control = (
+      <div style={{ position: "relative" }}>
+        <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: C.muted, fontSize: 14 }}>$</span>
+        <input value={v} inputMode="decimal" placeholder="0.00" onChange={function (e) { onChange(e.target.value); }} style={Object.assign({}, common, { paddingLeft: 24 })} />
+      </div>
+    );
+  } else {
+    const type = field.t === "date" ? "date" : field.t === "email" ? "email" : field.t === "tel" ? "tel" : field.t === "number" ? "number" : "text";
+    control = (
+      <input type={type} value={v} placeholder={field.t === "date" ? "" : "Not set"} onChange={function (e) { onChange(e.target.value); }} style={common} />
+    );
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gridColumn: field.full ? "1 / -1" : "auto" }}>
+      <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: C.faint, marginBottom: 6 }}>
+        {field.l}{field.req && <span style={{ color: C.amber, marginLeft: 3 }}>*</span>}
+      </label>
+      {control}
+    </div>
+  );
+}
