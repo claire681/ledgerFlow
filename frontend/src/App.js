@@ -176,7 +176,7 @@ function AppLayout({ onLogout }) {
           <Route path="/payroll/employees/add" element={<AddEmployee />} />
           <Route path="/payroll/employees/directory" element={<EmployeesDirectoryPage />} />
           <Route path="/payroll/employees/:id/v2" element={<EmployeeProfileV2 />} />
-          <Route path="/payroll/employees/:id" element={<EmployeeProfile />} />
+          <Route path="/payroll/employees/:id" element={<EmployeeProfileV2 />} />
           <Route path="/payroll/run" element={<PayrollLauncher />} />
           <Route path="/payroll/run/:payRunId" element={<RunPayroll />} />
           <Route path="/payroll/run/:payRunId/preview" element={<PayrollPreview />} />
