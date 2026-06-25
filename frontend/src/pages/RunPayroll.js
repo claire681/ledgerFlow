@@ -1081,7 +1081,7 @@ export default function RunPayroll() {
         </div>
 
         {/* footer */}
-        <div id="tour-footer" style={{ position: "sticky", bottom: 0, zIndex: 30, boxShadow: "0 -4px 12px rgba(15,23,42,0.06)", display: "flex", alignItems: "center", gap: 16, padding: "14px 26px",
+        <div id="tour-footer" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100, boxShadow: "0 -4px 12px rgba(15,23,42,0.06)", display: "flex", alignItems: "center", gap: 16, padding: "14px 26px",
           borderTop: "1px solid " + C.line, background: "#fff" }}>
           <button style={ghostBtn} onClick={() => navigate(-1)}>Cancel</button>
           <span style={{ marginLeft: "auto", fontSize: 13.5, color: C.muted }}>{selectedCount} of {rows.length} employees selected</span>
