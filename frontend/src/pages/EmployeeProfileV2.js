@@ -4,6 +4,7 @@ import {
   ChevronLeft, ChevronDown, Check, User, Phone, Briefcase, CreditCard,
   DollarSign, PlusCircle, Calendar, Receipt, MinusCircle
 } from "lucide-react";
+import { getCountryConfig, validateField } from "../utils/countryPayroll";
 
 const FONT = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -12,92 +13,83 @@ const C = {
   ink: "#12262B", teal: "#15A08C", tealDark: "#0F8474", tealInk: "#0E8A78", tealSoft: "#E3F4F0",
   text: "#1B2533", muted: "#66748B", faint: "#94A0B2",
   line: "#E7EAF0", lineSoft: "#F1F3F7", surface: "#F4F6F8",
-  amber: "#B7791F", amberSoft: "#FBF1DD",
-  green: "#1F9D6B", greenSoft: "#E4F5EC",
+  amber: "#B7791F", amberSoft: "#FBF1DD", green: "#1F9D6B", greenSoft: "#E4F5EC",
+  err: "#DC2626",
 };
 
-const PROVINCES = [
-  "Alberta","British Columbia","Manitoba","New Brunswick","Newfoundland and Labrador",
-  "Nova Scotia","Northwest Territories","Nunavut","Ontario","Prince Edward Island",
-  "Quebec","Saskatchewan","Yukon"
-];
-
 function authHeaders() {
-  const token = localStorage.getItem("access_token") || localStorage.getItem("token");
-  return token ? { Authorization: "Bearer " + token } : {};
+  const t = localStorage.getItem("access_token") || localStorage.getItem("token");
+  return t ? { Authorization: "Bearer " + t } : {};
 }
-
-const SECTIONS = [
-  { id: "personal", title: "Personal info", icon: User, required: true, fields: [
-    { k: "name", l: "Name", t: "text", req: true },
-    { k: "preferred", l: "Preferred first name", t: "text" },
-    { k: "email", l: "Email", t: "email" },
-    { k: "mobilePhone", l: "Mobile phone number", t: "tel" },
-    { k: "street", l: "Home address", t: "text", full: true },
-    { k: "city", l: "City", t: "text" },
-    { k: "province", l: "Province", t: "select", opts: PROVINCES },
-    { k: "postal", l: "Postal code", t: "text" },
-    { k: "birth", l: "Birth date", t: "date", req: true },
-    { k: "gender", l: "Gender", t: "select", opts: ["Female","Male","Non-binary","Prefer not to say"] },
-    { k: "sin", l: "Social insurance number", t: "text", req: true },
-  ]},
-  { id: "emergency", title: "Emergency contact", icon: Phone, fields: [
-    { k: "ecName", l: "Contact name", t: "text" },
-    { k: "ecRel", l: "Relationship", t: "select", opts: ["Spouse","Parent","Sibling","Child","Friend","Other"] },
-    { k: "ecPhone", l: "Phone number", t: "tel" },
-    { k: "ecEmail", l: "Email", t: "email" },
-  ]},
-  { id: "employment", title: "Employment details", icon: Briefcase, required: true, fields: [
-    { k: "empId", l: "Employee ID", t: "text" },
-    { k: "jobTitle", l: "Job title", t: "text" },
-    { k: "empType", l: "Employment type", t: "select", req: true, opts: ["Full-time","Part-time","Casual"] },
-    { k: "startDate", l: "Start date", t: "date", req: true },
-    { k: "workLocation", l: "Work location", t: "text" },
-    { k: "manager", l: "Manager", t: "text" },
-  ]},
-  { id: "payment", title: "Payment method", icon: CreditCard, required: true, fields: [
-    { k: "method", l: "Payment method", t: "select", req: true, opts: ["Direct deposit","Cheque"] },
-    { k: "institution", l: "Financial institution", t: "text", showIf: function(v){return v.method==="Direct deposit";} },
-    { k: "transit", l: "Transit number", t: "text", showIf: function(v){return v.method==="Direct deposit";} },
-    { k: "account", l: "Account number", t: "text", showIf: function(v){return v.method==="Direct deposit";} },
-  ]},
-  { id: "basepay", title: "Base pay", icon: DollarSign, required: true, fields: [
-    { k: "payType", l: "Pay type", t: "select", req: true, opts: ["Hourly","Salary"] },
-    { k: "rate", l: "Rate", t: "money", req: true },
-    { k: "standardHours", l: "Standard hours per pay period", t: "number" },
-    { k: "paySchedule", l: "Pay schedule", t: "select", opts: ["Weekly","Bi-weekly","Semi-monthly","Monthly"] },
-  ]},
-  { id: "addpay", title: "Additional pay types", icon: PlusCircle, fields: [
-    { k: "overtime", l: "Overtime", t: "select", opts: ["Enabled","Not enabled"] },
-    { k: "bonus", l: "Bonus", t: "select", opts: ["Enabled","Not enabled"] },
-    { k: "vacationPay", l: "Vacation pay", t: "select", opts: ["Enabled","Not enabled"] },
-  ]},
-  { id: "timeoff", title: "Time off", icon: Calendar, fields: [
-    { k: "vacationPolicy", l: "Vacation policy", t: "select", opts: ["Accrued by hours worked","Fixed annual","Unpaid"] },
-    { k: "accrualRate", l: "Accrual rate", t: "text" },
-    { k: "balanceHours", l: "Current balance (hours)", t: "number" },
-  ]},
-  { id: "tax", title: "Tax withholdings", icon: Receipt, required: true, fields: [
-    { k: "provinceEmp", l: "Province of employment", t: "select", req: true, opts: PROVINCES },
-    { k: "federalTD1", l: "Federal claim amount (TD1)", t: "money" },
-    { k: "provincialTD1", l: "Provincial claim amount (TD1)", t: "money" },
-    { k: "additionalTax", l: "Additional tax per pay", t: "money" },
-    { k: "cppExempt", l: "CPP exempt", t: "select", opts: ["No","Yes"] },
-    { k: "eiExempt", l: "EI exempt", t: "select", opts: ["No","Yes"] },
-  ]},
-  { id: "deductions", title: "Deductions and contributions", icon: MinusCircle, fields: [
-    { k: "deductionName", l: "Deduction name", t: "text" },
-    { k: "deductionAmount", l: "Amount per pay", t: "money" },
-  ]},
-];
 
 function isFilled(v) { return v !== undefined && v !== null && String(v).trim() !== ""; }
 
+function buildSections(country) {
+  return [
+    { id: "personal", title: "Personal info", icon: User, required: true, fields: [
+      { k: "name", l: "Name", t: "text", req: true },
+      { k: "preferred", l: "Preferred first name", t: "text" },
+      { k: "email", l: "Email", t: "email" },
+      { k: "mobilePhone", l: "Mobile phone number", t: "tel" },
+      { k: "street", l: "Home address", t: "text", full: true },
+      { k: "city", l: "City", t: "text" },
+      { k: "province", l: country.regionLabel, t: "select", opts: country.regions },
+      { k: "postal", l: "Postal code", t: "text" },
+      { k: "birth", l: "Birth date", t: "date", req: true },
+      { k: "gender", l: "Gender", t: "select", opts: ["Female","Male","Non-binary","Prefer not to say"] },
+      { k: "taxId", l: country.taxId.label, t: "text", req: true,
+        placeholder: country.taxId.placeholder,
+        validate: country.taxId.validate, errorMsg: country.taxId.errorMsg },
+    ]},
+    { id: "emergency", title: "Emergency contact", icon: Phone, fields: [
+      { k: "ecName", l: "Contact name", t: "text" },
+      { k: "ecRel", l: "Relationship", t: "select", opts: ["Spouse","Parent","Sibling","Child","Friend","Other"] },
+      { k: "ecPhone", l: "Phone number", t: "tel" },
+      { k: "ecEmail", l: "Email", t: "email" },
+    ]},
+    { id: "employment", title: "Employment details", icon: Briefcase, required: true, fields: [
+      { k: "empId", l: "Employee ID", t: "text" },
+      { k: "jobTitle", l: "Job title", t: "text" },
+      { k: "empType", l: "Employment type", t: "select", req: true, opts: ["Full-time","Part-time","Casual"] },
+      { k: "startDate", l: "Start date", t: "date", req: true },
+      { k: "workLocation", l: "Work location", t: "text" },
+      { k: "manager", l: "Manager", t: "text" },
+    ]},
+    { id: "payment", title: "Payment method", icon: CreditCard, required: true, fields: [
+      { k: "method", l: "Payment method", t: "select", req: true, opts: ["Direct deposit","Cheque"] },
+      { k: "institution", l: "Financial institution", t: "text", showIf: function(v) { return v.method === "Direct deposit"; } },
+      { k: "transit", l: "Transit number", t: "text", showIf: function(v) { return v.method === "Direct deposit"; } },
+      { k: "account", l: "Account number", t: "text", showIf: function(v) { return v.method === "Direct deposit"; } },
+    ]},
+    { id: "basepay", title: "Base pay", icon: DollarSign, required: true, fields: [
+      { k: "payType", l: "Pay type", t: "select", req: true, opts: ["Hourly","Salary"] },
+      { k: "rate", l: "Rate", t: "money", req: true },
+      { k: "standardHours", l: "Standard hours per pay period", t: "number" },
+      { k: "paySchedule", l: "Pay schedule", t: "select", opts: ["Weekly","Bi-weekly","Semi-monthly","Monthly"] },
+    ]},
+    { id: "addpay", title: "Additional pay types", icon: PlusCircle, fields: [
+      { k: "overtime", l: "Overtime", t: "select", opts: ["Enabled","Not enabled"] },
+      { k: "bonus", l: "Bonus", t: "select", opts: ["Enabled","Not enabled"] },
+      { k: "vacationPay", l: "Vacation pay", t: "select", opts: ["Enabled","Not enabled"] },
+    ]},
+    { id: "timeoff", title: "Time off", icon: Calendar, fields: [
+      { k: "vacationPolicy", l: "Vacation policy", t: "select", opts: ["Accrued by hours worked","Fixed annual","Unpaid"] },
+      { k: "accrualRate", l: "Accrual rate", t: "text" },
+      { k: "balanceHours", l: "Current balance (hours)", t: "number" },
+    ]},
+    { id: "tax", title: "Tax withholdings (" + country.taxForm + ")", icon: Receipt, required: true, fields: country.taxFields },
+    { id: "deductions", title: "Deductions and contributions", icon: MinusCircle, fields: [
+      { k: "deductionName", l: "Deduction name", t: "text" },
+      { k: "deductionAmount", l: "Amount per pay", t: "money" },
+    ]},
+  ];
+}
+
 function sectionStatus(section, values) {
-  const reqKeys = section.fields.filter(function(f){return f.req;}).map(function(f){return f.k;});
-  const anyFilled = section.fields.some(function(f){return isFilled(values[f.k]);});
+  const reqKeys = section.fields.filter(function(f) { return f.req; }).map(function(f) { return f.k; });
+  const anyFilled = section.fields.some(function(f) { return isFilled(values[f.k]); });
   if (reqKeys.length > 0) {
-    const allReq = reqKeys.every(function(k){return isFilled(values[k]);});
+    const allReq = reqKeys.every(function(k) { return isFilled(values[k]); });
     if (allReq) return "done";
     return anyFilled ? "edit" : "start";
   }
@@ -110,14 +102,14 @@ function formatDateForInput(d) {
   return d;
 }
 
-function employeeToValues(emp) {
+function employeeToValues(emp, country) {
   if (!emp) return {};
   const ti = emp.tax_info || {};
   const ded = Array.isArray(emp.deductions_list) && emp.deductions_list[0] ? emp.deductions_list[0] : {};
   const empTypeMap = { full_time: "Full-time", part_time: "Part-time", casual: "Casual" };
   const payScheduleMap = { weekly: "Weekly", bi_weekly: "Bi-weekly", semi_monthly: "Semi-monthly", monthly: "Monthly" };
   const rate = emp.pay_type === "hourly" ? emp.hourly_rate : emp.salary_amount;
-  return {
+  const result = {
     name: [emp.first_name, emp.last_name].filter(Boolean).join(" "),
     preferred: emp.preferred_name || "",
     email: emp.personal_email || "",
@@ -128,7 +120,7 @@ function employeeToValues(emp) {
     postal: emp.postal_or_zip || "",
     birth: formatDateForInput(emp.date_of_birth),
     gender: emp.gender || "",
-    sin: emp.sin_or_ssn || "",
+    taxId: emp.sin_or_ssn || "",
     ecName: emp.emergency_contact_name || "",
     ecRel: emp.emergency_contact_relationship || "",
     ecPhone: emp.emergency_contact_phone || "",
@@ -153,25 +145,22 @@ function employeeToValues(emp) {
     vacationPolicy: emp.vacation_policy || "",
     accrualRate: ti.accrual_rate || "",
     balanceHours: ti.balance_hours != null ? String(ti.balance_hours) : "",
-    provinceEmp: ti.province_of_employment || "",
-    federalTD1: ti.federal_td1 != null ? String(ti.federal_td1) : "",
-    provincialTD1: ti.provincial_td1 != null ? String(ti.provincial_td1) : "",
-    additionalTax: ti.additional_tax_per_pay != null ? String(ti.additional_tax_per_pay) : "",
-    cppExempt: ti.cpp_exempt || "",
-    eiExempt: ti.ei_exempt || "",
     deductionName: ded.name || "",
     deductionAmount: ded.amount != null ? String(ded.amount) : "",
   };
+  country.taxFields.forEach(function(f) {
+    result[f.k] = ti[f.k] != null ? String(ti[f.k]) : "";
+  });
+  return result;
 }
 
-function valuesToPatch(sectionId, v, currentEmp) {
+function valuesToPatch(sectionId, v, currentEmp, country) {
   const ti = (currentEmp && currentEmp.tax_info) || {};
   if (sectionId === "personal") {
     const parts = (v.name || "").trim().split(/\s+/);
-    const first = parts[0] || "";
-    const last = parts.slice(1).join(" ") || "";
     return {
-      first_name: first, last_name: last,
+      first_name: parts[0] || "",
+      last_name: parts.slice(1).join(" ") || "",
       preferred_name: v.preferred || null,
       personal_email: v.email || "",
       phone: v.mobilePhone || null,
@@ -181,7 +170,7 @@ function valuesToPatch(sectionId, v, currentEmp) {
       postal_or_zip: v.postal || null,
       date_of_birth: v.birth || null,
       gender: v.gender || null,
-      sin_or_ssn: v.sin || null,
+      sin_or_ssn: v.taxId || null,
     };
   }
   if (sectionId === "emergency") {
@@ -241,14 +230,15 @@ function valuesToPatch(sectionId, v, currentEmp) {
     };
   }
   if (sectionId === "tax") {
-    return { tax_info: Object.assign({}, ti, {
-      province_of_employment: v.provinceEmp || null,
-      federal_td1: v.federalTD1 ? Number(v.federalTD1) : null,
-      provincial_td1: v.provincialTD1 ? Number(v.provincialTD1) : null,
-      additional_tax_per_pay: v.additionalTax ? Number(v.additionalTax) : null,
-      cpp_exempt: v.cppExempt || null,
-      ei_exempt: v.eiExempt || null,
-    })};
+    const newTi = Object.assign({}, ti);
+    country.taxFields.forEach(function(f) {
+      if (f.t === "number" || f.t === "money") {
+        newTi[f.k] = isFilled(v[f.k]) ? Number(v[f.k]) : null;
+      } else {
+        newTi[f.k] = v[f.k] || null;
+      }
+    });
+    return { tax_info: newTi };
   }
   if (sectionId === "deductions") {
     return {
@@ -264,9 +254,9 @@ function valuesToPatch(sectionId, v, currentEmp) {
 function initialsFrom(name) {
   if (!name) return "?";
   const parts = String(name).trim().split(/\s+/);
-  const first = parts[0] && parts[0][0] || "";
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
-  return (first + last).toUpperCase();
+  const f = parts[0] && parts[0][0] || "";
+  const l = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return (f + l).toUpperCase();
 }
 
 function formatMoney(v) {
@@ -294,42 +284,78 @@ export default function EmployeeProfileV2() {
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [companyCountry, setCompanyCountry] = useState("CA");
+  const [fieldErrors, setFieldErrors] = useState({});
 
-  useEffect(function () {
+  const country = useMemo(function() { return getCountryConfig(companyCountry); }, [companyCountry]);
+  const sections = useMemo(function() { return buildSections(country); }, [country]);
+
+  useEffect(function() {
     if (!id) return;
     setLoading(true);
     fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() })
-      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-      .then(function (data) {
+      .then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function(data) {
         const emp = data.employee || data;
         setEmployee(emp);
-        setValues(employeeToValues(emp));
         setLoading(false);
       })
-      .catch(function (err) { setLoadError(err.message); setLoading(false); });
+      .catch(function(err) { setLoadError(err.message); setLoading(false); });
   }, [id]);
 
-  useEffect(function () {
+  useEffect(function() {
+    fetch(API_URL + "/api/v1/company/profile", { headers: authHeaders() })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        const co = data && (data.company || data);
+        if (co && co.address_country) setCompanyCountry(co.address_country);
+      })
+      .catch(function() {});
+  }, []);
+
+  useEffect(function() {
+    if (employee) setValues(employeeToValues(employee, country));
+  }, [employee, country]);
+
+  useEffect(function() {
     if (!toast) return;
-    const t = setTimeout(function () { setToast(null); }, 2400);
-    return function () { clearTimeout(t); };
+    const t = setTimeout(function() { setToast(null); }, 2800);
+    return function() { clearTimeout(t); };
   }, [toast]);
 
-  const startEdit = function (sectionId) {
+  const startEdit = function(sid) {
     setDraft(Object.assign({}, values));
-    setEditingId(sectionId);
-    setOpenId(sectionId);
+    setFieldErrors({});
+    setEditingId(sid);
+    setOpenId(sid);
   };
-  const cancelEdit = function () { setEditingId(null); setDraft({}); };
-  const setOpen = function (sectionId) {
+  const cancelEdit = function() { setEditingId(null); setDraft({}); setFieldErrors({}); };
+  const setOpen = function(sid) {
     if (editingId) return;
-    setOpenId(function (cur) { return cur === sectionId ? null : sectionId; });
+    setOpenId(function(cur) { return cur === sid ? null : sid; });
+  };
+  const onFieldChange = function(k, val) {
+    setDraft(function(d) { return Object.assign({}, d, { [k]: val }); });
+    if (fieldErrors[k]) setFieldErrors(function(fe) { return Object.assign({}, fe, { [k]: null }); });
   };
 
-  const saveSection = async function (sectionId) {
-    setSavingId(sectionId);
-    const patch = valuesToPatch(sectionId, draft, employee);
+  const saveSection = async function(sid) {
+    const section = sections.find(function(s) { return s.id === sid; });
+    const visibleFields = section.fields.filter(function(f) { return !f.showIf || f.showIf(draft); });
+    const errs = {};
+    visibleFields.forEach(function(f) {
+      const err = validateField(f, draft[f.k]);
+      if (err) errs[f.k] = err;
+    });
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      setToast({ kind: "err", msg: "Please fix the errors below" });
+      return;
+    }
+
+    setSavingId(sid);
     try {
+      const patch = valuesToPatch(sid, draft, employee, country);
       const res = await fetch(API_URL + "/api/v1/payroll/employees/" + id, {
         method: "PATCH",
         headers: Object.assign({ "Content-Type": "application/json" }, authHeaders()),
@@ -342,11 +368,10 @@ export default function EmployeeProfileV2() {
       const updated = await res.json();
       const emp = updated.employee || updated;
       setEmployee(emp);
-      setValues(employeeToValues(emp));
       setEditingId(null);
       setDraft({});
-      const sec = SECTIONS.find(function (s) { return s.id === sectionId; });
-      setToast({ kind: "ok", msg: "Saved " + sec.title.toLowerCase() });
+      setFieldErrors({});
+      setToast({ kind: "ok", msg: "Saved " + section.title.toLowerCase() });
     } catch (err) {
       setToast({ kind: "err", msg: err.message });
     } finally {
@@ -354,9 +379,9 @@ export default function EmployeeProfileV2() {
     }
   };
 
-  const requiredSections = SECTIONS.filter(function (s) { return s.required; });
-  const allRequiredDone = useMemo(function () {
-    return requiredSections.every(function (s) { return sectionStatus(s, values) === "done"; });
+  const requiredSections = sections.filter(function(s) { return s.required; });
+  const allRequiredDone = useMemo(function() {
+    return requiredSections.every(function(s) { return sectionStatus(s, values) === "done"; });
   }, [values, requiredSections]);
 
   if (loading) {
@@ -368,7 +393,7 @@ export default function EmployeeProfileV2() {
         <div style={{ background: "#FEE2E2", border: "1px solid #F87171", color: "#991B1B", padding: 16, borderRadius: 10 }}>
           Could not load employee: {loadError}
         </div>
-        <button onClick={function () { navigate("/payroll/employees"); }} style={{ marginTop: 16, fontFamily: FONT, fontWeight: 600, fontSize: 14, color: C.tealInk, background: "none", border: 0, cursor: "pointer" }}>
+        <button onClick={function() { navigate("/payroll/employees"); }} style={{ marginTop: 16, fontFamily: FONT, fontWeight: 600, fontSize: 14, color: C.tealInk, background: "none", border: 0, cursor: "pointer" }}>
           Back to Employees
         </button>
       </div>
@@ -377,10 +402,9 @@ export default function EmployeeProfileV2() {
 
   return (
     <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text, padding: "26px 40px 90px", maxWidth: 1500, margin: "0 auto" }}>
-      <div onClick={function () { navigate("/payroll/employees"); }} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: C.tealInk, cursor: "pointer", marginBottom: 18 }}>
+      <div onClick={function() { navigate("/payroll/employees"); }} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: C.tealInk, cursor: "pointer", marginBottom: 18 }}>
         <ChevronLeft size={16} /> Employees
       </div>
-
       <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 20 }}>
         <div style={{ width: 64, height: 64, borderRadius: "50%", background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", fontWeight: 600, fontSize: 22, flex: "0 0 64px" }}>
           {initialsFrom(values.name)}
@@ -393,29 +417,28 @@ export default function EmployeeProfileV2() {
               {allRequiredDone ? "Active" : "Draft"}
             </span>
           </div>
-          <div style={{ fontSize: 13.5, color: C.muted, marginTop: 2 }}>Employee</div>
+          <div style={{ fontSize: 13.5, color: C.muted, marginTop: 2 }}>Employee, {country.name}</div>
         </div>
       </div>
-
       <div style={{ display: "grid", gridTemplateColumns: "262px 1fr", gap: 26, alignItems: "start" }}>
-        <Rail values={values} openId={openId} onPick={setOpen} editingId={editingId} />
+        <Rail sections={sections} values={values} openId={openId} onPick={setOpen} editingId={editingId} />
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {SECTIONS.map(function (s) {
+          {sections.map(function(s) {
             return (
               <Section key={s.id} section={s} values={values} draft={draft}
                 isOpen={openId === s.id} isEditing={editingId === s.id} isSaving={savingId === s.id}
                 disabledByOtherEdit={!!editingId && editingId !== s.id}
-                onToggleOpen={function () { setOpen(s.id); }}
-                onEdit={function () { startEdit(s.id); }}
+                fieldErrors={fieldErrors}
+                onToggleOpen={function() { setOpen(s.id); }}
+                onEdit={function() { startEdit(s.id); }}
                 onCancel={cancelEdit}
-                onSave={function () { saveSection(s.id); }}
-                onChange={function (k, val) { setDraft(function (d) { return Object.assign({}, d, { [k]: val }); }); }}
+                onSave={function() { saveSection(s.id); }}
+                onChange={onFieldChange}
               />
             );
           })}
         </div>
       </div>
-
       {toast && (
         <div style={{ position: "fixed", bottom: 26, left: "50%", transform: "translateX(-50%)", background: toast.kind === "err" ? "#7F1D1D" : C.ink, color: "#fff", fontSize: 13, fontWeight: 500, padding: "11px 18px", borderRadius: 10, zIndex: 80, display: "flex", alignItems: "center", gap: 9, boxShadow: "0 8px 24px rgba(16,26,43,0.3)" }}>
           {toast.kind === "ok" ? <Check size={16} color="#7FE3D2" /> : <span style={{ color: "#FCA5A5", fontWeight: 700 }}>!</span>}
@@ -434,17 +457,17 @@ function DotIcon({ size }) {
   );
 }
 
-function Rail({ values, openId, onPick, editingId }) {
+function Rail({ sections, values, openId, onPick, editingId }) {
   return (
     <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, padding: 8, position: "sticky", top: 20, boxShadow: "0 1px 2px rgba(16,26,43,0.04)" }}>
-      {SECTIONS.map(function (s) {
+      {sections.map(function(s) {
         const st = sectionStatus(s, values);
         const on = openId === s.id;
         const Icon = s.icon;
         const disabled = !!editingId && editingId !== s.id;
         const dotColor = st === "done" ? C.green : (st === "edit" ? C.teal : C.amber);
         return (
-          <button key={s.id} onClick={function () { onPick(s.id); }} disabled={disabled}
+          <button key={s.id} onClick={function() { onPick(s.id); }} disabled={disabled}
             style={{ display: "flex", alignItems: "center", gap: 11, width: "100%", border: 0,
               background: on ? C.tealSoft : "none", fontFamily: FONT, fontSize: 13.5,
               fontWeight: on ? 600 : 500, color: on ? C.tealInk : C.text, padding: "11px 12px",
@@ -461,7 +484,7 @@ function Rail({ values, openId, onPick, editingId }) {
   );
 }
 
-function Section({ section, values, draft, isOpen, isEditing, isSaving, disabledByOtherEdit, onToggleOpen, onEdit, onCancel, onSave, onChange }) {
+function Section({ section, values, draft, isOpen, isEditing, isSaving, disabledByOtherEdit, fieldErrors, onToggleOpen, onEdit, onCancel, onSave, onChange }) {
   const Icon = section.icon;
   const status = sectionStatus(section, values);
   const pill = status === "done" ? { bg: C.greenSoft, fg: C.green, label: "Done" }
@@ -469,11 +492,11 @@ function Section({ section, values, draft, isOpen, isEditing, isSaving, disabled
     : { bg: C.amberSoft, fg: C.amber, label: "Start" };
   const actLabel = status === "start" ? "Start" : "Edit";
   const v = isEditing ? draft : values;
-  const visibleFields = section.fields.filter(function (f) { return !f.showIf || f.showIf(v); });
+  const visibleFields = section.fields.filter(function(f) { return !f.showIf || f.showIf(v); });
 
   return (
     <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
-      <div onClick={function () { if (!isEditing && !disabledByOtherEdit) onToggleOpen(); }}
+      <div onClick={function() { if (!isEditing && !disabledByOtherEdit) onToggleOpen(); }}
         style={{ display: "flex", alignItems: "center", gap: 13, padding: "18px 22px", cursor: isEditing || disabledByOtherEdit ? "default" : "pointer" }}>
         <span style={{ width: 30, height: 30, borderRadius: 9, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 30px" }}>
           <Icon size={17} />
@@ -483,7 +506,7 @@ function Section({ section, values, draft, isOpen, isEditing, isSaving, disabled
           {status === "done" && <Check size={12} />} {pill.label}
         </span>
         {!isEditing && (
-          <button onClick={function (e) { e.stopPropagation(); onEdit(); }} disabled={disabledByOtherEdit}
+          <button onClick={function(e) { e.stopPropagation(); onEdit(); }} disabled={disabledByOtherEdit}
             style={{ fontSize: 13.5, fontWeight: 600, color: C.tealInk, background: "none", border: 0, cursor: disabledByOtherEdit ? "not-allowed" : "pointer", padding: "6px 8px", borderRadius: 8, opacity: disabledByOtherEdit ? 0.5 : 1 }}>
             {actLabel}
           </button>
@@ -495,9 +518,9 @@ function Section({ section, values, draft, isOpen, isEditing, isSaving, disabled
           {isEditing ? (
             <div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 18px", padding: "18px 0 4px" }}>
-                {visibleFields.map(function (f) {
+                {visibleFields.map(function(f) {
                   return (
-                    <FieldEditor key={f.k} field={f} value={draft[f.k]} onChange={function (val) { onChange(f.k, val); }} />
+                    <FieldEditor key={f.k} field={f} value={draft[f.k]} error={fieldErrors[f.k]} onChange={function(val) { onChange(f.k, val); }} />
                   );
                 })}
               </div>
@@ -510,7 +533,7 @@ function Section({ section, values, draft, isOpen, isEditing, isSaving, disabled
             </div>
           ) : (
             <div>
-              {visibleFields.map(function (f) {
+              {visibleFields.map(function(f) {
                 const display = formatViewValue(f, v[f.k]);
                 return (
                   <div key={f.k} style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, padding: "13px 0", borderBottom: "1px solid " + C.lineSoft }}>
@@ -529,31 +552,32 @@ function Section({ section, values, draft, isOpen, isEditing, isSaving, disabled
   );
 }
 
-function FieldEditor({ field, value, onChange }) {
+function FieldEditor({ field, value, error, onChange }) {
   const v = value == null ? "" : value;
+  const borderColor = error ? C.err : C.line;
   const common = {
-    border: "1px solid " + C.line, borderRadius: 10, padding: "10px 12px",
+    border: "1px solid " + borderColor, borderRadius: 10, padding: "10px 12px",
     fontFamily: FONT, fontSize: 14, color: C.ink, background: "#fff", width: "100%",
   };
   let control;
   if (field.t === "select") {
     control = (
-      <select value={v} onChange={function (e) { onChange(e.target.value); }} style={Object.assign({}, common, { cursor: "pointer" })}>
+      <select value={v} onChange={function(e) { onChange(e.target.value); }} style={Object.assign({}, common, { cursor: "pointer" })}>
         <option value="">Select</option>
-        {field.opts.map(function (o) { return <option key={o} value={o}>{o}</option>; })}
+        {field.opts.map(function(o) { return <option key={o} value={o}>{o}</option>; })}
       </select>
     );
   } else if (field.t === "money") {
     control = (
       <div style={{ position: "relative" }}>
         <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: C.muted, fontSize: 14 }}>$</span>
-        <input value={v} inputMode="decimal" placeholder="0.00" onChange={function (e) { onChange(e.target.value); }} style={Object.assign({}, common, { paddingLeft: 24 })} />
+        <input value={v} inputMode="decimal" placeholder="0.00" onChange={function(e) { onChange(e.target.value); }} style={Object.assign({}, common, { paddingLeft: 24 })} />
       </div>
     );
   } else {
     const type = field.t === "date" ? "date" : field.t === "email" ? "email" : field.t === "tel" ? "tel" : field.t === "number" ? "number" : "text";
     control = (
-      <input type={type} value={v} placeholder={field.t === "date" ? "" : "Not set"} onChange={function (e) { onChange(e.target.value); }} style={common} />
+      <input type={type} value={v} placeholder={field.placeholder || (field.t === "date" ? "" : "Not set")} onChange={function(e) { onChange(e.target.value); }} style={common} />
     );
   }
   return (
@@ -562,6 +586,11 @@ function FieldEditor({ field, value, onChange }) {
         {field.l}{field.req && <span style={{ color: C.amber, marginLeft: 3 }}>*</span>}
       </label>
       {control}
+      {error && (
+        <div style={{ marginTop: 6, fontSize: 12, color: C.err, display: "flex", alignItems: "center", gap: 5 }}>
+          <span style={{ fontWeight: 700 }}>!</span> {error}
+        </div>
+      )}
     </div>
   );
 }
