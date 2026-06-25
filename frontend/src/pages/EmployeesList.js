@@ -285,7 +285,7 @@ export default function EmployeesList() {
               </>
             ) : (
               <>
-                <div style={item} onClick={() => { setOpenMenuId(null); navigate("/payroll/employees/" + emp.id); }}><UserCog size={14} style={{ color: TEXT_SECONDARY }} />Finish setup</div>
+                <div style={item} onClick={() => { setOpenMenuId(null); navigate("/payroll/employees/" + emp.id + "?section=personal"); }}><UserCog size={14} style={{ color: TEXT_SECONDARY }} />Finish setup</div>
                 <div style={item} onClick={() => { setOpenMenuId(null); alert("Make inactive coming soon"); }}><UserX size={14} style={{ color: TEXT_SECONDARY }} />Make inactive</div>
               </>
             )}
@@ -376,7 +376,7 @@ export default function EmployeesList() {
           </div>
         )}
 
-        <div style={{ border: "0.5px solid " + BORDER, borderRadius: 10, overflow: "hidden" }}>
+        <div style={{ border: "0.5px solid " + BORDER, borderRadius: 10, overflow: "visible" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>

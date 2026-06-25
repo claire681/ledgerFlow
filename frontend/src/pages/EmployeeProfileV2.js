@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ChevronLeft, ChevronDown, Check, User, Phone, Briefcase, CreditCard,
   DollarSign, PlusCircle, Calendar, Receipt, MinusCircle
@@ -288,6 +288,11 @@ export default function EmployeeProfileV2() {
   const [values, setValues] = useState({});
   const [draft, setDraft] = useState({});
   const [openId, setOpenId] = useState("personal");
+  const [searchParams] = useSearchParams();
+  useEffect(function() {
+    const section = searchParams.get("section");
+    if (section) setOpenId(section);
+  }, [searchParams]);
   const [editingId, setEditingId] = useState(null);
   const [savingId, setSavingId] = useState(null);
   const [toast, setToast] = useState(null);
