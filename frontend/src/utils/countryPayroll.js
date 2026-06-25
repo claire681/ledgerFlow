@@ -17,7 +17,7 @@ function rangeValidate(min, max) {
 
 var COUNTRIES = {
   CA: {
-    code: "CA", name: "Canada",
+    code: "CA", name: "Canada", calculationSource: "Payroll calculations use the latest CRA payroll formulas (T4127).",
     taxId: {
       label: "Social insurance number", short: "SIN", placeholder: "XXX-XXX-XXX",
       validate: function(v) { return /^\d{3}[- ]?\d{3}[- ]?\d{3}$/.test(String(v || "").trim()); },
@@ -29,12 +29,12 @@ var COUNTRIES = {
       { k: "federalTD1", l: "Federal TD1 claim amount", t: "money", placeholder: "Example: 16,129", help: "Enter the total federal claim amount from the employee's TD1 form (Line 13).", validate: rangeValidate(0, 999999), errorMsg: "Enter $0 to $999,999" },
       { k: "provincialTD1", l: "Provincial TD1 claim amount", t: "money", placeholder: "Example: 22,323", help: "Enter the total provincial claim amount from the employee's provincial TD1 form.", validate: rangeValidate(0, 999999), errorMsg: "Enter $0 to $999,999" },
       { k: "additionalTax", l: "Voluntary extra federal tax per pay (optional)", t: "money", placeholder: "Leave blank if none", help: "Only enter if the employee requested extra withholding on TD1 page 2.", validate: rangeValidate(0, 99999), errorMsg: "Enter $0 to $99,999" },
-      { k: "cppExempt", l: "CPP exempt", t: "select", opts: ["No","Yes"], default: "No", help: "Most employees are not exempt. Set Yes only for clergy electing out, employees under 18, or those over 70 with a CPT30." },
-      { k: "eiExempt", l: "EI exempt", t: "select", opts: ["No","Yes"], default: "No", help: "Most employees are not exempt. Set Yes only for employees who own more than 40% of company shares or sole proprietors." }
+      { k: "cppExempt", l: "CPP exempt", t: "select", opts: ["No","Yes"], default: "No", help: "Most employees are not exempt. Select Yes only if the employee qualifies for a CPP exemption under CRA rules." },
+      { k: "eiExempt", l: "EI exempt", t: "select", opts: ["No","Yes"], default: "No", help: "Most employees are not exempt. Select Yes only if the employee qualifies for an EI exemption under CRA rules." }
     ]
   },
   US: {
-    code: "US", name: "United States",
+    code: "US", name: "United States", calculationSource: "Payroll calculations use the latest IRS Publication 15-T tables.",
     taxId: {
       label: "Social security number", short: "SSN", placeholder: "XXX-XX-XXXX",
       validate: function(v) { return /^\d{3}[- ]?\d{2}[- ]?\d{4}$/.test(String(v || "").trim()); },
@@ -51,7 +51,7 @@ var COUNTRIES = {
     ]
   },
   GB: {
-    code: "GB", name: "United Kingdom",
+    code: "GB", name: "United Kingdom", calculationSource: "Payroll calculations use the latest HMRC PAYE rates and thresholds.",
     taxId: {
       label: "National Insurance number", short: "NINO", placeholder: "AB 12 34 56 C",
       validate: function(v) {
@@ -73,7 +73,7 @@ var COUNTRIES = {
     ]
   },
   AU: {
-    code: "AU", name: "Australia",
+    code: "AU", name: "Australia", calculationSource: "Payroll calculations use the latest ATO PAYG schedules.",
     taxId: {
       label: "Tax file number", short: "TFN", placeholder: "XXX XXX XXX",
       validate: function(v) {

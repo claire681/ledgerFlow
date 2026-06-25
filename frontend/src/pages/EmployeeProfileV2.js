@@ -446,7 +446,7 @@ export default function EmployeeProfileV2() {
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {sections.map(function(s) {
             return (
-              <Section key={s.id} section={s} values={values} draft={draft}
+              <Section key={s.id} section={s} values={values} draft={draft} country={country}
                 isOpen={openId === s.id} isEditing={editingId === s.id} isSaving={savingId === s.id}
                 disabledByOtherEdit={!!editingId && editingId !== s.id}
                 fieldErrors={fieldErrors}
@@ -505,7 +505,7 @@ function Rail({ sections, values, openId, onPick, editingId }) {
   );
 }
 
-function Section({ section, values, draft, isOpen, isEditing, isSaving, disabledByOtherEdit, fieldErrors, onToggleOpen, onEdit, onCancel, onSave, onChange }) {
+function Section({ section, values, draft, country, isOpen, isEditing, isSaving, disabledByOtherEdit, fieldErrors, onToggleOpen, onEdit, onCancel, onSave, onChange }) {
   const Icon = section.icon;
   const status = sectionStatus(section, values);
   const pill = status === "done" ? { bg: C.greenSoft, fg: C.green, label: "Done" }
@@ -548,10 +548,13 @@ function Section({ section, values, draft, isOpen, isEditing, isSaving, disabled
                   );
                 })}
               </div>
+              {section.id === "tax" && country && country.calculationSource && (
+                <div style={{ marginTop: 18, padding: "10px 14px", background: C.lineSoft, borderRadius: 8, fontSize: 12, color: C.muted, lineHeight: 1.45 }}>{country.calculationSource}</div>
+              )}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, padding: "16px 0 2px", marginTop: 6, borderTop: "1px solid " + C.lineSoft }}>
                 <button onClick={onCancel} disabled={isSaving} style={{ fontFamily: FONT, fontWeight: 600, fontSize: 14, background: "#fff", border: "1px solid " + C.line, color: C.ink, borderRadius: 10, padding: "9px 18px", cursor: isSaving ? "not-allowed" : "pointer" }}>Cancel</button>
                 <button onClick={onSave} disabled={isSaving} style={{ fontFamily: FONT, fontWeight: 600, fontSize: 14, background: isSaving ? "#C3CBD6" : C.teal, color: "#fff", border: "1px solid transparent", borderRadius: 10, padding: "9px 18px", cursor: isSaving ? "not-allowed" : "pointer", boxShadow: isSaving ? "none" : "0 1px 2px rgba(21,160,140,0.3)" }}>
-                  {isSaving ? "Saving..." : "Save"}
+                  {isSaving ? "Saving..." : "Save " + (section.shortTitle || section.title.split(" (")[0])}
                 </button>
               </div>
             </div>
