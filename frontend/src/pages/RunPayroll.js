@@ -391,6 +391,12 @@ export default function RunPayroll() {
   const [exportChecked, setExportChecked] = useState(true);
   const [periodOpen, setPeriodOpen] = useState(false);
   const [tourActive, setTourActive] = useState(false);
+  const [toolbarOpen, setToolbarOpen] = useState(true);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackSending, setFeedbackSending] = useState(false);
+  const [feedbackError, setFeedbackError] = useState(null);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [tourStep, setTourStep] = useState(0);
   const [tourTargetRect, setTourTargetRect] = useState(null);
   const [previewing, setPreviewing] = useState(false);
@@ -755,9 +761,9 @@ export default function RunPayroll() {
                   </>
                 );
               })()}
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}><MessageCircle size={16} />Give feedback</span>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}><HelpCircle size={16} />Help</span>
-            <span style={{ cursor: "pointer" }} onClick={() => navigate(-1)}><X size={16} /></span>
+            <span onClick={() => setFeedbackOpen(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}><MessageCircle size={16} />Give feedback</span>
+            <span onClick={() => setHelpOpen(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}><HelpCircle size={16} />Help</span>
+            <span onClick={() => setToolbarOpen(false)} title="Hide toolbar" style={{ cursor: "pointer" }}><X size={16}/></span>
           </div>
         </div>
 
@@ -1093,6 +1099,63 @@ export default function RunPayroll() {
           </button>
         </div>
 
+      {!toolbarOpen && (
+        <button onClick={() => setToolbarOpen(true)} style={{ position: "fixed", top: 14, right: 26, zIndex: 90, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, padding: "6px 12px", fontSize: 12.5, fontWeight: 600, color: C.muted, cursor: "pointer", fontFamily: FONT, boxShadow: "0 2px 8px rgba(15,23,42,0.08)" }}>Show toolbar</button>
+      )}
+      {feedbackOpen && (
+        <div onClick={(e) => { if (e.target === e.currentTarget) { setFeedbackOpen(false); setFeedbackError(null); }}} style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ width: 480, background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.2)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid " + C.line }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.ink }}>Give feedback</div>
+              <span onClick={() => { setFeedbackOpen(false); setFeedbackError(null); }} style={{ cursor: "pointer", color: C.muted }}><X size={18} /></span>
+            </div>
+            <div style={{ padding: "18px 20px" }}>
+              <div style={{ fontSize: 13.5, color: C.muted, marginBottom: 14, lineHeight: 1.5 }}>Tell us what is working, what is not, or what you wish Novala did. The Novala team reads every message.</div>
+              <textarea value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)} placeholder="Your feedback..." rows={6} style={{ width: "100%", border: "1px solid " + C.line, borderRadius: 10, padding: "10px 12px", fontFamily: FONT, fontSize: 14, color: C.ink, background: "#fff", resize: "vertical" }} />
+              {feedbackError && <div style={{ marginTop: 10, fontSize: 12.5, color: C.danger || "#DC2626" }}>{feedbackError}</div>}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginTop: 16 }}>
+                <button onClick={() => { setFeedbackOpen(false); setFeedbackError(null); setFeedbackText(""); }} disabled={feedbackSending} style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "9px 18px", fontFamily: FONT, fontWeight: 600, fontSize: 14, color: C.ink, cursor: feedbackSending ? "not-allowed" : "pointer" }}>Cancel</button>
+                <button onClick={async () => {
+                  if (!feedbackText.trim()) { setFeedbackError("Please write your feedback before sending."); return; }
+                  setFeedbackSending(true); setFeedbackError(null);
+                  try {
+                    const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+                    const apiUrl = (process.env.REACT_APP_API_URL || "https://api.getnovala.com") + "/api/v1/feedback";
+                    const res = await fetch(apiUrl, {
+                      method: "POST",
+                      headers: Object.assign({ "Content-Type": "application/json" }, token ? { Authorization: "Bearer " + token } : {}),
+                      body: JSON.stringify({ message: feedbackText, page_context: "Run Payroll page" }),
+                    });
+                    if (!res.ok) { const t = await res.text(); throw new Error("Send failed: " + t.slice(0, 200)); }
+                    setFeedbackOpen(false); setFeedbackText("");
+                  } catch (err) { setFeedbackError(err.message); } finally { setFeedbackSending(false); }
+                }} disabled={feedbackSending || !feedbackText.trim()} style={{ background: (feedbackSending || !feedbackText.trim()) ? "#C3CBD6" : C.brand, color: "#fff", border: "1px solid transparent", borderRadius: 10, padding: "9px 18px", fontFamily: FONT, fontWeight: 600, fontSize: 14, cursor: (feedbackSending || !feedbackText.trim()) ? "not-allowed" : "pointer" }}>
+                  {feedbackSending ? "Sending..." : "Send feedback"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {helpOpen && (
+        <div onClick={(e) => { if (e.target === e.currentTarget) setHelpOpen(false); }} style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ width: 460, background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.2)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid " + C.line }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.ink }}>Help & support</div>
+              <span onClick={() => setHelpOpen(false)} style={{ cursor: "pointer", color: C.muted }}><X size={18} /></span>
+            </div>
+            <div style={{ padding: "18px 20px", fontSize: 14, color: C.text, lineHeight: 1.6 }}>
+              <div style={{ marginBottom: 14 }}>Need a hand with payroll? Here is how to reach us:</div>
+              <div style={{ marginBottom: 10 }}><b style={{ color: C.ink }}>Email:</b> <a href="mailto:support@getnovala.com" style={{ color: C.brand, textDecoration: "none" }}>support@getnovala.com</a></div>
+              <div style={{ marginBottom: 10 }}><b style={{ color: C.ink }}>Take the tour:</b> <span onClick={() => { setHelpOpen(false); setTourStep(0); setTourActive(true); }} style={{ color: C.brand, cursor: "pointer", fontWeight: 600 }}>Restart the guided tour</span></div>
+              <div><b style={{ color: C.ink }}>Give feedback:</b> <span onClick={() => { setHelpOpen(false); setFeedbackOpen(true); }} style={{ color: C.brand, cursor: "pointer", fontWeight: 600 }}>Open the feedback form</span></div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", padding: "12px 20px", borderTop: "1px solid " + C.line }}>
+              <button onClick={() => setHelpOpen(false)} style={{ background: C.brand, color: "#fff", border: "none", borderRadius: 10, padding: "9px 18px", fontFamily: FONT, fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
       {customizeOpen && (
         <div onClick={(e) => { if (e.target === e.currentTarget) setCustomizeOpen(false); }} style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div style={{ width: 560, background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.2)" }}>
