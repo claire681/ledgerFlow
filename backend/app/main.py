@@ -26,6 +26,7 @@ from app.api.routes import (
     ai_context, snapshots, preferences, followup,
 )
 from app.api.routes.briefing import router as briefing_router
+from app.api.routes.email import router as email_router
 from app.api.routes import bills
 from app.api.routes import apikeys
 from app.api.routes import payroll
@@ -110,6 +111,7 @@ app.include_router(feedback.router, prefix="/api/v1", tags=["feedback"])
 app.include_router(subscriptions.router, prefix="/api/v1")
 app.include_router(billing.router,      prefix="/api/v1")
 app.include_router(work_locations.router, prefix="/api/v1")
+app.include_router(email_router, prefix="/api/v1")
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     return {

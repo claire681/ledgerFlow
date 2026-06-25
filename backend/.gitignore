@@ -1,1 +1,12 @@
 paypal_plans.json
+
+# Added *.bak
+*.bak.*
+*backup*
+*.pyc
+__pycache__/
+.env.local
+.env.*.local
+venv/
+.venv/
+*.log
