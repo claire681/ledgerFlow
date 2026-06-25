@@ -77,7 +77,7 @@ function buildSections(country) {
       { k: "accrualRate", l: "Accrual rate", t: "text" },
       { k: "balanceHours", l: "Current balance (hours)", t: "number" },
     ]},
-    { id: "tax", title: "Tax withholdings (" + country.taxForm + ")", icon: Receipt, required: true, fields: country.taxFields },
+    { id: "tax", title: "Tax setup (" + country.taxForm + ")", icon: Receipt, required: true, fields: country.taxFields, intro: "Enter the employee's tax setup once. Novala calculates payroll taxes, CPP, EI, and net pay automatically at every pay run." },
     { id: "deductions", title: "Deductions and contributions", icon: MinusCircle, fields: [
       { k: "deductionName", l: "Deduction name", t: "text" },
       { k: "deductionAmount", l: "Amount per pay", t: "money" },
@@ -517,6 +517,9 @@ function Section({ section, values, draft, isOpen, isEditing, isSaving, disabled
         <div style={{ padding: "4px 22px 22px", borderTop: "1px solid " + C.lineSoft }}>
           {isEditing ? (
             <div>
+              {section.intro && (
+                <div style={{ marginTop: 10, padding: "12px 14px", background: C.tealSoft, borderRadius: 10, fontSize: 13, color: C.tealInk, lineHeight: 1.5 }}>{section.intro}</div>
+              )}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 18px", padding: "18px 0 4px" }}>
                 {visibleFields.map(function(f) {
                   return (
@@ -586,6 +589,9 @@ function FieldEditor({ field, value, error, onChange }) {
         {field.l}{field.req && <span style={{ color: C.amber, marginLeft: 3 }}>*</span>}
       </label>
       {control}
+      {field.help && !error && (
+        <div style={{ marginTop: 6, fontSize: 12, color: C.muted, lineHeight: 1.45 }}>{field.help}</div>
+      )}
       {error && (
         <div style={{ marginTop: 6, fontSize: 12, color: C.err, display: "flex", alignItems: "center", gap: 5 }}>
           <span style={{ fontWeight: 700 }}>!</span> {error}

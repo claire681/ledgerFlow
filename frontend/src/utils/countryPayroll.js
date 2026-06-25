@@ -26,11 +26,11 @@ var COUNTRIES = {
     taxForm: "TD1", regionLabel: "Province", regions: PROVINCES_CA,
     taxFields: [
       { k: "provinceEmp", l: "Province of employment", t: "select", req: true, opts: PROVINCES_CA },
-      { k: "federalTD1", l: "Federal TD1 claimed amount", t: "money", validate: rangeValidate(0, 999999), errorMsg: "Enter $0 to $999,999" },
-      { k: "provincialTD1", l: "Provincial TD1 claimed amount", t: "money", validate: rangeValidate(0, 999999), errorMsg: "Enter $0 to $999,999" },
-      { k: "additionalTax", l: "Additional tax per pay", t: "money", validate: rangeValidate(0, 99999), errorMsg: "Enter $0 to $99,999" },
-      { k: "cppExempt", l: "CPP exempt", t: "select", opts: ["No","Yes"] },
-      { k: "eiExempt", l: "EI exempt", t: "select", opts: ["No","Yes"] }
+      { k: "federalTD1", l: "Federal TD1 claim amount", t: "money", help: "From the employee's TD1 federal form, total claim amount on line 13.", validate: rangeValidate(0, 999999), errorMsg: "Enter $0 to $999,999" },
+      { k: "provincialTD1", l: "Provincial TD1 claim amount", t: "money", help: "From the employee's provincial TD1 form, total claim amount.", validate: rangeValidate(0, 999999), errorMsg: "Enter $0 to $999,999" },
+      { k: "additionalTax", l: "Voluntary extra federal tax per pay (optional)", t: "money", help: "Only if requested by the employee on TD1 page 2. Leave blank otherwise.", validate: rangeValidate(0, 99999), errorMsg: "Enter $0 to $99,999" },
+      { k: "cppExempt", l: "CPP exempt", t: "select", opts: ["No","Yes"], help: "Most employees are not exempt. Set Yes only for clergy electing out, employees under 18, or those over 70 with a CPT30." },
+      { k: "eiExempt", l: "EI exempt", t: "select", opts: ["No","Yes"], help: "Most employees are not exempt. Set Yes only for employees who own more than 40% of company shares or sole proprietors." }
     ]
   },
   US: {
@@ -45,8 +45,8 @@ var COUNTRIES = {
       { k: "stateEmp", l: "State of employment", t: "select", req: true, opts: STATES_US },
       { k: "filingStatus", l: "Federal filing status", t: "select", opts: ["Single","Married filing jointly","Married filing separately","Head of household"] },
       { k: "allowances", l: "Federal allowances", t: "number", validate: rangeValidate(0, 99), errorMsg: "Enter 0 to 99" },
-      { k: "additionalFedTax", l: "Additional federal withholding per pay", t: "money", validate: rangeValidate(0, 99999), errorMsg: "Enter $0 to $99,999" },
-      { k: "stateWithholding", l: "State withholding amount per pay", t: "money", validate: rangeValidate(0, 99999), errorMsg: "Enter $0 to $99,999" },
+      { k: "additionalFedTax", l: "Voluntary extra federal withholding per pay (optional)", t: "money", help: "Only if requested by the employee on W-4 Step 4(c). Leave blank otherwise.", validate: rangeValidate(0, 99999), errorMsg: "Enter $0 to $99,999" },
+      { k: "stateWithholding", l: "Voluntary extra state withholding per pay (optional)", t: "money", help: "Only if requested by the employee. Leave blank otherwise.", validate: rangeValidate(0, 99999), errorMsg: "Enter $0 to $99,999" },
       { k: "fedExempt", l: "Exempt from federal withholding", t: "select", opts: ["No","Yes"] }
     ]
   },
