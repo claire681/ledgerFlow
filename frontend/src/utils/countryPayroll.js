@@ -26,11 +26,11 @@ var COUNTRIES = {
     taxForm: "TD1", regionLabel: "Province", regions: PROVINCES_CA,
     taxFields: [
       { k: "provinceEmp", l: "Province of employment", t: "select", req: true, opts: PROVINCES_CA },
-      { k: "federalTD1", l: "Federal TD1 claim amount", t: "money", help: "From the employee's TD1 federal form, total claim amount on line 13.", validate: rangeValidate(0, 999999), errorMsg: "Enter $0 to $999,999" },
-      { k: "provincialTD1", l: "Provincial TD1 claim amount", t: "money", help: "From the employee's provincial TD1 form, total claim amount.", validate: rangeValidate(0, 999999), errorMsg: "Enter $0 to $999,999" },
-      { k: "additionalTax", l: "Voluntary extra federal tax per pay (optional)", t: "money", help: "Only if requested by the employee on TD1 page 2. Leave blank otherwise.", validate: rangeValidate(0, 99999), errorMsg: "Enter $0 to $99,999" },
-      { k: "cppExempt", l: "CPP exempt", t: "select", opts: ["No","Yes"], help: "Most employees are not exempt. Set Yes only for clergy electing out, employees under 18, or those over 70 with a CPT30." },
-      { k: "eiExempt", l: "EI exempt", t: "select", opts: ["No","Yes"], help: "Most employees are not exempt. Set Yes only for employees who own more than 40% of company shares or sole proprietors." }
+      { k: "federalTD1", l: "Federal TD1 claim amount", t: "money", placeholder: "Example: 16,129", help: "Enter the total federal claim amount from the employee's TD1 form (Line 13).", validate: rangeValidate(0, 999999), errorMsg: "Enter $0 to $999,999" },
+      { k: "provincialTD1", l: "Provincial TD1 claim amount", t: "money", placeholder: "Example: 22,323", help: "Enter the total provincial claim amount from the employee's provincial TD1 form.", validate: rangeValidate(0, 999999), errorMsg: "Enter $0 to $999,999" },
+      { k: "additionalTax", l: "Voluntary extra federal tax per pay (optional)", t: "money", placeholder: "Leave blank if none", help: "Only enter if the employee requested extra withholding on TD1 page 2.", validate: rangeValidate(0, 99999), errorMsg: "Enter $0 to $99,999" },
+      { k: "cppExempt", l: "CPP exempt", t: "select", opts: ["No","Yes"], default: "No", help: "Most employees are not exempt. Set Yes only for clergy electing out, employees under 18, or those over 70 with a CPT30." },
+      { k: "eiExempt", l: "EI exempt", t: "select", opts: ["No","Yes"], default: "No", help: "Most employees are not exempt. Set Yes only for employees who own more than 40% of company shares or sole proprietors." }
     ]
   },
   US: {

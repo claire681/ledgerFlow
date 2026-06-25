@@ -294,6 +294,7 @@ export default function EmployeeProfileV2() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [companyCountry, setCompanyCountry] = useState("CA");
+  const [companyProvince, setCompanyProvince] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
 
   const country = useMemo(function() { return getCountryConfig(companyCountry); }, [companyCountry]);
@@ -318,6 +319,7 @@ export default function EmployeeProfileV2() {
       .then(function(data) {
         const co = data && (data.company || data);
         if (co && co.address_country) setCompanyCountry(co.address_country);
+        if (co && co.address_province) setCompanyProvince(co.address_province);
       })
       .catch(function() {});
   }, []);
@@ -333,7 +335,17 @@ export default function EmployeeProfileV2() {
   }, [toast]);
 
   const startEdit = function(sid) {
-    setDraft(Object.assign({}, values));
+    const section = sections.find(function(s) { return s.id === sid; });
+    const seeded = Object.assign({}, values);
+    if (section) {
+      section.fields.forEach(function(f) {
+        if (!isFilled(seeded[f.k]) && f.default != null) seeded[f.k] = f.default;
+        if (!isFilled(seeded[f.k]) && (f.k === "provinceEmp" || f.k === "province") && companyProvince) {
+          seeded[f.k] = companyProvince;
+        }
+      });
+    }
+    setDraft(seeded);
     setFieldErrors({});
     setEditingId(sid);
     setOpenId(sid);
