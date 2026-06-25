@@ -617,7 +617,12 @@ function FieldEditor({ field, value, error, onChange }) {
       </label>
       {control}
       {field.help && !error && (
-        <div style={{ marginTop: 6, fontSize: 12, color: C.muted, lineHeight: 1.45 }}>{field.help}</div>
+        <div style={{ marginTop: 6, fontSize: 12, color: C.muted, lineHeight: 1.45 }}>
+          {field.help}
+          {field.helpLink && (
+            <> <a href={field.helpLink.url} target="_blank" rel="noopener noreferrer" style={{ color: C.tealInk, textDecoration: "none", fontWeight: 600, marginLeft: 4 }}>{field.helpLink.label} ↗</a></>
+          )}
+        </div>
       )}
       {error && (
         <div style={{ marginTop: 6, fontSize: 12, color: C.err, display: "flex", alignItems: "center", gap: 5 }}>
