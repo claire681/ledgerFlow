@@ -317,9 +317,12 @@ export default function EmployeeProfileV2() {
     fetch(API_URL + "/api/v1/company/profile", { headers: authHeaders() })
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(data) {
-        const co = data && (data.company || data);
-        if (co && co.address_country) setCompanyCountry(co.address_country);
-        if (co && co.address_province) setCompanyProvince(co.address_province);
+        if (!data) return;
+        const co = data.company || data;
+        const country = co.country || co.address_country;
+        const province = co.province_state || co.address_province;
+        if (country) setCompanyCountry(country);
+        if (province) setCompanyProvince(province);
       })
       .catch(function() {});
   }, []);
