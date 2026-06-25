@@ -16,7 +16,10 @@ BASE_URL = "https://api-m.sandbox.paypal.com" if MODE == "sandbox" else "https:/
 _token_cache = {"access_token": None, "expires_at": 0}
 _token_lock = asyncio.Lock()
 
-_PLANS_PATH = Path(__file__).resolve().parent.parent.parent / "paypal_plans.json"
+_PLANS_PATH = (
+    Path(__file__).resolve().parent.parent.parent
+    / ("paypal_plans.live.json" if MODE == "live" else "paypal_plans.json")
+)
 _plans_cache: Optional[dict] = None
 
 
@@ -86,7 +89,7 @@ def get_plans_config() -> dict:
     global _plans_cache
     if _plans_cache is None:
         if not _PLANS_PATH.exists():
-            raise FileNotFoundError(f"paypal_plans.json not found at {_PLANS_PATH}. Run scripts/setup_paypal_plans.py.")
+            raise FileNotFoundError(f"Plans file not found at {_PLANS_PATH}. Run setup_paypal_trial_plans.py.")
         with open(_PLANS_PATH) as f:
             _plans_cache = json.load(f)
     return _plans_cache

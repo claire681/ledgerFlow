@@ -430,5 +430,10 @@ async def get_me(current_user=Depends(get_current_user)):
         "full_name": getattr(current_user, "full_name", None),
         "is_verified": bool(getattr(current_user, "is_verified", False)),
         "onboarding_completed": bool(getattr(current_user, "onboarding_completed", False)),
-        "subscription_status": getattr(current_user, "subscription_status", None)
+        "subscription_status": getattr(current_user, "subscription_status", None),
+        "trial_ends_at": (
+            current_user.trial_ends_at.isoformat()
+            if getattr(current_user, "trial_ends_at", None)
+            else None
+        ),
     }

@@ -1,0 +1,151 @@
+{
+  "product_id": "PROD-3NC55932VU767520L",
+  "trial_plans": {
+    "essentials": {
+      "plan_id": "P-5WS237466J698914SNI3VRZY",
+      "name": "Novala Essentials Monthly (14d trial)",
+      "price_usd": 19.0,
+      "trial_days": 14
+    },
+    "premium": {
+      "plan_id": "P-6DP02994VF6112812NI3VRZY",
+      "name": "Novala Premium Monthly (14d trial)",
+      "price_usd": 49.0,
+      "trial_days": 14
+    },
+    "scale": {
+      "plan_id": "P-5GA83400WG404441NNI3VRZY",
+      "name": "Novala Scale Monthly (14d trial)",
+      "price_usd": 99.0,
+      "trial_days": 14
+    },
+    "essentials_payroll_core": {
+      "plan_id": "P-876342494A1253509NI3VRZY",
+      "name": "Novala Essentials + Payroll Core Monthly (14d trial)",
+      "price_usd": 44.0,
+      "trial_days": 14
+    },
+    "premium_payroll_core": {
+      "plan_id": "P-6L241778A57273503NI3VR2A",
+      "name": "Novala Premium + Payroll Core Monthly (14d trial)",
+      "price_usd": 74.0,
+      "trial_days": 14
+    },
+    "scale_payroll_core": {
+      "plan_id": "P-6ER03453AB8268204NI3VR2A",
+      "name": "Novala Scale + Payroll Core Monthly (14d trial)",
+      "price_usd": 124.0,
+      "trial_days": 14
+    },
+    "essentials_payroll_premium": {
+      "plan_id": "P-96286161V2229113HNI3VR2A",
+      "name": "Novala Essentials + Payroll Premium Monthly (14d trial)",
+      "price_usd": 59.0,
+      "trial_days": 14
+    },
+    "premium_payroll_premium": {
+      "plan_id": "P-52182139RH434540NNI3VR2A",
+      "name": "Novala Premium + Payroll Premium Monthly (14d trial)",
+      "price_usd": 89.0,
+      "trial_days": 14
+    },
+    "scale_payroll_premium": {
+      "plan_id": "P-2K64763185412951VNI3VR2A",
+      "name": "Novala Scale + Payroll Premium Monthly (14d trial)",
+      "price_usd": 139.0,
+      "trial_days": 14
+    },
+    "essentials_payroll_elite": {
+      "plan_id": "P-3K862910HJ110405ANI3VR2I",
+      "name": "Novala Essentials + Payroll Elite Monthly (14d trial)",
+      "price_usd": 99.0,
+      "trial_days": 14
+    },
+    "premium_payroll_elite": {
+      "plan_id": "P-1UB366459P5569212NI3VR2I",
+      "name": "Novala Premium + Payroll Elite Monthly (14d trial)",
+      "price_usd": 129.0,
+      "trial_days": 14
+    },
+    "scale_payroll_elite": {
+      "plan_id": "P-54H94477W0661870KNI3VR2I",
+      "name": "Novala Scale + Payroll Elite Monthly (14d trial)",
+      "price_usd": 179.0,
+      "trial_days": 14
+    }
+  },
+  "plans": {
+    "essentials": {
+      "plan_id": "P-5WS237466J698914SNI3VRZY",
+      "name": "Novala Essentials Monthly (14d trial)",
+      "price_usd": 19.0,
+      "trial_days": 14
+    },
+    "premium": {
+      "plan_id": "P-6DP02994VF6112812NI3VRZY",
+      "name": "Novala Premium Monthly (14d trial)",
+      "price_usd": 49.0,
+      "trial_days": 14
+    },
+    "scale": {
+      "plan_id": "P-5GA83400WG404441NNI3VRZY",
+      "name": "Novala Scale Monthly (14d trial)",
+      "price_usd": 99.0,
+      "trial_days": 14
+    },
+    "essentials_payroll_core": {
+      "plan_id": "P-876342494A1253509NI3VRZY",
+      "name": "Novala Essentials + Payroll Core Monthly (14d trial)",
+      "price_usd": 44.0,
+      "trial_days": 14
+    },
+    "premium_payroll_core": {
+      "plan_id": "P-6L241778A57273503NI3VR2A",
+      "name": "Novala Premium + Payroll Core Monthly (14d trial)",
+      "price_usd": 74.0,
+      "trial_days": 14
+    },
+    "scale_payroll_core": {
+      "plan_id": "P-6ER03453AB8268204NI3VR2A",
+      "name": "Novala Scale + Payroll Core Monthly (14d trial)",
+      "price_usd": 124.0,
+      "trial_days": 14
+    },
+    "essentials_payroll_premium": {
+      "plan_id": "P-96286161V2229113HNI3VR2A",
+      "name": "Novala Essentials + Payroll Premium Monthly (14d trial)",
+      "price_usd": 59.0,
+      "trial_days": 14
+    },
+    "premium_payroll_premium": {
+      "plan_id": "P-52182139RH434540NNI3VR2A",
+      "name": "Novala Premium + Payroll Premium Monthly (14d trial)",
+      "price_usd": 89.0,
+      "trial_days": 14
+    },
+    "scale_payroll_premium": {
+      "plan_id": "P-2K64763185412951VNI3VR2A",
+      "name": "Novala Scale + Payroll Premium Monthly (14d trial)",
+      "price_usd": 139.0,
+      "trial_days": 14
+    },
+    "essentials_payroll_elite": {
+      "plan_id": "P-3K862910HJ110405ANI3VR2I",
+      "name": "Novala Essentials + Payroll Elite Monthly (14d trial)",
+      "price_usd": 99.0,
+      "trial_days": 14
+    },
+    "premium_payroll_elite": {
+      "plan_id": "P-1UB366459P5569212NI3VR2I",
+      "name": "Novala Premium + Payroll Elite Monthly (14d trial)",
+      "price_usd": 129.0,
+      "trial_days": 14
+    },
+    "scale_payroll_elite": {
+      "plan_id": "P-54H94477W0661870KNI3VR2I",
+      "name": "Novala Scale + Payroll Elite Monthly (14d trial)",
+      "price_usd": 179.0,
+      "trial_days": 14
+    }
+  }
+}

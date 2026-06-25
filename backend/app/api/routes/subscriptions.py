@@ -81,7 +81,7 @@ async def list_plans():
         PlanOut(slug=slug, name=info["name"], price_usd=info["price_usd"], plan_id=info["plan_id"])
         for slug, info in config.get("plans", {}).items()
     ]
-    return PlansResponse(mode=config.get("mode", "sandbox"), plans=plans)
+    return PlansResponse(mode=os.environ.get("PAYPAL_MODE", "sandbox").lower(), plans=plans)
 
 
 @router.post("/activate", response_model=SubscriptionOut)
@@ -264,17 +264,39 @@ async def paypal_webhook(
     paypal_cert_url: Optional[str] = Header(None, alias="paypal-cert-url"),
     paypal_auth_algo: Optional[str] = Header(None, alias="paypal-auth-algo"),
 ):
-    """Receive PayPal webhook events. Verifies signature, updates DB accordingly."""
+    """Receive PayPal webhook events. Verifies signature, updates DB accordingly.
+
+    Handles 9 event types:
+      Subscription lifecycle: ACTIVATED, CANCELLED, SUSPENDED, EXPIRED,
+      PAYMENT.FAILED, RE-ACTIVATED, UPDATED
+      Payments: PAYMENT.SALE.COMPLETED, PAYMENT.SALE.REFUNDED
+    """
     body_bytes = await request.body()
+
     try:
         event = json.loads(body_bytes.decode())
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON body")
 
-    webhook_id = os.environ.get("PAYPAL_WEBHOOK_ID", "")
+    mode = (os.environ.get("PAYPAL_MODE", "sandbox") or "").lower()
+    if mode == "live":
+        webhook_id = os.environ.get("PAYPAL_WEBHOOK_ID_LIVE", "")
+    else:
+        webhook_id = os.environ.get("PAYPAL_WEBHOOK_ID_SANDBOX", "")
     if not webhook_id:
-        print(f"[WEBHOOK] PAYPAL_WEBHOOK_ID not set; event received: {event.get('event_type')}")
-        return {"received": True, "verified": False, "note": "PAYPAL_WEBHOOK_ID not configured"}
+        webhook_id = os.environ.get("PAYPAL_WEBHOOK_ID", "")
+
+    if not webhook_id:
+        print(
+            "[WEBHOOK] no webhook_id configured for mode={}; event={}".format(
+                mode, event.get("event_type")
+            )
+        )
+        return {
+            "received": True,
+            "verified": False,
+            "note": "PAYPAL_WEBHOOK_ID not configured",
+        }
 
     verify_payload = {
         "auth_algo": paypal_auth_algo,
@@ -285,53 +307,189 @@ async def paypal_webhook(
         "webhook_id": webhook_id,
         "webhook_event": event,
     }
-    verify = await paypal_service.api_request("POST", "/v1/notifications/verify-webhook-signature", verify_payload)
-    if verify["status"] != 200 or (verify["body"] or {}).get("verification_status") != "SUCCESS":
-        print(f"[WEBHOOK] signature verification failed: {verify}")
-        raise HTTPException(status_code=401, detail="Webhook signature verification failed")
+
+    verify = await paypal_service.api_request(
+        "POST",
+        "/v1/notifications/verify-webhook-signature",
+        verify_payload,
+    )
+
+    if (
+        verify["status"] != 200
+        or (verify["body"] or {}).get("verification_status") != "SUCCESS"
+    ):
+        print("[WEBHOOK] signature verification failed: {}".format(verify))
+        raise HTTPException(
+            status_code=401,
+            detail="Webhook signature verification failed",
+        )
 
     event_type = event.get("event_type", "")
     resource = event.get("resource", {}) or {}
 
+    print("[WEBHOOK] verified {}".format(event_type))
+
     if event_type.startswith("BILLING.SUBSCRIPTION"):
-        paypal_sub_id = resource.get("id")
-        if not paypal_sub_id:
-            return {"received": True, "note": "no subscription id in resource"}
-        q = await db.execute(select(Subscription).where(Subscription.paypal_subscription_id == paypal_sub_id))
-        sub = q.scalar_one_or_none()
-        if not sub:
-            return {"received": True, "note": f"unknown subscription {paypal_sub_id}"}
-
-        if event_type == "BILLING.SUBSCRIPTION.ACTIVATED":
-            sub.status = "ACTIVE"
-        elif event_type == "BILLING.SUBSCRIPTION.CANCELLED":
-            sub.status = "CANCELLED"
-            sub.cancelled_at = datetime.now(timezone.utc)
-            user_q = await db.execute(select(User).where(User.id == sub.user_id))
-            user = user_q.scalar_one_or_none()
-            if user:
-                user.plan = "free"
-        elif event_type == "BILLING.SUBSCRIPTION.SUSPENDED":
-            sub.status = "SUSPENDED"
-        elif event_type == "BILLING.SUBSCRIPTION.EXPIRED":
-            sub.status = "EXPIRED"
-
-        billing_info = resource.get("billing_info", {}) or {}
-        nb = _parse_dt(billing_info.get("next_billing_time"))
-        if nb:
-            sub.current_period_end = nb
-        lp = _parse_dt((billing_info.get("last_payment") or {}).get("time"))
-        if lp:
-            sub.last_payment_at = lp
-        await db.commit()
-
+        await _handle_subscription_event(db, event_type, resource)
     elif event_type == "PAYMENT.SALE.COMPLETED":
-        sub_id = resource.get("billing_agreement_id")
-        if sub_id:
-            q = await db.execute(select(Subscription).where(Subscription.paypal_subscription_id == sub_id))
-            sub = q.scalar_one_or_none()
-            if sub:
-                sub.last_payment_at = datetime.now(timezone.utc)
-                await db.commit()
+        await _handle_payment_completed(db, resource)
+    elif event_type in ("PAYMENT.SALE.REFUNDED", "PAYMENT.CAPTURE.REFUNDED"):
+        await _handle_payment_refunded(db, resource)
+    else:
+        print("[WEBHOOK] unhandled event type: {}".format(event_type))
 
-    return {"received": True, "verified": True, "event_type": event_type}
+    return {
+        "received": True,
+        "verified": True,
+        "event_type": event_type,
+    }
+
+
+async def _handle_subscription_event(
+    db: AsyncSession, event_type: str, resource: dict
+):
+    paypal_sub_id = resource.get("id")
+    if not paypal_sub_id:
+        print("[WEBHOOK] no subscription id for {}".format(event_type))
+        return
+
+    q = await db.execute(
+        select(Subscription).where(
+            Subscription.paypal_subscription_id == paypal_sub_id
+        )
+    )
+    sub = q.scalar_one_or_none()
+
+    if not sub:
+        print(
+            "[WEBHOOK] unknown subscription {} for {}".format(
+                paypal_sub_id, event_type
+            )
+        )
+        return
+
+    user_q = await db.execute(select(User).where(User.id == sub.user_id))
+    user = user_q.scalar_one_or_none()
+
+    if event_type == "BILLING.SUBSCRIPTION.ACTIVATED":
+        # PayPal fires ACTIVATED when the trial starts (since trial is $0).
+        # Keep status as trialing if user is still in trial; the first real
+        # PAYMENT.SALE.COMPLETED at end of trial flips them to active.
+        is_trialing = (
+            (sub.status or "").lower() == "trialing"
+            or (user and (user.subscription_status or "").lower() == "trialing")
+        )
+        if not is_trialing:
+            sub.status = "active"
+            if user:
+                user.subscription_status = "active"
+
+    elif event_type == "BILLING.SUBSCRIPTION.CANCELLED":
+        sub.status = "cancelled"
+        sub.cancelled_at = datetime.now(timezone.utc)
+        if user:
+            user.subscription_status = "cancelled"
+
+    elif event_type == "BILLING.SUBSCRIPTION.SUSPENDED":
+        sub.status = "suspended"
+        if user:
+            user.subscription_status = "suspended"
+
+    elif event_type == "BILLING.SUBSCRIPTION.EXPIRED":
+        sub.status = "expired"
+        if user:
+            user.subscription_status = "expired"
+
+    elif event_type == "BILLING.SUBSCRIPTION.PAYMENT.FAILED":
+        sub.status = "past_due"
+        if user:
+            user.subscription_status = "past_due"
+
+    elif event_type == "BILLING.SUBSCRIPTION.RE-ACTIVATED":
+        sub.status = "active"
+        if user:
+            user.subscription_status = "active"
+
+    elif event_type == "BILLING.SUBSCRIPTION.UPDATED":
+        new_plan_id = resource.get("plan_id")
+        if new_plan_id and new_plan_id != sub.paypal_plan_id:
+            sub.paypal_plan_id = new_plan_id
+            try:
+                plans_config = await paypal_service.get_plans_config()
+                plans_dict = (
+                    (plans_config or {}).get("plans")
+                    or (plans_config or {}).get("trial_plans")
+                    or {}
+                )
+                for slug, info in plans_dict.items():
+                    if info.get("plan_id") == new_plan_id:
+                        sub.plan_slug = slug
+                        break
+            except Exception as e:
+                print("[WEBHOOK] could not look up new plan slug: {}".format(e))
+
+    # Always sync period dates and last payment if present in payload
+    billing_info = resource.get("billing_info", {}) or {}
+    nb = _parse_dt(billing_info.get("next_billing_time"))
+    if nb:
+        sub.current_period_end = nb
+
+    last_payment = billing_info.get("last_payment", {}) or {}
+    lp = _parse_dt(last_payment.get("time"))
+    if lp:
+        sub.last_payment_at = lp
+
+    await db.commit()
+
+
+async def _handle_payment_completed(db: AsyncSession, resource: dict):
+    """A recurring payment was successfully captured.
+
+    If the subscription was trialing or past_due, this is treated as the
+    activating payment and status flips to active on both Subscription and User.
+    """
+    paypal_sub_id = resource.get("billing_agreement_id")
+    if not paypal_sub_id:
+        print("[WEBHOOK] PAYMENT.SALE.COMPLETED has no billing_agreement_id")
+        return
+
+    q = await db.execute(
+        select(Subscription).where(
+            Subscription.paypal_subscription_id == paypal_sub_id
+        )
+    )
+    sub = q.scalar_one_or_none()
+    if not sub:
+        print(
+            "[WEBHOOK] PAYMENT.SALE.COMPLETED for unknown sub {}".format(
+                paypal_sub_id
+            )
+        )
+        return
+
+    sub.last_payment_at = datetime.now(timezone.utc)
+
+    current_status = (sub.status or "").lower()
+    if current_status in ("trialing", "approval_pending", "past_due"):
+        sub.status = "active"
+        user_q = await db.execute(select(User).where(User.id == sub.user_id))
+        user = user_q.scalar_one_or_none()
+        if user:
+            user.subscription_status = "active"
+
+    await db.commit()
+
+
+async def _handle_payment_refunded(db: AsyncSession, resource: dict):
+    """Log refund. Subscription cancellation flows through CANCELLED event."""
+    paypal_sub_id = (
+        resource.get("billing_agreement_id")
+        or resource.get("sale_id")
+        or resource.get("id")
+    )
+    amount = resource.get("amount") or resource.get("total")
+    print(
+        "[WEBHOOK] refund received for sub={} amount={}".format(
+            paypal_sub_id, amount
+        )
+    )
