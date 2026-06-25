@@ -228,50 +228,44 @@ export default function EmployeesList() {
 
   const renderPayRate = (emp) => {
     if (privacy) return PRIVATE_MASK;
-    const rate = formatPayRate(emp);
-    if (!rate) return <a onClick={() => navigate("/payroll/employees/" + emp.id + "?section=pay_types")} style={MISS}><AlertTriangle size={13} />Add pay rate</a>;
-    if (privacy) return <span style={MASK}>{"\u2022\u2022\u2022\u2022\u2022\u2022"}</span>;
-    return <span style={{ fontSize: 14, fontWeight: 600, color: TEXT_INK }}>{rate}</span>;
+    if (emp.pay_type === "hourly" && parseFloat(emp.hourly_rate)) return <span style={{ fontSize: 13.5, color: TEXT_PRIMARY }}>{formatCurrency(emp.hourly_rate, emp.currency)}/hour</span>;
+    if (emp.pay_type === "salary" && parseFloat(emp.salary_amount)) return <span style={{ fontSize: 13.5, color: TEXT_PRIMARY }}>{formatCurrency(emp.salary_amount, emp.currency)}</span>;
+    return <span style={{ fontSize: 13.5, color: TEXT_TERTIARY, fontStyle: "italic" }}>Not set</span>;
   };
 
   const renderMethod = (emp) => {
     const at = emp.account_type;
     if (at === "direct_deposit") return <span style={{ fontSize: 13.5, color: TEXT_PRIMARY }}>Direct deposit</span>;
     if (at === "cheque") return <span style={{ fontSize: 13.5, color: TEXT_PRIMARY }}>Cheque</span>;
-    return <a onClick={() => navigate("/payroll/employees/" + emp.id + "?section=payment_method")} style={MISS}><AlertTriangle size={13} />Add method</a>;
+    return <span style={{ fontSize: 13.5, color: TEXT_TERTIARY, fontStyle: "italic" }}>Not set</span>;
   };
 
   const renderVacation = (emp) => {
     if (privacy) return PRIVATE_MASK;
-    const v = getVacation(emp);
-    if (!v) return <a onClick={() => navigate("/payroll/employees/" + emp.id + "?section=vacation")} style={MISS}><AlertTriangle size={13} />Set up</a>;
-    if (privacy) return <span style={MASK}>{"\u2022\u2022\u2022\u2022\u2022\u2022"}</span>;
-    return <span style={{ fontSize: 14, color: TEXT_PRIMARY }}>{v}</span>;
+    const ti = emp.tax_info || {};
+    const balance = ti.balance_hours;
+    if (balance != null && balance !== "") {
+      return <span style={{ fontSize: 13.5, color: TEXT_PRIMARY }}>{Number(balance).toLocaleString()} hours</span>;
+    }
+    return <span style={{ fontSize: 13.5, color: TEXT_TERTIARY, fontStyle: "italic" }}>Not set</span>;
   };
 
   const renderPhone = (emp) => {
-    const p = getPhone(emp);
-    if (!p) return <a onClick={() => navigate("/payroll/employees/" + emp.id + "?section=personal_info")} style={MISS}><AlertTriangle size={13} />Add phone</a>;
-    return <span style={{ fontSize: 14, color: TEXT_PRIMARY }}>{formatPhone(p)}</span>;
+    const p = emp.phone;
+    if (p) return <span style={{ fontSize: 13.5, color: TEXT_PRIMARY }}>{p}</span>;
+    return <span style={{ fontSize: 13.5, color: TEXT_TERTIARY, fontStyle: "italic" }}>Not set</span>;
   };
 
   const renderStatus = (emp) => {
-    if (emp._ready) return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, padding: "3px 9px", borderRadius: 12, background: SUCCESS_SOFT, color: SUCCESS_TEXT }}>
-          <Check size={12} />Ready
-        </span>
-        <span style={{ fontSize: 12, color: TEXT_TERTIARY }}>Active</span>
-      </div>
-    );
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, padding: "3px 9px", borderRadius: 12, background: WARN_SOFT, color: WARN_TEXT }}>
-          <AlertTriangle size={12} />Needs setup
-        </span>
-        <a style={{ fontSize: 12, color: BRAND, cursor: "pointer", fontWeight: 600 }} onClick={() => navigate("/payroll/employees/" + emp.id)}>Finish setup</a>
-      </div>
-    );
+    const ti = emp.tax_info || {};
+    const personalDone = emp.first_name && emp.last_name && emp.date_of_birth && emp.sin_or_ssn;
+    const employmentDone = emp.employment_type && emp.start_date;
+    const paymentDone = emp.account_type;
+    const basepayDone = emp.pay_type && (emp.hourly_rate || emp.salary_amount);
+    const taxDone = ti.province_of_employment || ti.stateEmp || ti.taxCode || ti.tfnDeclared;
+    const allDone = personalDone && employmentDone && paymentDone && basepayDone && taxDone;
+    if (allDone) return <span style={{ fontSize: 12, fontWeight: 600, color: SUCCESS_TEXT, background: SUCCESS_SOFT, padding: "3px 10px", borderRadius: 20 }}>Active</span>;
+    return <span style={{ fontSize: 12, fontWeight: 600, color: WARN_TEXT, background: WARN_SOFT, padding: "3px 10px", borderRadius: 20 }}>Needs setup</span>;
   };
 
   const renderActions = (emp) => {
