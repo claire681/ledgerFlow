@@ -42,12 +42,12 @@ var COUNTRIES = {
     },
     taxForm: "W-4", regionLabel: "State", regions: STATES_US,
     taxFields: [
-      { k: "stateEmp", l: "State of employment", t: "select", req: true, opts: STATES_US },
-      { k: "filingStatus", l: "Federal filing status", t: "select", opts: ["Single","Married filing jointly","Married filing separately","Head of household"] },
-      { k: "allowances", l: "Federal allowances", t: "number", validate: rangeValidate(0, 99), errorMsg: "Enter 0 to 99" },
+      { k: "stateEmp", l: "State of employment", t: "select", req: true, opts: STATES_US, help: "The state where the employee performs most of their work. Determines state income tax withholding rules." },
+      { k: "filingStatus", l: "Federal filing status", t: "select", opts: ["Single","Married filing jointly","Married filing separately","Head of household"], help: "From the employee's W-4 Step 1(c)." },
+      { k: "allowances", l: "Federal allowances", t: "number", help: "From the employee's W-4 Step 3 (dependents claim). The 2020+ W-4 form replaces classic allowances with a dollar amount in Step 3.", validate: rangeValidate(0, 99), errorMsg: "Enter 0 to 99" },
       { k: "additionalFedTax", l: "Voluntary extra federal withholding per pay (optional)", t: "money", help: "Only if requested by the employee on W-4 Step 4(c). Leave blank otherwise.", validate: rangeValidate(0, 99999), errorMsg: "Enter $0 to $99,999" },
       { k: "stateWithholding", l: "Voluntary extra state withholding per pay (optional)", t: "money", help: "Only if requested by the employee. Leave blank otherwise.", validate: rangeValidate(0, 99999), errorMsg: "Enter $0 to $99,999" },
-      { k: "fedExempt", l: "Exempt from federal withholding", t: "select", opts: ["No","Yes"] }
+      { k: "fedExempt", l: "Exempt from federal withholding", t: "select", opts: ["No","Yes"], help: "Set Yes only if the employee wrote Exempt on W-4 Step 4(c). Very rare; usually only zero-tax-liability employees." }
     ]
   },
   GB: {
@@ -64,11 +64,12 @@ var COUNTRIES = {
     taxForm: "P45 / P46", regionLabel: "Region", regions: REGIONS_GB,
     taxFields: [
       { k: "taxCode", l: "Tax code", t: "text", req: true, placeholder: "e.g. 1257L",
+        help: "From the employee's P45, P46, or HMRC starter checklist. The default for most new employees is 1257L.",
         validate: function(v) { return !isFilled(v) || /^\s*\d{2,4}[A-Z]{1,2}\s*$/i.test(String(v)); },
         errorMsg: "Enter a valid UK tax code like 1257L" },
-      { k: "niCategory", l: "National Insurance category", t: "select", opts: ["A","B","C","F","H","I","J","L","M","S","V","X","Z"] },
-      { k: "studentLoanPlan", l: "Student loan plan", t: "select", opts: ["None","Plan 1","Plan 2","Plan 4","Postgraduate"] },
-      { k: "pensionPercent", l: "Pension contribution (%)", t: "number", validate: rangeValidate(0, 100), errorMsg: "Enter 0 to 100" }
+      { k: "niCategory", l: "National Insurance category", t: "select", opts: ["A","B","C","F","H","I","J","L","M","S","V","X","Z"], help: "Most employees are category A. HMRC sets the category based on age, residency, and other factors." },
+      { k: "studentLoanPlan", l: "Student loan plan", t: "select", opts: ["None","Plan 1","Plan 2","Plan 4","Postgraduate"], help: "From the employee's starter checklist. Select None if they do not have a UK student loan." },
+      { k: "pensionPercent", l: "Pension contribution (%)", t: "number", help: "The employee's percentage contribution to the workplace pension. Auto-enrolment minimum is 5%.", validate: rangeValidate(0, 100), errorMsg: "Enter 0 to 100" }
     ]
   },
   AU: {
@@ -83,11 +84,11 @@ var COUNTRIES = {
     },
     taxForm: "TFN declaration", regionLabel: "State or territory", regions: REGIONS_AU,
     taxFields: [
-      { k: "tfnDeclared", l: "Tax file number provided", t: "select", opts: ["Yes","No, claim exemption","Pending"] },
-      { k: "freeThreshold", l: "Claiming tax-free threshold", t: "select", opts: ["Yes","No"] },
-      { k: "medicareExempt", l: "Medicare levy exemption", t: "select", opts: ["None","Half","Full"] },
-      { k: "helpHecs", l: "HELP/HECS debt", t: "select", opts: ["No","Yes"] },
-      { k: "superRate", l: "Superannuation rate (%)", t: "number", validate: rangeValidate(0, 50), errorMsg: "Enter 0 to 50" }
+      { k: "tfnDeclared", l: "Tax file number provided", t: "select", opts: ["Yes","No, claim exemption","Pending"], help: "From the employee's TFN declaration form. Without a TFN, the highest marginal tax rate applies." },
+      { k: "freeThreshold", l: "Claiming tax-free threshold", t: "select", opts: ["Yes","No"], help: "From the employee's TFN declaration. Yes for their main job; No for second jobs (avoids underwithholding)." },
+      { k: "medicareExempt", l: "Medicare levy exemption", t: "select", opts: ["None","Half","Full"], help: "Most employees have no exemption. Set Half or Full only if the employee provided a valid Medicare levy variation form." },
+      { k: "helpHecs", l: "HELP/HECS debt", t: "select", opts: ["No","Yes"], help: "From the employee's TFN declaration. Yes triggers automatic study loan repayments through PAYG." },
+      { k: "superRate", l: "Superannuation rate (%)", t: "number", help: "Employer super guarantee rate. The current statutory minimum is 12% (FY 2025-26). Override only if your award or contract requires more.", validate: rangeValidate(0, 50), errorMsg: "Enter 0 to 50" }
     ]
   }
 };

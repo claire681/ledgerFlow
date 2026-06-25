@@ -24,6 +24,15 @@ function authHeaders() {
 
 function isFilled(v) { return v !== undefined && v !== null && String(v).trim() !== ""; }
 
+function taxIntroFor(country) {
+  const c = country.code;
+  if (c === "CA") return "Enter the employee's tax setup once (from their TD1). Novala calculates CRA federal tax, provincial tax, CPP, EI, employer contributions, and net pay automatically at every pay run.";
+  if (c === "US") return "Enter the employee's tax setup once (from their W-4). Novala calculates federal income tax, FICA (Social Security and Medicare), state tax, employer contributions, and net pay automatically at every pay run.";
+  if (c === "GB") return "Enter the employee's tax setup once (from their P45, P46, or starter checklist). Novala calculates PAYE income tax, employee and employer National Insurance, student loan deductions, and net pay automatically at every pay run.";
+  if (c === "AU") return "Enter the employee's tax setup once (from their TFN declaration). Novala calculates PAYG withholding, Medicare levy, HELP/HECS, employer superannuation, and net pay automatically at every pay run.";
+  return "Enter the employee's tax setup once. Novala calculates payroll taxes and net pay automatically at every pay run.";
+}
+
 function buildSections(country) {
   return [
     { id: "personal", title: "Personal info", icon: User, required: true, fields: [
@@ -77,7 +86,7 @@ function buildSections(country) {
       { k: "accrualRate", l: "Accrual rate", t: "text" },
       { k: "balanceHours", l: "Current balance (hours)", t: "number" },
     ]},
-    { id: "tax", title: "Tax setup (" + country.taxForm + ")", icon: Receipt, required: true, fields: country.taxFields, intro: "Enter the employee's tax setup once. Novala calculates payroll taxes, CPP, EI, and net pay automatically at every pay run." },
+    { id: "tax", title: "Tax setup (" + country.taxForm + ")", icon: Receipt, required: true, fields: country.taxFields, intro: taxIntroFor(country) },
     { id: "deductions", title: "Deductions and contributions", icon: MinusCircle, fields: [
       { k: "deductionName", l: "Deduction name", t: "text" },
       { k: "deductionAmount", l: "Amount per pay", t: "money" },
