@@ -276,7 +276,7 @@ export default function EmployeesList() {
       <div style={{ position: "relative", textAlign: "center" }}>
         <MoreVertical size={18} style={{ color: TEXT_TERTIARY, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); setOpenMenuId(open ? null : emp.id); }} />
         {open && (
-          <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", right: 0, top: 26, zIndex: 50, background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", padding: 4, minWidth: 200 }}>
+          <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} style={{ position: "absolute", right: 0, top: 26, zIndex: 50, background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", padding: 4, minWidth: 200 }}>
             {emp._ready ? (
               <>
                 <div style={item} onClick={() => { setOpenMenuId(null); navigate("/payroll/employees/" + emp.id); }}><User size={14} style={{ color: TEXT_SECONDARY }} />View profile</div>
