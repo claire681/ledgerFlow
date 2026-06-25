@@ -196,6 +196,16 @@ export default function EmployeesList() {
     );
   };
 
+    const renderEmail = (emp) => {
+    const email = emp.personal_email || emp.email || "";
+    if (!email) return <span style={{ color: TEXT_TERTIARY, fontStyle: "italic", fontSize: 13 }}>Not set</span>;
+    return <a href={"mailto:" + email} style={{ color: BRAND_DARK, fontSize: 13.5, textDecoration: "none" }} onClick={(e) => e.stopPropagation()}>{email}</a>;
+  };
+  const renderJobTitle = (emp) => {
+    const t = emp.position_title || emp.job_title || "";
+    if (!t) return <span style={{ color: TEXT_TERTIARY, fontStyle: "italic", fontSize: 13 }}>Not set</span>;
+    return <span style={{ fontSize: 13.5, color: TEXT_PRIMARY }}>{t}</span>;
+  };
   const renderName = (emp) => {
     const role = getRole(emp);
     return (

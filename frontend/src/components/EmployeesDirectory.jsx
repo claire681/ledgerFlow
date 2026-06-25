@@ -28,7 +28,7 @@ function ddOptions(emps, key) {
 // Group label inference. If the employee has a department, use it; otherwise derive from role/title.
 function deptOf(emp) {
   if (emp.department) return emp.department;
-  const t = String(emp.title || emp.role || emp.position || "").toLowerCase();
+  const t = String(emp.position_title || emp.title || emp.role || emp.position || emp.job_title || "").toLowerCase();
   if (t.includes("manager") || t.includes("owner") || t.includes("director")) return "Managers";
   if (t.includes("caregiver") || t.includes("aide") || t.includes("nurse")) return "Caregivers";
   if (t.includes("scheduler") || t.includes("admin") || t.includes("coordinator")) return "Office";
@@ -76,9 +76,9 @@ export default function EmployeesDirectory({ employees }) {
 
   const enriched = useMemo(() => (employees || []).map((e) => ({
     ...e,
-    _name: e.full_name || ((e.first_name || "") + " " + (e.last_name || "")).trim() || e.name || "Unnamed",
-    _title: e.title || e.role || e.position || "Employee",
-    _email: e.email || e.work_email || "",
+    _name: ((e.first_name || "") + " " + (e.last_name || "")).trim() || e.full_name || e.name || "Unnamed",
+    _title: e.position_title || e.title || e.job_title || e.role || e.position || "Employee",
+    _email: e.personal_email || e.email || e.work_email || "",
     _dept: deptOf(e),
     _emp: empTypeOf(e),
     _status: statusOf(e),
