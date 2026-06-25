@@ -389,6 +389,7 @@ export default function EmployeesList() {
                 <th style={{ ...TH, paddingLeft: 18 }}>Name</th>
                 <th style={TH}>Pay rate</th>
                 <th style={TH}>Pay method</th>
+                <th style={TH}>Available vacation</th>
                 <th style={TH}>Email</th>
                 <th style={TH}>Job title</th>
                 <th style={TH}>Phone number</th>
@@ -407,6 +408,7 @@ export default function EmployeesList() {
                   <td style={{ ...TD, paddingLeft: 18 }}>{renderName(emp)}</td>
                   <td style={TD}>{renderPayRate(emp)}</td>
                   <td style={TD}>{renderMethod(emp)}</td>
+                  <td style={TD}>{renderVacation(emp)}</td>
                   <td style={TD}>{renderEmail(emp)}</td>
                   <td style={TD}>{renderJobTitle(emp)}</td>
                   <td style={TD}>{renderPhone(emp)}</td>
