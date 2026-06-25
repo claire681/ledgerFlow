@@ -122,13 +122,42 @@ export default function EmployeesDirectory({ employees }) {
     return keys.map((k) => [k, map.get(k)]);
   }, [filtered, groupBy]);
 
-  const onSend = () => {
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState(null);
+
+  const onSend = async () => {
     if (!composeFor) return;
-    const s = encodeURIComponent(subject || "");
-    const b = encodeURIComponent(body || "");
-    window.location.href = "mailto:" + composeFor._email + "?subject=" + s + "&body=" + b;
-    setComposeFor(null);
-    setSubject(""); setBody("");
+    if (!subject.trim() || !body.trim()) {
+      setSendError("Add a subject and a message before sending.");
+      return;
+    }
+    setSending(true);
+    setSendError(null);
+    try {
+      const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+      const apiUrl = (process.env.REACT_APP_API_URL || "https://api.getnovala.com") + "/api/v1/email/send";
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: Object.assign({ "Content-Type": "application/json" }, token ? { Authorization: "Bearer " + token } : {}),
+        body: JSON.stringify({
+          to_email: composeFor._email,
+          to_name: composeFor._name || null,
+          subject: subject,
+          body: body,
+        }),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error("Send failed (" + res.status + "): " + txt.slice(0, 200));
+      }
+      setComposeFor(null);
+      setSubject("");
+      setBody("");
+    } catch (err) {
+      setSendError(err.message);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -208,10 +237,10 @@ export default function EmployeesDirectory({ employees }) {
               </Field>
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 22px", borderTop: "1px solid " + C.line, gap: 12 }}>
-              <span style={{ fontSize: 12, color: C.faint }}>Opens in your email app</span>
+              <span style={{ fontSize: 12, color: sendError ? "#DC2626" : C.faint }}>{sendError || "Sent from " + (composeFor._name ? "Novala on your behalf" : "Novala on your behalf")}</span>
               <div style={{ display: "flex", gap: 10 }}>
                 <button onClick={() => setComposeFor(null)} style={{ fontFamily: FONT, fontWeight: 600, fontSize: 14, background: "#fff", border: "1px solid " + C.line, color: C.ink, borderRadius: 11, padding: "9px 16px", cursor: "pointer" }}>Cancel</button>
-                <button onClick={onSend} disabled={!composeFor._email} style={{ fontFamily: FONT, fontWeight: 600, fontSize: 14, background: composeFor._email ? C.teal : "#C3CBD6", border: "1px solid transparent", color: "#fff", borderRadius: 11, padding: "9px 16px", cursor: composeFor._email ? "pointer" : "not-allowed", boxShadow: composeFor._email ? "0 1px 2px rgba(21,160,140,0.3)" : "none" }}>Send</button>
+                <button onClick={onSend} disabled={!composeFor._email || sending} style={{ fontFamily: FONT, fontWeight: 600, fontSize: 14, background: composeFor._email ? C.teal : "#C3CBD6", border: "1px solid transparent", color: "#fff", borderRadius: 11, padding: "9px 16px", cursor: composeFor._email ? "pointer" : "not-allowed", boxShadow: composeFor._email ? "0 1px 2px rgba(21,160,140,0.3)" : "none" }}>{sending ? "Sending..." : "Send"}</button>
               </div>
             </div>
           </div>
