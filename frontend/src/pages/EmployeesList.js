@@ -28,6 +28,13 @@ const SUCCESS_TEXT = "#166534";
 const SUCCESS_SOFT = "#DCFCE7";
 
 const PRIVACY_KEY = "novala_privacy";
+const PRIVATE_MASK = (
+  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#9CA3AF", fontSize: 13 }}>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+    Hidden
+  </span>
+);
+
 const AVATAR_COLORS = ["#0F9599", "#0B7377", "#185FA5", "#7C3AED", "#DB2777", "#0891B2", "#65A30D", "#B45309"];
 
 const getToken = () =>
@@ -220,6 +227,7 @@ export default function EmployeesList() {
   };
 
   const renderPayRate = (emp) => {
+    if (privacy) return PRIVATE_MASK;
     const rate = formatPayRate(emp);
     if (!rate) return <a onClick={() => navigate("/payroll/employees/" + emp.id + "?section=pay_types")} style={MISS}><AlertTriangle size={13} />Add pay rate</a>;
     if (privacy) return <span style={MASK}>{"\u2022\u2022\u2022\u2022\u2022\u2022"}</span>;
@@ -227,12 +235,14 @@ export default function EmployeesList() {
   };
 
   const renderMethod = (emp) => {
-    const m = getPayMethod(emp);
-    if (!m) return <a onClick={() => navigate("/payroll/employees/" + emp.id + "?section=payment_method")} style={MISS}><AlertTriangle size={13} />Add method</a>;
-    return <span style={{ fontSize: 14, color: TEXT_PRIMARY }}>{m}</span>;
+    const at = emp.account_type;
+    if (at === "direct_deposit") return <span style={{ fontSize: 13.5, color: TEXT_PRIMARY }}>Direct deposit</span>;
+    if (at === "cheque") return <span style={{ fontSize: 13.5, color: TEXT_PRIMARY }}>Cheque</span>;
+    return <a onClick={() => navigate("/payroll/employees/" + emp.id + "?section=payment_method")} style={MISS}><AlertTriangle size={13} />Add method</a>;
   };
 
   const renderVacation = (emp) => {
+    if (privacy) return PRIVATE_MASK;
     const v = getVacation(emp);
     if (!v) return <a onClick={() => navigate("/payroll/employees/" + emp.id + "?section=vacation")} style={MISS}><AlertTriangle size={13} />Set up</a>;
     if (privacy) return <span style={MASK}>{"\u2022\u2022\u2022\u2022\u2022\u2022"}</span>;
