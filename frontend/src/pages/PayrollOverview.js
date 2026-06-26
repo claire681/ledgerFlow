@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Shield, Play, UserPlus, Settings, ChevronRight, Calendar,
+  Shield, Play, UserPlus, Settings, ChevronRight, ChevronDown, Calendar,
   AlertTriangle, AlertCircle, FileText, User, CheckCircle,
   Book, ListChecks, Activity, CreditCard,
 } from "lucide-react";
@@ -50,6 +50,7 @@ export default function PayrollOverview() {
   const [autoPayroll, setAutoPayroll] = useState(false);
   const [attentionItems, setAttentionItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [attentionCollapsed, setAttentionCollapsed] = useState(false);
 
   // Load data
   useEffect(() => {
@@ -177,6 +178,9 @@ export default function PayrollOverview() {
           <ChipButton icon={<Play size={15} />} label="Run payroll" onClick={() => navigate("/payroll/run")} />
           <ChipButton icon={<UserPlus size={15} />} label="Add employee" onClick={() => navigate("/payroll/employees/new")} />
           <ChipButton icon={<Settings size={15} />} label="Update payroll settings" onClick={() => navigate("/payroll/settings")} />
+          <span onClick={() => navigate("/payroll/settings")} style={{ marginLeft: "auto", fontSize: 13.5, fontWeight: 600, color: C.tealInk, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, fontFamily: FONT }}>
+            Show all <ChevronRight size={14} />
+          </span>
         </div>
 
         {/* Hero card */}
@@ -241,14 +245,17 @@ export default function PayrollOverview() {
               <span style={{ fontSize: 11.5, fontWeight: 700, background: allAttentionItems.length > 0 ? C.amberSoft : C.greenSoft, color: allAttentionItems.length > 0 ? C.amber : C.green, borderRadius: 20, padding: "2px 9px" }}>
                 {allAttentionItems.length} {allAttentionItems.length === 1 ? "item" : "items"}
               </span>
+              <span onClick={() => setAttentionCollapsed(c => !c)} style={{ marginLeft: "auto", cursor: "pointer", color: C.muted, display: "inline-flex", alignItems: "center", transform: attentionCollapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.18s" }}>
+                <ChevronDown size={18} />
+              </span>
             </div>
-            {allAttentionItems.length === 0 ? (
+            {!attentionCollapsed && (allAttentionItems.length === 0 ? (
               <div style={{ padding: "30px 22px", textAlign: "center", color: C.muted, fontSize: 13.5 }}>All clear. Nothing needs your attention right now.</div>
             ) : (
               allAttentionItems.map((item, idx) => (
                 <AttentionItem key={item.id} item={item} isLast={idx === allAttentionItems.length - 1} onMarkDone={() => markDone(item.id)} />
               ))
-            )}
+            ))}
           </div>
 
           {/* RIGHT: sidebar */}
