@@ -148,7 +148,7 @@ export default function PayrollOverview() {
 
   return (
     <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text }}>
-      <div style={{ maxWidth: 1320, margin: "0 auto", padding: "28px 40px 90px" }}>
+      <div style={{ maxWidth: "100%", margin: 0, padding: "28px 32px 90px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <h1 style={{ fontSize: 26, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em" }}>Payroll overview</h1>
         </div>
