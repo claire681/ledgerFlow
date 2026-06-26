@@ -804,9 +804,21 @@ export default function RunPayroll() {
         {/* run header */}
         <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 26px", borderBottom: "1px solid " + C.lineSoft }}>
           <h1 style={{ fontSize: 21, fontWeight: 800, color: C.ink }}>Run payroll</h1>
-          <span style={{ background: C.tint, color: C.brandDark, fontSize: 12.5, fontWeight: 700,
-            padding: "5px 12px", borderRadius: 20 }}>{run ? run.frequency || "Semi-monthly" : "Semi-monthly"}</span>
-          <span style={{ fontSize: 13.5, color: C.muted }}>{run ? run.scheduleDetail || "15th and end of month" : "15th and end of month"}</span>
+          <div style={{ position: "relative" }}>
+            <button onClick={() => setFreqOpen(o => !o)} style={{ background: C.tint, color: C.brandDark, fontSize: 12.5, fontWeight: 700, padding: "5px 12px", borderRadius: 20, border: "1px solid " + C.tint, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 5 }}>
+              {frequency} <ChevronDown size={13} />
+            </button>
+            {freqOpen && (
+              <div style={{ position: "absolute", top: 32, left: 0, zIndex: 80, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(15,23,42,0.12)", padding: 4, minWidth: 200 }}>
+                {["Weekly","Bi-weekly","Semi-monthly","Monthly"].map(f => (
+                  <div key={f} onClick={() => { setFrequency(f); setFreqOpen(false); }} style={{ padding: "8px 12px", borderRadius: 6, fontSize: 13, fontWeight: f === frequency ? 700 : 500, color: f === frequency ? C.brandDark : C.ink, background: f === frequency ? C.tint : "transparent", cursor: "pointer" }}>
+                    {f}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <span style={{ fontSize: 13.5, color: C.muted }}>{frequency === "Semi-monthly" ? "15th and end of month" : frequency === "Weekly" ? "Every Friday" : frequency === "Bi-weekly" ? "Every other Friday" : "End of month"}</span>
           <div style={{ marginLeft: "auto", display: "flex", gap: 20, color: C.muted, fontSize: 13.5, fontWeight: 600, alignItems: "center" }}>
             <span onClick={() => { setTourStep(0); setTourActive(true); }} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}><Map size={16} />Take a tour</span>
               {tourActive && (() => {
