@@ -1041,11 +1041,11 @@ export default function RunPayroll() {
                         </button>
                         <button onClick={exportXLSX} onMouseEnter={(e) => e.currentTarget.style.background = C.page} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "9px 12px", background: "transparent", border: "none", borderRadius: 7, fontSize: 13.5, color: C.ink, cursor: "pointer", textAlign: "left", fontFamily: FONT }}>
                           <FileText size={16} color={C.muted} />
-                          <span>Excel (.xlsx)<div style={{ fontSize: 11, color: C.faint, marginTop: 1 }}>Coming next</div></span>
+                          <span>Excel (.xlsx)<div style={{ fontSize: 11, color: C.faint, marginTop: 1 }}>Spreadsheet for Microsoft Excel</div></span>
                         </button>
                         <button onClick={exportPDF} onMouseEnter={(e) => e.currentTarget.style.background = C.page} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "9px 12px", background: "transparent", border: "none", borderRadius: 7, fontSize: 13.5, color: C.ink, cursor: "pointer", textAlign: "left", fontFamily: FONT }}>
                           <Receipt size={16} color={C.muted} />
-                          <span>PDF report<div style={{ fontSize: 11, color: C.faint, marginTop: 1 }}>Coming next</div></span>
+                          <span>PDF report<div style={{ fontSize: 11, color: C.faint, marginTop: 1 }}>Printable report for sharing</div></span>
                         </button>
                         <div style={{ height: 1, background: C.line, margin: "4px 8px" }} />
                         <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 12.5, color: C.muted, cursor: "pointer" }}>
