@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Shield, Play, UserPlus, Settings, ChevronRight, ChevronDown, Calendar, Star, GripVertical, Search, X,
+  Shield, Play, UserPlus, Settings, ChevronRight, ChevronDown, Calendar,
   AlertTriangle, AlertCircle, FileText, User, CheckCircle,
   Book, ListChecks, Activity, CreditCard,
 } from "lucide-react";
@@ -10,36 +10,6 @@ import { generatePayPeriods } from "../utils/payScheduling";
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const getToken = () => localStorage.getItem("access_token") || localStorage.getItem("token") || "";
 const authHeaders = () => ({ Authorization: "Bearer " + getToken(), "Content-Type": "application/json" });
-
-// Actions catalogue (Create actions Show all panel)
-const ACTIONS_CATALOG = [
-  { id: "workers_comp", label: "Add workers comp", route: "/payroll/settings" },
-  { id: "run_payroll", label: "Run payroll", route: "/payroll/run" },
-  { id: "add_employee", label: "Add employee", route: "/payroll/employees/new" },
-  { id: "update_settings", label: "Update payroll settings", route: "/payroll/settings" },
-  { id: "edit_items", label: "Edit payroll items", route: "/payroll/settings" },
-  { id: "work_location", label: "Update work location", route: "/payroll/settings" },
-  { id: "accounting_prefs", label: "Update accounting preferences", route: "/payroll/settings" },
-  { id: "paycheque_list", label: "View paycheque list", route: "/payroll/paycheques" },
-  { id: "off_cycle", label: "Run off-cycle payroll", route: "/payroll/run" },
-  { id: "direct_deposit", label: "Set up direct deposit", route: "/payroll/settings" },
-  { id: "pay_schedule", label: "Manage pay schedule", route: "/payroll/settings" },
-];
-const DEFAULT_FAVOURITES = ["workers_comp", "run_payroll", "add_employee", "update_settings"];
-const MAX_FAVOURITES = 10;
-const FAVOURITES_STORAGE = "novala_create_action_favourites";
-
-const loadFavourites = () => {
-  try {
-    const stored = localStorage.getItem(FAVOURITES_STORAGE);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch (e) {}
-  return DEFAULT_FAVOURITES;
-};
-
 
 // Design tokens (matches spec)
 const C = {
@@ -81,8 +51,6 @@ export default function PayrollOverview() {
   const [attentionItems, setAttentionItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [attentionCollapsed, setAttentionCollapsed] = useState(false);
-  const [favourites, setFavourites] = useState(loadFavourites);
-  const [showActions, setShowActions] = useState(false);
 
   // Load data
   useEffect(() => {
@@ -206,13 +174,11 @@ export default function PayrollOverview() {
         {/* Create actions row */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 22 }}>
           <span style={{ fontSize: 13.5, fontWeight: 600, color: C.muted, marginRight: 4 }}>Create actions</span>
-          {favourites.slice(0, 5).map(favId => {
-            const action = ACTIONS_CATALOG.find(a => a.id === favId);
-            if (!action) return null;
-            const Icon = ACTION_ICONS[favId] || Settings;
-            return <ChipButton key={favId} icon={<Icon size={15} />} label={action.label} onClick={() => navigate(action.route)} />;
-          })}
-          <span onClick={() => setShowActions(true)} style={{ marginLeft: "auto", fontSize: 13.5, fontWeight: 600, color: C.tealInk, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, fontFamily: FONT }}>
+          <ChipButton icon={<Shield size={15} />} label="Add workers comp" onClick={() => navigate("/payroll/settings")} />
+          <ChipButton icon={<Play size={15} />} label="Run payroll" onClick={() => navigate("/payroll/run")} />
+          <ChipButton icon={<UserPlus size={15} />} label="Add employee" onClick={() => navigate("/payroll/employees/new")} />
+          <ChipButton icon={<Settings size={15} />} label="Update payroll settings" onClick={() => navigate("/payroll/settings")} />
+          <span onClick={() => navigate("/payroll/settings")} style={{ marginLeft: "auto", fontSize: 13.5, fontWeight: 600, color: C.tealInk, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, fontFamily: FONT }}>
             Show all <ChevronRight size={14} />
           </span>
         </div>
@@ -343,137 +309,6 @@ export default function PayrollOverview() {
         </div>
       </div>
     </div>
-  );
-}
-
-
-        {showActions && <CreateActionsPanel
-          favourites={favourites}
-          onSave={(newFavs) => { setFavourites(newFavs); localStorage.setItem(FAVOURITES_STORAGE, JSON.stringify(newFavs)); setShowActions(false); }}
-          onClose={() => setShowActions(false)}
-        />}
-      </div>
-    </div>
-  );
-}
-
-function CreateActionsPanel({ favourites: initialFavs, onSave, onClose }) {
-  const [favs, setFavs] = useState(initialFavs);
-  const [query, setQuery] = useState("");
-  const [dragId, setDragId] = useState(null);
-
-  const toggleFav = (id) => {
-    if (favs.includes(id)) {
-      setFavs(favs.filter(f => f !== id));
-    } else {
-      if (favs.length >= MAX_FAVOURITES) return;
-      setFavs([...favs, id]);
-    }
-  };
-
-  const reorder = (fromId, toId) => {
-    if (fromId === toId) return;
-    const newFavs = [...favs];
-    const fromIdx = newFavs.indexOf(fromId);
-    const toIdx = newFavs.indexOf(toId);
-    newFavs.splice(fromIdx, 1);
-    newFavs.splice(toIdx, 0, fromId);
-    setFavs(newFavs);
-  };
-
-  const filtered = ACTIONS_CATALOG.filter(a => a.label.toLowerCase().includes(query.toLowerCase()));
-  const favActions = favs.map(id => ACTIONS_CATALOG.find(a => a.id === id)).filter(Boolean);
-  const atMax = favs.length >= MAX_FAVOURITES;
-
-  return (
-    <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(16,26,43,0.42)", zIndex: 70 }} />
-      <div style={{ position: "fixed", top: 0, right: 0, height: "100%", width: "min(440px, 96vw)", background: "#fff", boxShadow: "-12px 0 40px rgba(16,26,43,0.18)", display: "flex", flexDirection: "column", zIndex: 71, fontFamily: FONT }}>
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", borderBottom: "1px solid " + C.line }}>
-          <h3 style={{ fontSize: 17, fontWeight: 600, color: C.ink }}>Create actions</h3>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 4, display: "inline-flex" }}><X size={16} /></button>
-        </div>
-
-        {/* Body */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "18px 22px 8px" }}>
-          {/* Search */}
-          <div style={{ position: "relative", marginBottom: 14 }}>
-            <Search size={16} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: C.faint }} />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search all create actions"
-              style={{ width: "100%", border: "1px solid " + C.line, borderRadius: 11, padding: "11px 38px 11px 40px", fontFamily: FONT, fontSize: 14, color: C.ink }}
-            />
-            {query && (
-              <button onClick={() => setQuery("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.faint, cursor: "pointer", padding: 4 }}><X size={14} /></button>
-            )}
-          </div>
-
-          <div style={{ fontSize: 12.5, color: C.muted, lineHeight: 1.5, marginBottom: 8 }}>
-            Choose your favourites. These appear on your Create actions row. If you do not customise, your top actions update as Novala learns what you use.
-          </div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: C.ink, marginBottom: 14 }}>
-            Select up to {MAX_FAVOURITES} <span style={{ color: C.faint, fontWeight: 500 }}>({favs.length} selected)</span>
-          </div>
-
-          {/* Favourites section */}
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: C.faint, margin: "18px 0 6px" }}>Favourites</div>
-          {favActions.length === 0 ? (
-            <div style={{ fontSize: 13, color: C.muted, padding: "14px 8px" }}>No favourites yet. Star actions below to add them.</div>
-          ) : favActions.map(a => (
-            <div
-              key={a.id}
-              draggable
-              onDragStart={() => setDragId(a.id)}
-              onDragEnd={() => setDragId(null)}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => { if (dragId) reorder(dragId, a.id); }}
-              style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 8px", borderRadius: 10, cursor: "default", background: dragId === a.id ? C.tealSoft : "transparent" }}
-              onMouseEnter={(e) => { if (dragId !== a.id) e.currentTarget.style.background = C.lineSoft; }}
-              onMouseLeave={(e) => { if (dragId !== a.id) e.currentTarget.style.background = "transparent"; }}
-            >
-              <span style={{ color: C.faint, cursor: "grab", display: "grid", placeItems: "center" }}><GripVertical size={14} /></span>
-              <button onClick={() => toggleFav(a.id)} style={{ background: "none", border: "none", cursor: "pointer", color: C.teal, padding: 0, display: "inline-flex" }}>
-                <Star size={20} fill="currentColor" />
-              </button>
-              <span style={{ flex: 1, fontSize: 14, color: C.ink, fontWeight: 500 }}>{a.label}</span>
-            </div>
-          ))}
-
-          {/* All actions section */}
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: C.faint, margin: "18px 0 6px" }}>Payroll</div>
-          {filtered.length === 0 ? (
-            <div style={{ fontSize: 13, color: C.muted, padding: "14px 8px" }}>No actions match your search.</div>
-          ) : filtered.map(a => {
-            const isFav = favs.includes(a.id);
-            const disabled = !isFav && atMax;
-            return (
-              <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 8px", borderRadius: 10 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = C.lineSoft}
-                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-              >
-                <button
-                  onClick={() => !disabled && toggleFav(a.id)}
-                  disabled={disabled}
-                  style={{ background: "none", border: "none", cursor: disabled ? "not-allowed" : "pointer", color: isFav ? C.teal : C.faint, padding: 0, display: "inline-flex", opacity: disabled ? 0.35 : 1 }}
-                >
-                  <Star size={20} fill={isFav ? "currentColor" : "none"} />
-                </button>
-                <span style={{ flex: 1, fontSize: 14, color: C.ink, fontWeight: 500 }}>{a.label}</span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Footer */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 22px", borderTop: "1px solid " + C.line }}>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: C.muted, fontWeight: 600, padding: "8px 4px", cursor: "pointer", fontFamily: FONT, fontSize: 14 }}>Cancel</button>
-          <button onClick={() => onSave(favs)} style={{ background: C.teal, color: "#fff", border: "none", borderRadius: 11, padding: "10px 22px", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: FONT, boxShadow: "0 2px 8px rgba(21,160,140,0.28)" }}>Save</button>
-        </div>
-      </div>
-    </>
   );
 }
 
