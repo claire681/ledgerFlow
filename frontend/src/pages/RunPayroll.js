@@ -518,9 +518,10 @@ export default function RunPayroll() {
       .catch((e) => { console.error("[RunPayroll] fetch error:", e); setError(e.message); setLoading(false); });
   }, [payRunId]);
 
-  const update = (id, field, value) =>
+  const update = (id, field, value) => {
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
     queueAutoSave(id, field, value);
+  };
 
   const activeRows = rows.filter((r) => r.ready && !r.skipped);
   const totalHours = activeRows.reduce((s, r) => s + (parseFloat(r.regular) || 0) + (parseFloat(r.statHoliday) || 0), 0);
