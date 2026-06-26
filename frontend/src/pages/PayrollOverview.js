@@ -287,7 +287,7 @@ export default function PayrollOverview() {
             <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 16, padding: 20, boxShadow: "0 1px 2px rgba(16,26,43,0.04)" }}>
               <h3 style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>Setup resources</h3>
               <div style={{ marginTop: 8 }}>
-                <ResourceLink icon={<Book size={20} />} label="View setup guide" onClick={() => navigate("/payroll/settings")} />
+                <ResourceLink icon={<Book size={20} />} label="View setup guide" onClick={() => navigate("/payroll/guide")} />
                 <ResourceLink icon={<ListChecks size={20} />} label="Things you will need" onClick={() => navigate("/payroll/settings")} />
                 <ResourceLink icon={<Activity size={20} />} label="Setting up payroll" mins="2 min" onClick={() => navigate("/payroll/settings")} />
                 <ResourceLink icon={<Activity size={20} />} label="Running your first payroll" mins="3 min" onClick={() => navigate("/payroll/run")} />
