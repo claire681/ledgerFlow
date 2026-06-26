@@ -425,7 +425,7 @@ export default function RunPayroll() {
     const token = localStorage.getItem("access_token") || localStorage.getItem("token");
     const auth = { headers: { Authorization: "Bearer " + token } };
     Promise.all([
-      fetch(API + "/api/v1/payroll/runs/" + payRunId, auth).then((r) => {
+      fetch(API + "/api/v1/payroll/pay-runs/" + payRunId, auth).then((r) => {
         if (!r.ok) throw new Error("Could not load pay run (HTTP " + r.status + ").");
         return r.json();
       }),
@@ -486,6 +486,7 @@ export default function RunPayroll() {
 
   const update = (id, field, value) =>
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+    queueAutoSave(id, field, value);
 
   const activeRows = rows.filter((r) => r.ready && !r.skipped);
   const totalHours = activeRows.reduce((s, r) => s + (parseFloat(r.regular) || 0) + (parseFloat(r.statHoliday) || 0), 0);
@@ -586,7 +587,7 @@ export default function RunPayroll() {
     setPreviewing(true);
     try {
       const token = localStorage.getItem("access_token") || localStorage.getItem("token") || "";
-      const res = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/calculate", {
+      const res = await fetch(API + "/api/v1/payroll/pay-runs/" + payRunId + "/calculate", {
         method: "POST",
         headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
         body: JSON.stringify({ employee_inputs: inputs })
@@ -829,7 +830,10 @@ export default function RunPayroll() {
           </div>
           <span style={{ fontSize: 13.5, color: C.muted }}>{frequency === "Semi-monthly" ? "15th and end of month" : frequency === "Weekly" ? "Every Friday" : frequency === "Bi-weekly" ? "Every other Friday" : "End of month"}</span>
           <div style={{ display: toolbarOpen ? "flex" : "none", marginLeft: "auto", gap: 20, color: C.muted, fontSize: 13.5, fontWeight: 600, alignItems: "center" }}>
-            <span onClick={() => { setTourStep(0); setTourActive(true); }} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}><Map size={16} />Take a tour</span>
+            <span style={{ fontSize: 12.5, color: saveStatus === "error" ? "#DC2626" : "#94A0B2", fontWeight: 600, marginRight: 8 }}>
+                {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : saveStatus === "error" ? "Save failed" : ""}
+              </span>
+              <span onClick={() => { setTourStep(0); setTourActive(true); }} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}><Map size={16} />Take a tour</span>
               {tourActive && (() => {
                 const step = TOUR_STEPS[tourStep] || {};
                 const vh = typeof window !== "undefined" ? window.innerHeight : 800;

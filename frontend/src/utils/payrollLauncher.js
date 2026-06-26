@@ -41,7 +41,7 @@ const computeDefaults = () => {
 export async function startNewPayroll(navigate) {
   try {
     const body = computeDefaults();
-    const res = await fetch(API_URL + "/api/v1/payroll/runs", {
+    const res = await fetch(API_URL + "/api/v1/payroll/pay-runs/draft", {
       method: "POST",
       headers: {
         Authorization: "Bearer " + getToken(),
