@@ -828,7 +828,7 @@ export default function RunPayroll() {
             )}
           </div>
           <span style={{ fontSize: 13.5, color: C.muted }}>{frequency === "Semi-monthly" ? "15th and end of month" : frequency === "Weekly" ? "Every Friday" : frequency === "Bi-weekly" ? "Every other Friday" : "End of month"}</span>
-          <div style={{ marginLeft: "auto", display: "flex", gap: 20, color: C.muted, fontSize: 13.5, fontWeight: 600, alignItems: "center" }}>
+          <div style={{ display: toolbarOpen ? "flex" : "none", marginLeft: "auto", gap: 20, color: C.muted, fontSize: 13.5, fontWeight: 600, alignItems: "center" }}>
             <span onClick={() => { setTourStep(0); setTourActive(true); }} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}><Map size={16} />Take a tour</span>
               {tourActive && (() => {
                 const step = TOUR_STEPS[tourStep] || {};
