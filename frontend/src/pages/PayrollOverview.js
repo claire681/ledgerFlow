@@ -373,7 +373,7 @@ function CreateActionsPanel({ initialFavs, onSave, onClose }) {
   return (
     <>
       <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(16,26,43,0.42)", zIndex: 70 }} />
-      <div style={{ position: "fixed", top: 0, right: 0, height: "100%", width: "min(440px, 96vw)", background: "#fff", boxShadow: "-12px 0 40px rgba(16,26,43,0.18)", display: "flex", flexDirection: "column", zIndex: 71, fontFamily: FONT }}>
+      <div style={{ position: "fixed", top: 0, right: 0, height: "100vh", maxHeight: "100vh", width: "min(440px, 96vw)", background: "#fff", boxShadow: "-12px 0 40px rgba(16,26,43,0.18)", display: "flex", flexDirection: "column", zIndex: 71, fontFamily: FONT }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", borderBottom: "1px solid " + C.line }}>
           <h3 style={{ fontSize: 17, fontWeight: 600, color: C.ink }}>Create actions</h3>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 4, display: "inline-flex" }}><X size={16} /></button>
@@ -446,7 +446,7 @@ function BankConnectPanel({ onClose }) {
   return (
     <>
       <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(16,26,43,0.42)", zIndex: 70 }} />
-      <div style={{ position: "fixed", top: 0, right: 0, height: "100%", width: "min(440px, 96vw)", background: "#fff", boxShadow: "-12px 0 40px rgba(16,26,43,0.18)", display: "flex", flexDirection: "column", zIndex: 71, fontFamily: FONT }}>
+      <div style={{ position: "fixed", top: 0, right: 0, height: "100vh", maxHeight: "100vh", width: "min(440px, 96vw)", background: "#fff", boxShadow: "-12px 0 40px rgba(16,26,43,0.18)", display: "flex", flexDirection: "column", zIndex: 71, fontFamily: FONT }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", borderBottom: "1px solid " + C.line }}>
           <h3 style={{ fontSize: 17, fontWeight: 600, color: C.ink }}>{step === 1 ? "Connect your bank" : "Verify your account"}</h3>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 4, display: "inline-flex" }}><X size={16} /></button>
