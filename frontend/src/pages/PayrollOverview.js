@@ -379,7 +379,7 @@ function CreateActionsPanel({ initialFavs, onSave, onClose }) {
           <h3 style={{ fontSize: 17, fontWeight: 600, color: C.ink }}>Create actions</h3>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 4, display: "inline-flex" }}><X size={16} /></button>
         </div>
-        <div style={{ flex: 1, overflowY: "auto", minHeight: 0, padding: "18px 22px 8px" }}>
+        <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0, maxHeight: "calc(100vh - 140px)", padding: "18px 22px 8px", WebkitOverflowScrolling: "touch" }}>
           <div style={{ position: "relative", marginBottom: 14 }}>
             <Search size={16} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: C.faint }} />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search all create actions" style={{ width: "100%", border: "1px solid " + C.line, borderRadius: 11, padding: "11px 38px 11px 40px", fontFamily: FONT, fontSize: 14, color: C.ink, outline: "none" }} />
@@ -454,7 +454,7 @@ function BankConnectPanel({ onClose }) {
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 4, display: "inline-flex" }}><X size={16} /></button>
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", minHeight: 0, padding: "18px 22px 8px" }}>
+        <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0, maxHeight: "calc(100vh - 140px)", padding: "18px 22px 8px", WebkitOverflowScrolling: "touch" }}>
           {/* Step indicator */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
             <StepDot n={1} active={step === 1} done={step > 1} />
