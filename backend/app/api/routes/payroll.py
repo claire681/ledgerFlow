@@ -535,6 +535,142 @@ async def get_pay_run(run_id: str, current_user=Depends(get_current_user), db: A
     return serialize_pay_run(pr, stubs)
 
 
+@router.post("/pay-runs/draft")
+async def get_or_create_draft(
+    body: dict,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Find or create a draft pay run for the given period.
+    Body: { pay_period_start, pay_period_end, pay_date }
+    Returns the draft with all its pay stubs.
+    """
+    from datetime import datetime as _dt
+    period_start = body.get("pay_period_start")
+    period_end = body.get("pay_period_end")
+    pay_date = body.get("pay_date")
+    if not period_start or not period_end or not pay_date:
+        raise HTTPException(400, "pay_period_start, pay_period_end, pay_date required")
+
+    period_start_d = _dt.fromisoformat(period_start).date() if isinstance(period_start, str) else period_start
+    period_end_d = _dt.fromisoformat(period_end).date() if isinstance(period_end, str) else period_end
+    pay_date_d = _dt.fromisoformat(pay_date).date() if isinstance(pay_date, str) else pay_date
+
+    # Look for existing draft for this exact period
+    result = await db.execute(
+        select(PayRun).where(
+            PayRun.owner_id == current_user.id,
+            PayRun.pay_period_start == period_start_d,
+            PayRun.pay_period_end == period_end_d,
+            PayRun.status == "draft",
+        )
+    )
+    pr = result.scalar_one_or_none()
+
+    if pr is None:
+        # Create a new draft. Seed one PayStub per active employee.
+        pr = PayRun(
+            owner_id=current_user.id,
+            pay_period_start=period_start_d,
+            pay_period_end=period_end_d,
+            pay_date=pay_date_d,
+            status="draft",
+            country=body.get("country", "CA"),
+            currency=body.get("currency", "CAD"),
+        )
+        db.add(pr)
+        await db.flush()
+
+        emps_res = await db.execute(
+            select(Employee).where(
+                Employee.owner_id == current_user.id,
+                Employee.status == "active",
+            )
+        )
+        for e in emps_res.scalars().all():
+            stub = PayStub(
+                pay_run_id=pr.id,
+                employee_id=e.id,
+                employee_name=((e.first_name or "") + " " + (e.last_name or "")).strip() or None,
+                employee_email=e.personal_email,
+                position_title=e.position_title,
+                pay_type=e.pay_type,
+                hourly_rate=e.hourly_rate,
+                salary_amount=e.salary_amount or 0,
+                currency=e.currency or "CAD",
+            )
+            db.add(stub)
+        await db.commit()
+        await db.refresh(pr)
+
+    # Fetch stubs and return
+    stubs_res = await db.execute(select(PayStub).where(PayStub.pay_run_id == pr.id))
+    stubs = list(stubs_res.scalars().all())
+    return serialize_pay_run(pr, stubs)
+
+
+@router.patch("/pay-runs/{run_id}/lines/{employee_id}")
+async def update_pay_run_line(
+    run_id: str,
+    employee_id: str,
+    body: dict,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Auto-save a single pay stub line. Accepts a sparse dict of fields to update."""
+    try:
+        rid = uuid.UUID(run_id)
+        eid = uuid.UUID(employee_id)
+    except (ValueError, AttributeError):
+        raise HTTPException(400, "Invalid run_id or employee_id")
+
+    # Verify the run belongs to this user
+    run_res = await db.execute(
+        select(PayRun).where(PayRun.id == rid, PayRun.owner_id == current_user.id)
+    )
+    pr = run_res.scalar_one_or_none()
+    if pr is None:
+        raise HTTPException(404, "Pay run not found")
+    if pr.status != "draft":
+        raise HTTPException(409, "Cannot edit a non-draft pay run")
+
+    # Find the stub
+    stub_res = await db.execute(
+        select(PayStub).where(PayStub.pay_run_id == rid, PayStub.employee_id == eid)
+    )
+    stub = stub_res.scalar_one_or_none()
+    if stub is None:
+        raise HTTPException(404, "Pay stub not found for this employee in this run")
+
+    # Allowed fields to update
+    allowed = {
+        "hours_regular", "hours_overtime", "hours_stat_holiday", "hours_vacation",
+        "hours_sick", "hours_evening", "hours_overnight", "hours_weekend",
+        "hours_on_call", "hours_travel", "bonus", "commission", "reimbursement",
+    }
+    for k, v in body.items():
+        if k not in allowed:
+            continue
+        if v is None or v == "":
+            setattr(stub, k, 0)
+        else:
+            try:
+                setattr(stub, k, Decimal(str(v)))
+            except Exception:
+                continue
+
+    # Memo and skipped go into calculation_snapshot JSONB as transient state for draft mode
+    if "memo" in body or "skipped" in body:
+        snap = dict(stub.calculation_snapshot or {})
+        if "memo" in body: snap["memo"] = body["memo"]
+        if "skipped" in body: snap["skipped"] = bool(body["skipped"])
+        stub.calculation_snapshot = snap
+
+    await db.commit()
+    await db.refresh(stub)
+    return {"ok": True, "stub_id": str(stub.id)}
+
+
 @router.post("/pay-runs", status_code=201)
 async def create_pay_run(body: PayRunCreateBody, current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     if not body.pay_stubs:
