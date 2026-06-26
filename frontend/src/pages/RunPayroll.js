@@ -482,7 +482,7 @@ export default function RunPayroll() {
           return undefined;
         };
         const linesByEmp = {};
-        const linesArr = data.lines || data.pay_lines || data.pay_run_lines || data.entries || data.items || [];
+        const linesArr = data.pay_stubs || data.lines || data.pay_lines || data.pay_run_lines || data.entries || data.items || [];
         linesArr.forEach((ln) => {
           const eid = pick(ln, "employee_id", "employeeId");
           if (eid) linesByEmp[eid] = ln;
@@ -503,9 +503,9 @@ export default function RunPayroll() {
             empType: empType || "",
             ready: pick(e, "setup_complete", "setupComplete") !== false,
             setupMissing: pick(e, "setup_missing", "setupMissing") || [],
-            regular: String(pick(line, "regular_hours", "regularHours") != null ? pick(line, "regular_hours", "regularHours") : 0),
-            statHoliday: String(pick(line, "stat_holiday_hours", "statHolidayHours") != null ? pick(line, "stat_holiday_hours", "statHolidayHours") : 0),
-            statPay: formatMoneyBlur(pick(line, "stat_avg_pay", "statAvgPay") != null ? pick(line, "stat_avg_pay", "statAvgPay") : 0),
+            regular: String(pick(line, "hours_regular", "regular_hours", "regularHours") != null ? pick(line, "hours_regular", "regular_hours", "regularHours") : 0),
+            statHoliday: String(pick(line, "hours_stat_holiday", "stat_holiday_hours", "statHolidayHours") != null ? pick(line, "hours_stat_holiday", "stat_holiday_hours", "statHolidayHours") : 0),
+            statPay: formatMoneyBlur(pick(line, "bonus", "stat_avg_pay", "statAvgPay") != null ? pick(line, "bonus", "stat_avg_pay", "statAvgPay") : 0),
             rateHint: rate != null ? money(rate) + "/hr" : "",
             payMethod: pick(line, "pay_method", "payMethod") || pick(e, "default_pay_method", "pay_method") || "Direct deposit",
             memo: pick(line, "memo") || "",
