@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import {
   Shield, Play, UserPlus, Settings, ChevronRight, ChevronDown, Calendar,
@@ -370,7 +371,7 @@ function CreateActionsPanel({ initialFavs, onSave, onClose }) {
   const filtered = ACTIONS_CATALOG.filter(a => a.label.toLowerCase().includes(query.toLowerCase()));
   const favActions = favs.map(id => ACTIONS_CATALOG.find(a => a.id === id)).filter(Boolean);
   const atMax = favs.length >= MAX_FAVOURITES;
-  return (
+  return createPortal(
     <>
       <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(16,26,43,0.42)", zIndex: 70 }} />
       <div style={{ position: "fixed", top: 0, right: 0, height: "100vh", maxHeight: "100vh", width: "min(440px, 96vw)", background: "#fff", boxShadow: "-12px 0 40px rgba(16,26,43,0.18)", display: "flex", flexDirection: "column", zIndex: 71, fontFamily: FONT }}>
@@ -413,7 +414,8 @@ function CreateActionsPanel({ initialFavs, onSave, onClose }) {
           <button onClick={() => onSave(favs)} style={{ background: C.teal, color: "#fff", border: "none", borderRadius: 11, padding: "10px 22px", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: FONT, boxShadow: "0 2px 8px rgba(21,160,140,0.28)" }}>Save</button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -443,7 +445,7 @@ function BankConnectPanel({ onClose }) {
   const inputStyle = { width: "100%", border: "1px solid " + C.line, borderRadius: 11, padding: "12px 14px", fontFamily: FONT, fontSize: 14, color: C.ink, outline: "none" };
   const labelStyle = { fontSize: 12.5, fontWeight: 600, color: C.ink, marginBottom: 6, display: "block" };
 
-  return (
+  return createPortal(
     <>
       <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(16,26,43,0.42)", zIndex: 70 }} />
       <div style={{ position: "fixed", top: 0, right: 0, height: "100vh", maxHeight: "100vh", width: "min(440px, 96vw)", background: "#fff", boxShadow: "-12px 0 40px rgba(16,26,43,0.18)", display: "flex", flexDirection: "column", zIndex: 71, fontFamily: FONT }}>
@@ -546,7 +548,8 @@ function BankConnectPanel({ onClose }) {
           <button onClick={next} style={{ background: C.teal, color: "#fff", border: "none", borderRadius: 11, padding: "10px 22px", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: FONT, boxShadow: "0 2px 8px rgba(21,160,140,0.28)" }}>{step === 2 ? "Done" : "Continue"}</button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
