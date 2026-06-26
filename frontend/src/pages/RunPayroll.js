@@ -375,6 +375,40 @@ export default function RunPayroll() {
   const navigate = useNavigate();
   const [run, setRun] = useState(null);
   const [rows, setRows] = useState([]);
+
+  // === Auto-save infrastructure (debounced PATCH to /pay-runs/{id}/lines/{employee_id}) ===
+  const autoSaveTimers = useRef({});
+  const [saveStatus, setSaveStatus] = useState(""); // "", "saving", "saved", "error"
+  const fieldMapToBackend = {
+    regular: "hours_regular",
+    statHoliday: "hours_stat_holiday",
+    statPay: "bonus",
+    memo: "memo",
+    skipped: "skipped",
+  };
+  const queueAutoSave = (rowId, field, value) => {
+    const backendField = fieldMapToBackend[field];
+    if (!backendField) return;
+    if (!payRunId || !rowId) return;
+    const key = rowId + ":" + field;
+    if (autoSaveTimers.current[key]) clearTimeout(autoSaveTimers.current[key]);
+    setSaveStatus("saving");
+    autoSaveTimers.current[key] = setTimeout(async () => {
+      try {
+        const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+        const numericFields = ["hours_regular", "hours_stat_holiday", "bonus"];
+        const isNumeric = numericFields.includes(backendField);
+        const payload = { [backendField]: isNumeric ? (parseFloat(value) || 0) : value };
+        const res = await fetch(API + "/api/v1/payroll/pay-runs/" + payRunId + "/lines/" + rowId, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) { setSaveStatus("error"); console.warn("[autoSave]", await res.text()); }
+        else { setSaveStatus("saved"); setTimeout(() => setSaveStatus(""), 2000); }
+      } catch (err) { setSaveStatus("error"); console.warn("[autoSave] error", err); }
+    }, 800);
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [memo, setMemo] = useState(null);
