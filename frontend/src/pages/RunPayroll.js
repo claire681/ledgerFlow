@@ -388,6 +388,8 @@ export default function RunPayroll() {
   const [filterEmpType, setFilterEmpType] = useState([]);
   const [filterPosition, setFilterPosition] = useState("");
   const [exportOpen, setExportOpen] = useState(false);
+  const [frequency, setFrequency] = useState("Semi-monthly");
+  const [freqOpen, setFreqOpen] = useState(false);
   const [exportChecked, setExportChecked] = useState(true);
   const [periodOpen, setPeriodOpen] = useState(false);
   const [tourActive, setTourActive] = useState(false);
@@ -502,14 +504,36 @@ export default function RunPayroll() {
     memo: (r) => (r.memo || "").toLowerCase(),
     payMethod: (r) => r.payMethod || ""
   };
-  const sortedRows = sortKey && SORT_VAL[sortKey] ? [...rows].sort((a, b) => {
+  
+  // Filter rows by selected pay frequency (uses employee.pay_schedule if present)
+  
+  function matchesAllFilters(r) {
+    if (!matchesFrequency(r)) return false;
+    if (filterPayMethod.length > 0 && !filterPayMethod.includes(r.payMethod || "")) return false;
+    if (filterStatus.length > 0) {
+      const st = r.skipped ? "Skipped" : (r.ready ? "Ready" : "Needs setup");
+      if (!filterStatus.includes(st)) return false;
+    }
+    if (filterEmpType.length > 0 && !filterEmpType.includes(r.employmentType || r.employment_type || "")) return false;
+    if (filterPosition && !((r.position || r.title || "").toLowerCase().includes(filterPosition.toLowerCase()))) return false;
+    return true;
+  }
+
+  function matchesFrequency(r) {
+    if (!frequency) return true;
+    const p = (r.pay_schedule || r.paySchedule || "").toLowerCase();
+    if (!p) return true; // unknown frequency: include everywhere
+    const norm = frequency.toLowerCase().replace(/[- ]/g, "_");
+    return p === norm || p.replace(/[- ]/g, "_") === norm;
+  }
+  const sortedRows = sortKey && SORT_VAL[sortKey] ? rows.filter(matchesAllFilters).sort((a, b) => {
     const va = SORT_VAL[sortKey](a), vb = SORT_VAL[sortKey](b);
     const factor = sortDir === "desc" ? -1 : 1;
     if (typeof va === "number" && typeof vb === "number") return (va - vb) * factor;
     if (va < vb) return -1 * factor;
     if (va > vb) return 1 * factor;
     return 0;
-  }) : rows;
+  }) : rows.filter(matchesAllFilters);
   const displayRows = sortedRows.filter((r) => {
     if (hideSkipped && r.skipped) return false;
     if (onlyWithHours && (parseFloat(r.regular) || 0) === 0 && (parseFloat(r.statHoliday) || 0) === 0) return false;
@@ -638,8 +662,74 @@ export default function RunPayroll() {
     URL.revokeObjectURL(url);
     setExportOpen(false);
   };
-  const exportXLSX = () => { setExportOpen(false); window.alert("Excel export (.xlsx) is coming in the next update. For now, CSV opens cleanly in Excel."); };
-  const exportPDF = () => { setExportOpen(false); window.alert("PDF report is coming in the next update."); };
+  const exportXLSX = () => {
+    try {
+      const rowsToExport = sortedRows.filter(r => !r.skipped || exportChecked === false);
+      const data = rowsToExport.map(r => ({
+        Employee: r.name || "",
+        Position: r.position || r.title || "",
+        "Regular hours": parseFloat(r.regular) || 0,
+        "Stat holiday hours": parseFloat(r.statHoliday) || 0,
+        "Pay method": r.payMethod || "",
+        "Pay rate": r.payRate || "",
+        Gross: grossOf(r),
+        Memo: r.memo || "",
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Payroll");
+      const fname = "novala-payroll-" + (run?.payDate || new Date().toISOString().slice(0,10)) + ".xlsx";
+      XLSX.writeFile(wb, fname);
+      setExportOpen(false);
+    } catch (err) {
+      window.alert("Excel export failed: " + err.message);
+    }
+  };
+  const exportPDF = () => {
+    setExportOpen(false);
+    setTimeout(() => {
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) { window.alert("Pop-ups blocked. Allow pop-ups to export PDF."); return; }
+      const rowsToExport = sortedRows.filter(r => !r.skipped || exportChecked === false);
+      const html = `
+        <html><head><title>Payroll Report - ${run?.payDate || ""}</title>
+        <style>
+          body { font-family: -apple-system, sans-serif; padding: 30px; color: #1B2533; }
+          h1 { font-size: 22px; margin-bottom: 4px; }
+          .sub { color: #66748B; font-size: 13px; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+          th { background: #F4F6F8; text-align: left; padding: 9px 11px; border-bottom: 1px solid #E7EAF0; font-weight: 600; }
+          td { padding: 8px 11px; border-bottom: 1px solid #F1F3F7; }
+          .num { text-align: right; font-variant-numeric: tabular-nums; }
+          .footer { margin-top: 22px; color: #94A0B2; font-size: 11.5px; }
+        </style></head>
+        <body>
+          <h1>Payroll Report</h1>
+          <div class="sub">Pay date: ${run?.payDate || "Draft"} &nbsp;&nbsp; Frequency: ${frequency || ""}</div>
+          <table>
+            <thead><tr>
+              <th>Employee</th><th>Position</th>
+              <th class="num">Regular hrs</th><th class="num">Stat hrs</th>
+              <th>Pay method</th><th class="num">Gross</th>
+            </tr></thead>
+            <tbody>
+              ${rowsToExport.map(r => `<tr>
+                <td>${r.name || ""}</td>
+                <td>${r.position || r.title || ""}</td>
+                <td class="num">${parseFloat(r.regular) || 0}</td>
+                <td class="num">${parseFloat(r.statHoliday) || 0}</td>
+                <td>${r.payMethod || ""}</td>
+                <td class="num">$${(grossOf(r) || 0).toFixed(2)}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table>
+          <div class="footer">Generated by Novala on ${new Date().toLocaleString()}</div>
+        </body></html>`;
+      printWindow.document.write(html);
+      printWindow.document.close();
+      setTimeout(() => printWindow.print(), 400);
+    }, 100);
+  };
 
   useEffect(() => {
     if (!tourActive) { setTourTargetRect(null); return; }
