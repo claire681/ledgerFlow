@@ -43,10 +43,49 @@ export const generateSemiMonthlyPeriods = (schedule, startYear, startMonth, coun
   return periods.slice(0, count);
 };
 
+const generateWeeklyOrBiweeklyPeriods = (schedule, count, intervalDays) => {
+  const periods = [];
+  const anchor = schedule.anchorPayDate ? new Date(schedule.anchorPayDate) : new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let payDate = new Date(anchor);
+  payDate.setHours(0, 0, 0, 0);
+  while (payDate < today) payDate = addDays(payDate, intervalDays);
+  for (let i = 0; i < count; i++) {
+    const periodEnd = addDays(payDate, -1);
+    const periodStart = addDays(periodEnd, -(intervalDays - 1));
+    periods.push({ periodStart, periodEnd, payDate: new Date(payDate) });
+    payDate = addDays(payDate, intervalDays);
+  }
+  return periods;
+};
+const generateMonthlyPeriods = (schedule, count) => {
+  const periods = [];
+  const dayOfMonth = schedule.dayOfMonth || "end_of_month";
+  const now = new Date();
+  let year = now.getFullYear(), month = now.getMonth() + 1;
+  for (let i = 0; i < count + 2; i++) {
+    const d = resolveDayOfMonth(dayOfMonth, year, month);
+    const payDate = makeDate(year, month, d);
+    if (payDate >= now) {
+      const periodEnd = addDays(payDate, -1);
+      const periodStart = makeDate(year, month, 1);
+      periods.push({ periodStart, periodEnd, payDate });
+    }
+    month += 1;
+    if (month > 12) { month = 1; year += 1; }
+    if (periods.length >= count) break;
+  }
+  return periods;
+};
 export const generatePayPeriods = (schedule, count) => {
   if (!schedule || !schedule.frequency) return [];
   const now = new Date();
-  if (schedule.frequency === "semi_monthly") return generateSemiMonthlyPeriods(schedule, now.getFullYear(), now.getMonth() + 1, count || 5);
+  const c = count || 5;
+  if (schedule.frequency === "weekly") return generateWeeklyOrBiweeklyPeriods(schedule, c, 7);
+  if (schedule.frequency === "bi_weekly" || schedule.frequency === "biweekly") return generateWeeklyOrBiweeklyPeriods(schedule, c, 14);
+  if (schedule.frequency === "semi_monthly") return generateSemiMonthlyPeriods(schedule, now.getFullYear(), now.getMonth() + 1, c);
+  if (schedule.frequency === "monthly") return generateMonthlyPeriods(schedule, c);
   return [];
 };
 
