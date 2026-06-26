@@ -101,7 +101,15 @@ function EditableCell({ value, onChange, money: isMoney = false, suffix = "", ra
       <span style={boxStyle} onClick={() => inputRef.current && inputRef.current.focus()}>
         {isMoney && <span style={{ color: C.muted, fontSize: 14 }}>$</span>}
         <input ref={inputRef} value={value} inputMode={isMoney ? "decimal" : "numeric"}
-          onChange={handleChange} onFocus={() => setFocused(true)} onBlur={handleBlur}
+          onChange={handleChange} onFocus={() => {
+              setFocused(true);
+              const v = String(value || "").trim();
+              if (isMoney) {
+                if (v === "" || v === "0" || v === "0.00" || v === "0.0") onChange("");
+              } else {
+                if (v === "" || v === "0" || Number(v) === 0) onChange("");
+              }
+            }} onBlur={handleBlur}
           style={inputStyle} className="np-no-spin" />
         {suffix && <span style={{ fontSize: 14, color: C.ink }}>{suffix}</span>}
       </span>
