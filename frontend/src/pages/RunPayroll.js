@@ -621,19 +621,14 @@ export default function RunPayroll() {
     }
     setPreviewing(true);
     try {
-      const token = localStorage.getItem("access_token") || localStorage.getItem("token") || "";
-      const res = await fetch(API + "/api/v1/payroll/pay-runs/" + payRunId + "/calculate", {
-        method: "POST",
-        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ employee_inputs: inputs })
-      });
-      if (!res.ok) {
-        const errText = await res.text().catch(() => "");
-        window.alert("Could not calculate payroll. HTTP " + res.status + (errText ? ": " + errText.slice(0, 300) : ""));
-        setPreviewing(false);
-        return;
-      }
-      const calculation = await res.json().catch(() => ({}));
+      // No backend calculator yet — compute basic totals client-side for the preview page.
+      const calculation = {
+        employee_count: inputs.length,
+        total_regular_hours: inputs.reduce((s, i) => s + (i.regular_hours || 0), 0),
+        total_stat_hours: inputs.reduce((s, i) => s + (i.stat_holiday_hours || 0), 0),
+        total_stat_pay: inputs.reduce((s, i) => s + (i.stat_pay_amount || 0), 0),
+        note: "Server-side payroll calculator (CRA T4127) not yet wired. Totals shown are gross input only."
+      };
       navigate("/payroll/run/" + payRunId + "/preview", {
         state: {
           calculation: calculation,
