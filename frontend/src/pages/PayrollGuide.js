@@ -65,7 +65,7 @@ const FAQS = [
   { q: "Can I change my pay schedule later?", a: "Yes, you can change your pay schedule at any time in Payroll settings. The new schedule takes effect from the next pay period; existing finalized runs are not affected." },
 ];
 
-export default function PayrollGuide() {
+export default function PayrollGuide({ embeddedInPanel = false, onClose }) {
   const navigate = useNavigate();
   const { askAndopen } = useAI();
 
@@ -73,9 +73,11 @@ export default function PayrollGuide() {
     <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text }}>
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "28px 32px 100px" }}>
 
-        <button onClick={() => navigate("/payroll/overview")} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 600, color: C.tealInk, cursor: "pointer", background: "none", border: "none", fontFamily: FONT, marginBottom: 14, padding: 0 }}>
-          <ChevronLeft size={14} /> Back to Payroll overview
-        </button>
+        {!embeddedInPanel && (
+          <button onClick={() => navigate("/payroll/overview")} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 600, color: C.tealInk, cursor: "pointer", background: "none", border: "none", fontFamily: FONT, marginBottom: 14, padding: 0 }}>
+            <ChevronLeft size={14} /> Back to Payroll overview
+          </button>
+        )}
 
         {/* Hero */}
         <div style={{ background: "linear-gradient(135deg, #EAF8F4, #F1F8F6)", border: "1px solid #D5EDE6", borderRadius: 18, padding: "34px 30px", marginBottom: 32, textAlign: "center" }}>

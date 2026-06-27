@@ -7,6 +7,7 @@ import {
   Book, ListChecks, Activity, CreditCard, Star, GripVertical, Search, X, Landmark,
 } from "lucide-react";
 import { generatePayPeriods } from "../utils/payScheduling";
+import PayrollGuide from "./PayrollGuide";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const getToken = () => localStorage.getItem("access_token") || localStorage.getItem("token") || "";
@@ -73,6 +74,7 @@ export default function PayrollOverview() {
   const [showActions, setShowActions] = useState(false);
   const [bankState] = useState("none");
   const [showBankConnect, setShowBankConnect] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -287,7 +289,7 @@ export default function PayrollOverview() {
             <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 16, padding: 20, boxShadow: "0 1px 2px rgba(16,26,43,0.04)" }}>
               <h3 style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>Setup resources</h3>
               <div style={{ marginTop: 8 }}>
-                <ResourceLink icon={<Book size={20} />} label="View setup guide" onClick={() => navigate("/payroll/guide")} />
+                <ResourceLink icon={<Book size={20} />} label="View setup guide" onClick={() => setShowGuide(true)} />
                 <ResourceLink icon={<ListChecks size={20} />} label="Things you will need" onClick={() => navigate("/payroll/settings")} />
                 <ResourceLink icon={<Activity size={20} />} label="Setting up payroll" mins="2 min" onClick={() => navigate("/payroll/settings")} />
                 <ResourceLink icon={<Activity size={20} />} label="Running your first payroll" mins="3 min" onClick={() => navigate("/payroll/run")} />
@@ -299,6 +301,7 @@ export default function PayrollOverview() {
 
         {showActions && <CreateActionsPanel initialFavs={favourites} onSave={(newFavs) => { setFavourites(newFavs); localStorage.setItem(FAVOURITES_STORAGE, JSON.stringify(newFavs)); setShowActions(false); }} onClose={() => setShowActions(false)} />}
         {showBankConnect && <BankConnectPanel onClose={() => setShowBankConnect(false)} />}
+        {showGuide && <PayrollGuideSheet onClose={() => setShowGuide(false)} />}
       </div>
     </div>
   );
@@ -560,5 +563,32 @@ function StepDot({ n, active, done }) {
     <div style={{ width: 28, height: 28, borderRadius: "50%", display: "grid", placeItems: "center", fontSize: 13, fontWeight: 600, flex: "0 0 28px", background: bg, color: fg, transition: "0.18s" }}>
       {done ? <CheckCircle size={14} /> : n}
     </div>
+  );
+}
+
+function PayrollGuideSheet({ onClose }) {
+  return createPortal(
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(16,26,43,0.55)", zIndex: 1000, animation: "fadeIn 0.2s ease-out" }} />
+      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: "92vh", background: C.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, boxShadow: "0 -12px 40px rgba(16,26,43,0.22)", zIndex: 1001, display: "flex", flexDirection: "column", animation: "slideUp 0.28s ease-out", fontFamily: FONT }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 0 6px", flex: "0 0 auto" }}>
+          <div onClick={onClose} style={{ width: 40, height: 5, borderRadius: 3, background: C.line, cursor: "pointer" }} />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 10px", flex: "0 0 auto" }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: C.muted }}>Payroll guide</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 4, display: "inline-flex", fontFamily: FONT, fontSize: 13.5, fontWeight: 600 }}>
+            Close
+          </button>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", minHeight: 0, maxHeight: "calc(92vh - 60px)", WebkitOverflowScrolling: "touch" }}>
+          <PayrollGuide embeddedInPanel onClose={onClose} />
+        </div>
+      </div>
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+      `}</style>
+    </>,
+    document.body
   );
 }
