@@ -171,22 +171,23 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch(API_URL + "/api/v1/businesses/me", { headers: authHeaders() })
+    fetch(API_URL + "/api/v1/company/profile", { headers: authHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (d) {
           const initial = {
-            legal_name: d.legal_name || d.company_name || d.name || "",
-            trading_name: d.trading_name || d.business_name || "",
+            company_name: d.company_name || "",
             address: d.address || "",
-            country: d.country || "ca",
-            currency: d.currency || "CAD",
-            fiscal_year_start: d.fiscal_year_start || "2026-01-01",
-            time_zone: d.time_zone || "America/Edmonton",
+            country: (d.country || "US").toLowerCase(),
+            province_state: d.province_state || "",
+            currency: d.currency || "USD",
+            fiscal_year_start: d.fiscal_year_start || 1,
+            phone: d.phone || "",
+            industry: d.industry || "",
+            website: d.website || "",
           };
           setData(initial); setOriginal(initial);
-          // Push country up so Tax registration knows
-          setBusinessCountry((initial.country || "ca").toLowerCase());
+          setBusinessCountry(initial.country);
         }
         setLoading(false);
       })
@@ -198,11 +199,42 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
   const onSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch(API_URL + "/api/v1/businesses/me", {
-        method: "PATCH", headers: authHeaders(), body: JSON.stringify(data),
+      // Backend expects country uppercase (e.g. "CA") and accepts only fields on CompanyProfile
+      const payload = {
+        company_name: data.company_name,
+        address: data.address,
+        country: (data.country || "").toUpperCase(),
+        province_state: data.province_state,
+        currency: data.currency,
+        fiscal_year_start: parseInt(data.fiscal_year_start) || 1,
+        phone: data.phone,
+        industry: data.industry,
+        website: data.website,
+      };
+      const res = await fetch(API_URL + "/api/v1/company/profile", {
+        method: "PATCH", headers: authHeaders(), body: JSON.stringify(payload),
       });
-      if (res.ok) { setOriginal(data); }
-    } catch (e) {}
+      if (res.ok) {
+        const updated = await res.json();
+        const refreshed = {
+          company_name: updated.company_name || "",
+          address: updated.address || "",
+          country: (updated.country || "US").toLowerCase(),
+          province_state: updated.province_state || "",
+          currency: updated.currency || "USD",
+          fiscal_year_start: updated.fiscal_year_start || 1,
+          phone: updated.phone || "",
+          industry: updated.industry || "",
+          website: updated.website || "",
+        };
+        setData(refreshed);
+        setOriginal(refreshed);
+        setBusinessCountry(refreshed.country);
+      } else {
+        const err = await res.text();
+        alert("Save failed: " + err);
+      }
+    } catch (e) { alert("Save failed: " + e.message); }
     setSaving(false);
   };
   const onDiscard = () => setData(original);
@@ -218,11 +250,11 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
       <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "24px 26px" }}>
         <CardSection label="Business">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
-            <Field label="Legal business name">
-              <TextInput value={data.legal_name} onChange={v => set("legal_name", v)} placeholder="Your registered legal name" />
+            <Field label="Company name">
+              <TextInput value={data.company_name} onChange={v => set("company_name", v)} placeholder="Your registered business name" />
             </Field>
-            <Field label="Trading name (optional)">
-              <TextInput value={data.trading_name} onChange={v => set("trading_name", v)} placeholder="If different from legal name" />
+            <Field label="Industry">
+              <TextInput value={data.industry} onChange={v => set("industry", v)} placeholder="What industry you operate in" />
             </Field>
           </div>
           <Field label="Business address" help="Physical address only. We use this to determine your tax responsibilities.">
@@ -255,25 +287,24 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
 
         <CardSection label="Fiscal year and time zone">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <Field label="Fiscal year start date" help="Used for year-end payroll reporting. Most businesses use January 1.">
-              <TextInput type="date" value={data.fiscal_year_start} onChange={v => set("fiscal_year_start", v)} />
-            </Field>
-            <Field label="Time zone">
-              <SelectInput value={data.time_zone} onChange={v => set("time_zone", v)}>
-                <option value="America/Edmonton">America/Edmonton (MST)</option>
-                <option value="America/Toronto">America/Toronto (EST)</option>
-                <option value="America/Vancouver">America/Vancouver (PST)</option>
-                <option value="America/New_York">America/New_York (EST)</option>
-                <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
-                <option value="Europe/London">Europe/London (GMT)</option>
-                <option value="Europe/Berlin">Europe/Berlin (CET)</option>
-                <option value="Europe/Paris">Europe/Paris (CET)</option>
-                <option value="Australia/Sydney">Australia/Sydney (AEDT)</option>
-                <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
-                <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
-                <option value="Pacific/Auckland">Pacific/Auckland (NZDT)</option>
-                <option value="Africa/Johannesburg">Africa/Johannesburg (SAST)</option>
+            <Field label="Fiscal year start month" help="Used for year-end payroll reporting. Most businesses use January.">
+              <SelectInput value={String(data.fiscal_year_start || 1)} onChange={v => set("fiscal_year_start", parseInt(v))}>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
               </SelectInput>
+            </Field>
+            <Field label="Phone (optional)">
+              <TextInput value={data.phone} onChange={v => set("phone", v)} placeholder="Business phone number" />
             </Field>
           </div>
         </CardSection>
@@ -368,34 +399,32 @@ function PayScheduleSection() {
 // === Tax registration section ===
 function TaxRegistrationSection({ businessCountry }) {
   const country = (businessCountry || "ca").toLowerCase();
+  // Tax registration is stored locally for now (no backend column yet)
+  const STORAGE_KEY = "novala_tax_registration";
   const [data, setData] = useState({});
   const [original, setOriginal] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch(API_URL + "/api/v1/businesses/me", { headers: authHeaders() })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (d) {
-          const initial = d.tax_registration || {};
-          setData(initial); setOriginal(initial);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setData(parsed); setOriginal(parsed);
+      }
+    } catch (e) {}
+    setLoading(false);
   }, []);
 
   const dirty = JSON.stringify(data) !== JSON.stringify(original);
 
-  const onSave = async () => {
+  const onSave = () => {
     setSaving(true);
     try {
-      const res = await fetch(API_URL + "/api/v1/businesses/me", {
-        method: "PATCH", headers: authHeaders(), body: JSON.stringify({ tax_registration: data }),
-      });
-      if (res.ok) { setOriginal(data); }
-    } catch (e) {}
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      setOriginal(data);
+    } catch (e) { alert("Save failed: " + e.message); }
     setSaving(false);
   };
   const onDiscard = () => setData(original);
