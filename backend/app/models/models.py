@@ -371,6 +371,7 @@ class CompanyProfile(Base):
     annual_revenue_est = Column(Numeric(14, 2), nullable=True)
     employee_count     = Column(Integer, nullable=True)
     founded_year       = Column(Integer, nullable=True)
+    tax_registration   = Column(JSONB, nullable=True, default=dict)
     created_at         = Column(DateTime(timezone=True), server_default=func.now())
     updated_at         = Column(DateTime(timezone=True), onupdate=func.now())
 

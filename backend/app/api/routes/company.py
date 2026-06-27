@@ -13,6 +13,7 @@ from app.services.memory_service import observe_and_update_memory
 from app.services.activity_service import log_activity
 from pydantic import BaseModel
 from typing import Optional
+from uuid import UUID
 from datetime import datetime
 
 router = APIRouter(prefix="/company", tags=["Company"])
@@ -39,14 +40,15 @@ class CompanyProfileSchema(BaseModel):
     annual_revenue_est: Optional[float] = None
     employee_count:     Optional[int]   = None
     founded_year:       Optional[int]   = None
+    tax_registration:  Optional[dict]   = None
 
     class Config:
         from_attributes = True
 
 
 class CompanyProfileResponse(CompanyProfileSchema):
-    id:         str
-    user_id:    str
+    id:         UUID
+    user_id:    UUID
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
