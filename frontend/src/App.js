@@ -18,6 +18,7 @@ import EmployeeProfileV2 from "./pages/EmployeeProfileV2";
 import AddEmployee from "./pages/AddEmployee";
 import PayrollOverview from "./pages/PayrollOverview";
 import PayrollGuide from "./pages/PayrollGuide";
+import PayrollSettingsStub from "./pages/PayrollSettingsStub";
 import PaychequeList from "./pages/PaychequeList";
 import PaychequeDetail from "./pages/PaychequeDetail";
 import RunPayroll from "./pages/RunPayroll";
@@ -188,6 +189,7 @@ function AppLayout({ onLogout }) {
           <Route path="/payroll/runs" element={<PayRuns />} />
           <Route path="/payroll/overview" element={<PayrollOverview />} />
               <Route path="/payroll/guide" element={<PayrollGuide />} />
+              <Route path="/payroll/settings/:screen" element={<PayrollSettingsStub />} />
           <Route path="/payroll/paycheques" element={<PaychequeList />} />
           <Route path="/payroll/paycheques/:id" element={<PaychequeDetail />} />
           <Route path="/payroll/items" element={<PayrollItems />} />

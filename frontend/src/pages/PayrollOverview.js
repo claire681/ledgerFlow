@@ -305,7 +305,7 @@ export default function PayrollOverview() {
         {showBankConnect && <BankConnectPanel onClose={() => setShowBankConnect(false)} />}
         {showGuide && <PayrollGuideSheet onClose={() => setShowGuide(false)} />}
         {showThingsNeeded && <ThingsYouNeedPanel onClose={() => setShowThingsNeeded(false)} />}
-        {showSettingUp && <SettingUpPayrollPanel onClose={() => setShowSettingUp(false)} />}
+        {showSettingUp && <SettingUpPayrollPanel onClose={() => setShowSettingUp(false)} onConnectBank={() => setShowBankConnect(true)} />}
       </div>
     </div>
   );
@@ -918,7 +918,7 @@ const SETUP_COUNTRY_DATA = {
   },
 };
 
-function SettingUpPayrollPanel({ onClose }) {
+function SettingUpPayrollPanel({ onClose, onConnectBank }) {
   const navigate = useNavigate();
   const [country, setCountry] = useState("CA-EN");
   const [countryOpen, setCountryOpen] = useState(false);
@@ -935,8 +935,8 @@ function SettingUpPayrollPanel({ onClose }) {
       time: "20 sec",
       why: "Novala uses your country and business address to apply the correct tax rules, currency, and legal entity classification.",
       needs: ["Registered business name", "Physical address (not a PO Box)", "Country and base currency"],
-      ctaLabel: "Open settings",
-      route: "/payroll/settings",
+      ctaLabel: "Open company details",
+      route: "/payroll/settings/company",
     },
     {
       title: "Add employees",
@@ -954,7 +954,7 @@ function SettingUpPayrollPanel({ onClose }) {
       why: "Pay schedule determines paycheque timing, period boundaries, and tax remittance cadence.",
       needs: ["Pay frequency (weekly, bi-weekly, semi-monthly, monthly)", "First payday on Novala", "Pay period start and end dates"],
       ctaLabel: "Configure schedule",
-      route: "/payroll/settings",
+      route: "/payroll/settings/schedule",
     },
     {
       title: "Bank account",
@@ -963,7 +963,7 @@ function SettingUpPayrollPanel({ onClose }) {
       why: "Direct deposit requires a verified business bank account. Until verified, employees are paid by cheque.",
       needs: ["Account holder legal name", cd.bankFields, "Confirmation of authorized signer"],
       ctaLabel: "Connect bank",
-      route: "/payroll/overview",
+      route: "BANK_CONNECT",
     },
     {
       title: "Tax registration",
@@ -972,7 +972,7 @@ function SettingUpPayrollPanel({ onClose }) {
       why: c.taxAuto ? "Required for calculating remittances correctly and for e-filing payroll taxes with the relevant authority." : "Required for calculating remittances. Tax e-filing automation for " + c.name + " is on our roadmap.",
       needs: [cd.taxIdLabel, cd.payrollAccount, "Filing cadence (monthly, quarterly, annually)"],
       ctaLabel: "Enter tax info",
-      route: "/payroll/settings",
+      route: "/payroll/settings/tax",
     },
     {
       title: "Review and authorize",
@@ -981,7 +981,7 @@ function SettingUpPayrollPanel({ onClose }) {
       why: "Final step before running payroll. Locks setup details and grants Novala permission to process pay runs.",
       needs: ["Review of all sections above", "Authorized signer name and confirmation"],
       ctaLabel: "Review setup",
-      route: "/payroll/settings",
+      route: "/payroll/settings/review",
     },
   ];
 
@@ -1103,7 +1103,7 @@ function SettingUpPayrollPanel({ onClose }) {
                         ))}
                       </ul>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <button onClick={(e) => { e.stopPropagation(); navigate(s.route); }} style={{ background: C.teal, color: "#fff", border: "none", borderRadius: 6, padding: "7px 14px", fontWeight: 500, fontSize: 12.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FONT }}>
+                        <button onClick={(e) => { e.stopPropagation(); if (s.route === "BANK_CONNECT") { onClose(); onConnectBank && onConnectBank(); } else { navigate(s.route); } }} style={{ background: C.teal, color: "#fff", border: "none", borderRadius: 6, padding: "7px 14px", fontWeight: 500, fontSize: 12.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FONT }}>
                           {s.ctaLabel}
                           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M9 6l6 6-6 6"/></svg>
                         </button>
