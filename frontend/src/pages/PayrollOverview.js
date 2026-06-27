@@ -597,18 +597,18 @@ function PayrollGuideSheet({ onClose }) {
 }
 
 const COUNTRIES_TYN = [
-  { code:"US", iso:"us", name:"United States", taxAuto:true },
-  { code:"CA-EN", iso:"ca", name:"Canada (English)", taxAuto:true },
-  { code:"CA-FR", iso:"ca", name:"Canada (Français)", taxAuto:true },
-  { code:"GB", iso:"gb", name:"United Kingdom", taxAuto:true },
-  { code:"AU", iso:"au", name:"Australia", taxAuto:true },
-  { code:"NZ", iso:"nz", name:"New Zealand", taxAuto:false },
-  { code:"SG", iso:"sg", name:"Singapore", taxAuto:false },
-  { code:"JP", iso:"jp", name:"Japan", taxAuto:false },
-  { code:"DE", iso:"de", name:"Germany", taxAuto:false },
-  { code:"FR", iso:"fr", name:"France", taxAuto:false },
-  { code:"ZA", iso:"za", name:"South Africa", taxAuto:false },
-  { code:"OTHER", iso:"un", name:"Other country", taxAuto:false },
+  { code:"US", iso:"us", name:"United States" },
+  { code:"CA-EN", iso:"ca", name:"Canada (English)" },
+  { code:"CA-FR", iso:"ca", name:"Canada (Français)" },
+  { code:"GB", iso:"gb", name:"United Kingdom" },
+  { code:"AU", iso:"au", name:"Australia" },
+  { code:"NZ", iso:"nz", name:"New Zealand" },
+  { code:"SG", iso:"sg", name:"Singapore" },
+  { code:"JP", iso:"jp", name:"Japan" },
+  { code:"DE", iso:"de", name:"Germany" },
+  { code:"FR", iso:"fr", name:"France" },
+  { code:"ZA", iso:"za", name:"South Africa" },
+  { code:"OTHER", iso:"un", name:"Other country" },
 ];
 
 const CHECKLIST_TYN = {
@@ -758,20 +758,14 @@ function ThingsYouNeedPanel({ onClose }) {
                   <div key={cc.code} onClick={() => { setCountry(cc.code); setOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", cursor: "pointer", fontSize: 13.5, color: cc.code === country ? C.tealInk : C.ink, fontWeight: cc.code === country ? 600 : 500, borderBottom: "1px solid " + C.lineSoft, background: cc.code === country ? C.tealSoft : "#fff" }}>
                     <img src={"https://flagcdn.com/w40/" + cc.iso + ".png"} alt="" style={{ width: 24, height: 18, borderRadius: 3, objectFit: "cover", flex: "0 0 24px", boxShadow: "0 0 0 1px rgba(0,0,0,0.08)" }} />
                     <span style={{ flex: 1 }}>{cc.name}</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: cc.taxAuto ? C.tealSoft : C.amberSoft, color: cc.taxAuto ? C.tealInk : C.amber }}>{cc.taxAuto ? "Tax auto" : "Coming soon"}</span>
+                    
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Coming soon notice */}
-          {!c.taxAuto && (
-            <div style={{ background: C.amberSoft, border: "1px solid #F2DCA6", borderLeft: "3px solid " + C.amber, borderRadius: 10, padding: "12px 14px", marginBottom: 14, fontSize: 12, color: C.amber, lineHeight: 1.55 }}>
-              <strong style={{ color: "#7C4F0F", display: "block", marginBottom: 3, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>Tax automation coming soon</strong>
-              Novala has full tax automation for US, Canada, UK, and Australia today. {c.name} is on our roadmap. Gather your info here so you are ready when we launch.
-            </div>
-          )}
+
 
           {/* Progress */}
           <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 12, padding: "14px 16px", marginBottom: 14, display: "flex", alignItems: "center", gap: 14 }}>
@@ -969,7 +963,7 @@ function SettingUpPayrollPanel({ onClose, onConnectBank }) {
       title: "Tax registration",
       desc: "Add your business tax IDs and filing frequency.",
       time: "3 min",
-      why: c.taxAuto ? "Required for calculating remittances correctly and for e-filing payroll taxes with the relevant authority." : "Required for calculating remittances. Tax e-filing automation for " + c.name + " is on our roadmap.",
+      why: "Required for calculating remittances correctly and for e-filing payroll taxes with the relevant authority.",
       needs: [cd.taxIdLabel, cd.payrollAccount, "Filing cadence (monthly, quarterly, annually)"],
       ctaLabel: "Enter tax info",
       route: "/payroll/settings/tax",
@@ -1038,7 +1032,7 @@ function SettingUpPayrollPanel({ onClose, onConnectBank }) {
             <button onClick={() => setCountryOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: "7px 10px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", width: "100%", fontFamily: FONT, textAlign: "left" }}>
               <img src={"https://flagcdn.com/w40/" + c.iso + ".png"} alt="" style={{ width: 22, height: 16, borderRadius: 2, objectFit: "cover", flex: "0 0 22px" }} />
               <span style={{ fontSize: 13, fontWeight: 600, color: C.ink, flex: 1 }}>{c.name}</span>
-              {!c.taxAuto && <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: C.amberSoft, color: C.amber }}>Tax coming soon</span>}
+              
               <ChevronDown size={13} style={{ color: C.muted, transform: countryOpen ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.18s" }} />
             </button>
             {countryOpen && (
@@ -1047,7 +1041,7 @@ function SettingUpPayrollPanel({ onClose, onConnectBank }) {
                   <div key={cc.code} onClick={() => { setCountry(cc.code); setCountryOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", cursor: "pointer", fontSize: 13, color: cc.code === country ? C.tealInk : C.ink, fontWeight: cc.code === country ? 600 : 500, borderBottom: "1px solid " + C.lineSoft, background: cc.code === country ? C.tealSoft : "#fff" }}>
                     <img src={"https://flagcdn.com/w40/" + cc.iso + ".png"} alt="" style={{ width: 22, height: 16, borderRadius: 2, objectFit: "cover", flex: "0 0 22px" }} />
                     <span style={{ flex: 1 }}>{cc.name}</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 4, background: cc.taxAuto ? C.tealSoft : C.amberSoft, color: cc.taxAuto ? C.tealInk : C.amber }}>{cc.taxAuto ? "Tax auto" : "Coming soon"}</span>
+                    
                   </div>
                 ))}
               </div>
