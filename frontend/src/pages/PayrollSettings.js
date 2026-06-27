@@ -399,7 +399,6 @@ function PayScheduleSection() {
 // === Tax registration section ===
 function TaxRegistrationSection({ businessCountry }) {
   const country = (businessCountry || "ca").toLowerCase();
-  // Tax registration is stored locally for now (no backend column yet)
   const STORAGE_KEY = "novala_tax_registration";
   const [data, setData] = useState({});
   const [original, setOriginal] = useState({});
@@ -407,23 +406,60 @@ function TaxRegistrationSection({ businessCountry }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setData(parsed); setOriginal(parsed);
-      }
-    } catch (e) {}
-    setLoading(false);
+    // Load from backend; migrate any leftover localStorage value if present
+    (async () => {
+      try {
+        const res = await fetch(API_URL + "/api/v1/company/profile", { headers: authHeaders() });
+        if (res.ok) {
+          const profile = await res.json();
+          let initial = profile.tax_registration || {};
+
+          // One-time migration: if DB is empty but localStorage has data, push it up
+          if ((!initial || Object.keys(initial).length === 0)) {
+            try {
+              const stored = localStorage.getItem(STORAGE_KEY);
+              if (stored) {
+                const parsed = JSON.parse(stored);
+                if (parsed && Object.keys(parsed).length > 0) {
+                  await fetch(API_URL + "/api/v1/company/profile", {
+                    method: "PATCH",
+                    headers: authHeaders(),
+                    body: JSON.stringify({ tax_registration: parsed }),
+                  });
+                  initial = parsed;
+                  localStorage.removeItem(STORAGE_KEY);
+                }
+              }
+            } catch (e) {}
+          }
+
+          setData(initial);
+          setOriginal(initial);
+        }
+      } catch (e) {}
+      setLoading(false);
+    })();
   }, []);
 
   const dirty = JSON.stringify(data) !== JSON.stringify(original);
 
-  const onSave = () => {
+  const onSave = async () => {
     setSaving(true);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      setOriginal(data);
+      const res = await fetch(API_URL + "/api/v1/company/profile", {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({ tax_registration: data }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        const fresh = updated.tax_registration || {};
+        setData(fresh);
+        setOriginal(fresh);
+      } else {
+        const err = await res.text();
+        alert("Save failed: " + err);
+      }
     } catch (e) { alert("Save failed: " + e.message); }
     setSaving(false);
   };
