@@ -923,7 +923,63 @@ function SettingUpPayrollPanel({ onClose, onConnectBank }) {
   const [country, setCountry] = useState("CA-EN");
   const [countryOpen, setCountryOpen] = useState(false);
   const [expandedIdx, setExpandedIdx] = useState(1);
-  const [doneSteps, setDoneSteps] = useState({ 0: true });
+  const [doneSteps, setDoneSteps] = useState({});
+  const [detecting, setDetecting] = useState(true);
+
+  // Auto-detect which steps are already complete by reading real backend data
+  useEffect(() => {
+    const apiUrl = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
+    const token = localStorage.getItem("access_token") || localStorage.getItem("token") || "";
+    const headers = { Authorization: "Bearer " + token, "Content-Type": "application/json" };
+
+    (async () => {
+      const detected = {};
+      try {
+        const [profileRes, employeesRes, settingsRes] = await Promise.all([
+          fetch(apiUrl + "/api/v1/company/profile", { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(apiUrl + "/api/v1/payroll/employees", { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(apiUrl + "/api/v1/payroll/settings", { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+        ]);
+
+        // Step 0: Company details — name AND address filled
+        if (profileRes && profileRes.company_name && profileRes.address) {
+          detected[0] = true;
+        }
+
+        // Step 1: Add employees — at least one employee exists
+        const employees = Array.isArray(employeesRes) ? employeesRes : (employeesRes && Array.isArray(employeesRes.employees) ? employeesRes.employees : []);
+        if (employees && employees.length > 0) {
+          detected[1] = true;
+        }
+
+        // Step 2: Pay schedule — frequency and anchor date both set
+        if (settingsRes && (settingsRes.default_pay_schedule || (settingsRes.pay_schedule && settingsRes.pay_schedule.frequency)) && (settingsRes.pay_period_anchor_date || (settingsRes.pay_schedule && settingsRes.pay_schedule.first_payday))) {
+          detected[2] = true;
+        }
+
+        // Step 3: Bank account — bank name AND routing details
+        if (settingsRes && settingsRes.company_bank_name && (settingsRes.company_transit_number || settingsRes.company_routing_number)) {
+          detected[3] = true;
+        }
+
+        // Step 4: Tax registration — at least one non-empty value
+        if (profileRes && profileRes.tax_registration && typeof profileRes.tax_registration === "object" && Object.values(profileRes.tax_registration).some(v => v && String(v).trim().length > 0)) {
+          detected[4] = true;
+        }
+
+        // Step 5: Review and authorize — only done if all 5 above are done
+        if (detected[0] && detected[1] && detected[2] && detected[3] && detected[4]) {
+          // We can't detect "authorized" without a separate field. Leave as not done so user can review.
+        }
+      } catch (e) {}
+
+      setDoneSteps(detected);
+      // Auto-expand the first incomplete step
+      const firstUndone = [0, 1, 2, 3, 4, 5].find(i => !detected[i]);
+      if (firstUndone !== undefined) setExpandedIdx(firstUndone);
+      setDetecting(false);
+    })();
+  }, []);
 
   const c = COUNTRIES_TYN.find(x => x.code === country);
   const cd = SETUP_COUNTRY_DATA[country] || SETUP_COUNTRY_DATA.OTHER;
