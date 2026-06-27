@@ -76,6 +76,7 @@ export default function PayrollOverview() {
   const [showBankConnect, setShowBankConnect] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [showThingsNeeded, setShowThingsNeeded] = useState(false);
+  const [showSettingUp, setShowSettingUp] = useState(false);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -292,7 +293,7 @@ export default function PayrollOverview() {
               <div style={{ marginTop: 8 }}>
                 <ResourceLink icon={<Book size={20} />} label="View setup guide" onClick={() => setShowGuide(true)} />
                 <ResourceLink icon={<ListChecks size={20} />} label="Things you will need" onClick={() => setShowThingsNeeded(true)} />
-                <ResourceLink icon={<Activity size={20} />} label="Setting up payroll" mins="2 min" onClick={() => navigate("/payroll/settings")} />
+                <ResourceLink icon={<Activity size={20} />} label="Setting up payroll" mins="2 min" onClick={() => setShowSettingUp(true)} />
                 <ResourceLink icon={<Activity size={20} />} label="Running your first payroll" mins="3 min" onClick={() => navigate("/payroll/run")} />
                 <ResourceLink icon={<CreditCard size={20} />} label="Set up direct deposit" onClick={() => setShowBankConnect(true)} isLast />
               </div>
@@ -304,6 +305,7 @@ export default function PayrollOverview() {
         {showBankConnect && <BankConnectPanel onClose={() => setShowBankConnect(false)} />}
         {showGuide && <PayrollGuideSheet onClose={() => setShowGuide(false)} />}
         {showThingsNeeded && <ThingsYouNeedPanel onClose={() => setShowThingsNeeded(false)} />}
+        {showSettingUp && <SettingUpPayrollPanel onClose={() => setShowSettingUp(false)} />}
       </div>
     </div>
   );
@@ -820,6 +822,311 @@ function ThingsYouNeedPanel({ onClose }) {
             <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 4, color: "#fff" }}>Got everything?</h3>
             <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", margin: "0 0 12px", lineHeight: 1.5 }}>When you have these in hand, you are ready to run setup.</p>
             <button onClick={onClose} style={{ background: C.teal, color: "#fff", border: "none", borderRadius: 9, padding: "9px 18px", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: FONT, boxShadow: "0 2px 8px rgba(21,160,140,0.28)" }}>Close and start setup</button>
+          </div>
+        </div>
+      </div>
+    </>,
+    document.body
+  );
+}
+
+// Country-specific data for Setting up payroll panel
+const SETUP_COUNTRY_DATA = {
+  "US": {
+    employeeIdLabel: "Social Security Number (SSN)",
+    employeeFormLabel: "Completed Form W-4 and state withholding form",
+    bankFields: "Routing number (9 digits) and account number",
+    taxIdLabel: "Federal EIN (12-3456789) and state tax ID",
+    payrollAccount: "State Unemployment Insurance (SUI) account",
+  },
+  "CA-EN": {
+    employeeIdLabel: "Social Insurance Number (SIN, 9 digits)",
+    employeeFormLabel: "Completed federal TD1 and provincial TD1 forms",
+    bankFields: "Transit number, institution number, and account number",
+    taxIdLabel: "CRA Business Number (BN) and Payroll account (RP)",
+    payrollAccount: "Revenu Quebec account if you have Quebec employees",
+  },
+  "CA-FR": {
+    employeeIdLabel: "Numéro d'assurance sociale (NAS, 9 chiffres)",
+    employeeFormLabel: "Formulaires TD1 fédéral et TP-1015.3 provincial",
+    bankFields: "Numéro de transit, institution et compte",
+    taxIdLabel: "Numéro d'entreprise (NE) et compte de paie (RP) de l'ARC",
+    payrollAccount: "Compte Revenu Québec pour les employés au Québec",
+  },
+  "GB": {
+    employeeIdLabel: "National Insurance Number (NINO, format AB123456C)",
+    employeeFormLabel: "P45 from prior employer or starter checklist + tax code",
+    bankFields: "Sort code (6 digits) and account number (8 digits)",
+    taxIdLabel: "PAYE reference (123/AB45678) and Accounts Office reference",
+    payrollAccount: "RTI submission credentials from HMRC",
+  },
+  "AU": {
+    employeeIdLabel: "Tax File Number (TFN, 9 digits)",
+    employeeFormLabel: "Completed TFN declaration form",
+    bankFields: "BSB number (6 digits) and account number",
+    taxIdLabel: "Australian Business Number (ABN, 11 digits)",
+    payrollAccount: "Single Touch Payroll (STP) BMS ID with the ATO",
+  },
+  "NZ": {
+    employeeIdLabel: "IRD number per employee",
+    employeeFormLabel: "Completed IR330 tax code declaration",
+    bankFields: "NZ bank account number (12-3456-7891011-00 format)",
+    taxIdLabel: "IRD number for your business",
+    payrollAccount: "Employer ESCT rate from Inland Revenue",
+  },
+  "SG": {
+    employeeIdLabel: "NRIC or FIN (for foreign workers)",
+    employeeFormLabel: "Work pass details if foreign worker (EP, S Pass, Work Permit)",
+    bankFields: "Singapore bank account details",
+    taxIdLabel: "Company UEN (Unique Entity Number)",
+    payrollAccount: "CPF employer number and IRAS Tax Reference Number",
+  },
+  "JP": {
+    employeeIdLabel: "My Number (12 digits per employee)",
+    employeeFormLabel: "Dependents declaration (Fuyo Kazoku Todoke)",
+    bankFields: "Japanese bank account details (zengin)",
+    taxIdLabel: "Corporate number (Hojin Bango, 13 digits)",
+    payrollAccount: "Withholding tax registration with the Tax Agency",
+  },
+  "DE": {
+    employeeIdLabel: "Steueridentifikationsnummer (11-digit tax ID) and Sozialversicherungsnummer",
+    employeeFormLabel: "Tax class (Steuerklasse I-VI) and Krankenkasse (health fund) details",
+    bankFields: "IBAN and BIC for SEPA payments",
+    taxIdLabel: "Steuernummer (business tax number) and Betriebsnummer",
+    payrollAccount: "USt-IdNr (VAT ID) if applicable",
+  },
+  "FR": {
+    employeeIdLabel: "Numéro de sécurité sociale (13 digits + 2-digit key)",
+    employeeFormLabel: "Contract type (CDI, CDD) and DPAE pre-employment declaration",
+    bankFields: "IBAN and BIC",
+    taxIdLabel: "SIRET (14 digits) and APE/NAF code",
+    payrollAccount: "URSSAF account number and convention collective code",
+  },
+  "ZA": {
+    employeeIdLabel: "South African ID number (13 digits) and tax number (10 digits)",
+    employeeFormLabel: "IRP3(a) tax directive if applicable",
+    bankFields: "Bank name, branch code, and account number",
+    taxIdLabel: "PAYE reference (10 digits from SARS)",
+    payrollAccount: "UIF reference number and SDL reference if applicable",
+  },
+  "OTHER": {
+    employeeIdLabel: "Government tax ID per employee (national ID, social insurance number, etc.)",
+    employeeFormLabel: "Completed local tax form per employee",
+    bankFields: "Bank account details (IBAN, SWIFT, or local format)",
+    taxIdLabel: "Your country's business tax ID number",
+    payrollAccount: "Your country's payroll tax registration",
+  },
+};
+
+function SettingUpPayrollPanel({ onClose }) {
+  const navigate = useNavigate();
+  const [country, setCountry] = useState("CA-EN");
+  const [countryOpen, setCountryOpen] = useState(false);
+  const [expandedIdx, setExpandedIdx] = useState(1);
+  const [doneSteps, setDoneSteps] = useState({ 0: true });
+
+  const c = COUNTRIES_TYN.find(x => x.code === country);
+  const cd = SETUP_COUNTRY_DATA[country] || SETUP_COUNTRY_DATA.OTHER;
+
+  const STEPS = [
+    {
+      title: "Company details",
+      desc: "Confirm your business name, address, and country.",
+      time: "20 sec",
+      why: "Novala uses your country and business address to apply the correct tax rules, currency, and legal entity classification.",
+      needs: ["Registered business name", "Physical address (not a PO Box)", "Country and base currency"],
+      ctaLabel: "Open settings",
+      route: "/payroll/settings",
+    },
+    {
+      title: "Add employees",
+      desc: "Enter each person you pay along with their tax form details.",
+      time: "5 to 10 min each",
+      why: "Tax withholding is calculated per person. Novala requires each employee's tax form and identification before payroll can run.",
+      needs: ["Full name, address, date of birth", cd.employeeIdLabel, cd.employeeFormLabel, "Pay rate and employment type", "Bank account for direct deposit"],
+      ctaLabel: "Add employee",
+      route: "/payroll/employees/add",
+    },
+    {
+      title: "Pay schedule",
+      desc: "Set how often paydays occur and when the first one is.",
+      time: "2 min",
+      why: "Pay schedule determines paycheque timing, period boundaries, and tax remittance cadence.",
+      needs: ["Pay frequency (weekly, bi-weekly, semi-monthly, monthly)", "First payday on Novala", "Pay period start and end dates"],
+      ctaLabel: "Configure schedule",
+      route: "/payroll/settings",
+    },
+    {
+      title: "Bank account",
+      desc: "Connect the business account payroll draws from.",
+      time: "5 min + 1 to 2 days verify",
+      why: "Direct deposit requires a verified business bank account. Until verified, employees are paid by cheque.",
+      needs: ["Account holder legal name", cd.bankFields, "Confirmation of authorized signer"],
+      ctaLabel: "Connect bank",
+      route: "/payroll/overview",
+    },
+    {
+      title: "Tax registration",
+      desc: "Add your business tax IDs and filing frequency.",
+      time: "3 min",
+      why: c.taxAuto ? "Required for calculating remittances correctly and for e-filing payroll taxes with the relevant authority." : "Required for calculating remittances. Tax e-filing automation for " + c.name + " is on our roadmap.",
+      needs: [cd.taxIdLabel, cd.payrollAccount, "Filing cadence (monthly, quarterly, annually)"],
+      ctaLabel: "Enter tax info",
+      route: "/payroll/settings",
+    },
+    {
+      title: "Review and authorize",
+      desc: "Confirm your setup and authorize payroll processing.",
+      time: "1 min",
+      why: "Final step before running payroll. Locks setup details and grants Novala permission to process pay runs.",
+      needs: ["Review of all sections above", "Authorized signer name and confirmation"],
+      ctaLabel: "Review setup",
+      route: "/payroll/settings",
+    },
+  ];
+
+  const doneCount = Object.values(doneSteps).filter(Boolean).length;
+  const pct = Math.round((doneCount / STEPS.length) * 100);
+  const activeIdx = STEPS.findIndex((_, i) => !doneSteps[i]);
+
+  const toggleStep = (i) => setExpandedIdx(prev => prev === i ? -1 : i);
+  const markDone = (i) => {
+    const newDone = { ...doneSteps, [i]: true };
+    setDoneSteps(newDone);
+    const nextIdx = STEPS.findIndex((_, j) => j > i && !newDone[j]);
+    setExpandedIdx(nextIdx >= 0 ? nextIdx : -1);
+  };
+
+  return createPortal(
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(10,26,30,0.32)", zIndex: 1000, animation: "novalaFadeIn 0.22s ease-out" }} />
+      <div style={{ position: "fixed", bottom: 20, right: 20, height: "85vh", width: "min(440px, calc(100vw - 40px))", background: "#fff", border: "1px solid " + C.line, boxShadow: "0 -8px 32px rgba(10,26,30,0.16), 0 4px 14px rgba(10,26,30,0.08)", borderRadius: 12, zIndex: 1001, display: "flex", flexDirection: "column", animation: "novalaSlideUpRight 0.3s ease-out", fontFamily: FONT, overflow: "hidden" }}>
+        {/* Header */}
+        <div style={{ background: "linear-gradient(135deg, " + C.teal + ", " + C.tealD + ")", color: "#fff", flex: "0 0 auto", padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", borderRadius: "12px 12px 0 0" }}>
+          <div style={{ fontSize: 13.5, fontWeight: 500, color: "rgba(255,255,255,0.95)", display: "inline-flex", alignItems: "center", gap: 9, letterSpacing: "0.01em" }}>
+            <Settings size={14} style={{ color: "rgba(255,255,255,0.7)" }} /> Setting up payroll
+          </div>
+          <button onClick={onClose} title="Close" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: "rgba(255,255,255,0.85)", display: "grid", placeItems: "center" }}>
+            <X size={13} />
+          </button>
+        </div>
+
+        <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+          {/* Brand row */}
+          <div style={{ padding: "18px 22px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid " + C.lineSoft }}>
+            <img src="/logo512.png" alt="Novala" style={{ width: 28, height: 28, borderRadius: 5, objectFit: "contain", background: "#fff", padding: 2, border: "1px solid " + C.line }} />
+            <span style={{ fontSize: 14, fontWeight: 600, color: C.ink, letterSpacing: "-0.01em" }}>Novala Payroll</span>
+          </div>
+
+          {/* Hero */}
+          <div style={{ padding: "22px 22px 18px", borderBottom: "1px solid " + C.lineSoft }}>
+            <h1 style={{ fontSize: 20, fontWeight: 600, color: C.ink, letterSpacing: "-0.018em", marginBottom: 6, lineHeight: 1.25 }}>Set up payroll</h1>
+            <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.55, marginBottom: 12 }}>Complete these six steps before your first pay run. Each opens the relevant page in Novala.</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 18, fontSize: 11.5, color: C.faint, fontWeight: 500 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                About 15 minutes total
+              </span>
+              <span style={{ width: 3, height: 3, borderRadius: "50%", background: C.faint }}></span>
+              <span>6 steps</span>
+            </div>
+          </div>
+
+          {/* Country picker */}
+          <div style={{ padding: "14px 22px", borderBottom: "1px solid " + C.lineSoft, background: "#FCFDFD" }}>
+            <span style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 6, display: "block" }}>Your country</span>
+            <button onClick={() => setCountryOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: "7px 10px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", width: "100%", fontFamily: FONT, textAlign: "left" }}>
+              <img src={"https://flagcdn.com/w40/" + c.iso + ".png"} alt="" style={{ width: 22, height: 16, borderRadius: 2, objectFit: "cover", flex: "0 0 22px" }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.ink, flex: 1 }}>{c.name}</span>
+              {!c.taxAuto && <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: C.amberSoft, color: C.amber }}>Tax coming soon</span>}
+              <ChevronDown size={13} style={{ color: C.muted, transform: countryOpen ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.18s" }} />
+            </button>
+            {countryOpen && (
+              <div style={{ marginTop: 6, maxHeight: 280, overflowY: "auto", border: "1px solid " + C.line, borderRadius: 6 }}>
+                {COUNTRIES_TYN.map(cc => (
+                  <div key={cc.code} onClick={() => { setCountry(cc.code); setCountryOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", cursor: "pointer", fontSize: 13, color: cc.code === country ? C.tealInk : C.ink, fontWeight: cc.code === country ? 600 : 500, borderBottom: "1px solid " + C.lineSoft, background: cc.code === country ? C.tealSoft : "#fff" }}>
+                    <img src={"https://flagcdn.com/w40/" + cc.iso + ".png"} alt="" style={{ width: 22, height: 16, borderRadius: 2, objectFit: "cover", flex: "0 0 22px" }} />
+                    <span style={{ flex: 1 }}>{cc.name}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 4, background: cc.taxAuto ? C.tealSoft : C.amberSoft, color: cc.taxAuto ? C.tealInk : C.amber }}>{cc.taxAuto ? "Tax auto" : "Coming soon"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Progress strip */}
+          <div style={{ padding: "14px 22px", display: "flex", alignItems: "center", gap: 14, borderBottom: "1px solid " + C.lineSoft, background: "#FCFDFD" }}>
+            <span style={{ fontSize: 12, color: C.text, fontWeight: 500, whiteSpace: "nowrap" }}>
+              <span style={{ color: C.ink, fontWeight: 600, fontSize: 13, fontVariantNumeric: "tabular-nums" }}>{doneCount}</span> of <span style={{ fontVariantNumeric: "tabular-nums" }}>{STEPS.length}</span> complete
+            </span>
+            <div style={{ flex: 1, height: 3, background: C.line, overflow: "hidden" }}>
+              <div style={{ height: "100%", background: C.teal, transition: "0.4s", width: pct + "%" }} />
+            </div>
+            <span style={{ fontSize: 11.5, color: C.faint, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{pct}%</span>
+          </div>
+
+          {/* Steps */}
+          <div style={{ padding: "0 22px" }}>
+            {STEPS.map((s, i) => {
+              const isDone = !!doneSteps[i];
+              const isActive = !isDone && i === activeIdx;
+              const isExpanded = expandedIdx === i;
+              return (
+                <div key={i} style={{ padding: "16px 0", borderBottom: i === STEPS.length - 1 ? "none" : "1px solid " + C.lineSoft }}>
+                  <div onClick={() => toggleStep(i)} style={{ display: "flex", alignItems: "flex-start", gap: 14, cursor: "pointer" }}>
+                    <div style={{ width: 24, height: 24, borderRadius: "50%", border: "1.5px solid " + (isDone ? C.teal : isActive ? C.teal : C.line), background: isDone ? C.teal : isActive ? C.teal : "#fff", display: "grid", placeItems: "center", flex: "0 0 24px", fontSize: 11.5, fontWeight: 600, color: (isDone || isActive) ? "#fff" : C.faint, marginTop: 2 }}>
+                      {isDone ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg> : i + 1}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: isDone ? C.muted : C.ink, lineHeight: 1.4, letterSpacing: "-0.005em" }}>{s.title}</div>
+                      <div style={{ fontSize: 12, color: C.muted, marginTop: 2, lineHeight: 1.5 }}>{s.desc}</div>
+                    </div>
+                    <div style={{ flex: "0 0 auto", display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 11, fontWeight: 500, color: C.faint, fontVariantNumeric: "tabular-nums", letterSpacing: "0.01em" }}>{s.time}</span>
+                      <ChevronDown size={14} style={{ color: C.faint, transform: isExpanded ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s", marginTop: 5 }} />
+                    </div>
+                  </div>
+
+                  {isExpanded && (
+                    <div style={{ padding: "14px 0 4px 38px" }}>
+                      <div style={{ fontSize: 12, color: C.text, lineHeight: 1.6, marginBottom: 14, padding: "10px 12px", background: C.tealSoft, borderLeft: "2px solid " + C.teal, borderRadius: "0 4px 4px 0" }}>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, color: C.tealInk, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4, display: "block" }}>Why this matters</span>
+                        {s.why}
+                      </div>
+                      <div style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>What you'll enter</div>
+                      <ul style={{ listStyle: "none", marginBottom: 14, padding: 0 }}>
+                        {s.needs.map((n, j) => (
+                          <li key={j} style={{ fontSize: 12, color: C.text, padding: "3px 0 3px 14px", position: "relative", lineHeight: 1.55 }}>
+                            <span style={{ position: "absolute", left: 0, top: 11, width: 6, height: 1, background: C.faint }}></span>
+                            {n}
+                          </li>
+                        ))}
+                      </ul>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <button onClick={(e) => { e.stopPropagation(); navigate(s.route); }} style={{ background: C.teal, color: "#fff", border: "none", borderRadius: 6, padding: "7px 14px", fontWeight: 500, fontSize: 12.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FONT }}>
+                          {s.ctaLabel}
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M9 6l6 6-6 6"/></svg>
+                        </button>
+                        {!isDone && (
+                          <button onClick={(e) => { e.stopPropagation(); markDone(i); }} style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "7px 14px", fontWeight: 500, fontSize: 12.5, cursor: "pointer", fontFamily: FONT }}>
+                            Mark complete
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Final CTA */}
+          <div style={{ padding: "18px 22px", borderTop: "1px solid " + C.lineSoft, background: "#FCFDFD" }}>
+            <div style={{ fontSize: 12, color: C.muted, marginBottom: 10, lineHeight: 1.5 }}>Once setup is complete, run your first pay run from the Payroll overview.</div>
+            <button onClick={() => doneCount === STEPS.length ? (navigate("/payroll/run"), onClose()) : null} disabled={doneCount < STEPS.length} style={{ background: doneCount === STEPS.length ? C.teal : C.line, color: doneCount === STEPS.length ? "#fff" : C.faint, border: "none", borderRadius: 6, padding: "9px 16px", fontWeight: 500, fontSize: 13, cursor: doneCount === STEPS.length ? "pointer" : "not-allowed", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FONT, width: "100%", justifyContent: "center" }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M9 6l6 6-6 6"/></svg>
+              {doneCount === STEPS.length ? "Run first payroll" : "Complete " + (STEPS.length - doneCount) + " more step" + ((STEPS.length - doneCount) === 1 ? "" : "s") + " to continue"}
+            </button>
           </div>
         </div>
       </div>
