@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Shield, Play, UserPlus, Settings, ChevronRight, ChevronDown, Calendar,
   AlertTriangle, AlertCircle, FileText, User, CheckCircle,
-  Book, ListChecks, Activity, CreditCard, Star, GripVertical, Search, X, Landmark,
+  Book, ListChecks, Activity, CreditCard, Star, GripVertical, Search, X, Landmark, Check,
 } from "lucide-react";
 import { generatePayPeriods } from "../utils/payScheduling";
 import PayrollGuide from "./PayrollGuide";
