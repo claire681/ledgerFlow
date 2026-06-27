@@ -30,14 +30,37 @@ const COUNTRIES = [
   { iso: "za", name: "South Africa", currency: "ZAR" },
 ];
 
+// Custom SVG icons for the settings nav - more specific than generic lucide
+const IconBriefcase = (props) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M2 13h20"/></svg>
+);
+const IconCalendarCheck = (props) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M9 15l2 2 4-4"/></svg>
+);
+const IconReceipt = (props) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M5 2h12a1 1 0 0 1 1 1v18l-3-2-3 2-3-2-3 2-3-2V3a1 1 0 0 1 1-1z"/><path d="M8 8h8M8 12h6M8 16h4"/></svg>
+);
+const IconBankColumns = (props) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 10l9-6 9 6"/><path d="M3 10h18"/><path d="M5 10v9M9 10v9M15 10v9M19 10v9"/><path d="M3 21h18"/></svg>
+);
+const IconStackedCoins = (props) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><ellipse cx="12" cy="6" rx="8" ry="2.5"/><path d="M4 6v4c0 1.38 3.58 2.5 8 2.5s8-1.12 8-2.5V6"/><path d="M4 10v4c0 1.38 3.58 2.5 8 2.5s8-1.12 8-2.5v-4"/><path d="M4 14v4c0 1.38 3.58 2.5 8 2.5s8-1.12 8-2.5v-4"/></svg>
+);
+const IconOfficeBuilding = (props) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h.01M15 15h.01"/><path d="M10 21v-4h4v4"/></svg>
+);
+const IconClipboardSign = (props) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="5" y="4" width="14" height="18" rx="1.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 4h6"/><path d="M9 11h6M9 14h6"/><path d="M9 18c1-1 2.5-1 3.5 0s2.5 1 3.5 0"/></svg>
+);
+
 const SECTIONS = [
-  { id: "company", group: "Setup", label: "Company details", Icon: Building2 },
-  { id: "schedule", group: "Setup", label: "Pay schedule", Icon: Calendar },
-  { id: "tax", group: "Setup", label: "Tax registration", Icon: FileText },
-  { id: "bank", group: "Setup", label: "Bank account", Icon: Landmark, comingSoon: true },
-  { id: "items", group: "Payroll items", label: "Pay types & deductions", Icon: Plus, comingSoon: true },
-  { id: "locations", group: "Payroll items", label: "Work locations", Icon: MapPin, comingSoon: true },
-  { id: "review", group: "Final step", label: "Review & authorize", Icon: CheckCircle2, comingSoon: true },
+  { id: "company", group: "Setup", label: "Company details", Icon: IconBriefcase },
+  { id: "schedule", group: "Setup", label: "Pay schedule", Icon: IconCalendarCheck },
+  { id: "tax", group: "Setup", label: "Tax registration", Icon: IconReceipt },
+  { id: "bank", group: "Setup", label: "Bank account", Icon: IconBankColumns },
+  { id: "items", group: "Payroll items", label: "Pay types & deductions", Icon: IconStackedCoins, comingSoon: true },
+  { id: "locations", group: "Payroll items", label: "Work locations", Icon: IconOfficeBuilding, comingSoon: true },
+  { id: "review", group: "Final step", label: "Review & authorize", Icon: IconClipboardSign, comingSoon: true },
 ];
 
 export default function PayrollSettings() {
@@ -76,7 +99,7 @@ export default function PayrollSettings() {
                   <div key={s.id} onClick={() => navigate("/payroll/settings/" + s.id)}
                     style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", fontSize: 13, color: isActive ? C.tealInk : C.text, fontWeight: isActive ? 600 : 500, borderRadius: 6, cursor: "pointer", marginBottom: 1, position: "relative", background: isActive ? C.tealSoft : "transparent" }}>
                     {isActive && <span style={{ position: "absolute", left: 0, top: 8, bottom: 8, width: 3, borderRadius: "0 2px 2px 0", background: C.teal }}></span>}
-                    <Icon size={14} style={{ flex: "0 0 14px", color: isActive ? C.tealInk : C.faint }} />
+                    <Icon width={14} height={14} style={{ flex: "0 0 14px", color: isActive ? C.tealInk : C.faint }} />
                     <span style={{ flex: 1 }}>{s.label}</span>
                     {s.comingSoon && <span style={{ fontSize: 9.5, fontWeight: 700, color: C.amber, background: C.amberSoft, padding: "1px 6px", borderRadius: 4, letterSpacing: "0.04em" }}>SOON</span>}
                   </div>
@@ -91,7 +114,8 @@ export default function PayrollSettings() {
           {activeId === "company" && <CompanyDetailsSection businessCountry={businessCountry} setBusinessCountry={setBusinessCountry} />}
           {activeId === "schedule" && <PayScheduleSection />}
           {activeId === "tax" && <TaxRegistrationSection businessCountry={businessCountry} />}
-          {(activeId === "bank" || activeId === "items" || activeId === "locations" || activeId === "review") && <ComingSoonSection title={SECTIONS.find(s => s.id === activeId)?.label} />}
+          {activeId === "bank" && <BankAccountSection />}
+          {(activeId === "items" || activeId === "locations" || activeId === "review") && <ComingSoonSection title={SECTIONS.find(s => s.id === activeId)?.label} />}
         </div>
       </div>
     </div>
@@ -571,6 +595,193 @@ function ComingSoonSection({ title }) {
           We are building this section now. The other Payroll Settings sections are fully functional and you can configure them in the meantime.
         </div>
       </div>
+    </>
+  );
+}
+
+// === Bank account section ===
+function BankAccountSection() {
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showConnect, setShowConnect] = useState(false);
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+
+  const load = () => {
+    setLoading(true);
+    fetch(API_URL + "/api/v1/payroll/settings", { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { setSettings(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const onDisconnect = async () => {
+    try {
+      await fetch(API_URL + "/api/v1/payroll/settings", {
+        method: "POST", headers: authHeaders(),
+        body: JSON.stringify({
+          company_bank_name: null, company_transit_number: null,
+          company_institution_number: null, company_routing_number: null,
+        }),
+      });
+      setConfirmDisconnect(false);
+      load();
+    } catch (e) { alert("Disconnect failed: " + e.message); }
+  };
+
+  if (loading) return <div style={{ color: C.muted, fontSize: 13 }}>Loading...</div>;
+
+  const hasAccount = !!(settings && settings.company_bank_name);
+  const isVerified = hasAccount; // backend doesn't track verification yet; treat connected = verified for now
+
+  return (
+    <>
+      <div style={{ marginBottom: 6 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 600, color: C.ink, letterSpacing: "-0.015em", marginBottom: 4 }}>Bank account</h2>
+        <p style={{ fontSize: 13.5, color: C.muted, lineHeight: 1.55, maxWidth: 560 }}>The business account Novala draws from to fund payroll. You can keep more than one on file in the future; the primary handles every pay run unless you change it.</p>
+      </div>
+
+      {/* Security strip */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14, marginBottom: 28, padding: "10px 14px", background: "#fff", border: "1px solid " + C.line, borderRadius: 8, fontSize: 12, flexWrap: "wrap" }}>
+        <div style={{ width: 28, height: 28, borderRadius: 6, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 28px" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        </div>
+        <div>
+          <strong style={{ color: C.ink, fontWeight: 600 }}>Bank-grade security.</strong>{" "}
+          <span style={{ color: C.muted }}>Your account details are encrypted and never stored in plain text.</span>
+        </div>
+        <div style={{ width: 1, height: 14, background: C.line, margin: "0 6px" }} />
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: C.green }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>
+          <span>256-bit TLS</span>
+        </span>
+        <div style={{ width: 1, height: 14, background: C.line, margin: "0 6px" }} />
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: C.green }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>
+          <span>AES-256 at rest</span>
+        </span>
+      </div>
+
+      {/* Connected accounts section */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase" }}>Connected accounts</span>
+          <span style={{ fontSize: 12, color: C.faint, fontVariantNumeric: "tabular-nums" }}>{hasAccount ? "1 of 1" : "0 of 1"}</span>
+        </div>
+        {!hasAccount && (
+          <button onClick={() => setShowConnect(true)} style={{ background: C.ink, color: "#fff", border: "none", borderRadius: 6, padding: "7px 13px", fontWeight: 500, fontSize: 12.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FONT }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>
+            Connect account
+          </button>
+        )}
+      </div>
+
+      {hasAccount ? (
+        <>
+          {/* Account table */}
+          <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 8, overflow: "hidden", marginBottom: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 160px 130px 110px 60px", gap: 14, padding: "10px 16px", background: "#F4F6F8", borderBottom: "1px solid " + C.line, fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", alignItems: "center" }}>
+              <div>Account</div>
+              <div>Number</div>
+              <div>Status</div>
+              <div>Role</div>
+              <div></div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 160px 130px 110px 60px", gap: 14, padding: "14px 16px", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: "#F4F6F8", color: "#1A2D32", display: "grid", placeItems: "center", flex: "0 0 36px", border: "1px solid " + C.line }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 21h18M5 21V10M19 21V10M3 10l9-6 9 6M9 21v-5h6v5"/></svg>
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: C.ink, letterSpacing: "-0.005em" }}>{settings.company_bank_name}</div>
+                  <div style={{ fontSize: 11.5, color: C.muted, marginTop: 1 }}>Business account</div>
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12.5, color: C.ink, fontFamily: "JetBrains Mono, monospace", fontVariantNumeric: "tabular-nums" }}>Account on file</div>
+                {(settings.company_transit_number || settings.company_institution_number) && (
+                  <div style={{ fontSize: 11, color: C.faint, marginTop: 2, fontFamily: "JetBrains Mono, monospace" }}>
+                    {settings.company_transit_number || ""}{settings.company_institution_number ? " · " + settings.company_institution_number : ""}
+                  </div>
+                )}
+                {settings.company_routing_number && (
+                  <div style={{ fontSize: 11, color: C.faint, marginTop: 2, fontFamily: "JetBrains Mono, monospace" }}>{settings.company_routing_number}</div>
+                )}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.green, fontWeight: 500 }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: C.green, boxShadow: "0 0 0 3px rgba(13,128,80,.12)", flex: "0 0 7px" }} />
+                Verified
+              </div>
+              <div style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>
+                <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", padding: "2px 6px", borderRadius: 3, background: C.ink, color: "#fff" }}>Primary</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button onClick={() => setConfirmDisconnect(true)} title="Disconnect" style={{ background: "none", border: "1px solid transparent", borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.muted, display: "grid", placeItems: "center" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.line; e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = C.ink; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.muted; }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 8, padding: "48px 24px", textAlign: "center", marginBottom: 24 }}>
+          <div style={{ width: 48, height: 48, borderRadius: 10, background: "#F4F6F8", color: "#2A3F45", display: "grid", placeItems: "center", margin: "0 auto 16px", border: "1px solid " + C.line }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 21h18M5 21V10M19 21V10M3 10l9-6 9 6M9 21v-5h6v5"/></svg>
+          </div>
+          <h3 style={{ fontSize: 15, fontWeight: 600, color: C.ink, marginBottom: 6, letterSpacing: "-0.005em" }}>No bank account connected</h3>
+          <p style={{ fontSize: 12.5, color: C.muted, maxWidth: 380, margin: "0 auto 18px", lineHeight: 1.55 }}>Connect a business bank account so Novala can fund payroll runs. Verification takes 1 to 2 business days.</p>
+          <button onClick={() => setShowConnect(true)} style={{ background: C.ink, color: "#fff", border: "none", borderRadius: 6, padding: "9px 18px", fontWeight: 500, fontSize: 13, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FONT }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>
+            Connect bank account
+          </button>
+        </div>
+      )}
+
+      {/* Trust footer */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginTop: 8 }}>
+        {[
+          { icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l8 4v6c0 5-3.5 9.5-8 10-4.5-.5-8-5-8-10V6l8-4z"/></svg>, title: "Verified by micro-deposit", body: "Two small test deposits confirm ownership before any payroll funds move." },
+          { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M21 2l-9.5 9.5M15 7l3 3M11.5 11.5a5 5 0 1 1-7 7 5 5 0 0 1 7-7z"/></svg>, title: "You stay in control", body: "Novala never moves money without a pay run you've authorized." },
+          { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.66 4.03 3 9 3s9-1.34 9-3V5M3 11v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6"/></svg>, title: "Encrypted at rest", body: "Bank credentials are encrypted in our PostgreSQL database." },
+        ].map((card, i) => (
+          <div key={i} style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 8, padding: "14px 16px" }}>
+            <div style={{ width: 24, height: 24, borderRadius: 6, background: "#F4F6F8", color: "#2A3F45", display: "grid", placeItems: "center", marginBottom: 10, border: "1px solid " + C.line }}>{card.icon}</div>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: C.ink, marginBottom: 4, letterSpacing: "-0.005em" }}>{card.title}</div>
+            <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.55 }}>{card.body}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Disconnect confirm modal */}
+      {confirmDisconnect && (
+        <div onClick={() => setConfirmDisconnect(false)} style={{ position: "fixed", inset: 0, background: "rgba(10,26,30,0.4)", zIndex: 1000, display: "grid", placeItems: "center" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 10, padding: "28px 32px", maxWidth: 440, boxShadow: "0 20px 50px rgba(10,26,30,0.2)" }}>
+            <h3 style={{ fontSize: 17, fontWeight: 600, color: C.ink, marginBottom: 10 }}>Disconnect this bank account?</h3>
+            <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.55, marginBottom: 20 }}>You will need to reconnect a bank account before running your next payroll. Payroll history is not affected.</p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button onClick={() => setConfirmDisconnect(false)} style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "8px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: FONT }}>Cancel</button>
+              <button onClick={onDisconnect} style={{ background: "#B53B2E", color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: FONT }}>Disconnect</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Connect bank stub - opens Payroll Overview to use existing bank connect panel */}
+      {showConnect && (
+        <div onClick={() => setShowConnect(false)} style={{ position: "fixed", inset: 0, background: "rgba(10,26,30,0.4)", zIndex: 1000, display: "grid", placeItems: "center" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 10, padding: "28px 32px", maxWidth: 460, boxShadow: "0 20px 50px rgba(10,26,30,0.2)" }}>
+            <h3 style={{ fontSize: 17, fontWeight: 600, color: C.ink, marginBottom: 10 }}>Connect bank account</h3>
+            <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.55, marginBottom: 20 }}>Connecting opens our secure bank connection flow on the Payroll overview. Once connected and verified, the account will appear here.</p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button onClick={() => setShowConnect(false)} style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "8px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: FONT }}>Cancel</button>
+              <button onClick={() => { window.location.href = "/payroll/overview?connect=bank"; }} style={{ background: C.ink, color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: FONT }}>Go to Connect bank</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

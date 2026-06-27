@@ -78,6 +78,17 @@ export default function PayrollOverview() {
   const [showThingsNeeded, setShowThingsNeeded] = useState(false);
   const [showSettingUp, setShowSettingUp] = useState(false);
 
+  // Auto-open Connect bank panel if URL has ?connect=bank
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.search.includes("connect=bank")) {
+      setShowBankConnect(true);
+      // Clean up the URL so refreshing doesn't reopen
+      const url = new URL(window.location.href);
+      url.searchParams.delete("connect");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, []);
+
   useEffect(() => {
     const fetchAll = async () => {
       try {
