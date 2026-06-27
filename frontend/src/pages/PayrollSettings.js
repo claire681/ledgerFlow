@@ -44,6 +44,8 @@ export default function PayrollSettings() {
   const navigate = useNavigate();
   const { section } = useParams();
   const activeId = SECTIONS.find(s => s.id === section)?.id || "company";
+  // Lifted country state shared between Company details and Tax registration
+  const [businessCountry, setBusinessCountry] = useState("ca");
 
   const grouped = {};
   SECTIONS.forEach(s => { (grouped[s.group] = grouped[s.group] || []).push(s); });
@@ -86,9 +88,9 @@ export default function PayrollSettings() {
 
         {/* Content */}
         <div style={{ flex: 1, overflowY: "auto", padding: "28px 36px 60px", minWidth: 0, background: C.surface }}>
-          {activeId === "company" && <CompanyDetailsSection />}
+          {activeId === "company" && <CompanyDetailsSection businessCountry={businessCountry} setBusinessCountry={setBusinessCountry} />}
           {activeId === "schedule" && <PayScheduleSection />}
-          {activeId === "tax" && <TaxRegistrationSection />}
+          {activeId === "tax" && <TaxRegistrationSection businessCountry={businessCountry} />}
           {(activeId === "bank" || activeId === "items" || activeId === "locations" || activeId === "review") && <ComingSoonSection title={SECTIONS.find(s => s.id === activeId)?.label} />}
         </div>
       </div>
@@ -162,7 +164,7 @@ function SaveBar({ dirty, saving, onSave, onDiscard, label = "Save" }) {
 }
 
 // === Company details section ===
-function CompanyDetailsSection() {
+function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
   const [data, setData] = useState({});
   const [original, setOriginal] = useState({});
   const [loading, setLoading] = useState(true);
@@ -183,6 +185,8 @@ function CompanyDetailsSection() {
             time_zone: d.time_zone || "America/Edmonton",
           };
           setData(initial); setOriginal(initial);
+          // Push country up so Tax registration knows
+          setBusinessCountry((initial.country || "ca").toLowerCase());
         }
         setLoading(false);
       })
@@ -229,7 +233,7 @@ function CompanyDetailsSection() {
         <CardSection label="Location and currency">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <Field label="Country">
-              <SelectInput value={(data.country || "").toLowerCase()} onChange={v => { set("country", v); const c = COUNTRIES.find(x => x.iso === v); if (c) set("currency", c.currency); }}>
+              <SelectInput value={(data.country || "").toLowerCase()} onChange={v => { set("country", v); const c = COUNTRIES.find(x => x.iso === v); if (c) set("currency", c.currency); setBusinessCountry(v); }}>
                 {COUNTRIES.map(c => <option key={c.iso} value={c.iso}>{c.name}</option>)}
               </SelectInput>
             </Field>
@@ -362,8 +366,8 @@ function PayScheduleSection() {
 }
 
 // === Tax registration section ===
-function TaxRegistrationSection() {
-  const [country, setCountry] = useState("ca");
+function TaxRegistrationSection({ businessCountry }) {
+  const country = (businessCountry || "ca").toLowerCase();
   const [data, setData] = useState({});
   const [original, setOriginal] = useState({});
   const [loading, setLoading] = useState(true);
@@ -374,7 +378,6 @@ function TaxRegistrationSection() {
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (d) {
-          setCountry((d.country || "ca").toLowerCase());
           const initial = d.tax_registration || {};
           setData(initial); setOriginal(initial);
         }
