@@ -75,6 +75,7 @@ export default function PayrollOverview() {
   const [bankState] = useState("none");
   const [showBankConnect, setShowBankConnect] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [showThingsNeeded, setShowThingsNeeded] = useState(false);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -290,7 +291,7 @@ export default function PayrollOverview() {
               <h3 style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>Setup resources</h3>
               <div style={{ marginTop: 8 }}>
                 <ResourceLink icon={<Book size={20} />} label="View setup guide" onClick={() => setShowGuide(true)} />
-                <ResourceLink icon={<ListChecks size={20} />} label="Things you will need" onClick={() => navigate("/payroll/settings")} />
+                <ResourceLink icon={<ListChecks size={20} />} label="Things you will need" onClick={() => setShowThingsNeeded(true)} />
                 <ResourceLink icon={<Activity size={20} />} label="Setting up payroll" mins="2 min" onClick={() => navigate("/payroll/settings")} />
                 <ResourceLink icon={<Activity size={20} />} label="Running your first payroll" mins="3 min" onClick={() => navigate("/payroll/run")} />
                 <ResourceLink icon={<CreditCard size={20} />} label="Set up direct deposit" onClick={() => setShowBankConnect(true)} isLast />
@@ -302,6 +303,7 @@ export default function PayrollOverview() {
         {showActions && <CreateActionsPanel initialFavs={favourites} onSave={(newFavs) => { setFavourites(newFavs); localStorage.setItem(FAVOURITES_STORAGE, JSON.stringify(newFavs)); setShowActions(false); }} onClose={() => setShowActions(false)} />}
         {showBankConnect && <BankConnectPanel onClose={() => setShowBankConnect(false)} />}
         {showGuide && <PayrollGuideSheet onClose={() => setShowGuide(false)} />}
+        {showThingsNeeded && <ThingsYouNeedPanel onClose={() => setShowThingsNeeded(false)} />}
       </div>
     </div>
   );
@@ -587,6 +589,240 @@ function PayrollGuideSheet({ onClose }) {
         @keyframes novalaFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes novalaSlideUpRight { from { transform: translateY(calc(100% + 30px)); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
       `}</style>
+    </>,
+    document.body
+  );
+}
+
+const COUNTRIES_TYN = [
+  { code:"US", iso:"us", name:"United States", taxAuto:true },
+  { code:"CA-EN", iso:"ca", name:"Canada (English)", taxAuto:true },
+  { code:"CA-FR", iso:"ca", name:"Canada (Français)", taxAuto:true },
+  { code:"GB", iso:"gb", name:"United Kingdom", taxAuto:true },
+  { code:"AU", iso:"au", name:"Australia", taxAuto:true },
+  { code:"NZ", iso:"nz", name:"New Zealand", taxAuto:false },
+  { code:"SG", iso:"sg", name:"Singapore", taxAuto:false },
+  { code:"JP", iso:"jp", name:"Japan", taxAuto:false },
+  { code:"DE", iso:"de", name:"Germany", taxAuto:false },
+  { code:"FR", iso:"fr", name:"France", taxAuto:false },
+  { code:"ZA", iso:"za", name:"South Africa", taxAuto:false },
+  { code:"OTHER", iso:"un", name:"Other country", taxAuto:false },
+];
+
+const CHECKLIST_TYN = {
+  "CA-EN": [
+    ["Schedule", [{txt:"How often you pay your team",sub:"Weekly, bi-weekly, semi-monthly, or monthly"},{txt:"Date you plan to start Novala payroll"},{txt:"First pay period to run on Novala"}]],
+    ["Compensation", [{txt:"Types of compensation",sub:"Hourly, salary, commission, bonuses, vacation pay"},{txt:"Sick and vacation accrual policies"},{txt:"Insurance benefits",sub:"Health, dental, vision premiums"},{txt:"Retirement contributions",sub:"RRSP, RPP, employer match"},{txt:"Other deductions",sub:"Child support, garnishments, employee loans"},{txt:"Additions and reimbursements",sub:"Travel, advances, tips"}]],
+    ["Tax info", [{txt:"Federal Business Number (BN)",sub:"9 digits from the CRA"},{txt:"CRA Payroll account number",sub:"Format: 123456789RP0001"},{txt:"T4 transmitter number",sub:"If you have filed T4s before"},{txt:"Revenu Quebec payroll account",sub:"Only for Quebec employees"}]],
+    ["Employees", [{txt:"Name, address, date of birth"},{txt:"Social Insurance Number (SIN)",sub:"9 digits per employee"},{txt:"Completed TD1 form",sub:"Federal and provincial"},{txt:"Pay rate"},{txt:"Bank details",sub:"Transit, institution, account number"},{txt:"Vacation hours and dollars accrued"}]],
+    ["Year-to-date", [{txt:"Only if you paid employees this year on another system"},{txt:"Most recent pay stub per employee"},{txt:"Payroll remittance receipts since Jan 1"}]],
+  ],
+  "CA-FR": [
+    ["Calendrier", [{txt:"Fréquence de paie",sub:"Hebdomadaire, bi-hebdomadaire, bi-mensuelle ou mensuelle"},{txt:"Date de début sur Novala"},{txt:"Première période de paie"}]],
+    ["Rémunération", [{txt:"Types de rémunération"},{txt:"Politiques de congés"},{txt:"Avantages d'assurance"},{txt:"Cotisations de retraite",sub:"REER, RPA"},{txt:"Autres déductions"},{txt:"Ajouts et remboursements"}]],
+    ["Information fiscale", [{txt:"Numéro d'entreprise fédéral (NE)",sub:"9 chiffres de l'ARC"},{txt:"Numéro de compte de paie ARC"},{txt:"Numéro de transmetteur T4"},{txt:"Compte Revenu Québec"}]],
+    ["Employés", [{txt:"Nom, adresse, date de naissance"},{txt:"Numéro d'assurance sociale (NAS)"},{txt:"Formulaires TD1 et TP-1015.3"},{txt:"Taux de rémunération"},{txt:"Coordonnées bancaires"},{txt:"Heures et dollars de vacances"}]],
+    ["Historique", [{txt:"Seulement si vous avez payé des employés cette année ailleurs"},{txt:"Bulletin de paie récent par employé"},{txt:"Reçus de remise depuis le 1er janvier"}]],
+  ],
+  US: [
+    ["Schedule", [{txt:"How often you pay your team",sub:"Weekly, bi-weekly, semi-monthly, or monthly"},{txt:"Date you plan to start Novala payroll"},{txt:"First pay period to run on Novala"}]],
+    ["Compensation", [{txt:"Types of compensation",sub:"Hourly, salary, commission, bonuses, PTO"},{txt:"PTO and sick leave policies"},{txt:"Insurance benefits"},{txt:"Retirement contributions",sub:"401(k), IRA, employer match"},{txt:"Other deductions"},{txt:"Additions and reimbursements"}]],
+    ["Tax info", [{txt:"Federal EIN",sub:"Format: 12-3456789"},{txt:"State tax ID"},{txt:"State Unemployment Insurance rate"},{txt:"Local tax IDs"}]],
+    ["Employees", [{txt:"Name, address, date of birth"},{txt:"Social Security Number (SSN)",sub:"Format: 123-45-6789"},{txt:"Completed Form W-4"},{txt:"State withholding form"},{txt:"Pay rate"},{txt:"Bank details",sub:"Routing number + account number"},{txt:"I-9 employment eligibility on file"}]],
+    ["Year-to-date", [{txt:"Only if you paid employees this year on another system"},{txt:"Most recent pay stub per employee"},{txt:"Form 941 quarterly filings"}]],
+  ],
+  GB: [
+    ["Schedule", [{txt:"How often you pay your team",sub:"Weekly, fortnightly, four-weekly, or monthly"},{txt:"Date you plan to start Novala payroll"},{txt:"First pay period to run on Novala"}]],
+    ["Compensation", [{txt:"Types of compensation"},{txt:"Statutory sick pay and holiday pay"},{txt:"Pension auto-enrolment"},{txt:"Student loan plans",sub:"Plan 1, 2, 4, or postgraduate"},{txt:"Other deductions"},{txt:"Benefits in kind"}]],
+    ["Tax info", [{txt:"PAYE reference",sub:"Format: 123/AB45678"},{txt:"Accounts Office reference",sub:"Format: 123PA00012345"},{txt:"Tax office name"},{txt:"RTI submission history"}]],
+    ["Employees", [{txt:"Name, address, date of birth"},{txt:"National Insurance Number (NINO)",sub:"Format: AB123456C"},{txt:"P45 or starter checklist"},{txt:"Tax code"},{txt:"Pay rate"},{txt:"Bank details",sub:"Sort code + account number"},{txt:"Right to work documentation"}]],
+    ["Year-to-date", [{txt:"Only if you paid employees this tax year elsewhere"},{txt:"Most recent payslip per employee"},{txt:"RTI submissions this tax year"}]],
+  ],
+  AU: [
+    ["Schedule", [{txt:"How often you pay your team",sub:"Weekly, fortnightly, monthly"},{txt:"Date you plan to start Novala payroll"},{txt:"First pay period to run on Novala"}]],
+    ["Compensation", [{txt:"Types of compensation"},{txt:"Annual and personal leave accrual"},{txt:"Superannuation",sub:"Fund and employer rate"},{txt:"Salary sacrifice arrangements"},{txt:"Other deductions",sub:"HELP/HECS, union fees"},{txt:"Reimbursements and allowances"}]],
+    ["Tax info", [{txt:"Australian Business Number (ABN)",sub:"11 digits"},{txt:"Withholding payer number (WPN)"},{txt:"Single Touch Payroll BMS ID"},{txt:"Branch code if multiple locations"}]],
+    ["Employees", [{txt:"Name, address, date of birth"},{txt:"Tax File Number (TFN)",sub:"9 digits per employee"},{txt:"Completed TFN declaration"},{txt:"Super fund and member number"},{txt:"Pay rate"},{txt:"Bank details",sub:"BSB + account number"}]],
+    ["Year-to-date", [{txt:"Only if you paid employees this financial year elsewhere"},{txt:"Most recent payslip per employee"},{txt:"STP submissions this year"}]],
+  ],
+  NZ: [
+    ["Schedule", [{txt:"How often you pay your team"},{txt:"Date you plan to start Novala payroll"},{txt:"First pay period to run on Novala"}]],
+    ["Compensation", [{txt:"Types of compensation"},{txt:"Annual and sick leave accrual"},{txt:"KiwiSaver employer contributions"},{txt:"Student loan deductions"},{txt:"Child support deductions"}]],
+    ["Tax info", [{txt:"IRD number for your business"},{txt:"PAYE intermediary registration"},{txt:"Employer ESCT rate"}]],
+    ["Employees", [{txt:"Name, address, date of birth"},{txt:"IRD number per employee"},{txt:"IR330 tax code declaration"},{txt:"KiwiSaver enrolment status"},{txt:"Pay rate"},{txt:"Bank account number",sub:"NZ format"}]],
+    ["Year-to-date", [{txt:"Only if you paid employees this tax year elsewhere"},{txt:"Most recent payslip per employee"}]],
+  ],
+  SG: [
+    ["Schedule", [{txt:"How often you pay your team"},{txt:"Date you plan to start Novala payroll"},{txt:"First pay period to run on Novala"}]],
+    ["Compensation", [{txt:"Types of compensation"},{txt:"Annual leave and medical leave"},{txt:"CPF contributions"},{txt:"SDL (Skills Development Levy)"},{txt:"Other deductions"}]],
+    ["Tax info", [{txt:"Company UEN",sub:"Unique Entity Number"},{txt:"CPF employer number"},{txt:"IRAS Tax Reference Number"}]],
+    ["Employees", [{txt:"Name, address, date of birth"},{txt:"NRIC or FIN"},{txt:"Work pass details if foreign"},{txt:"CPF contribution status"},{txt:"Pay rate"},{txt:"Bank details"}]],
+    ["Year-to-date", [{txt:"Only if you paid employees this calendar year elsewhere"},{txt:"Most recent payslip per employee"},{txt:"IR8A history if applicable"}]],
+  ],
+  JP: [
+    ["Schedule", [{txt:"How often you pay your team",sub:"Most pay monthly"},{txt:"Date you plan to start Novala payroll"},{txt:"First pay period to run on Novala"}]],
+    ["Compensation", [{txt:"Compensation types"},{txt:"Bonus structure"},{txt:"Health insurance contribution rate"},{txt:"Pension insurance contribution rate"},{txt:"Employment insurance rate"}]],
+    ["Tax info", [{txt:"Corporate number (Hojin Bango)",sub:"13 digits"},{txt:"Withholding tax registration"},{txt:"Resident tax office details"}]],
+    ["Employees", [{txt:"Name, address, date of birth"},{txt:"My Number",sub:"12 digits per employee"},{txt:"Dependents declaration"},{txt:"Health insurance enrolment"},{txt:"Pay rate"},{txt:"Bank details"}]],
+    ["Year-to-date", [{txt:"Only if you paid employees this calendar year elsewhere"},{txt:"Most recent pay slip per employee"},{txt:"Gensen Choshu Hyo if available"}]],
+  ],
+  DE: [
+    ["Schedule", [{txt:"How often you pay your team",sub:"Most German businesses pay monthly"},{txt:"Date you plan to start Novala payroll"},{txt:"First pay period to run on Novala"}]],
+    ["Compensation", [{txt:"Compensation types"},{txt:"Urlaub entitlement"},{txt:"Lohnfortzahlung policy"},{txt:"Health insurance contribution rate"},{txt:"Pension contribution rate"},{txt:"Unemployment insurance rate"}]],
+    ["Tax info", [{txt:"Steuernummer"},{txt:"Betriebsnummer"},{txt:"USt-IdNr (VAT ID) if applicable"}]],
+    ["Employees", [{txt:"Name, address, date of birth"},{txt:"Steueridentifikationsnummer",sub:"11-digit tax ID"},{txt:"Sozialversicherungsnummer"},{txt:"Tax class (I-VI)"},{txt:"Krankenkasse"},{txt:"Pay rate"},{txt:"IBAN and BIC for SEPA"}]],
+    ["Year-to-date", [{txt:"Only if you paid employees this calendar year elsewhere"},{txt:"Lohnabrechnung per employee"},{txt:"Lohnsteuerbescheinigung if mid-year hire"}]],
+  ],
+  FR: [
+    ["Schedule", [{txt:"How often you pay your team",sub:"Most pay monthly"},{txt:"Date you plan to start Novala payroll"},{txt:"First pay period to run on Novala"}]],
+    ["Compensation", [{txt:"Compensation types"},{txt:"Congés payés entitlement"},{txt:"Mutuelle coverage"},{txt:"Pension contributions"},{txt:"Tickets restaurant and transport"}]],
+    ["Tax info", [{txt:"SIRET number",sub:"14 digits"},{txt:"APE/NAF code"},{txt:"URSSAF account number"},{txt:"Convention collective code"}]],
+    ["Employees", [{txt:"Name, address, date of birth"},{txt:"Sécurité sociale number",sub:"13 digits + 2-digit key"},{txt:"Contract type (CDI, CDD)"},{txt:"Pay rate"},{txt:"DPAE pre-employment declaration"},{txt:"IBAN and BIC"}]],
+    ["Year-to-date", [{txt:"Only if you paid employees this calendar year elsewhere"},{txt:"Bulletin de paie per employee"},{txt:"DSN submissions this year"}]],
+  ],
+  ZA: [
+    ["Schedule", [{txt:"How often you pay your team"},{txt:"Date you plan to start Novala payroll"},{txt:"First pay period to run on Novala"}]],
+    ["Compensation", [{txt:"Types of compensation"},{txt:"Annual and sick leave policies"},{txt:"Medical aid contributions"},{txt:"Retirement fund contributions"},{txt:"UIF deductions"}]],
+    ["Tax info", [{txt:"PAYE reference",sub:"10 digits from SARS"},{txt:"UIF reference number"},{txt:"SDL reference if applicable"},{txt:"EMP501 reconciliation history"}]],
+    ["Employees", [{txt:"Name, address, date of birth"},{txt:"South African ID number",sub:"13 digits"},{txt:"Tax number per employee"},{txt:"IRP3(a) tax directive if applicable"},{txt:"Pay rate"},{txt:"Bank details"}]],
+    ["Year-to-date", [{txt:"Only if you paid employees this tax year elsewhere"},{txt:"Most recent payslip per employee"},{txt:"EMP201 monthly submissions"}]],
+  ],
+  OTHER: [
+    ["Schedule", [{txt:"How often you pay your team"},{txt:"Date you plan to start Novala payroll"},{txt:"First pay period to run on Novala"}]],
+    ["Compensation", [{txt:"Types of compensation"},{txt:"Leave and sick day policies"},{txt:"Insurance and retirement contributions"},{txt:"Statutory deductions in your country"},{txt:"Reimbursements and additions"}]],
+    ["Tax info", [{txt:"Your country's business tax ID"},{txt:"Your country's payroll tax registration"},{txt:"Local tax filing requirements"}]],
+    ["Employees", [{txt:"Name, address, date of birth"},{txt:"Government tax ID per employee"},{txt:"Completed local tax form per employee"},{txt:"Pay rate"},{txt:"Bank account details",sub:"IBAN, SWIFT, or local"}]],
+    ["Year-to-date", [{txt:"Only if you paid employees this year elsewhere"},{txt:"Most recent pay records per employee"}]],
+  ],
+};
+
+function ThingsYouNeedPanel({ onClose }) {
+  const [country, setCountry] = useState("CA-EN");
+  const [open, setOpen] = useState(false);
+  const [checkedItems, setCheckedItems] = useState({});
+
+  const c = COUNTRIES_TYN.find(x => x.code === country);
+  const cats = CHECKLIST_TYN[country] || CHECKLIST_TYN.OTHER;
+  let totalItems = 0;
+  let doneItems = 0;
+  cats.forEach(([_, items], idx) => {
+    items.forEach((__, i) => {
+      totalItems++;
+      if (checkedItems[country + "-" + idx + "-" + i]) doneItems++;
+    });
+  });
+  const pct = totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
+
+  const toggle = (key) => setCheckedItems(s => ({ ...s, [key]: !s[key] }));
+
+  return createPortal(
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(16,26,43,0.25)", zIndex: 1000, animation: "novalaFadeIn 0.22s ease-out" }} />
+      <div style={{ position: "fixed", bottom: 20, right: 20, height: "85vh", width: "min(440px, calc(100vw - 40px))", background: C.surface, boxShadow: "0 -12px 40px rgba(16,26,43,0.28), 0 6px 20px rgba(16,26,43,0.18)", borderRadius: 18, zIndex: 1001, display: "flex", flexDirection: "column", animation: "novalaSlideUpRight 0.3s ease-out", fontFamily: FONT, overflow: "hidden" }}>
+        <div style={{ background: "linear-gradient(135deg, " + C.teal + ", " + C.tealD + ")", flex: "0 0 auto", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderRadius: "18px 18px 0 0" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#fff", display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <ListChecks size={16} /> Things you'll need
+          </div>
+          <button onClick={onClose} title="Close" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: "50%", width: 30, height: 30, cursor: "pointer", color: "#fff", display: "grid", placeItems: "center" }}>
+            <X size={14} />
+          </button>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", minHeight: 0, padding: "20px 22px 50px" }}>
+          {/* Brand */}
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 9 }}>
+              <img src="/logo512.png" alt="Novala" style={{ width: 38, height: 38, borderRadius: 9, objectFit: "contain", background: "#fff", padding: 3, boxShadow: "0 2px 8px rgba(16,26,43,0.08)" }} />
+              <span style={{ fontSize: 19, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em" }}>Novala</span>
+            </div>
+          </div>
+
+          {/* Intro */}
+          <div style={{ background: "linear-gradient(135deg, #EAF8F4, #F1F8F6)", border: "1px solid #D5EDE6", borderRadius: 14, padding: "20px 18px", marginBottom: 14 }}>
+            <h1 style={{ fontSize: 19, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em", marginBottom: 6, lineHeight: 1.25 }}>Gather these before you start</h1>
+            <p style={{ fontSize: 12.5, color: C.muted, lineHeight: 1.55 }}>Setup goes smoother when you have the right info ready. This checklist adapts to your country.</p>
+          </div>
+
+          {/* Country picker */}
+          <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8, display: "block" }}>Your country</span>
+            <button onClick={() => setOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: "8px 12px", border: "1px solid " + C.line, borderRadius: 9, background: "#fff", width: "100%", fontFamily: FONT, textAlign: "left" }}>
+              <img src={"https://flagcdn.com/w40/" + c.iso + ".png"} alt="" style={{ width: 24, height: 18, borderRadius: 3, objectFit: "cover", flex: "0 0 24px", boxShadow: "0 0 0 1px rgba(0,0,0,0.08)" }} />
+              <span style={{ fontSize: 14, fontWeight: 600, color: C.ink, flex: 1 }}>{c.name}</span>
+              <ChevronDown size={14} style={{ color: C.muted, transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.18s" }} />
+            </button>
+            {open && (
+              <div style={{ marginTop: 8, maxHeight: 320, overflowY: "auto", border: "1px solid " + C.line, borderRadius: 9 }}>
+                {COUNTRIES_TYN.map(cc => (
+                  <div key={cc.code} onClick={() => { setCountry(cc.code); setOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", cursor: "pointer", fontSize: 13.5, color: cc.code === country ? C.tealInk : C.ink, fontWeight: cc.code === country ? 600 : 500, borderBottom: "1px solid " + C.lineSoft, background: cc.code === country ? C.tealSoft : "#fff" }}>
+                    <img src={"https://flagcdn.com/w40/" + cc.iso + ".png"} alt="" style={{ width: 24, height: 18, borderRadius: 3, objectFit: "cover", flex: "0 0 24px", boxShadow: "0 0 0 1px rgba(0,0,0,0.08)" }} />
+                    <span style={{ flex: 1 }}>{cc.name}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: cc.taxAuto ? C.tealSoft : C.amberSoft, color: cc.taxAuto ? C.tealInk : C.amber }}>{cc.taxAuto ? "Tax auto" : "Coming soon"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Coming soon notice */}
+          {!c.taxAuto && (
+            <div style={{ background: C.amberSoft, border: "1px solid #F2DCA6", borderLeft: "3px solid " + C.amber, borderRadius: 10, padding: "12px 14px", marginBottom: 14, fontSize: 12, color: C.amber, lineHeight: 1.55 }}>
+              <strong style={{ color: "#7C4F0F", display: "block", marginBottom: 3, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>Tax automation coming soon</strong>
+              Novala has full tax automation for US, Canada, UK, and Australia today. {c.name} is on our roadmap. Gather your info here so you are ready when we launch.
+            </div>
+          )}
+
+          {/* Progress */}
+          <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 12, padding: "14px 16px", marginBottom: 14, display: "flex", alignItems: "center", gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 600, color: C.ink, fontVariantNumeric: "tabular-nums" }}>{doneItems} of {totalItems}</div>
+              <div style={{ fontSize: 11, color: C.muted, fontWeight: 500 }}>items ready</div>
+            </div>
+            <div style={{ flex: 1, height: 6, background: C.line, borderRadius: 20, overflow: "hidden" }}>
+              <div style={{ height: "100%", background: "linear-gradient(90deg, " + C.teal + ", " + C.tealD + ")", borderRadius: 20, transition: "0.4s", width: pct + "%" }} />
+            </div>
+          </div>
+
+          {/* Table */}
+          <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 12, overflow: "hidden", marginBottom: 10 }}>
+            <div style={{ display: "flex", background: C.ink, color: "#fff" }}>
+              <div style={{ padding: "10px 14px", fontSize: 10.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", width: 115, flex: "0 0 115px", borderRight: "1px solid rgba(255,255,255,0.1)" }}>Category</div>
+              <div style={{ padding: "10px 14px", fontSize: 10.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", flex: 1 }}>Type of information needed</div>
+            </div>
+            {cats.map(([catName, items], idx) => (
+              <div key={idx} style={{ display: "flex", borderBottom: idx === cats.length - 1 ? "none" : "1px solid " + C.lineSoft }}>
+                <div style={{ padding: "14px 12px", width: 115, flex: "0 0 115px", background: C.lineSoft, borderRight: "1px solid " + C.line, display: "flex", alignItems: "flex-start", gap: 7 }}>
+                  <div style={{ width: 20, height: 20, borderRadius: 5, background: C.teal, color: "#fff", display: "grid", placeItems: "center", fontWeight: 700, fontSize: 10.5, flex: "0 0 20px", marginTop: 1 }}>{idx + 1}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: C.ink, lineHeight: 1.3 }}>{catName}</div>
+                </div>
+                <div style={{ padding: "8px 6px", flex: 1, minWidth: 0 }}>
+                  {items.map((item, i) => {
+                    const key = country + "-" + idx + "-" + i;
+                    const isChecked = !!checkedItems[key];
+                    return (
+                      <div key={i} onClick={() => toggle(key)} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "7px 8px", fontSize: 11.5, color: isChecked ? C.muted : C.text, lineHeight: 1.5, borderRadius: 7, cursor: "pointer", textDecoration: isChecked ? "line-through" : "none" }}>
+                        <div style={{ width: 15, height: 15, border: "1.5px solid " + (isChecked ? C.teal : C.line), borderRadius: 4, flex: "0 0 15px", marginTop: 1, display: "grid", placeItems: "center", background: isChecked ? C.teal : "#fff", color: "#fff" }}>
+                          {isChecked && <Check size={10} />}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          {item.txt}
+                          {item.sub && <div style={{ color: C.faint, fontSize: 10.5, marginTop: 2, lineHeight: 1.4 }}>{item.sub}</div>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Ready CTA */}
+          <div style={{ background: "linear-gradient(135deg, #0A1A1E, #12262B)", color: "#fff", borderRadius: 12, padding: 18, marginTop: 18, textAlign: "center" }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 4, color: "#fff" }}>Got everything?</h3>
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", margin: "0 0 12px", lineHeight: 1.5 }}>When you have these in hand, you are ready to run setup.</p>
+            <button onClick={onClose} style={{ background: C.teal, color: "#fff", border: "none", borderRadius: 9, padding: "9px 18px", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: FONT, boxShadow: "0 2px 8px rgba(21,160,140,0.28)" }}>Close and start setup</button>
+          </div>
+        </div>
+      </div>
     </>,
     document.body
   );
