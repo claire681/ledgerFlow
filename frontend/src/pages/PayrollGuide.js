@@ -69,9 +69,38 @@ export default function PayrollGuide({ embeddedInPanel = false, onClose }) {
   const navigate = useNavigate();
   const { askAndopen } = useAI();
 
+  // Compact sizes when embedded in a narrow panel
+  const SZ = embeddedInPanel ? {
+    contentPad: "20px 22px 50px", contentMaxW: "100%",
+    heroPad: "20px 18px", heroH1: 21, heroP: 13, heroEyebrow: 10.5,
+    flowPad: 16, flowTitle: 11, stepNum: 28, stepName: 13.5, stepGap: 8,
+    secPad: "18px 18px", secNum: 28, secNumRadius: 7, secH2: 15,
+    secTime: 10.5, secBody: 13, secLineH: 1.6,
+    whyPad: "11px 13px", whyFont: 12, whyLabel: 10,
+    btnPad: "8px 14px", btnFont: 12.5,
+    faqTitle: 11, faqMargin: "22px 0 10px",
+    faqSummaryPad: "12px 16px", faqSummaryFont: 13,
+    faqAnswerPad: "11px 16px 14px", faqAnswerFont: 12.5,
+    nexaPad: 18, nexaAvatar: 44, nexaH3: 14, nexaP: 12, nexaBtnPad: "9px 18px", nexaBtnFont: 13,
+    logoSize: 38, brandName: 19,
+  } : {
+    contentPad: "28px 32px 100px", contentMaxW: 900,
+    heroPad: "34px 30px", heroH1: 32, heroP: 15.5, heroEyebrow: 11,
+    flowPad: "24px 28px", flowTitle: 13, stepNum: 36, stepName: 12.5, stepGap: 8,
+    secPad: "28px 30px", secNum: 32, secNumRadius: 8, secH2: 19,
+    secTime: 12, secBody: 14.5, secLineH: 1.7,
+    whyPad: "14px 18px", whyFont: 13.5, whyLabel: 11.5,
+    btnPad: "10px 18px", btnFont: 13.5,
+    faqTitle: 13, faqMargin: "36px 0 14px",
+    faqSummaryPad: "16px 20px", faqSummaryFont: 14.5,
+    faqAnswerPad: "14px 20px 18px", faqAnswerFont: 13.5,
+    nexaPad: "28px 30px", nexaAvatar: 56, nexaH3: 17, nexaP: 13.5, nexaBtnPad: "11px 22px", nexaBtnFont: 14,
+    logoSize: 44, brandName: 22,
+  };
+
   return (
     <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text }}>
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "28px 32px 100px" }}>
+      <div style={{ maxWidth: SZ.contentMaxW, margin: "0 auto", padding: SZ.contentPad }}>
 
         {!embeddedInPanel && (
           <button onClick={() => navigate("/payroll/overview")} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13.5, fontWeight: 600, color: C.tealInk, cursor: "pointer", background: "none", border: "none", fontFamily: FONT, marginBottom: 14, padding: 0 }}>
@@ -83,17 +112,17 @@ export default function PayrollGuide({ embeddedInPanel = false, onClose }) {
         {embeddedInPanel && (
           <div style={{ textAlign: "center", marginBottom: 24, paddingTop: 6 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-              <img src="/logo512.png" alt="Novala" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "contain", background: "#fff", padding: 4, boxShadow: "0 2px 8px rgba(16,26,43,0.08)" }} />
-              <span style={{ fontSize: 22, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em" }}>Novala</span>
+              <img src="/logo512.png" alt="Novala" style={{ width: SZ.logoSize, height: SZ.logoSize, borderRadius: 10, objectFit: "contain", background: "#fff", padding: 4, boxShadow: "0 2px 8px rgba(16,26,43,0.08)" }} />
+              <span style={{ fontSize: SZ.brandName, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em" }}>Novala</span>
             </div>
           </div>
         )}
 
         {/* Hero */}
-        <div style={{ background: "linear-gradient(135deg, #EAF8F4, #F1F8F6)", border: "1px solid #D5EDE6", borderRadius: 18, padding: "34px 30px", marginBottom: 32, textAlign: "center" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.tealInk, marginBottom: 10 }}>Welcome to Novala payroll</div>
-          <h1 style={{ fontSize: 32, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em", marginBottom: 10 }}>Payroll, simplified</h1>
-          <p style={{ fontSize: 15.5, color: C.muted, maxWidth: 580, margin: "0 auto", lineHeight: 1.6 }}>
+        <div style={{ background: "linear-gradient(135deg, #EAF8F4, #F1F8F6)", border: "1px solid #D5EDE6", borderRadius: 18, padding: SZ.heroPad, marginBottom: 24, textAlign: "center" }}>
+          <div style={{ fontSize: SZ.heroEyebrow, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.tealInk, marginBottom: 8 }}>Welcome to Novala payroll</div>
+          <h1 style={{ fontSize: SZ.heroH1, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em", marginBottom: 8, lineHeight: 1.2 }}>Payroll, simplified</h1>
+          <p style={{ fontSize: SZ.heroP, color: C.muted, maxWidth: 580, margin: "0 auto", lineHeight: 1.6 }}>
             Running payroll on Novala takes five steps. This guide walks you through each one, so you know what is happening, why it matters, and where to find it in the app.
           </p>
         </div>
@@ -113,20 +142,20 @@ export default function PayrollGuide({ embeddedInPanel = false, onClose }) {
 
         {/* Step sections */}
         {STEPS.map(step => (
-          <section key={step.num} style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 14, padding: "28px 30px", marginBottom: 18, boxShadow: "0 1px 2px rgba(16,26,43,0.04)" }}>
+          <section key={step.num} style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 14, padding: SZ.secPad, marginBottom: 14, boxShadow: "0 1px 2px rgba(16,26,43,0.04)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 32px", fontWeight: 700, fontSize: 14 }}>{step.num}</div>
-              <h2 style={{ fontSize: 19, fontWeight: 600, color: C.ink, letterSpacing: "-0.01em" }}>{step.title}</h2>
-              <span style={{ marginLeft: "auto", fontSize: 12, fontWeight: 600, color: C.muted, background: C.lineSoft, padding: "4px 10px", borderRadius: 20 }}>{step.time}</span>
+              <div style={{ width: SZ.secNum, height: SZ.secNum, borderRadius: SZ.secNumRadius, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 " + SZ.secNum + "px", fontWeight: 700, fontSize: SZ.secNum >= 32 ? 14 : 12.5 }}>{step.num}</div>
+              <h2 style={{ fontSize: SZ.secH2, fontWeight: 600, color: C.ink, letterSpacing: "-0.01em", flex: 1, minWidth: 0 }}>{step.title}</h2>
+              <span style={{ marginLeft: "auto", fontSize: SZ.secTime, fontWeight: 600, color: C.muted, background: C.lineSoft, padding: "3px 9px", borderRadius: 20 }}>{step.time}</span>
             </div>
-            <div style={{ fontSize: 14.5, color: C.text, lineHeight: 1.7 }}>
+            <div style={{ fontSize: SZ.secBody, color: C.text, lineHeight: SZ.secLineH }}>
               <p style={{ marginBottom: 12 }}>{step.intro}</p>
-              <div style={{ background: C.tealSoft, borderLeft: "3px solid " + C.teal, padding: "14px 18px", margin: "14px 0", borderRadius: "0 10px 10px 0", fontSize: 13.5 }}>
-                <strong style={{ display: "block", color: C.tealInk, fontSize: 11.5, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 6 }}>Why this matters</strong>
+              <div style={{ background: C.tealSoft, borderLeft: "3px solid " + C.teal, padding: SZ.whyPad, margin: "12px 0", borderRadius: "0 8px 8px 0", fontSize: SZ.whyFont }}>
+                <strong style={{ display: "block", color: C.tealInk, fontSize: SZ.whyLabel, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 5 }}>Why this matters</strong>
                 {step.why}
               </div>
               <p style={{ marginBottom: 12 }}>{step.extra}</p>
-              <button onClick={() => navigate(step.route)} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: C.teal, color: "#fff", border: "none", borderRadius: 9, padding: "10px 18px", fontWeight: 600, fontSize: 13.5, cursor: "pointer", marginTop: 10, fontFamily: FONT, boxShadow: "0 1px 3px rgba(21,160,140,0.18)" }}>
+              <button onClick={() => navigate(step.route)} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: C.teal, color: "#fff", border: "none", borderRadius: 9, padding: SZ.btnPad, fontWeight: 600, fontSize: SZ.btnFont, cursor: "pointer", marginTop: 10, fontFamily: FONT, boxShadow: "0 1px 3px rgba(21,160,140,0.18)" }}>
                 {step.cta} <ChevronRight size={14} />
               </button>
             </div>
@@ -134,27 +163,27 @@ export default function PayrollGuide({ embeddedInPanel = false, onClose }) {
         ))}
 
         {/* FAQ */}
-        <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: C.faint, margin: "36px 0 14px", padding: "0 6px" }}>Frequently asked questions</div>
+        <div style={{ fontSize: SZ.faqTitle, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: C.faint, margin: SZ.faqMargin, padding: "0 4px" }}>Frequently asked questions</div>
         {FAQS.map((faq, i) => (
           <details key={i} style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 12, marginBottom: 10, overflow: "hidden" }}>
-            <summary style={{ cursor: "pointer", listStyle: "none", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", fontSize: 14.5, fontWeight: 600, color: C.ink }}>
+            <summary style={{ cursor: "pointer", listStyle: "none", display: "flex", alignItems: "center", justifyContent: "space-between", padding: SZ.faqSummaryPad, fontSize: SZ.faqSummaryFont, fontWeight: 600, color: C.ink }}>
               {faq.q}
               <ChevronDown size={16} style={{ color: C.muted, flex: "0 0 16px" }} />
             </summary>
-            <div style={{ padding: "14px 20px 18px", fontSize: 13.5, color: C.text, lineHeight: 1.65, borderTop: "1px solid " + C.lineSoft }}>
+            <div style={{ padding: SZ.faqAnswerPad, fontSize: SZ.faqAnswerFont, color: C.text, lineHeight: 1.6, borderTop: "1px solid " + C.lineSoft }}>
               {faq.a}
             </div>
           </details>
         ))}
 
         {/* Nexa CTA */}
-        <div style={{ background: "linear-gradient(135deg, #0A1A1E, #12262B)", color: "#fff", borderRadius: 16, padding: "28px 30px", marginTop: 30, display: "flex", alignItems: "center", gap: 20, boxShadow: "0 4px 16px rgba(18,38,43,0.18)" }}>
-          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, " + C.teal + ", #0EA5E9)", display: "grid", placeItems: "center", flex: "0 0 56px", fontSize: 20, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>N</div>
+        <div style={{ background: "linear-gradient(135deg, #0A1A1E, #12262B)", color: "#fff", borderRadius: 14, padding: SZ.nexaPad, marginTop: 22, display: "flex", flexDirection: embeddedInPanel ? "column" : "row", alignItems: "center", gap: embeddedInPanel ? 12 : 20, textAlign: embeddedInPanel ? "center" : "left", boxShadow: "0 4px 16px rgba(18,38,43,0.18)" }}>
+          <div style={{ width: SZ.nexaAvatar, height: SZ.nexaAvatar, borderRadius: "50%", background: "linear-gradient(135deg, " + C.teal + ", #0EA5E9)", display: "grid", placeItems: "center", flex: "0 0 " + SZ.nexaAvatar + "px", fontSize: 18, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>N</div>
           <div style={{ flex: 1 }}>
-            <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 4, color: "#fff" }}>Still have questions?</h3>
-            <p style={{ fontSize: 13.5, color: "rgba(255,255,255,0.7)", margin: 0 }}>Nexa, your Novala assistant, can answer payroll questions in plain language and walk you through anything in the app.</p>
+            <h3 style={{ fontSize: SZ.nexaH3, fontWeight: 600, marginBottom: 3, color: "#fff" }}>Still have questions?</h3>
+            <p style={{ fontSize: SZ.nexaP, color: "rgba(255,255,255,0.7)", margin: 0 }}>Nexa, your Novala assistant, can answer payroll questions in plain language and walk you through anything in the app.</p>
           </div>
-          <button onClick={() => askAndopen("Hi! I have questions about payroll on Novala. Can you help?")} style={{ background: C.teal, color: "#fff", border: "none", borderRadius: 10, padding: "11px 22px", fontWeight: 600, fontSize: 14, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, fontFamily: FONT, flex: "0 0 auto", boxShadow: "0 2px 8px rgba(21,160,140,0.28)" }}>
+          <button onClick={() => askAndopen("Hi! I have questions about payroll on Novala. Can you help?")} style={{ background: C.teal, color: "#fff", border: "none", borderRadius: 9, padding: SZ.nexaBtnPad, fontWeight: 600, fontSize: SZ.nexaBtnFont, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, fontFamily: FONT, flex: "0 0 auto", boxShadow: "0 2px 8px rgba(21,160,140,0.28)" }}>
             <MessageCircle size={14} /> Ask Nexa
           </button>
         </div>
