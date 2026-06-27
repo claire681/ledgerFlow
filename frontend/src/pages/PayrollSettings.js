@@ -601,6 +601,7 @@ function ComingSoonSection({ title }) {
 
 // === Bank account section ===
 function BankAccountSection() {
+  const navigate = useNavigate();
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
