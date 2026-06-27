@@ -569,24 +569,28 @@ function StepDot({ n, active, done }) {
 function PayrollGuideSheet({ onClose }) {
   return createPortal(
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(16,26,43,0.55)", zIndex: 1000, animation: "fadeIn 0.2s ease-out" }} />
-      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: "92vh", background: C.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, boxShadow: "0 -12px 40px rgba(16,26,43,0.22)", zIndex: 1001, display: "flex", flexDirection: "column", animation: "slideUp 0.28s ease-out", fontFamily: FONT }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 0 6px", flex: "0 0 auto" }}>
-          <div onClick={onClose} style={{ width: 40, height: 5, borderRadius: 3, background: C.line, cursor: "pointer" }} />
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(16,26,43,0.55)", zIndex: 1000, animation: "novalaFadeIn 0.2s ease-out" }} />
+      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: "65vh", background: C.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, boxShadow: "0 -12px 40px rgba(16,26,43,0.22)", zIndex: 1001, display: "flex", flexDirection: "column", animation: "novalaSlideUp 0.28s ease-out", fontFamily: FONT, overflow: "hidden" }}>
+        <div style={{ background: "linear-gradient(135deg, " + C.teal + ", " + C.tealD + ")", borderTopLeftRadius: 20, borderTopRightRadius: 20, flex: "0 0 auto" }}>
+          <div onClick={onClose} style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "10px 0 6px", cursor: "pointer" }}>
+            <div style={{ width: 40, height: 5, borderRadius: 3, background: "rgba(255,255,255,0.4)" }} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 12px" }}>
+            <div style={{ fontSize: 14.5, fontWeight: 600, color: "#fff", display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <Book size={16} /> Payroll guide
+            </div>
+            <button onClick={onClose} title="Close" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", color: "#fff", display: "grid", placeItems: "center" }}>
+              <X size={16} />
+            </button>
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 10px", flex: "0 0 auto" }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: C.muted }}>Payroll guide</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 4, display: "inline-flex", fontFamily: FONT, fontSize: 13.5, fontWeight: 600 }}>
-            Close
-          </button>
-        </div>
-        <div style={{ flex: 1, overflowY: "auto", minHeight: 0, maxHeight: "calc(92vh - 60px)", WebkitOverflowScrolling: "touch" }}>
+        <div style={{ flex: 1, overflowY: "auto", minHeight: 0, WebkitOverflowScrolling: "touch" }}>
           <PayrollGuide embeddedInPanel onClose={onClose} />
         </div>
       </div>
       <style>{`
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes novalaFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes novalaSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
       `}</style>
     </>,
     document.body

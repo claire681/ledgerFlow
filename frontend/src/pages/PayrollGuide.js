@@ -79,6 +79,16 @@ export default function PayrollGuide({ embeddedInPanel = false, onClose }) {
           </button>
         )}
 
+        {/* Novala brand */}
+        {embeddedInPanel && (
+          <div style={{ textAlign: "center", marginBottom: 24, paddingTop: 6 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+              <img src="/logo512.png" alt="Novala" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "contain", background: "#fff", padding: 4, boxShadow: "0 2px 8px rgba(16,26,43,0.08)" }} />
+              <span style={{ fontSize: 22, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em" }}>Novala</span>
+            </div>
+          </div>
+        )}
+
         {/* Hero */}
         <div style={{ background: "linear-gradient(135deg, #EAF8F4, #F1F8F6)", border: "1px solid #D5EDE6", borderRadius: 18, padding: "34px 30px", marginBottom: 32, textAlign: "center" }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.tealInk, marginBottom: 10 }}>Welcome to Novala payroll</div>
