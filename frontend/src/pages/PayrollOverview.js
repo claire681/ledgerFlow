@@ -155,6 +155,11 @@ export default function PayrollOverview() {
       <div style={{ maxWidth: "100%", margin: 0, padding: "28px 32px 90px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <h1 style={{ fontSize: 26, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em" }}>Payroll overview</h1>
+          <button onClick={() => navigate("/payroll/settings")} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", color: C.ink, border: "1px solid " + C.line, borderRadius: 9, padding: "8px 14px", fontWeight: 600, fontSize: 13.5, cursor: "pointer", fontFamily: FONT, transition: "0.12s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.teal; e.currentTarget.style.color = C.tealInk; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.line; e.currentTarget.style.color = C.ink; }}>
+            <Settings size={15} /> Payroll settings
+          </button>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 22 }}>
@@ -291,6 +296,7 @@ export default function PayrollOverview() {
             <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 16, padding: 20, boxShadow: "0 1px 2px rgba(16,26,43,0.04)" }}>
               <h3 style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>Setup resources</h3>
               <div style={{ marginTop: 8 }}>
+                <ResourceLink icon={<Settings size={20} />} label="Payroll settings" onClick={() => navigate("/payroll/settings")} />
                 <ResourceLink icon={<Book size={20} />} label="View setup guide" onClick={() => setShowGuide(true)} />
                 <ResourceLink icon={<ListChecks size={20} />} label="Things you will need" onClick={() => setShowThingsNeeded(true)} />
                 <ResourceLink icon={<Activity size={20} />} label="Setting up payroll" mins="2 min" onClick={() => setShowSettingUp(true)} />
