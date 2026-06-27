@@ -78,17 +78,6 @@ export default function PayrollOverview() {
   const [showThingsNeeded, setShowThingsNeeded] = useState(false);
   const [showSettingUp, setShowSettingUp] = useState(false);
 
-  // Auto-open Connect bank panel if URL has ?connect=bank
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.location.search.includes("connect=bank")) {
-      setShowBankConnect(true);
-      // Clean up the URL so refreshing doesn't reopen
-      const url = new URL(window.location.href);
-      url.searchParams.delete("connect");
-      window.history.replaceState({}, "", url.toString());
-    }
-  }, []);
-
   useEffect(() => {
     const fetchAll = async () => {
       try {
@@ -233,7 +222,7 @@ export default function PayrollOverview() {
                   {bankState === "ok" ? "Employees can be paid by direct deposit." : bankState === "pend" ? "Watch for a small deposit, then confirm the amount to finish setup. You can still pay by cheque meanwhile." : "Until a bank is connected and verified, pay employees by cheque."}
                 </div>
               </div>
-              <button onClick={() => setShowBankConnect(true)} style={{ background: "#12262B", color: "#fff", border: "none", borderRadius: 10, padding: "10px 18px", fontWeight: 600, fontSize: 13.5, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 8, boxShadow: "0 2px 8px rgba(18,38,43,0.22)" }}>
+              <button onClick={() => navigate("/payroll/bank/connect")} style={{ background: "#12262B", color: "#fff", border: "none", borderRadius: 10, padding: "10px 18px", fontWeight: 600, fontSize: 13.5, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 8, boxShadow: "0 2px 8px rgba(18,38,43,0.22)" }}>
                 <Landmark size={14} /> {bankState === "ok" ? "Manage" : bankState === "pend" ? "Confirm" : "Connect bank"}
               </button>
             </div>
@@ -312,7 +301,7 @@ export default function PayrollOverview() {
                 <ResourceLink icon={<ListChecks size={20} />} label="Things you will need" onClick={() => setShowThingsNeeded(true)} />
                 <ResourceLink icon={<Activity size={20} />} label="Setting up payroll" mins="2 min" onClick={() => setShowSettingUp(true)} />
                 <ResourceLink icon={<Activity size={20} />} label="Running your first payroll" mins="3 min" onClick={() => navigate("/payroll/run")} />
-                <ResourceLink icon={<CreditCard size={20} />} label="Set up direct deposit" onClick={() => setShowBankConnect(true)} isLast />
+                <ResourceLink icon={<CreditCard size={20} />} label="Set up direct deposit" onClick={() => navigate("/payroll/bank/connect")} isLast />
               </div>
             </div>
           </div>
@@ -322,7 +311,7 @@ export default function PayrollOverview() {
         {showBankConnect && <BankConnectPanel onClose={() => setShowBankConnect(false)} />}
         {showGuide && <PayrollGuideSheet onClose={() => setShowGuide(false)} />}
         {showThingsNeeded && <ThingsYouNeedPanel onClose={() => setShowThingsNeeded(false)} />}
-        {showSettingUp && <SettingUpPayrollPanel onClose={() => setShowSettingUp(false)} onConnectBank={() => setShowBankConnect(true)} />}
+        {showSettingUp && <SettingUpPayrollPanel onClose={() => setShowSettingUp(false)} onConnectBank={() => navigate("/payroll/bank/connect")} />}
       </div>
     </div>
   );

@@ -603,7 +603,6 @@ function ComingSoonSection({ title }) {
 function BankAccountSection() {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showConnect, setShowConnect] = useState(false);
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
 
   const load = () => {
@@ -633,7 +632,12 @@ function BankAccountSection() {
   if (loading) return <div style={{ color: C.muted, fontSize: 13 }}>Loading...</div>;
 
   const hasAccount = !!(settings && settings.company_bank_name);
-  const isVerified = hasAccount; // backend doesn't track verification yet; treat connected = verified for now
+  const bankDetails = settings && settings.bank_details ? settings.bank_details : {};
+  const verification = bankDetails.verification || {};
+  const verificationStatus = verification.status || (hasAccount ? "verified" : null);
+  const isVerified = verificationStatus === "verified";
+  const isVerifying = verificationStatus === "verifying";
+  const isLocked = verificationStatus === "locked";
 
   return (
     <>
@@ -670,7 +674,7 @@ function BankAccountSection() {
           <span style={{ fontSize: 12, color: C.faint, fontVariantNumeric: "tabular-nums" }}>{hasAccount ? "1 of 1" : "0 of 1"}</span>
         </div>
         {!hasAccount && (
-          <button onClick={() => setShowConnect(true)} style={{ background: C.ink, color: "#fff", border: "none", borderRadius: 6, padding: "7px 13px", fontWeight: 500, fontSize: 12.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FONT }}>
+          <button onClick={() => navigate("/payroll/bank/connect")} style={{ background: C.ink, color: "#fff", border: "none", borderRadius: 6, padding: "7px 13px", fontWeight: 500, fontSize: 12.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FONT }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>
             Connect account
           </button>
@@ -709,9 +713,9 @@ function BankAccountSection() {
                   <div style={{ fontSize: 11, color: C.faint, marginTop: 2, fontFamily: "JetBrains Mono, monospace" }}>{settings.company_routing_number}</div>
                 )}
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.green, fontWeight: 500 }}>
-                <span style={{ width: 7, height: 7, borderRadius: "50%", background: C.green, boxShadow: "0 0 0 3px rgba(13,128,80,.12)", flex: "0 0 7px" }} />
-                Verified
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: isLocked ? C.red : isVerifying ? C.amber : C.green, fontWeight: 500 }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: isLocked ? C.red : isVerifying ? C.amber : C.green, boxShadow: isLocked ? "0 0 0 3px rgba(181,59,46,.12)" : isVerifying ? "0 0 0 3px rgba(156,90,15,.12)" : "0 0 0 3px rgba(13,128,80,.12)", flex: "0 0 7px" }} />
+                {isLocked ? "Locked" : isVerifying ? <span onClick={() => navigate("/payroll/bank/verify")} style={{ cursor: "pointer", textDecoration: "underline" }}>Verify now</span> : "Verified"}
               </div>
               <div style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>
                 <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", padding: "2px 6px", borderRadius: 3, background: C.ink, color: "#fff" }}>Primary</span>
@@ -733,7 +737,7 @@ function BankAccountSection() {
           </div>
           <h3 style={{ fontSize: 15, fontWeight: 600, color: C.ink, marginBottom: 6, letterSpacing: "-0.005em" }}>No bank account connected</h3>
           <p style={{ fontSize: 12.5, color: C.muted, maxWidth: 380, margin: "0 auto 18px", lineHeight: 1.55 }}>Connect a business bank account so Novala can fund payroll runs. Verification takes 1 to 2 business days.</p>
-          <button onClick={() => setShowConnect(true)} style={{ background: C.ink, color: "#fff", border: "none", borderRadius: 6, padding: "9px 18px", fontWeight: 500, fontSize: 13, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FONT }}>
+          <button onClick={() => navigate("/payroll/bank/connect")} style={{ background: C.ink, color: "#fff", border: "none", borderRadius: 6, padding: "9px 18px", fontWeight: 500, fontSize: 13, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FONT }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>
             Connect bank account
           </button>
@@ -770,18 +774,7 @@ function BankAccountSection() {
       )}
 
       {/* Connect bank stub - opens Payroll Overview to use existing bank connect panel */}
-      {showConnect && (
-        <div onClick={() => setShowConnect(false)} style={{ position: "fixed", inset: 0, background: "rgba(10,26,30,0.4)", zIndex: 1000, display: "grid", placeItems: "center" }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 10, padding: "28px 32px", maxWidth: 460, boxShadow: "0 20px 50px rgba(10,26,30,0.2)" }}>
-            <h3 style={{ fontSize: 17, fontWeight: 600, color: C.ink, marginBottom: 10 }}>Connect bank account</h3>
-            <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.55, marginBottom: 20 }}>Connecting opens our secure bank connection flow on the Payroll overview. Once connected and verified, the account will appear here.</p>
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button onClick={() => setShowConnect(false)} style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "8px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: FONT }}>Cancel</button>
-              <button onClick={() => { window.location.href = "/payroll/overview?connect=bank"; }} style={{ background: C.ink, color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: FONT }}>Go to Connect bank</button>
-            </div>
-          </div>
-        </div>
-      )}
+      
     </>
   );
 }

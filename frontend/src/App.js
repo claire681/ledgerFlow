@@ -20,6 +20,7 @@ import PayrollOverview from "./pages/PayrollOverview";
 import PayrollGuide from "./pages/PayrollGuide";
 import PayrollSettingsStub from "./pages/PayrollSettingsStub";
 import PayrollSettings from "./pages/PayrollSettings";
+import ConnectBankFlow from "./pages/ConnectBankFlow";
 import PaychequeList from "./pages/PaychequeList";
 import PaychequeDetail from "./pages/PaychequeDetail";
 import RunPayroll from "./pages/RunPayroll";
@@ -192,6 +193,10 @@ function AppLayout({ onLogout }) {
               <Route path="/payroll/guide" element={<PayrollGuide />} />
               <Route path="/payroll/settings" element={<PayrollSettings />} />
               <Route path="/payroll/settings/:section" element={<PayrollSettings />} />
+              <Route path="/payroll/bank/connect" element={<ConnectBankFlow />} />
+              <Route path="/payroll/bank/connect/review" element={<ConnectBankFlow />} />
+              <Route path="/payroll/bank/connect/submitted" element={<ConnectBankFlow />} />
+              <Route path="/payroll/bank/verify" element={<ConnectBankFlow />} />
           <Route path="/payroll/paycheques" element={<PaychequeList />} />
           <Route path="/payroll/paycheques/:id" element={<PaychequeDetail />} />
           <Route path="/payroll/items" element={<PayrollItems />} />
