@@ -109,7 +109,7 @@ export default function ConnectBankFlow() {
 
   return (
     <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text }}>
-      <TopBar />
+      <Breadcrumb step={step} />
       <ProgressStrip step={step} />
       {step === 1 && <Step1Details />}
       {step === 2 && <Step2Review />}
@@ -119,27 +119,23 @@ export default function ConnectBankFlow() {
   );
 }
 
-// ============ TOP BAR ============
-function TopBar() {
+// ============ BREADCRUMB ============
+function Breadcrumb({ step }) {
   const navigate = useNavigate();
+  const labels = { 1: "Bank details", 2: "Review", 3: "Submitted", 4: "Confirm deposits" };
   return (
-    <div style={{ background: "#fff", borderBottom: "1px solid " + C.line, padding: "14px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <img src="/logo512.png" alt="Novala" style={{ width: 26, height: 26, borderRadius: 5, background: "#fff", padding: 2, border: "1px solid " + C.line }} />
-          <span style={{ fontSize: 14, fontWeight: 700, color: C.ink, letterSpacing: "-0.01em" }}>Novala</span>
-        </div>
-        <div style={{ width: 1, height: 22, background: C.line }} />
-        <div style={{ fontSize: 13.5, fontWeight: 500, color: C.muted }}>
-          <strong style={{ color: C.ink, fontWeight: 600 }}>Connect bank account</strong> · Payroll setup
-        </div>
+    <div style={{ background: "#fff", borderBottom: "1px solid " + C.lineSoft, padding: "14px 28px" }}>
+      <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.muted }}>
+        <span onClick={() => navigate("/payroll/overview")} style={{ cursor: "pointer", color: C.tealInk, fontWeight: 500 }}>Payroll</span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: C.faint }}><path d="M9 6l6 6-6 6"/></svg>
+        <span onClick={() => navigate("/payroll/settings/bank")} style={{ cursor: "pointer", color: C.tealInk, fontWeight: 500 }}>Settings</span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: C.faint }}><path d="M9 6l6 6-6 6"/></svg>
+        <span style={{ color: C.ink, fontWeight: 600 }}>Connect bank account · {labels[step]}</span>
       </div>
-      <button onClick={() => navigate("/payroll/settings/bank")} style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "7px 13px", fontWeight: 500, fontSize: 12.5, cursor: "pointer", fontFamily: FONT }}>
-        Save & exit
-      </button>
     </div>
   );
 }
+
 
 // ============ PROGRESS STRIP ============
 function ProgressStrip({ step }) {
@@ -211,7 +207,7 @@ function TrustSidebar({ variant = "default" }) {
 
   return (
     <div style={{ minWidth: 0 }}>
-      <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "22px 24px", position: "sticky", top: 106 }}>
+      <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "22px 24px", position: "sticky", top: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, paddingBottom: 18, borderBottom: "1px solid " + C.lineSoft, marginBottom: 18 }}>
           <div style={{ width: 38, height: 38, borderRadius: 9, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 38px" }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2l8 4v6c0 5-3.5 9.5-8 10-4.5-.5-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
