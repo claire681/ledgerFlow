@@ -116,6 +116,7 @@ const COUNTRY_CONFIG = {
 function WorkLocationsSection({ businessCountry = "CA" }) {
   const [locations, setLocations] = useState([]);
   const [companyName, setCompanyName] = useState("");
+  const [confirmIntlChange, setConfirmIntlChange] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -310,7 +311,7 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
                   <span style={{ display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: C.muted, fontSize: 11.5 }}>{loc.municipality || ""}{loc.province ? ", " + loc.province : ""} {loc.postal_code || ""}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 12.5, color: C.text, fontWeight: 500, minWidth: 0 }}>
-                  {isIntl && <img src={"https://flagcdn.com/w40/" + ((COUNTRY_CONFIG[(loc.country || "CA").toUpperCase()] || COUNTRY_CONFIG.OTHER).iso) + ".png"} alt="" style={{ width: 22, height: 16, borderRadius: 2, objectFit: "cover", boxShadow: "0 0 0 1px rgba(0,0,0,.06)", flex: "0 0 22px" }} />}
+                  
                   <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{loc.province || ""}{isIntl && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", color: "#9C5A0F", background: "#FBF1DD", padding: "1px 5px", borderRadius: 3, marginLeft: 6 }}>INTL</span>}</span>
                 </div>
                 
@@ -413,7 +414,7 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
                 {/* International override link (only shown if not already in intlMode) */}
                 {!intlMode && (
                   <div style={{ textAlign: "center", marginTop: 14, padding: "10px 0", fontSize: 11.5, color: C.muted }}>
-                    Located outside <strong style={{ color: C.ink }}>{companyConfig.name}</strong>? <span onClick={() => { const newCountry = (businessCountry || "CA").toUpperCase() === "CA" ? "US" : "CA"; setIntlMode(true); setForm({ ...form, country: newCountry, province: "" }); }} style={{ color: C.tealInk, cursor: "pointer", fontWeight: 500 }}>Add as international location ›</span>
+                    Located outside <strong style={{ color: C.ink }}>{companyConfig.name}</strong>? <span onClick={() => { if (editingId) { setConfirmIntlChange(true); } else { const newCountry = (businessCountry || "CA").toUpperCase() === "CA" ? "US" : "CA"; setIntlMode(true); setForm({ ...form, country: newCountry, province: "" }); } }} style={{ color: C.tealInk, cursor: "pointer", fontWeight: 500 }}>Add as international location ›</span>
                   </div>
                 )}
               </div>
@@ -448,6 +449,19 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
             </div>
           </div>
         </>, document.body)}
+
+      {/* International change confirmation modal */}
+      {confirmIntlChange && createPortal(
+        <div onClick={() => setConfirmIntlChange(false)} style={{ position: "fixed", inset: 0, background: "rgba(10,26,30,.42)", zIndex: 2000, display: "grid", placeItems: "center" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 12, padding: "24px 28px", maxWidth: 460, width: "90%", boxShadow: "0 24px 60px rgba(0,0,0,.3)" }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: C.ink, marginBottom: 8 }}>Change this location to international?</h3>
+            <p style={{ fontSize: 13, color: C.muted, marginBottom: 20, lineHeight: 1.55 }}>You are about to change this location from {companyConfig.name} to a different country. The province/state and postal code will need to be re-entered to match the new country.</p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button onClick={() => setConfirmIntlChange(false)} style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "9px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Keep as {companyConfig.name}</button>
+              <button onClick={() => { const newCountry = (businessCountry || "CA").toUpperCase() === "CA" ? "US" : "CA"; setIntlMode(true); setForm({ ...form, country: newCountry, province: "", postal_code: "" }); setConfirmIntlChange(false); }} style={{ background: C.ink, color: "#fff", border: 0, borderRadius: 6, padding: "9px 20px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Yes, change to international</button>
+            </div>
+          </div>
+        </div>, document.body)}
 
       {/* Delete confirmation modal */}
       {confirmDelete && createPortal(
