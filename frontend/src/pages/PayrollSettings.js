@@ -237,7 +237,6 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
       {/* Company context strip */}
       <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 8, padding: "10px 14px", marginBottom: 18, display: "flex", alignItems: "center", gap: 11, fontSize: 12, color: C.muted }}>
         <span style={{ fontSize: 10, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase" }}>Your company</span>
-        <img src={"https://flagcdn.com/w40/" + companyConfig.iso + ".png"} alt="" style={{ width: 22, height: 16, borderRadius: 2, objectFit: "cover", flex: "0 0 22px", boxShadow: "0 0 0 1px rgba(0,0,0,.06)" }} />
         <strong style={{ color: C.ink, fontWeight: 600 }}>{companyName || "Your company"}</strong>
         <span style={{ fontSize: 11.5, color: C.muted }}>· {companyConfig.name}</span>
         <span style={{ marginLeft: "auto", fontSize: 11.5, color: C.tealInk, cursor: "pointer", fontWeight: 500 }} onClick={() => window.location.href = "/payroll/settings/company"}>Change in Company details ›</span>
