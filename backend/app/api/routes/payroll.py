@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, date
 from typing import Optional, Dict, Any, List
 from decimal import Decimal
 import uuid
+from uuid import UUID
 import secrets
 import os
 import traceback
@@ -44,6 +45,7 @@ class EmployeeCreateBody(BaseModel):
     department: Optional[str] = None
     employee_number: Optional[str] = None
     notes: Optional[str] = None
+    work_location_id: Optional[UUID] = None
 
 
 class EmployeeUpdateBody(BaseModel):
@@ -88,6 +90,7 @@ class EmployeeUpdateBody(BaseModel):
     emergency_contact_phone: Optional[str] = None
     emergency_contact_email: Optional[str] = None
     notes: Optional[str] = None
+    work_location_id: Optional[UUID] = None
 
 
 class EmployeeSelfCompleteBody(BaseModel):
