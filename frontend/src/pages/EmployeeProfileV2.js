@@ -470,7 +470,7 @@ export default function EmployeeProfileV2() {
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {sections.map(function(s) {
             return (
-              <Section key={s.id} section={s} values={values} draft={draft} country={country}
+              <Section workLocations={workLocations} key={s.id} section={s} values={values} draft={draft} country={country}
                 isOpen={openId === s.id} isEditing={editingId === s.id} isSaving={savingId === s.id}
                 disabledByOtherEdit={!!editingId && editingId !== s.id}
                 fieldErrors={fieldErrors}
@@ -529,7 +529,7 @@ function Rail({ sections, values, openId, onPick, editingId }) {
   );
 }
 
-function Section({ section, values, draft, country, isOpen, isEditing, isSaving, disabledByOtherEdit, fieldErrors, onToggleOpen, onEdit, onCancel, onSave, onChange }) {
+function Section({ section, values, draft, country, isOpen, isEditing, isSaving, disabledByOtherEdit, fieldErrors, onToggleOpen, onEdit, onCancel, onSave, onChange, workLocations }) {
   const Icon = section.icon;
   const status = sectionStatus(section, values);
   const pill = status === "done" ? { bg: C.greenSoft, fg: C.green, label: "Done" }
