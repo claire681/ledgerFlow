@@ -618,7 +618,15 @@ function FieldEditor({ field, value, error, onChange }) {
         {field.opts.map(function(o) { return <option key={o} value={o}>{o}</option>; })}
       </select>
     );
-  } else if (field.t === "money") {
+  } else if (field.t === "wloc-select") {
+    const locs = field.workLocations || [];
+    control = (
+        <select value={v} onChange={function(e) { onChange(e.target.value); }} style={Object.assign({}, common, { cursor: "pointer" })}>
+            <option value="">Select a location</option>
+            {locs.map(function(loc) { return <option key={loc.id} value={loc.id}>{loc.name || "(Unnamed location)"}</option>; })}
+        </select>
+    );
+} else if (field.t === "money") {
     control = (
       <div style={{ position: "relative" }}>
         <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: C.muted, fontSize: 14 }}>$</span>
