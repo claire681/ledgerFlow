@@ -115,6 +115,7 @@ const COUNTRY_CONFIG = {
 
 function WorkLocationsSection({ businessCountry = "CA" }) {
   const [locations, setLocations] = useState([]);
+  const [companyName, setCompanyName] = useState("");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -140,6 +141,13 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
   };
 
   useEffect(() => { loadLocations(); }, []);
+
+  useEffect(() => {
+    fetch(API_URL + "/api/v1/company/profile", { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d && d.company_name) setCompanyName(d.company_name); })
+      .catch(() => {});
+  }, []);
 
   // === Open drawer for new ===
   const openNew = () => {
@@ -222,7 +230,8 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
       <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 8, padding: "10px 14px", marginBottom: 18, display: "flex", alignItems: "center", gap: 11, fontSize: 12, color: C.muted }}>
         <span style={{ fontSize: 10, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase" }}>Your company</span>
         <img src={"https://flagcdn.com/w40/" + companyConfig.iso + ".png"} alt="" style={{ width: 22, height: 16, borderRadius: 2, objectFit: "cover", flex: "0 0 22px", boxShadow: "0 0 0 1px rgba(0,0,0,.06)" }} />
-        <strong style={{ color: C.ink, fontWeight: 600 }}>{companyConfig.name}</strong>
+        <strong style={{ color: C.ink, fontWeight: 600 }}>{companyName || "Your company"}</strong>
+        <span style={{ fontSize: 11.5, color: C.muted }}>· {companyConfig.name}</span>
         <span style={{ marginLeft: "auto", fontSize: 11.5, color: C.tealInk, cursor: "pointer", fontWeight: 500 }} onClick={() => window.location.href = "/payroll/settings/company"}>Change in Company details ›</span>
       </div>
 
@@ -336,16 +345,7 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
                 <div style={{ fontSize: 11, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Address</div>
 
                 {/* Country indicator (default) or override panel */}
-                {!intlMode ? (
-                  <div style={{ marginBottom: 18 }}>
-                    <label style={{ fontSize: 12.5, fontWeight: 600, color: C.ink, display: "block", marginBottom: 6 }}>Country</label>
-                    <div style={{ background: C.surface2 || "#F4F6F8", border: "1px solid " + C.line, borderRadius: 6, padding: "9px 12px", display: "flex", alignItems: "center", gap: 10, fontSize: 12.5, color: C.muted }}>
-                      <img src={"https://flagcdn.com/w40/" + companyConfig.iso + ".png"} alt="" style={{ width: 22, height: 16, borderRadius: 2, objectFit: "cover", flex: "0 0 22px" }} />
-                      <strong style={{ color: C.ink, fontWeight: 600 }}>{companyConfig.name}</strong>
-                      <span style={{ fontSize: 11.5, color: C.muted, marginLeft: "auto" }}>from your company profile</span>
-                    </div>
-                  </div>
-                ) : (
+                {!intlMode ? null : (
                   <div style={{ background: "#FBF1DD", border: "1px solid #E8C896", borderRadius: 8, padding: "14px 16px", marginBottom: 18 }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                       <strong style={{ fontSize: 12.5, color: "#9C5A0F", fontWeight: 600 }}>International location</strong>
