@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ChevronRight, ChevronLeft, Building2, Calendar, FileText, Landmark,
-  Plus, MapPin, CheckCircle2, AlertTriangle,
+  Plus, MapPin, CheckCircle2, AlertTriangle, Search, Shield,
 } from "lucide-react";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -59,7 +59,7 @@ const SECTIONS = [
   { id: "schedule", group: "Setup", label: "Pay schedule", Icon: IconCalendarCheck },
   { id: "tax", group: "Setup", label: "Tax registration", Icon: IconReceipt },
   { id: "bank", group: "Setup", label: "Bank account", Icon: IconBankColumns },
-  { id: "items", group: "Payroll items", label: "Pay types & deductions", Icon: IconStackedCoins, comingSoon: true },
+  { id: "items", group: "Payroll items", label: "Pay types & deductions", Icon: IconStackedCoins },
   { id: "locations", group: "Payroll items", label: "Work locations", Icon: IconOfficeBuilding },
   { id: "review", group: "Final step", label: "Review & authorize", Icon: IconClipboardSign, comingSoon: true },
 ];
@@ -478,6 +478,250 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
   );
 }
 
+
+// ===== Pay Types & Deductions section (read-only catalog v1, drawer coming) =====
+function PayTypesSection({ businessCountry = "CA" }) {
+  const [payTypes, setPayTypes] = React.useState([]);
+  const [deductions, setDeductions] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [activeTab, setActiveTab] = React.useState("earnings");
+  const [search, setSearch] = React.useState("");
+
+  React.useEffect(function() {
+    async function load() {
+      try {
+        const [ptRes, dtRes] = await Promise.all([
+          fetch(API_URL + "/api/v1/pay-types", { headers: authHeaders() }),
+          fetch(API_URL + "/api/v1/deduction-types", { headers: authHeaders() }),
+        ]);
+        if (ptRes.ok) setPayTypes(await ptRes.json());
+        if (dtRes.ok) setDeductions(await dtRes.json());
+      } catch (err) {
+        console.error("Failed to load pay types", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const businessCountryUpper = (businessCountry || "CA").toUpperCase();
+  const companyConfig = COUNTRY_CONFIG[businessCountryUpper] || COUNTRY_CONFIG.CA;
+
+  // Filter by search term
+  const filterFn = function(item) {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (item.name || "").toLowerCase().includes(q) || (item.description || "").toLowerCase().includes(q);
+  };
+  const filteredPayTypes = payTypes.filter(filterFn);
+  const filteredDeductions = deductions.filter(filterFn);
+
+  const defaultPayTypeCount = payTypes.filter(function(p) { return p.is_default; }).length;
+  const customPayTypeCount = payTypes.length - defaultPayTypeCount;
+  const defaultDeductionCount = deductions.filter(function(d) { return d.is_default; }).length;
+  const customDeductionCount = deductions.length - defaultDeductionCount;
+
+  // Format calc method for display
+  function formatCalc(item, isDeduction) {
+    const method = item.calc_method;
+    const rate = isDeduction ? item.default_amount : item.default_rate;
+    const unit = item.unit_label || "";
+
+    if (method === "fixed") {
+      return rate != null ? { main: Number(rate).toFixed(2), suffix: unit } : { main: "Fixed", suffix: "" };
+    }
+    if (method === "rate_hours") {
+      return rate != null ? { main: Number(rate).toFixed(2), suffix: unit || "per hour" } : { main: "Rate", suffix: "x hours" };
+    }
+    if (method === "rate_units") {
+      return rate != null ? { main: Number(rate).toFixed(2), suffix: unit } : { main: "Rate", suffix: "x units" };
+    }
+    if (method === "percent_gross") {
+      return rate != null ? { main: Number(rate).toFixed(2), suffix: "% of gross" } : { main: "%", suffix: "of gross" };
+    }
+    return { main: "Variable", suffix: "" };
+  }
+
+  // Format tax treatment as prose
+  function formatTaxTreatment(pt) {
+    const flags = [];
+    if (pt.federal_taxable) flags.push("Federal");
+    if (pt.cpp_contributable) flags.push("CPP");
+    if (pt.ei_insurable) flags.push("EI");
+    if (pt.vacationable) flags.push("Vacation");
+
+    if (flags.length === 0) {
+      return { primary: "Non-taxable reimbursement", secondary: null, nonTax: true };
+    }
+    if (pt.federal_taxable && pt.cpp_contributable && pt.ei_insurable && pt.vacationable) {
+      return { primary: "Fully taxable", secondary: "Federal, CPP, EI, Vacation", nonTax: false };
+    }
+    if (pt.federal_taxable && pt.cpp_contributable && pt.ei_insurable && !pt.vacationable) {
+      return { primary: "Taxable, non-vacationable", secondary: "Federal, CPP, EI", nonTax: false };
+    }
+    return { primary: "Partially taxable", secondary: flags.join(", "), nonTax: false };
+  }
+
+  function formatDeductionTreatment(d) {
+    const parts = [];
+    if (d.is_pre_tax) parts.push("Pre-tax");
+    else parts.push("Post-tax");
+    if (d.employer_matched) {
+      parts.push(d.calc_method === "fixed" ? "employer shared" : "employer matched");
+    }
+    const secondary = d.is_pre_tax ? "Reduces federal taxable income" : null;
+    return { primary: parts.join(", "), secondary: secondary };
+  }
+
+  if (loading) {
+    return React.createElement("div", { style: { padding: 60, textAlign: "center", color: C.muted, fontSize: 13 } }, "Loading pay types...");
+  }
+
+  return (
+    <div>
+
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, marginBottom: 8, paddingBottom: 24, borderBottom: "1px solid " + C.line }}>
+        <div style={{ flex: 1, maxWidth: 560 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 600, color: C.ink, letterSpacing: "-0.018em", marginBottom: 6 }}>Pay types &amp; deductions</h1>
+          <p style={{ fontSize: 13.5, color: C.muted, lineHeight: 1.6 }}>Define the earnings and deductions that drive every pay run. Each item carries the tax treatment rules Novala applies automatically when you process payroll.</p>
+        </div>
+        <button style={{ background: "#0E1A1A", color: "#fff", border: 0, borderRadius: 6, padding: "10px 16px", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 7, boxShadow: "0 1px 2px rgba(10,26,30,.08)", opacity: 0.5 }}>
+          <Plus size={13} strokeWidth={2.2} />
+          New item
+        </button>
+      </div>
+
+      {/* Context strip */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 0 24px", fontSize: 12, color: C.muted, borderBottom: "1px solid " + C.line, marginBottom: 32 }}>
+        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#0D8050", flex: "0 0 5px" }}></span>
+        <span>Configured for <strong style={{ color: C.ink, fontWeight: 600 }}>{companyConfig.name}</strong>. Tax flags follow CRA payroll rules.</span>
+        <span style={{ color: C.line, fontSize: 16, lineHeight: 1 }}>·</span>
+        <span>{payTypes.length + deductions.length} items configured</span>
+      </div>
+
+      {/* Summary cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 32 }}>
+        <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "18px 20px" }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: C.faint, letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 8 }}>Earnings configured</div>
+          <div style={{ fontSize: 24, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em", fontFamily: "'JetBrains Mono', monospace", lineHeight: 1, marginBottom: 6 }}>{payTypes.length}</div>
+          <div style={{ fontSize: 12, color: C.muted }}>{defaultPayTypeCount} default · {customPayTypeCount} custom</div>
+        </div>
+        <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "18px 20px" }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: C.faint, letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 8 }}>Deductions configured</div>
+          <div style={{ fontSize: 24, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em", fontFamily: "'JetBrains Mono', monospace", lineHeight: 1, marginBottom: 6 }}>{deductions.length}</div>
+          <div style={{ fontSize: 12, color: C.muted }}>{defaultDeductionCount} default · {customDeductionCount} custom</div>
+        </div>
+        <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "18px 20px" }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: C.faint, letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 8 }}>In active use</div>
+          <div style={{ fontSize: 24, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em", fontFamily: "'JetBrains Mono', monospace", lineHeight: 1, marginBottom: 6 }}>{payTypes.filter(function(p) { return p.is_active; }).length + deductions.filter(function(d) { return d.is_active; }).length}</div>
+          <div style={{ fontSize: 12, color: C.muted }}>across your employees</div>
+        </div>
+      </div>
+
+      {/* Segment control */}
+      <div style={{ display: "inline-flex", background: C.surface2 || "#F4F6F8", borderRadius: 8, padding: 3, marginBottom: 20 }}>
+        <button onClick={() => setActiveTab("earnings")} style={{ padding: "7px 16px", fontSize: 13, fontWeight: activeTab === "earnings" ? 600 : 500, color: activeTab === "earnings" ? C.ink : C.muted, cursor: "pointer", borderRadius: 6, fontFamily: FONT, background: activeTab === "earnings" ? "#fff" : "transparent", border: 0, display: "inline-flex", alignItems: "center", gap: 7, boxShadow: activeTab === "earnings" ? "0 1px 2px rgba(10,26,30,.08)" : "none" }}>
+          Earnings <span style={{ fontSize: 11.5, fontWeight: 600, color: activeTab === "earnings" ? C.muted : C.faint, background: C.surface2 || "#F4F6F8", padding: "1px 7px", borderRadius: 10 }}>{payTypes.length}</span>
+        </button>
+        <button onClick={() => setActiveTab("deductions")} style={{ padding: "7px 16px", fontSize: 13, fontWeight: activeTab === "deductions" ? 600 : 500, color: activeTab === "deductions" ? C.ink : C.muted, cursor: "pointer", borderRadius: 6, fontFamily: FONT, background: activeTab === "deductions" ? "#fff" : "transparent", border: 0, display: "inline-flex", alignItems: "center", gap: 7, boxShadow: activeTab === "deductions" ? "0 1px 2px rgba(10,26,30,.08)" : "none" }}>
+          Deductions <span style={{ fontSize: 11.5, fontWeight: 600, color: activeTab === "deductions" ? C.muted : C.faint, background: C.surface2 || "#F4F6F8", padding: "1px 7px", borderRadius: 10 }}>{deductions.length}</span>
+        </button>
+      </div>
+
+      {/* Toolbar */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>All {activeTab === "earnings" ? "earnings" : "deductions"}</span>
+          <span style={{ fontSize: 12, color: C.muted, fontVariantNumeric: "tabular-nums" }}>
+            {activeTab === "earnings" ? filteredPayTypes.length : filteredDeductions.length} items
+          </span>
+        </div>
+        <div style={{ position: "relative" }}>
+          <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: C.faint, pointerEvents: "none" }} />
+          <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ padding: "8px 12px 8px 36px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 12.5, color: C.ink, width: 240, outline: "none", background: "#fff" }} />
+        </div>
+      </div>
+
+      {/* Table */}
+      <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, overflow: "hidden" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.2fr 56px", gap: 18, padding: "13px 22px", background: "#FCFCFD", borderBottom: "1px solid " + C.line, fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+          <div>Name</div>
+          <div>Calculation</div>
+          <div>Tax treatment</div>
+          <div></div>
+        </div>
+
+        {activeTab === "earnings" && filteredPayTypes.map(function(pt) {
+          const calc = formatCalc(pt, false);
+          const tax = formatTaxTreatment(pt);
+          return (
+            <div key={pt.id} style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.2fr 56px", gap: 18, padding: "16px 22px", borderBottom: "1px solid " + C.lineSoft, alignItems: "center", cursor: "pointer" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: tax.nonTax ? C.faint : "#0D8050", flex: "0 0 8px" }}></div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.ink, marginBottom: 2, letterSpacing: "-0.005em" }}>{pt.name}</div>
+                  <div style={{ fontSize: 12, color: C.muted, fontWeight: 400 }}>{pt.description || (pt.is_default ? "" : "Custom")}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 13, color: C.ink, fontWeight: 500, fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums" }}>
+                {calc.main}{calc.suffix && <span style={{ color: C.faint, fontWeight: 400, fontFamily: FONT, marginLeft: 2, fontSize: 11.5 }}> {calc.suffix}</span>}
+              </div>
+              <div style={{ fontSize: 12.5, color: C.text }}>
+                <span style={{ fontWeight: 500, color: tax.nonTax ? C.muted : C.ink, fontStyle: tax.nonTax ? "italic" : "normal" }}>{tax.primary}</span>
+                {tax.secondary && <span style={{ color: C.muted, fontSize: 11.5, marginTop: 2, display: "block" }}>{tax.secondary}</span>}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", color: C.faint, fontSize: 11 }}>
+                <span style={{ fontSize: 16 }}>⋮</span>
+              </div>
+            </div>
+          );
+        })}
+
+        {activeTab === "deductions" && filteredDeductions.map(function(d) {
+          const calc = formatCalc(d, true);
+          const tax = formatDeductionTreatment(d);
+          return (
+            <div key={d.id} style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.2fr 56px", gap: 18, padding: "16px 22px", borderBottom: "1px solid " + C.lineSoft, alignItems: "center", cursor: "pointer" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: "#9C5A0F", flex: "0 0 8px" }}></div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.ink, marginBottom: 2, letterSpacing: "-0.005em" }}>{d.name}</div>
+                  <div style={{ fontSize: 12, color: C.muted, fontWeight: 400 }}>{d.description || (d.is_default ? "" : "Custom")}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 13, color: C.ink, fontWeight: 500, fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums" }}>
+                {calc.main}{calc.suffix && <span style={{ color: C.faint, fontWeight: 400, fontFamily: FONT, marginLeft: 2, fontSize: 11.5 }}> {calc.suffix}</span>}
+              </div>
+              <div style={{ fontSize: 12.5, color: C.text }}>
+                <span style={{ fontWeight: 500, color: C.ink }}>{tax.primary}</span>
+                {tax.secondary && <span style={{ color: C.muted, fontSize: 11.5, marginTop: 2, display: "block" }}>{tax.secondary}</span>}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", color: C.faint, fontSize: 11 }}>
+                <span style={{ fontSize: 16 }}>⋮</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer note */}
+      <div style={{ marginTop: 24, padding: "18px 22px", background: "#fff", border: "1px solid " + C.line, borderRadius: 10, display: "flex", alignItems: "flex-start", gap: 14, fontSize: 12.5, color: C.muted, lineHeight: 1.6 }}>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: C.surface2 || "#F4F6F8", color: "#2A3F45", display: "grid", placeItems: "center", flex: "0 0 32px" }}>
+          <Shield size={16} strokeWidth={1.8} />
+        </div>
+        <div>
+          <strong style={{ color: C.ink, fontWeight: 600, display: "block", marginBottom: 2 }}>How tax treatment drives your payroll</strong>
+          Each item's tax flags tell Novala which earnings count toward CPP, EI, and federal tax, and which deductions reduce taxable income. Default settings match current CRA rules. Add and edit coming soon.
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
+
 export default function PayrollSettings() {
   const navigate = useNavigate();
   const { section } = useParams();
@@ -531,7 +775,8 @@ export default function PayrollSettings() {
           {activeId === "tax" && <TaxRegistrationSection businessCountry={businessCountry} />}
           {activeId === "bank" && <BankAccountSection />}
           {activeId === "locations" && <WorkLocationsSection businessCountry={businessCountry} />}
-                    {(activeId === "items" || activeId === "review") && <ComingSoonSection title={SECTIONS.find(s => s.id === activeId)?.label} />}
+                    {activeId === "items" && <PayTypesSection businessCountry={businessCountry} />}
+          {activeId === "review" && <ComingSoonSection title={SECTIONS.find(s => s.id === activeId)?.label} />}
         </div>
       </div>
     </div>
