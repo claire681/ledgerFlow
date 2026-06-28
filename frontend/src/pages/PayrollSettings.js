@@ -181,6 +181,13 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
   // === Save ===
   const onSave = async () => {
     if (!form.name?.trim()) { alert("Location name is required"); return; }
+    // Validate province matches selected country
+    const activeCountry = (intlMode ? form.country : businessCountry || "CA").toUpperCase();
+    const activeConfig = COUNTRY_CONFIG[activeCountry] || COUNTRY_CONFIG.OTHER;
+    if (activeConfig.subdivisions && form.province && !activeConfig.subdivisions.includes(form.province)) {
+      alert("The selected " + activeConfig.subdivLabel.toLowerCase() + " (" + form.province + ") is not valid for " + activeConfig.name + ". Please pick from the dropdown.");
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
@@ -353,12 +360,12 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
                   <div style={{ background: "#FBF1DD", border: "1px solid #E8C896", borderRadius: 8, padding: "14px 16px", marginBottom: 18 }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                       <strong style={{ fontSize: 12.5, color: "#9C5A0F", fontWeight: 600 }}>International location</strong>
-                      <span onClick={() => { setIntlMode(false); setForm({ ...form, country: businessCountry }); }} style={{ fontSize: 11, color: C.muted, cursor: "pointer" }}>Cancel override</span>
+                      <span onClick={() => { setIntlMode(false); setForm({ ...form, country: businessCountry, province: "" }); }} style={{ fontSize: 11, color: C.muted, cursor: "pointer" }}>Cancel override</span>
                     </div>
                     <div style={{ fontSize: 11.5, color: C.text, lineHeight: 1.55, marginBottom: 12 }}>
                       Use for locations outside <strong>{companyConfig.name}</strong>. Address fields will adapt to the chosen country's format and tax jurisdiction.
                     </div>
-                    <select value={form.country || "US"} onChange={(e) => setForm({ ...form, country: e.target.value })} style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "9px 12px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", outline: "none" }}>
+                    <select value={form.country || "US"} onChange={(e) => setForm({ ...form, country: e.target.value, province: "" })} style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "9px 12px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", outline: "none" }}>
                       {Object.keys(COUNTRY_CONFIG).filter(k => k !== (businessCountry || "CA").toUpperCase()).map(k => <option key={k} value={k}>{COUNTRY_CONFIG[k].name}</option>)}
                     </select>
                   </div>
@@ -406,7 +413,7 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
                 {/* International override link (only shown if not already in intlMode) */}
                 {!intlMode && (
                   <div style={{ textAlign: "center", marginTop: 14, padding: "10px 0", fontSize: 11.5, color: C.muted }}>
-                    Located outside <strong style={{ color: C.ink }}>{companyConfig.name}</strong>? <span onClick={() => { setIntlMode(true); setForm({ ...form, country: businessCountry === "CA" ? "US" : "CA" }); }} style={{ color: C.tealInk, cursor: "pointer", fontWeight: 500 }}>Add as international location ›</span>
+                    Located outside <strong style={{ color: C.ink }}>{companyConfig.name}</strong>? <span onClick={() => { const newCountry = (businessCountry || "CA").toUpperCase() === "CA" ? "US" : "CA"; setIntlMode(true); setForm({ ...form, country: newCountry, province: "" }); }} style={{ color: C.tealInk, cursor: "pointer", fontWeight: 500 }}>Add as international location ›</span>
                   </div>
                 )}
               </div>
