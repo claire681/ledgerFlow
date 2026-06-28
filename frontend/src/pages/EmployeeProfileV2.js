@@ -61,7 +61,8 @@ function buildSections(country) {
       { k: "jobTitle", l: "Job title", t: "text" },
       { k: "empType", l: "Employment type", t: "select", req: true, opts: ["Full-time","Part-time","Casual"] },
       { k: "startDate", l: "Start date", t: "date", req: true },
-      { k: "workLocation", l: "Work location", t: "text" },
+      { k: "workLocationId", l: "Work location", t: "wloc-select" },
+    { k: "department", l: "Department", t: "text" },
       { k: "manager", l: "Manager", t: "text" },
     ]},
     { id: "payment", title: "Payment method", icon: CreditCard, required: true, fields: [
@@ -138,7 +139,8 @@ function employeeToValues(emp, country) {
     jobTitle: emp.position_title || "",
     empType: empTypeMap[emp.employment_type] || emp.employment_type || "",
     startDate: formatDateForInput(emp.start_date),
-    workLocation: emp.department || "",
+    workLocationId: emp.work_location_id || "",
+    department: emp.department || "",
     manager: emp.manager_name || "",
     method: emp.account_type === "direct_deposit" ? "Direct deposit" : (emp.account_type === "cheque" ? "Cheque" : ""),
     institution: emp.bank_name || "",
@@ -197,7 +199,8 @@ function valuesToPatch(sectionId, v, currentEmp, country) {
       position_title: v.jobTitle || null,
       employment_type: empTypeMap[v.empType] || (v.empType || "full_time").toLowerCase().replace(/[- ]/g, "_"),
       start_date: v.startDate || null,
-      department: v.workLocation || null,
+      work_location_id: v.workLocationId || null,
+    department: v.department || null,
       manager_name: v.manager || null,
     };
   }
@@ -276,6 +279,12 @@ function formatMoney(v) {
 }
 
 function formatViewValue(field, value) {
+  if (field.t === "wloc-select") {
+    if (!value) return "";
+    const locs = field.workLocations || [];
+    const found = locs.find(function(l) { return l.id === value; });
+    return found ? (found.name || "(Unnamed)") : "";
+  }
   if (!isFilled(value)) return null;
   if (field.t === "money") return formatMoney(value);
   return String(value);
@@ -287,6 +296,13 @@ export default function EmployeeProfileV2() {
   const [employee, setEmployee] = useState(null);
   const [values, setValues] = useState({});
   const [draft, setDraft] = useState({});
+  const [workLocations, setWorkLocations] = useState([]);
+  useEffect(function() {
+    fetch(API_URL + "/api/v1/work-locations", { headers: authHeaders() })
+      .then(function(r) { return r.ok ? r.json() : []; })
+      .then(function(data) { setWorkLocations(data || []); })
+      .catch(function() {});
+  }, []);
   const [openId, setOpenId] = useState("personal");
   const [searchParams] = useSearchParams();
   useEffect(function() {
@@ -552,7 +568,7 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 18px", padding: "18px 0 4px" }}>
                 {visibleFields.map(function(f) {
                   return (
-                    <FieldEditor key={f.k} field={f} value={draft[f.k]} error={fieldErrors[f.k]} onChange={function(val) { onChange(f.k, val); }} />
+                    <FieldEditor key={f.k} field={f.t === "wloc-select" ? Object.assign({}, f, { workLocations: workLocations }) : f} value={draft[f.k]} error={fieldErrors[f.k]} onChange={function(val) { onChange(f.k, val); }} />
                   );
                 })}
               </div>
@@ -569,7 +585,7 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
           ) : (
             <div>
               {visibleFields.map(function(f) {
-                const display = formatViewValue(f, v[f.k]);
+                const display = formatViewValue(f.t === "wloc-select" ? Object.assign({}, f, { workLocations: workLocations }) : f, v[f.k]);
                 return (
                   <div key={f.k} style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, padding: "13px 0", borderBottom: "1px solid " + C.lineSoft }}>
                     <span style={{ fontSize: 13.5, color: C.muted }}>{f.l}</span>
