@@ -279,13 +279,13 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
         </div>
       ) : (
         <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 8, overflow: "hidden", marginBottom: 24 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 280px 180px 60px", gap: 14, padding: "11px 18px", background: C.surface2 || "#F4F6F8", borderBottom: "1px solid " + C.line, fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-            <div>Location</div><div>Address</div><div>Region</div><div></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 280px 140px 130px 60px", gap: 14, padding: "11px 18px", background: C.surface2 || "#F4F6F8", borderBottom: "1px solid " + C.line, fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            <div>Location</div><div>Address</div><div>Region</div><div>Headcount</div><div></div>
           </div>
           {filtered.map(loc => {
             const isIntl = loc.is_international;
             return (
-              <div key={loc.id} onClick={() => openEdit(loc)} style={{ display: "grid", gridTemplateColumns: "1fr 280px 180px 60px", gap: 14, padding: "14px 18px", borderBottom: "1px solid " + C.lineSoft, alignItems: "center", cursor: "pointer", background: isIntl ? "rgba(156,90,15,0.03)" : "#fff" }}>
+              <div key={loc.id} onClick={() => openEdit(loc)} style={{ display: "grid", gridTemplateColumns: "1fr 280px 140px 130px 60px", gap: 14, padding: "14px 18px", borderBottom: "1px solid " + C.lineSoft, alignItems: "center", cursor: "pointer", background: isIntl ? "rgba(156,90,15,0.03)" : "#fff" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
                   <div style={{ width: 36, height: 36, borderRadius: 8, background: C.surface2 || "#F4F6F8", color: "#1A2D32", display: "grid", placeItems: "center", flex: "0 0 36px", border: "1px solid " + C.line }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h.01M15 15h.01"/><path d="M10 21v-4h4v4"/></svg>
@@ -303,10 +303,14 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
                   <span style={{ display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: C.muted, fontSize: 11.5 }}>{loc.municipality || ""}{loc.province ? ", " + loc.province : ""} {loc.postal_code || ""}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 12.5, color: C.text, fontWeight: 500, minWidth: 0 }}>
-                  <img src={"https://flagcdn.com/w40/" + ((COUNTRY_CONFIG[(loc.country || "CA").toUpperCase()] || COUNTRY_CONFIG.OTHER).iso) + ".png"} alt="" style={{ width: 22, height: 16, borderRadius: 2, objectFit: "cover", boxShadow: "0 0 0 1px rgba(0,0,0,.06)", flex: "0 0 22px" }} />
+                  {isIntl && <img src={"https://flagcdn.com/w40/" + ((COUNTRY_CONFIG[(loc.country || "CA").toUpperCase()] || COUNTRY_CONFIG.OTHER).iso) + ".png"} alt="" style={{ width: 22, height: 16, borderRadius: 2, objectFit: "cover", boxShadow: "0 0 0 1px rgba(0,0,0,.06)", flex: "0 0 22px" }} />}
                   <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{loc.province || ""}{isIntl && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", color: "#9C5A0F", background: "#FBF1DD", padding: "1px 5px", borderRadius: 3, marginLeft: 6 }}>INTL</span>}</span>
                 </div>
                 
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: C.faint, flex: "0 0 14px" }}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                  {(loc.assigned_employees || []).length} {(loc.assigned_employees || []).length === 1 ? "employee" : "employees"}
+                </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
                   <button style={{ background: "none", border: "1px solid transparent", borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.muted, display: "grid", placeItems: "center" }} title="Edit">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
