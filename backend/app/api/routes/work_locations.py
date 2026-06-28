@@ -15,13 +15,17 @@ router = APIRouter(prefix="/work-locations", tags=["Work Locations"])
 
 # ----- Schemas -----
 class WorkLocationBase(BaseModel):
+    name: Optional[str] = None
     is_primary: Optional[bool] = False
     status: Optional[str] = "active"
     street_address: Optional[str] = None
+    suite: Optional[str] = None
     municipality: Optional[str] = None
     province: Optional[str] = None
     postal_code: Optional[str] = None
     country: Optional[str] = "CA"
+    phone: Optional[str] = None
+    is_international: Optional[bool] = False
 
 
 class WorkLocationCreate(WorkLocationBase):
@@ -29,13 +33,17 @@ class WorkLocationCreate(WorkLocationBase):
 
 
 class WorkLocationUpdate(BaseModel):
+    name: Optional[str] = None
     is_primary: Optional[bool] = None
     status: Optional[str] = None
     street_address: Optional[str] = None
+    suite: Optional[str] = None
     municipality: Optional[str] = None
     province: Optional[str] = None
     postal_code: Optional[str] = None
     country: Optional[str] = None
+    phone: Optional[str] = None
+    is_international: Optional[bool] = None
 
 
 class AssignedEmployeeOut(BaseModel):
@@ -50,13 +58,17 @@ class AssignedEmployeeOut(BaseModel):
 
 class WorkLocationOut(BaseModel):
     id: UUID
+    name: Optional[str] = None
     is_primary: bool
     status: str
     street_address: Optional[str] = None
+    suite: Optional[str] = None
     municipality: Optional[str] = None
     province: Optional[str] = None
     postal_code: Optional[str] = None
     country: str
+    phone: Optional[str] = None
+    is_international: bool = False
     created_at: datetime
     updated_at: datetime
     assigned_employees: List[AssignedEmployeeOut] = []
@@ -73,13 +85,17 @@ async def _hydrate(location: WorkLocation, db: AsyncSession) -> dict:
     emps = emp_result.scalars().all()
     return {
         "id": location.id,
+        "name": location.name,
         "is_primary": location.is_primary,
         "status": location.status,
         "street_address": location.street_address,
+        "suite": location.suite,
         "municipality": location.municipality,
         "province": location.province,
         "postal_code": location.postal_code,
         "country": location.country,
+        "phone": location.phone,
+        "is_international": location.is_international or False,
         "created_at": location.created_at,
         "updated_at": location.updated_at,
         "assigned_employees": [

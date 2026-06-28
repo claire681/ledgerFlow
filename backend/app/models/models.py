@@ -937,6 +937,12 @@ class WorkLocation(Base):
     postal_code = Column(String(20), nullable=True)
     country = Column(String(2), nullable=False, default="CA")
 
+    # Extended fields for full Work Locations UI
+    name = Column(String(200), nullable=True)
+    suite = Column(String(100), nullable=True)
+    phone = Column(String(50), nullable=True)
+    is_international = Column(Boolean, nullable=False, default=False)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime(timezone=True), nullable=True)
