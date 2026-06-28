@@ -729,6 +729,7 @@ class PayrollSettings(Base):
 
     # Active flag (set true when owner finishes setup)
     payroll_active = Column(Boolean, default=False)
+    bank_details = Column(JSONB, nullable=True, default=dict)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

@@ -350,11 +350,11 @@ function PayScheduleSection() {
     fetch(API_URL + "/api/v1/payroll/settings", { headers: authHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then(d => {
-        if (d && d.pay_schedule) {
+        if (d) {
           const initial = {
-            frequency: d.pay_schedule.frequency || "bi_weekly",
-            first_payday: d.pay_schedule.first_payday || d.pay_schedule.anchorPayDate || "",
-            period_end: d.pay_schedule.period_end || "",
+            frequency: d.default_pay_schedule || (d.pay_schedule && d.pay_schedule.frequency) || "bi_weekly",
+            first_payday: d.pay_period_anchor_date || (d.pay_schedule && (d.pay_schedule.first_payday || d.pay_schedule.anchorPayDate)) || "",
+            period_end: (d.pay_schedule && d.pay_schedule.period_end) || "",
           };
           setData(initial); setOriginal(initial);
         }
@@ -369,7 +369,11 @@ function PayScheduleSection() {
     setSaving(true);
     try {
       const res = await fetch(API_URL + "/api/v1/payroll/settings", {
-        method: "PATCH", headers: authHeaders(), body: JSON.stringify({ pay_schedule: data }),
+        method: "POST", headers: authHeaders(),
+          body: JSON.stringify({
+            default_pay_schedule: data.frequency,
+            pay_period_anchor_date: data.first_payday || null,
+          }),
       });
       if (res.ok) { setOriginal(data); }
     } catch (e) {}

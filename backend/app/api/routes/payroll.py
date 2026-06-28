@@ -130,6 +130,7 @@ class PayrollSettingsBody(BaseModel):
     business_number: Optional[str] = None
     ein: Optional[str] = None
     payroll_active: Optional[bool] = None
+    bank_details: Optional[Dict[str, Any]] = None
 
 
 # ============================================================================
@@ -190,6 +191,7 @@ def serialize_settings(s):
         "company_account_number_encrypted": s.company_account_number_encrypted,
         "business_number": s.business_number, "ein": s.ein,
         "payroll_active": s.payroll_active,
+        "bank_details": s.bank_details or {},
         "created_at": s.created_at.isoformat() if s.created_at else None,
         "updated_at": s.updated_at.isoformat() if s.updated_at else None,
     }
@@ -491,6 +493,8 @@ def serialize_pay_run(pr, stubs=None):
 
 
 def serialize_pay_stub(s):
+    # Pull the draft-only transient state (memo, skipped) out of calculation_snapshot
+    snap = s.calculation_snapshot or {}
     return {
         "id": str(s.id),
         "pay_run_id": str(s.pay_run_id),
@@ -499,12 +503,20 @@ def serialize_pay_stub(s):
         "employee_email": s.employee_email,
         "position_title": s.position_title,
         "pay_type": s.pay_type,
-        "hours_worked": float(s.hours_worked) if s.hours_worked is not None else None,
+        "hours_regular": float(s.hours_regular or 0),
+        "hours_overtime": float(s.hours_overtime or 0),
+        "hours_stat_holiday": float(s.hours_stat_holiday or 0),
+        "hours_vacation": float(s.hours_vacation or 0),
+        "hours_sick": float(s.hours_sick or 0),
         "hourly_rate": float(s.hourly_rate) if s.hourly_rate is not None else None,
-        "gross": float(s.gross or 0),
-        "deductions": s.deductions or {},
-        "deductions_total": float(s.deductions_total or 0),
-        "net": float(s.net or 0),
+        "salary_amount": float(s.salary_amount or 0),
+        "bonus": float(s.bonus or 0),
+        "commission": float(s.commission or 0),
+        "gross_pay": float(s.gross_pay or 0),
+        "total_employee_deductions": float(s.total_employee_deductions or 0),
+        "net_pay": float(s.net_pay or 0),
+        "memo": snap.get("memo", ""),
+        "skipped": snap.get("skipped", False),
         "currency": s.currency,
         "created_at": s.created_at.isoformat() if s.created_at else None,
     }
@@ -557,15 +569,16 @@ async def get_or_create_draft(
     pay_date_d = _dt.fromisoformat(pay_date).date() if isinstance(pay_date, str) else pay_date
 
     # Look for existing draft for this exact period
+    # Use the MOST RECENT draft if multiple exist (defensive — duplicates shouldn't happen but we won't crash if they do)
     result = await db.execute(
         select(PayRun).where(
             PayRun.owner_id == current_user.id,
             PayRun.pay_period_start == period_start_d,
             PayRun.pay_period_end == period_end_d,
             PayRun.status == "draft",
-        )
+        ).order_by(PayRun.created_at.desc()).limit(1)
     )
-    pr = result.scalar_one_or_none()
+    pr = result.scalars().first()
 
     if pr is None:
         # Create a new draft. Seed one PayStub per active employee.
