@@ -706,6 +706,7 @@ class PayrollSettings(Base):
     # Pay schedule
     default_pay_schedule = Column(String, nullable=False, default="bi_weekly")
     pay_period_anchor_date = Column(Date, nullable=True)
+    pay_schedule_config = Column(JSONB, nullable=True, default=dict)
 
     # Currency
     currency = Column(String, nullable=False, default="CAD")

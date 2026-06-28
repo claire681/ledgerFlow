@@ -341,90 +341,300 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
 
 // === Pay schedule section ===
 function PayScheduleSection() {
-  const [data, setData] = useState({ frequency: "bi_weekly", first_payday: "", period_end: "" });
-  const [original, setOriginal] = useState({ frequency: "bi_weekly", first_payday: "", period_end: "" });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+    const initialState = { frequency: "semi_monthly", first_payday: "", config: {} };
+    const [data, setData] = useState(initialState);
+    const [original, setOriginal] = useState(initialState);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetch(API_URL + "/api/v1/payroll/settings", { headers: authHeaders() })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (d) {
-          const initial = {
-            frequency: d.default_pay_schedule || (d.pay_schedule && d.pay_schedule.frequency) || "bi_weekly",
-            first_payday: d.pay_period_anchor_date || (d.pay_schedule && (d.pay_schedule.first_payday || d.pay_schedule.anchorPayDate)) || "",
-            period_end: (d.pay_schedule && d.pay_schedule.period_end) || "",
-          };
-          setData(initial); setOriginal(initial);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+    useEffect(() => {
+      fetch(API_URL + "/api/v1/payroll/settings", { headers: authHeaders() })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (d) {
+            const initial = {
+              frequency: d.default_pay_schedule || "semi_monthly",
+              first_payday: d.pay_period_anchor_date || "",
+              config: d.pay_schedule_config || {},
+            };
+            // Smart defaults for semi-monthly if config is empty
+            if (initial.frequency === "semi_monthly" && (!initial.config.first_day && !initial.config.second_day)) {
+              initial.config = { first_day: 15, second_day: "last" };
+            } else if (initial.frequency === "monthly" && !initial.config.day_of_month) {
+              initial.config = { day_of_month: "last_business" };
+            } else if ((initial.frequency === "weekly" || initial.frequency === "bi_weekly") && !initial.config.weekday) {
+              initial.config = { weekday: "Friday" };
+            }
+            setData(initial); setOriginal(initial);
+          }
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }, []);
 
-  const dirty = JSON.stringify(data) !== JSON.stringify(original);
+    const dirty = JSON.stringify(data) !== JSON.stringify(original);
 
-  const onSave = async () => {
-    setSaving(true);
-    try {
-      const res = await fetch(API_URL + "/api/v1/payroll/settings", {
-        method: "POST", headers: authHeaders(),
+    // Determine if all required fields are filled for the selected frequency
+    const isComplete = () => {
+      if (data.frequency === "weekly" || data.frequency === "bi_weekly") {
+        return !!(data.config.weekday && data.first_payday);
+      }
+      if (data.frequency === "semi_monthly") {
+        return !!(data.config.first_day && data.config.second_day);
+      }
+      if (data.frequency === "monthly") {
+        return !!data.config.day_of_month;
+      }
+      return false;
+    };
+
+    const onSave = async () => {
+      setSaving(true);
+      try {
+        const res = await fetch(API_URL + "/api/v1/payroll/settings", {
+          method: "POST", headers: authHeaders(),
           body: JSON.stringify({
             default_pay_schedule: data.frequency,
             pay_period_anchor_date: data.first_payday || null,
+            pay_schedule_config: data.config || {},
           }),
-      });
-      if (res.ok) { setOriginal(data); }
-    } catch (e) {}
-    setSaving(false);
-  };
-  const onDiscard = () => setData(original);
-  const set = (k, v) => setData(s => ({ ...s, [k]: v }));
+        });
+        if (res.ok) { setOriginal(data); }
+      } catch (e) {}
+      setSaving(false);
+    };
 
-  if (loading) return <div style={{ color: C.muted, fontSize: 13 }}>Loading...</div>;
+    const onDiscard = () => setData(original);
+    const setFreq = (f) => {
+      const newConfig = f === "semi_monthly" ? { first_day: 15, second_day: "last" }
+                      : f === "monthly" ? { day_of_month: "last_business" }
+                      : (f === "weekly" || f === "bi_weekly") ? { weekday: "Friday" }
+                      : {};
+      setData({ ...data, frequency: f, config: newConfig });
+    };
+    const setConfig = (k, v) => setData({ ...data, config: { ...data.config, [k]: v } });
+    const setFirstPayday = (v) => setData({ ...data, first_payday: v });
 
-  const FREQS = [
-    { id: "weekly", name: "Weekly", desc: "52 paydays per year" },
-    { id: "bi_weekly", name: "Bi-weekly", desc: "26 paydays per year" },
-    { id: "semi_monthly", name: "Semi-monthly", desc: "24 paydays per year (15th and end of month)" },
-    { id: "monthly", name: "Monthly", desc: "12 paydays per year" },
-  ];
+    if (loading) return <div style={{ color: C.muted, fontSize: 13 }}>Loading...</div>;
 
-  return (
-    <>
-      <SectionHead title="Pay schedule" subtitle="How often paydays happen and what time period each pay run covers. Used to count down to payday and lock the correct pay period." />
-      <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "24px 26px" }}>
-        <CardSection label="Pay frequency">
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
-            {FREQS.map(f => (
-              <div key={f.id} onClick={() => set("frequency", f.id)}
-                style={{ padding: 14, border: "1px solid " + (data.frequency === f.id ? C.teal : C.line), borderRadius: 8, cursor: "pointer", background: data.frequency === f.id ? C.tealSoft : "#fff", transition: "0.12s" }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: C.ink, marginBottom: 3 }}>{f.name}</div>
-                <div style={{ fontSize: 11.5, color: C.muted }}>{f.desc}</div>
+    // === Compute upcoming paydays based on current data ===
+    const computeUpcomingPaydays = () => {
+      if (!isComplete()) return [];
+      const today = new Date();
+      const paydays = [];
+
+      if (data.frequency === "semi_monthly") {
+        const firstDay = parseInt(data.config.first_day);
+        const secondDay = data.config.second_day;
+        const cursor = new Date(today.getFullYear(), today.getMonth(), 1);
+        for (let i = 0; i < 6 && paydays.length < 3; i++) {
+          const m = new Date(cursor.getFullYear(), cursor.getMonth() + i, 1);
+          // First payday
+          const d1 = new Date(m.getFullYear(), m.getMonth(), firstDay);
+          if (d1 >= today) paydays.push(d1);
+          if (paydays.length >= 3) break;
+          // Second payday
+          let d2;
+          if (secondDay === "last") {
+            d2 = new Date(m.getFullYear(), m.getMonth() + 1, 0); // last day of month
+          } else {
+            d2 = new Date(m.getFullYear(), m.getMonth(), parseInt(secondDay));
+          }
+          if (d2 >= today) paydays.push(d2);
+        }
+      } else if (data.frequency === "monthly") {
+        for (let i = 0; i < 6 && paydays.length < 3; i++) {
+          const m = new Date(today.getFullYear(), today.getMonth() + i, 1);
+          let d;
+          if (data.config.day_of_month === "last" || data.config.day_of_month === "last_business") {
+            d = new Date(m.getFullYear(), m.getMonth() + 1, 0);
+            if (data.config.day_of_month === "last_business") {
+              while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
+            }
+          } else {
+            d = new Date(m.getFullYear(), m.getMonth(), parseInt(data.config.day_of_month) || 1);
+          }
+          if (d >= today) paydays.push(d);
+        }
+      } else if (data.frequency === "weekly" || data.frequency === "bi_weekly") {
+        if (!data.first_payday) return [];
+        const interval = data.frequency === "weekly" ? 7 : 14;
+        let d = new Date(data.first_payday + "T12:00:00");
+        while (d < today) d.setDate(d.getDate() + interval);
+        for (let i = 0; i < 3; i++) {
+          paydays.push(new Date(d));
+          d.setDate(d.getDate() + interval);
+        }
+      }
+      return paydays.slice(0, 3);
+    };
+
+    const upcoming = computeUpcomingPaydays();
+    const formatDate = (d) => d.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
+    const formatFullDate = (d) => d.toLocaleDateString("en-US", { weekday: "long", year: "numeric" });
+    const daysFromNow = (d) => {
+      const today = new Date(); today.setHours(0,0,0,0);
+      const target = new Date(d); target.setHours(0,0,0,0);
+      const diff = Math.round((target - today) / (1000 * 60 * 60 * 24));
+      if (diff === 0) return "Today";
+      if (diff === 1) return "Tomorrow";
+      return "In " + diff + " days";
+    };
+
+    const inputStyle = { width: "100%", fontFamily: FONT, fontSize: 14, color: C.ink, padding: "11px 14px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", outline: "none" };
+    const labelStyle = { fontSize: 12.5, fontWeight: 600, color: C.ink, display: "block", marginBottom: 6 };
+
+    const FREQS = [
+      { id: "weekly", name: "Weekly", meta: "52 paydays per year · same weekday every week" },
+      { id: "bi_weekly", name: "Bi-weekly", meta: "26 paydays per year · every 2 weeks, dates shift" },
+      { id: "semi_monthly", name: "Semi-monthly", meta: "24 paydays per year · 2 fixed dates per month" },
+      { id: "monthly", name: "Monthly", meta: "12 paydays per year · one date per month" },
+    ];
+
+    return (
+      <>
+        <SectionHead title="Pay schedule" subtitle="How often paydays happen and what dates each pay period covers. Used to count down to payday and calculate the right pay period for each run." />
+
+        {/* Why this matters callout */}
+        <div style={{ background: C.tealSoft, borderLeft: "2px solid " + C.teal, borderRadius: "0 8px 8px 0", padding: "14px 18px", marginBottom: 18, display: "flex", alignItems: "flex-start", gap: 11 }}>
+          <div style={{ width: 24, height: 24, borderRadius: 5, background: "#fff", color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 24px", marginTop: 1, border: "1px solid #C9E5DD" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+          </div>
+          <div style={{ flex: 1, fontSize: 12.5, color: C.tealInk, lineHeight: 1.6 }}>
+            <strong style={{ color: C.tealInk, fontWeight: 600, display: "block", marginBottom: 3 }}>Configure how your company pays employees</strong>
+            Pay schedules vary by country and company. Pick the frequency that matches your existing process. If you're starting fresh, semi-monthly (15th &amp; end of month) is the most common in North America.
+          </div>
+        </div>
+
+        <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "24px 26px" }}>
+
+          {/* Pay frequency cards */}
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid " + C.lineSoft }}>Pay frequency</div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              {FREQS.map(f => {
+                const selected = data.frequency === f.id;
+                return (
+                  <div key={f.id} onClick={() => setFreq(f.id)} style={{ background: "#fff", border: "1.5px solid " + (selected ? C.ink : C.line), borderRadius: 10, padding: "18px 20px", cursor: "pointer", transition: ".12s", boxShadow: selected ? "0 0 0 3px rgba(10,26,30,.06)" : "none" }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 15, fontWeight: 600, color: C.ink, letterSpacing: "-0.005em", marginBottom: 2 }}>{f.name}</div>
+                        <div style={{ fontSize: 11.5, color: C.muted, fontVariantNumeric: "tabular-nums" }}>{f.meta}</div>
+                      </div>
+                      <div style={{ width: 18, height: 18, borderRadius: "50%", border: "1.5px solid " + (selected ? C.ink : C.line), background: selected ? C.ink : "#fff", flex: "0 0 18px", display: "grid", placeItems: "center", marginTop: 1 }}>
+                        {selected && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#fff" }} />}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Frequency-specific inputs */}
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid " + C.lineSoft }}>
+              {data.frequency === "semi_monthly" ? "Semi-monthly schedule" : data.frequency === "monthly" ? "Monthly schedule" : data.frequency === "weekly" ? "Weekly schedule" : "Bi-weekly schedule"}
+            </div>
+
+            {(data.frequency === "weekly" || data.frequency === "bi_weekly") && (
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                  <div>
+                    <label style={labelStyle}>Payday weekday <span style={{ color: "#B53B2E", fontSize: 11 }}>required</span></label>
+                    <select value={data.config.weekday || ""} onChange={(e) => setConfig("weekday", e.target.value)} style={inputStyle}>
+                      <option value="">Select day...</option>
+                      <option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>First payday under this schedule <span style={{ color: "#B53B2E", fontSize: 11 }}>required</span></label>
+                    <input type="date" value={data.first_payday} onChange={(e) => setFirstPayday(e.target.value)} style={inputStyle} />
+                  </div>
+                </div>
+                <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.55 }}>All future paydays fall on the same weekday, {data.frequency === "weekly" ? "7" : "14"} days apart from the first payday.</div>
+              </>
+            )}
+
+            {data.frequency === "semi_monthly" && (
+              <>
+                <p style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.55, marginBottom: 14 }}>Pick the two days of the month when paydays happen. Most companies use the 15th and the last day, but you can customize.</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                  <div>
+                    <label style={labelStyle}>First payday of the month <span style={{ color: "#B53B2E", fontSize: 11 }}>required</span></label>
+                    <select value={data.config.first_day || ""} onChange={(e) => setConfig("first_day", e.target.value)} style={{ ...inputStyle, fontFamily: "JetBrains Mono, monospace" }}>
+                      <option value="">Select day...</option>
+                      {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16].map(n => <option key={n} value={n}>{n}{n===1?"st":n===2?"nd":n===3?"rd":"th"}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Second payday of the month <span style={{ color: "#B53B2E", fontSize: 11 }}>required</span></label>
+                    <select value={data.config.second_day || ""} onChange={(e) => setConfig("second_day", e.target.value)} style={{ ...inputStyle, fontFamily: "JetBrains Mono, monospace" }}>
+                      <option value="">Select day...</option>
+                      {[16,17,18,19,20,21,22,23,24,25,26,27,28,29,30].map(n => <option key={n} value={n}>{n}{n===21?"st":n===22?"nd":n===23?"rd":"th"}</option>)}
+                      <option value="last">Last day of month</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.55, marginTop: 12 }}>If a payday falls on a weekend, money typically moves on the closest preceding business day. Most banks handle this automatically.</div>
+              </>
+            )}
+
+            {data.frequency === "monthly" && (
+              <div>
+                <label style={labelStyle}>Payday each month <span style={{ color: "#B53B2E", fontSize: 11 }}>required</span></label>
+                <select value={data.config.day_of_month || ""} onChange={(e) => setConfig("day_of_month", e.target.value)} style={inputStyle}>
+                  <option value="">Select day...</option>
+                  <option value="1">1st of the month</option>
+                  <option value="15">15th of the month</option>
+                  <option value="last_business">Last business day of the month</option>
+                  <option value="last">Last calendar day of the month</option>
+                </select>
+                <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.55, marginTop: 8 }}>Most companies pay on the last business day. The last calendar day option pays on the actual final day even if it's a weekend.</div>
               </div>
-            ))}
+            )}
           </div>
-        </CardSection>
 
-        <CardSection label="First payday and period">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <Field label="First payday on Novala" help="The first day employees will be paid on this schedule.">
-              <TextInput type="date" value={data.first_payday} onChange={v => set("first_payday", v)} />
-            </Field>
-            <Field label="Pay period end (anchor date)" help="The last day of the period this first payday covers.">
-              <TextInput type="date" value={data.period_end} onChange={v => set("period_end", v)} />
-            </Field>
+          {/* Pay period & upcoming paydays */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid " + C.lineSoft }}>Pay period &amp; next paydays</div>
+
+            {!isComplete() ? (
+              <div style={{ background: "#F4F6F8", border: "1px dashed " + C.line, borderRadius: 8, padding: "24px 22px", textAlign: "center", color: C.muted, fontSize: 12.5, lineHeight: 1.55 }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: C.faint, marginBottom: 10 }}><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+                <div style={{ color: C.text, fontWeight: 600, marginBottom: 3 }}>Complete the fields above</div>
+                <div>We'll calculate your pay periods and show the next 3 paydays here.</div>
+              </div>
+            ) : (
+              <div style={{ background: "linear-gradient(180deg, #fff 0%, #F4F6F8 100%)", border: "1px solid " + C.line, borderRadius: 10, padding: "20px 24px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: C.ink, letterSpacing: "-0.005em", display: "flex", alignItems: "center", gap: 7 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: C.tealInk }}><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+                    Your next {upcoming.length} payday{upcoming.length === 1 ? "" : "s"}
+                  </div>
+                  <span style={{ fontSize: 11, color: C.muted, fontVariantNumeric: "tabular-nums" }}>Based on your schedule</span>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(" + Math.min(upcoming.length, 3) + ", 1fr)", gap: 10 }}>
+                  {upcoming.map((d, i) => (
+                    <div key={i} style={{ background: "#fff", border: "1.5px solid " + (i === 0 ? C.ink : C.line), borderRadius: 8, padding: "14px 16px", position: "relative" }}>
+                      {i === 0 && <div style={{ position: "absolute", top: -8, left: 12, fontSize: 8.5, fontWeight: 700, letterSpacing: "0.06em", background: C.ink, color: "#fff", padding: "2px 6px", borderRadius: 3 }}>NEXT</div>}
+                      <div style={{ fontSize: 9.5, fontWeight: 700, color: i === 0 ? C.ink : C.faint, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 6 }}>Payday {i + 1}</div>
+                      <div style={{ fontSize: 18, fontWeight: 600, color: C.ink, fontFamily: "JetBrains Mono, monospace", letterSpacing: "-0.01em", marginBottom: 1 }}>{formatDate(d)}</div>
+                      <div style={{ fontSize: 11, color: C.muted, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.03em" }}>{formatFullDate(d)}</div>
+                      <div style={{ fontSize: 10.5, color: C.tealInk, fontWeight: 500, marginTop: 6, paddingTop: 6, borderTop: "1px dashed " + C.line }}>{daysFromNow(d)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        </CardSection>
+        </div>
 
-        <SaveBar dirty={dirty} saving={saving} onSave={onSave} onDiscard={onDiscard} label="Save pay schedule" />
-      </div>
-    </>
-  );
-}
-
-// === Tax registration section ===
+        <SaveBar dirty={dirty} saving={saving} onSave={onSave} onDiscard={onDiscard} />
+      </>
+    );
+  }
 function TaxRegistrationSection({ businessCountry }) {
   const country = (businessCountry || "ca").toLowerCase();
   const STORAGE_KEY = "novala_tax_registration";

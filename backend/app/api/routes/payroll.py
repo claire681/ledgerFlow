@@ -120,6 +120,7 @@ class PayrollSettingsBody(BaseModel):
     province_or_state: Optional[str] = None
     default_pay_schedule: Optional[str] = None
     pay_period_anchor_date: Optional[date] = None
+    pay_schedule_config: Optional[Dict[str, Any]] = None
     currency: Optional[str] = None
     custom_deduction_rates: Optional[Dict[str, Any]] = None
     company_bank_name: Optional[str] = None
@@ -182,6 +183,7 @@ def serialize_settings(s):
         "country": s.country, "province_or_state": s.province_or_state,
         "default_pay_schedule": s.default_pay_schedule,
         "pay_period_anchor_date": s.pay_period_anchor_date.isoformat() if s.pay_period_anchor_date else None,
+        "pay_schedule_config": s.pay_schedule_config or {},
         "currency": s.currency,
         "custom_deduction_rates": s.custom_deduction_rates or {},
         "company_bank_name": s.company_bank_name,
