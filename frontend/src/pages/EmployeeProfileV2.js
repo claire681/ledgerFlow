@@ -282,7 +282,8 @@ function formatViewValue(field, value) {
   if (field.t === "wloc-select") {
     if (!value) return "";
     const locs = field.workLocations || [];
-    const found = locs.find(function(l) { return l.id === value; });
+    if (locs.length === 0) return "Loading location...";
+    const found = locs.find(function(l) { return String(l.id) === String(value); });
     return found ? (found.name || "(Unnamed)") : "";
   }
   if (!isFilled(value)) return null;
