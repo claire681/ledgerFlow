@@ -11,6 +11,7 @@ from app.db.database import get_db
 from app.models.models import User
 from app.schemas.schemas import UserRegister, UserLogin, TokenResponse, UserOut
 from app.core.security import hash_password, verify_password, create_access_token, get_current_user
+from app.services.seed_payroll_defaults import seed_payroll_defaults_for_user
 import secrets
 from pydantic import BaseModel
 
@@ -46,6 +47,11 @@ async def register(
             existing.company = body.company
         await db.commit()
         await db.refresh(existing)
+        # Seed payroll defaults (idempotent - safe if already seeded)
+        try:
+            await seed_payroll_defaults_for_user(db, existing.id, country="CA")
+        except Exception as seed_err:
+            print(f"Seed payroll defaults failed on resume: {seed_err}")
         token = create_access_token(data={"sub": str(existing.id)})
         return {
             "access_token": token,
