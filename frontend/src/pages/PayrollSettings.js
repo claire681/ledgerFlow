@@ -870,36 +870,188 @@ function PayTypesSection({ businessCountry = "CA" }) {
             </div>
 
             {/* Body */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px", display: "flex", flexDirection: "column", gap: 20 }}>
+            <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px", display: "flex", flexDirection: "column", gap: 24 }}>
 
-              {/* Name */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>Name</label>
-                <input type="text" value={draft.name || ""} onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                  placeholder={drawerCategory === "earning" ? "e.g., Care visit bonus" : "e.g., Parking fee"}
-                  style={{ padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%" }} />
-                <span style={{ fontSize: 11.5, color: C.muted, marginTop: 2 }}>Appears on pay stubs and pay runs</span>
+              {/* Section: Item type */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Item type</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div onClick={() => drawerMode === "add" && setDrawerCategory("earning")} style={{ padding: "14px 16px", border: "1.5px solid " + (drawerCategory === "earning" ? C.ink : C.line), borderRadius: 8, cursor: drawerMode === "add" ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 12, background: drawerCategory === "earning" ? "#FAFBFC" : "#fff", opacity: drawerMode === "add" ? 1 : 0.6 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: 2, background: "#0D8050", flex: "0 0 10px" }}></div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: C.ink, marginBottom: 2 }}>Earning</div>
+                      <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.45 }}>Money paid to employees</div>
+                    </div>
+                  </div>
+                  <div onClick={() => drawerMode === "add" && setDrawerCategory("deduction")} style={{ padding: "14px 16px", border: "1.5px solid " + (drawerCategory === "deduction" ? C.ink : C.line), borderRadius: 8, cursor: drawerMode === "add" ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 12, background: drawerCategory === "deduction" ? "#FAFBFC" : "#fff", opacity: drawerMode === "add" ? 1 : 0.6 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: 2, background: "#9C5A0F", flex: "0 0 10px" }}></div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: C.ink, marginBottom: 2 }}>Deduction</div>
+                      <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.45 }}>Money taken from paycheck</div>
+                    </div>
+                  </div>
+                </div>
+                {drawerMode === "edit" && <div style={{ fontSize: 11.5, color: C.muted, fontStyle: "italic" }}>Item type cannot be changed after creation.</div>}
               </div>
 
-              {/* Description */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>Description (optional)</label>
-                <input type="text" value={draft.description || ""} onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                  placeholder="Brief internal description"
-                  style={{ padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%" }} />
+              {/* Section: Details */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Details</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>Name</label>
+                  <input type="text" value={draft.name || ""} onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                    placeholder={drawerCategory === "earning" ? "e.g., Care visit bonus" : "e.g., Parking fee"}
+                    style={{ padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%" }} />
+                  <span style={{ fontSize: 11.5, color: C.muted, marginTop: 2 }}>Appears on pay stubs and pay runs</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>Description (optional)</label>
+                  <input type="text" value={draft.description || ""} onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                    placeholder="Brief internal description"
+                    style={{ padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%" }} />
+                </div>
               </div>
 
-              {/* Calculation method */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>Calculation method</label>
-                <select value={draft.calc_method || "fixed"} onChange={(e) => setDraft({ ...draft, calc_method: e.target.value })}
-                  style={{ padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%", cursor: "pointer" }}>
-                  <option value="fixed">Fixed amount</option>
-                  {drawerCategory === "earning" && <option value="rate_hours">Rate x hours</option>}
-                  {drawerCategory === "earning" && <option value="rate_units">Rate x units (visits, km, etc.)</option>}
-                  <option value="percent_gross">Percentage of gross</option>
-                </select>
+              {/* Section: Calculation method */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Calculation method</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {(drawerCategory === "earning" ? [
+                    { key: "fixed", name: "Fixed amount", formula: "amount per pay period" },
+                    { key: "rate_hours", name: "Rate x hours", formula: "hourly_rate x hours_worked" },
+                    { key: "rate_units", name: "Rate x units", formula: "unit_rate x quantity (visits, km, etc.)" },
+                    { key: "percent_gross", name: "Percentage of gross", formula: "percentage x gross_pay" },
+                  ] : [
+                    { key: "fixed", name: "Fixed amount", formula: "amount per pay period" },
+                    { key: "percent_gross", name: "Percentage of gross", formula: "percentage x gross_pay" },
+                  ]).map(function(opt) {
+                    const isActive = draft.calc_method === opt.key;
+                    return (
+                      <div key={opt.key} onClick={() => setDraft({ ...draft, calc_method: opt.key })} style={{ padding: "12px 14px", border: "1px solid " + (isActive ? C.ink : C.line), borderRadius: 7, cursor: "pointer", display: "flex", alignItems: "center", gap: 11, background: isActive ? "#F7F9FB" : "#fff" }}>
+                        <div style={{ width: 16, height: 16, borderRadius: "50%", border: "1.5px solid " + (isActive ? C.ink : "#C2CCD8"), flex: "0 0 16px", position: "relative" }}>
+                          {isActive && <div style={{ position: "absolute", inset: 3, background: C.ink, borderRadius: "50%" }}></div>}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: C.ink, marginBottom: 1 }}>{opt.name}</div>
+                          <div style={{ fontSize: 11.5, color: C.muted, fontFamily: "'JetBrains Mono', monospace" }}>{opt.formula}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Conditional fields based on calc method */}
+                {(draft.calc_method === "rate_hours" || draft.calc_method === "rate_units" || draft.calc_method === "percent_gross" || (draft.calc_method === "fixed" && drawerCategory === "deduction")) && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 6 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>
+                        {draft.calc_method === "percent_gross" ? "Default percentage" : "Default rate"}
+                      </label>
+                      <div style={{ position: "relative" }}>
+                        {draft.calc_method !== "percent_gross" && <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: C.muted, fontSize: 13.5, pointerEvents: "none", fontFamily: "'JetBrains Mono', monospace" }}>$</span>}
+                        <input type="text" inputMode="decimal" value={drawerCategory === "earning" ? (draft.default_rate || "") : (draft.default_amount || "")}
+                          onChange={(e) => setDraft(drawerCategory === "earning" ? { ...draft, default_rate: e.target.value } : { ...draft, default_amount: e.target.value })}
+                          placeholder={draft.calc_method === "percent_gross" ? "5.00" : "25.00"}
+                          style={{ padding: draft.calc_method === "percent_gross" ? "10px 12px" : "10px 12px 10px 26px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: "'JetBrains Mono', monospace", fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%" }} />
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>Unit label</label>
+                      <input type="text" value={draft.unit_label || ""} onChange={(e) => setDraft({ ...draft, unit_label: e.target.value })}
+                        placeholder={draft.calc_method === "percent_gross" ? "% of gross" : (draft.calc_method === "rate_hours" ? "per hour" : "per visit, per km")}
+                        style={{ padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%" }} />
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* Section: Tax treatment - EARNINGS */}
+              {drawerCategory === "earning" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Tax treatment · Canada</div>
+
+                  <div style={{ padding: "12px 14px", background: C.tealSoft, borderLeft: "2px solid " + C.teal, borderRadius: "0 6px 6px 0", fontSize: 12, color: C.tealInk, lineHeight: 1.55, display: "flex", gap: 10, alignItems: "flex-start" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ flex: "0 0 14px", marginTop: 1 }}><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    <span>These flags determine how Novala calculates federal tax, CPP, EI, and vacation pay for this item.</span>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 0, border: "1px solid " + C.line, borderRadius: 8, overflow: "hidden", background: "#fff" }}>
+                    {[
+                      { key: "federal_taxable", name: "Federal taxable", desc: "Counts toward federal and provincial income tax" },
+                      { key: "cpp_contributable", name: "CPP contributable", desc: "Counts toward Canada Pension Plan contributions" },
+                      { key: "ei_insurable", name: "EI insurable", desc: "Counts toward Employment Insurance premiums" },
+                      { key: "vacationable", name: "Vacationable", desc: "Accrues vacation pay on this earning" },
+                      { key: "wcb_reportable", name: "WCB reportable", desc: "Counts toward Workers Compensation Board reporting" },
+                    ].map(function(flag, idx, arr) {
+                      const isOn = !!draft[flag.key];
+                      return (
+                        <div key={flag.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 14px", borderBottom: idx === arr.length - 1 ? "none" : "1px solid " + C.lineSoft, gap: 14 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: C.ink, marginBottom: 1 }}>{flag.name}</div>
+                            <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.45 }}>{flag.desc}</div>
+                          </div>
+                          <div onClick={() => setDraft({ ...draft, [flag.key]: !isOn })} style={{ position: "relative", width: 38, height: 22, flex: "0 0 38px", cursor: "pointer" }}>
+                            <div style={{ position: "absolute", inset: 0, background: isOn ? C.teal : "#D7DCE3", borderRadius: 11, transition: "background .18s" }}></div>
+                            <div style={{ position: "absolute", height: 16, width: 16, left: isOn ? 19 : 3, bottom: 3, background: "#fff", borderRadius: "50%", transition: "left .18s", boxShadow: "0 1px 2px rgba(0,0,0,.15)" }}></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Section: Tax treatment - DEDUCTIONS */}
+              {drawerCategory === "deduction" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Tax treatment · Canada</div>
+
+                  <div style={{ padding: "12px 14px", background: C.tealSoft, borderLeft: "2px solid " + C.teal, borderRadius: "0 6px 6px 0", fontSize: 12, color: C.tealInk, lineHeight: 1.55, display: "flex", gap: 10, alignItems: "flex-start" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ flex: "0 0 14px", marginTop: 1 }}><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    <span>Pre-tax deductions reduce the employee's taxable income. Employer-matched means the company contributes too.</span>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 0, border: "1px solid " + C.line, borderRadius: 8, overflow: "hidden", background: "#fff" }}>
+                    {[
+                      { key: "is_pre_tax", name: "Pre-tax", desc: "Reduces the employee's taxable income before tax is calculated" },
+                      { key: "employer_matched", name: "Employer matched", desc: "The company contributes an equivalent or matching amount" },
+                    ].map(function(flag, idx, arr) {
+                      const isOn = !!draft[flag.key];
+                      return (
+                        <div key={flag.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 14px", borderBottom: idx === arr.length - 1 ? "none" : "1px solid " + C.lineSoft, gap: 14 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: C.ink, marginBottom: 1 }}>{flag.name}</div>
+                            <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.45 }}>{flag.desc}</div>
+                          </div>
+                          <div onClick={() => setDraft({ ...draft, [flag.key]: !isOn })} style={{ position: "relative", width: 38, height: 22, flex: "0 0 38px", cursor: "pointer" }}>
+                            <div style={{ position: "absolute", inset: 0, background: isOn ? C.teal : "#D7DCE3", borderRadius: 11, transition: "background .18s" }}></div>
+                            <div style={{ position: "absolute", height: 16, width: 16, left: isOn ? 19 : 3, bottom: 3, background: "#fff", borderRadius: "50%", transition: "left .18s", boxShadow: "0 1px 2px rgba(0,0,0,.15)" }}></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Section: Reporting (earnings only) */}
+              {drawerCategory === "earning" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Reporting</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>T4 box (year-end reporting)</label>
+                    <select value={draft.t4_box || "14"} onChange={(e) => setDraft({ ...draft, t4_box: e.target.value })}
+                      style={{ padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%", cursor: "pointer" }}>
+                      <option value="14">Box 14 - Employment income (default)</option>
+                      <option value="24">Box 24 - EI insurable earnings</option>
+                      <option value="26">Box 26 - CPP pensionable earnings</option>
+                      <option value="40">Box 40 - Other taxable allowances and benefits</option>
+                      <option value="custom">Custom box</option>
+                    </select>
+                    <span style={{ fontSize: 11.5, color: C.muted, marginTop: 2 }}>Used when generating T4 slips at year-end</span>
+                  </div>
+                </div>
+              )}
 
               {/* Save error */}
               {saveError && (
@@ -907,11 +1059,6 @@ function PayTypesSection({ businessCountry = "CA" }) {
                   {saveError}
                 </div>
               )}
-
-              {/* Tax flag toggles - coming in Commit 2 */}
-              <div style={{ padding: "12px 14px", background: C.surface2 || "#F4F6F8", borderRadius: 6, fontSize: 12, color: C.muted, lineHeight: 1.55, fontStyle: "italic" }}>
-                Tax treatment toggles (federal taxable, CPP, EI, vacationable, etc.) coming in next update. Defaults are applied automatically: fully taxable for earnings, post-tax for deductions.
-              </div>
 
             </div>
 
