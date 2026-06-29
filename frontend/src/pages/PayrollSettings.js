@@ -483,6 +483,7 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
 function PayTypesSection({ businessCountry = "CA" }) {
   const [payTypes, setPayTypes] = React.useState([]);
   const [deductions, setDeductions] = React.useState([]);
+  const [companyProvince, setCompanyProvince] = React.useState("");
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState("earnings");
   const [search, setSearch] = React.useState("");
@@ -490,12 +491,17 @@ function PayTypesSection({ businessCountry = "CA" }) {
   React.useEffect(function() {
     async function load() {
       try {
-        const [ptRes, dtRes] = await Promise.all([
+        const [ptRes, dtRes, cpRes] = await Promise.all([
           fetch(API_URL + "/api/v1/pay-types", { headers: authHeaders() }),
           fetch(API_URL + "/api/v1/deduction-types", { headers: authHeaders() }),
+          fetch(API_URL + "/api/v1/company/profile", { headers: authHeaders() }),
         ]);
         if (ptRes.ok) setPayTypes(await ptRes.json());
         if (dtRes.ok) setDeductions(await dtRes.json());
+        if (cpRes.ok) {
+          const cp = await cpRes.json();
+          setCompanyProvince(cp.province_state || cp.province || "");
+        }
       } catch (err) {
         console.error("Failed to load pay types", err);
       } finally {
@@ -597,6 +603,8 @@ function PayTypesSection({ businessCountry = "CA" }) {
       <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 0 24px", fontSize: 12, color: C.muted, borderBottom: "1px solid " + C.line, marginBottom: 32 }}>
         <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#0D8050", flex: "0 0 5px" }}></span>
         <span>Configured for <strong style={{ color: C.ink, fontWeight: 600 }}>{companyConfig.name}</strong>. Tax flags follow CRA payroll rules.</span>
+        {companyProvince && (<><span style={{ color: C.line, fontSize: 16, lineHeight: 1 }}>·</span>
+        <span>Province: <strong style={{ color: C.ink, fontWeight: 600 }}>{companyProvince}</strong></span></>)}
         <span style={{ color: C.line, fontSize: 16, lineHeight: 1 }}>·</span>
         <span>{payTypes.length + deductions.length} items configured</span>
       </div>
