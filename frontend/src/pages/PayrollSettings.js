@@ -719,6 +719,37 @@ function PayTypesSection({ businessCountry = "CA" }) {
     }
   }
 
+  async function onDelete() {
+    if (!editingId) return;
+    setDeleting(true);
+    const isEarning = drawerCategory === "earning";
+    const endpoint = isEarning ? "/api/v1/pay-types/" : "/api/v1/deduction-types/";
+    try {
+      const res = await fetch(API_URL + endpoint + editingId, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+      if (!res.ok && res.status !== 204) {
+        const errData = await res.json().catch(function() { return {}; });
+        setSaveError(errData.detail || "Delete failed");
+        setDeleting(false);
+        setConfirmDelete(false);
+        return;
+      }
+      if (isEarning) {
+        setPayTypes(function(prev) { return prev.filter(function(p) { return p.id !== editingId; }); });
+      } else {
+        setDeductions(function(prev) { return prev.filter(function(d) { return d.id !== editingId; }); });
+      }
+      setConfirmDelete(false);
+      closeDrawer();
+    } catch (err) {
+      setSaveError("Network error: " + err.message);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   // Compute the most recent updated_at across pay types and deductions
   const lastUpdated = React.useMemo(function() {
     const allItems = payTypes.concat(deductions);
