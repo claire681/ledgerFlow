@@ -1026,3 +1026,52 @@ class DeductionType(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
+
+
+class EmployeePayItem(Base):
+    """
+    Links an employee to a pay type (Salary, Hourly wage, Overtime, etc.).
+    Inherits tax rules from the pay_type. Rate can be overridden per employee.
+    """
+    __tablename__ = "employee_pay_items"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    pay_type_id = Column(UUID(as_uuid=True), ForeignKey("pay_types.id", ondelete="RESTRICT"), nullable=False, index=True)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Per-employee overrides (NULL means use pay_type default)
+    rate_override = Column(Numeric(12, 4), nullable=True)
+    unit_label_override = Column(String(50), nullable=True)
+
+    # Status
+    is_active = Column(Boolean, default=True, nullable=False)
+    paused_at = Column(DateTime(timezone=True), nullable=True)
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class EmployeeDeductionItem(Base):
+    """
+    Links an employee to a deduction type (RRSP, health benefits, garnishment, etc.).
+    Inherits tax rules from the deduction_type. Amount can be overridden per employee.
+    """
+    __tablename__ = "employee_deduction_items"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    deduction_type_id = Column(UUID(as_uuid=True), ForeignKey("deduction_types.id", ondelete="RESTRICT"), nullable=False, index=True)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Per-employee overrides (NULL means use deduction_type default)
+    amount_override = Column(Numeric(12, 4), nullable=True)
+
+    # Status
+    is_active = Column(Boolean, default=True, nullable=False)
+    paused_at = Column(DateTime(timezone=True), nullable=True)
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

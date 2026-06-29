@@ -36,6 +36,8 @@ from app.api.routes import pay_runs
 from app.api.routes import work_locations
 from app.api.routes import pay_types
 from app.api.routes import deduction_types
+from app.api.routes import employee_pay_items
+from app.api.routes import employee_deduction_items
 
 
 @asynccontextmanager
@@ -115,6 +117,8 @@ app.include_router(billing.router,      prefix="/api/v1")
 app.include_router(work_locations.router, prefix="/api/v1")
 app.include_router(pay_types.router,        prefix="/api/v1")
 app.include_router(deduction_types.router,  prefix="/api/v1")
+app.include_router(employee_pay_items.router, prefix="/api/v1")
+app.include_router(employee_deduction_items.router, prefix="/api/v1")
 app.include_router(email_router, prefix="/api/v1")
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
