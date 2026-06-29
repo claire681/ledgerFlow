@@ -487,6 +487,13 @@ function PayTypesSection({ businessCountry = "CA" }) {
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState("earnings");
   const [search, setSearch] = React.useState("");
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [drawerMode, setDrawerMode] = React.useState("add");
+  const [drawerCategory, setDrawerCategory] = React.useState("earning");
+  const [editingId, setEditingId] = React.useState(null);
+  const [draft, setDraft] = React.useState({});
+  const [saving, setSaving] = React.useState(false);
+  const [saveError, setSaveError] = React.useState(null);
 
   React.useEffect(function() {
     async function load() {
@@ -580,6 +587,133 @@ function PayTypesSection({ businessCountry = "CA" }) {
     return { primary: parts.join(", "), secondary: secondary };
   }
 
+  function openAddDrawer(category) {
+    setDrawerCategory(category);
+    setDrawerMode("add");
+    setEditingId(null);
+    setDraft({
+      name: "",
+      description: "",
+      calc_method: "fixed",
+      default_rate: "",
+      unit_label: "",
+      federal_taxable: true,
+      cpp_contributable: true,
+      ei_insurable: true,
+      vacationable: true,
+      wcb_reportable: true,
+      t4_box: "14",
+      is_pre_tax: false,
+      employer_matched: false,
+      default_amount: "",
+    });
+    setSaveError(null);
+    setDrawerOpen(true);
+  }
+
+  function openEditDrawer(item, category) {
+    setDrawerCategory(category);
+    setDrawerMode("edit");
+    setEditingId(item.id);
+    setDraft({
+      name: item.name || "",
+      description: item.description || "",
+      calc_method: item.calc_method || "fixed",
+      default_rate: item.default_rate != null ? String(item.default_rate) : "",
+      default_amount: item.default_amount != null ? String(item.default_amount) : "",
+      unit_label: item.unit_label || "",
+      federal_taxable: item.federal_taxable !== undefined ? item.federal_taxable : true,
+      cpp_contributable: item.cpp_contributable !== undefined ? item.cpp_contributable : true,
+      ei_insurable: item.ei_insurable !== undefined ? item.ei_insurable : true,
+      vacationable: item.vacationable !== undefined ? item.vacationable : true,
+      wcb_reportable: item.wcb_reportable !== undefined ? item.wcb_reportable : true,
+      t4_box: item.t4_box || "14",
+      is_pre_tax: item.is_pre_tax || false,
+      employer_matched: item.employer_matched || false,
+    });
+    setSaveError(null);
+    setDrawerOpen(true);
+  }
+
+  function closeDrawer() {
+    setDrawerOpen(false);
+    setEditingId(null);
+    setDraft({});
+    setSaveError(null);
+  }
+
+  async function onSave() {
+    if (!draft.name || !draft.name.trim()) {
+      setSaveError("Name is required");
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+
+    const isEarning = drawerCategory === "earning";
+    const endpoint = isEarning ? "/api/v1/pay-types" : "/api/v1/deduction-types";
+    const url = drawerMode === "add" ? endpoint : endpoint + "/" + editingId;
+    const method = drawerMode === "add" ? "POST" : "PATCH";
+
+    const body = {
+      name: draft.name,
+      description: draft.description || null,
+      calc_method: draft.calc_method,
+      unit_label: draft.unit_label || null,
+    };
+
+    if (isEarning) {
+      body.default_rate = draft.default_rate ? Number(draft.default_rate) : null;
+      body.federal_taxable = draft.federal_taxable;
+      body.cpp_contributable = draft.cpp_contributable;
+      body.ei_insurable = draft.ei_insurable;
+      body.vacationable = draft.vacationable;
+      body.wcb_reportable = draft.wcb_reportable;
+      body.t4_box = draft.t4_box || null;
+    } else {
+      body.default_amount = draft.default_amount ? Number(draft.default_amount) : null;
+      body.is_pre_tax = draft.is_pre_tax;
+      body.employer_matched = draft.employer_matched;
+    }
+
+    try {
+      const res = await fetch(API_URL + url, {
+        method: method,
+        headers: authHeaders(),
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(function() { return {}; });
+        setSaveError(errData.detail || "Save failed (status " + res.status + ")");
+        setSaving(false);
+        return;
+      }
+
+      const saved = await res.json();
+      // Refresh the list
+      if (isEarning) {
+        if (drawerMode === "add") {
+          setPayTypes(function(prev) { return prev.concat([saved]); });
+        } else {
+          setPayTypes(function(prev) { return prev.map(function(p) { return p.id === saved.id ? saved : p; }); });
+        }
+      } else {
+        if (drawerMode === "add") {
+          setDeductions(function(prev) { return prev.concat([saved]); });
+        } else {
+          setDeductions(function(prev) { return prev.map(function(d) { return d.id === saved.id ? saved : d; }); });
+        }
+      }
+
+      closeDrawer();
+    } catch (err) {
+      setSaveError("Network error: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (loading) {
     return React.createElement("div", { style: { padding: 60, textAlign: "center", color: C.muted, fontSize: 13 } }, "Loading pay types...");
   }
@@ -593,7 +727,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
           <h1 style={{ fontSize: 22, fontWeight: 600, color: C.ink, letterSpacing: "-0.018em", marginBottom: 6 }}>Pay types &amp; deductions</h1>
           <p style={{ fontSize: 13.5, color: C.muted, lineHeight: 1.6 }}>Define the earnings and deductions that drive every pay run. Each item carries the tax treatment rules Novala applies automatically when you process payroll.</p>
         </div>
-        <button style={{ background: "#0E1A1A", color: "#fff", border: 0, borderRadius: 6, padding: "10px 16px", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 7, boxShadow: "0 1px 2px rgba(10,26,30,.08)", opacity: 0.5 }}>
+        <button onClick={() => openAddDrawer(activeTab === "earnings" ? "earning" : "deduction")} style={{ background: "#0E1A1A", color: "#fff", border: 0, borderRadius: 6, padding: "10px 16px", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 7, boxShadow: "0 1px 2px rgba(10,26,30,.08)" }}>
           <Plus size={13} strokeWidth={2.2} />
           New item
         </button>
@@ -665,7 +799,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
           const calc = formatCalc(pt, false);
           const tax = formatTaxTreatment(pt);
           return (
-            <div key={pt.id} style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.2fr 56px", gap: 18, padding: "16px 22px", borderBottom: "1px solid " + C.lineSoft, alignItems: "center", cursor: "pointer" }}>
+            <div key={pt.id} onClick={() => openEditDrawer(pt, "earning")} style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.2fr 56px", gap: 18, padding: "16px 22px", borderBottom: "1px solid " + C.lineSoft, alignItems: "center", cursor: "pointer" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
                 <div style={{ width: 8, height: 8, borderRadius: 2, background: tax.nonTax ? C.faint : "#0D8050", flex: "0 0 8px" }}></div>
                 <div style={{ minWidth: 0, flex: 1 }}>
@@ -691,7 +825,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
           const calc = formatCalc(d, true);
           const tax = formatDeductionTreatment(d);
           return (
-            <div key={d.id} style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.2fr 56px", gap: 18, padding: "16px 22px", borderBottom: "1px solid " + C.lineSoft, alignItems: "center", cursor: "pointer" }}>
+            <div key={d.id} onClick={() => openEditDrawer(d, "deduction")} style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.2fr 56px", gap: 18, padding: "16px 22px", borderBottom: "1px solid " + C.lineSoft, alignItems: "center", cursor: "pointer" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
                 <div style={{ width: 8, height: 8, borderRadius: 2, background: "#9C5A0F", flex: "0 0 8px" }}></div>
                 <div style={{ minWidth: 0, flex: 1 }}>
@@ -713,6 +847,88 @@ function PayTypesSection({ businessCountry = "CA" }) {
           );
         })}
       </div>
+
+
+      {/* Drawer: Add/Edit Pay Type or Deduction */}
+      {drawerOpen && createPortal(
+        <div onClick={closeDrawer} style={{ position: "fixed", inset: 0, background: "rgba(10,26,30,.42)", zIndex: 1500, display: "flex", justifyContent: "flex-end" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: 560, height: "100vh", background: "#fff", display: "flex", flexDirection: "column", boxShadow: "-20px 0 60px rgba(10,26,30,.18)", overflow: "hidden", fontFamily: FONT }}>
+
+            {/* Header */}
+            <div style={{ padding: "24px 32px 20px", borderBottom: "1px solid " + C.line, flex: "0 0 auto" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                <div style={{ fontSize: 18, fontWeight: 600, color: C.ink, letterSpacing: "-0.015em" }}>
+                  {drawerMode === "add" ? "New" : "Edit"} {drawerCategory === "earning" ? "earning" : "deduction"}
+                </div>
+                <button onClick={closeDrawer} style={{ width: 30, height: 30, borderRadius: 6, border: 0, background: "transparent", color: C.muted, cursor: "pointer", display: "grid", placeItems: "center", fontFamily: FONT }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.55 }}>
+                Configure how this item is calculated. Tax treatment options coming next.
+              </div>
+            </div>
+
+            {/* Body */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px", display: "flex", flexDirection: "column", gap: 20 }}>
+
+              {/* Name */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>Name</label>
+                <input type="text" value={draft.name || ""} onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                  placeholder={drawerCategory === "earning" ? "e.g., Care visit bonus" : "e.g., Parking fee"}
+                  style={{ padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%" }} />
+                <span style={{ fontSize: 11.5, color: C.muted, marginTop: 2 }}>Appears on pay stubs and pay runs</span>
+              </div>
+
+              {/* Description */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>Description (optional)</label>
+                <input type="text" value={draft.description || ""} onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                  placeholder="Brief internal description"
+                  style={{ padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%" }} />
+              </div>
+
+              {/* Calculation method */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>Calculation method</label>
+                <select value={draft.calc_method || "fixed"} onChange={(e) => setDraft({ ...draft, calc_method: e.target.value })}
+                  style={{ padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%", cursor: "pointer" }}>
+                  <option value="fixed">Fixed amount</option>
+                  {drawerCategory === "earning" && <option value="rate_hours">Rate x hours</option>}
+                  {drawerCategory === "earning" && <option value="rate_units">Rate x units (visits, km, etc.)</option>}
+                  <option value="percent_gross">Percentage of gross</option>
+                </select>
+              </div>
+
+              {/* Save error */}
+              {saveError && (
+                <div style={{ padding: "10px 12px", background: "#FBEDEC", border: "1px solid #F0C3BC", borderRadius: 6, fontSize: 12.5, color: "#B53B2E" }}>
+                  {saveError}
+                </div>
+              )}
+
+              {/* Tax flag toggles - coming in Commit 2 */}
+              <div style={{ padding: "12px 14px", background: C.surface2 || "#F4F6F8", borderRadius: 6, fontSize: 12, color: C.muted, lineHeight: 1.55, fontStyle: "italic" }}>
+                Tax treatment toggles (federal taxable, CPP, EI, vacationable, etc.) coming in next update. Defaults are applied automatically: fully taxable for earnings, post-tax for deductions.
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: "18px 32px", borderTop: "1px solid " + C.line, background: "#fff", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, flex: "0 0 auto" }}>
+              <button onClick={closeDrawer} disabled={saving} style={{ padding: "9px 16px", borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", fontFamily: FONT, border: "1px solid " + C.line, background: "#fff", color: C.ink }}>
+                Cancel
+              </button>
+              <button onClick={onSave} disabled={saving} style={{ padding: "9px 16px", borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", fontFamily: FONT, border: 0, background: saving ? "#94A0B2" : C.ink, color: "#fff", boxShadow: "0 1px 2px rgba(10,26,30,.1)" }}>
+                {saving ? "Saving..." : (drawerMode === "add" ? "Create " + drawerCategory : "Save changes")}
+              </button>
+            </div>
+
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Footer note */}
       <div style={{ marginTop: 24, padding: "18px 22px", background: "#fff", border: "1px solid " + C.line, borderRadius: 10, display: "flex", alignItems: "flex-start", gap: 14, fontSize: 12.5, color: C.muted, lineHeight: 1.6 }}>
