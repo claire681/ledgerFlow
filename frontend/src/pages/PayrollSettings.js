@@ -497,6 +497,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
   const [editingIsDefault, setEditingIsDefault] = React.useState(false);
+  const [kebabOpenId, setKebabOpenId] = React.useState(null);
 
   React.useEffect(function() {
     async function load() {
@@ -779,6 +780,72 @@ function PayTypesSection({ businessCountry = "CA" }) {
     return latest.toLocaleDateString(undefined, { month: "short", day: "numeric", year: latest.getFullYear() !== now.getFullYear() ? "numeric" : undefined });
   }, [payTypes, deductions]);
 
+  function onDuplicate(item, category) {
+    setDrawerCategory(category);
+    setDrawerMode("add");
+    setEditingId(null);
+    setEditingIsDefault(false);
+    setDraft({
+      name: (item.name || "") + " (copy)",
+      description: item.description || "",
+      calc_method: item.calc_method || "fixed",
+      default_rate: item.default_rate != null ? String(item.default_rate) : "",
+      default_amount: item.default_amount != null ? String(item.default_amount) : "",
+      unit_label: item.unit_label || "",
+      federal_taxable: item.federal_taxable !== undefined ? item.federal_taxable : true,
+      cpp_contributable: item.cpp_contributable !== undefined ? item.cpp_contributable : true,
+      ei_insurable: item.ei_insurable !== undefined ? item.ei_insurable : true,
+      vacationable: item.vacationable !== undefined ? item.vacationable : true,
+      wcb_reportable: item.wcb_reportable !== undefined ? item.wcb_reportable : true,
+      t4_box: item.t4_box || "14",
+      is_pre_tax: item.is_pre_tax || false,
+      employer_matched: item.employer_matched || false,
+    });
+    setSaveError(null);
+    setKebabOpenId(null);
+    setDrawerOpen(true);
+  }
+
+  async function onToggleActive(item, category) {
+    const isEarning = category === "earning";
+    const endpoint = isEarning ? "/api/v1/pay-types/" : "/api/v1/deduction-types/";
+    setKebabOpenId(null);
+    try {
+      const res = await fetch(API_URL + endpoint + item.id, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({ is_active: !item.is_active }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        if (isEarning) {
+          setPayTypes(function(prev) { return prev.map(function(p) { return p.id === updated.id ? updated : p; }); });
+        } else {
+          setDeductions(function(prev) { return prev.map(function(d) { return d.id === updated.id ? updated : d; }); });
+        }
+      }
+    } catch (err) {
+      console.error("Toggle active failed", err);
+    }
+  }
+
+  function onKebabDelete(item, category) {
+    setDrawerCategory(category);
+    setEditingId(item.id);
+    setEditingIsDefault(!!item.is_default);
+    setDraft({ name: item.name });
+    setKebabOpenId(null);
+    setConfirmDelete(true);
+  }
+
+  // Close kebab on outside click
+  React.useEffect(function() {
+    if (!kebabOpenId) return;
+    function handleClick() { setKebabOpenId(null); }
+    document.addEventListener("click", handleClick);
+    return function() { document.removeEventListener("click", handleClick); };
+  }, [kebabOpenId]);
+
   if (loading) {
     return React.createElement("div", { style: { padding: 60, textAlign: "center", color: C.muted, fontSize: 13 } }, "Loading pay types...");
   }
@@ -881,8 +948,35 @@ function PayTypesSection({ businessCountry = "CA" }) {
                 <span style={{ fontWeight: 500, color: tax.nonTax ? C.muted : C.ink, fontStyle: tax.nonTax ? "italic" : "normal" }}>{tax.primary}</span>
                 {tax.secondary && <span style={{ color: C.muted, fontSize: 11.5, marginTop: 2, display: "block" }}>{tax.secondary}</span>}
               </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", color: C.faint, fontSize: 11 }}>
-                <span style={{ fontSize: 16 }}>⋮</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", position: "relative" }} onClick={(e) => e.stopPropagation()}>
+                <button onClick={(e) => { e.stopPropagation(); setKebabOpenId(kebabOpenId === pt.id ? null : pt.id); }} style={{ background: "none", border: "1px solid transparent", borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.faint, display: "grid", placeItems: "center", fontFamily: FONT }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                </button>
+                {kebabOpenId === pt.id && (
+                  <div style={{ position: "absolute", right: 0, top: 32, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 8px 24px rgba(10,26,30,.12)", minWidth: 160, zIndex: 100, padding: 4 }}>
+                    <button onClick={(e) => { e.stopPropagation(); setKebabOpenId(null); openEditDrawer(pt, "earning"); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "8px 12px", background: "none", border: 0, fontSize: 13, color: C.ink, cursor: "pointer", borderRadius: 5, fontFamily: FONT, textAlign: "left" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: C.muted, flex: "0 0 13px" }}><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                      Edit
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); onDuplicate(pt, "earning"); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "8px 12px", background: "none", border: 0, fontSize: 13, color: C.ink, cursor: "pointer", borderRadius: 5, fontFamily: FONT, textAlign: "left" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: C.muted, flex: "0 0 13px" }}><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      Duplicate
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); onToggleActive(pt, "earning"); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "8px 12px", background: "none", border: 0, fontSize: 13, color: C.ink, cursor: "pointer", borderRadius: 5, fontFamily: FONT, textAlign: "left" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: C.muted, flex: "0 0 13px" }}><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
+                      {pt.is_active ? "Deactivate" : "Activate"}
+                    </button>
+                    {!pt.is_default && (
+                      <>
+                        <div style={{ height: 1, background: C.lineSoft, margin: "4px 8px" }}></div>
+                        <button onClick={(e) => { e.stopPropagation(); onKebabDelete(pt, "earning"); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "8px 12px", background: "none", border: 0, fontSize: 13, color: "#B53B2E", cursor: "pointer", borderRadius: 5, fontFamily: FONT, textAlign: "left" }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flex: "0 0 13px" }}><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -907,8 +1001,35 @@ function PayTypesSection({ businessCountry = "CA" }) {
                 <span style={{ fontWeight: 500, color: C.ink }}>{tax.primary}</span>
                 {tax.secondary && <span style={{ color: C.muted, fontSize: 11.5, marginTop: 2, display: "block" }}>{tax.secondary}</span>}
               </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", color: C.faint, fontSize: 11 }}>
-                <span style={{ fontSize: 16 }}>⋮</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", position: "relative" }} onClick={(e) => e.stopPropagation()}>
+                <button onClick={(e) => { e.stopPropagation(); setKebabOpenId(kebabOpenId === d.id ? null : d.id); }} style={{ background: "none", border: "1px solid transparent", borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.faint, display: "grid", placeItems: "center", fontFamily: FONT }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                </button>
+                {kebabOpenId === d.id && (
+                  <div style={{ position: "absolute", right: 0, top: 32, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 8px 24px rgba(10,26,30,.12)", minWidth: 160, zIndex: 100, padding: 4 }}>
+                    <button onClick={(e) => { e.stopPropagation(); setKebabOpenId(null); openEditDrawer(d, "deduction"); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "8px 12px", background: "none", border: 0, fontSize: 13, color: C.ink, cursor: "pointer", borderRadius: 5, fontFamily: FONT, textAlign: "left" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: C.muted, flex: "0 0 13px" }}><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                      Edit
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); onDuplicate(d, "deduction"); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "8px 12px", background: "none", border: 0, fontSize: 13, color: C.ink, cursor: "pointer", borderRadius: 5, fontFamily: FONT, textAlign: "left" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: C.muted, flex: "0 0 13px" }}><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      Duplicate
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); onToggleActive(d, "deduction"); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "8px 12px", background: "none", border: 0, fontSize: 13, color: C.ink, cursor: "pointer", borderRadius: 5, fontFamily: FONT, textAlign: "left" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: C.muted, flex: "0 0 13px" }}><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
+                      {d.is_active ? "Deactivate" : "Activate"}
+                    </button>
+                    {!d.is_default && (
+                      <>
+                        <div style={{ height: 1, background: C.lineSoft, margin: "4px 8px" }}></div>
+                        <button onClick={(e) => { e.stopPropagation(); onKebabDelete(d, "deduction"); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "8px 12px", background: "none", border: 0, fontSize: 13, color: "#B53B2E", cursor: "pointer", borderRadius: 5, fontFamily: FONT, textAlign: "left" }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flex: "0 0 13px" }}><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
