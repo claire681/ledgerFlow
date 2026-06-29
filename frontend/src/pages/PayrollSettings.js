@@ -929,7 +929,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
           <div></div>
         </div>
 
-        {activeTab === "earnings" && filteredPayTypes.map(function(pt) {
+        {activeTab === "earnings" && filteredPayTypes.map(function(pt, idx) {
           const calc = formatCalc(pt, false);
           const tax = formatTaxTreatment(pt);
           return (
@@ -953,7 +953,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
                 </button>
                 {kebabOpenId === pt.id && (
-                  <div style={{ position: "absolute", right: 0, top: 32, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 8px 24px rgba(10,26,30,.12)", minWidth: 160, zIndex: 100, padding: 4 }}>
+                  <div style={Object.assign({ position: "absolute", right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 8px 24px rgba(10,26,30,.12)", minWidth: 160, zIndex: 100, padding: 4 }, idx >= filteredPayTypes.length - 2 ? { bottom: 32 } : { top: 32 })}>
                     <button onClick={(e) => { e.stopPropagation(); setKebabOpenId(null); openEditDrawer(pt, "earning"); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "8px 12px", background: "none", border: 0, fontSize: 13, color: C.ink, cursor: "pointer", borderRadius: 5, fontFamily: FONT, textAlign: "left" }}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: C.muted, flex: "0 0 13px" }}><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                       Edit
@@ -982,7 +982,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
           );
         })}
 
-        {activeTab === "deductions" && filteredDeductions.map(function(d) {
+        {activeTab === "deductions" && filteredDeductions.map(function(d, idx) {
           const calc = formatCalc(d, true);
           const tax = formatDeductionTreatment(d);
           return (
@@ -1006,7 +1006,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
                 </button>
                 {kebabOpenId === d.id && (
-                  <div style={{ position: "absolute", right: 0, top: 32, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 8px 24px rgba(10,26,30,.12)", minWidth: 160, zIndex: 100, padding: 4 }}>
+                  <div style={Object.assign({ position: "absolute", right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 8px 24px rgba(10,26,30,.12)", minWidth: 160, zIndex: 100, padding: 4 }, idx >= filteredDeductions.length - 2 ? { bottom: 32 } : { top: 32 })}>
                     <button onClick={(e) => { e.stopPropagation(); setKebabOpenId(null); openEditDrawer(d, "deduction"); }} style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "8px 12px", background: "none", border: 0, fontSize: 13, color: C.ink, cursor: "pointer", borderRadius: 5, fontFamily: FONT, textAlign: "left" }}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: C.muted, flex: "0 0 13px" }}><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                       Edit
