@@ -494,6 +494,9 @@ function PayTypesSection({ businessCountry = "CA" }) {
   const [draft, setDraft] = React.useState({});
   const [saving, setSaving] = React.useState(false);
   const [saveError, setSaveError] = React.useState(null);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+  const [editingIsDefault, setEditingIsDefault] = React.useState(false);
 
   React.useEffect(function() {
     async function load() {
@@ -591,6 +594,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
     setDrawerCategory(category);
     setDrawerMode("add");
     setEditingId(null);
+    setEditingIsDefault(false);
     setDraft({
       name: "",
       description: "",
@@ -615,6 +619,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
     setDrawerCategory(category);
     setDrawerMode("edit");
     setEditingId(item.id);
+    setEditingIsDefault(!!item.is_default);
     setDraft({
       name: item.name || "",
       description: item.description || "",
@@ -1094,15 +1099,45 @@ function PayTypesSection({ businessCountry = "CA" }) {
             </div>
 
             {/* Footer */}
-            <div style={{ padding: "18px 32px", borderTop: "1px solid " + C.line, background: "#fff", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, flex: "0 0 auto" }}>
-              <button onClick={closeDrawer} disabled={saving} style={{ padding: "9px 16px", borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", fontFamily: FONT, border: "1px solid " + C.line, background: "#fff", color: C.ink }}>
+            <div style={{ padding: "18px 32px", borderTop: "1px solid " + C.line, background: "#fff", display: "flex", alignItems: "center", gap: 10, flex: "0 0 auto" }}>
+              {drawerMode === "edit" && !editingIsDefault && (
+                <button onClick={() => setConfirmDelete(true)} disabled={saving || deleting} style={{ padding: "9px 16px", borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: (saving || deleting) ? "not-allowed" : "pointer", fontFamily: FONT, border: "1px solid #F0C3BC", background: "#fff", color: "#B53B2E", display: "inline-flex", alignItems: "center", gap: 6, marginRight: "auto" }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  Delete this {drawerCategory}
+                </button>
+              )}
+              {drawerMode === "edit" && editingIsDefault && (
+                <span style={{ fontSize: 11.5, color: C.faint, fontStyle: "italic", marginRight: "auto" }}>Default items cannot be deleted</span>
+              )}
+              <button onClick={closeDrawer} disabled={saving || deleting} style={{ padding: "9px 16px", borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: (saving || deleting) ? "not-allowed" : "pointer", fontFamily: FONT, border: "1px solid " + C.line, background: "#fff", color: C.ink, marginLeft: drawerMode === "add" ? "auto" : 0 }}>
                 Cancel
               </button>
-              <button onClick={onSave} disabled={saving} style={{ padding: "9px 16px", borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: saving ? "not-allowed" : "pointer", fontFamily: FONT, border: 0, background: saving ? "#94A0B2" : C.ink, color: "#fff", boxShadow: "0 1px 2px rgba(10,26,30,.1)" }}>
+              <button onClick={onSave} disabled={saving || deleting} style={{ padding: "9px 16px", borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: (saving || deleting) ? "not-allowed" : "pointer", fontFamily: FONT, border: 0, background: (saving || deleting) ? "#94A0B2" : C.ink, color: "#fff", boxShadow: "0 1px 2px rgba(10,26,30,.1)" }}>
                 {saving ? "Saving..." : (drawerMode === "add" ? "Create " + drawerCategory : "Save changes")}
               </button>
             </div>
 
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Delete confirmation modal */}
+      {confirmDelete && createPortal(
+        <div onClick={() => setConfirmDelete(false)} style={{ position: "fixed", inset: 0, background: "rgba(10,26,30,.42)", zIndex: 2000, display: "grid", placeItems: "center" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 12, padding: "24px 28px", maxWidth: 460, width: "90%", boxShadow: "0 24px 60px rgba(0,0,0,.3)", fontFamily: FONT }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: C.ink, marginBottom: 8 }}>Delete this {drawerCategory}?</h3>
+            <p style={{ fontSize: 13, color: C.muted, marginBottom: 20, lineHeight: 1.55 }}>
+              This will permanently remove <strong style={{ color: C.ink }}>{draft.name}</strong> from your catalog. Employees currently assigned to this {drawerCategory} will need to be reassigned. This cannot be undone.
+            </p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button onClick={() => setConfirmDelete(false)} disabled={deleting} style={{ background: "#fff", color: C.ink, border: "1px solid " + C.line, borderRadius: 6, padding: "9px 16px", fontWeight: 500, fontSize: 13, cursor: deleting ? "not-allowed" : "pointer", fontFamily: FONT }}>
+                Cancel
+              </button>
+              <button onClick={onDelete} disabled={deleting} style={{ background: "#B53B2E", color: "#fff", border: 0, borderRadius: 6, padding: "9px 20px", fontWeight: 500, fontSize: 13, cursor: deleting ? "not-allowed" : "pointer", fontFamily: FONT, opacity: deleting ? 0.7 : 1 }}>
+                {deleting ? "Deleting..." : ("Yes, delete " + drawerCategory)}
+              </button>
+            </div>
           </div>
         </div>,
         document.body
