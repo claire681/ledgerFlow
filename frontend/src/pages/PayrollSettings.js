@@ -714,6 +714,35 @@ function PayTypesSection({ businessCountry = "CA" }) {
     }
   }
 
+  // Compute the most recent updated_at across pay types and deductions
+  const lastUpdated = React.useMemo(function() {
+    const allItems = payTypes.concat(deductions);
+    if (allItems.length === 0) return null;
+    let latest = null;
+    allItems.forEach(function(item) {
+      if (item.updated_at) {
+        const d = new Date(item.updated_at);
+        if (!latest || d > latest) latest = d;
+      }
+    });
+    if (!latest) return null;
+    const now = new Date();
+    const diffMs = now - latest;
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHr = Math.floor(diffMs / 3600000);
+    const diffDay = Math.floor(diffMs / 86400000);
+    if (diffMin < 1) return "Just now";
+    if (diffMin < 60) return diffMin + " min ago";
+    if (diffHr < 24) {
+      const isToday = latest.toDateString() === now.toDateString();
+      if (isToday) return diffHr + "h ago";
+    }
+    if (diffDay === 0) return "Today";
+    if (diffDay === 1) return "Yesterday";
+    if (diffDay < 7) return diffDay + " days ago";
+    return latest.toLocaleDateString(undefined, { month: "short", day: "numeric", year: latest.getFullYear() !== now.getFullYear() ? "numeric" : undefined });
+  }, [payTypes, deductions]);
+
   if (loading) {
     return React.createElement("div", { style: { padding: 60, textAlign: "center", color: C.muted, fontSize: 13 } }, "Loading pay types...");
   }
@@ -741,6 +770,8 @@ function PayTypesSection({ businessCountry = "CA" }) {
         <span>Province: <strong style={{ color: C.ink, fontWeight: 600 }}>{companyProvince}</strong></span></>)}
         <span style={{ color: C.line, fontSize: 16, lineHeight: 1 }}>·</span>
         <span>{payTypes.length + deductions.length} items configured</span>
+        {lastUpdated && (<><span style={{ color: C.line, fontSize: 16, lineHeight: 1 }}>·</span>
+        <span>Last updated <strong style={{ color: C.ink, fontWeight: 600 }}>{lastUpdated}</strong></span></>)}
       </div>
 
       {/* Summary cards */}
