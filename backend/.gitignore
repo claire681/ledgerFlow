@@ -10,3 +10,8 @@ __pycache__/
 venv/
 .venv/
 *.log
+
+# Catch all backup file patterns
+*.backup
+*.backup-*
+*.bak

@@ -947,3 +947,82 @@ class WorkLocation(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
+# ── Pay Types & Deductions ────────────────────────────────────────────
+
+class PayType(Base):
+    """
+    Catalog of earning types: salary, hourly, overtime, bonus, mileage, etc.
+    Each pay type carries tax-treatment flags that drive payroll calculations.
+    Country-specific defaults are seeded based on company country.
+    """
+    __tablename__ = "pay_types"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Basic info
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    country = Column(String, nullable=False, default="CA")  # Inherited from company at creation
+
+    # Classification
+    is_default = Column(Boolean, default=False, nullable=False, index=True)  # Seeded vs custom
+    is_active = Column(Boolean, default=True, nullable=False)
+
+    # Calculation method: fixed | rate_hours | rate_units | percent_gross
+    calc_method = Column(String, nullable=False, default="fixed")
+    default_rate = Column(Numeric(12, 4), nullable=True)  # Used as starting rate per employee
+    unit_label = Column(String, nullable=True)  # "per visit", "per km", "per hour"
+
+    # Canadian tax flags
+    federal_taxable = Column(Boolean, default=True, nullable=False)
+    cpp_contributable = Column(Boolean, default=True, nullable=False)
+    ei_insurable = Column(Boolean, default=True, nullable=False)
+    vacationable = Column(Boolean, default=True, nullable=False)
+    wcb_reportable = Column(Boolean, default=True, nullable=False)
+
+    # Reporting
+    t4_box = Column(String, nullable=True, default="14")  # Default to Box 14 (employment income)
+
+    # Country-specific tax flags as JSONB for future expansion
+    # e.g. for US: {"federal_withholding": true, "fica_applicable": true, "futa_applicable": true}
+    country_flags = Column(JSONB, nullable=False, default=dict)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class DeductionType(Base):
+    """
+    Catalog of deduction types: RRSP, health benefits, garnishments, union dues, etc.
+    Each deduction carries tax-treatment rules (pre-tax vs post-tax, employer match).
+    """
+    __tablename__ = "deduction_types"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    country = Column(String, nullable=False, default="CA")
+
+    is_default = Column(Boolean, default=False, nullable=False, index=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+
+    # Calculation: fixed | percent_gross
+    calc_method = Column(String, nullable=False, default="fixed")
+    default_amount = Column(Numeric(12, 4), nullable=True)
+    unit_label = Column(String, nullable=True)  # "/month", "% of gross"
+
+    # Tax treatment
+    is_pre_tax = Column(Boolean, default=False, nullable=False)  # Reduces taxable income
+    employer_matched = Column(Boolean, default=False, nullable=False)  # Employer contributes too
+
+    # Country-specific flags
+    country_flags = Column(JSONB, nullable=False, default=dict)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+
