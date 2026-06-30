@@ -516,8 +516,12 @@ function Rail({ sections, values, openId, onPick, editingId }) {
   );
 }
 
+
 function CompensationSectionCard({ section, isOpen, onToggleOpen }) {
   const Icon = section.icon;
+  const earnings = [];
+  const deductions = [];
+
   return (
     <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
       <div onClick={onToggleOpen}
@@ -532,8 +536,34 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen }) {
         <ChevronDown size={18} color={C.muted} style={{ transform: isOpen ? "none" : "rotate(-90deg)", transition: "transform 0.2s" }} />
       </div>
       {isOpen && (
-        <div style={{ padding: "20px 22px", borderTop: "1px solid " + C.lineSoft, color: C.muted, fontSize: 13, fontStyle: "italic" }}>
-          Compensation section coming up next.
+        <div style={{ padding: "20px 22px", borderTop: "1px solid " + C.lineSoft }}>
+
+          {/* EARNINGS sub-section */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 11 }}>
+            <span style={{ fontSize: 10.5, fontWeight: 700, color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>Earnings</span>
+            <button style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "6px 11px", fontWeight: 500, fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FONT }}>
+              <span style={{ color: C.tealInk, fontSize: 14, lineHeight: 1, fontWeight: 600 }}>+</span>
+              Add earning
+            </button>
+          </div>
+          <div style={{ background: "#FCFCFD", border: "1px solid " + C.line, borderRadius: 8, padding: "32px 20px", textAlign: "center", marginBottom: 22 }}>
+            <div style={{ fontSize: 13, color: C.muted, marginBottom: 4 }}>No earnings assigned yet</div>
+            <div style={{ fontSize: 11.5, color: C.faint }}>Click "Add earning" to assign a pay type from your catalog</div>
+          </div>
+
+          {/* DEDUCTIONS sub-section */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 11 }}>
+            <span style={{ fontSize: 10.5, fontWeight: 700, color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>Deductions &amp; contributions</span>
+            <button style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "6px 11px", fontWeight: 500, fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FONT }}>
+              <span style={{ color: C.tealInk, fontSize: 14, lineHeight: 1, fontWeight: 600 }}>+</span>
+              Add deduction
+            </button>
+          </div>
+          <div style={{ background: "#FCFCFD", border: "1px solid " + C.line, borderRadius: 8, padding: "32px 20px", textAlign: "center" }}>
+            <div style={{ fontSize: 13, color: C.muted, marginBottom: 4 }}>No deductions assigned yet</div>
+            <div style={{ fontSize: 11.5, color: C.faint }}>Click "Add deduction" to assign a deduction type</div>
+          </div>
+
         </div>
       )}
     </div>
