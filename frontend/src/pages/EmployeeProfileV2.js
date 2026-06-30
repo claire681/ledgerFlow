@@ -71,27 +71,13 @@ function buildSections(country) {
       { k: "transit", l: "Transit number", t: "text", showIf: function(v) { return v.method === "Direct deposit"; } },
       { k: "account", l: "Account number", t: "text", showIf: function(v) { return v.method === "Direct deposit"; } },
     ]},
-    { id: "basepay", title: "Base pay", icon: DollarSign, required: true, fields: [
-      { k: "payType", l: "Pay type", t: "select", req: true, opts: ["Hourly","Salary"] },
-      { k: "rate", l: "Rate", t: "money", req: true },
-      { k: "standardHours", l: "Standard hours per pay period", t: "number" },
-      { k: "paySchedule", l: "Pay schedule", t: "select", opts: ["Weekly","Bi-weekly","Semi-monthly","Monthly"] },
-    ]},
-    { id: "addpay", title: "Additional pay types", icon: PlusCircle, fields: [
-      { k: "overtime", l: "Overtime", t: "select", opts: ["Enabled","Not enabled"] },
-      { k: "bonus", l: "Bonus", t: "select", opts: ["Enabled","Not enabled"] },
-      { k: "vacationPay", l: "Vacation pay", t: "select", opts: ["Enabled","Not enabled"] },
-    ]},
+    { id: "compensation", title: "Compensation", icon: DollarSign, required: true, isCustomSection: true, fields: [] },
     { id: "timeoff", title: "Time off", icon: Calendar, fields: [
       { k: "vacationPolicy", l: "Vacation policy", t: "select", opts: ["Accrued by hours worked","Fixed annual","Unpaid"] },
       { k: "accrualRate", l: "Accrual rate", t: "text" },
       { k: "balanceHours", l: "Current balance (hours)", t: "number" },
     ]},
     { id: "tax", title: "Tax setup (" + country.taxForm + ")", icon: Receipt, required: true, fields: country.taxFields, intro: taxIntroFor(country) },
-    { id: "deductions", title: "Deductions and contributions", icon: MinusCircle, fields: [
-      { k: "deductionName", l: "Deduction name", t: "text" },
-      { k: "deductionAmount", l: "Amount per pay", t: "money" },
-    ]},
   ];
 }
 
