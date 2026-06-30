@@ -516,6 +516,30 @@ function Rail({ sections, values, openId, onPick, editingId }) {
   );
 }
 
+function CompensationSectionCard({ section, isOpen, onToggleOpen }) {
+  const Icon = section.icon;
+  return (
+    <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
+      <div onClick={onToggleOpen}
+           style={{ display: "flex", alignItems: "center", gap: 13, padding: "18px 22px", cursor: "pointer" }}>
+        <span style={{ width: 30, height: 30, borderRadius: 9, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 30px" }}>
+          <Icon size={17} />
+        </span>
+        <h3 style={{ flex: 1, fontSize: 16, fontWeight: 700, color: C.ink }}>{section.title}</h3>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: C.amberSoft, color: C.amber }}>
+          Not started
+        </span>
+        <ChevronDown size={18} color={C.muted} style={{ transform: isOpen ? "none" : "rotate(-90deg)", transition: "transform 0.2s" }} />
+      </div>
+      {isOpen && (
+        <div style={{ padding: "20px 22px", borderTop: "1px solid " + C.lineSoft, color: C.muted, fontSize: 13, fontStyle: "italic" }}>
+          Compensation section coming up next.
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Section({ section, values, draft, country, isOpen, isEditing, isSaving, disabledByOtherEdit, fieldErrors, onToggleOpen, onEdit, onCancel, onSave, onChange, workLocations }) {
   const Icon = section.icon;
   const status = sectionStatus(section, values);
@@ -524,6 +548,17 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
     : { bg: C.amberSoft, fg: C.amber, label: "Start" };
   const actLabel = status === "start" ? "Start" : "Edit";
   const v = isEditing ? draft : values;
+
+  // Special-case rendering for Compensation section
+  if (section.id === "compensation") {
+    return (
+      <CompensationSectionCard
+        section={section}
+        isOpen={isOpen}
+        onToggleOpen={onToggleOpen}
+      />
+    );
+  }
   const visibleFields = section.fields.filter(function(f) { return !f.showIf || f.showIf(v); });
 
   return (
