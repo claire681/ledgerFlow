@@ -457,7 +457,7 @@ export default function EmployeeProfileV2() {
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {sections.map(function(s) {
             return (
-              <Section workLocations={workLocations} key={s.id} section={s} values={values} draft={draft} country={country}
+              <Section workLocations={workLocations} key={s.id} section={s} values={values} draft={draft} country={country} employeeId={id}
                 isOpen={openId === s.id} isEditing={editingId === s.id} isSaving={savingId === s.id}
                 disabledByOtherEdit={!!editingId && editingId !== s.id}
                 fieldErrors={fieldErrors}
@@ -517,10 +517,31 @@ function Rail({ sections, values, openId, onPick, editingId }) {
 }
 
 
-function CompensationSectionCard({ section, isOpen, onToggleOpen }) {
+function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) {
   const Icon = section.icon;
-  const earnings = [];
-  const deductions = [];
+  const [earnings, setEarnings] = useState([]);
+  const [deductions, setDeductions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(function() {
+    if (!employeeId) {
+      setLoading(false);
+      return;
+    }
+    var headers = Object.assign({ "Content-Type": "application/json" }, authHeaders());
+    Promise.all([
+      fetch(API_URL + "/api/v1/employee-pay-items/employee/" + employeeId, { headers: headers })
+        .then(function(r) { return r.ok ? r.json() : []; }),
+      fetch(API_URL + "/api/v1/employee-deduction-items/employee/" + employeeId, { headers: headers })
+        .then(function(r) { return r.ok ? r.json() : []; })
+    ]).then(function(results) {
+      setEarnings(results[0] || []);
+      setDeductions(results[1] || []);
+      setLoading(false);
+    }).catch(function() {
+      setLoading(false);
+    });
+  }, [employeeId]);
 
   return (
     <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
@@ -570,7 +591,7 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen }) {
   );
 }
 
-function Section({ section, values, draft, country, isOpen, isEditing, isSaving, disabledByOtherEdit, fieldErrors, onToggleOpen, onEdit, onCancel, onSave, onChange, workLocations }) {
+function Section({ section, values, draft, country, isOpen, isEditing, isSaving, disabledByOtherEdit, fieldErrors, onToggleOpen, onEdit, onCancel, onSave, onChange, workLocations, employeeId }) {
   const Icon = section.icon;
   const status = sectionStatus(section, values);
   const pill = status === "done" ? { bg: C.greenSoft, fg: C.green, label: "Done" }
@@ -586,6 +607,7 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
         section={section}
         isOpen={isOpen}
         onToggleOpen={onToggleOpen}
+        employeeId={employeeId}
       />
     );
   }
