@@ -604,6 +604,45 @@ function CompensationDrawer({ mode, employeeId, onClose }) {
     ? "Pick a pay type from your catalog and set the rate"
     : "Pick a deduction type from your catalog and set the amount";
 
+  const [catalog, setCatalog] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState(null);
+
+  useEffect(function() {
+    var headers = Object.assign({ "Content-Type": "application/json" }, authHeaders());
+    var endpoint = isEarning ? "/api/v1/pay-types" : "/api/v1/deduction-types";
+    fetch(API_URL + endpoint, { headers: headers })
+      .then(function(r) { return r.ok ? r.json() : []; })
+      .then(function(data) {
+        var items = Array.isArray(data) ? data : (data.items || []);
+        var activeOnly = items.filter(function(t) { return t.is_active !== false; });
+        setCatalog(activeOnly);
+        setLoading(false);
+      })
+      .catch(function() { setLoading(false); });
+  }, [isEarning]);
+
+  function taxSummary(item) {
+    if (isEarning) {
+      var flags = [];
+      if (item.federal_taxable) flags.push("Federal");
+      if (item.cpp_contributable) flags.push("CPP");
+      if (item.ei_insurable) flags.push("EI");
+      if (item.vacationable) flags.push("Vacation");
+      return flags.length ? flags.join(", ") : "Non-taxable";
+    }
+    return null;
+  }
+
+  function formatRate(item) {
+    var rate = isEarning ? item.default_rate : item.default_amount;
+    var unit = item.unit_label || "";
+    if (rate == null || rate === "") return "Not set" + (unit ? " " + unit : "");
+    var num = Number(rate);
+    var formatted = num.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return formatted + (unit ? " " + unit : "");
+  }
+
   return createPortal(
     <div style={{ position: "fixed", inset: 0, background: "rgba(14,26,31,0.35)", zIndex: 1000, display: "flex", justifyContent: "flex-end" }}
          onClick={onClose}>
@@ -622,9 +661,78 @@ function CompensationDrawer({ mode, employeeId, onClose }) {
           </button>
         </div>
         <div style={{ flex: 1, overflowY: "auto", padding: "22px 26px" }}>
-          <div style={{ color: C.muted, fontSize: 13, fontStyle: "italic" }}>
-            Catalog list coming in the next commit.
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 11 }}>
+            {isEarning ? "Pay type" : "Deduction type"}
           </div>
+
+          {loading && (
+            <div style={{ color: C.muted, fontSize: 13, padding: "20px 0" }}>Loading catalog...</div>
+          )}
+
+          {!loading && catalog.length === 0 && (
+            <div style={{ background: "#FCFCFD", border: "1px solid " + C.line, borderRadius: 8, padding: "32px 20px", textAlign: "center" }}>
+              <div style={{ fontSize: 13, color: C.muted, marginBottom: 4 }}>No {isEarning ? "pay types" : "deduction types"} in your catalog yet</div>
+              <div style={{ fontSize: 11.5, color: C.faint }}>Add some in Payroll settings first</div>
+            </div>
+          )}
+
+          {!loading && catalog.length > 0 && (
+            <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 8, overflow: "hidden" }}>
+              {catalog.map(function(item, idx) {
+                var isSelected = selectedId === item.id;
+                var lastIdx = catalog.length - 1;
+                var rowStyle = {
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 14,
+                  padding: "13px 16px",
+                  borderBottom: idx < lastIdx ? "1px solid " + C.lineSoft : "none",
+                  cursor: "pointer",
+                  background: isSelected ? C.tealSoft : "#fff",
+                  transition: "background 0.1s"
+                };
+                var dotStyle = {
+                  width: 16, height: 16, borderRadius: "50%",
+                  border: "2px solid " + (isSelected ? C.teal : C.line),
+                  flex: "0 0 16px",
+                  display: "grid",
+                  placeItems: "center",
+                  background: "#fff"
+                };
+                return (
+                  <div key={item.id} onClick={function() { setSelectedId(item.id); }} style={rowStyle}>
+                    <div style={dotStyle}>
+                      {isSelected && (
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.teal }}></div>
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: C.ink, marginBottom: 2 }}>
+                        {item.name}
+                      </div>
+                      <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.5, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        {isEarning && (
+                          <span>{taxSummary(item)}</span>
+                        )}
+                        {!isEarning && item.is_pre_tax && (
+                          <span style={{ display: "inline-flex", alignItems: "center", fontSize: 10.5, fontWeight: 600, color: C.tealInk, background: C.tealSoft, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.01em" }}>Pre-tax</span>
+                        )}
+                        {!isEarning && !item.is_pre_tax && (
+                          <span style={{ display: "inline-flex", alignItems: "center", fontSize: 10.5, fontWeight: 600, color: C.muted, background: C.surface, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.01em" }}>Post-tax</span>
+                        )}
+                        {!isEarning && item.employer_matched && (
+                          <span style={{ display: "inline-flex", alignItems: "center", fontSize: 10.5, fontWeight: 600, color: C.green, background: C.greenSoft, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.01em" }}>Employer match</span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums", fontSize: 13, color: C.ink, fontWeight: 500, textAlign: "right", flex: "0 0 auto" }}>
+                      {formatRate(item)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
         <div style={{ padding: "18px 26px", borderTop: "1px solid " + C.line, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, background: "#fff" }}>
           <button onClick={onClose}
