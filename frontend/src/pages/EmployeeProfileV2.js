@@ -548,8 +548,43 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
     refreshData();
   }, [employeeId]);
 
+  function handleRemoveClick(item, kind) {
+    setConfirmRemove({ item: item, kind: kind });
+    setOpenMenuId(null);
+    setRemoveError(null);
+  }
+
+  function handleConfirmRemove() {
+    if (!confirmRemove || removing) return;
+    setRemoving(true);
+    setRemoveError(null);
+    var endpoint = confirmRemove.kind === "earning"
+      ? "/api/v1/employee-pay-items/" + confirmRemove.item.id
+      : "/api/v1/employee-deduction-items/" + confirmRemove.item.id;
+    var headers = Object.assign({ "Content-Type": "application/json" }, authHeaders());
+    fetch(API_URL + endpoint, { method: "DELETE", headers: headers })
+      .then(function(r) {
+        if (!r.ok && r.status !== 204) {
+          return r.text().then(function(t) { throw new Error(t || "Failed to remove"); });
+        }
+        return null;
+      })
+      .then(function() {
+        setRemoving(false);
+        setConfirmRemove(null);
+        refreshData();
+      })
+      .catch(function(err) {
+        setRemoving(false);
+        setRemoveError(err.message || "Failed to remove. Please try again.");
+      });
+  }
+
   const [drawerMode, setDrawerMode] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [confirmRemove, setConfirmRemove] = useState(null);
+  const [removing, setRemoving] = useState(false);
+  const [removeError, setRemoveError] = useState(null);
 
   return (
     <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
@@ -628,7 +663,7 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
                         <div style={{ position: "absolute", top: 32, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 4px 12px rgba(14,26,31,0.08)", zIndex: 10, minWidth: 160, overflow: "hidden" }}>
                           <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed" }}>Edit rate</div>
                           <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed" }}>Pause</div>
-                          <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed", borderTop: "1px solid " + C.lineSoft }}>Remove</div>
+                          <div onClick={function(e) { e.stopPropagation(); handleRemoveClick(item, "earning"); }} style={{ padding: "9px 14px", fontSize: 13, color: C.err, cursor: "pointer", borderTop: "1px solid " + C.lineSoft, fontWeight: 500 }}>Remove</div>
                         </div>
                       )}
                     </div>
@@ -699,7 +734,7 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
                         <div style={{ position: "absolute", top: 32, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 4px 12px rgba(14,26,31,0.08)", zIndex: 10, minWidth: 160, overflow: "hidden" }}>
                           <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed" }}>Edit amount</div>
                           <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed" }}>Pause</div>
-                          <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed", borderTop: "1px solid " + C.lineSoft }}>Remove</div>
+                          <div onClick={function(e) { e.stopPropagation(); handleRemoveClick(item, "deduction"); }} style={{ padding: "9px 14px", fontSize: 13, color: C.err, cursor: "pointer", borderTop: "1px solid " + C.lineSoft, fontWeight: 500 }}>Remove</div>
                         </div>
                       )}
                     </div>
@@ -710,6 +745,40 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
           )}
 
         </div>
+      )}
+      {confirmRemove && createPortal(
+        <div style={{ position: "fixed", inset: 0, background: "rgba(14,26,31,0.35)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+             onClick={function() { if (!removing) setConfirmRemove(null); }}>
+          <div onClick={function(e) { e.stopPropagation(); }}
+               style={{ background: "#fff", borderRadius: 12, maxWidth: 440, width: "100%", boxShadow: "0 20px 40px rgba(14,26,31,0.15)", overflow: "hidden", fontFamily: FONT }}>
+            <div style={{ padding: "22px 24px 18px" }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.ink, letterSpacing: "-0.005em", marginBottom: 8 }}>
+                Remove {confirmRemove.kind === "earning" ? (confirmRemove.item.pay_type && confirmRemove.item.pay_type.name) : (confirmRemove.item.deduction_type && confirmRemove.item.deduction_type.name)}?
+              </div>
+              <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.55 }}>
+                This will remove this {confirmRemove.kind === "earning" ? "pay type" : "deduction"} from the employee. Your catalog {confirmRemove.kind === "earning" ? "pay type" : "deduction type"} stays intact and can be reassigned later.
+              </div>
+              {removeError && (
+                <div style={{ marginTop: 14, padding: "10px 12px", background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 8, color: C.err, fontSize: 12.5, lineHeight: 1.5 }}>
+                  {removeError}
+                </div>
+              )}
+            </div>
+            <div style={{ padding: "14px 24px 18px", display: "flex", justifyContent: "flex-end", gap: 10, borderTop: "1px solid " + C.line, background: "#FBFCFD" }}>
+              <button onClick={function() { if (!removing) setConfirmRemove(null); }}
+                      disabled={removing}
+                      style={{ padding: "9px 16px", borderRadius: 8, fontFamily: FONT, fontWeight: 600, fontSize: 13.5, cursor: removing ? "not-allowed" : "pointer", border: "1px solid " + C.line, color: C.ink, background: "#fff" }}>
+                Cancel
+              </button>
+              <button onClick={handleConfirmRemove}
+                      disabled={removing}
+                      style={{ padding: "9px 16px", borderRadius: 8, fontFamily: FONT, fontWeight: 600, fontSize: 13.5, cursor: removing ? "not-allowed" : "pointer", border: "1px solid transparent", color: "#fff", background: removing ? "#C3CBD6" : C.err, boxShadow: removing ? "none" : "0 1px 2px rgba(181,59,46,0.25)" }}>
+                {removing ? "Removing..." : "Remove"}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
       {drawerMode && (
         <CompensationDrawer mode={drawerMode} employeeId={employeeId} onClose={function() { setDrawerMode(null); }} onSaved={function() { setDrawerMode(null); refreshData(); }} />
