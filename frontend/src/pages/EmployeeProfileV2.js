@@ -607,6 +607,7 @@ function CompensationDrawer({ mode, employeeId, onClose }) {
   const [catalog, setCatalog] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
+  const [rateOverride, setRateOverride] = useState("");
 
   useEffect(function() {
     var headers = Object.assign({ "Content-Type": "application/json" }, authHeaders());
@@ -641,6 +642,15 @@ function CompensationDrawer({ mode, employeeId, onClose }) {
     var num = Number(rate);
     var formatted = num.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return formatted + (unit ? " " + unit : "");
+  }
+
+  var selectedItem = catalog.find(function(t) { return t.id === selectedId; }) || null;
+  var prefix = selectedItem && selectedItem.calc_method === "percent_gross" ? "%" : "$";
+  var defaultRateDisplay = selectedItem ? formatRate(selectedItem) : "";
+
+  function handleSelect(id) {
+    setSelectedId(id);
+    setRateOverride("");
   }
 
   return createPortal(
@@ -700,7 +710,7 @@ function CompensationDrawer({ mode, employeeId, onClose }) {
                   background: "#fff"
                 };
                 return (
-                  <div key={item.id} onClick={function() { setSelectedId(item.id); }} style={rowStyle}>
+                  <div key={item.id} onClick={function() { handleSelect(item.id); }} style={rowStyle}>
                     <div style={dotStyle}>
                       {isSelected && (
                         <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.teal }}></div>
@@ -733,14 +743,42 @@ function CompensationDrawer({ mode, employeeId, onClose }) {
               })}
             </div>
           )}
+
+          {selectedItem && (
+            <div style={{ marginTop: 22 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: C.text, marginBottom: 6, display: "block" }}>
+                {isEarning ? "Rate for this employee" : "Amount for this employee"}
+              </label>
+              <div style={{ fontSize: 11.5, color: C.muted, marginBottom: 8, lineHeight: 1.5 }}>
+                {defaultRateDisplay && defaultRateDisplay.indexOf("Not set") === -1
+                  ? "Leave blank to use the catalog default (" + defaultRateDisplay + "). Override to set a specific value."
+                  : "No default set in catalog. Enter the amount to apply."}
+              </div>
+              <div style={{ position: "relative" }}>
+                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: C.muted, fontFamily: "'JetBrains Mono', monospace", fontSize: 14, pointerEvents: "none" }}>
+                  {prefix}
+                </span>
+                <input
+                  type="text"
+                  value={rateOverride}
+                  onChange={function(e) { setRateOverride(e.target.value); }}
+                  placeholder={selectedItem && selectedItem.default_rate != null ? String(selectedItem.default_rate) : (selectedItem && selectedItem.default_amount != null ? String(selectedItem.default_amount) : "0.00")}
+                  style={{ width: "100%", padding: "11px 14px 11px 28px", border: "1px solid " + C.line, borderRadius: 8, fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums", fontSize: 14, color: C.ink, background: "#fff", boxSizing: "border-box" }}
+                />
+              </div>
+              <div style={{ fontSize: 11.5, color: C.faint, marginTop: 5 }}>
+                Applied at every pay run for this employee
+              </div>
+            </div>
+          )}
         </div>
         <div style={{ padding: "18px 26px", borderTop: "1px solid " + C.line, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, background: "#fff" }}>
           <button onClick={onClose}
                   style={{ padding: "10px 18px", borderRadius: 10, fontFamily: FONT, fontWeight: 600, fontSize: 14, cursor: "pointer", border: "1px solid " + C.line, color: C.ink, background: "#fff" }}>
             Cancel
           </button>
-          <button disabled
-                  style={{ padding: "10px 18px", borderRadius: 10, fontFamily: FONT, fontWeight: 600, fontSize: 14, cursor: "not-allowed", border: "1px solid transparent", color: "#fff", background: "#C3CBD6" }}>
+          <button disabled={!selectedId}
+                  style={{ padding: "10px 18px", borderRadius: 10, fontFamily: FONT, fontWeight: 600, fontSize: 14, cursor: selectedId ? "pointer" : "not-allowed", border: "1px solid transparent", color: "#fff", background: selectedId ? "#0E1A1A" : "#C3CBD6", boxShadow: selectedId ? "0 1px 2px rgba(14,26,31,0.15)" : "none" }}>
             Add to employee
           </button>
         </div>
