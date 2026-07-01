@@ -549,6 +549,7 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
   }, [employeeId]);
 
   const [drawerMode, setDrawerMode] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   return (
     <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
@@ -609,14 +610,27 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
                       {rateDisplay}
                       {unit && <span style={{ fontFamily: FONT, color: C.muted, fontWeight: 400, fontSize: 11, marginLeft: 2 }}> {unit}</span>}
                     </div>
-                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                      <button style={{ background: "none", border: "1px solid transparent", borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.muted, display: "grid", placeItems: "center" }}>
+                    <div style={{ display: "flex", justifyContent: "flex-end", position: "relative" }}>
+                      <button
+                        onClick={function(e) {
+                          e.stopPropagation();
+                          setOpenMenuId(openMenuId === item.id ? null : item.id);
+                        }}
+                        style={{ background: openMenuId === item.id ? C.surface : "none", border: "1px solid transparent", borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.muted, display: "grid", placeItems: "center" }}
+                      >
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                           <circle cx="12" cy="5" r="1.4"/>
                           <circle cx="12" cy="12" r="1.4"/>
                           <circle cx="12" cy="19" r="1.4"/>
                         </svg>
                       </button>
+                      {openMenuId === item.id && (
+                        <div style={{ position: "absolute", top: 32, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 4px 12px rgba(14,26,31,0.08)", zIndex: 10, minWidth: 160, overflow: "hidden" }}>
+                          <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed" }}>Edit rate</div>
+                          <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed" }}>Pause</div>
+                          <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed", borderTop: "1px solid " + C.lineSoft }}>Remove</div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -667,14 +681,27 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
                       {amountDisplay}
                       {unit && <span style={{ fontFamily: FONT, color: C.muted, fontWeight: 400, fontSize: 11, marginLeft: 2 }}> {unit}</span>}
                     </div>
-                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                      <button style={{ background: "none", border: "1px solid transparent", borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.muted, display: "grid", placeItems: "center" }}>
+                    <div style={{ display: "flex", justifyContent: "flex-end", position: "relative" }}>
+                      <button
+                        onClick={function(e) {
+                          e.stopPropagation();
+                          setOpenMenuId(openMenuId === item.id ? null : item.id);
+                        }}
+                        style={{ background: openMenuId === item.id ? C.surface : "none", border: "1px solid transparent", borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.muted, display: "grid", placeItems: "center" }}
+                      >
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                           <circle cx="12" cy="5" r="1.4"/>
                           <circle cx="12" cy="12" r="1.4"/>
                           <circle cx="12" cy="19" r="1.4"/>
                         </svg>
                       </button>
+                      {openMenuId === item.id && (
+                        <div style={{ position: "absolute", top: 32, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 4px 12px rgba(14,26,31,0.08)", zIndex: 10, minWidth: 160, overflow: "hidden" }}>
+                          <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed" }}>Edit amount</div>
+                          <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed" }}>Pause</div>
+                          <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed", borderTop: "1px solid " + C.lineSoft }}>Remove</div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
