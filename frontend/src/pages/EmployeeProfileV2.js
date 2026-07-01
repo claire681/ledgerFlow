@@ -580,6 +580,22 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
       });
   }
 
+  function handlePauseToggle(item, kind) {
+    var endpoint = kind === "earning"
+      ? "/api/v1/employee-pay-items/" + item.id
+      : "/api/v1/employee-deduction-items/" + item.id;
+    var headers = Object.assign({ "Content-Type": "application/json" }, authHeaders());
+    var newActive = !item.is_active;
+    setOpenMenuId(null);
+    fetch(API_URL + endpoint, {
+      method: "PATCH",
+      headers: headers,
+      body: JSON.stringify({ is_active: newActive })
+    }).then(function(r) {
+      if (r.ok) refreshData();
+    });
+  }
+
   const [drawerMode, setDrawerMode] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [confirmRemove, setConfirmRemove] = useState(null);
@@ -630,12 +646,18 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
                 var rateDisplay = rate != null ? Number(rate).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "Not set";
                 var markerColor = flags.length ? C.green : C.faint;
                 var isLast = idx === earnings.length - 1;
+                var isPaused = item.is_active === false;
                 return (
-                  <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 200px 44px", gap: 18, padding: "13px 18px", borderBottom: isLast ? "none" : "1px solid " + C.lineSoft, alignItems: "center", background: "#fff" }}>
+                  <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 200px 44px", gap: 18, padding: "13px 18px", borderBottom: isLast ? "none" : "1px solid " + C.lineSoft, alignItems: "center", background: "#fff", opacity: isPaused ? 0.55 : 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
                       <div style={{ width: 8, height: 8, borderRadius: 2, background: markerColor, flex: "0 0 8px" }}></div>
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: 13.5, fontWeight: 500, color: C.ink, marginBottom: 2 }}>{pt.name || "Unknown"}</div>
+                        <div style={{ fontSize: 13.5, fontWeight: 500, color: C.ink, marginBottom: 2, display: "flex", alignItems: "center", gap: 8 }}>
+                          <span>{pt.name || "Unknown"}</span>
+                          {isPaused && (
+                            <span style={{ display: "inline-flex", alignItems: "center", fontSize: 10, fontWeight: 600, color: C.amber, background: C.amberSoft, padding: "1px 6px", borderRadius: 4, letterSpacing: "0.02em" }}>Paused</span>
+                          )}
+                        </div>
                         <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.5 }}>
                           {pt.description ? pt.description + " · " : ""}{taxSummary}
                         </div>
@@ -662,7 +684,9 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
                       {openMenuId === item.id && (
                         <div style={{ position: "absolute", top: 32, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 4px 12px rgba(14,26,31,0.08)", zIndex: 10, minWidth: 160, overflow: "hidden" }}>
                           <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed" }}>Edit rate</div>
-                          <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed" }}>Pause</div>
+                          <div onClick={function(e) { e.stopPropagation(); handlePauseToggle(item, "earning"); }} style={{ padding: "9px 14px", fontSize: 13, color: item.is_active === false ? C.green : C.amber, cursor: "pointer", fontWeight: 500 }}>
+                            {item.is_active === false ? "Resume" : "Pause"}
+                          </div>
                           <div onClick={function(e) { e.stopPropagation(); handleRemoveClick(item, "earning"); }} style={{ padding: "9px 14px", fontSize: 13, color: C.err, cursor: "pointer", borderTop: "1px solid " + C.lineSoft, fontWeight: 500 }}>Remove</div>
                         </div>
                       )}
@@ -694,12 +718,18 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
                 var unit = dt.unit_label || "";
                 var amountDisplay = amount != null ? Number(amount).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "Not set";
                 var isLast = idx === deductions.length - 1;
+                var isPaused = item.is_active === false;
                 return (
-                  <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 200px 44px", gap: 18, padding: "13px 18px", borderBottom: isLast ? "none" : "1px solid " + C.lineSoft, alignItems: "center", background: "#fff" }}>
+                  <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 200px 44px", gap: 18, padding: "13px 18px", borderBottom: isLast ? "none" : "1px solid " + C.lineSoft, alignItems: "center", background: "#fff", opacity: isPaused ? 0.55 : 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
                       <div style={{ width: 8, height: 8, borderRadius: 2, background: C.amber, flex: "0 0 8px" }}></div>
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: 13.5, fontWeight: 500, color: C.ink, marginBottom: 2 }}>{dt.name || "Unknown"}</div>
+                        <div style={{ fontSize: 13.5, fontWeight: 500, color: C.ink, marginBottom: 2, display: "flex", alignItems: "center", gap: 8 }}>
+                          <span>{dt.name || "Unknown"}</span>
+                          {isPaused && (
+                            <span style={{ display: "inline-flex", alignItems: "center", fontSize: 10, fontWeight: 600, color: C.amber, background: C.amberSoft, padding: "1px 6px", borderRadius: 4, letterSpacing: "0.02em" }}>Paused</span>
+                          )}
+                        </div>
                         <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.5, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                           {dt.is_pre_tax ? (
                             <span style={{ display: "inline-flex", alignItems: "center", fontSize: 10.5, fontWeight: 600, color: C.tealInk, background: C.tealSoft, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.01em" }}>Pre-tax</span>
@@ -733,7 +763,9 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
                       {openMenuId === item.id && (
                         <div style={{ position: "absolute", top: 32, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 4px 12px rgba(14,26,31,0.08)", zIndex: 10, minWidth: 160, overflow: "hidden" }}>
                           <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed" }}>Edit amount</div>
-                          <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed" }}>Pause</div>
+                          <div onClick={function(e) { e.stopPropagation(); handlePauseToggle(item, "deduction"); }} style={{ padding: "9px 14px", fontSize: 13, color: item.is_active === false ? C.green : C.amber, cursor: "pointer", fontWeight: 500 }}>
+                            {item.is_active === false ? "Resume" : "Pause"}
+                          </div>
                           <div onClick={function(e) { e.stopPropagation(); handleRemoveClick(item, "deduction"); }} style={{ padding: "9px 14px", fontSize: 13, color: C.err, cursor: "pointer", borderTop: "1px solid " + C.lineSoft, fontWeight: 500 }}>Remove</div>
                         </div>
                       )}
