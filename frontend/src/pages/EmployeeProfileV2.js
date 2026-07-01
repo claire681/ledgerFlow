@@ -558,8 +558,8 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
           <Icon size={17} />
         </span>
         <h3 style={{ flex: 1, fontSize: 16, fontWeight: 700, color: C.ink }}>{section.title}</h3>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: C.amberSoft, color: C.amber }}>
-          Not started
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: (earnings.length + deductions.length) > 0 ? C.tealSoft : C.amberSoft, color: (earnings.length + deductions.length) > 0 ? C.tealInk : C.amber }}>
+          {(earnings.length + deductions.length) === 0 ? "Not started" : (earnings.length + " earning" + (earnings.length === 1 ? "" : "s") + " · " + deductions.length + " deduction" + (deductions.length === 1 ? "" : "s"))}
         </span>
         <ChevronDown size={18} color={C.muted} style={{ transform: isOpen ? "none" : "rotate(-90deg)", transition: "transform 0.2s" }} />
       </div>
@@ -574,10 +574,55 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
               Add earning
             </button>
           </div>
-          <div style={{ background: "#FCFCFD", border: "1px solid " + C.line, borderRadius: 8, padding: "32px 20px", textAlign: "center", marginBottom: 22 }}>
-            <div style={{ fontSize: 13, color: C.muted, marginBottom: 4 }}>No earnings assigned yet</div>
-            <div style={{ fontSize: 11.5, color: C.faint }}>Click "Add earning" to assign a pay type from your catalog</div>
-          </div>
+          {earnings.length === 0 ? (
+            <div style={{ background: "#FCFCFD", border: "1px solid " + C.line, borderRadius: 8, padding: "32px 20px", textAlign: "center", marginBottom: 22 }}>
+              <div style={{ fontSize: 13, color: C.muted, marginBottom: 4 }}>No earnings assigned yet</div>
+              <div style={{ fontSize: 11.5, color: C.faint }}>Click "Add earning" to assign a pay type from your catalog</div>
+            </div>
+          ) : (
+            <div style={{ background: "#FCFCFD", border: "1px solid " + C.line, borderRadius: 8, overflow: "visible", marginBottom: 22 }}>
+              {earnings.map(function(item, idx) {
+                var pt = item.pay_type || {};
+                var flags = [];
+                if (pt.federal_taxable) flags.push("Federal");
+                if (pt.cpp_contributable) flags.push("CPP");
+                if (pt.ei_insurable) flags.push("EI");
+                if (pt.vacationable) flags.push("Vacation");
+                var taxSummary = flags.length ? flags.join(", ") : "Non-taxable";
+                var rate = item.rate_override != null ? item.rate_override : pt.default_rate;
+                var unit = item.unit_label_override || pt.unit_label || "";
+                var rateDisplay = rate != null ? Number(rate).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "Not set";
+                var markerColor = flags.length ? C.green : C.faint;
+                var isLast = idx === earnings.length - 1;
+                return (
+                  <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 200px 44px", gap: 18, padding: "13px 18px", borderBottom: isLast ? "none" : "1px solid " + C.lineSoft, alignItems: "center", background: "#fff" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: markerColor, flex: "0 0 8px" }}></div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 500, color: C.ink, marginBottom: 2 }}>{pt.name || "Unknown"}</div>
+                        <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.5 }}>
+                          {pt.description ? pt.description + " · " : ""}{taxSummary}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums", fontSize: 13.5, color: C.ink, fontWeight: 500, textAlign: "right" }}>
+                      {rateDisplay}
+                      {unit && <span style={{ fontFamily: FONT, color: C.muted, fontWeight: 400, fontSize: 11, marginLeft: 2 }}> {unit}</span>}
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <button style={{ background: "none", border: "1px solid transparent", borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.muted, display: "grid", placeItems: "center" }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                          <circle cx="12" cy="5" r="1.4"/>
+                          <circle cx="12" cy="12" r="1.4"/>
+                          <circle cx="12" cy="19" r="1.4"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* DEDUCTIONS sub-section */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 11 }}>
@@ -587,10 +632,55 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
               Add deduction
             </button>
           </div>
-          <div style={{ background: "#FCFCFD", border: "1px solid " + C.line, borderRadius: 8, padding: "32px 20px", textAlign: "center" }}>
-            <div style={{ fontSize: 13, color: C.muted, marginBottom: 4 }}>No deductions assigned yet</div>
-            <div style={{ fontSize: 11.5, color: C.faint }}>Click "Add deduction" to assign a deduction type</div>
-          </div>
+          {deductions.length === 0 ? (
+            <div style={{ background: "#FCFCFD", border: "1px solid " + C.line, borderRadius: 8, padding: "32px 20px", textAlign: "center" }}>
+              <div style={{ fontSize: 13, color: C.muted, marginBottom: 4 }}>No deductions assigned yet</div>
+              <div style={{ fontSize: 11.5, color: C.faint }}>Click "Add deduction" to assign a deduction type</div>
+            </div>
+          ) : (
+            <div style={{ background: "#FCFCFD", border: "1px solid " + C.line, borderRadius: 8, overflow: "visible" }}>
+              {deductions.map(function(item, idx) {
+                var dt = item.deduction_type || {};
+                var amount = item.amount_override != null ? item.amount_override : dt.default_amount;
+                var unit = dt.unit_label || "";
+                var amountDisplay = amount != null ? Number(amount).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "Not set";
+                var isLast = idx === deductions.length - 1;
+                return (
+                  <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 200px 44px", gap: 18, padding: "13px 18px", borderBottom: isLast ? "none" : "1px solid " + C.lineSoft, alignItems: "center", background: "#fff" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: C.amber, flex: "0 0 8px" }}></div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 500, color: C.ink, marginBottom: 2 }}>{dt.name || "Unknown"}</div>
+                        <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.5, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          {dt.is_pre_tax ? (
+                            <span style={{ display: "inline-flex", alignItems: "center", fontSize: 10.5, fontWeight: 600, color: C.tealInk, background: C.tealSoft, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.01em" }}>Pre-tax</span>
+                          ) : (
+                            <span style={{ display: "inline-flex", alignItems: "center", fontSize: 10.5, fontWeight: 600, color: C.muted, background: C.surface, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.01em" }}>Post-tax</span>
+                          )}
+                          {dt.employer_matched && (
+                            <span style={{ display: "inline-flex", alignItems: "center", fontSize: 10.5, fontWeight: 600, color: C.green, background: C.greenSoft, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.01em" }}>Employer match</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums", fontSize: 13.5, color: C.ink, fontWeight: 500, textAlign: "right" }}>
+                      {amountDisplay}
+                      {unit && <span style={{ fontFamily: FONT, color: C.muted, fontWeight: 400, fontSize: 11, marginLeft: 2 }}> {unit}</span>}
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <button style={{ background: "none", border: "1px solid transparent", borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.muted, display: "grid", placeItems: "center" }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                          <circle cx="12" cy="5" r="1.4"/>
+                          <circle cx="12" cy="12" r="1.4"/>
+                          <circle cx="12" cy="19" r="1.4"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
         </div>
       )}
