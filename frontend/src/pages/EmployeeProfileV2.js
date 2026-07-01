@@ -862,6 +862,138 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
             </div>
           )}
 
+
+          {/* PAY PERIOD PREVIEW */}
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase", marginTop: 22, marginBottom: 11 }}>
+            Pay period preview
+          </div>
+
+          <div style={{ background: "#FCFCFD", border: "1px solid " + C.line, borderRadius: 10, overflow: "hidden" }}>
+
+            <div style={{ padding: "14px 20px", borderBottom: "1px solid " + C.line, background: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>
+                  {payFrequency === "weekly" ? "Weekly" : payFrequency === "biweekly" ? "Bi-weekly" : payFrequency === "semimonthly" ? "Semi-monthly" : "Monthly"} pay period
+                </div>
+                <div style={{ fontSize: 11.5, color: C.muted }}>Estimated using standard hours. Real hours entered on Run Payroll.</div>
+              </div>
+              <div style={{ display: "inline-flex", background: C.surface, border: "1px solid " + C.line, borderRadius: 8, padding: 2 }}>
+                {[{ id: "weekly", label: "Weekly" }, { id: "biweekly", label: "Bi-weekly" }, { id: "semimonthly", label: "Semi-monthly" }, { id: "monthly", label: "Monthly" }].map(function(f) {
+                  var isActive = payFrequency === f.id;
+                  return (
+                    <button key={f.id} onClick={function() { setPayFrequency(f.id); }} style={{ background: isActive ? "#fff" : "none", border: 0, padding: "6px 10px", fontFamily: FONT, fontSize: 11.5, fontWeight: 600, color: isActive ? C.ink : C.muted, cursor: "pointer", borderRadius: 6, boxShadow: isActive ? "0 1px 2px rgba(14,26,31,0.06)" : "none" }}>{f.label}</button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {(function() {
+              var activeEarnings = earnings.filter(function(e) { return e.is_active !== false; });
+              var activeDeductions = deductions.filter(function(d) { return d.is_active !== false; });
+              var earningLines = activeEarnings.map(function(e) { return { item: e, line: getEarningLine(e, payFrequency) }; });
+              var fixedEarnings = earningLines.filter(function(x) { return x.line.kind === "fixed"; });
+              var estimatedEarnings = earningLines.filter(function(x) { return x.line.kind === "estimated"; });
+              var variableEarnings = earningLines.filter(function(x) { return x.line.kind === "variable"; });
+              var estimatedGross = 0;
+              fixedEarnings.forEach(function(x) { estimatedGross += x.line.amount || 0; });
+              estimatedEarnings.forEach(function(x) { estimatedGross += x.line.amount || 0; });
+              var deductionLines = activeDeductions.map(function(d) { return { item: d, line: getDeductionLine(d, payFrequency, estimatedGross) }; });
+              var fixedDeductions = deductionLines.filter(function(x) { return x.line.kind === "fixed"; });
+              var estimatedDeductions = deductionLines.filter(function(x) { return x.line.kind === "estimated"; });
+              var variableDeductions = deductionLines.filter(function(x) { return x.line.kind === "variable"; });
+              var totalDeductions = 0;
+              fixedDeductions.forEach(function(x) { totalDeductions += x.line.amount || 0; });
+              estimatedDeductions.forEach(function(x) { totalDeductions += x.line.amount || 0; });
+              var estimatedNet = estimatedGross - totalDeductions;
+              function fmt(n) { return Number(n).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+              function subLabelJsx(text, hint) {
+                return (
+                  <div style={{ fontSize: 10, fontWeight: 700, color: C.faint, letterSpacing: "0.07em", textTransform: "uppercase", padding: "14px 20px 8px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span>{text}</span>
+                    <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: C.faint, textTransform: "none", letterSpacing: 0 }}>{hint}</span>
+                  </div>
+                );
+              }
+              function renderLine(x, isDeduction) {
+                var line = x.line;
+                var hasAmount = line.amount != null;
+                var itemName = isDeduction ? ((x.item.deduction_type && x.item.deduction_type.name) || "Unknown") : ((x.item.pay_type && x.item.pay_type.name) || "Unknown");
+                return (
+                  <div key={x.item.id} style={{ display: "grid", gridTemplateColumns: "1fr auto auto", padding: "11px 20px", borderBottom: "1px solid " + C.lineSoft, alignItems: "center", gap: 14, background: "#fff" }}>
+                    <div style={{ fontSize: 13, color: C.text }}>
+                      <strong style={{ fontWeight: 600, color: C.ink, display: "block", marginBottom: 2 }}>{itemName}</strong>
+                      <span style={{ fontSize: 11.5, color: C.muted }}>
+                        {line.label}
+                        {line.standard && (
+                          <span style={{ display: "inline-block", fontSize: 10, fontWeight: 600, color: C.amber, background: C.amberSoft, padding: "1px 5px", borderRadius: 3, marginLeft: 4, letterSpacing: "0.01em", textTransform: "uppercase" }}>standard</span>
+                        )}
+                      </span>
+                    </div>
+                    <div style={{ color: C.faint, fontSize: 12, padding: "0 2px", fontFamily: "'JetBrains Mono', monospace", visibility: hasAmount ? "visible" : "hidden" }}>&rarr;</div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums", fontSize: 13.5, fontWeight: 500, color: hasAmount ? (line.standard ? C.muted : C.ink) : C.faint, textAlign: "right", whiteSpace: "nowrap" }}>
+                      {hasAmount ? (
+                        <span>{isDeduction ? "\u2212" : ""}<span style={{ color: C.muted, fontWeight: 500, marginRight: 2 }}>$</span>{fmt(line.amount)}</span>
+                      ) : (
+                        <span style={{ fontSize: 12 }}>on Run Payroll</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+              function subtotalLine(text, amount, isDeduction) {
+                return (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", padding: "11px 20px", borderBottom: "1px solid " + C.lineSoft, alignItems: "center", gap: 14, background: "#F8FAFB" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{text}</div>
+                    <div style={{ visibility: "hidden" }}>&rarr;</div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums", fontSize: 14, fontWeight: 700, color: C.ink, textAlign: "right", whiteSpace: "nowrap" }}>
+                      {isDeduction && "\u2212"}<span style={{ color: C.muted, fontWeight: 500, marginRight: 2 }}>$</span>{fmt(amount)}
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div>
+                  {fixedEarnings.length > 0 && subLabelJsx("Fixed earnings", "real amount")}
+                  {fixedEarnings.map(function(x) { return renderLine(x, false); })}
+                  {(estimatedEarnings.length > 0 || variableEarnings.length > 0) && subLabelJsx("Estimated earnings", "based on standard hours")}
+                  {estimatedEarnings.map(function(x) { return renderLine(x, false); })}
+                  {variableEarnings.map(function(x) { return renderLine(x, false); })}
+                  {(fixedEarnings.length + estimatedEarnings.length + variableEarnings.length) > 0 && subtotalLine("Estimated gross earnings", estimatedGross, false)}
+                  {(fixedDeductions.length + estimatedDeductions.length + variableDeductions.length) > 0 && subLabelJsx("Deductions", "applied to gross")}
+                  {fixedDeductions.map(function(x) { return renderLine(x, true); })}
+                  {estimatedDeductions.map(function(x) { return renderLine(x, true); })}
+                  {variableDeductions.map(function(x) { return renderLine(x, true); })}
+                  {(fixedDeductions.length + estimatedDeductions.length + variableDeductions.length) > 0 && subtotalLine("Estimated voluntary deductions", totalDeductions, true)}
+                  {(fixedEarnings.length + estimatedEarnings.length) > 0 && (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", padding: "13px 20px", borderBottom: "1px solid " + C.lineSoft, alignItems: "center", gap: 14, background: "#F4F7F8" }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>Estimated pay before tax</div>
+                      <div style={{ visibility: "hidden" }}>&rarr;</div>
+                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums", fontSize: 15, fontWeight: 700, color: C.ink, textAlign: "right", whiteSpace: "nowrap" }}>
+                        <span style={{ color: C.muted, fontWeight: 500, marginRight: 2 }}>$</span>{fmt(estimatedNet)}
+                      </div>
+                    </div>
+                  )}
+                  {(activeEarnings.length === 0 && activeDeductions.length === 0) && (
+                    <div style={{ padding: "24px 20px", fontSize: 12.5, color: C.faint, background: "#fff", textAlign: "center", fontStyle: "italic" }}>
+                      Add earnings and deductions above to see a pay period preview.
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            <div style={{ padding: "14px 20px", background: C.tealSoft, display: "flex", gap: 10, alignItems: "flex-start", borderTop: "1px solid " + C.line }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flex: "0 0 14px", color: C.teal, marginTop: 2 }}>
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M12 16v-4M12 8h.01"/>
+              </svg>
+              <div style={{ fontSize: 11.5, color: C.tealInk, fontWeight: 400, lineHeight: 1.55 }}>
+                Items with a <strong style={{ fontWeight: 600 }}>STANDARD</strong> tag are estimates based on standard hours for the selected frequency (40 weekly, 80 bi-weekly, 86.67 semi-monthly, 173.33 monthly). Federal income tax, provincial tax, CPP, and EI are calculated when you run payroll with real hours.
+              </div>
+            </div>
+
+          </div>
+
         </div>
       )}
       {confirmRemove && createPortal(
