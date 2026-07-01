@@ -828,15 +828,35 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
 
 function CompensationDrawer({ mode, employeeId, editItem, onClose, onSaved }) {
   const isEarning = mode === "earning";
-  const title = isEarning ? "Add earning" : "Add deduction";
-  const sub = isEarning
-    ? "Pick a pay type from your catalog and set the rate"
-    : "Pick a deduction type from your catalog and set the amount";
+  const isEditing = !!editItem;
+
+  var editTypeId = null;
+  var editOverride = "";
+  var editItemName = "";
+  if (isEditing) {
+    var item = editItem.item;
+    if (isEarning) {
+      editTypeId = item.pay_type_id;
+      editOverride = item.rate_override != null ? String(item.rate_override) : "";
+      editItemName = (item.pay_type && item.pay_type.name) || "";
+    } else {
+      editTypeId = item.deduction_type_id;
+      editOverride = item.amount_override != null ? String(item.amount_override) : "";
+      editItemName = (item.deduction_type && item.deduction_type.name) || "";
+    }
+  }
+
+  const title = isEditing
+    ? (isEarning ? "Edit rate for " + editItemName : "Edit amount for " + editItemName)
+    : (isEarning ? "Add earning" : "Add deduction");
+  const sub = isEditing
+    ? (isEarning ? "Update the rate for this employee. Leave blank to use the catalog default." : "Update the amount for this employee. Leave blank to use the catalog default.")
+    : (isEarning ? "Pick a pay type from your catalog and set the rate" : "Pick a deduction type from your catalog and set the amount");
 
   const [catalog, setCatalog] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState(null);
-  const [rateOverride, setRateOverride] = useState("");
+  const [selectedId, setSelectedId] = useState(editTypeId);
+  const [rateOverride, setRateOverride] = useState(editOverride);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
@@ -977,7 +997,7 @@ function CompensationDrawer({ mode, employeeId, editItem, onClose, onSaved }) {
                   background: "#fff"
                 };
                 return (
-                  <div key={item.id} onClick={function() { handleSelect(item.id); }} style={rowStyle}>
+                  <div key={item.id} onClick={function() { if (!isEditing || item.id === editTypeId) handleSelect(item.id); }} style={Object.assign({}, rowStyle, isEditing && item.id !== editTypeId ? { opacity: 0.4, cursor: "not-allowed" } : {})}>
                     <div style={dotStyle}>
                       {isSelected && (
                         <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.teal }}></div>
@@ -1053,7 +1073,7 @@ function CompensationDrawer({ mode, employeeId, editItem, onClose, onSaved }) {
           <button disabled={!selectedId || saving}
                   onClick={handleSave}
                   style={{ padding: "10px 18px", borderRadius: 10, fontFamily: FONT, fontWeight: 600, fontSize: 14, cursor: (selectedId && !saving) ? "pointer" : "not-allowed", border: "1px solid transparent", color: "#fff", background: (selectedId && !saving) ? "#0E1A1A" : "#C3CBD6", boxShadow: (selectedId && !saving) ? "0 1px 2px rgba(14,26,31,0.15)" : "none" }}>
-            {saving ? "Adding..." : "Add to employee"}
+            {saving ? (isEditing ? "Updating..." : "Adding...") : (isEditing ? "Update" : "Add to employee")}
           </button>
         </div>
       </div>
