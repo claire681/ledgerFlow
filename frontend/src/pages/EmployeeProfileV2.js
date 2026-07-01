@@ -524,7 +524,7 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
   const [deductions, setDeductions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(function() {
+  function refreshData() {
     if (!employeeId) {
       setLoading(false);
       return;
@@ -542,6 +542,10 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
     }).catch(function() {
       setLoading(false);
     });
+  }
+
+  useEffect(function() {
+    refreshData();
   }, [employeeId]);
 
   const [drawerMode, setDrawerMode] = useState(null);
@@ -591,13 +595,13 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
         </div>
       )}
       {drawerMode && (
-        <CompensationDrawer mode={drawerMode} employeeId={employeeId} onClose={function() { setDrawerMode(null); }} />
+        <CompensationDrawer mode={drawerMode} employeeId={employeeId} onClose={function() { setDrawerMode(null); }} onSaved={function() { setDrawerMode(null); refreshData(); }} />
       )}
     </div>
   );
 }
 
-function CompensationDrawer({ mode, employeeId, onClose }) {
+function CompensationDrawer({ mode, employeeId, onClose, onSaved }) {
   const isEarning = mode === "earning";
   const title = isEarning ? "Add earning" : "Add deduction";
   const sub = isEarning
@@ -608,6 +612,44 @@ function CompensationDrawer({ mode, employeeId, onClose }) {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
   const [rateOverride, setRateOverride] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  function handleSave() {
+    if (!selectedId || saving) return;
+    setSaving(true);
+    setSaveError(null);
+
+    var endpoint = isEarning ? "/api/v1/employee-pay-items" : "/api/v1/employee-deduction-items";
+    var overrideField = isEarning ? "rate_override" : "amount_override";
+    var typeIdField = isEarning ? "pay_type_id" : "deduction_type_id";
+
+    var body = {
+      employee_id: employeeId,
+      notes: null
+    };
+    body[typeIdField] = selectedId;
+    body[overrideField] = rateOverride.trim() === "" ? null : Number(rateOverride);
+
+    var headers = Object.assign({ "Content-Type": "application/json" }, authHeaders());
+
+    fetch(API_URL + endpoint, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(body)
+    }).then(function(r) {
+      if (!r.ok) {
+        return r.text().then(function(t) { throw new Error(t || "Failed to save"); });
+      }
+      return r.json();
+    }).then(function() {
+      setSaving(false);
+      if (onSaved) onSaved();
+    }).catch(function(err) {
+      setSaving(false);
+      setSaveError(err.message || "Failed to save. Please try again.");
+    });
+  }
 
   useEffect(function() {
     var headers = Object.assign({ "Content-Type": "application/json" }, authHeaders());
@@ -771,15 +813,22 @@ function CompensationDrawer({ mode, employeeId, onClose }) {
               </div>
             </div>
           )}
+
+          {saveError && (
+            <div style={{ marginTop: 16, padding: "11px 14px", background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 8, color: "#B53B2E", fontSize: 12.5, lineHeight: 1.5 }}>
+              {saveError}
+            </div>
+          )}
         </div>
         <div style={{ padding: "18px 26px", borderTop: "1px solid " + C.line, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, background: "#fff" }}>
           <button onClick={onClose}
                   style={{ padding: "10px 18px", borderRadius: 10, fontFamily: FONT, fontWeight: 600, fontSize: 14, cursor: "pointer", border: "1px solid " + C.line, color: C.ink, background: "#fff" }}>
             Cancel
           </button>
-          <button disabled={!selectedId}
-                  style={{ padding: "10px 18px", borderRadius: 10, fontFamily: FONT, fontWeight: 600, fontSize: 14, cursor: selectedId ? "pointer" : "not-allowed", border: "1px solid transparent", color: "#fff", background: selectedId ? "#0E1A1A" : "#C3CBD6", boxShadow: selectedId ? "0 1px 2px rgba(14,26,31,0.15)" : "none" }}>
-            Add to employee
+          <button disabled={!selectedId || saving}
+                  onClick={handleSave}
+                  style={{ padding: "10px 18px", borderRadius: 10, fontFamily: FONT, fontWeight: 600, fontSize: 14, cursor: (selectedId && !saving) ? "pointer" : "not-allowed", border: "1px solid transparent", color: "#fff", background: (selectedId && !saving) ? "#0E1A1A" : "#C3CBD6", boxShadow: (selectedId && !saving) ? "0 1px 2px rgba(14,26,31,0.15)" : "none" }}>
+            {saving ? "Adding..." : "Add to employee"}
           </button>
         </div>
       </div>
