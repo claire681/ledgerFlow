@@ -865,24 +865,40 @@ function CompensationDrawer({ mode, employeeId, editItem, onClose, onSaved }) {
     setSaving(true);
     setSaveError(null);
 
-    var endpoint = isEarning ? "/api/v1/employee-pay-items" : "/api/v1/employee-deduction-items";
     var overrideField = isEarning ? "rate_override" : "amount_override";
     var typeIdField = isEarning ? "pay_type_id" : "deduction_type_id";
-
-    var body = {
-      employee_id: employeeId,
-      notes: null
-    };
-    body[typeIdField] = selectedId;
-    body[overrideField] = rateOverride.trim() === "" ? null : Number(rateOverride);
-
+    var collectionEndpoint = isEarning ? "/api/v1/employee-pay-items" : "/api/v1/employee-deduction-items";
     var headers = Object.assign({ "Content-Type": "application/json" }, authHeaders());
 
-    fetch(API_URL + endpoint, {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify(body)
-    }).then(function(r) {
+    var overrideValue = rateOverride.trim() === "" ? null : Number(rateOverride);
+
+    var fetchOpts;
+    var url;
+    if (isEditing) {
+      var patchBody = {};
+      patchBody[overrideField] = overrideValue;
+      url = API_URL + collectionEndpoint + "/" + editItem.item.id;
+      fetchOpts = {
+        method: "PATCH",
+        headers: headers,
+        body: JSON.stringify(patchBody)
+      };
+    } else {
+      var body = {
+        employee_id: employeeId,
+        notes: null
+      };
+      body[typeIdField] = selectedId;
+      body[overrideField] = overrideValue;
+      url = API_URL + collectionEndpoint;
+      fetchOpts = {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(body)
+      };
+    }
+
+    fetch(url, fetchOpts).then(function(r) {
       if (!r.ok) {
         return r.text().then(function(t) { throw new Error(t || "Failed to save"); });
       }
