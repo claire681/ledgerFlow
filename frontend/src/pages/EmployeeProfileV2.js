@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { createPortal } from "react-dom";
 import {
   ChevronLeft, ChevronDown, Check, User, Phone, Briefcase, CreditCard,
   DollarSign, PlusCircle, Calendar, Receipt, MinusCircle
@@ -543,6 +544,8 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
     });
   }, [employeeId]);
 
+  const [drawerMode, setDrawerMode] = useState(null);
+
   return (
     <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
       <div onClick={onToggleOpen}
@@ -562,7 +565,7 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
           {/* EARNINGS sub-section */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 11 }}>
             <span style={{ fontSize: 10.5, fontWeight: 700, color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>Earnings</span>
-            <button style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "6px 11px", fontWeight: 500, fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FONT }}>
+            <button onClick={function() { setDrawerMode("earning"); }} style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "6px 11px", fontWeight: 500, fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FONT }}>
               <span style={{ color: C.tealInk, fontSize: 14, lineHeight: 1, fontWeight: 600 }}>+</span>
               Add earning
             </button>
@@ -575,7 +578,7 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
           {/* DEDUCTIONS sub-section */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 11 }}>
             <span style={{ fontSize: 10.5, fontWeight: 700, color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>Deductions &amp; contributions</span>
-            <button style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "6px 11px", fontWeight: 500, fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FONT }}>
+            <button onClick={function() { setDrawerMode("deduction"); }} style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "6px 11px", fontWeight: 500, fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FONT }}>
               <span style={{ color: C.tealInk, fontSize: 14, lineHeight: 1, fontWeight: 600 }}>+</span>
               Add deduction
             </button>
@@ -587,7 +590,55 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
 
         </div>
       )}
+      {drawerMode && (
+        <CompensationDrawer mode={drawerMode} employeeId={employeeId} onClose={function() { setDrawerMode(null); }} />
+      )}
     </div>
+  );
+}
+
+function CompensationDrawer({ mode, employeeId, onClose }) {
+  const isEarning = mode === "earning";
+  const title = isEarning ? "Add earning" : "Add deduction";
+  const sub = isEarning
+    ? "Pick a pay type from your catalog and set the rate"
+    : "Pick a deduction type from your catalog and set the amount";
+
+  return createPortal(
+    <div style={{ position: "fixed", inset: 0, background: "rgba(14,26,31,0.35)", zIndex: 1000, display: "flex", justifyContent: "flex-end" }}
+         onClick={onClose}>
+      <div onClick={function(e) { e.stopPropagation(); }}
+           style={{ width: 520, height: "100vh", background: "#fff", boxShadow: "-20px 0 40px rgba(14,26,31,0.15)", display: "flex", flexDirection: "column", fontFamily: FONT }}>
+        <div style={{ padding: "20px 26px 18px", borderBottom: "1px solid " + C.line, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: C.ink, letterSpacing: "-0.01em", marginBottom: 2 }}>{title}</div>
+            <div style={{ fontSize: 12.5, color: C.muted }}>{sub}</div>
+          </div>
+          <button onClick={onClose}
+                  style={{ background: "none", border: 0, color: C.faint, cursor: "pointer", padding: 6, borderRadius: 6, display: "grid", placeItems: "center" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", padding: "22px 26px" }}>
+          <div style={{ color: C.muted, fontSize: 13, fontStyle: "italic" }}>
+            Catalog list coming in the next commit.
+          </div>
+        </div>
+        <div style={{ padding: "18px 26px", borderTop: "1px solid " + C.line, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, background: "#fff" }}>
+          <button onClick={onClose}
+                  style={{ padding: "10px 18px", borderRadius: 10, fontFamily: FONT, fontWeight: 600, fontSize: 14, cursor: "pointer", border: "1px solid " + C.line, color: C.ink, background: "#fff" }}>
+            Cancel
+          </button>
+          <button disabled
+                  style={{ padding: "10px 18px", borderRadius: 10, fontFamily: FONT, fontWeight: 600, fontSize: 14, cursor: "not-allowed", border: "1px solid transparent", color: "#fff", background: "#C3CBD6" }}>
+            Add to employee
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
