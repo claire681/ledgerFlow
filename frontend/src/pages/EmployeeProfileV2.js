@@ -655,8 +655,8 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
                 var isLast = idx === earnings.length - 1;
                 var isPaused = item.is_active === false;
                 return (
-                  <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 200px 44px", gap: 18, padding: "13px 18px", borderBottom: isLast ? "none" : "1px solid " + C.lineSoft, alignItems: "center", background: "#fff", opacity: isPaused ? 0.55 : 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+                  <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 200px 44px", gap: 18, padding: "13px 18px", borderBottom: isLast ? "none" : "1px solid " + C.lineSoft, alignItems: "center", background: "#fff" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0, opacity: isPaused ? 0.55 : 1 }}>
                       <div style={{ width: 8, height: 8, borderRadius: 2, background: markerColor, flex: "0 0 8px" }}></div>
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 500, color: C.ink, marginBottom: 2, display: "flex", alignItems: "center", gap: 8 }}>
@@ -670,7 +670,7 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
                         </div>
                       </div>
                     </div>
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums", fontSize: 13.5, color: C.ink, fontWeight: 500, textAlign: "right" }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums", fontSize: 13.5, color: C.ink, fontWeight: 500, textAlign: "right", opacity: isPaused ? 0.55 : 1 }}>
                       {rateDisplay}
                       {unit && <span style={{ fontFamily: FONT, color: C.muted, fontWeight: 400, fontSize: 11, marginLeft: 2 }}> {unit}</span>}
                     </div>
@@ -727,8 +727,8 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
                 var isLast = idx === deductions.length - 1;
                 var isPaused = item.is_active === false;
                 return (
-                  <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 200px 44px", gap: 18, padding: "13px 18px", borderBottom: isLast ? "none" : "1px solid " + C.lineSoft, alignItems: "center", background: "#fff", opacity: isPaused ? 0.55 : 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+                  <div key={item.id} style={{ display: "grid", gridTemplateColumns: "1fr 200px 44px", gap: 18, padding: "13px 18px", borderBottom: isLast ? "none" : "1px solid " + C.lineSoft, alignItems: "center", background: "#fff" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0, opacity: isPaused ? 0.55 : 1 }}>
                       <div style={{ width: 8, height: 8, borderRadius: 2, background: C.amber, flex: "0 0 8px" }}></div>
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 500, color: C.ink, marginBottom: 2, display: "flex", alignItems: "center", gap: 8 }}>
@@ -749,7 +749,7 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
                         </div>
                       </div>
                     </div>
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums", fontSize: 13.5, color: C.ink, fontWeight: 500, textAlign: "right" }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums", fontSize: 13.5, color: C.ink, fontWeight: 500, textAlign: "right", opacity: isPaused ? 0.55 : 1 }}>
                       {amountDisplay}
                       {unit && <span style={{ fontFamily: FONT, color: C.muted, fontWeight: 400, fontSize: 11, marginLeft: 2 }}> {unit}</span>}
                     </div>
