@@ -602,12 +602,91 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
     setOpenMenuId(null);
   }
 
+  function standardHoursForFrequency(freq) {
+    if (freq === "weekly") return 40;
+    if (freq === "biweekly") return 80;
+    if (freq === "semimonthly") return 86.67;
+    return 173.33;
+  }
+
+  function prorateMonthlyToFrequency(monthlyAmount, freq) {
+    var m = Number(monthlyAmount) || 0;
+    if (freq === "weekly") return m * 12 / 52;
+    if (freq === "biweekly") return m * 12 / 26;
+    if (freq === "semimonthly") return m / 2;
+    return m;
+  }
+
+  function parseUnitPeriod(unit) {
+    if (!unit) return null;
+    var u = String(unit).toLowerCase().trim();
+    if (u.indexOf("month") !== -1) return "month";
+    if (u.indexOf("year") !== -1) return "year";
+    if (u.indexOf("hr") !== -1 || u.indexOf("hour") !== -1) return "hour";
+    if (u.indexOf("km") !== -1) return "km";
+    if (u.indexOf("day") !== -1) return "day";
+    if (u.indexOf("visit") !== -1) return "visit";
+    return null;
+  }
+
+  function getEarningLine(item, freq) {
+    var pt = item.pay_type || {};
+    var rate = item.rate_override != null ? Number(item.rate_override) : Number(pt.default_rate || 0);
+    var unit = item.unit_label_override || pt.unit_label || "";
+    var period = parseUnitPeriod(unit);
+    var calcMethod = pt.calc_method || "fixed";
+
+    if (calcMethod === "percent_gross") {
+      return { kind: "variable", label: rate.toFixed(2) + "% of gross", amount: null, standard: false, rate: rate };
+    }
+    if (period === "month") {
+      return { kind: "fixed", label: "$" + rate.toFixed(2) + " /month", amount: prorateMonthlyToFrequency(rate, freq), standard: false, rate: rate };
+    }
+    if (period === "year") {
+      var monthlyFromYear = rate / 12;
+      return { kind: "fixed", label: "$" + rate.toFixed(2) + " /year", amount: prorateMonthlyToFrequency(monthlyFromYear, freq), standard: false, rate: rate };
+    }
+    if (period === "hour") {
+      var stdHours = standardHoursForFrequency(freq);
+      var isOvertime = (pt.name || "").toLowerCase().indexOf("overtime") !== -1;
+      var hoursForStandard = isOvertime ? 0 : stdHours;
+      return { kind: "estimated", label: "$" + rate.toFixed(2) + " /hr × " + hoursForStandard + " hrs", amount: rate * hoursForStandard, standard: true, rate: rate };
+    }
+    if (period === "km") {
+      return { kind: "variable", label: "$" + rate.toFixed(2) + " /km × distance driven", amount: null, standard: false, rate: rate };
+    }
+    if (period === "visit") {
+      return { kind: "variable", label: "$" + rate.toFixed(2) + " /visit × visits", amount: null, standard: false, rate: rate };
+    }
+    return { kind: "variable", label: "applied when triggered", amount: null, standard: false, rate: rate };
+  }
+
+  function getDeductionLine(item, freq, estimatedGross) {
+    var dt = item.deduction_type || {};
+    var amount = item.amount_override != null ? Number(item.amount_override) : Number(dt.default_amount || 0);
+    var unit = dt.unit_label || "";
+    var period = parseUnitPeriod(unit);
+    var calcMethod = dt.calc_method || "fixed";
+
+    if (calcMethod === "percent_gross") {
+      return { kind: "estimated", label: amount.toFixed(2) + "% × estimated gross", amount: estimatedGross * amount / 100, standard: true, rate: amount };
+    }
+    if (period === "month") {
+      return { kind: "fixed", label: "$" + amount.toFixed(2) + " /month", amount: prorateMonthlyToFrequency(amount, freq), standard: false, rate: amount };
+    }
+    if (period === "year") {
+      return { kind: "fixed", label: "$" + amount.toFixed(2) + " /year", amount: prorateMonthlyToFrequency(amount / 12, freq), standard: false, rate: amount };
+    }
+    return { kind: "variable", label: "applied when triggered", amount: null, standard: false, rate: amount };
+  }
+
   const [drawerMode, setDrawerMode] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [confirmRemove, setConfirmRemove] = useState(null);
   const [removing, setRemoving] = useState(false);
   const [removeError, setRemoveError] = useState(null);
   const [editItem, setEditItem] = useState(null);
+  const [payFrequency, setPayFrequency] = useState("biweekly");
 
   return (
     <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
