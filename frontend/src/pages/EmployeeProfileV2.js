@@ -596,11 +596,18 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
     });
   }
 
+  function handleEditClick(item, kind) {
+    setEditItem({ item: item, kind: kind });
+    setDrawerMode(kind);
+    setOpenMenuId(null);
+  }
+
   const [drawerMode, setDrawerMode] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [confirmRemove, setConfirmRemove] = useState(null);
   const [removing, setRemoving] = useState(false);
   const [removeError, setRemoveError] = useState(null);
+  const [editItem, setEditItem] = useState(null);
 
   return (
     <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
@@ -683,7 +690,7 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
                       </button>
                       {openMenuId === item.id && (
                         <div style={{ position: "absolute", top: 32, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 4px 12px rgba(14,26,31,0.08)", zIndex: 10, minWidth: 160, overflow: "hidden" }}>
-                          <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed" }}>Edit rate</div>
+                          <div onClick={function(e) { e.stopPropagation(); handleEditClick(item, "earning"); }} style={{ padding: "9px 14px", fontSize: 13, color: C.tealInk, cursor: "pointer", fontWeight: 500 }}>Edit rate</div>
                           <div onClick={function(e) { e.stopPropagation(); handlePauseToggle(item, "earning"); }} style={{ padding: "9px 14px", fontSize: 13, color: item.is_active === false ? C.green : C.amber, cursor: "pointer", fontWeight: 500 }}>
                             {item.is_active === false ? "Resume" : "Pause"}
                           </div>
@@ -762,7 +769,7 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
                       </button>
                       {openMenuId === item.id && (
                         <div style={{ position: "absolute", top: 32, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 4px 12px rgba(14,26,31,0.08)", zIndex: 10, minWidth: 160, overflow: "hidden" }}>
-                          <div style={{ padding: "9px 14px", fontSize: 13, color: C.faint, cursor: "not-allowed" }}>Edit amount</div>
+                          <div onClick={function(e) { e.stopPropagation(); handleEditClick(item, "deduction"); }} style={{ padding: "9px 14px", fontSize: 13, color: C.tealInk, cursor: "pointer", fontWeight: 500 }}>Edit amount</div>
                           <div onClick={function(e) { e.stopPropagation(); handlePauseToggle(item, "deduction"); }} style={{ padding: "9px 14px", fontSize: 13, color: item.is_active === false ? C.green : C.amber, cursor: "pointer", fontWeight: 500 }}>
                             {item.is_active === false ? "Resume" : "Pause"}
                           </div>
@@ -813,13 +820,13 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
         document.body
       )}
       {drawerMode && (
-        <CompensationDrawer mode={drawerMode} employeeId={employeeId} onClose={function() { setDrawerMode(null); }} onSaved={function() { setDrawerMode(null); refreshData(); }} />
+        <CompensationDrawer mode={drawerMode} employeeId={employeeId} editItem={editItem} onClose={function() { setDrawerMode(null); setEditItem(null); }} onSaved={function() { setDrawerMode(null); setEditItem(null); refreshData(); }} />
       )}
     </div>
   );
 }
 
-function CompensationDrawer({ mode, employeeId, onClose, onSaved }) {
+function CompensationDrawer({ mode, employeeId, editItem, onClose, onSaved }) {
   const isEarning = mode === "earning";
   const title = isEarning ? "Add earning" : "Add deduction";
   const sub = isEarning
