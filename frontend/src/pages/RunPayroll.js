@@ -620,7 +620,6 @@ export default function RunPayroll() {
       return;
     }
       setPreviewing(true);
-      window.alert("DEBUG: previewRun called with " + inputs.length + " employees. About to call backend.");
       try {
         // Map UI inputs to backend PayRunEmployeeInput shape
         const employee_inputs = inputs.map((i) => ({
@@ -650,14 +649,11 @@ export default function RunPayroll() {
         });
 
         let calculation;
-        window.alert("DEBUG: backend responded with status " + resp.status);
         if (resp.ok) {
           const stubsResp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/stubs", {
             headers: { "Authorization": "Bearer " + token }
           });
           const stubs = stubsResp.ok ? await stubsResp.json() : [];
-          window.alert("DEBUG: got " + stubs.length + " stubs. First stub fields: " + (stubs[0] ? Object.keys(stubs[0]).join(", ") : "NONE"));
-          if (stubs[0]) window.alert("DEBUG: first stub values - gross_pay=" + stubs[0].gross_pay + ", total_employee_deductions=" + stubs[0].total_employee_deductions + ", net_pay=" + stubs[0].net_pay);
           const runData = await resp.json();
           calculation = {
             employee_count: runData.employee_count || inputs.length,
