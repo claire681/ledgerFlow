@@ -430,7 +430,8 @@ export default function PayrollPreview() {
         const passedState = (location && location.state) || {};
         const passedCalc = passedState.calculation;
         const passedRows = passedState.rows;
-        const calcLines = passedCalc && (passedCalc.lines || passedCalc.employee_lines || passedCalc.employees || passedCalc.results || passedCalc.line_items);
+        const passedStubs = Array.isArray(passedState.stubs) ? passedState.stubs : null;
+      const calcLines = passedStubs || (passedCalc && (passedCalc.lines || passedCalc.employee_lines || passedCalc.employees || passedCalc.results || passedCalc.line_items));
         if (passedCalc && typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
           console.log("[PayrollPreview] received calculation from RunPayroll:", passedCalc);
         }
