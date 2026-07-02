@@ -620,6 +620,7 @@ export default function RunPayroll() {
       return;
     }
       setPreviewing(true);
+      window.alert("DEBUG: previewRun called with " + inputs.length + " employees. About to call backend.");
       try {
         // Map UI inputs to backend PayRunEmployeeInput shape
         const employee_inputs = inputs.map((i) => ({
@@ -649,6 +650,7 @@ export default function RunPayroll() {
         });
 
         let calculation;
+        window.alert("DEBUG: backend responded with status " + resp.status);
         if (resp.ok) {
           const stubsResp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/stubs", {
             headers: { "Authorization": "Bearer " + token }
