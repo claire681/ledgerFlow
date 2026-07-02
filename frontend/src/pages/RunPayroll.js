@@ -619,39 +619,86 @@ export default function RunPayroll() {
       window.alert("No employees ready to pay. Tick at least one ready employee in the table first.");
       return;
     }
-    setPreviewing(true);
-    try {
-      // No backend calculator yet — compute basic totals client-side for the preview page.
-      const calculation = {
-        employee_count: inputs.length,
-        total_regular_hours: inputs.reduce((s, i) => s + (i.regular_hours || 0), 0),
-        total_stat_hours: inputs.reduce((s, i) => s + (i.stat_holiday_hours || 0), 0),
-        total_stat_pay: inputs.reduce((s, i) => s + (i.stat_pay_amount || 0), 0),
-        note: "Server-side payroll calculator (CRA T4127) not yet wired. Totals shown are gross input only."
-      };
-      navigate("/payroll/run/" + payRunId + "/preview", {
-        state: {
-          calculation: calculation,
-          inputs: inputs,
-          rows: rows.filter((r) => r.ready && !r.skipped).map((r) => ({
-            id: r.id,
-            name: r.name,
-            regular: parseFloat(r.regular) || 0,
-            statHoliday: parseFloat(r.statHoliday) || 0,
-            statPay: parseFloat(String(r.statPay == null ? "" : r.statPay).replace(/[^0-9.]/g, "")) || 0,
-            payMethod: r.payMethod,
-            memo: r.memo || "",
-            rate: parseFloat(String(r.rateHint == null ? "" : r.rateHint).replace(/[^0-9.]/g, "")) || 0,
-            empType: r.empType,
-            position: r.position
-          }))
+      setPreviewing(true);
+      try {
+        // Map UI inputs to backend PayRunEmployeeInput shape
+        const employee_inputs = inputs.map((i) => ({
+          employee_id: i.employee_id,
+          hours: {
+            regular: i.regular_hours || 0,
+            stat_holiday: i.stat_holiday_hours || 0
+          },
+          bonus: 0,
+          commission: 0,
+          reimbursement: 0
+        }));
+
+        // Call backend calculate endpoint - runs the Canada tax engine
+        const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+        const resp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/calculate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({
+            employee_inputs: employee_inputs,
+            pay_periods_per_year: 26,
+            subnational: "AB"
+          })
+        });
+
+        let calculation;
+        if (resp.ok) {
+          const stubsResp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/stubs", {
+            headers: { "Authorization": "Bearer " + token }
+          });
+          const stubs = stubsResp.ok ? await stubsResp.json() : [];
+          const runData = await resp.json();
+          calculation = {
+            employee_count: runData.employee_count || inputs.length,
+            total_gross: runData.total_gross,
+            total_deductions: runData.total_deductions,
+            total_net: runData.total_net,
+            stubs: stubs,
+            source: "backend"
+          };
+        } else {
+          const errText = await resp.text();
+          console.error("Calculate failed:", resp.status, errText);
+          calculation = {
+            employee_count: inputs.length,
+            total_regular_hours: inputs.reduce((s, i) => s + (i.regular_hours || 0), 0),
+            total_stat_hours: inputs.reduce((s, i) => s + (i.stat_holiday_hours || 0), 0),
+            total_stat_pay: inputs.reduce((s, i) => s + (i.stat_pay_amount || 0), 0),
+            note: "Backend calculation failed. Showing gross input only.",
+            source: "client_fallback"
+          };
         }
-      });
-    } catch (e) {
-      window.alert("Network error: " + ((e && e.message) ? e.message : String(e)));
-      setPreviewing(false);
-    }
-  };
+
+        navigate("/payroll/run/" + payRunId + "/preview", {
+          state: {
+            calculation: calculation,
+            inputs: inputs,
+            rows: rows.filter((r) => r.ready && !r.skipped).map((r) => ({
+              id: r.id,
+              name: r.name,
+              regular: parseFloat(r.regular) || 0,
+              statHoliday: parseFloat(r.statHoliday) || 0,
+              statPay: parseFloat(String(r.statPay == null ? "" : r.statPay).replace(/[^0-9.]/g, "")) || 0,
+              payMethod: r.payMethod,
+              memo: r.memo || "",
+              rate: parseFloat(String(r.rateHint == null ? "" : r.rateHint).replace(/[^0-9.]/g, "")) || 0,
+              empType: r.empType,
+              position: r.position
+            }))
+          }
+        });
+      } catch (e) {
+        window.alert("Network error: " + ((e && e.message) ? e.message : String(e)));
+        setPreviewing(false);
+      }
+    };
 
   const customizeDefaults = () => {
     setSortKey(""); setSortDir("asc"); setDensity("normal"); setStripe(false);
