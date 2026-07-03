@@ -1,19 +1,20 @@
 """Canadian federal income tax calculation, 2026.
 
-Reference: CRA T4127 January 2026, formula method.
+Reference: CRA T4127 Payroll Deductions Formulas, 123rd Edition, effective July 1, 2026. Values verified against Table 8.1 (rates, thresholds, constants) and Table 8.9 (federal claim codes).
 
 Method: annualize period gross, apply progressive brackets, subtract
 TD1 claim credit at lowest bracket rate, divide back by pay periods.
 
-2026 figures (placeholder; verify against CRA T4127):
+2026 verified figures from CRA T4127:
 - Brackets:
-    15.0 percent up to 55,867
-    20.5 percent on 55,867 to 111,733
-    26.0 percent on 111,733 to 173,205
-    29.0 percent on 173,205 to 246,752
-    33.0 percent above 246,752
-- Basic Personal Amount: 16,129
-- Lowest bracket rate: 15 percent
+    14.0 percent up to 58,523
+    20.5 percent on 58,523 to 117,045
+    26.0 percent on 117,045 to 181,440
+    29.0 percent on 181,440 to 258,482
+    33.0 percent above 258,482
+- Basic Personal Amount (claim code 1): 16,452
+- Lowest bracket rate: 14 percent (dropped from 15 percent under
+  the Making Life More Affordable for Canadians Act)
 
 Pure function. Quebec uses Quebec provincial regime (separate module).
 """
@@ -24,15 +25,15 @@ from typing import List, Tuple, Optional
 
 # Brackets as (upper_bound, rate). upper_bound=None means open top.
 BRACKETS_2026: List[Tuple[Optional[Decimal], Decimal]] = [
-    (Decimal("55867.00"), Decimal("0.150")),
-    (Decimal("111733.00"), Decimal("0.205")),
-    (Decimal("173205.00"), Decimal("0.260")),
-    (Decimal("246752.00"), Decimal("0.290")),
+    (Decimal("58523.00"), Decimal("0.140")),
+    (Decimal("117045.00"), Decimal("0.205")),
+    (Decimal("181440.00"), Decimal("0.260")),
+    (Decimal("258482.00"), Decimal("0.290")),
     (None, Decimal("0.330")),
 ]
 
-BASIC_PERSONAL_AMOUNT_2026 = Decimal("16129.00")
-LOWEST_RATE = Decimal("0.150")
+BASIC_PERSONAL_AMOUNT_2026 = Decimal("16452.00")
+LOWEST_RATE = Decimal("0.140")
 
 
 def _q(amount: Decimal) -> Decimal:
