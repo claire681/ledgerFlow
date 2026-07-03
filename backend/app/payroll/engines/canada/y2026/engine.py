@@ -14,13 +14,13 @@ needed to reproduce the calculation later for audit or year-end forms.
 from decimal import Decimal
 from typing import Optional
 
-from ...types import (
+from ....types import (
     PayCalculationInput,
     PayCalculationResult,
     DeductionLine,
     EarningsInput,
 )
-from ...base import PayrollEngine
+from ....base import PayrollEngine
 from . import cpp, ei, federal_tax, alberta
 
 
