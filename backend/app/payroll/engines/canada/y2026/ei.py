@@ -1,11 +1,13 @@
 """Employment Insurance (EI) calculation for Canada, 2026.
 
-Reference: Canada Employment Insurance Commission, 2026 rates.
+Reference: CRA T4127 Payroll Deductions Formulas, 123rd Edition, effective July 1, 2026. Values verified against Table 8.7 (Employment Insurance 2026 rates and amounts).
 
-2026 figures (placeholder until final EI publication; verify before production):
-- Employee rate (federal): 1.66 percent
-- Employer rate: 1.4 x employee = 2.324 percent
-- Maximum Insurable Earnings: 65,700
+2026 verified figures from CRA T4127 Table 8.7:
+- Employee rate (Canada except QC): 1.63 percent
+- Employer rate: 1.4 x employee = 2.282 percent
+- Maximum Insurable Earnings: 68,900
+- Maximum Annual Employee Premium: 1,123.07
+- Maximum Annual Employer Premium: 1,572.30
 
 Quebec uses a lower EI rate (1.32 percent employee) plus QPIP separately;
 this module returns the standard federal rate for now. Quebec handling
@@ -18,10 +20,10 @@ from decimal import Decimal, ROUND_HALF_UP
 from typing import Tuple, Optional
 
 
-# 2026 constants. Verify before production.
-EI_RATE_EMPLOYEE_2026 = Decimal("0.0166")
+# 2026 constants, verified against CRA T4127 123rd Edition Table 8.7.
+EI_RATE_EMPLOYEE_2026 = Decimal("0.0163")
 EI_EMPLOYER_MULTIPLIER = Decimal("1.40")
-MAX_INSURABLE_EARNINGS_2026 = Decimal("65700.00")
+MAX_INSURABLE_EARNINGS_2026 = Decimal("68900.00")
 
 
 def _q(amount: Decimal) -> Decimal:
