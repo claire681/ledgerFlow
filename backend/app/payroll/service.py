@@ -12,6 +12,23 @@ Reasons for this design:
 """
 
 from decimal import Decimal
+
+
+def _parse_bool(value):
+    """Convert Yes/No/True/False strings to a Python bool.
+
+    tax_info JSONB stores booleans as strings ('Yes' or 'No') from
+    older UI forms. Python's bool() incorrectly returns True for any
+    non-empty string, including 'No'. This helper converts safely:
+    None, '', False -> False
+    True, 'Yes', 'yes', 'true', '1', 'y' -> True
+    anything else including 'No' -> False
+    """
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in ("yes", "true", "1", "y")
 from datetime import date
 from typing import List, Dict, Optional, Any
 
@@ -55,16 +72,16 @@ class PayrollService:
 
         employee_ctx = EmployeeContext(
             employee_id=str(employee["id"]),
-            td1_federal_code=tax_info.get("td1_federal_code"),
-            td1_provincial_code=tax_info.get("td1_provincial_code"),
+            td1_federal_code=tax_info.get("federal_td1") or tax_info.get("td1_federal_code") or tax_info.get("federalTD1"),
+            td1_provincial_code=tax_info.get("provincial_td1") or tax_info.get("td1_provincial_code") or tax_info.get("provincialTD1"),
             w4_filing_status=tax_info.get("w4_filing_status"),
             w4_dependents=tax_info.get("w4_dependents"),
             ni_category=tax_info.get("ni_category"),
             tax_info=tax_info,
-            cpp_exempt=bool(tax_info.get("cpp_exempt", False)),
-            ei_exempt=bool(tax_info.get("ei_exempt", False)),
-            fica_exempt=bool(tax_info.get("fica_exempt", False)),
-            additional_withholding=Decimal(str(tax_info.get("additional_withholding", "0"))),
+            cpp_exempt=_parse_bool(tax_info.get("cpp_exempt")),
+            ei_exempt=_parse_bool(tax_info.get("ei_exempt")),
+            fica_exempt=_parse_bool(tax_info.get("fica_exempt")),
+            additional_withholding=Decimal(str(tax_info.get("additional_tax_per_pay") or tax_info.get("additional_withholding") or tax_info.get("additionalTax") or "0")),
             vacation_pay_pct=Decimal(str(employee.get("vacation_pay_pct", "4.0") or "4.0")),
         )
 
