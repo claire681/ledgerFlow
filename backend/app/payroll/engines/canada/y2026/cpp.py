@@ -1,13 +1,16 @@
 """Canada Pension Plan (CPP and CPP2) calculation.
 
-Reference: CRA T4127, January 2026 edition.
+Reference: CRA T4127 Payroll Deductions Formulas, 123rd Edition, effective July 1, 2026. Values verified against Table 8.3 (CPP contribution rates and amounts) and Table 8.4 (CPP2 second additional rates and amounts).
 
-2026 constants (placeholders pending final CRA publication):
-- YMPE (Years Maximum Pensionable Earnings): 71,300
-- YAMPE (Years Additional Maximum Pensionable Earnings): 81,200
+2026 verified constants from CRA T4127 Table 8.3 and Table 8.4:
+- YMPE (Year's Maximum Pensionable Earnings): 74,600
+- YAMPE (Year's Additional Maximum Pensionable Earnings): 85,000
 - Basic exemption: 3,500
+- YMCE (Year's Maximum Contributory Earnings): 71,100 (= YMPE minus Basic exemption)
 - CPP1 rate: 5.95 percent (employee and employer each)
+- CPP1 maximum contribution: 4,230.45 per side
 - CPP2 rate: 4.0 percent (employee and employer each) on YMPE-YAMPE band
+- CPP2 maximum contribution: 416.00 per side
 
 Pure function. Employer matches CPP and CPP2 exactly.
 Quebec (QC) uses QPP instead; this returns zero for QC.
@@ -17,9 +20,9 @@ from decimal import Decimal, ROUND_HALF_UP
 from typing import Tuple, Optional
 
 
-# 2026 constants. Verify against CRA T4127 January 2026 before production.
-YMPE_2026 = Decimal("71300.00")
-YAMPE_2026 = Decimal("81200.00")
+# 2026 constants, verified against CRA T4127 Payroll Deductions Formulas 123rd Edition.
+YMPE_2026 = Decimal("74600.00")
+YAMPE_2026 = Decimal("85000.00")
 BASIC_EXEMPTION = Decimal("3500.00")
 CPP_RATE = Decimal("0.0595")
 CPP2_RATE = Decimal("0.0400")
