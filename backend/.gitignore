@@ -16,3 +16,6 @@ venv/
 *.backup-*
 *.bak
 .env
+
+# CRA reference documents (downloaded from canada.ca)
+cra/
