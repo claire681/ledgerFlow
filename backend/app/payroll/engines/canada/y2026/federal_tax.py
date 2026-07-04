@@ -35,6 +35,23 @@ BRACKETS_2026: List[Tuple[Optional[Decimal], Decimal]] = [
 BASIC_PERSONAL_AMOUNT_2026 = Decimal("16452.00")
 LOWEST_RATE = Decimal("0.140")
 
+# Canada Employment Amount (Table 8.2 of T4127 123rd Edition)
+# Used in K4 credit: K4 = LOWEST_RATE * CEA
+CANADA_EMPLOYMENT_AMOUNT_2026 = Decimal("1501.00")
+
+# Base CPP rate portion for K2 credit
+# Total CPP employee rate = 5.95% = Base 4.95% + First Additional 1.00%
+# Only the BASE portion (4.95%) is eligible for the K2 tax credit.
+# Ratio 0.0495/0.0595 extracts base from total.
+BASE_CPP_RATE_2026 = Decimal("0.0495")
+TOTAL_CPP_RATE_2026 = Decimal("0.0595")
+
+# Annual maximums used to cap the K2 credit base (Table 8.3 and Table 8.7)
+# Max base CPP contribution = YMCE * base_rate = 71,100 * 0.0495 = 3,519.45
+MAX_BASE_CPP_ANNUAL_2026 = Decimal("3519.45")
+# Max EI premium (Table 8.7)
+MAX_EI_PREMIUM_ANNUAL_2026 = Decimal("1123.07")
+
 
 def _q(amount: Decimal) -> Decimal:
     return amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
@@ -69,8 +86,20 @@ def calculate_federal_tax(
     pay_periods_per_year: int,
     td1_federal_claim: Optional[Decimal] = None,
     additional_withholding: Decimal = Decimal("0"),
+    cpp_contribution: Decimal = Decimal("0"),
+    ei_contribution: Decimal = Decimal("0"),
 ) -> Decimal:
     """Calculate federal income tax for one pay period.
+
+    Implements T4127 Option 1 formula:
+        T3 = _annual_tax(A) - K1 - K2 - K4
+    where:
+        A  = annualized gross
+        K1 = LOWEST_RATE * TD1 claim (basic personal amount credit)
+        K2 = LOWEST_RATE * (annualized base CPP + annualized EI), capped at annual maxes
+        K4 = LOWEST_RATE * Canada Employment Amount
+
+    Then period_tax = T3 / pay_periods.
 
     Args:
         gross_pay: Taxable earnings this period.
@@ -78,6 +107,11 @@ def calculate_federal_tax(
         td1_federal_claim: Total TD1 federal claim amount in dollars.
             Defaults to Basic Personal Amount.
         additional_withholding: Manual extra withholding per period.
+        cpp_contribution: Total CPP employee contribution this period
+            (Base + First Additional = 5.95% of pensionable earnings).
+            Used to compute K2 credit. Default 0 preserves pre-K2 behavior.
+        ei_contribution: EI employee premium this period.
+            Used to compute K2 credit. Default 0 preserves pre-K2 behavior.
 
     Returns:
         Federal income tax to withhold this period.
@@ -87,16 +121,31 @@ def calculate_federal_tax(
 
     # Annualize this period
     annual_gross = gross_pay * Decimal(pay_periods_per_year)
+    P = Decimal(pay_periods_per_year)
 
-    # Progressive brackets on annual income
+    # Progressive brackets on annual income (this is R*A - K from T4127)
     annual_tax = _annual_tax(annual_gross)
 
-    # TD1 claim becomes a non-refundable credit at the lowest bracket rate
-    annual_credit = td1_federal_claim * LOWEST_RATE
-    annual_tax = max(annual_tax - annual_credit, Decimal("0"))
+    # K1: TD1 claim credit at lowest bracket rate
+    k1 = td1_federal_claim * LOWEST_RATE
+
+    # K2: credit for BASE CPP and EI contributions (annualized, capped at max)
+    # Formula: K2 = LOWEST_RATE * [(P * base_cpp, max annual base cpp) + (P * ei, max annual ei)]
+    # Extract base CPP portion from total CPP: total * (base_rate / total_rate)
+    base_cpp_this_period = cpp_contribution * (BASE_CPP_RATE_2026 / TOTAL_CPP_RATE_2026)
+    annual_base_cpp = min(P * base_cpp_this_period, MAX_BASE_CPP_ANNUAL_2026)
+    annual_ei = min(P * ei_contribution, MAX_EI_PREMIUM_ANNUAL_2026)
+    k2 = LOWEST_RATE * (annual_base_cpp + annual_ei)
+
+    # K4: Canada Employment Amount credit
+    k4 = LOWEST_RATE * CANADA_EMPLOYMENT_AMOUNT_2026
+
+    # Total annual tax after all credits: T3 = R*A - K - K1 - K2 - K4
+    # (K is already baked into _annual_tax via the bracket walk)
+    annual_tax = max(annual_tax - k1 - k2 - k4, Decimal("0"))
 
     # Period tax
-    period_tax = _q(annual_tax / Decimal(pay_periods_per_year))
+    period_tax = _q(annual_tax / P)
 
     # Manual extra
     period_tax += additional_withholding

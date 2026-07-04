@@ -75,6 +75,8 @@ class CanadaPayrollEngine(PayrollEngine):
             pay_periods_per_year=juris.pay_periods_per_year,
             td1_federal_claim=td1_fed_claim,
             additional_withholding=emp.additional_withholding,
+            cpp_contribution=cpp_employee,
+            ei_contribution=ei_employee,
         )
 
         # 5. Provincial income tax
