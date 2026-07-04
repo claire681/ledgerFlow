@@ -34,6 +34,15 @@ BRACKETS_AB_2026: List[Tuple[Optional[Decimal], Decimal]] = [
 BPA_AB_2026 = Decimal("22769.00")
 LOWEST_RATE_AB = Decimal("0.08")
 
+# For K2P credit (mirrors K2 in federal_tax.py).
+# Only the BASE portion of CPP (4.95%) is eligible for the K2P tax credit.
+BASE_CPP_RATE_2026 = Decimal("0.0495")
+TOTAL_CPP_RATE_2026 = Decimal("0.0595")
+
+# Annual maximums for capping the K2P credit base (T4127 Table 8.3 and Table 8.7)
+MAX_BASE_CPP_ANNUAL_2026 = Decimal("3519.45")   # 71,100 * 0.0495
+MAX_EI_PREMIUM_ANNUAL_2026 = Decimal("1123.07")
+
 
 def _q(amount: Decimal) -> Decimal:
     return amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
@@ -63,15 +72,39 @@ def calculate_alberta_tax(
     gross_pay: Decimal,
     pay_periods_per_year: int,
     td1_provincial_claim: Optional[Decimal] = None,
+    cpp_contribution: Decimal = Decimal("0"),
+    ei_contribution: Decimal = Decimal("0"),
 ) -> Decimal:
-    """Alberta provincial income tax for one pay period."""
+    """Alberta provincial income tax for one pay period.
+
+    Implements T4127 Chapter 4 Step 5 for Alberta:
+        T2 = T4 - K1P - K2P
+    where:
+        T4  = annual basic Alberta tax (bracket walk of annualized gross)
+        K1P = LOWEST_RATE_AB * TD1 provincial claim
+        K2P = LOWEST_RATE_AB * (annualized base CPP + annualized EI), capped at annual maxes
+
+    Alberta does not have K3P, K4P, or LCP credits (unlike some provinces).
+    """
     if td1_provincial_claim is None:
         td1_provincial_claim = BPA_AB_2026
 
     annual_gross = gross_pay * Decimal(pay_periods_per_year)
+    P = Decimal(pay_periods_per_year)
+
+    # T4: annual basic Alberta tax (bracket walk)
     annual_tax = _annual_tax(annual_gross)
 
-    annual_credit = td1_provincial_claim * LOWEST_RATE_AB
-    annual_tax = max(annual_tax - annual_credit, Decimal("0"))
+    # K1P: TD1 provincial claim credit
+    k1p = td1_provincial_claim * LOWEST_RATE_AB
 
-    return _q(annual_tax / Decimal(pay_periods_per_year))
+    # K2P: Alberta credit for base CPP and EI contributions
+    base_cpp_this_period = cpp_contribution * (BASE_CPP_RATE_2026 / TOTAL_CPP_RATE_2026)
+    annual_base_cpp = min(P * base_cpp_this_period, MAX_BASE_CPP_ANNUAL_2026)
+    annual_ei = min(P * ei_contribution, MAX_EI_PREMIUM_ANNUAL_2026)
+    k2p = LOWEST_RATE_AB * (annual_base_cpp + annual_ei)
+
+    # T2: final annual Alberta tax (never negative)
+    annual_tax = max(annual_tax - k1p - k2p, Decimal("0"))
+
+    return _q(annual_tax / P)

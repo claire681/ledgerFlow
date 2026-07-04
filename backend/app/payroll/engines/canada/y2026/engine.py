@@ -85,6 +85,8 @@ class CanadaPayrollEngine(PayrollEngine):
             province=juris.subnational,
             pay_periods_per_year=juris.pay_periods_per_year,
             td1_provincial_code=emp.td1_provincial_code,
+            cpp_contribution=cpp_employee,
+            ei_contribution=ei_employee,
         )
 
         # 6. Totals
@@ -222,6 +224,8 @@ class CanadaPayrollEngine(PayrollEngine):
         province: Optional[str],
         pay_periods_per_year: int,
         td1_provincial_code: Optional[int],
+        cpp_contribution: Decimal = Decimal("0"),
+        ei_contribution: Decimal = Decimal("0"),
     ) -> Decimal:
         """Dispatch to provincial tax module. Returns 0 for QC (separate regime)
         and any province not yet implemented."""
@@ -238,5 +242,7 @@ class CanadaPayrollEngine(PayrollEngine):
         }
         if td1_provincial_code is not None:
             kwargs["td1_provincial_claim"] = Decimal(str(td1_provincial_code))
+        kwargs["cpp_contribution"] = cpp_contribution
+        kwargs["ei_contribution"] = ei_contribution
 
         return handler(**kwargs)
