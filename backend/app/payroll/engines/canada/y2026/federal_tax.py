@@ -46,6 +46,11 @@ CANADA_EMPLOYMENT_AMOUNT_2026 = Decimal("1501.00")
 BASE_CPP_RATE_2026 = Decimal("0.0495")
 TOTAL_CPP_RATE_2026 = Decimal("0.0595")
 
+# First Additional CPP rate (enhancement introduced 2019, phased in by 2023).
+# Used to compute F5A: the portion of CPP contribution that reduces annual
+# taxable income (not just a credit). Per CRA T4127 Step 1 formula for A.
+FIRST_ADDITIONAL_CPP_RATE_2026 = Decimal("0.0100")
+
 # Annual maximums used to cap the K2 credit base (Table 8.3 and Table 8.7)
 # Max base CPP contribution = YMCE * base_rate = 71,100 * 0.0495 = 3,519.45
 MAX_BASE_CPP_ANNUAL_2026 = Decimal("3519.45")
@@ -92,9 +97,9 @@ def calculate_federal_tax(
     """Calculate federal income tax for one pay period.
 
     Implements T4127 Option 1 formula:
+        A  = P * (I - F5A)  where F5A = First Additional CPP per period
         T3 = _annual_tax(A) - K1 - K2 - K4
     where:
-        A  = annualized gross
         K1 = LOWEST_RATE * TD1 claim (basic personal amount credit)
         K2 = LOWEST_RATE * (annualized base CPP + annualized EI), capped at annual maxes
         K4 = LOWEST_RATE * Canada Employment Amount
@@ -119,8 +124,14 @@ def calculate_federal_tax(
     if td1_federal_claim is None:
         td1_federal_claim = BASIC_PERSONAL_AMOUNT_2026
 
+    # Deduct F5A: First Additional CPP portion is subtracted from taxable
+    # income (T4127 Step 1). Only Base CPP + EI get credit treatment via K2;
+    # First Additional CPP reduces the taxable base directly.
+    first_additional_cpp = cpp_contribution * (FIRST_ADDITIONAL_CPP_RATE_2026 / TOTAL_CPP_RATE_2026)
+    taxable_gross = gross_pay - first_additional_cpp
+
     # Annualize this period
-    annual_gross = gross_pay * Decimal(pay_periods_per_year)
+    annual_gross = taxable_gross * Decimal(pay_periods_per_year)
     P = Decimal(pay_periods_per_year)
 
     # Progressive brackets on annual income (this is R*A - K from T4127)

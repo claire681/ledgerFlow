@@ -39,6 +39,11 @@ LOWEST_RATE_AB = Decimal("0.08")
 BASE_CPP_RATE_2026 = Decimal("0.0495")
 TOTAL_CPP_RATE_2026 = Decimal("0.0595")
 
+# First Additional CPP rate (enhancement introduced 2019, phased in by 2023).
+# Used to compute F5A: the portion of CPP contribution that reduces annual
+# taxable income (not just a credit). Per CRA T4127 Step 1 formula for A.
+FIRST_ADDITIONAL_CPP_RATE_2026 = Decimal("0.0100")
+
 # Annual maximums for capping the K2P credit base (T4127 Table 8.3 and Table 8.7)
 MAX_BASE_CPP_ANNUAL_2026 = Decimal("3519.45")   # 71,100 * 0.0495
 MAX_EI_PREMIUM_ANNUAL_2026 = Decimal("1123.07")
@@ -89,7 +94,12 @@ def calculate_alberta_tax(
     if td1_provincial_claim is None:
         td1_provincial_claim = BPA_AB_2026
 
-    annual_gross = gross_pay * Decimal(pay_periods_per_year)
+    # Deduct F5A: First Additional CPP portion reduces taxable income
+    # (T4127 Step 1). Mirrors the same treatment as federal.
+    first_additional_cpp = cpp_contribution * (FIRST_ADDITIONAL_CPP_RATE_2026 / TOTAL_CPP_RATE_2026)
+    taxable_gross = gross_pay - first_additional_cpp
+
+    annual_gross = taxable_gross * Decimal(pay_periods_per_year)
     P = Decimal(pay_periods_per_year)
 
     # T4: annual basic Alberta tax (bracket walk)
