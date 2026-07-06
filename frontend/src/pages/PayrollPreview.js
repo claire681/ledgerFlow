@@ -440,11 +440,11 @@ export default function PayrollPreview() {
           name: l.name || l.employee_name || ((l.last_name || "") + ", " + (l.preferred_name || l.first_name || "")).trim().replace(/^,\s*/, ""),
           classification: l.classification || (l.employment_type === "salaried" ? "Salary" : "Hourly"),
           payment_method: l.payment_method || "Direct deposit",
-          total_hours: Number(l.total_hours || l.hours || l.hours_total || 0),
+          total_hours: Number(l.total_hours || l.hours || l.hours_total || (Number(l.hours_regular || 0) + Number(l.hours_overtime || 0) + Number(l.hours_stat_holiday || 0) + Number(l.hours_vacation || 0) + Number(l.hours_sick || 0)) || 0),
           gross_pay: Number(l.gross_pay || l.gross || l.total_gross || 0),
           employee_taxes: Number(l.employee_taxes || l.ee_tax || l.deductions || l.total_deductions || l.total_employee_deductions || 0),
           net_pay: Number(l.net_pay || l.net || l.take_home || l.total_net || 0),
-          employer_taxes: Number(l.employer_taxes || l.er_tax || l.employer_total || 0),
+          employer_taxes: Number(l.employer_taxes || l.er_tax || l.employer_total || l.total_employer_contributions || 0),
           change_in_gross_pct: l.change_in_gross_pct != null ? Number(l.change_in_gross_pct) : null,
         });
         const mapPassedRow = (r) => {
