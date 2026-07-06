@@ -650,17 +650,13 @@ export default function RunPayroll() {
 
         let calculation;
         if (resp.ok) {
-          const stubsResp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/stubs", {
-            headers: { "Authorization": "Bearer " + token }
-          });
-          const stubs = stubsResp.ok ? await stubsResp.json() : [];
           const runData = await resp.json();
           calculation = {
             employee_count: runData.employee_count || inputs.length,
             total_gross: runData.total_gross,
             total_deductions: runData.total_deductions,
             total_net: runData.total_net,
-            stubs: stubs,
+            stubs: runData.stubs || [],
             source: "backend"
           };
         } else {
