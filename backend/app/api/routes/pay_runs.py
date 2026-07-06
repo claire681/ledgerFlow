@@ -581,7 +581,37 @@ async def calculate_pay_run(
     await db.commit()
     await db.refresh(run)
 
-    return _run_to_response(run)
+    run_response = _run_to_response(run)
+    return {
+        **run_response.model_dump(),
+        "stubs": [
+            {
+                "employee_id": str(stub.employee_id),
+                "employee_name": stub.employee_name,
+                "position_title": stub.position_title,
+                "pay_type": stub.pay_type,
+                "hourly_rate": str(stub.hourly_rate) if stub.hourly_rate is not None else None,
+                "salary_amount": str(stub.salary_amount) if stub.salary_amount is not None else None,
+                "hours_regular": str(stub.hours_regular),
+                "hours_overtime": str(stub.hours_overtime),
+                "hours_stat_holiday": str(stub.hours_stat_holiday),
+                "hours_vacation": str(stub.hours_vacation),
+                "hours_sick": str(stub.hours_sick),
+                "gross_pay": str(stub.gross_pay),
+                "federal_tax": str(stub.federal_tax),
+                "provincial_or_state_tax": str(stub.provincial_or_state_tax),
+                "social_security_employee": str(stub.social_security_employee),
+                "social_security_2_employee": str(stub.social_security_2_employee),
+                "unemployment_employee": str(stub.unemployment_employee),
+                "total_employee_deductions": str(stub.total_employee_deductions),
+                "social_security_employer": str(stub.social_security_employer),
+                "unemployment_employer": str(stub.unemployment_employer),
+                "total_employer_contributions": str(stub.total_employer_contributions),
+                "net_pay": str(stub.net_pay),
+            }
+            for stub in preview.pay_stubs
+        ],
+    }
 
 
 # ============================================================
