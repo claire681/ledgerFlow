@@ -830,6 +830,7 @@ class PayStub(Base):
     # Audit + artifacts
     calculation_snapshot = Column(JSONB, nullable=True)
     paystub_pdf_s3_key = Column(String(500), nullable=True)
+    memo = Column(String(500), nullable=True)
     paid_at = Column(DateTime(timezone=True), nullable=True)
     currency = Column(String(3), nullable=False, default="CAD")
 

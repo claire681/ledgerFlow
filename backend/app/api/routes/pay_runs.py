@@ -524,6 +524,13 @@ async def calculate_pay_run(
     except ValueError as e:
         raise HTTPException(400, str(e))
 
+    # Preserve any existing memos before wiping so they survive recalculation
+    existing_memos_result = await db.execute(
+        select(PayStub.employee_id, PayStub.memo)
+        .where(PayStub.pay_run_id == run_id, PayStub.memo.isnot(None))
+    )
+    existing_memos = {str(r.employee_id): r.memo for r in existing_memos_result.all()}
+
     # Wipe existing pay stubs for this run, then insert fresh
     await db.execute(delete(PayStub).where(PayStub.pay_run_id == run_id))
 
@@ -568,6 +575,10 @@ async def calculate_pay_run(
             net_pay=stub.net_pay,
             calculation_snapshot=dict(stub.calculation_snapshot),
         )
+        # Restore memo if this employee had one from a previous calculation
+        preserved_memo = existing_memos.get(str(stub.employee_id))
+        if preserved_memo:
+            new_stub.memo = preserved_memo
         db.add(new_stub)
 
     # Update run totals
@@ -609,12 +620,22 @@ async def calculate_pay_run(
             return None
         return float((Decimal(str(current_gross)) - prev) / prev)
 
+    # Re-fetch persisted stubs so we have DB ids and memo values
+    saved_stubs_result = await db.execute(
+        select(PayStub)
+        .where(PayStub.pay_run_id == run.id)
+        .order_by(PayStub.created_at)
+    )
+    saved_stubs = saved_stubs_result.scalars().all()
+
     run_response = _run_to_response(run)
     return {
         **run_response.model_dump(),
         "stubs": [
             {
+                "id": str(stub.id),
                 "employee_id": str(stub.employee_id),
+                "memo": stub.memo,
                 "change_in_gross_pct": _change_pct(stub.gross_pay, stub.employee_id),
                 "employee_name": stub.employee_name,
                 "position_title": stub.position_title,
@@ -638,10 +659,54 @@ async def calculate_pay_run(
                 "total_employer_contributions": str(stub.total_employer_contributions),
                 "net_pay": str(stub.net_pay),
             }
-            for stub in preview.pay_stubs
+            for stub in saved_stubs
         ],
     }
 
+
+
+
+# ============================================================
+# PATCH /stubs/{stub_id}/memo
+# ============================================================
+
+class UpdateStubMemoRequest(BaseModel):
+    memo: Optional[str] = None
+
+
+@router.patch("/stubs/{stub_id}/memo")
+async def update_stub_memo(
+    stub_id: UUID,
+    body: UpdateStubMemoRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Update the memo field on a single pay stub.
+
+    Verifies ownership via pay run, then updates memo (max 500 chars).
+    """
+    result = await db.execute(
+        select(PayStub, PayRun)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(
+            PayStub.id == stub_id,
+            PayRun.owner_id == current_user.id,
+        )
+    )
+    row = result.first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Pay stub not found")
+
+    stub = row[0]
+    memo = (body.memo or "").strip()
+    if len(memo) > 500:
+        memo = memo[:500]
+    stub.memo = memo if memo else None
+
+    await db.commit()
+    await db.refresh(stub)
+
+    return {"id": str(stub.id), "memo": stub.memo}
 
 # ============================================================
 # POST /runs/{id}/finalize
