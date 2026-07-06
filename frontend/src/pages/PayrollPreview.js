@@ -410,6 +410,8 @@ export default function PayrollPreview() {
   const [paystubFor, setPaystubFor] = useState(null);
   const [compareFor, setCompareFor] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [editingMemoId, setEditingMemoId] = useState(null);
+  const [memoDrafts, setMemoDrafts] = useState({});
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -446,8 +448,31 @@ export default function PayrollPreview() {
           net_pay: Number(l.net_pay || l.net || l.take_home || l.total_net || 0),
           employer_taxes: Number(l.employer_taxes || l.er_tax || l.employer_total || l.total_employer_contributions || 0),
           change_in_gross_pct: l.change_in_gross_pct != null ? Number(l.change_in_gross_pct) : null,
+          stub_id: l.id || l.stub_id || null,
+          memo: l.memo || "",
         });
-        const mapPassedRow = (r) => {
+        const saveMemo = async (stubId, memoText) => {
+    if (!stubId) return;
+    const token = getToken();
+    try {
+      await fetch(API + "/api/v1/payroll/stubs/" + stubId + "/memo", {
+        method: "PATCH",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ memo: memoText || "" })
+      });
+      setLines((prev) => prev.map((line) =>
+        line.stub_id === stubId ? { ...line, memo: memoText || "" } : line
+      ));
+    } catch (e) {
+      console.error("Failed to save memo", e);
+    }
+    setEditingMemoId(null);
+  };
+
+  const mapPassedRow = (r) => {
           const hours = (Number(r.regular) || 0) + (Number(r.statHoliday) || 0);
           const gross = hours * (Number(r.rate) || 0) + (Number(r.statPay) || 0);
           return {
@@ -806,7 +831,39 @@ export default function PayrollPreview() {
                           );
                         })()}
                       </td>
-                      <td style={{ ...cellBase, textAlign: "right", color: C.faint, fontSize: 12, cursor: "pointer" }}>+ Add</td>
+                      <td style={{ ...cellBase, textAlign: "right", fontSize: 12 }}>
+                        {editingMemoId === r.stub_id ? (
+                          <input
+                            type="text"
+                            autoFocus
+                            maxLength={500}
+                            value={memoDrafts[r.stub_id] ?? r.memo ?? ""}
+                            onChange={(e) => setMemoDrafts({ ...memoDrafts, [r.stub_id]: e.target.value })}
+                            onBlur={() => saveMemo(r.stub_id, memoDrafts[r.stub_id] ?? r.memo ?? "")}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") { e.target.blur(); }
+                              else if (e.key === "Escape") { setEditingMemoId(null); }
+                            }}
+                            placeholder="Add a memo"
+                            style={{ width: "100%", padding: "4px 6px", border: "1px solid " + C.teal, borderRadius: 6, fontSize: 12, fontFamily: FONT, color: C.ink, outline: "none" }}
+                          />
+                        ) : r.memo ? (
+                          <span
+                            onClick={() => { setEditingMemoId(r.stub_id); setMemoDrafts({ ...memoDrafts, [r.stub_id]: r.memo }); }}
+                            style={{ cursor: "pointer", color: C.ink, fontSize: 12 }}
+                            title="Click to edit memo"
+                          >
+                            {r.memo}
+                          </span>
+                        ) : (
+                          <span
+                            onClick={() => r.stub_id && setEditingMemoId(r.stub_id)}
+                            style={{ cursor: r.stub_id ? "pointer" : "default", color: C.muted, fontSize: 12 }}
+                          >
+                            + Add
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
