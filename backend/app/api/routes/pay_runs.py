@@ -581,12 +581,41 @@ async def calculate_pay_run(
     await db.commit()
     await db.refresh(run)
 
+    # Compute change_in_gross_pct: compare each employee's gross to their
+    # most recent previous pay stub (any prior pay run of this owner).
+    # If no previous stub exists, change is None (Preview shows "New").
+    current_employee_ids = [str(s.employee_id) for s in preview.pay_stubs]
+    prev_gross_by_emp = {}
+    if current_employee_ids:
+        prev_result = await db.execute(
+            select(PayStub.employee_id, PayStub.gross_pay, PayStub.created_at)
+            .where(
+                PayStub.employee_id.in_(current_employee_ids),
+                PayStub.pay_run_id != run.id,
+            )
+            .order_by(PayStub.employee_id, PayStub.created_at.desc())
+        )
+        seen = set()
+        for row in prev_result.all():
+            emp_id = str(row.employee_id)
+            if emp_id in seen:
+                continue
+            seen.add(emp_id)
+            prev_gross_by_emp[emp_id] = Decimal(str(row.gross_pay))
+
+    def _change_pct(current_gross, employee_id):
+        prev = prev_gross_by_emp.get(str(employee_id))
+        if prev is None or prev == 0:
+            return None
+        return float((Decimal(str(current_gross)) - prev) / prev)
+
     run_response = _run_to_response(run)
     return {
         **run_response.model_dump(),
         "stubs": [
             {
                 "employee_id": str(stub.employee_id),
+                "change_in_gross_pct": _change_pct(stub.gross_pay, stub.employee_id),
                 "employee_name": stub.employee_name,
                 "position_title": stub.position_title,
                 "pay_type": stub.pay_type,
