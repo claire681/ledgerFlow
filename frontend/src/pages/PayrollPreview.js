@@ -414,6 +414,31 @@ export default function PayrollPreview() {
   const [memoDrafts, setMemoDrafts] = useState({});
   const [error, setError] = useState(null);
 
+  const saveMemo = async (stubId, memoText) => {
+    if (!stubId) return;
+    const token = getToken();
+    try {
+      await fetch(API + "/api/v1/payroll/stubs/" + stubId + "/memo", {
+        method: "PATCH",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ memo: memoText || "" })
+      });
+      setLines((prev) =>
+        prev.map((line) =>
+          line.stub_id === stubId
+            ? { ...line, memo: memoText || "" }
+            : line
+        )
+      );
+    } catch (e) {
+      console.error("Failed to save memo", e);
+    }
+    setEditingMemoId(null);
+  };
+
   useEffect(() => {
     let cancelled = false;
     async function fetchAll() {
@@ -451,27 +476,6 @@ export default function PayrollPreview() {
           stub_id: l.id || l.stub_id || null,
           memo: l.memo || "",
         });
-        const saveMemo = async (stubId, memoText) => {
-    if (!stubId) return;
-    const token = getToken();
-    try {
-      await fetch(API + "/api/v1/payroll/stubs/" + stubId + "/memo", {
-        method: "PATCH",
-        headers: {
-          "Authorization": "Bearer " + token,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ memo: memoText || "" })
-      });
-      setLines((prev) => prev.map((line) =>
-        line.stub_id === stubId ? { ...line, memo: memoText || "" } : line
-      ));
-    } catch (e) {
-      console.error("Failed to save memo", e);
-    }
-    setEditingMemoId(null);
-  };
-
   const mapPassedRow = (r) => {
           const hours = (Number(r.regular) || 0) + (Number(r.statHoliday) || 0);
           const gross = hours * (Number(r.rate) || 0) + (Number(r.statPay) || 0);
