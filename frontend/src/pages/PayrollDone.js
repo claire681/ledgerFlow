@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { HelpCircle, X, Check, CreditCard, Receipt, ChevronDown, Search } from "lucide-react";
 
 const FONT = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
+const API = "https://api.getnovala.com";
 
 const C = {
   ink: "#12262B", teal: "#15A08C", tealDark: "#0F8474", tealInk: "#0E8A78", tealSoft: "#E3F4F0",
@@ -46,7 +47,93 @@ export default function PayrollDone() {
   const { payRunId } = useParams();
   const location = useLocation();
 
-  const run = location.state?.runData || PLACEHOLDER_RUN;
+  const [runState, setRunState] = useState(null);
+  const [loadingRun, setLoadingRun] = useState(true);
+  const [runError, setRunError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadDoneView() {
+      const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+      try {
+        const resp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/done-view", {
+          headers: { "Authorization": "Bearer " + token }
+        });
+        if (!resp.ok) {
+          const errText = await resp.text();
+          if (!cancelled) {
+            setRunError("Failed to load pay run: " + errText);
+            setLoadingRun(false);
+          }
+          return;
+        }
+        const data = await resp.json();
+        // Transform /done-view response into the run shape the JSX expects
+        const employees = (data.employees || []).map((e) => ({
+          id: e.stub_id,
+          name: e.name,
+          paymentMethod: e.payment_method,
+          isCheque: e.is_cheque,
+          netPay: Number(e.net_pay),
+          address: e.address_line1 || "",
+          addressLine2: e.address_line2 || "",
+          paidFrom: e.paid_from,
+          paidBy: e.paid_by,
+          grossPay: Number(e.gross_pay),
+          employeeDeductions: Number(e.employee_deductions),
+          employerCost: Number(e.employer_cost),
+          memo: e.memo,
+          payLines: (e.pay_lines || []).map((p) => ({
+            type: p.type,
+            hours: Number(p.hours),
+            rate: Number(p.rate),
+            current: Number(p.current),
+            ytd: Number(p.ytd),
+          })),
+          employeeTaxes: (e.employee_taxes || []).map((t) => ({
+            type: t.type,
+            current: Number(t.current),
+            ytd: Number(t.ytd),
+          })),
+          employerContributions: (e.employer_contributions || []).map((t) => ({
+            type: t.type,
+            current: Number(t.current),
+            ytd: Number(t.ytd),
+          })),
+        }));
+        const totals = data.totals || {};
+        const runObj = {
+          schedule: "Bi-weekly",
+          periodLabel: (data.run.pay_period_start || "") + " to " + (data.run.pay_period_end || ""),
+          payDate: data.run.pay_date,
+          deliverBy: data.run.pay_date,
+          employeesPaid: totals.employees_paid || employees.length,
+          employeeTakeHome: Number(totals.employee_take_home),
+          totalCost: Number(totals.total_cost),
+          chequeCount: totals.cheque_count || 0,
+          depositCount: totals.deposit_count || 0,
+          employeeTax: Number(totals.employee_tax),
+          employerTax: Number(totals.employer_tax),
+          agency: "CRA",
+          currency: data.run.currency || "CAD",
+          employees: employees,
+        };
+        if (!cancelled) {
+          setRunState(runObj);
+          setLoadingRun(false);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setRunError("Network error: " + (e.message || String(e)));
+          setLoadingRun(false);
+        }
+      }
+    }
+    loadDoneView();
+    return () => { cancelled = true; };
+  }, [payRunId]);
+
+  const run = runState || PLACEHOLDER_RUN;
   const currency = run.currency || "CAD";
 
   const [activePaystub, setActivePaystub] = useState(null);
