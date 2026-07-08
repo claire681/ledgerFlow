@@ -993,6 +993,59 @@ async def get_pay_run_done_view(
         },
     }
 
+
+
+# ============================================================
+# GET /paycheques - list all paycheques (pay stubs) for the user
+# ============================================================
+
+@router.get("/paycheques")
+async def list_paycheques(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """List all paycheques (pay stubs) belonging to the current user.
+
+    Returns each pay stub joined with its pay run for the pay_date and
+    run-level status. Only stubs from finalized or voided runs appear;
+    stubs from draft runs are hidden (they haven't been issued yet).
+    """
+    result = await db.execute(
+        select(PayStub, PayRun)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(
+            PayRun.owner_id == current_user.id,
+            PayRun.status.in_(["finalized", "voided"]),
+        )
+        .order_by(PayRun.pay_date.desc(), PayStub.employee_name)
+    )
+    rows = result.all()
+
+    paycheques = []
+    for stub, run in rows:
+        # Map run status to paycheque status
+        # finalized -> "issued", voided -> "voided"
+        pc_status = "voided" if run.status == "voided" else "issued"
+
+        paycheques.append({
+            "id": str(stub.id),
+            "employee_id": str(stub.employee_id),
+            "name": stub.employee_name,
+            "pay_date": run.pay_date.isoformat() if run.pay_date else None,
+            "pay_period_start": run.pay_period_start.isoformat() if run.pay_period_start else None,
+            "pay_period_end": run.pay_period_end.isoformat() if run.pay_period_end else None,
+            "total": str(stub.gross_pay),
+            "net": str(stub.net_pay),
+            "pay_method": "cheque",  # defaults per current strategy
+            "cheque_number": None,  # not stored yet
+            "status": pc_status,
+            "currency": run.currency,
+            "pay_run_id": str(run.id),
+            "memo": stub.memo,
+        })
+
+    return paycheques
+
 # ============================================================
 # POST /runs/{id}/void
 # ============================================================
