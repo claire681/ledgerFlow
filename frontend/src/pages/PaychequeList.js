@@ -379,7 +379,7 @@ export default function PaychequeList() {
         </div>
       )}
 
-      <div style={{ background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 8, overflow: "hidden" }}>
+      <div style={{ background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 8 }}>
 
         <div style={{ display: "grid", gridTemplateColumns: GRID, alignItems: "center", columnGap: 6, padding: "9px 12px", background: BG_PAGE, borderBottom: "0.5px solid " + BORDER }}>
           <input type="checkbox" checked={allSelected} onChange={toggleAll} style={{ margin: 0, width: 13, height: 13 }} />
