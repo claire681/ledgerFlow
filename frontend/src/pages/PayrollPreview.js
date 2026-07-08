@@ -486,6 +486,14 @@ export default function PayrollPreview() {
         ]);
         if (cancelled) return;
         setRun(runRes);
+
+        // If this run is already finalized or voided, Preview is not the
+        // right place. Redirect to the read-only Done page.
+        if (runRes && (runRes.status === "finalized" || runRes.status === "voided")) {
+          navigate("/payroll/run/" + payRunId + "/done", { replace: true });
+          return;
+        }
+
         const runLines = (runRes && runRes.lines) || [];
         const emps = Array.isArray(employeesRes) ? employeesRes : (employeesRes && employeesRes.items) || [];
         const passedState = (location && location.state) || {};
