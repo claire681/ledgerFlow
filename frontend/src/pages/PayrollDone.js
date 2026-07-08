@@ -153,6 +153,23 @@ export default function PayrollDone() {
     return () => { document.body.style.overflow = ""; };
   }, [activePaystub]);
 
+  const saveStubMemo = async (stubId, memoText) => {
+    if (!stubId) return;
+    const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+    try {
+      await fetch(API + "/api/v1/payroll/stubs/" + stubId + "/memo", {
+        method: "PATCH",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ memo: memoText || "" })
+      });
+    } catch (e) {
+      console.error("Failed to save memo", e);
+    }
+  };
+
   const totalRemittance = (run.employeeTax || 0) + (run.employerTax || 0);
   const empWord = run.employeesPaid === 1 ? "employee" : "employees";
   const chequeWord = run.chequeCount === 1 ? "cheque" : "cheques";
@@ -244,7 +261,7 @@ export default function PayrollDone() {
                     <td style={{ ...tdStyle, ...num }}>
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "flex-end" }}>
                         {fmtMoney(emp.netPay, currency)}
-                        <button onClick={() => setActivePaystub(emp)} title="View paystub" aria-label="View paystub"
+                        <button onClick={() => { setActivePaystub(emp); setMemo(emp.memo || ""); }} title="View paystub" aria-label="View paystub"
                           style={{ width: 26, height: 26, borderRadius: 7, border: "1px solid " + C.line, background: "#fff", color: C.muted, cursor: "pointer", display: "inline-grid", placeItems: "center" }}>
                           <Search size={15} />
                         </button>
@@ -271,7 +288,7 @@ export default function PayrollDone() {
 
       {activePaystub && <PaystubOverlay emp={activePaystub} run={run} currency={currency}
         sectionsOpen={sectionsOpen} toggleSection={(k) => setSectionsOpen((s) => ({ ...s, [k]: !s[k] }))}
-        memo={memo} setMemo={setMemo} onClose={() => setActivePaystub(null)} />}
+        memo={memo} setMemo={setMemo} saveMemo={(m) => saveStubMemo(activePaystub && activePaystub.id, m)} onClose={() => setActivePaystub(null)} />}
     </div>
   );
 }
@@ -300,7 +317,7 @@ function NextRow({ Icon, title, detail, actions }) {
   );
 }
 
-function PaystubOverlay({ emp, run, currency, sectionsOpen, toggleSection, memo, setMemo, onClose }) {
+function PaystubOverlay({ emp, run, currency, sectionsOpen, toggleSection, memo, setMemo, saveMemo, onClose }) {
   const sumCurrent = (rows) => rows.reduce((s, r) => s + (r.current || 0), 0);
   const sumYtd = (rows) => rows.reduce((s, r) => s + (r.ytd || 0), 0);
   return (
@@ -366,7 +383,7 @@ function PaystubOverlay({ emp, run, currency, sectionsOpen, toggleSection, memo,
         </Section>
 
         <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, margin: "30px 0 8px" }}>Memo</div>
-        <textarea value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="Add a note to this paystub"
+        <textarea value={memo} onChange={(e) => setMemo(e.target.value)} onBlur={() => saveMemo && saveMemo(memo)} placeholder="Add a note to this paystub"
           style={{ width: "100%", maxWidth: 520, minHeight: 90, border: "1px solid " + C.line, borderRadius: 11, padding: "12px 14px", fontFamily: FONT, fontSize: 13.5, color: C.ink, resize: "vertical" }} />
       </div>
 
