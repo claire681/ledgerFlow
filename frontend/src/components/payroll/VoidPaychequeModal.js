@@ -49,7 +49,7 @@ export default function VoidPaychequeModal({ open, onClose, paycheque, onConfirm
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <h2 style={{ fontSize: 16, fontWeight: 500, color: TEXT_PRIMARY, margin: 0 }}>Void this paycheque?</h2>
-              <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 3 }}>This will reverse the ledger entries and tax accruals. It can't be undone.</div>
+              <div style={{ fontSize: 12, color: TEXT_SECONDARY, marginTop: 3 }}>The paycheque stays in your records marked VOIDED. This action cannot be undone.</div>
             </div>
           </div>
 
@@ -67,14 +67,14 @@ export default function VoidPaychequeModal({ open, onClose, paycheque, onConfirm
           <div style={{ background: "#FEF3C7", borderRadius: 8, padding: "10px 12px", marginBottom: 12 }}>
             <div style={{ fontSize: 11, color: "#92400E", fontWeight: 500, marginBottom: 4 }}>Voiding will:</div>
             <div style={{ fontSize: 11, color: "#92400E", lineHeight: 1.6 }}>
-              • Create reversing entries in your general ledger<br />
-              • Reverse CPP, EI, and federal income tax accruals<br />
-              • Mark the paycheque as voided, leaving the row visible for audit
+              • Reverse YTD balances for CPP, EI, and income tax<br />
+              • Keep the paycheque visible with a VOIDED mark for audit<br />
+              • Leave you responsible for collecting payment from the employee (or paying them, if the cheque already cleared)
             </div>
           </div>
 
           <div>
-            <label style={{ fontSize: 11, color: TEXT_SECONDARY, display: "block", marginBottom: 4 }}>Reason (recommended, recorded in audit trail)</label>
+            <label style={{ fontSize: 11, color: TEXT_SECONDARY, display: "block", marginBottom: 4 }}>Reason (required, recorded in audit trail)</label>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -91,7 +91,7 @@ export default function VoidPaychequeModal({ open, onClose, paycheque, onConfirm
 
         <div style={{ padding: "12px 22px 16px", borderTop: "0.5px solid #F3F4F6", display: "flex", justifyContent: "flex-end", gap: 8 }}>
           <button onClick={onClose} disabled={submitting} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 5, background: "white", color: TEXT_PRIMARY, border: "0.5px solid " + BORDER, cursor: submitting ? "wait" : "pointer", fontWeight: 500, fontFamily: "inherit" }}>Cancel</button>
-          <button onClick={handleConfirm} disabled={submitting} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 5, background: "#B45309", color: "white", border: "none", cursor: submitting ? "wait" : "pointer", fontWeight: 500, fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <button onClick={handleConfirm} disabled={submitting || !reason.trim()} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 5, background: "#B45309", color: "white", border: "none", cursor: submitting ? "wait" : "pointer", fontWeight: 500, fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 5 }}>
             <RotateCcw size={13} />
             {submitting ? "Voiding..." : "Void paycheque"}
           </button>
