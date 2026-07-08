@@ -99,7 +99,7 @@ export default function PayrollOverview() {
         if (runsRes && runsRes.ok) {
           const runs = await runsRes.json();
           const runArr = Array.isArray(runs) ? runs : (runs.items || runs.data || []);
-          const finalized = runArr.filter(r => r.status === "approved" || r.status === "paid");
+          const finalized = runArr.filter(r => r.status === "approved" || r.status === "paid" || r.status === "finalized");
           if (finalized.length > 0) setLastRun(finalized[0]);
         }
         setAutoPayroll(localStorage.getItem("novala_auto_payroll") === "true");
