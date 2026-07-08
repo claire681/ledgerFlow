@@ -1031,11 +1031,14 @@ async def list_paycheques(
             "id": str(stub.id),
             "employee_id": str(stub.employee_id),
             "name": stub.employee_name,
+            "employee_name": stub.employee_name,
             "pay_date": run.pay_date.isoformat() if run.pay_date else None,
             "pay_period_start": run.pay_period_start.isoformat() if run.pay_period_start else None,
             "pay_period_end": run.pay_period_end.isoformat() if run.pay_period_end else None,
             "total": str(stub.gross_pay),
+            "gross_pay": str(stub.gross_pay),
             "net": str(stub.net_pay),
+            "net_pay": str(stub.net_pay),
             "pay_method": "cheque",  # defaults per current strategy
             "cheque_number": None,  # not stored yet
             "status": pc_status,
