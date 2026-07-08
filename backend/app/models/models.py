@@ -831,6 +831,9 @@ class PayStub(Base):
     calculation_snapshot = Column(JSONB, nullable=True)
     paystub_pdf_s3_key = Column(String(500), nullable=True)
     memo = Column(String(500), nullable=True)
+    voided = Column(Boolean, nullable=False, server_default='false', default=False)
+    voided_at = Column(DateTime(timezone=True), nullable=True)
+    voided_reason = Column(String(1000), nullable=True)
     paid_at = Column(DateTime(timezone=True), nullable=True)
     currency = Column(String(3), nullable=False, default="CAD")
 

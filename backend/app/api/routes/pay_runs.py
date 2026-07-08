@@ -1023,9 +1023,8 @@ async def list_paycheques(
 
     paycheques = []
     for stub, run in rows:
-        # Map run status to paycheque status
-        # finalized -> "issued", voided -> "voided"
-        pc_status = "voided" if run.status == "voided" else "issued"
+        # Map to paycheque status. A stub-level void takes precedence.
+        pc_status = "voided" if (stub.voided or run.status == "voided") else "issued"
 
         paycheques.append({
             "id": str(stub.id),
@@ -1167,7 +1166,7 @@ async def get_paycheque_detail(
         "ytd": str((ytd.ytd_social_security_employer + ytd.ytd_unemployment_employer)) if ytd else "0.00",
     }
 
-    pc_status = "voided" if run.status == "voided" else "issued"
+    pc_status = "voided" if (stub.voided or run.status == "voided") else "issued"
 
     return {
         "id": str(stub.id),
@@ -1192,6 +1191,120 @@ async def get_paycheque_detail(
         "employee_taxes": {"lines": emp_tax_lines, "total": emp_tax_total},
         "employer_taxes": {"lines": er_tax_lines, "total": er_tax_total},
         "deductions_contributions": {"lines": [], "total": None},
+    }
+
+
+
+# ============================================================
+# POST /paycheques/{stub_id}/void
+# ============================================================
+
+class VoidPaychequeRequest(BaseModel):
+    reason: str
+
+
+@router.post("/paycheques/{stub_id}/void")
+async def void_paycheque(
+    stub_id: UUID,
+    body: VoidPaychequeRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Void a single paycheque (pay stub).
+
+    Requirements per V1 spec:
+    - Reason required (non-empty after strip)
+    - Only stubs from finalized runs can be voided
+    - Can't void an already-voided stub
+    - Reverses YTD balances for the employee (subtracts stub's amounts)
+    - Marks the stub as voided (does NOT touch other stubs in the run)
+    - Writes audit log with reason
+    """
+    reason = (body.reason or "").strip()
+    if not reason:
+        raise HTTPException(status_code=400, detail="Reason is required to void a paycheque")
+
+    # Load stub + run to verify ownership
+    result = await db.execute(
+        select(PayStub, PayRun)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(
+            PayStub.id == stub_id,
+            PayRun.owner_id == current_user.id,
+        )
+    )
+    row = result.first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Paycheque not found")
+    stub, run = row
+
+    if stub.voided:
+        raise HTTPException(status_code=400, detail="This paycheque is already voided")
+
+    if run.status != "finalized":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only paycheques from finalized runs can be voided (current: {run.status})"
+        )
+
+    # Reverse YTD balances for this employee (this year, this jurisdiction)
+    snap = stub.calculation_snapshot or {}
+    country = snap.get("country", run.country)
+    subnational = snap.get("subnational")
+    jurisdiction_key = _jurisdiction_key(country, subnational)
+    tax_year = run.pay_period_start.year
+
+    ytd_result = await db.execute(
+        select(YTDBalance).where(
+            YTDBalance.employee_id == stub.employee_id,
+            YTDBalance.tax_year == tax_year,
+            YTDBalance.jurisdiction == jurisdiction_key,
+        )
+    )
+    ytd = ytd_result.scalar_one_or_none()
+    if ytd is not None:
+        # Subtract this stub's amounts from YTD
+        ytd.ytd_gross = (ytd.ytd_gross or Decimal(0)) - (stub.gross_pay or Decimal(0))
+        ytd.ytd_federal_tax = (ytd.ytd_federal_tax or Decimal(0)) - (stub.federal_tax or Decimal(0))
+        ytd.ytd_provincial_or_state_tax = (ytd.ytd_provincial_or_state_tax or Decimal(0)) - (stub.provincial_or_state_tax or Decimal(0))
+        ytd.ytd_social_security_employee = (ytd.ytd_social_security_employee or Decimal(0)) - (stub.social_security_employee or Decimal(0))
+        ytd.ytd_social_security_employer = (ytd.ytd_social_security_employer or Decimal(0)) - (stub.social_security_employer or Decimal(0))
+        ytd.ytd_unemployment_employee = (ytd.ytd_unemployment_employee or Decimal(0)) - (stub.unemployment_employee or Decimal(0))
+        ytd.ytd_unemployment_employer = (ytd.ytd_unemployment_employer or Decimal(0)) - (stub.unemployment_employer or Decimal(0))
+
+    # Mark the stub voided
+    stub.voided = True
+    stub.voided_at = datetime.now(timezone.utc)
+    stub.voided_reason = reason[:1000]
+
+    # Audit log
+    audit = PayrollAuditLog(
+        owner_id=current_user.id,
+        entity_type="pay_stub",
+        entity_id=stub.id,
+        action="voided",
+        actor_user_id=current_user.id,
+        actor_role="admin",
+        before_state={"voided": False},
+        after_state={
+            "voided": True,
+            "reason": reason,
+            "gross_pay_reversed": str(stub.gross_pay),
+            "net_pay_reversed": str(stub.net_pay),
+        },
+        notes=f"Paycheque voided: {reason[:200]}",
+    )
+    db.add(audit)
+
+    await db.commit()
+    await db.refresh(stub)
+
+    return {
+        "id": str(stub.id),
+        "voided": stub.voided,
+        "voided_at": stub.voided_at.isoformat() if stub.voided_at else None,
+        "voided_reason": stub.voided_reason,
+        "status": "voided",
     }
 
 # ============================================================
