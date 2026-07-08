@@ -78,7 +78,7 @@ export default function VoidPaychequeModal({ open, onClose, paycheque, onConfirm
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Cheque issued in error, employee was not on this run"
+              placeholder="Type a reason to enable Void (e.g. Cheque issued in error)"
               rows={2}
               style={{ width: "100%", padding: "7px 9px", borderRadius: 5, border: "0.5px solid " + BORDER, fontSize: 12, fontFamily: "inherit", color: TEXT_PRIMARY, boxSizing: "border-box", resize: "vertical" }}
             />
@@ -91,7 +91,7 @@ export default function VoidPaychequeModal({ open, onClose, paycheque, onConfirm
 
         <div style={{ padding: "12px 22px 16px", borderTop: "0.5px solid #F3F4F6", display: "flex", justifyContent: "flex-end", gap: 8 }}>
           <button onClick={onClose} disabled={submitting} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 5, background: "white", color: TEXT_PRIMARY, border: "0.5px solid " + BORDER, cursor: submitting ? "wait" : "pointer", fontWeight: 500, fontFamily: "inherit" }}>Cancel</button>
-          <button onClick={handleConfirm} disabled={submitting || !reason.trim()} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 5, background: "#B45309", color: "white", border: "none", cursor: submitting ? "wait" : "pointer", fontWeight: 500, fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <button onClick={handleConfirm} disabled={submitting || !reason.trim()} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 5, background: (submitting || !reason.trim()) ? "#D6D3D1" : "#B45309", color: "white", border: "none", cursor: (submitting || !reason.trim()) ? "not-allowed" : "pointer", fontWeight: 500, fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 5 }}>
             <RotateCcw size={13} />
             {submitting ? "Voiding..." : "Void paycheque"}
           </button>
