@@ -84,7 +84,7 @@ export default function PayrollOverview() {
         const [empRes, scheduleRes, runsRes] = await Promise.all([
           fetch(API_URL + "/api/v1/payroll/employees", { headers: authHeaders() }),
           fetch(API_URL + "/api/v1/payroll/settings", { headers: authHeaders() }).catch(() => null),
-          fetch(API_URL + "/api/v1/payroll/pay-runs", { headers: authHeaders() }).catch(() => null),
+          fetch(API_URL + "/api/v1/payroll/runs", { headers: authHeaders() }).catch(() => null),
         ]);
         if (empRes && empRes.ok) {
           const empData = await empRes.json();
