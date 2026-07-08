@@ -1049,6 +1049,151 @@ async def list_paycheques(
 
     return paycheques
 
+
+
+# ============================================================
+# GET /paycheques/{stub_id} - full detail for one paycheque
+# ============================================================
+
+@router.get("/paycheques/{stub_id}")
+async def get_paycheque_detail(
+    stub_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Return full detail for a single paycheque (pay stub).
+
+    Response shape matches what PaychequeDetail.js expects:
+    nested pay / employee_taxes / employer_taxes objects each with
+    lines[] and total {current, ytd}.
+    """
+    result = await db.execute(
+        select(PayStub, PayRun)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(
+            PayStub.id == stub_id,
+            PayRun.owner_id == current_user.id,
+        )
+    )
+    row = result.first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Paycheque not found")
+    stub, run = row
+
+    # Employee for address + bank
+    emp_result = await db.execute(
+        select(Employee).where(Employee.id == stub.employee_id)
+    )
+    emp = emp_result.scalar_one_or_none()
+
+    # YTD balances
+    tax_year = run.pay_period_start.year
+    ytd_result = await db.execute(
+        select(YTDBalance).where(
+            YTDBalance.employee_id == stub.employee_id,
+            YTDBalance.tax_year == tax_year,
+        )
+    )
+    ytd = ytd_result.scalar_one_or_none()
+
+    # Address
+    address_parts = []
+    if emp:
+        if emp.address_line1:
+            address_parts.append(emp.address_line1)
+        city_prov_postal = []
+        if emp.city: city_prov_postal.append(emp.city)
+        if emp.province_or_state: city_prov_postal.append(emp.province_or_state)
+        if emp.postal_or_zip: city_prov_postal.append(emp.postal_or_zip)
+        if city_prov_postal:
+            address_parts.append(", ".join(city_prov_postal))
+    address = "\n".join(address_parts) if address_parts else None
+
+    # Pay lines
+    pay_lines = []
+    if stub.hours_regular and float(stub.hours_regular) > 0:
+        rate = float(stub.hourly_rate) if stub.hourly_rate else 0
+        pay_lines.append({
+            "type": "Regular Pay",
+            "hours": str(stub.hours_regular),
+            "rate": str(stub.hourly_rate) if stub.hourly_rate else "0",
+            "current": str(round(float(stub.hours_regular) * rate, 2)),
+            "ytd": str(ytd.ytd_gross) if ytd else "0.00",
+        })
+    if stub.hours_overtime and float(stub.hours_overtime) > 0:
+        rate = float(stub.hourly_rate) * 1.5 if stub.hourly_rate else 0
+        pay_lines.append({
+            "type": "Overtime Pay",
+            "hours": str(stub.hours_overtime),
+            "rate": str(round(rate, 2)),
+            "current": str(round(float(stub.hours_overtime) * rate, 2)),
+            "ytd": "0.00",
+        })
+    if stub.hours_stat_holiday and float(stub.hours_stat_holiday) > 0:
+        rate = float(stub.hourly_rate) if stub.hourly_rate else 0
+        pay_lines.append({
+            "type": "Stat Holiday Pay",
+            "hours": str(stub.hours_stat_holiday),
+            "rate": str(stub.hourly_rate) if stub.hourly_rate else "0",
+            "current": str(round(float(stub.hours_stat_holiday) * rate, 2)),
+            "ytd": "0.00",
+        })
+
+    pay_total = {
+        "current": str(stub.gross_pay),
+        "ytd": str(ytd.ytd_gross) if ytd else "0.00",
+    }
+
+    # Employee taxes
+    emp_tax_lines = [
+        {"type": "Canada Pension Plan", "current": str(stub.social_security_employee), "ytd": str(ytd.ytd_social_security_employee) if ytd else "0.00"},
+        {"type": "Employment Insurance", "current": str(stub.unemployment_employee), "ytd": str(ytd.ytd_unemployment_employee) if ytd else "0.00"},
+        {"type": "Income Tax", "current": str(stub.federal_tax + stub.provincial_or_state_tax), "ytd": str((ytd.ytd_federal_tax + ytd.ytd_provincial_or_state_tax)) if ytd else "0.00"},
+        {"type": "Second Canada Pension Plan", "current": str(stub.social_security_2_employee), "ytd": "0.00"},
+    ]
+    emp_tax_total = {
+        "current": str(stub.total_employee_deductions),
+        "ytd": str((ytd.ytd_social_security_employee + ytd.ytd_unemployment_employee + ytd.ytd_federal_tax + ytd.ytd_provincial_or_state_tax)) if ytd else "0.00",
+    }
+
+    # Employer taxes
+    er_tax_lines = [
+        {"type": "Employment Insurance Employer", "current": str(stub.unemployment_employer), "ytd": str(ytd.ytd_unemployment_employer) if ytd else "0.00"},
+        {"type": "Canada Pension Plan Employer", "current": str(stub.social_security_employer), "ytd": str(ytd.ytd_social_security_employer) if ytd else "0.00"},
+        {"type": "Second Canada Pension Plan Employer", "current": "0.00", "ytd": "0.00"},
+    ]
+    er_tax_total = {
+        "current": str(stub.total_employer_contributions or 0),
+        "ytd": str((ytd.ytd_social_security_employer + ytd.ytd_unemployment_employer)) if ytd else "0.00",
+    }
+
+    pc_status = "voided" if run.status == "voided" else "issued"
+
+    return {
+        "id": str(stub.id),
+        "employee_id": str(stub.employee_id),
+        "employee_name": stub.employee_name,
+        "employee_address": address,
+        "position_title": stub.position_title,
+        "pay_date": run.pay_date.isoformat() if run.pay_date else None,
+        "pay_period_start": run.pay_period_start.isoformat() if run.pay_period_start else None,
+        "pay_period_end": run.pay_period_end.isoformat() if run.pay_period_end else None,
+        "paid_from": emp.bank_name if emp and emp.bank_name else "Employer bank account",
+        "pay_method": "cheque",
+        "cheque_number": None,
+        "gross_pay": str(stub.gross_pay),
+        "total_pay": str(stub.gross_pay),
+        "net_pay": str(stub.net_pay),
+        "currency": run.currency,
+        "memo": stub.memo,
+        "status": pc_status,
+        "pay_run_id": str(run.id),
+        "pay": {"lines": pay_lines, "total": pay_total},
+        "employee_taxes": {"lines": emp_tax_lines, "total": emp_tax_total},
+        "employer_taxes": {"lines": er_tax_lines, "total": er_tax_total},
+        "deductions_contributions": {"lines": [], "total": None},
+    }
+
 # ============================================================
 # POST /runs/{id}/void
 # ============================================================
