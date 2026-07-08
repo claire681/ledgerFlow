@@ -481,7 +481,7 @@ export default function PaychequeList() {
 
               <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 1 }} onClick={(e) => e.stopPropagation()}>
                 <span onClick={() => handleRowAction(pc, "print")} style={{ color: isVoided ? TEXT_TERTIARY : BRAND, fontWeight: 500, cursor: isVoided ? "not-allowed" : "pointer", fontSize: 11 }}>Print stub</span>
-                <ChevronDown onClick={() => setRowMenuId(rowMenuId === pc.id ? null : pc.id)} size={13} style={{ color: isVoided ? TEXT_TERTIARY : TEXT_SECONDARY, cursor: "pointer", padding: 2 }} />
+                <ChevronDown onClick={() => setRowMenuId(rowMenuId === pc.id ? null : pc.id)} size={18} style={{ color: isVoided ? TEXT_TERTIARY : TEXT_SECONDARY, cursor: "pointer", padding: 4, borderRadius: 4, background: rowMenuId === pc.id ? "#F3F4F6" : "transparent" }} />
                 <PaychequeRowMenu
                   open={rowMenuId === pc.id}
                   onClose={() => setRowMenuId(null)}
