@@ -190,9 +190,27 @@ export default function PaychequeList() {
 
   const openPaycheque = (id) => navigate("/payroll/paycheques/" + id);
 
+  const openPaychequePdf = async (paychequeId) => {
+    try {
+      const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + paychequeId + "/pdf", {
+        headers: authHeaders(),
+      });
+      if (!res.ok) {
+        alert("Could not load pay stub PDF");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (e) {
+      alert("Error loading pay stub: " + e.message);
+    }
+  };
+
   const handleRowAction = (paycheque, actionId) => {
     if (actionId === "view") return openPaycheque(paycheque.id);
-    if (actionId === "print") { openPaycheque(paycheque.id); setTimeout(() => window.print(), 400); return; }
+    if (actionId === "print") { openPaychequePdf(paycheque.id); return; }
     if (actionId === "email") return alert("Email pay stub coming soon");
     if (actionId === "edit") return alert("Amendment flow coming soon");
     if (actionId === "void") return setVoidTarget(paycheque);
