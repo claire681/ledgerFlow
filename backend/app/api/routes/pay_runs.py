@@ -1211,6 +1211,195 @@ async def get_paycheque_detail(
 
 
 
+
+
+# ============================================================
+# GET /paycheques/{stub_id}/pdf - PDF pay stub
+# ============================================================
+
+@router.get("/paycheques/{stub_id}/pdf")
+async def get_paycheque_pdf(
+    stub_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Generate a PDF pay stub for the given stub.
+
+    Uses WeasyPrint to render an HTML template to PDF. Returns the
+    raw PDF as application/pdf. Frontend can open it in a new tab
+    or trigger download.
+    """
+    from weasyprint import HTML
+    from jinja2 import Environment, FileSystemLoader
+    from fastapi.responses import Response
+    from datetime import datetime
+    from app.models.models import CompanyProfile
+    import os
+
+    # Fetch pay stub + pay run
+    result = await db.execute(
+        select(PayStub, PayRun)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(
+            PayStub.id == stub_id,
+            PayRun.owner_id == current_user.id,
+        )
+    )
+    row = result.first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Paycheque not found")
+    stub, run = row
+
+    # Employee
+    emp_result = await db.execute(select(Employee).where(Employee.id == stub.employee_id))
+    emp = emp_result.scalar_one_or_none()
+
+    # Employer (company profile)
+    company_res = await db.execute(
+        select(CompanyProfile).where(CompanyProfile.user_id == current_user.id)
+    )
+    company = company_res.scalar_one_or_none()
+
+    # YTD
+    tax_year = run.pay_period_start.year
+    ytd_result = await db.execute(
+        select(YTDBalance).where(
+            YTDBalance.employee_id == stub.employee_id,
+            YTDBalance.tax_year == tax_year,
+        )
+    )
+    ytd = ytd_result.scalar_one_or_none()
+
+    # Money formatter
+    def money(v, symbol=False):
+        n = float(v or 0)
+        body = f"{abs(n):,.2f}"
+        sign = "-" if n < 0 else ""
+        return f"{sign}${body}" if symbol else f"{sign}{body}"
+
+    def num(v):
+        return f"{float(v or 0):,.2f}"
+
+    def fmt_date(d):
+        if d is None:
+            return ""
+        return d.strftime("%d-%m-%Y")
+
+    # Employer lines
+    employer_name = company.company_name if company else ""
+    employer_line1 = company.address_street if company else ""
+    parts = []
+    if company:
+        if company.address_city:
+            parts.append(company.address_city)
+        if company.province_state:
+            parts.append(company.province_state)
+        if company.address_postal_code:
+            parts.append(company.address_postal_code)
+    employer_line2 = " ".join(parts)
+
+    # Employee address
+    address_parts = []
+    if emp:
+        if emp.address_line1:
+            address_parts.append(emp.address_line1)
+        cpp = []
+        if emp.city: cpp.append(emp.city)
+        if emp.province_or_state: cpp.append(emp.province_or_state)
+        if emp.postal_or_zip: cpp.append(emp.postal_or_zip)
+        if cpp:
+            address_parts.append(", ".join(cpp))
+    employee_line1 = address_parts[0] if len(address_parts) > 0 else ""
+    employee_line2 = address_parts[1] if len(address_parts) > 1 else ""
+
+    # Pay lines
+    earnings = []
+    total_hours = 0
+    if stub.hours_regular and float(stub.hours_regular) > 0:
+        rate = float(stub.hourly_rate or 0)
+        earnings.append({
+            "type": "Regular Pay",
+            "hours": num(stub.hours_regular),
+            "rate": num(stub.hourly_rate),
+            "current": money(float(stub.hours_regular) * rate),
+            "ytd": money(ytd.ytd_gross if ytd else 0),
+        })
+        total_hours += float(stub.hours_regular)
+    if stub.hours_overtime and float(stub.hours_overtime) > 0:
+        rate = float(stub.hourly_rate or 0) * 1.5
+        earnings.append({
+            "type": "Overtime Pay",
+            "hours": num(stub.hours_overtime),
+            "rate": num(rate),
+            "current": money(float(stub.hours_overtime) * rate),
+            "ytd": money(0),
+        })
+        total_hours += float(stub.hours_overtime)
+    if stub.hours_stat_holiday and float(stub.hours_stat_holiday) > 0:
+        rate = float(stub.hourly_rate or 0)
+        earnings.append({
+            "type": "Stat Holiday Pay",
+            "hours": num(stub.hours_stat_holiday),
+            "rate": num(stub.hourly_rate),
+            "current": money(float(stub.hours_stat_holiday) * rate),
+            "ytd": money(0),
+        })
+        total_hours += float(stub.hours_stat_holiday)
+
+    # Taxes
+    taxes = [
+        {"type": "Canada Pension Plan", "current": money(stub.social_security_employee), "ytd": money(ytd.ytd_social_security_employee if ytd else 0)},
+        {"type": "Employment Insurance", "current": money(stub.unemployment_employee), "ytd": money(ytd.ytd_unemployment_employee if ytd else 0)},
+        {"type": "Income Tax", "current": money(stub.federal_tax + stub.provincial_or_state_tax), "ytd": money((ytd.ytd_federal_tax + ytd.ytd_provincial_or_state_tax) if ytd else 0)},
+        {"type": "Second Canada Pension Plan", "current": money(stub.social_security_2_employee), "ytd": money(0)},
+    ]
+
+    # Summary
+    total_pay_current = float(stub.gross_pay or 0)
+    total_taxes_current = float(stub.total_employee_deductions or 0)
+    deductions_current = 0
+
+    # Load template
+    template_dir = os.path.join(os.path.dirname(__file__), "..", "..", "templates")
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template("pay_stub.html")
+
+    html_content = template.render(
+        employer_name=employer_name,
+        employer_line1=employer_line1,
+        employer_line2=employer_line2,
+        employee_name=stub.employee_name,
+        employee_line1=employee_line1,
+        employee_line2=employee_line2,
+        period_beginning=fmt_date(run.pay_period_start),
+        period_ending=fmt_date(run.pay_period_end),
+        pay_date=fmt_date(run.pay_date),
+        total_hours=num(total_hours),
+        net_pay_display=money(stub.net_pay, symbol=True),
+        memo=stub.memo,
+        earnings=earnings,
+        taxes=taxes,
+        deductions=[],
+        summary_total_pay_current=money(total_pay_current, symbol=True),
+        summary_total_pay_ytd=money(ytd.ytd_gross if ytd else 0, symbol=True),
+        summary_taxes_current=money(total_taxes_current, symbol=True),
+        summary_taxes_ytd=money((ytd.ytd_social_security_employee + ytd.ytd_unemployment_employee + ytd.ytd_federal_tax + ytd.ytd_provincial_or_state_tax) if ytd else 0, symbol=True),
+        summary_deductions_current=money(deductions_current, symbol=True),
+        summary_deductions_ytd=money(0, symbol=True),
+    )
+
+    # Render to PDF
+    pdf_bytes = HTML(string=html_content).write_pdf()
+
+    filename = f"paystub_{stub.employee_name.replace(' ', '_')}_{fmt_date(run.pay_date)}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="{filename}"',
+        }
+    )
+
 # ============================================================
 # POST /paycheques/{stub_id}/void
 # ============================================================
