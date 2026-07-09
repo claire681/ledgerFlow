@@ -8,6 +8,7 @@ import {
 import {
   formatCurrency, formatDate, formatPeriodLong, employeeNameFromPaycheque,
 } from "../utils/paychequeStatus";
+import PayStub from "../components/payroll/PayStub";
 import VoidPaychequeModal from "../components/payroll/VoidPaychequeModal";
 import DeletePaychequeModal from "../components/payroll/DeletePaychequeModal";
 
@@ -214,9 +215,11 @@ export default function PaychequeDetail() {
     <div className="paycheque-print-area" style={{ background: BG_CARD, minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "inherit" }}>
       <style>{`
         @media print {
+          /* Hide everything, then show only the pay stub */
           body * { visibility: hidden; }
-          .paycheque-print-area, .paycheque-print-area * { visibility: visible; }
-          .paycheque-print-area {
+          .pay-stub-print-only, .pay-stub-print-only * { visibility: visible; }
+          .pay-stub-print-only {
+            display: block !important;
             position: absolute;
             left: 0;
             top: 0;
@@ -224,10 +227,16 @@ export default function PaychequeDetail() {
             background: white !important;
           }
           .no-print { display: none !important; }
-          /* Reset any dark backgrounds for print */
-          .paycheque-print-area { background: white !important; }
+        }
+        /* On screen, hide the pay stub - it's only for print */
+        @media screen {
+          .pay-stub-print-only { display: none; }
         }
       `}</style>
+
+      <div className="pay-stub-print-only">
+        <PayStub data={pc} />
+      </div>
 
       <div className="no-print" style={{ padding: "12px 20px", borderBottom: "0.5px solid #F3F4F6", display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12 }}>
         <div ref={adjustRef} style={{ position: "relative" }}>
