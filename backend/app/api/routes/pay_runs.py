@@ -1095,6 +1095,13 @@ async def get_paycheque_detail(
     )
     ytd = ytd_result.scalar_one_or_none()
 
+    # Employer for pay stub header
+    from app.models.models import CompanyProfile
+    company_res = await db.execute(
+        select(CompanyProfile).where(CompanyProfile.user_id == current_user.id)
+    )
+    company = company_res.scalar_one_or_none()
+
     # Address
     address_parts = []
     if emp:
@@ -1187,6 +1194,15 @@ async def get_paycheque_detail(
         "memo": stub.memo,
         "status": pc_status,
         "pay_run_id": str(run.id),
+        "employer": {
+            "name": company.company_name if company else None,
+            "business_number": company.business_number if company else None,
+            "payroll_rp_account": company.payroll_rp_account if company else None,
+            "address_street": company.address_street if company else None,
+            "address_city": company.address_city if company else None,
+            "address_province": company.province_state if company else None,
+            "address_postal_code": company.address_postal_code if company else None,
+        } if company else None,
         "pay": {"lines": pay_lines, "total": pay_total},
         "employee_taxes": {"lines": emp_tax_lines, "total": emp_tax_total},
         "employer_taxes": {"lines": er_tax_lines, "total": er_tax_total},
