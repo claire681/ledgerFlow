@@ -233,7 +233,7 @@ export default function SettingsCompany() {
   }
 
   return (
-    <div style={{ padding: "30px 44px", maxWidth: 840, margin: "0 auto", fontFamily: "Inter, 'Plus Jakarta Sans', sans-serif", color: TEXT, fontSize: 14, lineHeight: 1.5 }}>
+    <div style={{ padding: "30px 44px", maxWidth: 1200, margin: "0 auto", fontFamily: "Inter, 'Plus Jakarta Sans', sans-serif", color: TEXT, fontSize: 14, lineHeight: 1.5 }}>
       <button
         onClick={() => navigate("/settings")}
         style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px 6px 8px", background: PAPER, border: "1px solid " + LINE, borderRadius: 8, color: MUTED, fontSize: 12.5, fontWeight: 500, cursor: "pointer", marginBottom: 20, fontFamily: "inherit" }}
@@ -369,6 +369,30 @@ export default function SettingsCompany() {
           </button>
         </div>
       </div>
+
+      {saveSuccess && (
+        <div style={{
+          position: "fixed",
+          top: 24,
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: "#059669",
+          color: "white",
+          padding: "12px 24px",
+          borderRadius: 10,
+          fontSize: 14,
+          fontWeight: 600,
+          boxShadow: "0 8px 24px rgba(0, 100, 60, 0.25)",
+          zIndex: 1000,
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          fontFamily: "'Inter', 'Plus Jakarta Sans', sans-serif",
+        }}>
+          <span>✓</span>
+          Company profile saved
+        </div>
+      )}
 
       {saveError && (
         <div style={{ marginTop: 12, padding: "10px 14px", background: DANGER_SOFT, color: DANGER, borderRadius: 8, fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
