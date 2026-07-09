@@ -363,6 +363,11 @@ class CompanyProfile(Base):
     logo_url           = Column(Text,    nullable=True)
     payroll_rp_account = Column(String(20), nullable=True)  # CRA RP account, e.g. RP0001
     address            = Column(Text,    nullable=True)
+    business_number   = Column(String(20), nullable=True)   # CRA BN or equivalent
+    payroll_rp_account = Column(String(20), nullable=True)  # CRA RP account, e.g. RP0001
+    address_street   = Column(String(200), nullable=True)
+    address_city     = Column(String(100), nullable=True)
+    address_postal_code = Column(String(20), nullable=True)
     country            = Column(String,  default="US")
     province_state     = Column(String,  nullable=True)
     currency           = Column(String,  default="USD")

@@ -30,6 +30,11 @@ class CompanyProfileSchema(BaseModel):
     contact_email:      Optional[str]   = None
     logo_url:           Optional[str]   = None
     address:            Optional[str]   = None
+    address_street:     Optional[str]   = None
+    address_city:       Optional[str]   = None
+    address_postal_code: Optional[str]  = None
+    business_number:    Optional[str]   = None
+    payroll_rp_account: Optional[str]   = None
     country:            Optional[str]   = "US"
     province_state:     Optional[str]   = None
     currency:           Optional[str]   = "USD"
