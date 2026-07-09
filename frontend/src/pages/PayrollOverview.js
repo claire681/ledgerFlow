@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { generatePayPeriods } from "../utils/payScheduling";
 import PayrollGuide from "./PayrollGuide";
+import CompanyProfileBanner from "../components/company/CompanyProfileBanner";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const getToken = () => localStorage.getItem("access_token") || localStorage.getItem("token") || "";
@@ -153,6 +154,8 @@ export default function PayrollOverview() {
   return (
     <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text }}>
       <div style={{ maxWidth: "100%", margin: 0, padding: "28px 32px 90px" }}>
+      <CompanyProfileBanner />
+
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <h1 style={{ fontSize: 26, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em" }}>Payroll overview</h1>
           <button onClick={() => navigate("/payroll/settings")} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", color: C.ink, border: "1px solid " + C.line, borderRadius: 9, padding: "8px 14px", fontWeight: 600, fontSize: 13.5, cursor: "pointer", fontFamily: FONT, transition: "0.12s" }}
