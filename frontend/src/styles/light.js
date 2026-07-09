@@ -14,8 +14,8 @@ export const L = {
   // Text
   text:        '#0F172A',
   textSub:     '#374151',
-  textMuted:   '#6B7280',
-  textFaint:   '#9CA3AF',
+  textMuted:   '#4B5563',
+  textFaint:   '#6B7280',
 
   // Accent
   accent:      '#0AB98A',
@@ -109,7 +109,7 @@ export const sectionTitle = {
 export const label = {
   fontSize:      10,
   fontWeight:    600,
-  color:         '#6B7280',
+  color:         '#4B5563',
   letterSpacing: '0.1em',
   textTransform: 'uppercase',
   marginBottom:  6,
@@ -153,7 +153,7 @@ export const btnSecondary = {
   padding:        '8px 16px',
   borderRadius:   8,
   background:     'transparent',
-  color:          '#6B7280',
+  color:          '#374151',
   border:         '1px solid #E5E7EB',
   cursor:         'pointer',
   fontSize:       12,
