@@ -214,6 +214,9 @@ export default function PaychequeDetail() {
   return (
     <div className="paycheque-print-area" style={{ background: BG_CARD, minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "inherit" }}>
       <style>{`
+        @page {
+          margin: 12mm 10mm;
+        }
         @media print {
           /* Hide everything, then show only the pay stub */
           body * { visibility: hidden; }
