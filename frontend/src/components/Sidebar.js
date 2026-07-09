@@ -268,13 +268,13 @@ const SLIM_ITEMS = [
 ];
 
 const SLIM_BOTTOM = [
-  { id: 'settings',   icon: SettingsIcon,   label: 'Settings',  path: '/settings', dark: true },
   { id: 'more',      icon: MoreHorizontal, label: 'More',      flyout: 'more'      },
   { id: 'customize', icon: Sliders,        label: 'Customize', action: 'customize' },
 ];
 
 const MORE_ITEMS = [
   { label: 'Audit Log',          icon: ClipboardList, path: '/tools/audit-log'   },
+  { label: 'Settings',           icon: SettingsIcon,  path: '/settings'          },
   { label: 'Help & Support',     icon: HelpCircle,    path: '/help'              },
   { label: 'Keyboard Shortcuts', icon: Keyboard,      path: null                 },
   { label: "What's New",         icon: Zap,           path: '/profile/whats-new' },
@@ -697,7 +697,7 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
       : flyout === item.flyout;
     const isHov     = hovItem === item.id;
     const iconColor  = isActive || isHov ? ACCENT : DEFAULT;
-    const labelColor = item.dark ? '#FFFFFF' : (isActive || isHov ? ACCENT : DEFAULT);
+    const labelColor = isActive || isHov ? ACCENT : DEFAULT;
     const bg         = isActive ? '#E2F5F0' : isHov ? '#F1F5F9' : 'transparent';
 
     return (
@@ -733,8 +733,8 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
   const renderAccountingPinned = function() {
     const isActive  = flyout === 'apps' && flyoutExpanded === 'accounting';
     const isHov     = hovItem === 'accounting';
-    const iconColor = item.dark ? '#FFFFFF' : (isActive || isHov ? ACCENT : DEFAULT);
-    const bg        = item.dark ? '#0F172A' : isActive ? '#E2F5F0' : isHov ? '#F1F5F9' : 'transparent';
+    const iconColor = isActive || isHov ? ACCENT : DEFAULT;
+    const bg        = isActive ? '#E2F5F0' : isHov ? '#F1F5F9' : 'transparent';
     return (
       <div
         onClick={handleAccountingClick}
