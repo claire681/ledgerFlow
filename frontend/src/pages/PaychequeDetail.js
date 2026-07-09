@@ -211,9 +211,25 @@ export default function PaychequeDetail() {
   const empTaxTotal = pc.employee_taxes && pc.employee_taxes.total ? parseFloat(pc.employee_taxes.total.current || 0) : 0;
 
   return (
-    <div style={{ background: BG_CARD, minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "inherit" }}>
+    <div className="paycheque-print-area" style={{ background: BG_CARD, minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "inherit" }}>
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          .paycheque-print-area, .paycheque-print-area * { visibility: visible; }
+          .paycheque-print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            background: white !important;
+          }
+          .no-print { display: none !important; }
+          /* Reset any dark backgrounds for print */
+          .paycheque-print-area { background: white !important; }
+        }
+      `}</style>
 
-      <div style={{ padding: "12px 20px", borderBottom: "0.5px solid #F3F4F6", display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12 }}>
+      <div className="no-print" style={{ padding: "12px 20px", borderBottom: "0.5px solid #F3F4F6", display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12 }}>
         <div ref={adjustRef} style={{ position: "relative" }}>
           <button onClick={() => setAdjustOpen(!adjustOpen)} style={{ fontSize: 12, padding: "6px 12px", borderRadius: 5, background: "white", border: "0.5px solid " + BORDER, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, color: TEXT_PRIMARY, fontWeight: 500, fontFamily: "inherit" }}>
             Make adjustment <ChevronDown size={11} />
