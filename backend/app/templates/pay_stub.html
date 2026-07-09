@@ -5,8 +5,8 @@
 <title>Pay Stub</title>
 <style>
   @page {
-    size: A4;
-    margin: 15mm 15mm;
+    size: letter;
+    margin: 0;
   }
   body {
     font-family: 'Inter', 'Helvetica', 'Arial', sans-serif;
@@ -18,8 +18,16 @@
   }
   .paper {
     background: #FFFFFF;
-    border: 1px solid #E5E7EB;
     width: 100%;
+    min-height: 100vh;
+    padding: 0.5in 0.5in 0.5in 0.5in;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+  .paper-spacer {
+    flex: 1 1 auto;
+    min-height: 40px;
   }
   .bar { height: 8px; background: #15A08C; }
   .header {
@@ -208,6 +216,7 @@
     {% endif %}
   </div>
 
+  <div class="paper-spacer"></div>
   <div class="dashed-rule"></div>
 
   <!-- Earnings / taxes / summary grid -->
