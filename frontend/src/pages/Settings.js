@@ -40,6 +40,7 @@ const SETTINGS_MENU = [
   {
     header: 'YOUR COMPANY',
     items: [
+      { label: 'Company profile', path: '/settings/company' },
       { label: 'Account and settings',   path: '/settings'                      },
       { label: 'Manage users',           path: '/team'                          },
       { label: 'Custom form styles',     path: '/settings/form-styles'          },
