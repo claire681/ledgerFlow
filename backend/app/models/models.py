@@ -110,6 +110,7 @@ class User(Base):
     company         = Column(String,  nullable=True)
     hashed_pw       = Column(String,  nullable=False)
     role            = Column(String,  default="admin")
+    country          = Column(String(2), nullable=True)  # ISO 3166 2-letter code
     plan            = Column(String,  default="free")
     is_active       = Column(Boolean, default=True)
     is_verified     = Column(Boolean, default=False)
@@ -360,6 +361,7 @@ class CompanyProfile(Base):
     phone              = Column(String,  nullable=True)
     contact_email      = Column(String,  nullable=True)
     logo_url           = Column(Text,    nullable=True)
+    payroll_rp_account = Column(String(20), nullable=True)  # CRA RP account, e.g. RP0001
     address            = Column(Text,    nullable=True)
     country            = Column(String,  default="US")
     province_state     = Column(String,  nullable=True)
