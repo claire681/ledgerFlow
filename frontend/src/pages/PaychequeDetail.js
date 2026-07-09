@@ -225,6 +225,13 @@ export default function PaychequeDetail() {
             top: 0;
             width: 100%;
             background: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          .pay-stub-print-only * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           .no-print { display: none !important; }
         }
