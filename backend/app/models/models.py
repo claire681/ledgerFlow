@@ -841,6 +841,11 @@ class PayStub(Base):
     voided = Column(Boolean, nullable=False, server_default='false', default=False)
     voided_at = Column(DateTime(timezone=True), nullable=True)
     voided_reason = Column(String(1000), nullable=True)
+
+    # Adjustment cheque fields
+    is_adjustment          = Column(Boolean, nullable=False, server_default="false")
+    adjustment_of_stub_id  = Column(UUID(as_uuid=True), ForeignKey("pay_stubs.id"), nullable=True)
+    adjustment_reason      = Column(Text, nullable=True)
     paid_at = Column(DateTime(timezone=True), nullable=True)
     currency = Column(String(3), nullable=False, default="CAD")
 
