@@ -58,6 +58,51 @@ class CompanyProfileResponse(CompanyProfileSchema):
     updated_at: Optional[datetime] = None
 
 
+# ── GET /profile/completeness ───────────────────────────────────────────
+
+@router.get("/profile/completeness")
+async def get_profile_completeness(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Check whether the company profile has all required fields for the user's country.
+
+    Returns:
+        {
+          "is_complete": bool,
+          "missing_fields": ["business_number", "address_street", ...]
+        }
+    """
+    result = await db.execute(
+        select(CompanyProfile).where(CompanyProfile.user_id == current_user.id)
+    )
+    profile = result.scalar_one_or_none()
+
+    country = (current_user.country or "CA").upper()
+
+    # Universal required fields (any country)
+    required = ["company_name", "address_street", "address_city", "address_postal_code", "province_state"]
+
+    # Canada requires business number + RP account for payroll
+    if country == "CA":
+        required.extend(["business_number", "payroll_rp_account"])
+
+    missing = []
+    if profile is None:
+        missing = list(required)
+    else:
+        for field in required:
+            value = getattr(profile, field, None)
+            if not value or (isinstance(value, str) and not value.strip()):
+                missing.append(field)
+
+    return {
+        "is_complete": len(missing) == 0,
+        "missing_fields": missing,
+        "country": country,
+    }
+
+
 # ── GET profile ───────────────────────────────────────────────────────────
 
 @router.get("/profile", response_model=CompanyProfileResponse)
