@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Upload, AlertCircle } from "lucide-react";
+import { ChevronLeft, AlertCircle } from "lucide-react";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -246,30 +246,6 @@ export default function SettingsCompany() {
       <p style={{ color: MUTED, fontSize: 14, marginBottom: 32, maxWidth: 620 }}>
         Your business identity. This information appears on every invoice you send, every pay stub you generate, and every CRA remittance. Keep it accurate.
       </p>
-
-      {/* Card 1: Logo */}
-      <div style={cardStyle}>
-        <div style={cardHeaderStyle}>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 600, color: INK, marginBottom: 4, letterSpacing: "-0.01em" }}>Company logo</div>
-            <div style={{ color: MUTED, fontSize: 13, lineHeight: 1.55 }}>Displayed at the top of invoices and pay stubs. Builds recognition.</div>
-          </div>
-          <span style={badgeOptional}>Optional</span>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <div style={{ width: 90, height: 90, borderRadius: 12, background: LINE_SOFT, border: "2px dashed #C9CDD2", display: "flex", alignItems: "center", justifyContent: "center", color: FAINT, fontSize: 11, textAlign: "center", flexShrink: 0, fontWeight: 500 }}>
-            {form.logo_url ? <img src={form.logo_url} alt="Logo" style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 10 }} /> : "Upload\na logo".split("\n").map((s, i) => <div key={i}>{s}</div>)}
-          </div>
-          <div style={{ flex: 1 }}>
-            <button style={{ background: PAPER, color: INK, border: "1px solid " + LINE, padding: "9px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <Upload size={14} />
-              Choose file
-            </button>
-            <div style={{ ...helperStyle, marginTop: 8 }}>PNG, JPG or SVG. Square format recommended. Max 2 MB.</div>
-          </div>
-        </div>
-      </div>
 
       {/* Card 2: Legal identity */}
       <div style={cardStyle}>
