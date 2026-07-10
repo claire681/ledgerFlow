@@ -13,6 +13,7 @@ import CreateAdjustmentModal from "../components/payroll/CreateAdjustmentModal";
 import AdjustmentGuardModal from "../components/payroll/AdjustmentGuardModal";
 import VoidPaychequeModal from "../components/payroll/VoidPaychequeModal";
 import DeletePaychequeModal from "../components/payroll/DeletePaychequeModal";
+import DeleteGuardModal from "../components/payroll/DeleteGuardModal";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -416,7 +417,12 @@ export default function PaychequeDetail() {
         onVoid={() => setVoidOpen(true)}
       />
       <VoidPaychequeModal open={voidOpen} onClose={() => setVoidOpen(false)} paycheque={pc} onConfirm={handleVoid} />
-      <DeletePaychequeModal open={deleteOpen} onClose={() => setDeleteOpen(false)} paycheque={pc} onConfirm={handleDelete} />
+      <DeleteGuardModal
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        stub={pc}
+        onVoid={() => setVoidOpen(true)}
+      />
     </div>
   );
 }
