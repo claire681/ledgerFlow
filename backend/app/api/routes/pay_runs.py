@@ -17,7 +17,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from pydantic import BaseModel
 
 from app.db.database import get_db
@@ -1220,6 +1220,138 @@ async def get_paycheque_detail(
 
 
 
+
+
+
+# ============================================================
+# Payroll Taxes (Payroll Tax Centre) endpoints
+# ============================================================
+
+@router.get("/taxes/pd7a")
+async def get_pd7a_remittance(
+    year: int,
+    month: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """PD7A remittance calculation for a single month.
+
+    Aggregates all finalized, non-voided paycheques where pay_date falls
+    in the specified month. Returns the totals CRA needs for the PD7A
+    Statement of Account.
+
+    Due date is the 15th of the following month (standard monthly remitter
+    threshold; quarterly and accelerated remitters have different rules,
+    handled in later phases).
+    """
+    from datetime import date, timedelta
+    from calendar import monthrange
+    from app.models.models import CompanyProfile
+
+    if year < 2020 or year > 2030:
+        raise HTTPException(status_code=400, detail="year must be between 2020 and 2030")
+    if month < 1 or month > 12:
+        raise HTTPException(status_code=400, detail="month must be between 1 and 12")
+
+    period_start = date(year, month, 1)
+    period_end = date(year, month, monthrange(year, month)[1])
+
+    # Aggregate the paycheques
+    result = await db.execute(
+        select(
+            func.count(PayStub.id).label("stub_count"),
+            func.count(func.distinct(PayStub.employee_id)).label("employee_count"),
+            func.coalesce(func.sum(PayStub.gross_pay), 0).label("gross"),
+            func.coalesce(func.sum(PayStub.federal_tax), 0).label("federal_tax"),
+            func.coalesce(func.sum(PayStub.provincial_or_state_tax), 0).label("provincial_tax"),
+            func.coalesce(func.sum(PayStub.social_security_employee), 0).label("cpp_employee"),
+            func.coalesce(func.sum(PayStub.social_security_employer), 0).label("cpp_employer"),
+            func.coalesce(func.sum(PayStub.unemployment_employee), 0).label("ei_employee"),
+            func.coalesce(func.sum(PayStub.unemployment_employer), 0).label("ei_employer"),
+        )
+        .select_from(PayStub)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(
+            PayRun.owner_id == current_user.id,
+            PayRun.pay_date >= period_start,
+            PayRun.pay_date <= period_end,
+            PayStub.voided == False,
+            PayRun.status != "voided",
+        )
+    )
+    row = result.first()
+
+    gross = float(row.gross or 0)
+    fed = float(row.federal_tax or 0)
+    prov = float(row.provincial_tax or 0)
+    cpp_ee = float(row.cpp_employee or 0)
+    cpp_er = float(row.cpp_employer or 0)
+    ei_ee = float(row.ei_employee or 0)
+    ei_er = float(row.ei_employer or 0)
+
+    cpp_total = round(cpp_ee + cpp_er, 2)
+    ei_total = round(ei_ee + ei_er, 2)
+    tax_total = round(fed + prov, 2)
+    current_payment = round(cpp_total + ei_total + tax_total, 2)
+
+    # Due date: 15th of following month
+    if month == 12:
+        due_date = date(year + 1, 1, 15)
+    else:
+        due_date = date(year, month + 1, 15)
+
+    today = date.today()
+    days_remaining = (due_date - today).days
+
+    if row.stub_count == 0:
+        status = "no_activity"
+    elif today > due_date:
+        status = "overdue"
+    else:
+        status = "ready_to_pay"
+
+    # Company info
+    comp_res = await db.execute(
+        select(CompanyProfile).where(CompanyProfile.user_id == current_user.id)
+    )
+    company = comp_res.scalar_one_or_none()
+
+    account_number_formatted = ""
+    if company and company.business_number and company.payroll_rp_account:
+        rp = company.payroll_rp_account.replace("RP", "").strip()
+        account_number_formatted = f"{company.business_number} RP {rp}"
+
+    return {
+        "period_start": period_start.isoformat(),
+        "period_end": period_end.isoformat(),
+        "period_label": f"{period_start.strftime('%d/%m/%Y')} to {period_end.strftime('%d/%m/%Y')}",
+        "due_date": due_date.isoformat(),
+        "due_date_display": due_date.strftime("%d/%m/%Y"),
+        "days_remaining": days_remaining,
+        "status": status,
+        "paycheque_count": row.stub_count or 0,
+        "employee_count": row.employee_count or 0,
+        "gross_payroll": round(gross, 2),
+        "cpp_employee": round(cpp_ee, 2),
+        "cpp_employer": round(cpp_er, 2),
+        "cpp_contributions": cpp_total,
+        "ei_employee": round(ei_ee, 2),
+        "ei_employer": round(ei_er, 2),
+        "ei_premiums": ei_total,
+        "federal_tax": round(fed, 2),
+        "provincial_tax": round(prov, 2),
+        "tax_deductions": tax_total,
+        "current_payment": current_payment,
+        "company": {
+            "name": company.company_name if company else "",
+            "address_street": company.address_street if company else "",
+            "address_city": company.address_city if company else "",
+            "address_postal": company.address_postal_code if company else "",
+            "business_number": company.business_number if company else "",
+            "payroll_rp_account": company.payroll_rp_account if company else "",
+            "account_number_formatted": account_number_formatted,
+        },
+    }
 
 # ============================================================
 # GET /paycheques/export/excel - Excel export of paycheques
