@@ -171,6 +171,45 @@ function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen }) {
   const status = pd7a ? pd7a.status : "no_activity";
   const periodLabel = pd7a ? pd7a.period_label : "";
 
+  const [archiving, setArchiving] = useState(false);
+  const [archiveError, setArchiveError] = useState("");
+
+  const handleArchive = async () => {
+    if (!pd7a || archiving) return;
+    setArchiving(true);
+    setArchiveError("");
+    try {
+      const res = await fetch(`${API_URL}/api/v1/payroll/taxes/archived-forms`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          country: "CA",
+          form_type: "PD7A",
+          form_subtype: "monthly",
+          period_start: pd7a.period_start,
+          period_end: pd7a.period_end,
+          period_label: pd7a.period_label,
+          form_data: {
+            gross_payroll: pd7a.gross_payroll,
+            cpp_contributions: pd7a.cpp_contributions,
+            ei_premiums: pd7a.ei_premiums,
+            tax_deductions: pd7a.tax_deductions,
+            current_payment: pd7a.current_payment,
+            employee_count: pd7a.employee_count,
+            paycheque_count: pd7a.paycheque_count,
+            company: pd7a.company || {},
+          },
+        }),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const created = await res.json();
+      navigate(`/payroll/taxes/archived/${created.id}`);
+    } catch (e) {
+      setArchiveError("Could not archive: " + e.message);
+      setArchiving(false);
+    }
+  };
+
   return (
     <>
       {/* Metrics strip */}
@@ -236,8 +275,22 @@ function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen }) {
           amount={money(currentPayment)}
           byLine={"Pay by " + dueDateDisplay}
           onPay={() => navigate("/payroll/taxes/archived")}
+          onArchive={handleArchive}
+          archiving={archiving}
         />
       ) : (
+        null
+      )}
+      {archiveError && (
+        <div style={{
+          background: "#FEF2F2", border: "1px solid #FCA5A5",
+          borderRadius: 8, padding: "10px 12px", marginTop: 10,
+          color: "#991B1B", fontSize: 13, fontWeight: 600,
+        }}>
+          {archiveError}
+        </div>
+      )}
+      {false ? null : (
         <EmptyState text="No remittance due this month." />
       )}
 
@@ -428,7 +481,7 @@ function SectionHeader({ label, count }) {
   );
 }
 
-function ObligationCard({ title, sub, statusPill, statusText, dueLine, amount, byLine, onPay }) {
+function ObligationCard({ title, sub, statusPill, statusText, dueLine, amount, byLine, onPay, onArchive, archiving }) {
   const pillColors = {
     ready: { bg: TOKENS.tealTint, color: TOKENS.tealInk, icon: <CheckCircle2 size={14} /> },
     wait: { bg: "#EEF1F4", color: TOKENS.muted, icon: <Clock size={14} /> },
@@ -470,22 +523,42 @@ function ObligationCard({ title, sub, statusPill, statusText, dueLine, amount, b
         </div>
         <div style={{ fontSize: 12, color: TOKENS.faint }}>{byLine}</div>
       </div>
-      <button
-        onClick={onPay}
-        style={{
-          fontFamily: "inherit", fontWeight: 600, fontSize: 14,
-          borderRadius: 10, padding: "10px 16px", cursor: "pointer",
-          border: "1px solid transparent",
-          boxShadow: "0 1px 2px rgba(16,30,40,.06)",
-          display: "inline-flex", alignItems: "center", gap: 7,
-          background: TOKENS.teal, color: "#fff",
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.background = TOKENS.tealHover}
-        onMouseLeave={(e) => e.currentTarget.style.background = TOKENS.teal}
-      >
-        Pay and file
-        <ChevronDown size={14} />
-      </button>
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <button
+          onClick={onArchive}
+          disabled={archiving}
+          style={{
+            fontFamily: "inherit", fontWeight: 700, fontSize: 14,
+            borderRadius: 10, padding: "10px 16px",
+            cursor: archiving ? "wait" : "pointer",
+            border: "1px solid " + TOKENS.lineStrong,
+            background: "white", color: "#0E1A1A",
+            display: "inline-flex", alignItems: "center", gap: 7,
+            opacity: archiving ? 0.6 : 1,
+          }}
+          onMouseEnter={(e) => { if (!archiving) e.currentTarget.style.background = "#F9FAFB"; }}
+          onMouseLeave={(e) => { if (!archiving) e.currentTarget.style.background = "white"; }}
+        >
+          <Archive size={14} strokeWidth={2.5} />
+          {archiving ? "Archiving..." : "Archive"}
+        </button>
+        <button
+          onClick={onPay}
+          style={{
+            fontFamily: "inherit", fontWeight: 600, fontSize: 14,
+            borderRadius: 10, padding: "10px 16px", cursor: "pointer",
+            border: "1px solid transparent",
+            boxShadow: "0 1px 2px rgba(16,30,40,.06)",
+            display: "inline-flex", alignItems: "center", gap: 7,
+            background: TOKENS.teal, color: "#fff",
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = TOKENS.tealHover}
+          onMouseLeave={(e) => e.currentTarget.style.background = TOKENS.teal}
+        >
+          Pay and file
+          <ChevronDown size={14} />
+        </button>
+      </div>
     </div>
   );
 }
