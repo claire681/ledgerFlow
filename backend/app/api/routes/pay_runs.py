@@ -1353,6 +1353,200 @@ async def get_pd7a_remittance(
         },
     }
 
+
+
+# ============================================================
+# Archived tax forms + audit log endpoints
+# Country-agnostic; used for PD7A (Canada) today, 941/EPS/etc later
+# ============================================================
+
+
+class ArchiveFormRequest(BaseModel):
+    """Body for archiving a form. All the numbers come from the calculator
+    endpoint; this just records what the user saw at archive time."""
+    country: str = "CA"
+    form_type: str  # e.g. "PD7A", "941", "EPS"
+    form_subtype: Optional[str] = None  # e.g. "monthly", "quarterly"
+    period_start: str  # ISO date
+    period_end: str
+    period_label: Optional[str] = None
+    form_data: dict
+
+
+@router.post("/taxes/archived-forms")
+async def archive_form(
+    body: ArchiveFormRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Save a snapshot of a tax form for future viewing/printing.
+
+    Country-agnostic. Body carries country + form_type so this works for
+    Canada's PD7A, USA's 941, UK's EPS, etc.
+    """
+    from datetime import date, datetime
+    from uuid import uuid4
+    from app.models.models import ArchivedForm
+    from app.services.audit_log import log_event
+
+    try:
+        period_start = date.fromisoformat(body.period_start)
+        period_end = date.fromisoformat(body.period_end)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="period_start and period_end must be ISO dates")
+
+    if body.country not in ("CA", "US", "UK", "AU", "IE"):
+        raise HTTPException(status_code=400, detail="unsupported country: " + body.country)
+
+    archived = ArchivedForm(
+        id=uuid4(),
+        user_id=current_user.id,
+        country=body.country.upper(),
+        form_type=body.form_type.upper(),
+        form_subtype=body.form_subtype,
+        period_start=period_start,
+        period_end=period_end,
+        period_label=body.period_label,
+        form_data=body.form_data,
+        archived_by=current_user.id,
+    )
+    db.add(archived)
+
+    await log_event(
+        db,
+        user_id=current_user.id,
+        event_type="form.archive",
+        entity_type="archived_form",
+        entity_id=archived.id,
+        action="archive",
+        details={
+            "country": body.country,
+            "form_type": body.form_type,
+            "period_label": body.period_label,
+        },
+    )
+
+    await db.commit()
+    await db.refresh(archived)
+
+    return {
+        "id": str(archived.id),
+        "country": archived.country,
+        "form_type": archived.form_type,
+        "form_subtype": archived.form_subtype,
+        "period_start": archived.period_start.isoformat(),
+        "period_end": archived.period_end.isoformat(),
+        "period_label": archived.period_label,
+        "archived_at": archived.archived_at.isoformat(),
+    }
+
+
+@router.get("/taxes/archived-forms")
+async def list_archived_forms(
+    country: Optional[str] = None,
+    form_type: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """List archived forms for the current user. Optional filters by country
+    and form_type. Sorted newest archived first."""
+    from app.models.models import ArchivedForm
+
+    query = select(ArchivedForm).where(ArchivedForm.user_id == current_user.id)
+    if country:
+        query = query.where(ArchivedForm.country == country.upper())
+    if form_type:
+        query = query.where(ArchivedForm.form_type == form_type.upper())
+    query = query.order_by(ArchivedForm.archived_at.desc())
+
+    result = await db.execute(query)
+    rows = result.scalars().all()
+
+    return [
+        {
+            "id": str(r.id),
+            "country": r.country,
+            "form_type": r.form_type,
+            "form_subtype": r.form_subtype,
+            "period_start": r.period_start.isoformat(),
+            "period_end": r.period_end.isoformat(),
+            "period_label": r.period_label,
+            "archived_at": r.archived_at.isoformat(),
+        }
+        for r in rows
+    ]
+
+
+@router.get("/taxes/archived-forms/{form_id}")
+async def get_archived_form(
+    form_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get one archived form with full form_data snapshot."""
+    from app.models.models import ArchivedForm
+
+    result = await db.execute(
+        select(ArchivedForm).where(
+            ArchivedForm.id == form_id,
+            ArchivedForm.user_id == current_user.id,
+        )
+    )
+    row = result.scalar_one_or_none()
+    if not row:
+        raise HTTPException(status_code=404, detail="Archived form not found")
+
+    return {
+        "id": str(row.id),
+        "country": row.country,
+        "form_type": row.form_type,
+        "form_subtype": row.form_subtype,
+        "period_start": row.period_start.isoformat(),
+        "period_end": row.period_end.isoformat(),
+        "period_label": row.period_label,
+        "form_data": row.form_data,
+        "archived_at": row.archived_at.isoformat(),
+    }
+
+
+@router.get("/audit-events")
+async def list_audit_events(
+    entity_type: Optional[str] = None,
+    event_type: Optional[str] = None,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """List audit events for the current user. Optional filters.
+    Sorted newest first. Max 100 per page (later: cursor pagination)."""
+    from app.models.models import AuditEvent
+
+    if limit < 1 or limit > 500:
+        limit = 100
+
+    query = select(AuditEvent).where(AuditEvent.user_id == current_user.id)
+    if entity_type:
+        query = query.where(AuditEvent.entity_type == entity_type)
+    if event_type:
+        query = query.where(AuditEvent.event_type == event_type)
+    query = query.order_by(AuditEvent.created_at.desc()).limit(limit)
+
+    result = await db.execute(query)
+    rows = result.scalars().all()
+
+    return [
+        {
+            "id": str(r.id),
+            "event_type": r.event_type,
+            "entity_type": r.entity_type,
+            "entity_id": str(r.entity_id) if r.entity_id else None,
+            "action": r.action,
+            "details": r.details or {},
+            "created_at": r.created_at.isoformat(),
+        }
+        for r in rows
+    ]
+
 # ============================================================
 # GET /paycheques/export/excel - Excel export of paycheques
 # ============================================================

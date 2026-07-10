@@ -361,7 +361,8 @@ class CompanyProfile(Base):
     phone              = Column(String,  nullable=True)
     contact_email      = Column(String,  nullable=True)
     logo_url           = Column(Text,    nullable=True)
-    payroll_rp_account = Column(String(20), nullable=True)  # CRA RP account, e.g. RP0001
+    payroll_rp_account = Column(String(20), nullable=True)
+    remitter_type = Column(String(30), nullable=False, server_default="monthly")  # CRA RP account, e.g. RP0001
     address            = Column(Text,    nullable=True)
     business_number   = Column(String(20), nullable=True)   # CRA BN or equivalent
     payroll_rp_account = Column(String(20), nullable=True)  # CRA RP account, e.g. RP0001
@@ -1091,3 +1092,46 @@ class EmployeeDeductionItem(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class ArchivedForm(Base):
+    """Country-agnostic tax form archive.
+    
+    Stores generated PD7A (Canada), 941 (USA), EPS (UK), etc.
+    country + form_type identifies what this is.
+    form_data JSONB holds a full snapshot so we can regenerate the PDF anytime.
+    """
+    __tablename__ = "archived_forms"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    country = Column(String(2), nullable=False, index=True)
+    form_type = Column(String(20), nullable=False, index=True)
+    form_subtype = Column(String(50), nullable=True)
+    period_start = Column(Date, nullable=False)
+    period_end = Column(Date, nullable=False)
+    period_label = Column(String(100), nullable=True)
+    form_data = Column(JSONB, nullable=False)
+    pdf_s3_key = Column(String(500), nullable=True)
+    archived_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    archived_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+
+class AuditEvent(Base):
+    """Universal audit log for significant business events.
+    
+    Not tied to any country. Logs paycheque voids, adjustments, form archives,
+    settings changes, etc. Used for compliance and the audit log UI.
+    """
+    __tablename__ = "audit_events"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    event_type = Column(String(50), nullable=False, index=True)
+    entity_type = Column(String(50), nullable=False)
+    entity_id = Column(UUID(as_uuid=True), nullable=True)
+    actor_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    action = Column(String(20), nullable=False)
+    details = Column(JSONB, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
