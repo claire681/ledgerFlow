@@ -18,6 +18,7 @@ import DeletePaychequeModal from "../components/payroll/DeletePaychequeModal";
 import CreateAdjustmentModal from "../components/payroll/CreateAdjustmentModal";
 import AdjustmentGuardModal from "../components/payroll/AdjustmentGuardModal";
 import DeleteGuardModal from "../components/payroll/DeleteGuardModal";
+import BulkVoidModal from "../components/payroll/BulkVoidModal";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -85,6 +86,8 @@ export default function PaychequeList() {
   const [voidTarget, setVoidTarget] = useState(null);
     const [adjustTarget, setAdjustTarget] = useState(null);
     const [exportMenuOpen, setExportMenuOpen] = useState(false);
+    const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+    const [bulkVoidStubs, setBulkVoidStubs] = useState(null);
     const [guardTarget, setGuardTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -417,9 +420,41 @@ export default function PaychequeList() {
               </>
             )}
           </div>
-          <button onClick={() => alert("More actions coming soon")} title="More" style={{ width: 30, height: 30, borderRadius: 6, background: "white", border: "0.5px solid " + BORDER, cursor: "pointer", color: TEXT_SECONDARY, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-            <MoreVertical size={14} />
-          </button>
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <button onClick={() => setMoreMenuOpen(!moreMenuOpen)} title="More" style={{ width: 30, height: 30, borderRadius: 6, background: "white", border: "0.5px solid " + BORDER, cursor: "pointer", color: TEXT_SECONDARY, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <MoreVertical size={14} />
+            </button>
+            {moreMenuOpen && (
+              <>
+                <div onClick={() => setMoreMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+                <div style={{ position: "absolute", top: 38, right: 0, background: "white", border: "1px solid " + BORDER, borderRadius: 10, padding: 4, width: 220, boxShadow: "0 8px 24px rgba(0,0,0,0.10)", zIndex: 50 }}>
+                  <div
+                    onClick={() => {
+                      if (selected.size === 0) return;
+                      setMoreMenuOpen(false);
+                      const stubs = paycheques.filter(p => selected.has(p.id));
+                      setBulkVoidStubs(stubs);
+                    }}
+                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 6, cursor: selected.size > 0 ? "pointer" : "not-allowed", fontSize: 13, color: selected.size > 0 ? "#000000" : "#9CA3AF", fontWeight: 500, opacity: selected.size > 0 ? 1 : 0.6 }}
+                    onMouseEnter={e => { if (selected.size > 0) e.currentTarget.style.background = "#F0FAFA"; }}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <RotateCcw size={15} style={{ color: selected.size > 0 ? "#1A2332" : "#9CA3AF" }} />
+                    Bulk void selected {selected.size > 0 ? "(" + selected.size + ")" : ""}
+                  </div>
+                  <div
+                    onClick={() => { setMoreMenuOpen(false); navigate("/tools/audit-log"); }}
+                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 6, cursor: "pointer", fontSize: 13, color: "#000000", fontWeight: 500 }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#F0FAFA"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <FileText size={15} style={{ color: "#1A2332" }} />
+                    View audit log
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <button onClick={loadAll} title="Refresh" style={{ width: 30, height: 30, borderRadius: 6, background: "white", border: "0.5px solid " + BORDER, cursor: "pointer", color: TEXT_SECONDARY, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
             <RefreshCw size={14} style={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
           </button>
@@ -620,6 +655,25 @@ export default function PaychequeList() {
         onClose={() => setVoidTarget(null)}
         paycheque={voidTarget}
         onConfirm={confirmVoid}
+      />
+
+      <BulkVoidModal
+        open={!!bulkVoidStubs}
+        onClose={() => setBulkVoidStubs(null)}
+        stubs={bulkVoidStubs || []}
+        onDone={(result) => {
+          if (result.success > 0) {
+            // Refresh list
+            fetch(API_URL + "/api/v1/payroll/paycheques", { headers: authHeaders() })
+              .then(r => r.json())
+              .then(setPaycheques)
+              .catch(() => {});
+            setSelected(new Set());
+          }
+          if (result.failed > 0) {
+            alert(`Voided ${result.success}, failed ${result.failed}.\n` + result.errors.slice(0, 3).join("\n"));
+          }
+        }}
       />
 
       <DeleteGuardModal
