@@ -412,11 +412,7 @@ export default function PaychequeList() {
                     <FileText size={15} style={{ color: "#1A2332" }} />
                     Save as PDF
                   </div>
-                  <div style={{ height: 1, background: "#E5E7EB", margin: "4px 0" }} />
-                  <div onClick={() => { setExportMenuOpen(false); window.print(); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 6, cursor: "pointer", fontSize: 13, color: "#000000", fontWeight: 500 }} onMouseEnter={e => e.currentTarget.style.background = "#F0FAFA"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                    <Printer size={15} style={{ color: "#1A2332" }} />
-                    Print
-                  </div>
+
                 </div>
               </>
             )}
