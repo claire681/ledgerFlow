@@ -216,7 +216,7 @@ export default function AuditLog() {
       lineHeight: 1.5,
       fontWeight: 500,
     }}>
-      <div style={{ maxWidth: 1060, margin: "0 auto", padding: "24px 24px 60px" }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 24px 60px" }}>
         <a
           onClick={() => navigate(-1)}
           style={{

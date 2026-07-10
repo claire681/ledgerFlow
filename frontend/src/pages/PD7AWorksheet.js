@@ -82,7 +82,7 @@ export default function PD7AWorksheet() {
       fontSize: 14,
       fontWeight: 500,
     }}>
-      <div style={{ maxWidth: 1060, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto" }}>
         <a
           onClick={() => navigate("/payroll/taxes/archived")}
           style={{

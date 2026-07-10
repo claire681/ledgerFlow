@@ -100,7 +100,7 @@ export default function PayrollTaxes() {
       lineHeight: 1.5,
       fontWeight: 500,
     }}>
-      <div style={{ maxWidth: 1060, margin: "0 auto", padding: "24px 24px 60px" }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 24px 60px" }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: TOKENS.ink }}>
           Payroll taxes
         </h1>
