@@ -1579,6 +1579,235 @@ async def email_paycheque(
 
     return {"sent": True, "to": body.to_email}
 
+
+
+# ============================================================
+# POST /paycheques/{stub_id}/adjust - Create adjustment cheque
+# ============================================================
+
+class AdjustPaychequeRequest(BaseModel):
+    direction: str  # "extra_pay" or "recover_overpayment"
+    gross_amount: float  # always positive
+    reason: str
+
+
+@router.post("/paycheques/{stub_id}/adjust")
+async def adjust_paycheque(
+    stub_id: UUID,
+    body: AdjustPaychequeRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Create an adjustment cheque linked to the given original pay stub.
+
+    Business rules:
+    - Original stub must be finalized, not voided, not itself an adjustment
+    - direction 'extra_pay': positive amount, employee owed more
+    - direction 'recover_overpayment': negative amount, employee owes back
+    - Taxes calculated on the signed amount via the same tax engine as
+      regular pay runs, using the original pay run's dates so YTD/period
+      context matches
+    - Adjustment saved as new PayStub row with is_adjustment=true
+    - YTD balances updated by the delta (positive or negative)
+    """
+    from decimal import Decimal
+    from app.payroll.service import PayrollService
+    from app.payroll.types import PayRunEmployeeInput, HoursWorked, JurisdictionContext
+
+    if body.direction not in ("extra_pay", "recover_overpayment"):
+        raise HTTPException(status_code=400, detail="direction must be 'extra_pay' or 'recover_overpayment'")
+    if not body.reason or not body.reason.strip():
+        raise HTTPException(status_code=400, detail="reason is required")
+    if body.gross_amount <= 0:
+        raise HTTPException(status_code=400, detail="gross_amount must be positive; direction controls sign")
+
+    # Fetch original stub + run
+    result = await db.execute(
+        select(PayStub, PayRun)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(PayStub.id == stub_id, PayRun.owner_id == current_user.id)
+    )
+    row = result.first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Original paycheque not found")
+    orig_stub, orig_run = row
+
+    if orig_run.status != "finalized":
+        raise HTTPException(status_code=400, detail="Can only adjust finalized paycheques")
+    if orig_stub.voided:
+        raise HTTPException(status_code=400, detail="Cannot adjust a voided paycheque")
+    if orig_stub.is_adjustment:
+        raise HTTPException(status_code=400, detail="Cannot create adjustment on an adjustment cheque")
+
+    # Fetch employee
+    emp_result = await db.execute(select(Employee).where(Employee.id == orig_stub.employee_id))
+    emp = emp_result.scalar_one_or_none()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    # Fetch YTD (should exist for finalized run)
+    tax_year = orig_run.pay_period_start.year
+    ytd_result = await db.execute(
+        select(YTDBalance).where(
+            YTDBalance.employee_id == orig_stub.employee_id,
+            YTDBalance.tax_year == tax_year,
+        )
+    )
+    ytd = ytd_result.scalar_one_or_none()
+
+    # Sign the amount by direction
+    signed_gross = Decimal(str(body.gross_amount))
+    if body.direction == "recover_overpayment":
+        signed_gross = -signed_gross
+
+    # Pay periods per year map
+    freq_map = {"weekly": 52, "biweekly": 26, "semimonthly": 24, "monthly": 12}
+    pay_periods_per_year = freq_map.get(emp.pay_frequency or "biweekly", 26)
+
+    # Build employee dict (matches shape the engine expects)
+    employee_dict = {
+        "id": str(emp.id),
+        "first_name": emp.first_name,
+        "last_name": emp.last_name,
+        "personal_email": emp.personal_email,
+        "position_title": emp.position_title,
+        "pay_type": emp.pay_type,
+        "hourly_rate": float(emp.hourly_rate) if emp.hourly_rate else 0,
+        "salary_amount": float(emp.salary_amount) if emp.salary_amount else 0,
+        "currency": emp.currency or "CAD",
+        "country": emp.country or "CA",
+        "province_or_state": emp.province_or_state or "AB",
+        "pay_frequency": emp.pay_frequency or "biweekly",
+        "tax_info": emp.tax_info or {},
+    }
+
+    hours_input = PayRunEmployeeInput(
+        employee_id=str(emp.id),
+        hours=HoursWorked(),  # all zeros
+        bonus=signed_gross,
+        commission=Decimal("0"),
+        reimbursement=Decimal("0"),
+    )
+
+    ytd_dict = {
+        "ytd_gross": str(ytd.ytd_gross) if ytd else "0",
+        "ytd_social_security_employee": str(ytd.ytd_social_security_employee) if ytd else "0",
+        "ytd_unemployment_employee": str(ytd.ytd_unemployment_employee) if ytd else "0",
+        "ytd_federal_tax": str(ytd.ytd_federal_tax) if ytd else "0",
+        "ytd_provincial_or_state_tax": str(ytd.ytd_provincial_or_state_tax) if ytd else "0",
+    }
+
+    # Use two-letter province code, not full name
+    prov_code_map = {"Alberta": "AB", "British Columbia": "BC", "Manitoba": "MB",
+                     "New Brunswick": "NB", "Newfoundland and Labrador": "NL",
+                     "Nova Scotia": "NS", "Ontario": "ON", "Prince Edward Island": "PE",
+                     "Quebec": "QC", "Saskatchewan": "SK", "Northwest Territories": "NT",
+                     "Nunavut": "NU", "Yukon": "YT"}
+    prov = emp.province_or_state or "AB"
+    prov = prov_code_map.get(prov, prov)
+
+    jurisdiction = JurisdictionContext(
+        country=emp.country or "CA",
+        province_or_state=prov,
+        pay_frequency=emp.pay_frequency or "biweekly",
+        tax_year=tax_year,
+        pay_period_start=orig_run.pay_period_start,
+        pay_period_end=orig_run.pay_period_end,
+        pay_date=orig_run.pay_date,
+        pay_periods_per_year=pay_periods_per_year,
+    )
+
+    service = PayrollService()
+    calc_result = service.calculate_one_employee(
+        employee=employee_dict,
+        hours_input=hours_input,
+        ytd=ytd_dict,
+        jurisdiction=jurisdiction,
+    )
+
+    # Create adjustment PayStub row
+    from uuid import uuid4
+    adjustment_stub = PayStub(
+        id=uuid4(),
+        pay_run_id=orig_stub.pay_run_id,
+        employee_id=orig_stub.employee_id,
+        employee_name=orig_stub.employee_name,
+        employee_email=orig_stub.employee_email,
+        position_title=orig_stub.position_title,
+        pay_type=orig_stub.pay_type,
+        hourly_rate=orig_stub.hourly_rate,
+        salary_amount=Decimal("0"),
+        currency=orig_stub.currency,
+        hours_regular=Decimal("0"),
+        hours_overtime=Decimal("0"),
+        hours_stat_holiday=Decimal("0"),
+        hours_vacation=Decimal("0"),
+        hours_sick=Decimal("0"),
+        hours_evening=Decimal("0"),
+        hours_overnight=Decimal("0"),
+        hours_weekend=Decimal("0"),
+        hours_on_call=Decimal("0"),
+        hours_travel=Decimal("0"),
+        gross_pay=calc_result.gross_pay,
+        bonus=signed_gross,
+        commission=Decimal("0"),
+        reimbursement=Decimal("0"),
+        federal_tax=calc_result.federal_tax,
+        provincial_or_state_tax=calc_result.provincial_or_state_tax,
+        social_security_employee=calc_result.social_security_employee,
+        social_security_employer=calc_result.social_security_employer,
+        social_security_2_employee=calc_result.social_security_2_employee,
+        unemployment_employee=calc_result.unemployment_employee,
+        unemployment_employer=calc_result.unemployment_employer,
+        total_employee_deductions=calc_result.total_employee_deductions,
+        total_employer_contributions=calc_result.total_employer_contributions,
+        net_pay=calc_result.net_pay,
+        is_adjustment=True,
+        adjustment_of_stub_id=orig_stub.id,
+        adjustment_reason=body.reason.strip(),
+        memo=f"Adjustment: {body.reason.strip()[:80]}",
+        voided=False,
+    )
+    db.add(adjustment_stub)
+
+    # Update YTD balances by delta (may create if missing)
+    if ytd is None:
+        ytd = YTDBalance(
+            id=uuid4(),
+            employee_id=orig_stub.employee_id,
+            tax_year=tax_year,
+            jurisdiction=(emp.country or "CA") + "-" + prov,
+            ytd_gross=Decimal("0"),
+            ytd_federal_tax=Decimal("0"),
+            ytd_provincial_or_state_tax=Decimal("0"),
+            ytd_social_security_employee=Decimal("0"),
+            ytd_unemployment_employee=Decimal("0"),
+        )
+        db.add(ytd)
+
+    ytd.ytd_gross = (ytd.ytd_gross or Decimal("0")) + calc_result.gross_pay
+    ytd.ytd_social_security_employee = (ytd.ytd_social_security_employee or Decimal("0")) + calc_result.social_security_employee
+    ytd.ytd_unemployment_employee = (ytd.ytd_unemployment_employee or Decimal("0")) + calc_result.unemployment_employee
+    ytd.ytd_federal_tax = (ytd.ytd_federal_tax or Decimal("0")) + calc_result.federal_tax
+    ytd.ytd_provincial_or_state_tax = (ytd.ytd_provincial_or_state_tax or Decimal("0")) + calc_result.provincial_or_state_tax
+
+    await db.commit()
+    await db.refresh(adjustment_stub)
+
+    return {
+        "adjustment_stub_id": str(adjustment_stub.id),
+        "direction": body.direction,
+        "gross_amount": float(calc_result.gross_pay),
+        "net_amount": float(calc_result.net_pay),
+        "taxes": {
+            "federal": float(calc_result.federal_tax),
+            "provincial": float(calc_result.provincial_or_state_tax),
+            "cpp": float(calc_result.social_security_employee),
+            "ei": float(calc_result.unemployment_employee),
+        },
+        "reason": body.reason.strip(),
+    }
+
 # ============================================================
 # POST /paycheques/{stub_id}/void
 # ============================================================
