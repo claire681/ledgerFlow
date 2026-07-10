@@ -6,6 +6,7 @@ import InvoiceEditor from "./pages/InvoiceEditor";
 import InvoiceReviewSend from "./pages/InvoiceReviewSend";
 import PayRuns from "./pages/PayRuns";
 import PayrollLauncher from "./utils/payrollLauncher";
+import PayrollTaxes from "./pages/PayrollTaxes";
 import PayRunDetail from "./pages/PayRunDetail";
 import PayStubDetail from "./pages/PayStubDetail";
 import EmployeesList from "./pages/EmployeesList";
@@ -177,7 +178,10 @@ function AppLayout({ onLogout }) {
         <main  style={{ flex:1, overflowY:'auto', position:'relative', minWidth:0, marginLeft: 0 }}>
           <AccessGate />
           <Routes>
-          <Route path="/payroll/employees" element={<EmployeesList />} />
+          <Route path="/payroll/taxes" element={<PayrollTaxes />} />
+        <Route path="/payroll/taxes/payments" element={<PayrollTaxes />} />
+        <Route path="/payroll/taxes/filings" element={<PayrollTaxes />} />
+        <Route path="/payroll/employees" element={<EmployeesList />} />
           <Route path="/payroll/employees/add" element={<AddEmployee />} />
           <Route path="/payroll/employees/directory" element={<EmployeesDirectoryPage />} />
           <Route path="/payroll/employees/:id/v2" element={<EmployeeProfileV2 />} />
