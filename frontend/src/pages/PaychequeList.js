@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft, ChevronDown, ChevronRight, Filter, Lock,
-  MoreVertical, ArrowUp, ArrowDown, FileText, Building2,
+  MoreVertical, ArrowUp, ArrowDown, FileText, Building2, Printer,
   X, AlertTriangle, MessageCircle, RefreshCw,
 } from "lucide-react";
 
@@ -84,6 +84,7 @@ export default function PaychequeList() {
   const [rowMenuId, setRowMenuId] = useState(null);
   const [voidTarget, setVoidTarget] = useState(null);
     const [adjustTarget, setAdjustTarget] = useState(null);
+    const [exportMenuOpen, setExportMenuOpen] = useState(false);
     const [guardTarget, setGuardTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -196,7 +197,42 @@ export default function PaychequeList() {
 
   const openPaycheque = (id) => navigate("/payroll/paycheques/" + id);
 
-  const openPaychequePdf = async (paychequeId) => {
+  const exportExcel = async () => {
+      try {
+        const res = await fetch(API_URL + "/api/v1/payroll/paycheques/export/excel", {
+          headers: authHeaders(),
+        });
+        if (!res.ok) { alert("Could not export Excel (HTTP " + res.status + ")"); return; }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "paycheques_" + new Date().toISOString().slice(0,10) + ".xlsx";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+      } catch (e) {
+        alert("Export failed: " + e.message);
+      }
+    };
+
+    const exportPdf = async () => {
+      try {
+        const res = await fetch(API_URL + "/api/v1/payroll/paycheques/export/pdf", {
+          headers: authHeaders(),
+        });
+        if (!res.ok) { alert("Could not export PDF (HTTP " + res.status + ")"); return; }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank");
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      } catch (e) {
+        alert("Export failed: " + e.message);
+      }
+    };
+
+    const openPaychequePdf = async (paychequeId) => {
     try {
       const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + paychequeId + "/pdf", {
         headers: authHeaders(),
@@ -360,9 +396,31 @@ export default function PaychequeList() {
               <Lock size={12} />Privacy
             </span>
           </div>
-          <button onClick={() => alert("Export options coming soon")} style={{ fontSize: 12, padding: "7px 12px", borderRadius: 6, background: "white", border: "0.5px solid " + BORDER, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, color: TEXT_PRIMARY, fontFamily: "inherit", fontWeight: 500 }}>
-            Export <ChevronDown size={12} />
-          </button>
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <button onClick={() => setExportMenuOpen(!exportMenuOpen)} style={{ fontSize: 12, padding: "7px 12px", borderRadius: 6, background: "white", border: "0.5px solid " + BORDER, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, color: TEXT_PRIMARY, fontFamily: "inherit", fontWeight: 500 }}>
+              Export <ChevronDown size={12} />
+            </button>
+            {exportMenuOpen && (
+              <>
+                <div onClick={() => setExportMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+                <div style={{ position: "absolute", top: 38, right: 0, background: "white", border: "1px solid " + BORDER, borderRadius: 10, padding: 4, width: 200, boxShadow: "0 8px 24px rgba(0,0,0,0.10)", zIndex: 50 }}>
+                  <div onClick={() => { setExportMenuOpen(false); exportExcel(); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 6, cursor: "pointer", fontSize: 13, color: "#000000", fontWeight: 500 }} onMouseEnter={e => e.currentTarget.style.background = "#F0FAFA"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                    <FileText size={15} style={{ color: "#1A2332" }} />
+                    Export to Excel
+                  </div>
+                  <div onClick={() => { setExportMenuOpen(false); exportPdf(); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 6, cursor: "pointer", fontSize: 13, color: "#000000", fontWeight: 500 }} onMouseEnter={e => e.currentTarget.style.background = "#F0FAFA"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                    <FileText size={15} style={{ color: "#1A2332" }} />
+                    Save as PDF
+                  </div>
+                  <div style={{ height: 1, background: "#E5E7EB", margin: "4px 0" }} />
+                  <div onClick={() => { setExportMenuOpen(false); window.print(); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 6, cursor: "pointer", fontSize: 13, color: "#000000", fontWeight: 500 }} onMouseEnter={e => e.currentTarget.style.background = "#F0FAFA"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                    <Printer size={15} style={{ color: "#1A2332" }} />
+                    Print
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <button onClick={() => alert("More actions coming soon")} title="More" style={{ width: 30, height: 30, borderRadius: 6, background: "white", border: "0.5px solid " + BORDER, cursor: "pointer", color: TEXT_SECONDARY, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
             <MoreVertical size={14} />
           </button>
