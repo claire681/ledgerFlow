@@ -2,10 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Filter, Printer, FileText, History, Archive,
-  ChevronDown, CheckCircle2, Clock, AlertTriangle,
-  X, HelpCircle,
+  ChevronDown, ChevronRight, CheckCircle2, Clock, AlertTriangle, X,
 } from "lucide-react";
-
 import ResourcesDrawer from "../components/payroll/ResourcesDrawer";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -18,23 +16,24 @@ const authHeaders = () => {
   };
 };
 
-// Design tokens (from spec)
+// Design tokens (dark, per spec)
 const TOKENS = {
   teal: "#15A08C",
   tealHover: "#0F8474",
   tealTint: "#E1F5EE",
-  tealInk: "#0F6E56",
-  slate: "#12262B",
-  muted: "#66748B",
-  faint: "#8A94A6",
+  tealInk: "#0B7377",
+  ink: "#000000",
+  dark: "#1A2332",
+  slateHead: "#12262B",
   bg: "#F4F6F8",
   card: "#FFFFFF",
   line: "#E7EAF0",
-  lineStrong: "#D5DBE3",
-  ink: "#0E1A1A",
+  lineStrong: "#D1D5DB",
   amber: "#B7791F",
   amberTint: "#FDF3E2",
   amberLine: "#F1DDB8",
+  amberText: "#7A4A00",
+  neutralPill: "#EEF1F4",
 };
 
 const money = (n) => {
@@ -45,19 +44,20 @@ const money = (n) => {
   });
 };
 
+// ============================================================
+// MAIN
+// ============================================================
 export default function PayrollTaxes() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Determine tab from URL: /payroll/taxes/payments (default) or /payroll/taxes/filings
   const tabFromUrl = location.pathname.endsWith("/filings") ? "filings" : "payments";
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [pd7a, setPd7a] = useState(null);
-  const [resourcesOpen, setResourcesOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [resourcesOpen, setResourcesOpen] = useState(false);
 
-  // Load PD7A for current month on mount
   useEffect(() => {
     const now = new Date();
     const year = now.getFullYear();
@@ -92,50 +92,34 @@ export default function PayrollTaxes() {
       background: TOKENS.bg,
       minHeight: "100vh",
       fontFamily: "Inter, 'Plus Jakarta Sans', sans-serif",
-      color: TOKENS.slate,
+      color: TOKENS.ink,
       fontSize: 14,
       lineHeight: 1.5,
+      fontWeight: 500,
     }}>
       <div style={{ maxWidth: 1060, margin: "0 auto", padding: "24px 24px 60px" }}>
-        {/* Header */}
-        <h1 style={{
-          fontSize: 24, fontWeight: 600, margin: 0, color: TOKENS.slate,
-        }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: TOKENS.ink }}>
           Payroll taxes
         </h1>
 
-        {/* Tabs */}
+        {/* Segmented tabs */}
         <div style={{
-          borderBottom: "1px solid " + TOKENS.line,
-          marginTop: 16, display: "flex", gap: 26,
+          display: "inline-flex",
+          gap: 4,
+          background: "#EDF0F3",
+          borderRadius: 10,
+          padding: 4,
+          marginTop: 16,
         }}>
           <button
             onClick={() => switchTab("payments")}
-            style={{
-              padding: "10px 2px",
-              background: "none", border: "none",
-              borderBottom: activeTab === "payments"
-                ? "2px solid " + TOKENS.teal
-                : "2px solid transparent",
-              color: activeTab === "payments" ? TOKENS.tealInk : TOKENS.muted,
-              fontWeight: activeTab === "payments" ? 600 : 400,
-              fontSize: 15, cursor: "pointer", fontFamily: "inherit",
-            }}
+            style={tabStyle(activeTab === "payments")}
           >
             Payments
           </button>
           <button
             onClick={() => switchTab("filings")}
-            style={{
-              padding: "10px 2px",
-              background: "none", border: "none",
-              borderBottom: activeTab === "filings"
-                ? "2px solid " + TOKENS.teal
-                : "2px solid transparent",
-              color: activeTab === "filings" ? TOKENS.tealInk : TOKENS.muted,
-              fontWeight: activeTab === "filings" ? 600 : 400,
-              fontSize: 15, cursor: "pointer", fontFamily: "inherit",
-            }}
+            style={tabStyle(activeTab === "filings")}
           >
             Filings
           </button>
@@ -143,10 +127,19 @@ export default function PayrollTaxes() {
 
         {/* Tab content */}
         {activeTab === "payments" && (
-          <PaymentsTab pd7a={pd7a} loading={loading} error={error} navigate={navigate} onResourcesOpen={() => setResourcesOpen(true)} />
+          <PaymentsTab
+            pd7a={pd7a}
+            loading={loading}
+            error={error}
+            navigate={navigate}
+            onResourcesOpen={() => setResourcesOpen(true)}
+          />
         )}
         {activeTab === "filings" && (
-          <FilingsTab navigate={navigate} onResourcesOpen={() => setResourcesOpen(true)} />
+          <FilingsTab
+            navigate={navigate}
+            onResourcesOpen={() => setResourcesOpen(true)}
+          />
         )}
 
         <ResourcesDrawer
@@ -160,10 +153,24 @@ export default function PayrollTaxes() {
   );
 }
 
-// ============================================================
-// Payments tab
-// ============================================================
+function tabStyle(active) {
+  return {
+    padding: "7px 18px",
+    background: active ? "white" : "transparent",
+    border: "none",
+    borderRadius: 8,
+    color: active ? TOKENS.ink : TOKENS.dark,
+    fontFamily: "inherit",
+    fontSize: 14,
+    fontWeight: active ? 700 : 600,
+    cursor: "pointer",
+    boxShadow: active ? "0 1px 2px rgba(16, 30, 40, 0.08)" : "none",
+  };
+}
 
+// ============================================================
+// PAYMENTS TAB
+// ============================================================
 function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen }) {
   const hasData = pd7a && pd7a.paycheque_count > 0;
   const currentPayment = pd7a ? pd7a.current_payment : 0;
@@ -171,6 +178,7 @@ function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen }) {
   const status = pd7a ? pd7a.status : "no_activity";
   const periodLabel = pd7a ? pd7a.period_label : "";
 
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
   const [archiving, setArchiving] = useState(false);
   const [archiveError, setArchiveError] = useState("");
 
@@ -192,8 +200,14 @@ function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen }) {
           form_data: {
             gross_payroll: pd7a.gross_payroll,
             cpp_contributions: pd7a.cpp_contributions,
+            cpp_employer: pd7a.cpp_employer,
+            cpp_employee: pd7a.cpp_employee,
             ei_premiums: pd7a.ei_premiums,
+            ei_employer: pd7a.ei_employer,
+            ei_employee: pd7a.ei_employee,
             tax_deductions: pd7a.tax_deductions,
+            federal_tax: pd7a.federal_tax,
+            provincial_tax: pd7a.provincial_tax,
             current_payment: pd7a.current_payment,
             employee_count: pd7a.employee_count,
             paycheque_count: pd7a.paycheque_count,
@@ -212,99 +226,73 @@ function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen }) {
 
   return (
     <>
-      {/* Metrics strip */}
+      {/* Metrics */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(3, 1fr)",
         gap: 12,
         marginTop: 18,
       }}>
-        <MetricCard
-          label="Due now"
-          value={loading ? "Loading..." : money(hasData ? currentPayment : 0)}
-        />
-        <MetricCard
-          label="Next payment due"
-          value={loading ? "Loading..." : (hasData ? dueDateDisplay : "None")}
-        />
-        <MetricCard
-          label="Upcoming filings"
-          value="3"
-        />
+        <MetricTile label="Due now" value={loading ? "Loading..." : money(hasData ? currentPayment : 0)} />
+        <MetricTile label="Next payment due" value={loading ? "Loading..." : (hasData ? dueDateDisplay : "None")} />
+        <MetricTile label="Upcoming filings" value="3" />
       </div>
 
       {/* Toolbar */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 8,
-        marginTop: 16, position: "relative",
-      }}>
-        <ToolbarBtn bordered icon={<Filter size={14} />} label="Filter" />
+      <div style={toolbarStyle}>
+        <ToolbarBtn bordered icon={<Filter size={14} strokeWidth={2.5} />} label="Filter" />
         <div style={{ flex: 1 }} />
-        <ToolbarBtn icon={<Printer size={14} />} label="Print" />
-        <ToolbarBtn icon={<FileText size={14} />} label="Resources" onClick={onResourcesOpen} />
-        <ToolbarBtn icon={<History size={14} />} label="Payment history" />
+        <ToolbarBtn icon={<Printer size={14} strokeWidth={2.5} />} label="Print" onClick={() => window.print()} />
+        <ToolbarBtn icon={<FileText size={14} strokeWidth={2.5} />} label="Resources" onClick={onResourcesOpen} />
+        <ToolbarBtn icon={<History size={14} strokeWidth={2.5} />} label="Payment history" />
       </div>
 
-      {error && (
-        <div style={{
-          background: "#FEF2F2", border: "1px solid #FCA5A5",
-          borderRadius: 8, padding: "10px 12px", marginTop: 14,
-          color: "#991B1B", fontSize: 13, fontWeight: 600,
-        }}>
-          {error}
-        </div>
-      )}
+      {error && <ErrorStrip text={error} />}
+      {archiveError && <ErrorStrip text={archiveError} />}
 
-      {/* Action needed */}
-      <SectionHeader label="Action needed" count={hasData ? 1 : 0} />
+      {/* ACTION NEEDED */}
+      <SectionHead label="ACTION NEEDED" count={hasData ? 1 : 0} />
       {hasData ? (
-        <ObligationCard
-          title="Federal taxes"
-          sub={periodLabel}
-          statusPill={
-            status === "ready_to_pay" ? "ready" :
-            status === "overdue" ? "overdue" :
-            "wait"
-          }
-          statusText={
-            status === "ready_to_pay" ? "Ready to pay" :
-            status === "overdue" ? "Overdue" :
-            "Waiting"
-          }
-          dueLine={"Due " + dueDateDisplay}
-          amount={money(currentPayment)}
-          byLine={"Pay by " + dueDateDisplay}
-          onPay={() => navigate("/payroll/taxes/archived")}
-          onArchive={handleArchive}
-          archiving={archiving}
-        />
+        <>
+          <ObligationCard
+            title="Federal taxes"
+            sub={periodLabel}
+            status={status}
+            dueDate={dueDateDisplay}
+            amount={money(currentPayment)}
+            breakdownOpen={breakdownOpen}
+            onToggleBreakdown={() => setBreakdownOpen(!breakdownOpen)}
+            onArchive={handleArchive}
+            archiving={archiving}
+          />
+          {breakdownOpen && (
+            <BreakdownPanel
+              rows={[
+                { label: "Canada Pension Plan Employer", amount: pd7a.cpp_employer },
+                { label: "Canada Pension Plan", amount: pd7a.cpp_employee },
+                { label: "Employment Insurance Employer", amount: pd7a.ei_employer },
+                { label: "Employment Insurance", amount: pd7a.ei_employee },
+                { label: "Income Tax", amount: pd7a.tax_deductions },
+              ]}
+              total={pd7a.current_payment}
+            />
+          )}
+        </>
       ) : (
-        null
-      )}
-      {archiveError && (
-        <div style={{
-          background: "#FEF2F2", border: "1px solid #FCA5A5",
-          borderRadius: 8, padding: "10px 12px", marginTop: 10,
-          color: "#991B1B", fontSize: 13, fontWeight: 600,
-        }}>
-          {archiveError}
-        </div>
-      )}
-      {false ? null : (
-        <EmptyState text="No remittance due this month." />
+        <EmptyBox text="No remittance due this month." />
       )}
 
-      {/* Coming up */}
-      <SectionHeader label="Coming up" count={0} />
-      <EmptyState text="Nothing coming up. You are all clear." />
+      {/* COMING UP */}
+      <SectionHead label="COMING UP" count={0} />
+      <EmptyBox text="Coast is clear!" />
 
-      {/* Scheduled */}
-      <SectionHeader label="Scheduled" count={0} />
-      <EmptyState text="No scheduled payments yet." />
+      {/* SCHEDULED */}
+      <SectionHead label="SCHEDULED" count={0} />
+      <EmptyBox text="Nothing to see here (yet)!" />
 
-      {/* Payment resources */}
-      <SectionHeader label="Payment resources" />
-      <ResourceList
+      {/* PAYMENT RESOURCES */}
+      <SectionHead label="PAYMENT RESOURCES" />
+      <ResourceLinkList
         items={[
           { title: "Record tax payments", desc: "Add or update tax payments made outside of Novala." },
           { title: "All payment resources", desc: "Payment history, tax liabilities, and other reports." },
@@ -319,83 +307,91 @@ function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen }) {
 }
 
 // ============================================================
-// Filings tab (placeholder cards for T4 slips)
+// FILINGS TAB
 // ============================================================
-
 function FilingsTab({ navigate, onResourcesOpen }) {
   const currentYear = new Date().getFullYear();
   const t4DueDate = "01/03/" + (currentYear + 1);
+  const t4PeriodStart = "01/01/" + currentYear;
+  const t4PeriodEnd = "31/12/" + currentYear;
 
   return (
     <>
+      {/* Dental banner */}
       <div style={{
         background: TOKENS.amberTint,
         border: "1px solid " + TOKENS.amberLine,
-        borderRadius: 12, padding: "14px 16px",
-        display: "flex", gap: 12, marginTop: 18,
+        borderRadius: 12,
+        padding: "14px 16px",
+        display: "flex",
+        gap: 12,
+        marginTop: 18,
       }}>
         <div style={{ color: TOKENS.amber }}>
-          <AlertTriangle size={20} />
+          <AlertTriangle size={20} strokeWidth={2.5} />
         </div>
         <div>
-          <div style={{ fontWeight: 600, color: "#8A5A0C", fontSize: 14 }}>
+          <div style={{ fontWeight: 700, color: TOKENS.amberText, fontSize: 14 }}>
             Select a dental benefits code for each employee
           </div>
-          <div style={{ color: TOKENS.muted, fontSize: 13, marginTop: 2 }}>
-            The CRA needs to know who has access to any dental benefits you offer. This info is required to file T4 slips. Add it on each employee's deductions and contributions page. <a style={{ color: TOKENS.teal, cursor: "pointer" }}>Find out more</a>
+          <div style={{ color: TOKENS.dark, fontSize: 13, marginTop: 2, fontWeight: 600 }}>
+            The CRA needs to know who has access to any dental benefits you offer. This info is required to file T4 slips. Add it on each employee's deductions and contributions page.{" "}
+            <a style={{ color: TOKENS.tealInk, fontWeight: 700, cursor: "pointer" }}>Find out more</a>
           </div>
         </div>
       </div>
 
-      <div style={{
-        display: "flex", alignItems: "center", gap: 8,
-        marginTop: 16, position: "relative",
-      }}>
-        <ToolbarBtn bordered icon={<Filter size={14} />} label="Filter" />
+      {/* Toolbar */}
+      <div style={toolbarStyle}>
+        <ToolbarBtn bordered icon={<Filter size={14} strokeWidth={2.5} />} label="Filter" />
         <div style={{ flex: 1 }} />
-        <ToolbarBtn icon={<Printer size={14} />} label="Print" />
-        <ToolbarBtn icon={<FileText size={14} />} label="Resources" onClick={onResourcesOpen} />
+        <ToolbarBtn icon={<Printer size={14} strokeWidth={2.5} />} label="Print" onClick={() => window.print()} />
+        <ToolbarBtn icon={<FileText size={14} strokeWidth={2.5} />} label="Resources" onClick={onResourcesOpen} />
         <ToolbarBtn
-          icon={<Archive size={14} />}
+          icon={<Archive size={14} strokeWidth={2.5} />}
           label="Archive"
           onClick={() => navigate("/payroll/taxes/archived")}
         />
       </div>
 
-      <SectionHeader label="Action needed" count={0} />
-      <EmptyState text="You are all caught up." />
+      {/* ACTION NEEDED */}
+      <SectionHead label="ACTION NEEDED" count={0} />
+      <EmptyBox text="Woohoo! All caught up." />
 
-      <SectionHeader label="Coming up" count={3} />
+      {/* COMING UP */}
+      <SectionHead label="COMING UP" count={3} />
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <FilingCard
           title="T4 summary"
-          sub={"01/01/" + currentYear + " to 31/12/" + currentYear}
-          dueLine={"Due " + t4DueDate}
+          sub={t4PeriodStart + " to " + t4PeriodEnd}
+          dueDate={t4DueDate}
           method="Manually file"
         />
         <FilingCard
           title="T4 employer slips"
           sub="Employer copy of T4 slips"
-          dueLine={"Due " + t4DueDate}
+          dueDate={t4DueDate}
           method="Manually file with XML"
         />
         <FilingCard
           title="T4 employee slips"
           sub="T4 slip for employee"
-          dueLine={"Due " + t4DueDate}
+          dueDate={t4DueDate}
           method="Manually file"
         />
       </div>
 
-      <SectionHeader label="Done" count={0} />
-      <EmptyState text="Completed filings will show up here." />
+      {/* DONE */}
+      <SectionHead label="DONE" count={0} />
+      <EmptyBox text="Nothing to see here (yet)!" />
 
-      <SectionHeader label="Filing resources" />
-      <ResourceList
+      {/* FILING RESOURCES */}
+      <SectionHead label="FILING RESOURCES" />
+      <ResourceLinkList
         items={[
           { title: "Record of employment", desc: "The ROEs you have created for your employees." },
           { title: "Archived forms and filings", desc: "Completed tax filings and forms ready to view and print.", onClick: () => navigate("/payroll/taxes/archived") },
-          { title: "All filings resources", desc: "Tax filings, federal tax forms, and other compliance resources." },
+          { title: "All filings resources", desc: "Tax filings, federal tax forms, and other compliance resources.", onClick: onResourcesOpen },
         ]}
       />
     </>
@@ -403,21 +399,32 @@ function FilingsTab({ navigate, onResourcesOpen }) {
 }
 
 // ============================================================
-// Sub-components
+// SUB-COMPONENTS
 // ============================================================
+const toolbarStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  marginTop: 16,
+  position: "relative",
+  flexWrap: "wrap",
+};
 
-function MetricCard({ label, value }) {
+function MetricTile({ label, value }) {
   return (
     <div style={{
       background: TOKENS.card,
       border: "1px solid " + TOKENS.line,
       borderRadius: 12,
-      padding: "14px 16px",
+      padding: "16px 18px",
     }}>
-      <div style={{ fontSize: 13, color: TOKENS.muted }}>{label}</div>
+      <div style={{ fontSize: 13, color: TOKENS.dark, fontWeight: 600 }}>{label}</div>
       <div style={{
-        fontSize: 24, fontWeight: 600, marginTop: 3,
-        color: TOKENS.slate, fontVariantNumeric: "tabular-nums",
+        fontSize: 26,
+        fontWeight: 700,
+        marginTop: 3,
+        color: TOKENS.ink,
+        fontVariantNumeric: "tabular-nums",
       }}>
         {value}
       </div>
@@ -426,29 +433,25 @@ function MetricCard({ label, value }) {
 }
 
 function ToolbarBtn({ icon, label, bordered, onClick }) {
+  const [hover, setHover] = React.useState(false);
   return (
     <button
       onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       style={{
-        display: "inline-flex", alignItems: "center", gap: 7,
-        background: bordered ? TOKENS.card : "none",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 7,
+        background: bordered ? "white" : (hover ? "#EEF1F4" : "transparent"),
         border: bordered ? "1px solid " + TOKENS.lineStrong : "none",
-        color: bordered ? TOKENS.slate : TOKENS.muted,
-        fontFamily: "inherit", fontSize: 13,
-        cursor: "pointer", padding: "8px 11px",
+        color: TOKENS.ink,
+        fontFamily: "inherit",
+        fontSize: 13,
+        cursor: "pointer",
+        padding: "8px 11px",
         borderRadius: 8,
-      }}
-      onMouseEnter={(e) => {
-        if (!bordered) {
-          e.currentTarget.style.background = "#EEF1F4";
-          e.currentTarget.style.color = TOKENS.slate;
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!bordered) {
-          e.currentTarget.style.background = "none";
-          e.currentTarget.style.color = TOKENS.muted;
-        }
+        fontWeight: 700,
       }}
     >
       {icon}
@@ -457,22 +460,33 @@ function ToolbarBtn({ icon, label, bordered, onClick }) {
   );
 }
 
-function SectionHeader({ label, count }) {
+function SectionHead({ label, count }) {
   return (
     <div style={{
-      fontSize: 13, fontWeight: 600, color: TOKENS.muted,
-      letterSpacing: "0.2px", margin: "26px 0 10px",
-      display: "flex", alignItems: "center", gap: 8,
+      fontSize: 13,
+      fontWeight: 700,
+      color: TOKENS.dark,
+      letterSpacing: "0.6px",
+      textTransform: "uppercase",
+      margin: "26px 0 10px",
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
     }}>
       {label}
       {count !== undefined && (
         <span style={{
-          background: TOKENS.bg,
-          border: "1px solid " + TOKENS.line,
+          background: TOKENS.slateHead,
+          color: "white",
           borderRadius: 999,
-          minWidth: 20, height: 20,
-          display: "inline-flex", alignItems: "center", justifyContent: "center",
-          fontSize: 11, color: TOKENS.muted, padding: "0 6px",
+          minWidth: 20,
+          height: 20,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 11,
+          padding: "0 6px",
+          fontWeight: 700,
         }}>
           {count}
         </span>
@@ -481,132 +495,227 @@ function SectionHeader({ label, count }) {
   );
 }
 
-function ObligationCard({ title, sub, statusPill, statusText, dueLine, amount, byLine, onPay, onArchive, archiving }) {
-  const pillColors = {
-    ready: { bg: TOKENS.tealTint, color: TOKENS.tealInk, icon: <CheckCircle2 size={14} /> },
-    wait: { bg: "#EEF1F4", color: TOKENS.muted, icon: <Clock size={14} /> },
-    overdue: { bg: "#FEE2E2", color: "#991B1B", icon: <AlertTriangle size={14} /> },
-  };
-  const pill = pillColors[statusPill] || pillColors.wait;
+function ObligationCard({
+  title, sub, status, dueDate, amount,
+  breakdownOpen, onToggleBreakdown,
+  onArchive, archiving,
+}) {
+  const pillMeta =
+    status === "ready_to_pay" ? { bg: TOKENS.tealTint, color: TOKENS.tealInk, icon: <CheckCircle2 size={14} strokeWidth={2.5} />, text: "Ready to pay" } :
+    status === "overdue"       ? { bg: TOKENS.amberTint, color: TOKENS.amberText, icon: <AlertTriangle size={14} strokeWidth={2.5} />, text: "Overdue" } :
+                                 { bg: TOKENS.neutralPill, color: TOKENS.dark, icon: <Clock size={14} strokeWidth={2.5} />, text: "Waiting" };
 
   return (
     <div style={{
       background: TOKENS.card,
       border: "1px solid " + TOKENS.line,
+      borderLeft: "4px solid " + TOKENS.teal,
       borderRadius: 12,
       padding: "16px 18px",
-      display: "flex", flexWrap: "wrap", alignItems: "center",
-      gap: 18, justifyContent: "space-between",
+      display: "flex",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: 20,
     }}>
-      <div>
-        <div style={{ fontSize: 15, fontWeight: 600, color: TOKENS.slate }}>{title}</div>
-        <div style={{ fontSize: 13, color: TOKENS.muted }}>{sub}</div>
+      <div style={{ flex: 1, minWidth: 170 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: TOKENS.ink }}>{title}</div>
+        <div style={{ fontSize: 13, color: TOKENS.dark, fontWeight: 600 }}>{sub}</div>
         <div>
           <span style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            fontSize: 12, padding: "4px 10px", borderRadius: 999,
-            fontWeight: 500, marginTop: 8,
-            background: pill.bg, color: pill.color,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 12,
+            padding: "4px 10px",
+            borderRadius: 999,
+            fontWeight: 700,
+            marginTop: 8,
+            background: pillMeta.bg,
+            color: pillMeta.color,
           }}>
-            {pill.icon}
-            {statusText}
+            {pillMeta.icon}
+            {pillMeta.text}
           </span>
         </div>
       </div>
-      <div style={{ textAlign: "right" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: TOKENS.slate }}>{dueLine}</div>
-        <div style={{
-          fontSize: 20, fontWeight: 600, color: TOKENS.slate,
+
+      <div style={{ marginRight: 8 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: TOKENS.ink }}>Due {dueDate}</div>
+        <div style={{ fontSize: 12, color: TOKENS.dark, fontWeight: 600 }}>Pay by {dueDate}</div>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: 36 }}>
+        <button
+          onClick={onToggleBreakdown}
+          style={{
+            background: "none",
+            border: "none",
+            color: TOKENS.dark,
+            cursor: "pointer",
+            padding: 2,
+            display: "inline-flex",
+            transition: "transform 0.15s ease",
+            transform: breakdownOpen ? "rotate(90deg)" : "rotate(0deg)",
+          }}
+          aria-label={breakdownOpen ? "Hide breakdown" : "Show breakdown"}
+        >
+          <ChevronRight size={16} strokeWidth={2.5} />
+        </button>
+        <span style={{
+          fontSize: 20,
+          fontWeight: 700,
+          color: TOKENS.ink,
           fontVariantNumeric: "tabular-nums",
         }}>
           {amount}
-        </div>
-        <div style={{ fontSize: 12, color: TOKENS.faint }}>{byLine}</div>
+        </span>
       </div>
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+
+      <div style={{ display: "flex", gap: 8, marginLeft: 8 }}>
         <button
           onClick={onArchive}
           disabled={archiving}
           style={{
-            fontFamily: "inherit", fontWeight: 700, fontSize: 14,
-            borderRadius: 10, padding: "10px 16px",
+            fontFamily: "inherit",
+            fontWeight: 700,
+            fontSize: 14,
+            borderRadius: 10,
+            padding: "10px 16px",
             cursor: archiving ? "wait" : "pointer",
             border: "1px solid " + TOKENS.lineStrong,
-            background: "white", color: "#0E1A1A",
-            display: "inline-flex", alignItems: "center", gap: 7,
+            background: "white",
+            color: TOKENS.ink,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 7,
             opacity: archiving ? 0.6 : 1,
           }}
-          onMouseEnter={(e) => { if (!archiving) e.currentTarget.style.background = "#F9FAFB"; }}
-          onMouseLeave={(e) => { if (!archiving) e.currentTarget.style.background = "white"; }}
         >
           <Archive size={14} strokeWidth={2.5} />
           {archiving ? "Archiving..." : "Archive"}
         </button>
         <button
-          onClick={onPay}
           style={{
-            fontFamily: "inherit", fontWeight: 600, fontSize: 14,
-            borderRadius: 10, padding: "10px 16px", cursor: "pointer",
+            fontFamily: "inherit",
+            fontWeight: 700,
+            fontSize: 14,
+            borderRadius: 10,
+            padding: "10px 16px",
+            cursor: "pointer",
             border: "1px solid transparent",
-            boxShadow: "0 1px 2px rgba(16,30,40,.06)",
-            display: "inline-flex", alignItems: "center", gap: 7,
-            background: TOKENS.teal, color: "#fff",
+            boxShadow: "0 1px 2px rgba(16, 30, 40, 0.06)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 7,
+            background: TOKENS.teal,
+            color: "white",
           }}
           onMouseEnter={(e) => e.currentTarget.style.background = TOKENS.tealHover}
           onMouseLeave={(e) => e.currentTarget.style.background = TOKENS.teal}
         >
           Pay and file
-          <ChevronDown size={14} />
+          <ChevronDown size={14} strokeWidth={2.5} />
         </button>
       </div>
     </div>
   );
 }
 
-function FilingCard({ title, sub, dueLine, method }) {
+function BreakdownPanel({ rows, total }) {
+  return (
+    <div style={{
+      background: "#F7F9FA",
+      border: "1px solid " + TOKENS.line,
+      borderRadius: 10,
+      margin: "8px 0 0 4px",
+      padding: "12px 18px",
+    }}>
+      {rows.map((r, i) => (
+        <div key={i} style={{
+          display: "flex",
+          justifyContent: "space-between",
+          padding: "4px 0",
+          color: TOKENS.dark,
+          fontSize: 13,
+          fontWeight: 600,
+        }}>
+          <span>{r.label}</span>
+          <span style={{ fontVariantNumeric: "tabular-nums" }}>{money(r.amount)}</span>
+        </div>
+      ))}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        padding: "8px 0 4px",
+        color: TOKENS.ink,
+        fontSize: 13,
+        fontWeight: 700,
+        borderTop: "1px solid " + TOKENS.line,
+        marginTop: 4,
+      }}>
+        <span>Total</span>
+        <span style={{ fontVariantNumeric: "tabular-nums" }}>{money(total)}</span>
+      </div>
+    </div>
+  );
+}
+
+function FilingCard({ title, sub, dueDate, method }) {
   return (
     <div style={{
       background: TOKENS.card,
       border: "1px solid " + TOKENS.line,
+      borderLeft: "4px solid " + TOKENS.teal,
       borderRadius: 12,
       padding: "16px 18px",
-      display: "flex", flexWrap: "wrap", alignItems: "center",
-      gap: 18, justifyContent: "space-between",
+      display: "flex",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: 20,
     }}>
-      <div>
-        <div style={{ fontSize: 15, fontWeight: 600, color: TOKENS.slate }}>{title}</div>
-        <div style={{ fontSize: 13, color: TOKENS.muted }}>{sub}</div>
+      <div style={{ flex: 1, minWidth: 190 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: TOKENS.ink }}>{title}</div>
+        <div style={{ fontSize: 13, color: TOKENS.dark, fontWeight: 600 }}>{sub}</div>
         <div>
           <span style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            fontSize: 12, padding: "4px 10px", borderRadius: 999,
-            fontWeight: 500, marginTop: 8,
-            background: "#EEF1F4", color: TOKENS.muted,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 12,
+            padding: "4px 10px",
+            borderRadius: 999,
+            fontWeight: 700,
+            marginTop: 8,
+            background: TOKENS.neutralPill,
+            color: TOKENS.dark,
           }}>
-            <Clock size={14} />
+            <Clock size={14} strokeWidth={2.5} />
             Not due yet
           </span>
         </div>
       </div>
-      <div style={{ textAlign: "right" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: TOKENS.slate }}>{dueLine}</div>
-        <div style={{ fontSize: 12, color: TOKENS.faint }}>{method}</div>
+      <div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: TOKENS.ink }}>Due {dueDate}</div>
+        <div style={{ fontSize: 12, color: TOKENS.dark, fontWeight: 600 }}>{method}</div>
       </div>
-      <button
-        style={{
-          fontFamily: "inherit", fontWeight: 600, fontSize: 14,
-          borderRadius: 10, padding: "10px 16px", cursor: "pointer",
-          border: "1px solid " + TOKENS.lineStrong,
-          background: TOKENS.card, color: TOKENS.slate,
-        }}
-      >
+      <button style={{
+        fontFamily: "inherit",
+        fontWeight: 700,
+        fontSize: 14,
+        borderRadius: 10,
+        padding: "10px 16px",
+        cursor: "pointer",
+        border: "1px solid " + TOKENS.lineStrong,
+        background: "white",
+        color: TOKENS.ink,
+      }}>
         Preview
       </button>
     </div>
   );
 }
 
-function EmptyState({ text }) {
+function EmptyBox({ text }) {
   return (
     <div style={{
       background: TOKENS.card,
@@ -614,41 +723,63 @@ function EmptyState({ text }) {
       borderRadius: 12,
       padding: 26,
       textAlign: "center",
-      color: TOKENS.muted,
+      color: TOKENS.dark,
+      fontWeight: 600,
     }}>
       {text}
     </div>
   );
 }
 
-function ResourceList({ items }) {
+function ErrorStrip({ text }) {
   return (
     <div style={{
-      border: "1px solid " + TOKENS.line,
-      borderRadius: 12,
-      overflow: "hidden",
-      background: TOKENS.card,
+      background: "#FEF2F2",
+      border: "1px solid #FCA5A5",
+      borderRadius: 8,
+      padding: "10px 12px",
+      marginTop: 14,
+      color: "#991B1B",
+      fontSize: 13,
+      fontWeight: 600,
     }}>
+      {text}
+    </div>
+  );
+}
+
+function ResourceLinkList({ items }) {
+  return (
+    <div style={{ marginTop: 6 }}>
       {items.map((item, i) => (
-        <div
+        <a
           key={i}
           onClick={item.onClick}
           style={{
             display: "block",
-            padding: "14px 16px",
-            borderTop: i === 0 ? "none" : "1px solid " + TOKENS.line,
+            marginBottom: 18,
             cursor: item.onClick ? "pointer" : "default",
+            textDecoration: "none",
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = "#F7F9FA"}
-          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
         >
-          <div style={{ fontWeight: 600, color: TOKENS.teal, fontSize: 14 }}>
+          <span style={{
+            color: TOKENS.tealInk,
+            fontWeight: 700,
+            fontSize: 15,
+            display: "block",
+          }}>
             {item.title}
-          </div>
-          <div style={{ color: TOKENS.muted, fontSize: 13, marginTop: 2 }}>
+          </span>
+          <span style={{
+            color: TOKENS.dark,
+            fontSize: 13,
+            marginTop: 2,
+            display: "block",
+            fontWeight: 600,
+          }}>
             {item.desc}
-          </div>
-        </div>
+          </span>
+        </a>
       ))}
     </div>
   );
