@@ -1206,6 +1206,9 @@ async def get_paycheque_detail(
             "address_province": company.province_state if company else None,
             "address_postal_code": company.address_postal_code if company else None,
         } if company else None,
+        "is_adjustment": bool(stub.is_adjustment),
+        "adjustment_of_stub_id": str(stub.adjustment_of_stub_id) if stub.adjustment_of_stub_id else None,
+        "adjustment_reason": stub.adjustment_reason,
         "pay": {"lines": pay_lines, "total": pay_total},
         "employee_taxes": {"lines": emp_tax_lines, "total": emp_tax_total},
         "employer_taxes": {"lines": er_tax_lines, "total": er_tax_total},
@@ -1367,7 +1370,20 @@ async def get_paycheque_pdf(
     env = Environment(loader=FileSystemLoader(template_dir))
     template = env.get_template("pay_stub.html")
 
+    # Adjustment context: fetch original pay date if this is an adjustment
+    original_pay_date_display = None
+    if stub.is_adjustment and stub.adjustment_of_stub_id:
+        orig_res = await db.execute(
+            select(PayRun).join(PayStub, PayStub.pay_run_id == PayRun.id).where(PayStub.id == stub.adjustment_of_stub_id)
+        )
+        orig_run = orig_res.scalar_one_or_none()
+        if orig_run and orig_run.pay_date:
+            original_pay_date_display = orig_run.pay_date.strftime("%d %b %Y")
+
     html_content = template.render(
+        is_adjustment=bool(stub.is_adjustment),
+        adjustment_reason=stub.adjustment_reason,
+        original_pay_date=original_pay_date_display,
         employer_name=employer_name,
         employer_line1=employer_line1,
         employer_line2=employer_line2,

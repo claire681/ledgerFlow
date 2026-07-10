@@ -136,6 +136,27 @@
     font-weight: 600;
     color: #0B7377;
   }
+  .adjustment-banner {
+    background: #FEF3C7;
+    border: 1px solid #FDE68A;
+    padding: 10px 14px;
+    margin: 12px 28px 0;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #92400E;
+    font-weight: 700;
+  }
+  .adjustment-banner .label {
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .adjustment-banner .reason {
+    color: #1A2332;
+    font-weight: 600;
+    font-size: 12.5px;
+    margin-top: 4px;
+  }
   td.padtop { padding-top: 5px; }
 </style>
 </head>
@@ -153,7 +174,7 @@
         {% if employer_line2 %}<div class="muted">{{ employer_line2 }}</div>{% endif %}
       </div>
       <div class="header-right">
-        <div class="fw-600">Pay Stub Detail</div>
+        <div class="fw-600">{% if is_adjustment %}Adjustment Cheque{% else %}Pay Stub Detail{% endif %}</div>
         <div class="muted">PAY DATE: {{ pay_date }}</div>
         <div class="muted">NET PAY: {{ net_pay_display }}</div>
       </div>
@@ -166,6 +187,14 @@
   </div>
 
   <div class="bar" style="margin-top: 12px;"></div>
+
+  {% if is_adjustment %}
+  <div class="adjustment-banner">
+    <div class="label">Adjustment cheque</div>
+    <div>Correcting pay stub from {{ original_pay_date }}</div>
+    {% if adjustment_reason %}<div class="reason">Reason: {{ adjustment_reason }}</div>{% endif %}
+  </div>
+  {% endif %}
 
   <!-- Detail block -->
   <div class="section">

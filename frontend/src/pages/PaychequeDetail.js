@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   HelpCircle, X, ChevronDown, BookOpen, Printer,
-  RotateCcw, Trash2, Edit,
+  RotateCcw, Trash2, Edit, AlertTriangle,
 } from "lucide-react";
 
 import {
@@ -272,6 +272,37 @@ export default function PaychequeDetail() {
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px 16px", maxWidth: 880, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+          {pc && pc.is_adjustment && (
+            <div className="no-print" style={{
+              background: "#FEF3C7", border: "1px solid #FDE68A",
+              borderRadius: 8, padding: "12px 14px", marginBottom: 18,
+              display: "flex", alignItems: "flex-start", gap: 10,
+            }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: 8,
+                background: "#FDE68A", color: "#92400E",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0, marginTop: 2,
+              }}>
+                <AlertTriangle size={16} strokeWidth={2.5} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontSize: 11, color: "#92400E",
+                  letterSpacing: "0.5px", textTransform: "uppercase",
+                  fontWeight: 700, marginBottom: 3,
+                }}>Adjustment cheque</div>
+                <div style={{ fontSize: 13, color: "#1A2332", fontWeight: 600, marginBottom: 4 }}>
+                  This pay stub was created to correct a previous pay stub.
+                </div>
+                {pc.adjustment_reason && (
+                  <div style={{ fontSize: 12.5, color: "#1A2332", fontWeight: 500 }}>
+                    <span style={{ fontWeight: 700 }}>Reason:</span> {pc.adjustment_reason}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 18 }}>
           <div>
