@@ -9,6 +9,8 @@ import {
   formatCurrency, formatDate, formatPeriodLong, employeeNameFromPaycheque,
 } from "../utils/paychequeStatus";
 import PayStub from "../components/payroll/PayStub";
+import CreateAdjustmentModal from "../components/payroll/CreateAdjustmentModal";
+import AdjustmentGuardModal from "../components/payroll/AdjustmentGuardModal";
 import VoidPaychequeModal from "../components/payroll/VoidPaychequeModal";
 import DeletePaychequeModal from "../components/payroll/DeletePaychequeModal";
 
@@ -107,6 +109,8 @@ export default function PaychequeDetail() {
   const { id } = useParams();
 
   const [pc, setPc] = useState(null);
+    const [adjustOpenModal, setAdjustOpenModal] = useState(false);
+    const [guardOpenModal, setGuardOpenModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [memo, setMemo] = useState("");
@@ -255,7 +259,7 @@ export default function PaychequeDetail() {
           </button>
           {adjustOpen && (
             <div style={{ position: "absolute", right: 0, top: 36, background: "white", border: "0.5px solid " + BORDER, borderRadius: 8, padding: 4, width: 180, zIndex: 50, boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
-              <div onClick={() => { setAdjustOpen(false); alert("Amendment flow coming soon"); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 5, cursor: "pointer", fontSize: 12, color: TEXT_PRIMARY }}>
+              <div onClick={() => { setAdjustOpen(false); if (pc && pc.is_adjustment) { setGuardOpenModal(true); } else { setAdjustOpenModal(true); } }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 5, cursor: "pointer", fontSize: 12, color: TEXT_PRIMARY }}>
                 <Edit size={13} style={{ color: TEXT_SECONDARY }} />Edit
               </div>
               <div onClick={() => { setAdjustOpen(false); setVoidOpen(true); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 5, cursor: "pointer", fontSize: 12, color: WARNING }}>
@@ -399,6 +403,18 @@ export default function PaychequeDetail() {
         </div>
       </div>
 
+      <CreateAdjustmentModal
+        open={adjustOpenModal}
+        onClose={() => setAdjustOpenModal(false)}
+        originalStub={pc}
+        onCreated={() => { window.location.reload(); }}
+      />
+      <AdjustmentGuardModal
+        open={guardOpenModal}
+        onClose={() => setGuardOpenModal(false)}
+        stub={pc}
+        onVoid={() => setVoidOpen(true)}
+      />
       <VoidPaychequeModal open={voidOpen} onClose={() => setVoidOpen(false)} paycheque={pc} onConfirm={handleVoid} />
       <DeletePaychequeModal open={deleteOpen} onClose={() => setDeleteOpen(false)} paycheque={pc} onConfirm={handleDelete} />
     </div>
