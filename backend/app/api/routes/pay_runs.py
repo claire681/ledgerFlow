@@ -1219,6 +1219,216 @@ async def get_paycheque_detail(
 
 
 
+
+
+# ============================================================
+# GET /paycheques/export/excel - Excel export of paycheques
+# ============================================================
+
+@router.get("/paycheques/export/excel")
+async def export_paycheques_excel(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Export all user paycheques as an Excel (.xlsx) file.
+
+    Columns: Pay Date, Employee, Gross Pay, Net Pay, Status, Type
+    Returns a spreadsheet response the browser downloads.
+    """
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+    from fastapi.responses import Response
+    from io import BytesIO
+    from datetime import datetime
+
+    result = await db.execute(
+        select(PayStub, PayRun)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(PayRun.owner_id == current_user.id)
+        .order_by(PayRun.pay_date.desc())
+    )
+    rows = result.all()
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Paycheques"
+
+    headers = ["Pay Date", "Employee", "Gross Pay", "Net Pay", "Status", "Type"]
+    ws.append(headers)
+
+    # Style header row
+    header_fill = PatternFill(start_color="15A08C", end_color="15A08C", fill_type="solid")
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    for col in range(1, len(headers) + 1):
+        cell = ws.cell(row=1, column=col)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="left", vertical="center")
+
+    for stub, run in rows:
+        pay_date_str = run.pay_date.strftime("%Y-%m-%d") if run.pay_date else ""
+        pc_status = "Voided" if (stub.voided or run.status == "voided") else "Issued"
+        pc_type = "Adjustment" if stub.is_adjustment else "Regular"
+        ws.append([
+            pay_date_str,
+            stub.employee_name or "",
+            float(stub.gross_pay or 0),
+            float(stub.net_pay or 0),
+            pc_status,
+            pc_type,
+        ])
+
+    # Set money format on gross/net columns
+    for row_i in range(2, ws.max_row + 1):
+        ws.cell(row=row_i, column=3).number_format = "$#,##0.00"
+        ws.cell(row=row_i, column=4).number_format = "$#,##0.00"
+
+    # Auto-size columns (rough)
+    widths = {1: 14, 2: 28, 3: 14, 4: 14, 5: 12, 6: 14}
+    for col_i, w in widths.items():
+        ws.column_dimensions[get_column_letter(col_i)].width = w
+
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    filename = f"paycheques_export_{datetime.utcnow().strftime('%Y%m%d')}.xlsx"
+    return Response(
+        content=buf.read(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        }
+    )
+
+
+
+# ============================================================
+# GET /paycheques/export/pdf - PDF export of paycheques list
+# ============================================================
+
+@router.get("/paycheques/export/pdf")
+async def export_paycheques_pdf(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Export all user paycheques as a PDF report.
+
+    Simple table layout: pay date, employee, gross, net, status, type.
+    Reuses the same WeasyPrint pipeline as the individual pay stub PDF.
+    """
+    from weasyprint import HTML
+    from fastapi.responses import Response
+    from datetime import datetime
+    from app.models.models import CompanyProfile
+
+    result = await db.execute(
+        select(PayStub, PayRun)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(PayRun.owner_id == current_user.id)
+        .order_by(PayRun.pay_date.desc())
+    )
+    rows = result.all()
+
+    # Company info for header
+    company_res = await db.execute(
+        select(CompanyProfile).where(CompanyProfile.user_id == current_user.id)
+    )
+    company = company_res.scalar_one_or_none()
+    company_name = company.company_name if company else ""
+
+    def money(v):
+        n = float(v or 0)
+        return f"${abs(n):,.2f}" if n >= 0 else f"-${abs(n):,.2f}"
+
+    def fmt_date(d):
+        return d.strftime("%d %b %Y") if d else ""
+
+    # Build the HTML
+    row_html = ""
+    for stub, run in rows:
+        pc_status = "Voided" if (stub.voided or run.status == "voided") else "Issued"
+        pc_type = "Adjustment" if stub.is_adjustment else "Regular"
+        row_html += f"""
+        <tr>
+          <td>{fmt_date(run.pay_date)}</td>
+          <td>{stub.employee_name or ""}</td>
+          <td class="num">{money(stub.gross_pay)}</td>
+          <td class="num">{money(stub.net_pay)}</td>
+          <td>{pc_status}</td>
+          <td>{pc_type}</td>
+        </tr>
+        """
+
+    total_gross = sum(float(s.gross_pay or 0) for s, _ in rows)
+    total_net = sum(float(s.net_pay or 0) for s, _ in rows)
+
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        @page {{ size: letter; margin: 15mm; }}
+        body {{ font-family: Inter, Helvetica, Arial, sans-serif; font-size: 11px; color: #0A0F1A; }}
+        .head {{ margin-bottom: 22px; }}
+        .company {{ font-size: 14px; font-weight: 700; color: #000000; }}
+        .title {{ font-size: 18px; font-weight: 700; color: #000000; margin-top: 4px; }}
+        .meta {{ color: #2C3644; font-size: 11px; margin-top: 6px; font-weight: 600; }}
+        table {{ width: 100%; border-collapse: collapse; margin-top: 6px; }}
+        th {{ background: #15A08C; color: white; font-weight: 700; text-align: left; padding: 8px 10px; font-size: 11px; }}
+        td {{ padding: 7px 10px; border-bottom: 1px solid #E5E7EB; font-weight: 500; }}
+        .num {{ text-align: right; }}
+        .totals {{ margin-top: 18px; padding: 12px 14px; background: #E1F5EE; border-radius: 6px; }}
+        .totals-row {{ display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #0B7377; }}
+      </style>
+    </head>
+    <body>
+      <div class="head">
+        <div class="company">{company_name}</div>
+        <div class="title">Paycheques Report</div>
+        <div class="meta">Generated {datetime.utcnow().strftime('%d %b %Y')}  ·  {len(rows)} paycheque{'s' if len(rows) != 1 else ''}</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Pay Date</th>
+            <th>Employee</th>
+            <th class="num">Gross</th>
+            <th class="num">Net</th>
+            <th>Status</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          {row_html}
+        </tbody>
+      </table>
+      <div class="totals">
+        <div class="totals-row">
+          <span>Total Gross</span>
+          <span>{money(total_gross)}</span>
+        </div>
+        <div class="totals-row" style="margin-top: 4px;">
+          <span>Total Net</span>
+          <span>{money(total_net)}</span>
+        </div>
+      </div>
+    </body>
+    </html>
+    """
+
+    pdf_bytes = HTML(string=html).write_pdf()
+    filename = f"paycheques_report_{datetime.utcnow().strftime('%Y%m%d')}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="{filename}"',
+        }
+    )
+
 # ============================================================
 # GET /paycheques/{stub_id}/pdf - PDF pay stub
 # ============================================================
