@@ -10,6 +10,7 @@ import PayrollTaxes from "./pages/PayrollTaxes";
 import ArchivedForms from "./pages/ArchivedForms";
 import PD7AWorksheet from "./pages/PD7AWorksheet";
 import AuditLog from "./pages/AuditLog";
+import PayrollTaxPrintView from "./pages/PayrollTaxPrintView";
 import PayRunDetail from "./pages/PayRunDetail";
 import PayStubDetail from "./pages/PayStubDetail";
 import EmployeesList from "./pages/EmployeesList";
@@ -187,6 +188,7 @@ function AppLayout({ onLogout }) {
         <Route path="/payroll/taxes/archived" element={<ArchivedForms />} />
         <Route path="/payroll/taxes/archived/:id" element={<PD7AWorksheet />} />
         <Route path="/payroll/audit-log" element={<AuditLog />} />
+        <Route path="/payroll/taxes/print" element={<PayrollTaxPrintView />} />
         <Route path="/tools/audit-log" element={<AuditLog />} />
         <Route path="/payroll/employees" element={<EmployeesList />} />
           <Route path="/payroll/employees/add" element={<AddEmployee />} />
