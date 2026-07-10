@@ -6,6 +6,8 @@ import {
   X, HelpCircle,
 } from "lucide-react";
 
+import ResourcesDrawer from "../components/payroll/ResourcesDrawer";
+
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
 const authHeaders = () => {
@@ -51,6 +53,7 @@ export default function PayrollTaxes() {
   const tabFromUrl = location.pathname.endsWith("/filings") ? "filings" : "payments";
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   const [pd7a, setPd7a] = useState(null);
+  const [resourcesOpen, setResourcesOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -140,11 +143,18 @@ export default function PayrollTaxes() {
 
         {/* Tab content */}
         {activeTab === "payments" && (
-          <PaymentsTab pd7a={pd7a} loading={loading} error={error} navigate={navigate} />
+          <PaymentsTab pd7a={pd7a} loading={loading} error={error} navigate={navigate} onResourcesOpen={() => setResourcesOpen(true)} />
         )}
         {activeTab === "filings" && (
-          <FilingsTab navigate={navigate} />
+          <FilingsTab navigate={navigate} onResourcesOpen={() => setResourcesOpen(true)} />
         )}
+
+        <ResourcesDrawer
+          open={resourcesOpen}
+          onClose={() => setResourcesOpen(false)}
+          onNavigate={(path) => navigate(path)}
+          country="CA"
+        />
       </div>
     </div>
   );
@@ -154,7 +164,7 @@ export default function PayrollTaxes() {
 // Payments tab
 // ============================================================
 
-function PaymentsTab({ pd7a, loading, error, navigate }) {
+function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen }) {
   const hasData = pd7a && pd7a.paycheque_count > 0;
   const currentPayment = pd7a ? pd7a.current_payment : 0;
   const dueDateDisplay = pd7a ? pd7a.due_date_display : "";
@@ -192,7 +202,7 @@ function PaymentsTab({ pd7a, loading, error, navigate }) {
         <ToolbarBtn bordered icon={<Filter size={14} />} label="Filter" />
         <div style={{ flex: 1 }} />
         <ToolbarBtn icon={<Printer size={14} />} label="Print" />
-        <ToolbarBtn icon={<FileText size={14} />} label="Resources" />
+        <ToolbarBtn icon={<FileText size={14} />} label="Resources" onClick={onResourcesOpen} />
         <ToolbarBtn icon={<History size={14} />} label="Payment history" />
       </div>
 
@@ -259,7 +269,7 @@ function PaymentsTab({ pd7a, loading, error, navigate }) {
 // Filings tab (placeholder cards for T4 slips)
 // ============================================================
 
-function FilingsTab({ navigate }) {
+function FilingsTab({ navigate, onResourcesOpen }) {
   const currentYear = new Date().getFullYear();
   const t4DueDate = "01/03/" + (currentYear + 1);
 
@@ -291,7 +301,7 @@ function FilingsTab({ navigate }) {
         <ToolbarBtn bordered icon={<Filter size={14} />} label="Filter" />
         <div style={{ flex: 1 }} />
         <ToolbarBtn icon={<Printer size={14} />} label="Print" />
-        <ToolbarBtn icon={<FileText size={14} />} label="Resources" />
+        <ToolbarBtn icon={<FileText size={14} />} label="Resources" onClick={onResourcesOpen} />
         <ToolbarBtn
           icon={<Archive size={14} />}
           label="Archive"
