@@ -8,6 +8,7 @@ import PayRuns from "./pages/PayRuns";
 import PayrollLauncher from "./utils/payrollLauncher";
 import PayrollTaxes from "./pages/PayrollTaxes";
 import ArchivedForms from "./pages/ArchivedForms";
+import PD7AWorksheet from "./pages/PD7AWorksheet";
 import PayRunDetail from "./pages/PayRunDetail";
 import PayStubDetail from "./pages/PayStubDetail";
 import EmployeesList from "./pages/EmployeesList";
@@ -183,6 +184,7 @@ function AppLayout({ onLogout }) {
         <Route path="/payroll/taxes/payments" element={<PayrollTaxes />} />
         <Route path="/payroll/taxes/filings" element={<PayrollTaxes />} />
         <Route path="/payroll/taxes/archived" element={<ArchivedForms />} />
+        <Route path="/payroll/taxes/archived/:id" element={<PD7AWorksheet />} />
         <Route path="/payroll/employees" element={<EmployeesList />} />
           <Route path="/payroll/employees/add" element={<AddEmployee />} />
           <Route path="/payroll/employees/directory" element={<EmployeesDirectoryPage />} />
