@@ -17,6 +17,7 @@ import DeletePaychequeModal from "../components/payroll/DeletePaychequeModal";
 
 import CreateAdjustmentModal from "../components/payroll/CreateAdjustmentModal";
 import AdjustmentGuardModal from "../components/payroll/AdjustmentGuardModal";
+import DeleteGuardModal from "../components/payroll/DeleteGuardModal";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -567,11 +568,11 @@ export default function PaychequeList() {
         onConfirm={confirmVoid}
       />
 
-      <DeletePaychequeModal
+      <DeleteGuardModal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        paycheque={deleteTarget}
-        onConfirm={confirmDelete}
+        stub={deleteTarget}
+        onVoid={() => { if (deleteTarget) setVoidTarget(deleteTarget); }}
       />
 
       <style>{"@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}"}</style>
