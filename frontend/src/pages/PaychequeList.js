@@ -15,6 +15,8 @@ import PaychequeRowMenu from "../components/payroll/PaychequeRowMenu";
 import VoidPaychequeModal from "../components/payroll/VoidPaychequeModal";
 import DeletePaychequeModal from "../components/payroll/DeletePaychequeModal";
 
+import CreateAdjustmentModal from "../components/payroll/CreateAdjustmentModal";
+
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
 const BRAND = "#0F9599";
@@ -79,6 +81,7 @@ export default function PaychequeList() {
   const [editingCheque, setEditingCheque] = useState({});
   const [rowMenuId, setRowMenuId] = useState(null);
   const [voidTarget, setVoidTarget] = useState(null);
+    const [adjustTarget, setAdjustTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   useEffect(() => { loadAll(); }, []);
@@ -212,7 +215,7 @@ export default function PaychequeList() {
     if (actionId === "view") return openPaycheque(paycheque.id);
     if (actionId === "print") { openPaychequePdf(paycheque.id); return; }
     if (actionId === "email") return alert("Email pay stub coming soon");
-    if (actionId === "edit") return alert("Amendment flow coming soon");
+    if (actionId === "edit") return setAdjustTarget(paycheque);
     if (actionId === "void") return setVoidTarget(paycheque);
     if (actionId === "delete") return setDeleteTarget(paycheque);
   };
@@ -527,6 +530,19 @@ export default function PaychequeList() {
         employees={employees}
         paySchedules={paySchedules}
         onApply={applyFilter}
+      />
+
+      <CreateAdjustmentModal
+        open={!!adjustTarget}
+        onClose={() => setAdjustTarget(null)}
+        originalStub={adjustTarget}
+        onCreated={(data) => {
+          // Refresh the list to show the new adjustment
+          fetch(API_URL + "/api/v1/payroll/paycheques", { headers: authHeaders() })
+            .then(r => r.json())
+            .then(setPaycheques)
+            .catch(() => {});
+        }}
       />
 
       <VoidPaychequeModal
