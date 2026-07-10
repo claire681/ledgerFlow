@@ -430,6 +430,7 @@ export default function PaychequeList() {
           const pillColors = STATUS_COLORS[status] || STATUS_COLORS.pending;
           const rowOpacity = isVoided ? 0.7 : 1;
           const rowColor = isVoided ? TEXT_TERTIARY : TEXT_PRIMARY;
+        const isAdjustment = pc.is_adjustment === true;
 
           return (
             <div
@@ -439,11 +440,11 @@ export default function PaychequeList() {
                 display: "grid", gridTemplateColumns: GRID, alignItems: "center", columnGap: 6,
                 padding: "11px 12px", borderBottom: "0.5px solid #F3F4F6",
                 fontSize: 11, color: rowColor, opacity: rowOpacity,
-                background: isSelected ? "#F0FAFA" : "white",
+                background: isAdjustment ? "#FEF3C7" : (isSelected ? "#F0FAFA" : "white"),
                 cursor: "pointer",
               }}
-              onMouseOver={(e) => { if (!isSelected && !isVoided) e.currentTarget.style.background = "#FAFBFC"; }}
-              onMouseOut={(e) => { if (!isSelected) e.currentTarget.style.background = "white"; }}
+              onMouseOver={(e) => { if (!isSelected && !isVoided && !isAdjustment) e.currentTarget.style.background = "#FAFBFC"; }}
+              onMouseOut={(e) => { if (!isSelected) e.currentTarget.style.background = isAdjustment ? "#FEF3C7" : "white"; }}
             >
               <input type="checkbox" checked={isSelected} onClick={(e) => e.stopPropagation()} onChange={() => toggleOne(pc.id)} style={{ margin: 0, width: 13, height: 13, accentColor: BRAND }} />
 
@@ -456,7 +457,7 @@ export default function PaychequeList() {
                 )}
               </div>
 
-              <div style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: isVoided ? "line-through" : "none" }}>{employeeNameFromPaycheque(pc)}</div>
+              <div style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: isVoided ? "line-through" : "none" }}><span>{employeeNameFromPaycheque(pc)}</span>{isAdjustment && (<span style={{ fontSize: 9, fontWeight: 700, color: "#92400E", background: "#FDE68A", padding: "2px 6px", borderRadius: 4, letterSpacing: "0.3px", textTransform: "uppercase", marginLeft: 6 }}>Adjustment</span>)}</div>
 
               <div style={{ textAlign: "right", textDecoration: isVoided ? "line-through" : "none" }}>
                 {privacy ? <span style={{ fontFamily: "monospace", color: TEXT_TERTIARY, letterSpacing: 1 }}>{"\u2022\u2022\u2022\u2022"}</span> : formatCurrency(pc.total_pay || pc.gross_pay, pc.currency)}

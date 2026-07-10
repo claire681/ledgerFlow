@@ -1044,6 +1044,9 @@ async def list_paycheques(
             "currency": run.currency,
             "pay_run_id": str(run.id),
             "memo": stub.memo,
+            "is_adjustment": bool(stub.is_adjustment),
+            "adjustment_of_stub_id": str(stub.adjustment_of_stub_id) if stub.adjustment_of_stub_id else None,
+            "adjustment_reason": stub.adjustment_reason,
         })
 
     return paycheques
