@@ -97,6 +97,12 @@ function PromoBanner() {
   if (!show) return null;
   return (
     <div style={{ width:'100%', height:40, background:'#0F5959', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', flexShrink:0, zIndex:101 }}>
+      <style>{`
+        @media print {
+          [data-print="hide"] { display: none !important; }
+          body { background: white !important; }
+        }
+      `}</style>
       <div style={{ fontSize:13, color:'#fff', display:'flex', alignItems:'center', gap:6 }}>
         Meet Nova — Instant, smart answers inside Novala.
         <span
@@ -149,15 +155,17 @@ function AppLayout({ onLogout }) {
       fontFamily:"'Inter', -apple-system, sans-serif",
     }}>
       {/* Promo banner */}
-      <PromoBanner/>
+      <div data-print="hide"><PromoBanner/></div>
 
       {/* Main header */}
       {(
+          <div data-print="hide">
           <TopBar
         onLogout={onLogout}
         onMobileMenu={() => setMobileMenuOpen(o => !o)}
         isMobile={isMobile}
       />
+          </div>
         )}
 
     
@@ -165,6 +173,7 @@ function AppLayout({ onLogout }) {
       <div style={{ display:'flex', flex:1, overflow:'hidden', position:'relative' }}>
 
         {!(location.pathname.startsWith("/invoices/new") || location.pathname.match(/^\/invoices\/[^/]+\/(edit|send)$/)) && (
+            <div data-print="hide">
             <Sidebar
           onLogout={onLogout}
           mobileOpen={mobileMenuOpen}
@@ -173,6 +182,7 @@ function AppLayout({ onLogout }) {
           isTablet={isTablet}
           isDesktop={isDesktop}
         />
+            </div>
           )}
 
         {mobileMenuOpen && isMobile && (
