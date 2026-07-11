@@ -326,7 +326,7 @@ function FilingsTab({ navigate, onResourcesOpen, onPrint }) {
       <SectionHead label="COMING UP" count={3} />
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <FilingCard title="T4 summary" sub={t4PeriodStart + " to " + t4PeriodEnd} dueDate={t4DueDate} method="Manually file" />
-        <FilingCard title="T4 employer slips" sub="Employer copy of T4 slips" dueDate={t4DueDate} method="Manually file with XML" />
+        <FilingCard title="T4 employer slips" sub="Employer copy of T4 slips" dueDate={t4DueDate} method="Manually file with XML" onPreview={() => window.open("/payroll/taxes/t4-preview/employer", "_blank")} />
         <FilingCard title="T4 employee slips" sub="T4 slip for employee" dueDate={t4DueDate} method="Manually file" />
       </div>
 
@@ -702,7 +702,7 @@ function BreakdownPanel({ rows, total }) {
   );
 }
 
-function FilingCard({ title, sub, dueDate, method }) {
+function FilingCard({ title, sub, dueDate, method, onPreview }) {
   return (
     <div style={{
       background: TOKENS.card,
@@ -730,7 +730,9 @@ function FilingCard({ title, sub, dueDate, method }) {
         <div style={{ fontSize: 15, fontWeight: 700, color: TOKENS.ink }}>Due {dueDate}</div>
         <div style={{ fontSize: 12, color: TOKENS.dark, fontWeight: 600 }}>{method}</div>
       </div>
-      <button style={{
+      <button
+        onClick={onPreview}
+        style={{
         fontFamily: "inherit", fontWeight: 700, fontSize: 14,
         borderRadius: 10, padding: "10px 16px", cursor: "pointer",
         border: "1px solid " + TOKENS.lineStrong,
