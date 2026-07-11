@@ -46,8 +46,7 @@ const s = {
   crarow1: { display: "flex", gap: 5, alignItems: "flex-start" },
   flag: { flex: "0 0 auto", display: "inline-block", position: "relative", width: 32, height: 17, border: "0.5px solid #000" },
   flagBar: { position: "absolute", top: 0, bottom: 0, width: "25%", background: "#000" },
-  flagCentre: { position: "absolute", left: "25%", right: "25%", top: 0, bottom: 0, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" },
-  flagLeaf: { width: 12, height: 12, fill: "#000" },
+  flagCentre: { position: "absolute", left: "25%", right: "25%", top: 0, bottom: 0, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, lineHeight: 1, filter: "grayscale(1) brightness(0)" },
   craname: { display: "flex", gap: 9, fontSize: 8, lineHeight: 1.25 },
   cranameSpan: { width: 54, display: "inline-block" },
   crarow2: { display: "flex", gap: 8, alignItems: "center", marginTop: 5 },
@@ -109,9 +108,7 @@ function Flag() {
       <span style={{ ...s.flagBar, left: 0 }} />
       <span style={{ ...s.flagBar, right: 0 }} />
       <span style={s.flagCentre}>
-        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style={s.flagLeaf}>
-          <path d="M50,4 L54.5,25 L66,20 L60.5,36 L74,32 L68,48 L82,52 L68,58 L74,72 L60.5,68 L64.5,84 L54.5,76 L50,96 L45.5,76 L35.5,84 L39.5,68 L26,72 L32,58 L18,52 L32,48 L26,32 L39.5,36 L34,20 L45.5,25 Z" />
-        </svg>
+        {"\uD83C\uDF41"}
       </span>
     </span>
   );
