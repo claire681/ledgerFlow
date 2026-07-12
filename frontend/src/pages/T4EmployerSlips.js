@@ -1,30 +1,21 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 // T4EmployerSlips
 // Employer copy of the CRA T4 slip (T4 25), filing copy, two slips per page with
 // dashed cut lines, black-and-white CRA header flag, connected grid, header divider.
-// Inline styles only, except one scoped <style> block for print rules and the cut-line
-// marker (media queries and ::after cannot be expressed inline). No new dependencies.
+// Fetches real YTD data from GET /payroll/taxes/t4-preview?year=YYYY
+// Inline styles only (except one scoped <style> block for print rules and the cut-line
+// marker, which media queries and ::after cannot express inline). No new dependencies.
 
-const SAMPLE_EMPLOYER = {
-  name: "BrightCare Home Healthcare Services Inc.",
-  addr1: "8460-106A Avenue NW",
-  addr2: "Edmonton",
-  prov: "AB",
-  postal: "T5H 0S3",
-  account: "746043769RP0001",
+const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
+
+const authHeaders = () => {
+  const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+  return {
+    "Content-Type": "application/json",
+    Authorization: token ? "Bearer " + token : "",
+  };
 };
-
-const SAMPLE_EMPLOYEES = [
-  { last: "Dela Raiz", first: "Shirley", init: "", sin: "589-404-425", addr1: "9310 211 St NW", addr2: "Edmonton", province: "AB", postal: "T5T 4N8", b14: 736, b16: 31.48, b18: 11.99, b24: 736, b26: 736 },
-  { last: "McIsaac", first: "Cheryl", init: "D", sin: "636-342-396", addr1: "49313-RR173", addr2: "Ryley", province: "AB", postal: "T0B 4A0", b14: 3650, b16: 121.75, b18: 59.5, b24: 3650, b26: 3650 },
-  { last: "Peterson", first: "Michelle", init: "", sin: "643-230-733", addr1: "50070 Range Road 200", addr2: "Camrose County", province: "AB", postal: "T0B 2M1", b14: 288, b18: 4.7, b24: 288, b26: 288 },
-  { last: "Bisson", first: "Tiffany", init: "", sin: "654-279-652", addr1: "265-50418 Range Road 202", addr2: "Beaver County", province: "AB", postal: "T0B 4J2", b14: 360, b16: 12.74, b18: 5.87, b24: 360, b26: 360 },
-  { last: "Cavanagh", first: "Jennifer", init: "N", sin: "663-367-746", addr1: "5203 50ave Holden, Alberta", addr2: "Tofield", province: "AB", postal: "T0B 2C0", b14: 576, b16: 1.32, b18: 9.39, b24: 576, b26: 576 },
-  { last: "Cardinal", first: "Marilyn", init: "D", sin: "724-430-228", addr1: "Ryley", addr2: "Ryley", province: "AB", postal: "T0B 4A0", b14: 72, b18: 1.17, b24: 72, b26: 72 },
-  { last: "ST. PIERRE", first: "Jennifer", init: "", sin: "736-945-262", addr1: "Ryley", addr2: "Ryley", province: "AB", postal: "T0B 4A0", b14: 6552, b16: 294.41, b18: 106.82, b24: 6552, b26: 6552 },
-  { last: "Kemanzi", first: "Claire", init: "", sin: "973-066-707", addr1: "8460 106A Avenue NW", addr2: "Edmonton", province: "AB", postal: "T5H 0S4", b14: 2300, b16: 118.01, b18: 37.5, b22: 156.77, b24: 2300, b26: 2300 },
-];
 
 const mono = "'Courier New', monospace";
 
@@ -234,7 +225,7 @@ function Slip({ employer, employee, year }) {
         </div>
 
         <div style={s.midcol}>
-          <TextBox num="45" value="" label={<>Employer-offered dental benefits<br />Prestations dentaires offertes par l'employeur</>} />
+          <TextBox num="45" value={e.b45 || ""} label={<>Employer-offered dental benefits<br />Prestations dentaires offertes par l'employeur</>} />
           <TextBox num="10" value={e.province} label={<>Province of employment<br />Province d'emploi</>} />
           <TextBox num="29" value="" label={<>Employment code<br />Code d'emploi</>} />
         </div>
@@ -342,7 +333,39 @@ function ReversePage() {
   );
 }
 
-function T4EmployerSlips({ year = 2026, employer = SAMPLE_EMPLOYER, employees = SAMPLE_EMPLOYEES }) {
+function T4EmployerSlips() {
+  const currentYear = new Date().getFullYear();
+  const [year] = useState(currentYear);
+  const [employer, setEmployer] = useState(null);
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    fetch(`${API_URL}/api/v1/payroll/taxes/t4-preview?year=${year}`, {
+      headers: authHeaders(),
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        setEmployer(data.employer || null);
+        setEmployees(data.employees || []);
+        setLoading(false);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError("Could not load T4 data: " + e.message);
+        setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [year]);
+
   const pages = [];
   for (let i = 0; i < employees.length; i += 2) pages.push(employees.slice(i, i + 2));
 
@@ -360,14 +383,54 @@ function T4EmployerSlips({ year = 2026, employer = SAMPLE_EMPLOYER, employees = 
       `}</style>
 
       <div className="t4-noprint" style={{ background: "#fff", borderBottom: "1px solid #E3E7EC", padding: "12px 20px", display: "flex", gap: 10, alignItems: "center", position: "sticky", top: 0, zIndex: 5 }}>
-        <button onClick={() => window.print()} style={{ font: "inherit", fontWeight: 600, fontSize: 14, border: "none", borderRadius: 10, padding: "9px 18px", cursor: "pointer", background: "#15A08C", color: "#fff" }}>Print</button>
-        <span style={{ color: "#5F6B7A", fontSize: 13, marginLeft: "auto" }}>Employer copy · file with XML · two slips per page, cut along the dashed line</span>
+        <button
+          onClick={() => window.print()}
+          disabled={loading || employees.length === 0}
+          style={{
+            font: "inherit", fontWeight: 600, fontSize: 14,
+            border: "none", borderRadius: 10, padding: "9px 18px",
+            cursor: (loading || employees.length === 0) ? "not-allowed" : "pointer",
+            background: (loading || employees.length === 0) ? "#9ec8be" : "#15A08C",
+            color: "#fff",
+          }}
+        >
+          Print
+        </button>
+        <span style={{ color: "#5F6B7A", fontSize: 13, marginLeft: "auto" }}>
+          {loading ? "Loading T4 data..." :
+           error ? "Error loading T4 data" :
+           employees.length === 0 ? "No employee data for " + year :
+           `Employer copy · file with XML · two slips per page (${employees.length} employees)`}
+        </span>
       </div>
 
-      {pages.map((pair, pi) => (
+      {loading && (
+        <div style={{ ...s.page, textAlign: "center", padding: 60, fontSize: 14 }}>
+          Loading T4 data for {year}...
+        </div>
+      )}
+
+      {error && !loading && (
+        <div style={{ ...s.page, padding: 40 }}>
+          <div style={{
+            background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 8,
+            padding: "12px 16px", color: "#991B1B", fontSize: 14, fontWeight: 600,
+          }}>
+            {error}
+          </div>
+        </div>
+      )}
+
+      {!loading && !error && employees.length === 0 && (
+        <div style={{ ...s.page, textAlign: "center", padding: 60, fontSize: 14 }}>
+          No paycheques have been issued for {year} yet. Complete a payroll run before previewing T4 slips.
+        </div>
+      )}
+
+      {!loading && !error && employer && pages.map((pair, pi) => (
         <div key={pi} className="t4-page" style={s.page}>
           {pair.map((emp, idx) => (
-            <React.Fragment key={idx}>
+            <React.Fragment key={emp.id || idx}>
               <Slip employer={employer} employee={emp} year={year} />
               <CutLine />
             </React.Fragment>
@@ -375,9 +438,11 @@ function T4EmployerSlips({ year = 2026, employer = SAMPLE_EMPLOYER, employees = 
         </div>
       ))}
 
-      <div className="t4-page" style={s.page}>
-        <ReversePage />
-      </div>
+      {!loading && !error && employees.length > 0 && (
+        <div className="t4-page" style={s.page}>
+          <ReversePage />
+        </div>
+      )}
     </div>
   );
 }

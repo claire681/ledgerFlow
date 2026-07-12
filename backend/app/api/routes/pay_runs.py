@@ -2549,3 +2549,194 @@ async def void_pay_run(
     await db.refresh(run)
     return _run_to_response(run)
 
+
+# =============================================================
+# T4 preview formatters (SIN, province code, postal code)
+# =============================================================
+_T4_PROVINCE_MAP = {
+    "alberta": "AB", "british columbia": "BC", "manitoba": "MB",
+    "new brunswick": "NB", "newfoundland and labrador": "NL",
+    "newfoundland": "NL", "labrador": "NL",
+    "nova scotia": "NS", "northwest territories": "NT",
+    "nunavut": "NU", "ontario": "ON",
+    "prince edward island": "PE", "quebec": "QC", "qu\u00e9bec": "QC",
+    "saskatchewan": "SK", "yukon": "YT",
+}
+
+def _t4_fmt_province(v):
+    if not v:
+        return ""
+    v = v.strip()
+    if len(v) == 2:
+        return v.upper()
+    return _T4_PROVINCE_MAP.get(v.lower(), v)
+
+def _t4_fmt_sin(v):
+    if not v:
+        return ""
+    digits = "".join(c for c in str(v) if c.isdigit())
+    if len(digits) == 9:
+        return f"{digits[0:3]}-{digits[3:6]}-{digits[6:9]}"
+    return v.strip()
+
+def _t4_fmt_postal(v):
+    if not v:
+        return ""
+    v = v.strip().upper().replace(" ", "")
+    if len(v) == 6:
+        return f"{v[0:3]} {v[3:6]}"
+    return v
+
+
+@router.get("/taxes/t4-preview")
+async def get_t4_preview(
+    year: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    T4 employer slips preview data for the given tax year.
+
+    Aggregates all finalized, non-voided paycheques per employee where
+    pay_date falls within the tax year. Returns employer info plus one
+    row per employee containing CRA T4 box values (14, 16, 16A, 18, 22,
+    24, 26, 45, etc.).
+
+    Response shape matches the T4EmployerSlips React component's props:
+      { year, employer: {...}, employees: [{...}, ...] }
+
+    Money box values are floats or null. Null renders as an empty box on
+    the printed slip. Only employees with at least one non-voided pay
+    stub in the tax year are included.
+    """
+    from datetime import date
+    from app.models.models import CompanyProfile
+
+    if year < 2020 or year > 2030:
+        raise HTTPException(status_code=400, detail="year must be between 2020 and 2030")
+
+    period_start = date(year, 1, 1)
+    period_end = date(year, 12, 31)
+
+    # ============================================================
+    # 1) Company profile (employer info + Box 54 CRA account)
+    # ============================================================
+    comp_res = await db.execute(
+        select(CompanyProfile).where(CompanyProfile.user_id == current_user.id)
+    )
+    company = comp_res.scalar_one_or_none()
+
+    if not company:
+        raise HTTPException(status_code=404, detail="Company profile not set")
+
+    # Build CRA account: business_number + payroll_rp_account
+    # e.g. "746043769" + "RP0001" = "746043769RP0001"
+    bn = (company.business_number or "").strip()
+    rp = (company.payroll_rp_account or "").strip()
+    cra_account = bn + rp if bn and rp else (bn or rp or "")
+
+    employer = {
+        "name": company.company_name or "",
+        "addr1": (company.address_street or "").strip(),
+        "addr2": (company.address_city or "").strip(),
+        "prov": _t4_fmt_province(company.province_state or ""),
+        "postal": _t4_fmt_postal(company.address_postal_code or ""),
+        "account": cra_account,
+    }
+
+    # ============================================================
+    # 2) Aggregate paycheques per employee for the year
+    # ============================================================
+    # Group sums by employee_id
+    result = await db.execute(
+        select(
+            PayStub.employee_id.label("employee_id"),
+            func.coalesce(func.sum(PayStub.gross_pay), 0).label("gross"),
+            func.coalesce(func.sum(PayStub.federal_tax), 0).label("federal_tax"),
+            func.coalesce(func.sum(PayStub.provincial_or_state_tax), 0).label("provincial_tax"),
+            func.coalesce(func.sum(PayStub.social_security_employee), 0).label("cpp_employee"),
+            func.coalesce(func.sum(PayStub.social_security_2_employee), 0).label("cpp2_employee"),
+            func.coalesce(func.sum(PayStub.unemployment_employee), 0).label("ei_employee"),
+        )
+        .select_from(PayStub)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(
+            PayRun.owner_id == current_user.id,
+            PayRun.pay_date >= period_start,
+            PayRun.pay_date <= period_end,
+            PayStub.voided == False,
+            PayRun.status != "voided",
+        )
+        .group_by(PayStub.employee_id)
+    )
+    stub_agg = {row.employee_id: row for row in result.all()}
+
+    if not stub_agg:
+        return {"year": year, "employer": employer, "employees": []}
+
+    # ============================================================
+    # 3) Fetch employee records for those with paycheques
+    # ============================================================
+    employee_ids = list(stub_agg.keys())
+    emp_res = await db.execute(
+        select(Employee).where(Employee.id.in_(employee_ids))
+    )
+    employees = emp_res.scalars().all()
+
+    # ============================================================
+    # 4) Build the per-employee slip data
+    # ============================================================
+    def r2(v):
+        """Round to 2 decimals; return None for zero (blank on the slip)."""
+        v = float(v or 0)
+        return round(v, 2) if v > 0 else None
+
+    result_employees = []
+    for emp in employees:
+        agg = stub_agg.get(emp.id)
+        if not agg:
+            continue
+
+        gross = float(agg.gross or 0)
+        federal_tax = float(agg.federal_tax or 0)
+        provincial_tax = float(agg.provincial_tax or 0)
+        income_tax_deducted = federal_tax + provincial_tax
+
+        result_employees.append({
+            "id": str(emp.id),
+            "last": (emp.last_name or "").strip(),
+            "first": (emp.first_name or "").strip(),
+            "init": "",  # middle initial - not tracked separately
+            "sin": _t4_fmt_sin(emp.sin_or_ssn or ""),
+            "addr1": (emp.address_line1 or "").strip(),
+            "addr2": (emp.city or "").strip(),
+            "province": _t4_fmt_province(emp.province_or_state or ""),
+            "postal": _t4_fmt_postal(emp.postal_or_zip or ""),
+            # Money boxes (None renders as blank on the slip)
+            "b14": r2(gross),                        # Employment income
+            "b16": r2(agg.cpp_employee),             # CPP contributions
+            "b16A": r2(agg.cpp2_employee),           # Second CPP (CPP2)
+            "b17": None,                             # QPP (Quebec only)
+            "b17A": None,                            # Second QPP (Quebec only)
+            "b18": r2(agg.ei_employee),              # EI premiums
+            "b20": None,                             # RPP contributions - not tracked
+            "b22": r2(income_tax_deducted),          # Income tax deducted
+            "b24": r2(gross),                        # EI insurable earnings (proxy)
+            "b26": r2(gross),                        # CPP pensionable earnings (proxy)
+            "b44": None,                             # Union dues - not tracked
+            "b46": None,                             # Charitable donations - not tracked
+            "b50": None,                             # RPP registration - not tracked
+            "b52": None,                             # Pension adjustment - not tracked
+            "b55": None,                             # PPIP premiums (Quebec only)
+            "b56": None,                             # PPIP insurable (Quebec only)
+            "b45": (emp.dental_benefit_code or "1"), # Dental benefits code
+        })
+
+    # Sort alphabetically by last name for consistent order
+    result_employees.sort(key=lambda e: (e["last"].upper(), e["first"].upper()))
+
+    return {
+        "year": year,
+        "employer": employer,
+        "employees": result_employees,
+    }
