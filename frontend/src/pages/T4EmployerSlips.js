@@ -44,9 +44,8 @@ const s = {
   empAddr: { fontFamily: mono, fontSize: 12, lineHeight: 1.7 },
   cracell: { flex: "0 0 24%", textAlign: "left", fontSize: 8, lineHeight: 1.2, padding: "2px 4px 3px", borderBottom: "1px solid #000", borderRight: "1px solid #000" },
   crarow1: { display: "flex", gap: 5, alignItems: "flex-start" },
-  flag: { flex: "0 0 auto", display: "inline-block", position: "relative", width: 32, height: 17, border: "0.5px solid #000" },
-  flagBar: { position: "absolute", top: 0, bottom: 0, width: "25%", background: "#000" },
-  flagCentre: { position: "absolute", left: "25%", right: "25%", top: 0, bottom: 0, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, lineHeight: 1, filter: "grayscale(1) brightness(0)" },
+  flag: { flex: "0 0 auto", display: "inline-flex", width: 32, height: 17, border: "0.5px solid #999", background: "linear-gradient(to right,#000 25%,#fff 25%,#fff 75%,#000 75%)", alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  flagLeaf: { fontSize: 14, lineHeight: 1, filter: "grayscale(1) brightness(0)" },
   craname: { display: "flex", gap: 9, fontSize: 8, lineHeight: 1.25 },
   cranameSpan: { width: 54, display: "inline-block" },
   crarow2: { display: "flex", gap: 8, alignItems: "center", marginTop: 5 },
@@ -105,11 +104,7 @@ const s = {
 function Flag() {
   return (
     <span style={s.flag}>
-      <span style={{ ...s.flagBar, left: 0 }} />
-      <span style={{ ...s.flagBar, right: 0 }} />
-      <span style={s.flagCentre}>
-        {"\uD83C\uDF41"}
-      </span>
+      <span style={s.flagLeaf}>{"\uD83C\uDF41"}</span>
     </span>
   );
 }
