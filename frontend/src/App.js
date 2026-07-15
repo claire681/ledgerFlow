@@ -12,6 +12,7 @@ import PD7AWorksheet from "./pages/PD7AWorksheet";
 import AuditLog from "./pages/AuditLog";
 import PayrollTaxPrintView from "./pages/PayrollTaxPrintView";
 import T4EmployerSlips from "./pages/T4EmployerSlips";
+import T4Summary from "./pages/T4Summary";
 import PayRunDetail from "./pages/PayRunDetail";
 import PayStubDetail from "./pages/PayStubDetail";
 import EmployeesList from "./pages/EmployeesList";
@@ -201,6 +202,7 @@ function AppLayout({ onLogout }) {
         <Route path="/payroll/audit-log" element={<AuditLog />} />
         <Route path="/payroll/taxes/print" element={<PayrollTaxPrintView />} />
         <Route path="/payroll/taxes/t4-preview/employer" element={<T4EmployerSlips />} />
+        <Route path="/payroll/taxes/t4-preview/summary" element={<T4Summary />} />
         <Route path="/tools/audit-log" element={<AuditLog />} />
         <Route path="/payroll/employees" element={<EmployeesList />} />
           <Route path="/payroll/employees/add" element={<AddEmployee />} />
