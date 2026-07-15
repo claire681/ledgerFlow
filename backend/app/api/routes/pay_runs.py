@@ -2740,3 +2740,205 @@ async def get_t4_preview(
         "employer": employer,
         "employees": result_employees,
     }
+
+
+@router.get("/taxes/t4-sum-preview")
+async def get_t4_sum_preview(
+    year: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    T4 Summary (T4 SUM 25) preview data for the given tax year.
+
+    Aggregates YTD paycheque totals across ALL employees plus
+    remittances from archived PD7A forms, and computes the CRA
+    T4 Summary box values (14, 16, 16A, 27, 27A, 18, 19, 22,
+    80, 82, difference, 84, 86, 88).
+
+    Reconciliation performed server-side to guarantee:
+      Box 80 = 16 + 16A + 27 + 27A + 18 + 19 + 22
+      Difference = Box 80 - Box 82
+      Box 84 = -Difference when negative (overpayment)
+      Box 86 = Difference when positive (balance due)
+
+    Response shape matches the T4Summary React component's props.
+    """
+    from datetime import date
+    from app.models.models import CompanyProfile, ArchivedForm
+
+    if year < 2020 or year > 2030:
+        raise HTTPException(status_code=400, detail="year must be between 2020 and 2030")
+
+    period_start = date(year, 1, 1)
+    period_end = date(year, 12, 31)
+
+    # ============================================================
+    # 1) Company profile
+    # ============================================================
+    comp_res = await db.execute(
+        select(CompanyProfile).where(CompanyProfile.user_id == current_user.id)
+    )
+    company = comp_res.scalar_one_or_none()
+
+    if not company:
+        raise HTTPException(status_code=404, detail="Company profile not set")
+
+    bn = (company.business_number or "").strip()
+    rp = (company.payroll_rp_account or "").strip()
+    cra_account = bn + rp if bn and rp else (bn or rp or "")
+
+    employer = {
+        "name": company.company_name or "",
+        "addr1": (company.address_street or "").strip(),
+        "addr2": (company.address_city or "").strip(),
+        "prov": _t4_fmt_province(company.province_state or ""),
+        "postal": _t4_fmt_postal(company.address_postal_code or ""),
+        "account": cra_account,
+    }
+
+    # ============================================================
+    # 2) Aggregate paycheque totals across ALL employees for the year
+    # ============================================================
+    stubs_res = await db.execute(
+        select(
+            func.count(func.distinct(PayStub.employee_id)).label("slip_count"),
+            func.coalesce(func.sum(PayStub.gross_pay), 0).label("gross"),
+            func.coalesce(func.sum(PayStub.social_security_employee), 0).label("cpp_employee"),
+            func.coalesce(func.sum(PayStub.social_security_2_employee), 0).label("cpp2_employee"),
+            func.coalesce(func.sum(PayStub.social_security_employer), 0).label("cpp_employer"),
+            func.coalesce(func.sum(PayStub.unemployment_employee), 0).label("ei_employee"),
+            func.coalesce(func.sum(PayStub.unemployment_employer), 0).label("ei_employer"),
+            func.coalesce(func.sum(PayStub.federal_tax), 0).label("federal_tax"),
+            func.coalesce(func.sum(PayStub.provincial_or_state_tax), 0).label("provincial_tax"),
+        )
+        .select_from(PayStub)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(
+            PayRun.owner_id == current_user.id,
+            PayRun.pay_date >= period_start,
+            PayRun.pay_date <= period_end,
+            PayStub.voided == False,
+            PayRun.status != "voided",
+        )
+    )
+    totals = stubs_res.first()
+
+    slip_count = int(totals.slip_count or 0)
+
+    def _round2(v):
+        return round(float(v or 0), 2)
+
+    b14 = _round2(totals.gross)                # Employment income
+    b16 = _round2(totals.cpp_employee)         # Employees' CPP
+    b16A = _round2(totals.cpp2_employee)       # Employees' second CPP
+    b27 = _round2(totals.cpp_employer)         # Employer's CPP
+    b27A = 0.0                                 # Employer's second CPP (not tracked separately)
+    b18 = _round2(totals.ei_employee)          # Employees' EI premiums
+    b19 = _round2(totals.ei_employer)          # Employer's EI premiums
+    b22 = _round2(float(totals.federal_tax or 0) + float(totals.provincial_tax or 0))
+
+    # Box 80: total deductions reported = 16 + 16A + 27 + 27A + 18 + 19 + 22
+    b80 = round(b16 + b16A + b27 + b27A + b18 + b19 + b22, 2)
+
+    # ============================================================
+    # 3) Box 82: remittances - sum of archived PD7A current_payment
+    #    for the year
+    # ============================================================
+    remitt_res = await db.execute(
+        select(ArchivedForm).where(
+            ArchivedForm.user_id == current_user.id,
+            ArchivedForm.country == "CA",
+            ArchivedForm.form_type == "PD7A",
+            ArchivedForm.period_start >= period_start,
+            ArchivedForm.period_end <= period_end,
+        )
+    )
+    archived = remitt_res.scalars().all()
+
+    b82 = 0.0
+    for form in archived:
+        data = form.form_data or {}
+        payment = data.get("current_payment") or 0
+        try:
+            b82 += float(payment)
+        except (TypeError, ValueError):
+            pass
+    b82 = round(b82, 2)
+
+    # ============================================================
+    # 4) Difference, Box 84 (overpayment) or Box 86 (balance due)
+    # ============================================================
+    difference = round(b80 - b82, 2)
+    if difference > 0:
+        b84 = None
+        b86 = difference
+    elif difference < 0:
+        b84 = abs(difference)
+        b86 = None
+    else:
+        b84 = None
+        b86 = None
+
+    # Helper to convert 0 to None (blank cell on the form)
+    def _blank_if_zero(v):
+        return v if (v is not None and v > 0) else None
+
+    summary = {
+        "slips": slip_count,
+        "b14": _blank_if_zero(b14),
+        "b16": _blank_if_zero(b16),
+        "b16A": _blank_if_zero(b16A),
+        "b27": _blank_if_zero(b27),
+        "b27A": _blank_if_zero(b27A),
+        "b18": _blank_if_zero(b18),
+        "b19": _blank_if_zero(b19),
+        "b22": _blank_if_zero(b22),
+        "b20": None,   # RPP contributions - not tracked
+        "b52": None,   # Pension adjustment - not tracked
+        "b80": _blank_if_zero(b80),
+        "b82": _blank_if_zero(b82),
+        "difference": abs(difference) if difference != 0 else None,
+        "b84": b84,
+        "b86": b86,
+    }
+
+    # ============================================================
+    # 5) Contact: current user
+    # ============================================================
+    contact_name = ""
+    if hasattr(current_user, "full_name") and current_user.full_name:
+        contact_name = current_user.full_name
+    elif hasattr(current_user, "first_name") or hasattr(current_user, "last_name"):
+        first = getattr(current_user, "first_name", "") or ""
+        last = getattr(current_user, "last_name", "") or ""
+        contact_name = (first + " " + last).strip()
+    elif getattr(current_user, "email", None):
+        contact_name = current_user.email.split("@")[0]
+
+    # Parse phone from company profile
+    phone_raw = (company.phone or "").strip()
+    area_code = ""
+    phone_number = ""
+    digits_only = "".join(c for c in phone_raw if c.isdigit())
+    if len(digits_only) >= 10:
+        area_code = digits_only[0:3]
+        phone_number = digits_only[3:6] + "-" + digits_only[6:10]
+    elif len(digits_only) == 7:
+        phone_number = digits_only[0:3] + "-" + digits_only[3:7]
+    else:
+        phone_number = phone_raw
+
+    contact = {
+        "name": contact_name,
+        "areaCode": area_code,
+        "phone": phone_number,
+        "ext": "",
+    }
+
+    return {
+        "year": year,
+        "employer": employer,
+        "summary": summary,
+        "contact": contact,
+    }

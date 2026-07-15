@@ -1,34 +1,20 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 // T4Summary
 // CRA T4 Summary (T4 SUM 25). Page 1 is the form inside one outer box; page 2 is the
 // bilingual CRA instructions. Black-and-white CRA header flag, connected grid, the
 // do-not-use area with numbered boxes, the Difference branch to Overpayment / Balance due.
-// Inline styles only, except one scoped <style> block for the page and print rules
-// (media queries cannot be inline). No new dependencies.
-//
-// Data shape:
-// employer = { name, addr1, addr2, prov, postal, account }
-// summary  = { slips, b14, b16, b16A, b27, b27A, b18, b19, b22, b80, b82, difference, b84, b86 }
-// contact  = { name, areaCode, phone, ext }
+// Fetches real YTD data from GET /payroll/taxes/t4-sum-preview?year=YYYY
 
-const SAMPLE_EMPLOYER = {
-  name: "BrightCare Home Healthcare Services Inc.",
-  addr1: "8460-106A Avenue NW",
-  addr2: "Edmonton",
-  prov: "AB",
-  postal: "T5H 0S3",
-  account: "746043769RP0001",
+const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
+
+const authHeaders = () => {
+  const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+  return {
+    "Content-Type": "application/json",
+    Authorization: token ? "Bearer " + token : "",
+  };
 };
-
-const SAMPLE_SUMMARY = {
-  slips: 8,
-  b14: 15476, b16: 609.84, b16A: null, b27: 609.84, b27A: null,
-  b18: 252.30, b19: 353.25, b22: 156.77, b80: 1982, b82: 1275.10,
-  difference: 706.90, b84: null, b86: 706.90,
-};
-
-const SAMPLE_CONTACT = { name: "Claire Kemanzi", areaCode: "780", phone: "556-1123", ext: "" };
 
 const mono = "'Courier New', monospace";
 
@@ -389,7 +375,43 @@ function Page2() {
   );
 }
 
-function T4Summary({ year = 2026, employer = SAMPLE_EMPLOYER, summary = SAMPLE_SUMMARY, contact = SAMPLE_CONTACT }) {
+function T4Summary() {
+  const currentYear = new Date().getFullYear();
+  const [year] = useState(currentYear);
+  const [employer, setEmployer] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [contact, setContact] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    fetch(`${API_URL}/api/v1/payroll/taxes/t4-sum-preview?year=${year}`, {
+      headers: authHeaders(),
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        setEmployer(data.employer || null);
+        setSummary(data.summary || null);
+        setContact(data.contact || null);
+        setLoading(false);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError("Could not load T4 Summary data: " + e.message);
+        setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [year]);
+
+  const hasData = !loading && !error && employer && summary && contact;
+
   return (
     <div style={{ background: "#EDEFF2", fontFamily: "Arial, Helvetica, sans-serif", color: "#000" }}>
       <style>{`
@@ -403,12 +425,45 @@ function T4Summary({ year = 2026, employer = SAMPLE_EMPLOYER, summary = SAMPLE_S
       `}</style>
 
       <div className="t4-noprint" style={{ background: "#fff", borderBottom: "1px solid #E3E7EC", padding: "12px 20px", display: "flex", gap: 10, alignItems: "center", position: "sticky", top: 0, zIndex: 5 }}>
-        <button onClick={() => window.print()} style={{ font: "inherit", fontWeight: 600, fontSize: 14, border: "none", borderRadius: 10, padding: "9px 18px", cursor: "pointer", background: "#15A08C", color: "#fff" }}>Print</button>
-        <span style={{ color: "#5F6B7A", fontSize: 13, marginLeft: "auto" }}>T4 Summary preview, 2 pages. Print or Save as PDF from the browser dialog.</span>
+        <button
+          onClick={() => window.print()}
+          disabled={!hasData}
+          style={{
+            font: "inherit", fontWeight: 600, fontSize: 14,
+            border: "none", borderRadius: 10, padding: "9px 18px",
+            cursor: hasData ? "pointer" : "not-allowed",
+            background: hasData ? "#15A08C" : "#9ec8be",
+            color: "#fff",
+          }}
+        >
+          Print
+        </button>
+        <span style={{ color: "#5F6B7A", fontSize: 13, marginLeft: "auto" }}>
+          {loading ? "Loading T4 Summary data..." :
+           error ? "Error loading T4 Summary" :
+           `T4 Summary preview for ${year}, 2 pages. Print or Save as PDF.`}
+        </span>
       </div>
 
-      <Page1 year={year} employer={employer} summary={summary} contact={contact} />
-      <Page2 />
+      {loading && (
+        <div className="t4-page" style={{ textAlign: "center", padding: 60, fontSize: 14 }}>
+          Loading T4 Summary data for {year}...
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="t4-page" style={{ padding: 40 }}>
+          <div style={{
+            background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 8,
+            padding: "12px 16px", color: "#991B1B", fontSize: 14, fontWeight: 600,
+          }}>
+            {error}
+          </div>
+        </div>
+      )}
+
+      {hasData && <Page1 year={year} employer={employer} summary={summary} contact={contact} />}
+      {hasData && <Page2 />}
     </div>
   );
 }
