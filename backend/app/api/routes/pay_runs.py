@@ -2953,222 +2953,685 @@ T4_EMPLOYER_SLIPS_HTML_TEMPLATE = """<!DOCTYPE html>
 <meta charset="utf-8">
 <style>
   @page { size: letter; margin: 0.35in; }
-  body { font-family: Arial, Helvetica, sans-serif; color: #000; font-size: 9pt; margin: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #000; font-size: 8.5pt; margin: 0; padding: 0; }
+
   .page { page-break-after: always; }
   .page:last-child { page-break-after: auto; }
-  .slip { border: 1px solid #000; position: relative; padding: 6px 8px 7px 20px; margin-bottom: 22px; }
-  .cutline { border-top: 1px dashed #666; margin: 22px 0; }
 
+  /* Each slip is a bordered box on the page */
+  .slip {
+    border: 1px solid #000;
+    position: relative;
+    padding: 6px 8px 7px 22px;
+    margin-bottom: 22px;
+  }
+  .cutline {
+    border-top: 1px dashed #666;
+    margin: 18px 0;
+  }
+
+  /* Vertical Protected B strip on left of each slip */
   .vprot {
-    position: absolute; left: 0; top: 0; bottom: 0; width: 16px;
-    border-right: 1px solid #000; text-align: center; font-size: 7pt;
-    padding: 6px 2px; writing-mode: vertical-rl; transform: rotate(180deg);
+    position: absolute;
+    left: 0; top: 0; bottom: 0; width: 18px;
+    border-right: 1px solid #000;
+    text-align: center;
+    font-size: 6pt;
+    padding: 6px 2px;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
   }
-  .vprot .prot { display: block; margin-bottom: 40px; }
+  .vprot .prot-a { display: block; margin-bottom: 20px; font-weight: bold; }
+  .vprot .prot-b { display: block; }
 
-  .topband { display: table; width: 100%; border-collapse: collapse; margin-bottom: 0; }
-  .topband > div { display: table-cell; vertical-align: top; }
-  .empbox { border: 1px solid #000; padding: 4px 8px; width: 40%; }
-  .cracell {
-    border-bottom: 1px solid #000; border-right: 1px solid #000;
-    width: 24%; text-align: left; font-size: 8pt; line-height: 1.2;
+  /* HEADER (top band): 3 cells - employer / CRA / T4 title */
+  .topband {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  .topband > div {
+    display: table-cell;
+    vertical-align: top;
+  }
+  .cell-employer {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    width: 40%;
+    height: 62px;
+  }
+  .cell-cra {
+    border-bottom: 1px solid #000;
+    border-right: 1px solid #000;
+    width: 33%;
+    padding: 3px 5px;
+  }
+  .cell-t4title {
+    text-align: right;
     padding: 2px 4px 3px;
+    border-bottom: 1px solid #000;
   }
-  .t4title { text-align: right; padding: 2px 0 3px; border-bottom: 1px solid #000; }
 
-  .cap { font-size: 7pt; line-height: 1.15; margin-bottom: 4px; }
-  .empAddr { font-family: 'Courier New', monospace; font-size: 12pt; line-height: 1.7; }
+  .cap-label {
+    font-size: 6.5pt;
+    line-height: 1.15;
+    margin-bottom: 3px;
+  }
+  .emp-addr {
+    font-family: "Courier New", monospace;
+    font-size: 10pt;
+    line-height: 1.5;
+  }
 
-  .crarow1 { display: flex; gap: 5px; align-items: flex-start; }
+  /* CRA cell content */
+  .cra-row1 {
+    display: table;
+    width: 100%;
+    margin-bottom: 4px;
+  }
+  .cra-flag-cell {
+    display: table-cell;
+    width: 38px;
+    vertical-align: middle;
+  }
+  .cra-name-cell {
+    display: table-cell;
+    vertical-align: middle;
+    font-size: 7pt;
+    line-height: 1.2;
+    padding-left: 5px;
+  }
   .flag {
-    display: inline-block; width: 32px; height: 17px;
+    display: inline-block;
+    width: 32px;
+    height: 17px;
     background: linear-gradient(to right, #000 25%, #fff 25%, #fff 75%, #000 75%);
-    border: 0.5px solid #999; text-align: center; line-height: 17px; font-size: 14px;
-    flex: 0 0 auto;
+    border: 0.5px solid #999;
+    text-align: center;
+    line-height: 17px;
+    font-size: 13px;
+    color: #000;
   }
-  .craname { font-size: 8pt; line-height: 1.25; display: flex; gap: 9px; }
-  .craname span { width: 54px; display: inline-block; }
-  .crarow2 { display: flex; gap: 8px; align-items: center; margin-top: 5px; }
-  .yrlbl { font-size: 7pt; line-height: 1.1; }
-  .yrbox { border: 1px solid #000; display: inline-block; padding: 2px 12px; font-size: 13pt; font-family: 'Courier New', monospace; }
+  .cra-row2 {
+    display: table;
+    width: 100%;
+  }
+  .yrlbl {
+    display: table-cell;
+    font-size: 6.5pt;
+    line-height: 1.15;
+    vertical-align: middle;
+    padding-right: 8px;
+    width: 55%;
+  }
+  .yrbox {
+    display: table-cell;
+    vertical-align: middle;
+  }
+  .yrbox span {
+    display: inline-block;
+    border: 1px solid #000;
+    padding: 2px 10px;
+    font-size: 12pt;
+    font-family: "Courier New", monospace;
+  }
 
-  .t4 { font-size: 22pt; font-weight: bold; }
-  .st { font-size: 10pt; font-weight: bold; }
+  /* T4 title cell */
+  .t4-big { font-size: 22pt; font-weight: bold; line-height: 1; }
+  .t4-sub { font-size: 8.5pt; font-weight: bold; margin-top: 2px; }
+  .t4-sub-fr { font-size: 8pt; font-style: italic; }
 
-  .bodyrow { display: table; width: 100%; }
-  .leftcol { display: table-cell; width: 40%; vertical-align: top; }
-  .midcol { display: table-cell; width: 15%; vertical-align: top; }
-  .rightcol { display: table-cell; vertical-align: top; }
+  /* BODY: 3-column layout below the top band */
+  .bodyrow {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+    margin-top: 0;
+  }
+  .leftcol {
+    display: table-cell;
+    width: 40%;
+    vertical-align: top;
+  }
+  .midcol {
+    display: table-cell;
+    width: 15%;
+    vertical-align: top;
+  }
+  .rightcol {
+    display: table-cell;
+    width: 45%;
+    vertical-align: top;
+  }
 
-  .mbox { display: block; }
-  .mlabel { text-align: center; font-size: 6.5pt; line-height: 1.05; padding: 1px 2px 0; min-height: 13px; }
-  .mfield { border: 1px solid #000; border-top: none; display: table; width: 100%; min-height: 18px; }
-  .mnum { display: table-cell; border-right: 1px solid #000; font-weight: bold; font-size: 8pt; padding: 1px 3px; vertical-align: top; width: 20px; }
-  .mval { display: table-cell; text-align: right; font-family: 'Courier New', monospace; font-size: 11pt; padding: 1px 4px; vertical-align: middle; }
-  .mcents { display: table-cell; border-left: 1px solid #000; width: 22px; text-align: right; font-family: 'Courier New', monospace; font-size: 11pt; padding: 1px 3px; vertical-align: middle; }
-  .tval { display: table-cell; font-family: 'Courier New', monospace; font-size: 11pt; padding: 1px 6px; vertical-align: middle; }
-  .mrow { display: table; width: 100%; table-layout: fixed; }
-  .mrow > .mbox { display: table-cell; width: 50%; }
+  /* Box 54 (Employer account number) */
+  .box54 {
+    border: 1px solid #000;
+    border-top: none;
+    display: table;
+    width: 100%;
+    min-height: 28px;
+  }
+  .box54-num {
+    display: table-cell;
+    border-right: 1px solid #000;
+    font-weight: bold;
+    font-size: 9pt;
+    padding: 2px 5px;
+    vertical-align: top;
+    width: 22px;
+  }
+  .box54-body {
+    display: table-cell;
+    padding: 2px 6px;
+  }
+  .box54-lbl { font-size: 6.5pt; }
+  .box54-val {
+    font-family: "Courier New", monospace;
+    font-size: 12pt;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
 
-  .box54 { border: 1px solid #000; display: table; width: 100%; min-height: 28px; }
-  .box54n { display: table-cell; border-right: 1px solid #000; font-weight: bold; font-size: 8.5pt; padding: 2px 5px; vertical-align: top; width: 25px; }
-  .box54b { display: table-cell; padding: 2px 7px; }
-  .box54l { font-size: 6.5pt; }
-  .box54v { font-family: 'Courier New', monospace; font-size: 12pt; letter-spacing: 1px; margin-top: 2px; }
+  /* SIN + Exempt row */
+  .sin-exempt-row {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+  .sin-cell, .exempt-cell {
+    display: table-cell;
+    vertical-align: top;
+  }
+  .sin-cell { width: 55%; }
+  .exempt-cell { width: 45%; }
 
-  .lrow { display: table; width: 100%; }
-  .lrow > .mbox { display: table-cell; vertical-align: top; }
-  .lrow .mbox.exempt { width: 40%; }
+  .field-lbl {
+    text-align: center;
+    font-size: 6pt;
+    line-height: 1.1;
+    padding: 2px 2px 0;
+    min-height: 14px;
+  }
+  .field-box {
+    border: 1px solid #000;
+    border-top: none;
+    display: table;
+    width: 100%;
+    min-height: 20px;
+  }
+  .field-num {
+    display: table-cell;
+    border-right: 1px solid #000;
+    font-weight: bold;
+    font-size: 8pt;
+    padding: 1px 3px;
+    vertical-align: top;
+    width: 18px;
+  }
+  .field-val {
+    display: table-cell;
+    text-align: left;
+    font-family: "Courier New", monospace;
+    font-size: 10pt;
+    padding: 2px 4px;
+    vertical-align: middle;
+  }
 
-  .exf { border: 1px solid #000; display: table; width: 100%; min-height: 32px; }
-  .exfn { display: table-cell; border-right: 1px solid #000; font-weight: bold; font-size: 8.5pt; padding: 2px 3px; vertical-align: top; width: 20px; }
-  .excols { display: table-cell; text-align: center; font-size: 6pt; padding: 2px 0; }
-  .cbx { border: 1px solid #000; width: 14px; height: 11px; display: inline-block; margin: 2px 4px; vertical-align: middle; }
+  /* Exempt checkboxes */
+  .exempt-box {
+    border: 1px solid #000;
+    border-top: none;
+    display: table;
+    width: 100%;
+    min-height: 30px;
+  }
+  .exempt-num {
+    display: table-cell;
+    border-right: 1px solid #000;
+    font-weight: bold;
+    font-size: 9pt;
+    padding: 2px 3px;
+    vertical-align: top;
+    width: 18px;
+  }
+  .exempt-cols {
+    display: table-cell;
+    text-align: center;
+    font-size: 5.5pt;
+    padding: 3px 0;
+  }
+  .exempt-cols > span {
+    display: inline-block;
+    margin: 0 4px;
+    text-align: center;
+  }
+  .cbx {
+    border: 1px solid #000;
+    width: 12px;
+    height: 10px;
+    display: inline-block;
+    margin: 1px auto;
+    vertical-align: middle;
+  }
 
-  .empname { border: 1px solid #000; padding: 4px 7px; min-height: 80px; margin-top: 2px; }
-  .nhdr { font-size: 6.5pt; display: flex; justify-content: space-between; margin: 3px 0; }
-  .nameline { border: 1px solid #000; display: table; width: 100%; padding: 3px 6px; font-family: 'Courier New', monospace; font-size: 12pt; }
-  .nameline .ln { display: table-cell; }
-  .nameline .fn { display: table-cell; width: 34%; }
-  .nameline .inch { display: table-cell; width: 8%; text-align: right; }
-  .addr { font-family: 'Courier New', monospace; font-size: 11pt; margin-top: 10px; line-height: 1.8; }
+  /* Employee name and address block */
+  .empname {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    min-height: 82px;
+    margin-top: 3px;
+  }
+  .empname-hdr {
+    font-size: 6pt;
+    display: table;
+    width: 100%;
+    margin: 3px 0;
+  }
+  .empname-hdr > span {
+    display: table-cell;
+    padding-right: 4px;
+  }
+  .nameline {
+    border: 1px solid #000;
+    display: table;
+    width: 100%;
+    padding: 3px 5px;
+    font-family: "Courier New", monospace;
+    font-size: 10pt;
+    table-layout: fixed;
+  }
+  .nameline > span {
+    display: table-cell;
+  }
+  .nameline .ln { width: 58%; }
+  .nameline .fn { width: 34%; }
+  .nameline .inch { width: 8%; text-align: right; }
+  .empaddr {
+    font-family: "Courier New", monospace;
+    font-size: 10pt;
+    margin-top: 8px;
+    line-height: 1.6;
+  }
 
-  .other { border: 1px solid #000; margin-top: 6px; padding: 5px 8px; }
-  .orow { display: table; width: 100%; margin-top: 3px; }
-  .ocell { display: table-cell; padding-right: 6px; }
-  .obc { border: 1px solid #000; width: 34px; height: 18px; display: inline-block; vertical-align: middle; }
-  .oam { border: 1px solid #000; border-left: none; height: 18px; display: inline-block; width: 60%; vertical-align: middle; }
-  .och { font-size: 6.5pt; margin-bottom: 1px; }
+  /* Middle column boxes (45, 10, 29) */
+  .mid-box {
+    display: block;
+    margin-bottom: 0;
+  }
 
-  .sfoot { display: table; width: 100%; margin-top: 6px; font-size: 8.5pt; }
-  .sfoot > div { display: table-cell; }
-  .sfoot > div:last-child { text-align: right; font-family: 'Courier New', monospace; }
+  /* Right column money boxes - 8 rows of 2 boxes each */
+  .money-row {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+  .money-row > .money-box {
+    display: table-cell;
+    width: 50%;
+    vertical-align: top;
+  }
+  .money-box {
+    display: block;
+  }
+  .money-lbl {
+    text-align: center;
+    font-size: 5.5pt;
+    line-height: 1;
+    padding: 1px 2px 0;
+    min-height: 14px;
+  }
+  .money-field {
+    border: 1px solid #000;
+    border-top: none;
+    display: table;
+    width: 100%;
+    min-height: 18px;
+    table-layout: fixed;
+  }
+  .money-field > span {
+    display: table-cell;
+    vertical-align: middle;
+  }
+  .money-num {
+    border-right: 1px solid #000;
+    font-weight: bold;
+    font-size: 7.5pt;
+    padding: 1px 2px;
+    width: 22px;
+  }
+  .money-dollars {
+    text-align: right;
+    font-family: "Courier New", monospace;
+    font-size: 10pt;
+    padding: 1px 3px;
+  }
+  .money-cents {
+    border-left: 1px solid #000;
+    text-align: right;
+    font-family: "Courier New", monospace;
+    font-size: 10pt;
+    padding: 1px 3px;
+    width: 22px;
+  }
+
+  /* Other information section */
+  .other-section {
+    border: 1px solid #000;
+    margin-top: 6px;
+    padding: 4px 6px;
+  }
+  .other-title {
+    font-size: 6.5pt;
+    margin-bottom: 3px;
+  }
+  .other-row {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+    margin-top: 2px;
+  }
+  .other-cell {
+    display: table-cell;
+    padding-right: 5px;
+    vertical-align: top;
+    width: 33.33%;
+  }
+  .other-cell:last-child { padding-right: 0; }
+  .other-header {
+    font-size: 6pt;
+    display: table;
+    width: 100%;
+  }
+  .other-header > span {
+    display: table-cell;
+  }
+  .other-boxes {
+    display: table;
+    width: 100%;
+    margin-top: 1px;
+  }
+  .other-boxes > span {
+    display: table-cell;
+  }
+  .other-boxnum {
+    border: 1px solid #000;
+    width: 34px;
+    height: 18px;
+    background: #fff;
+  }
+  .other-boxval {
+    border: 1px solid #000;
+    border-left: none;
+    height: 18px;
+    background: #fff;
+  }
+
+  /* Slip footer */
+  .slip-foot {
+    display: table;
+    width: 100%;
+    margin-top: 4px;
+    font-size: 7.5pt;
+  }
+  .slip-foot > div {
+    display: table-cell;
+  }
+  .slip-foot > div:last-child {
+    text-align: right;
+    font-family: "Courier New", monospace;
+  }
+
+  /* Reverse page (box explanations) */
+  .reverse-page {
+    padding: 30px;
+    font-size: 9pt;
+    line-height: 1.4;
+  }
+  .reverse-title {
+    font-size: 12pt;
+    font-weight: bold;
+    margin-bottom: 12px;
+  }
+  .reverse-cols {
+    column-count: 2;
+    column-gap: 24px;
+  }
+  .reverse-box {
+    margin-bottom: 4px;
+    break-inside: avoid;
+  }
+  .reverse-note {
+    border: 1px solid #000;
+    padding: 8px 10px;
+    margin-top: 12px;
+    font-size: 8pt;
+  }
 </style>
 </head>
 <body>
 {% for pair in pages %}
 <div class="page">
-  {% for e in pair %}
-  <div class="slip">
-    <div class="vprot"><span class="prot">Protected B when completed / Protégé B une fois rempli</span><span>T4 (25)</span></div>
+{% for e in pair %}
+<div class="slip">
+  <div class="vprot">
+    <span class="prot-a">Protected B when completed / Protégé B une fois rempli</span>
+    <span class="prot-b">T4 (25)</span>
+  </div>
 
-    <div class="topband">
-      <div class="empbox">
-        <div class="cap">Employer's name &ndash; Nom de l'employeur</div>
-        <div class="empAddr">
-          {{ employer.name }}<br>{{ employer.addr1 }}<br>
-          {{ employer.addr2 }} &nbsp;&nbsp;&nbsp; {{ employer.prov }} &nbsp; {{ employer.postal }}
+  <!-- TOP BAND: Employer / CRA / T4 title -->
+  <div class="topband">
+    <div class="cell-employer">
+      <div class="cap-label">Employer's name &ndash; Nom de l'employeur</div>
+      <div class="emp-addr">
+        {{ employer.name }}<br>{{ employer.addr1 }}<br>
+        {{ employer.addr2 }} &nbsp;&nbsp;&nbsp; {{ employer.prov }} &nbsp; {{ employer.postal }}
+      </div>
+    </div>
+    <div class="cell-cra">
+      <div class="cra-row1">
+        <div class="cra-flag-cell"><span class="flag">🍁</span></div>
+        <div class="cra-name-cell">Canada Revenue Agency<br>Agence du revenu du Canada</div>
+      </div>
+      <div class="cra-row2">
+        <span class="yrlbl">Year<br>Année</span>
+        <span class="yrbox"><span>{{ year }}</span></span>
+      </div>
+    </div>
+    <div class="cell-t4title">
+      <div class="t4-big">T4</div>
+      <div class="t4-sub">Statement of Remuneration Paid</div>
+      <div class="t4-sub-fr">État de la rémunération payée</div>
+    </div>
+  </div>
+
+  <!-- BODY: Left 40% / Mid 15% / Right 45% -->
+  <div class="bodyrow">
+    <!-- LEFT COLUMN -->
+    <div class="leftcol">
+      <!-- Box 54 -->
+      <div class="box54">
+        <span class="box54-num">54</span>
+        <div class="box54-body">
+          <div class="box54-lbl">Employer's account number &ndash; Numéro de compte de l'employeur</div>
+          <div class="box54-val">{{ employer.account }}</div>
         </div>
       </div>
-      <div class="cracell">
-        <div class="crarow1">
-          <span class="flag">🍁</span>
-          <div class="craname"><span>Canada Revenue Agency</span><span>Agence du revenu du Canada</span></div>
+
+      <!-- SIN + Exempt -->
+      <div class="sin-exempt-row">
+        <div class="sin-cell">
+          <div class="field-lbl">Social insurance number<br>Numéro d'assurance sociale</div>
+          <div class="field-box">
+            <span class="field-num">12</span>
+            <span class="field-val">{{ e.sin }}</span>
+          </div>
         </div>
-        <div class="crarow2"><span class="yrlbl">Year<br>Année</span><span class="yrbox">{{ year }}</span></div>
+        <div class="exempt-cell">
+          <div class="field-lbl"><b>Exempt &ndash; Exemption</b></div>
+          <div class="exempt-box">
+            <span class="exempt-num">28</span>
+            <div class="exempt-cols">
+              <span>CPP<br>QPP<br><span class="cbx"></span></span>
+              <span>EI<br>AE<br><span class="cbx"></span></span>
+              <span>PPIP<br>RPAP<br><span class="cbx"></span></span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="t4title">
-        <div class="t4">T4</div>
-        <div class="st">Statement of Remuneration Paid</div>
-        <div style="font-size:10pt">État de la rémunération payée</div>
+
+      <!-- Employee name and address -->
+      <div class="empname">
+        <div class="cap-label">Employee's name and address &ndash; Nom et adresse de l'employé</div>
+        <div class="empname-hdr">
+          <span>Last name (capitals) / Nom de famille</span>
+          <span>First name / Prénom</span>
+          <span>Init.</span>
+        </div>
+        <div class="nameline">
+          <span class="ln">{{ e.last }}</span>
+          <span class="fn">{{ e.first }}</span>
+          <span class="inch">{{ e.init }}</span>
+        </div>
+        <div class="empaddr">
+          {{ e.addr1 }}<br>{{ e.addr2 }} &nbsp;&nbsp;&nbsp; {{ e.province }} &nbsp; {{ e.postal }}
+        </div>
       </div>
     </div>
 
-    <div class="bodyrow">
-      <div class="leftcol">
-        <div class="box54">
-          <span class="box54n">54</span>
-          <div class="box54b">
-            <div class="box54l">Employer's account number &ndash; Numéro de compte de l'employeur</div>
-            <div class="box54v">{{ employer.account }}</div>
-          </div>
-        </div>
-
-        <div class="lrow">
-          <div class="mbox">
-            <div class="mlabel">Social insurance number<br>Numéro d'assurance sociale</div>
-            <div class="mfield"><span class="mnum">12</span><span class="tval">{{ e.sin }}</span></div>
-          </div>
-          <div class="mbox exempt">
-            <div class="mlabel"><b>Exempt &ndash; Exemption</b></div>
-            <div class="exf">
-              <span class="exfn">28</span>
-              <div class="excols">CPP/QPP<span class="cbx"></span> EI<span class="cbx"></span> PPIP<span class="cbx"></span></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="empname">
-          <div class="cap">Employee's name and address &ndash; Nom et adresse de l'employé</div>
-          <div class="nhdr"><span>Last name</span><span>First name</span><span>Init</span></div>
-          <div class="nameline"><span class="ln">{{ e.last }}</span><span class="fn">{{ e.first }}</span><span class="inch">{{ e.init }}</span></div>
-          <div class="addr">{{ e.addr1 }}<br>{{ e.addr2 }} &nbsp;&nbsp; {{ e.province }} &nbsp; {{ e.postal }}</div>
+    <!-- MIDDLE COLUMN -->
+    <div class="midcol">
+      <div class="mid-box">
+        <div class="field-lbl">Dental benefits<br>Prestations dentaires</div>
+        <div class="field-box">
+          <span class="field-num">45</span>
+          <span class="field-val">{{ e.b45 or "" }}</span>
         </div>
       </div>
-
-      <div class="midcol">
-        <div class="mbox">
-          <div class="mlabel">Dental benefits<br>Prestations dentaires</div>
-          <div class="mfield"><span class="mnum">45</span><span class="tval">{{ e.b45 or '' }}</span></div>
-        </div>
-        <div class="mbox">
-          <div class="mlabel">Province of employment<br>Province d'emploi</div>
-          <div class="mfield"><span class="mnum">10</span><span class="tval">{{ e.province }}</span></div>
-        </div>
-        <div class="mbox">
-          <div class="mlabel">Employment code<br>Code d'emploi</div>
-          <div class="mfield"><span class="mnum">29</span><span class="tval"></span></div>
+      <div class="mid-box">
+        <div class="field-lbl">Province of employment<br>Province d'emploi</div>
+        <div class="field-box">
+          <span class="field-num">10</span>
+          <span class="field-val">{{ e.province }}</span>
         </div>
       </div>
+      <div class="mid-box">
+        <div class="field-lbl">Employment code<br>Code d'emploi</div>
+        <div class="field-box">
+          <span class="field-num">29</span>
+          <span class="field-val"></span>
+        </div>
+      </div>
+    </div>
 
-      <div class="rightcol">
-        {% set rows = [
-          [('14','Employment income – Revenus d\\'emploi', e.b14), ('22','Income tax deducted – Impôt retenu', e.b22)],
-          [('16','CPP contributions – RPC', e.b16), ('17','QPP contributions – RRQ', e.b17)],
-          [('16A','Second CPP – RPC2', e.b16A), ('17A','Second QPP – RRQ2', e.b17A)],
-          [('24','EI insurable earnings – Gains AE', e.b24), ('26','CPP/QPP pensionable – RPC/RRQ', e.b26)],
-          [('18','EI premiums – AE', e.b18), ('44','Union dues – Cotisations', e.b44)],
-          [('20','RPP – RPA', e.b20), ('46','Charitable donations – Dons', e.b46)],
-          [('52','Pension adjustment – PA', e.b52), ('50','RPP registration – N° RPA', e.b50)],
-          [('55','PPIP premiums – RPAP', e.b55), ('56','PPIP insurable – Gains RPAP', e.b56)]
-        ] %}
-        {% for row in rows %}
-        <div class="mrow">
-          {% for num, label, val in row %}
-          <div class="mbox">
-            <div class="mlabel">{{ label }}</div>
-            <div class="mfield">
-              <span class="mnum">{{ num }}</span>
-              {% if val is not none %}
-                {% set dollars = ('%.2f' % val).split('.')[0] %}
-                {% set cents = ('%.2f' % val).split('.')[1] %}
-                <span class="mval">{{ dollars }}</span><span class="mcents">{{ cents }}</span>
-              {% else %}
-                <span class="mval"></span><span class="mcents"></span>
-              {% endif %}
-            </div>
+    <!-- RIGHT COLUMN: 8 rows of 2 money boxes -->
+    <div class="rightcol">
+      {% set rows = [
+        [("14", "Employment income – Revenus d'emploi", e.b14), ("22", "Income tax deducted – Impôt retenu", e.b22)],
+        [("16", "CPP contributions – RPC", e.b16), ("17", "QPP contributions – RRQ", e.b17)],
+        [("16A", "Second CPP – RPC2", e.b16A), ("17A", "Second QPP – RRQ2", e.b17A)],
+        [("24", "EI insurable earnings – Gains AE", e.b24), ("26", "CPP/QPP pensionable – Gains RPC/RRQ", e.b26)],
+        [("18", "EI premiums – Cotisations AE", e.b18), ("44", "Union dues – Cotisations syndicales", e.b44)],
+        [("20", "RPP contributions – RPA", e.b20), ("46", "Charitable donations – Dons", e.b46)],
+        [("52", "Pension adjustment – Facteur d'équivalence", e.b52), ("50", "RPP registration number", e.b50)],
+        [("55", "PPIP premiums – Cotisations RPAP", e.b55), ("56", "PPIP insurable earnings – Gains RPAP", e.b56)]
+      ] %}
+      {% for row in rows %}
+      <div class="money-row">
+        {% for num, label, val in row %}
+        <div class="money-box">
+          <div class="money-lbl">{{ label }}</div>
+          <div class="money-field">
+            <span class="money-num">{{ num }}</span>
+            {% if val is not none %}
+              {% set dollars = ("%.2f" % val).split(".")[0] %}
+              {% set cents = ("%.2f" % val).split(".")[1] %}
+              <span class="money-dollars">{{ dollars }}</span>
+              <span class="money-cents">{{ cents }}</span>
+            {% else %}
+              <span class="money-dollars"></span>
+              <span class="money-cents"></span>
+            {% endif %}
           </div>
-          {% endfor %}
         </div>
         {% endfor %}
       </div>
+      {% endfor %}
     </div>
+  </div>
 
-    <div class="other">
-      <div style="font-size:7pt">Other information (see over) &ndash; Autres renseignements (voir au verso)</div>
-      <div class="orow">
-        <div class="ocell"><div class="och">Box &ndash; Case &nbsp;&nbsp; Amount &ndash; Montant</div><span class="obc"></span><span class="oam"></span></div>
-        <div class="ocell"><div class="och">Box &ndash; Case &nbsp;&nbsp; Amount &ndash; Montant</div><span class="obc"></span><span class="oam"></span></div>
-        <div class="ocell"><div class="och">Box &ndash; Case &nbsp;&nbsp; Amount &ndash; Montant</div><span class="obc"></span><span class="oam"></span></div>
+  <!-- Other information section -->
+  <div class="other-section">
+    <div class="other-title">Other information (see over) &ndash; Autres renseignements (voir au verso)</div>
+    <div class="other-row">
+      <div class="other-cell">
+        <div class="other-header"><span>Box &ndash; Case</span><span>Amount &ndash; Montant</span></div>
+        <div class="other-boxes"><span class="other-boxnum"></span><span class="other-boxval"></span></div>
+      </div>
+      <div class="other-cell">
+        <div class="other-header"><span>Box &ndash; Case</span><span>Amount &ndash; Montant</span></div>
+        <div class="other-boxes"><span class="other-boxnum"></span><span class="other-boxval"></span></div>
+      </div>
+      <div class="other-cell">
+        <div class="other-header"><span>Box &ndash; Case</span><span>Amount &ndash; Montant</span></div>
+        <div class="other-boxes"><span class="other-boxnum"></span><span class="other-boxval"></span></div>
       </div>
     </div>
-
-    <div class="sfoot"><div><b>T4 (25)</b></div><div>REV &nbsp; OSP</div></div>
+    <div class="other-row">
+      <div class="other-cell">
+        <div class="other-header"><span>Box &ndash; Case</span><span>Amount &ndash; Montant</span></div>
+        <div class="other-boxes"><span class="other-boxnum"></span><span class="other-boxval"></span></div>
+      </div>
+      <div class="other-cell">
+        <div class="other-header"><span>Box &ndash; Case</span><span>Amount &ndash; Montant</span></div>
+        <div class="other-boxes"><span class="other-boxnum"></span><span class="other-boxval"></span></div>
+      </div>
+      <div class="other-cell">
+        <div class="other-header"><span>Box &ndash; Case</span><span>Amount &ndash; Montant</span></div>
+        <div class="other-boxes"><span class="other-boxnum"></span><span class="other-boxval"></span></div>
+      </div>
+    </div>
   </div>
-  {% if not loop.last %}<div class="cutline"></div>{% endif %}
-  {% endfor %}
+
+  <div class="slip-foot">
+    <div><b>T4 (25)</b></div>
+    <div>REV &nbsp; OSP</div>
+  </div>
+</div>
+{% if not loop.last %}<div class="cutline"></div>{% endif %}
+{% endfor %}
 </div>
 {% endfor %}
+
+<!-- REVERSE PAGE: Box explanations bilingual -->
+<div class="reverse-page">
+  <div class="reverse-title">Report these amounts on your tax return. / Déclarez ces montants dans votre déclaration.</div>
+  <div class="reverse-cols">
+    <div class="reverse-box"><b>14</b> Employment income – Enter on line 10100. Revenus d'emploi – ligne 10100.</div>
+    <div class="reverse-box"><b>16</b> Employee's CPP contributions – see line 30800. Cotisations RPC.</div>
+    <div class="reverse-box"><b>16A</b> Employee's second CPP contributions (CPP2). Deuxièmes cotisations au RPC.</div>
+    <div class="reverse-box"><b>17</b> Employee's QPP contributions. Cotisations RRQ.</div>
+    <div class="reverse-box"><b>17A</b> Employee's second QPP contributions (QPP2). Deuxièmes cotisations au RRQ.</div>
+    <div class="reverse-box"><b>18</b> Employee's EI premiums – line 31200. Cotisations AE – ligne 31200.</div>
+    <div class="reverse-box"><b>20</b> RPP contributions – line 20700. Cotisations RPA.</div>
+    <div class="reverse-box"><b>22</b> Income tax deducted – line 43700. Impôt retenu – ligne 43700.</div>
+    <div class="reverse-box"><b>24</b> EI insurable earnings. Gains assurables d'AE.</div>
+    <div class="reverse-box"><b>26</b> CPP/QPP pensionable earnings. Gains ouvrant droit à pension.</div>
+    <div class="reverse-box"><b>44</b> Union dues – line 21200. Cotisations syndicales – ligne 21200.</div>
+    <div class="reverse-box"><b>45</b> Employer-offered dental benefits. Prestations dentaires.</div>
+    <div class="reverse-box"><b>46</b> Charitable donations. Dons de bienfaisance.</div>
+    <div class="reverse-box"><b>50</b> RPP or DPSP registration number. N° d'agrément RPA/RPDB.</div>
+    <div class="reverse-box"><b>52</b> Pension adjustment – line 20600. Facteur d'équivalence – ligne 20600.</div>
+    <div class="reverse-box"><b>54</b> Employer's account number. Numéro de compte de l'employeur.</div>
+    <div class="reverse-box"><b>55</b> PPIP premiums. Cotisations RPAP.</div>
+    <div class="reverse-box"><b>56</b> PPIP insurable earnings. Gains assurables RPAP.</div>
+  </div>
+  <div class="reverse-note">
+    <b>Do not report these amounts on your tax return.</b> For CRA use only. (Amounts in boxes 30, 32, 34, 36, 38, 40, 57, 58, 59, 60, 86 and 90 are already included in box 14.)<br>
+    <b>Ne déclarez pas ces montants.</b> À l'usage de l'ARC seulement.
+  </div>
+</div>
 </body>
 </html>
 """
