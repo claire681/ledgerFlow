@@ -398,7 +398,7 @@ function T4EmployerSlips() {
         <button
           onClick={async () => {
             const token = localStorage.getItem("access_token") || localStorage.getItem("token");
-            const res = await fetch(`${API_URL}/api/v1/payroll/taxes/t4-employer-slips.pdf?year=${year}`, {
+            const res = await fetch(`${API_URL}/api/v1/payroll/taxes/t4-employer-slips-v2.pdf?year=${year}`, {
               headers: { Authorization: "Bearer " + token },
             });
             if (!res.ok) { alert("Could not generate PDF"); return; }

@@ -3789,4 +3789,267 @@ async def get_t4_employer_slips_pdf(
         content=pdf_bytes,
         media_type="application/pdf",
         headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )# =============================================================
+# T4 employer slips PDF - Playwright edition
+# =============================================================
+# Uses Playwright + Chromium headless to render the approved
+# t4-slips-print.html template with real BrightCare data injected
+# via window.__T4DATA__.
+#
+# This replaces the WeasyPrint version so the PDF matches the
+# React preview exactly.
+# =============================================================
+
+import asyncio
+import os
+from pathlib import Path
+from typing import Optional
+
+
+# Module-level Playwright browser (lazy singleton)
+_pw_browser = None
+_pw_playwright = None
+_pw_lock = asyncio.Lock()
+_pw_semaphore = asyncio.Semaphore(int(os.getenv("T4_PDF_CONCURRENCY", "2")))
+
+
+async def _get_browser():
+    """Launch Chromium once and reuse it across requests."""
+    global _pw_browser, _pw_playwright
+    async with _pw_lock:
+        if _pw_browser is None:
+            from playwright.async_api import async_playwright
+            _pw_playwright = await async_playwright().start()
+            _pw_browser = await _pw_playwright.chromium.launch(
+                headless=True,
+                args=[
+                    "--disable-dev-shm-usage",  # critical on small servers
+                    "--no-sandbox",
+                    "--disable-gpu",
+                ],
+            )
+        return _pw_browser
+
+
+async def shutdown_pw_browser():
+    """Clean up Playwright on app shutdown."""
+    global _pw_browser, _pw_playwright
+    if _pw_browser is not None:
+        await _pw_browser.close()
+        _pw_browser = None
+    if _pw_playwright is not None:
+        await _pw_playwright.stop()
+        _pw_playwright = None
+
+
+def _money_pair(v):
+    """Format a money value as ['dollars', 'cents'] pair, or None if blank."""
+    if v is None:
+        return None
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    if f == 0:
+        return None
+    parts = ("%.2f" % f).split(".")
+    return [parts[0], parts[1]]
+
+
+async def _render_t4_slips_pdf(data: dict) -> bytes:
+    """
+    Render the T4 slips PDF using Playwright.
+
+    Loads the approved t4-slips-print.html template, injects data as
+    window.__T4DATA__ (using add_init_script so it's set BEFORE the
+    template's inline script runs), waits for slips to appear in the
+    DOM, then generates PDF at Letter size.
+    """
+    # Path to the HTML template
+    template_path = Path(__file__).resolve().parent.parent.parent / "templates" / "t4-slips-print.html"
+    if not template_path.exists():
+        raise HTTPException(
+            status_code=500,
+            detail=f"T4 template not found at {template_path}",
+        )
+
+    template_url = f"file://{template_path.absolute()}"
+
+    async with _pw_semaphore:
+        browser = await _get_browser()
+        context = await browser.new_context()
+        try:
+            page = await context.new_page()
+
+            # Inject data BEFORE the template's own script runs
+            import json
+            init_script = f"window.__T4DATA__ = {json.dumps(data)};"
+            await page.add_init_script(init_script)
+
+            # Load the template file
+            await page.goto(template_url, wait_until="domcontentloaded")
+
+            # Wait for at least one slip to appear (template builds the DOM)
+            await page.wait_for_selector(".slip", timeout=5000)
+
+            # Give the template's inline JS a moment to complete
+            await page.wait_for_timeout(200)
+
+            # Generate PDF
+            pdf_bytes = await page.pdf(
+                format="Letter",
+                print_background=True,
+                margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
+                prefer_css_page_size=True,
+            )
+            return pdf_bytes
+        finally:
+            await context.close()
+
+
+@router.get("/taxes/t4-employer-slips-v2.pdf")
+async def get_t4_employer_slips_pdf_v2(
+    year: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Generate T4 employer slips as a PDF using Playwright + Chromium
+    to render the approved HTML template with real data.
+
+    This produces a PDF that matches the React preview exactly since
+    both use the same layout definitions.
+    """
+    from datetime import date
+    from fastapi.responses import Response
+    from app.models.models import CompanyProfile
+
+    if year < 2020 or year > 2030:
+        raise HTTPException(status_code=400, detail="year must be between 2020 and 2030")
+
+    period_start = date(year, 1, 1)
+    period_end = date(year, 12, 31)
+
+    # ==========================================================
+    # 1) Company profile
+    # ==========================================================
+    comp_res = await db.execute(
+        select(CompanyProfile).where(CompanyProfile.user_id == current_user.id)
+    )
+    company = comp_res.scalar_one_or_none()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company profile not set")
+
+    bn = (company.business_number or "").strip()
+    rp = (company.payroll_rp_account or "").strip()
+    cra_account = bn + rp if bn and rp else (bn or rp or "")
+
+    employer = {
+        "name": company.company_name or "",
+        "addr1": (company.address_street or "").strip(),
+        "addr2": (company.address_city or "").strip(),
+        "prov": _t4_fmt_province(company.province_state or ""),
+        "postal": _t4_fmt_postal(company.address_postal_code or ""),
+        "account": cra_account,
+    }
+
+    # ==========================================================
+    # 2) Aggregate paycheque data per employee
+    # ==========================================================
+    result = await db.execute(
+        select(
+            PayStub.employee_id.label("employee_id"),
+            func.coalesce(func.sum(PayStub.gross_pay), 0).label("gross"),
+            func.coalesce(func.sum(PayStub.federal_tax), 0).label("federal_tax"),
+            func.coalesce(func.sum(PayStub.provincial_or_state_tax), 0).label("provincial_tax"),
+            func.coalesce(func.sum(PayStub.social_security_employee), 0).label("cpp_employee"),
+            func.coalesce(func.sum(PayStub.social_security_2_employee), 0).label("cpp2_employee"),
+            func.coalesce(func.sum(PayStub.unemployment_employee), 0).label("ei_employee"),
+        )
+        .select_from(PayStub)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(
+            PayRun.owner_id == current_user.id,
+            PayRun.pay_date >= period_start,
+            PayRun.pay_date <= period_end,
+            PayStub.voided == False,
+            PayRun.status != "voided",
+        )
+        .group_by(PayStub.employee_id)
+    )
+    stub_agg = {row.employee_id: row for row in result.all()}
+
+    if not stub_agg:
+        raise HTTPException(status_code=404, detail=f"No paycheques found for {year}")
+
+    # ==========================================================
+    # 3) Fetch employee records
+    # ==========================================================
+    employee_ids = list(stub_agg.keys())
+    emp_res = await db.execute(select(Employee).where(Employee.id.in_(employee_ids)))
+    employees = emp_res.scalars().all()
+
+    def r2(v):
+        v = float(v or 0)
+        return round(v, 2) if v > 0 else None
+
+    # ==========================================================
+    # 4) Build the data structure the template expects
+    # ==========================================================
+    employee_slips = []
+    for emp in employees:
+        agg = stub_agg.get(emp.id)
+        if not agg:
+            continue
+        gross = float(agg.gross or 0)
+        federal_tax = float(agg.federal_tax or 0)
+        provincial_tax = float(agg.provincial_tax or 0)
+        income_tax_deducted = federal_tax + provincial_tax
+
+        employee_slips.append({
+            "last": (emp.last_name or "").strip(),
+            "first": (emp.first_name or "").strip(),
+            "init": "",
+            "sin": _t4_fmt_sin(emp.sin_or_ssn or ""),
+            "addr1": (emp.address_line1 or "").strip(),
+            "addr2": (emp.city or "").strip(),
+            "province": _t4_fmt_province(emp.province_or_state or ""),
+            "postal": _t4_fmt_postal(emp.postal_or_zip or ""),
+            "b14": _money_pair(r2(gross)),
+            "b16": _money_pair(r2(agg.cpp_employee)),
+            "b16A": _money_pair(r2(agg.cpp2_employee)),
+            "b17": None,
+            "b17A": None,
+            "b18": _money_pair(r2(agg.ei_employee)),
+            "b20": None,
+            "b22": _money_pair(r2(income_tax_deducted)),
+            "b24": _money_pair(r2(gross)),
+            "b26": _money_pair(r2(gross)),
+            "b44": None,
+            "b46": None,
+            "b50": None,
+            "b52": None,
+            "b55": None,
+            "b56": None,
+            "b45": (emp.dental_benefit_code or "1"),
+        })
+
+    employee_slips.sort(key=lambda e: (e["last"].upper(), e["first"].upper()))
+
+    data = {
+        "year": year,
+        "employer": employer,
+        "employees": employee_slips,
+    }
+
+    # ==========================================================
+    # 5) Render PDF via Playwright
+    # ==========================================================
+    pdf_bytes = await _render_t4_slips_pdf(data)
+
+    filename = f"T4-Employer-Slips-{year}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
     )

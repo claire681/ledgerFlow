@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>T4 Slips Print</title>
+<style>
+  @page { size: Letter; margin: 0.35in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: Arial, Helvetica, sans-serif; color: #000; font-size: 9pt; background: #fff; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+  .slip { border: 1px solid #000; position: relative; padding: 6px 8px 7px 22px; margin-bottom: 22px; }
+  .cutline { border-top: 1px dashed #666; margin: 18px 0; }
+  .vprot { position: absolute; left: 0; top: 0; bottom: 0; width: 18px; border-right: 1px solid #000; text-align: center; font-size: 6pt; padding: 6px 2px; writing-mode: vertical-rl; transform: rotate(180deg); }
+  .vprot .prot-a { display: block; margin-bottom: 20px; font-weight: bold; }
+  .vprot .prot-b { display: block; }
+  .topband { display: table; width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .topband > div { display: table-cell; vertical-align: top; }
+  .cell-employer { border: 1px solid #000; padding: 4px 6px; width: 40%; height: 62px; }
+  .cell-cra { border-bottom: 1px solid #000; border-right: 1px solid #000; width: 33%; padding: 3px 5px; }
+  .cell-t4title { text-align: right; padding: 2px 4px 3px; border-bottom: 1px solid #000; }
+  .cap-label { font-size: 6.5pt; line-height: 1.15; margin-bottom: 3px; }
+  .emp-addr { font-family: "Courier New", monospace; font-size: 10pt; line-height: 1.5; }
+  .cra-row1 { display: table; width: 100%; margin-bottom: 4px; }
+  .cra-flag-cell { display: table-cell; width: 38px; vertical-align: middle; }
+  .cra-name-cell { display: table-cell; vertical-align: middle; font-size: 7pt; line-height: 1.2; padding-left: 5px; }
+  .flag { display: inline-block; width: 32px; height: 17px; background: linear-gradient(to right, #000 25%, #fff 25%, #fff 75%, #000 75%); border: 0.5px solid #999; text-align: center; line-height: 17px; font-size: 13px; color: #000; }
+  .cra-row2 { display: table; width: 100%; }
+  .yrlbl { display: table-cell; font-size: 6.5pt; line-height: 1.15; vertical-align: middle; padding-right: 8px; width: 55%; }
+  .yrbox { display: table-cell; vertical-align: middle; }
+  .yrbox span { display: inline-block; border: 1px solid #000; padding: 2px 10px; font-size: 12pt; font-family: "Courier New", monospace; }
+  .t4-big { font-size: 22pt; font-weight: bold; line-height: 1; }
+  .t4-sub { font-size: 8.5pt; font-weight: bold; margin-top: 2px; }
+  .t4-sub-fr { font-size: 8pt; font-style: italic; }
+  .bodyrow { display: table; width: 100%; table-layout: fixed; margin-top: 0; }
+  .leftcol { display: table-cell; width: 40%; vertical-align: top; }
+  .midcol { display: table-cell; width: 15%; vertical-align: top; }
+  .rightcol { display: table-cell; width: 45%; vertical-align: top; }
+  .box54 { border: 1px solid #000; border-top: none; display: table; width: 100%; min-height: 28px; }
+  .box54-num { display: table-cell; border-right: 1px solid #000; font-weight: bold; font-size: 9pt; padding: 2px 5px; vertical-align: top; width: 22px; }
+  .box54-body { display: table-cell; padding: 2px 6px; }
+  .box54-lbl { font-size: 6.5pt; }
+  .box54-val { font-family: "Courier New", monospace; font-size: 12pt; letter-spacing: 1px; margin-top: 2px; }
+  .sin-exempt-row { display: table; width: 100%; table-layout: fixed; }
+  .sin-cell, .exempt-cell { display: table-cell; vertical-align: top; }
+  .sin-cell { width: 55%; }
+  .exempt-cell { width: 45%; }
+  .field-lbl { text-align: center; font-size: 6pt; line-height: 1.1; padding: 2px 2px 0; min-height: 14px; }
+  .field-box { border: 1px solid #000; border-top: none; display: table; width: 100%; min-height: 20px; }
+  .field-num { display: table-cell; border-right: 1px solid #000; font-weight: bold; font-size: 8pt; padding: 1px 3px; vertical-align: top; width: 18px; }
+  .field-val { display: table-cell; text-align: left; font-family: "Courier New", monospace; font-size: 10pt; padding: 2px 4px; vertical-align: middle; }
+  .exempt-box { border: 1px solid #000; border-top: none; display: table; width: 100%; min-height: 30px; }
+  .exempt-num { display: table-cell; border-right: 1px solid #000; font-weight: bold; font-size: 9pt; padding: 2px 3px; vertical-align: top; width: 18px; }
+  .exempt-cols { display: table-cell; text-align: center; font-size: 5.5pt; padding: 3px 0; }
+  .exempt-cols > span { display: inline-block; margin: 0 4px; text-align: center; }
+  .cbx { border: 1px solid #000; width: 12px; height: 10px; display: inline-block; margin: 1px auto; vertical-align: middle; }
+  .empname { border: 1px solid #000; padding: 4px 6px; min-height: 82px; margin-top: 3px; }
+  .empname-hdr { font-size: 6pt; display: table; width: 100%; margin: 3px 0; }
+  .empname-hdr > span { display: table-cell; padding-right: 4px; }
+  .nameline { border: 1px solid #000; display: table; width: 100%; padding: 3px 5px; font-family: "Courier New", monospace; font-size: 10pt; table-layout: fixed; }
+  .nameline > span { display: table-cell; }
+  .nameline .ln { width: 58%; }
+  .nameline .fn { width: 34%; }
+  .nameline .inch { width: 8%; text-align: right; }
+  .empaddr { font-family: "Courier New", monospace; font-size: 10pt; margin-top: 8px; line-height: 1.6; }
+  .mid-box { display: block; margin-bottom: 0; }
+  .money-row { display: table; width: 100%; table-layout: fixed; }
+  .money-row > .money-box { display: table-cell; width: 50%; vertical-align: top; }
+  .money-box { display: block; }
+  .money-lbl { text-align: center; font-size: 5.5pt; line-height: 1; padding: 1px 2px 0; min-height: 14px; }
+  .money-field { border: 1px solid #000; border-top: none; display: table; width: 100%; min-height: 18px; table-layout: fixed; }
+  .money-field > span { display: table-cell; vertical-align: middle; }
+  .money-num { border-right: 1px solid #000; font-weight: bold; font-size: 7.5pt; padding: 1px 2px; width: 22px; }
+  .money-dollars { text-align: right; font-family: "Courier New", monospace; font-size: 10pt; padding: 1px 3px; }
+  .money-cents { border-left: 1px solid #000; text-align: right; font-family: "Courier New", monospace; font-size: 10pt; padding: 1px 3px; width: 22px; }
+  .other-section { border: 1px solid #000; margin-top: 6px; padding: 4px 6px; }
+  .other-title { font-size: 6.5pt; margin-bottom: 3px; }
+  .other-row { display: table; width: 100%; table-layout: fixed; margin-top: 2px; }
+  .other-cell { display: table-cell; padding-right: 5px; vertical-align: top; width: 33.33%; }
+  .other-cell:last-child { padding-right: 0; }
+  .other-header { font-size: 6pt; display: table; width: 100%; }
+  .other-header > span { display: table-cell; }
+  .other-boxes { display: table; width: 100%; margin-top: 1px; }
+  .other-boxes > span { display: table-cell; }
+  .other-boxnum { border: 1px solid #000; width: 34px; height: 18px; background: #fff; }
+  .other-boxval { border: 1px solid #000; border-left: none; height: 18px; background: #fff; }
+  .slip-foot { display: table; width: 100%; margin-top: 4px; font-size: 7.5pt; }
+  .slip-foot > div { display: table-cell; }
+  .slip-foot > div:last-child { text-align: right; font-family: "Courier New", monospace; }
+  .reverse-page { padding: 30px; font-size: 9pt; line-height: 1.4; page-break-before: always; }
+  .reverse-title { font-size: 12pt; font-weight: bold; margin-bottom: 12px; }
+  .reverse-cols { column-count: 2; column-gap: 24px; }
+  .reverse-box { margin-bottom: 4px; break-inside: avoid; }
+  .reverse-note { border: 1px solid #000; padding: 8px 10px; margin-top: 12px; font-size: 8pt; }
+</style>
+</head>
+<body>
+<div id="slips-root"></div>
+<script>
+(function() {
+  var data = window.__T4DATA__ || { year: 2026, employer: {}, employees: [] };
+  var employer = data.employer || {};
+  var employees = data.employees || [];
+  var year = data.year || new Date().getFullYear();
+  var root = document.getElementById("slips-root");
+  function esc(s) { if (s == null) return ""; return String(s).replace(/[&<>"']/g, function(c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function moneyField(num, label, val) {
+    var dollars = "", cents = "";
+    if (val && Array.isArray(val)) { dollars = val[0] || ""; cents = val[1] || ""; }
+    return '<div class="money-box"><div class="money-lbl">' + esc(label) + '</div><div class="money-field"><span class="money-num">' + esc(num) + '</span><span class="money-dollars">' + esc(dollars) + '</span><span class="money-cents">' + esc(cents) + '</span></div></div>';
+  }
+  var moneyRows = [
+    [["14","Employment income - Revenus d'emploi","b14"], ["22","Income tax deducted - Impot retenu","b22"]],
+    [["16","CPP contributions - RPC","b16"], ["17","QPP contributions - RRQ","b17"]],
+    [["16A","Second CPP - RPC2","b16A"], ["17A","Second QPP - RRQ2","b17A"]],
+    [["24","EI insurable earnings - Gains AE","b24"], ["26","CPP/QPP pensionable - Gains RPC/RRQ","b26"]],
+    [["18","EI premiums - Cotisations AE","b18"], ["44","Union dues - Cotisations syndicales","b44"]],
+    [["20","RPP contributions - RPA","b20"], ["46","Charitable donations - Dons","b46"]],
+    [["52","Pension adjustment - Facteur d equivalence","b52"], ["50","RPP registration number","b50"]],
+    [["55","PPIP premiums - Cotisations RPAP","b55"], ["56","PPIP insurable earnings - Gains RPAP","b56"]]
+  ];
+  function renderSlip(e) {
+    var moneyRowsHtml = moneyRows.map(function(row) { return '<div class="money-row">' + moneyField(row[0][0], row[0][1], e[row[0][2]]) + moneyField(row[1][0], row[1][1], e[row[1][2]]) + '</div>'; }).join("");
+    var otherCells = '<div class="other-cell"><div class="other-header"><span>Box - Case</span><span>Amount - Montant</span></div><div class="other-boxes"><span class="other-boxnum"></span><span class="other-boxval"></span></div></div>';
+    return '<div class="slip"><div class="vprot"><span class="prot-a">Protected B when completed / Protege B une fois rempli</span><span class="prot-b">T4 (25)</span></div><div class="topband"><div class="cell-employer"><div class="cap-label">Employer name - Nom de l employeur</div><div class="emp-addr">' + esc(employer.name) + '<br>' + esc(employer.addr1) + '<br>' + esc(employer.addr2) + ' &nbsp;&nbsp;&nbsp; ' + esc(employer.prov) + ' &nbsp; ' + esc(employer.postal) + '</div></div><div class="cell-cra"><div class="cra-row1"><div class="cra-flag-cell"><span class="flag">' + "\uD83C\uDF41" + '</span></div><div class="cra-name-cell">Canada Revenue Agency<br>Agence du revenu du Canada</div></div><div class="cra-row2"><span class="yrlbl">Year<br>Annee</span><span class="yrbox"><span>' + esc(year) + '</span></span></div></div><div class="cell-t4title"><div class="t4-big">T4</div><div class="t4-sub">Statement of Remuneration Paid</div><div class="t4-sub-fr">Etat de la remuneration payee</div></div></div><div class="bodyrow"><div class="leftcol"><div class="box54"><span class="box54-num">54</span><div class="box54-body"><div class="box54-lbl">Employer account number - Numero de compte de l employeur</div><div class="box54-val">' + esc(employer.account) + '</div></div></div><div class="sin-exempt-row"><div class="sin-cell"><div class="field-lbl">Social insurance number<br>Numero d assurance sociale</div><div class="field-box"><span class="field-num">12</span><span class="field-val">' + esc(e.sin) + '</span></div></div><div class="exempt-cell"><div class="field-lbl"><b>Exempt - Exemption</b></div><div class="exempt-box"><span class="exempt-num">28</span><div class="exempt-cols"><span>CPP<br>QPP<br><span class="cbx"></span></span><span>EI<br>AE<br><span class="cbx"></span></span><span>PPIP<br>RPAP<br><span class="cbx"></span></span></div></div></div></div><div class="empname"><div class="cap-label">Employee name and address - Nom et adresse de l employe</div><div class="empname-hdr"><span>Last name (capitals) / Nom de famille</span><span>First name / Prenom</span><span>Init.</span></div><div class="nameline"><span class="ln">' + esc(e.last) + '</span><span class="fn">' + esc(e.first) + '</span><span class="inch">' + esc(e.init) + '</span></div><div class="empaddr">' + esc(e.addr1) + '<br>' + esc(e.addr2) + ' &nbsp;&nbsp;&nbsp; ' + esc(e.province) + ' &nbsp; ' + esc(e.postal) + '</div></div></div><div class="midcol"><div class="mid-box"><div class="field-lbl">Dental benefits<br>Prestations dentaires</div><div class="field-box"><span class="field-num">45</span><span class="field-val">' + esc(e.b45 || "") + '</span></div></div><div class="mid-box"><div class="field-lbl">Province of employment<br>Province d emploi</div><div class="field-box"><span class="field-num">10</span><span class="field-val">' + esc(e.province) + '</span></div></div><div class="mid-box"><div class="field-lbl">Employment code<br>Code d emploi</div><div class="field-box"><span class="field-num">29</span><span class="field-val"></span></div></div></div><div class="rightcol">' + moneyRowsHtml + '</div></div><div class="other-section"><div class="other-title">Other information (see over) - Autres renseignements (voir au verso)</div><div class="other-row">' + otherCells + otherCells + otherCells + '</div><div class="other-row">' + otherCells + otherCells + otherCells + '</div></div><div class="slip-foot"><div><b>T4 (25)</b></div><div>REV &nbsp; OSP</div></div></div>';
+  }
+  var html = "";
+  for (var i = 0; i < employees.length; i += 2) {
+    var pair = employees.slice(i, i + 2);
+    html += '<div class="page">' + renderSlip(pair[0]);
+    if (pair[1]) { html += '<div class="cutline"></div>' + renderSlip(pair[1]); }
+    html += '</div>';
+  }
+  html += '<div class="reverse-page"><div class="reverse-title">Report these amounts on your tax return. / Declarez ces montants dans votre declaration.</div><div class="reverse-cols">';
+  var boxes = [["14","Employment income - Enter on line 10100. Revenus d emploi - ligne 10100."],["16","Employee CPP contributions - see line 30800. Cotisations RPC."],["16A","Employee second CPP contributions (CPP2). Deuxiemes cotisations au RPC."],["17","Employee QPP contributions. Cotisations RRQ."],["17A","Employee second QPP contributions (QPP2). Deuxiemes cotisations au RRQ."],["18","Employee EI premiums - line 31200. Cotisations AE - ligne 31200."],["20","RPP contributions - line 20700. Cotisations RPA."],["22","Income tax deducted - line 43700. Impot retenu - ligne 43700."],["24","EI insurable earnings. Gains assurables d AE."],["26","CPP/QPP pensionable earnings. Gains ouvrant droit a pension."],["44","Union dues - line 21200. Cotisations syndicales - ligne 21200."],["45","Employer-offered dental benefits. Prestations dentaires."],["46","Charitable donations. Dons de bienfaisance."],["50","RPP or DPSP registration number. N d agrement RPA/RPDB."],["52","Pension adjustment - line 20600. Facteur d equivalence - ligne 20600."],["54","Employer account number. Numero de compte de l employeur."],["55","PPIP premiums. Cotisations RPAP."],["56","PPIP insurable earnings. Gains assurables RPAP."]];
+  boxes.forEach(function(b) { html += '<div class="reverse-box"><b>' + b[0] + '</b> ' + b[1] + '</div>'; });
+  html += '</div><div class="reverse-note"><b>Do not report these amounts on your tax return.</b> For CRA use only. (Amounts in boxes 30, 32, 34, 36, 38, 40, 57, 58, 59, 60, 86 and 90 are already included in box 14.)<br><b>Ne declarez pas ces montants.</b> A l usage de l ARC seulement.</div></div>';
+  root.innerHTML = html;
+})();
+</script>
+</body>
+</html>
