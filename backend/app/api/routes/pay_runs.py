@@ -2941,4 +2941,389 @@ async def get_t4_sum_preview(
         "employer": employer,
         "summary": summary,
         "contact": contact,
+    }# ============================================================
+# T4 employer slips PDF endpoint
+# Returns a printable PDF version of the T4 slips, with real
+# BrightCare data, using WeasyPrint to render HTML+CSS to PDF.
+# ============================================================
+
+T4_EMPLOYER_SLIPS_HTML_TEMPLATE = """<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: letter; margin: 0.35in; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #000; font-size: 9pt; margin: 0; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+  .slip { border: 1px solid #000; position: relative; padding: 6px 8px 7px 20px; margin-bottom: 22px; }
+  .cutline { border-top: 1px dashed #666; margin: 22px 0; }
+
+  .vprot {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 16px;
+    border-right: 1px solid #000; text-align: center; font-size: 7pt;
+    padding: 6px 2px; writing-mode: vertical-rl; transform: rotate(180deg);
+  }
+  .vprot .prot { display: block; margin-bottom: 40px; }
+
+  .topband { display: table; width: 100%; border-collapse: collapse; margin-bottom: 0; }
+  .topband > div { display: table-cell; vertical-align: top; }
+  .empbox { border: 1px solid #000; padding: 4px 8px; width: 40%; }
+  .cracell {
+    border-bottom: 1px solid #000; border-right: 1px solid #000;
+    width: 24%; text-align: left; font-size: 8pt; line-height: 1.2;
+    padding: 2px 4px 3px;
+  }
+  .t4title { text-align: right; padding: 2px 0 3px; border-bottom: 1px solid #000; }
+
+  .cap { font-size: 7pt; line-height: 1.15; margin-bottom: 4px; }
+  .empAddr { font-family: 'Courier New', monospace; font-size: 12pt; line-height: 1.7; }
+
+  .crarow1 { display: flex; gap: 5px; align-items: flex-start; }
+  .flag {
+    display: inline-block; width: 32px; height: 17px;
+    background: linear-gradient(to right, #000 25%, #fff 25%, #fff 75%, #000 75%);
+    border: 0.5px solid #999; text-align: center; line-height: 17px; font-size: 14px;
+    flex: 0 0 auto;
+  }
+  .craname { font-size: 8pt; line-height: 1.25; display: flex; gap: 9px; }
+  .craname span { width: 54px; display: inline-block; }
+  .crarow2 { display: flex; gap: 8px; align-items: center; margin-top: 5px; }
+  .yrlbl { font-size: 7pt; line-height: 1.1; }
+  .yrbox { border: 1px solid #000; display: inline-block; padding: 2px 12px; font-size: 13pt; font-family: 'Courier New', monospace; }
+
+  .t4 { font-size: 22pt; font-weight: bold; }
+  .st { font-size: 10pt; font-weight: bold; }
+
+  .bodyrow { display: table; width: 100%; }
+  .leftcol { display: table-cell; width: 40%; vertical-align: top; }
+  .midcol { display: table-cell; width: 15%; vertical-align: top; }
+  .rightcol { display: table-cell; vertical-align: top; }
+
+  .mbox { display: block; }
+  .mlabel { text-align: center; font-size: 6.5pt; line-height: 1.05; padding: 1px 2px 0; min-height: 13px; }
+  .mfield { border: 1px solid #000; border-top: none; display: table; width: 100%; min-height: 18px; }
+  .mnum { display: table-cell; border-right: 1px solid #000; font-weight: bold; font-size: 8pt; padding: 1px 3px; vertical-align: top; width: 20px; }
+  .mval { display: table-cell; text-align: right; font-family: 'Courier New', monospace; font-size: 11pt; padding: 1px 4px; vertical-align: middle; }
+  .mcents { display: table-cell; border-left: 1px solid #000; width: 22px; text-align: right; font-family: 'Courier New', monospace; font-size: 11pt; padding: 1px 3px; vertical-align: middle; }
+  .tval { display: table-cell; font-family: 'Courier New', monospace; font-size: 11pt; padding: 1px 6px; vertical-align: middle; }
+  .mrow { display: table; width: 100%; table-layout: fixed; }
+  .mrow > .mbox { display: table-cell; width: 50%; }
+
+  .box54 { border: 1px solid #000; display: table; width: 100%; min-height: 28px; }
+  .box54n { display: table-cell; border-right: 1px solid #000; font-weight: bold; font-size: 8.5pt; padding: 2px 5px; vertical-align: top; width: 25px; }
+  .box54b { display: table-cell; padding: 2px 7px; }
+  .box54l { font-size: 6.5pt; }
+  .box54v { font-family: 'Courier New', monospace; font-size: 12pt; letter-spacing: 1px; margin-top: 2px; }
+
+  .lrow { display: table; width: 100%; }
+  .lrow > .mbox { display: table-cell; vertical-align: top; }
+  .lrow .mbox.exempt { width: 40%; }
+
+  .exf { border: 1px solid #000; display: table; width: 100%; min-height: 32px; }
+  .exfn { display: table-cell; border-right: 1px solid #000; font-weight: bold; font-size: 8.5pt; padding: 2px 3px; vertical-align: top; width: 20px; }
+  .excols { display: table-cell; text-align: center; font-size: 6pt; padding: 2px 0; }
+  .cbx { border: 1px solid #000; width: 14px; height: 11px; display: inline-block; margin: 2px 4px; vertical-align: middle; }
+
+  .empname { border: 1px solid #000; padding: 4px 7px; min-height: 80px; margin-top: 2px; }
+  .nhdr { font-size: 6.5pt; display: flex; justify-content: space-between; margin: 3px 0; }
+  .nameline { border: 1px solid #000; display: table; width: 100%; padding: 3px 6px; font-family: 'Courier New', monospace; font-size: 12pt; }
+  .nameline .ln { display: table-cell; }
+  .nameline .fn { display: table-cell; width: 34%; }
+  .nameline .inch { display: table-cell; width: 8%; text-align: right; }
+  .addr { font-family: 'Courier New', monospace; font-size: 11pt; margin-top: 10px; line-height: 1.8; }
+
+  .other { border: 1px solid #000; margin-top: 6px; padding: 5px 8px; }
+  .orow { display: table; width: 100%; margin-top: 3px; }
+  .ocell { display: table-cell; padding-right: 6px; }
+  .obc { border: 1px solid #000; width: 34px; height: 18px; display: inline-block; vertical-align: middle; }
+  .oam { border: 1px solid #000; border-left: none; height: 18px; display: inline-block; width: 60%; vertical-align: middle; }
+  .och { font-size: 6.5pt; margin-bottom: 1px; }
+
+  .sfoot { display: table; width: 100%; margin-top: 6px; font-size: 8.5pt; }
+  .sfoot > div { display: table-cell; }
+  .sfoot > div:last-child { text-align: right; font-family: 'Courier New', monospace; }
+</style>
+</head>
+<body>
+{% for pair in pages %}
+<div class="page">
+  {% for e in pair %}
+  <div class="slip">
+    <div class="vprot"><span class="prot">Protected B when completed / Protégé B une fois rempli</span><span>T4 (25)</span></div>
+
+    <div class="topband">
+      <div class="empbox">
+        <div class="cap">Employer's name &ndash; Nom de l'employeur</div>
+        <div class="empAddr">
+          {{ employer.name }}<br>{{ employer.addr1 }}<br>
+          {{ employer.addr2 }} &nbsp;&nbsp;&nbsp; {{ employer.prov }} &nbsp; {{ employer.postal }}
+        </div>
+      </div>
+      <div class="cracell">
+        <div class="crarow1">
+          <span class="flag">🍁</span>
+          <div class="craname"><span>Canada Revenue Agency</span><span>Agence du revenu du Canada</span></div>
+        </div>
+        <div class="crarow2"><span class="yrlbl">Year<br>Année</span><span class="yrbox">{{ year }}</span></div>
+      </div>
+      <div class="t4title">
+        <div class="t4">T4</div>
+        <div class="st">Statement of Remuneration Paid</div>
+        <div style="font-size:10pt">État de la rémunération payée</div>
+      </div>
+    </div>
+
+    <div class="bodyrow">
+      <div class="leftcol">
+        <div class="box54">
+          <span class="box54n">54</span>
+          <div class="box54b">
+            <div class="box54l">Employer's account number &ndash; Numéro de compte de l'employeur</div>
+            <div class="box54v">{{ employer.account }}</div>
+          </div>
+        </div>
+
+        <div class="lrow">
+          <div class="mbox">
+            <div class="mlabel">Social insurance number<br>Numéro d'assurance sociale</div>
+            <div class="mfield"><span class="mnum">12</span><span class="tval">{{ e.sin }}</span></div>
+          </div>
+          <div class="mbox exempt">
+            <div class="mlabel"><b>Exempt &ndash; Exemption</b></div>
+            <div class="exf">
+              <span class="exfn">28</span>
+              <div class="excols">CPP/QPP<span class="cbx"></span> EI<span class="cbx"></span> PPIP<span class="cbx"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="empname">
+          <div class="cap">Employee's name and address &ndash; Nom et adresse de l'employé</div>
+          <div class="nhdr"><span>Last name</span><span>First name</span><span>Init</span></div>
+          <div class="nameline"><span class="ln">{{ e.last }}</span><span class="fn">{{ e.first }}</span><span class="inch">{{ e.init }}</span></div>
+          <div class="addr">{{ e.addr1 }}<br>{{ e.addr2 }} &nbsp;&nbsp; {{ e.province }} &nbsp; {{ e.postal }}</div>
+        </div>
+      </div>
+
+      <div class="midcol">
+        <div class="mbox">
+          <div class="mlabel">Dental benefits<br>Prestations dentaires</div>
+          <div class="mfield"><span class="mnum">45</span><span class="tval">{{ e.b45 or '' }}</span></div>
+        </div>
+        <div class="mbox">
+          <div class="mlabel">Province of employment<br>Province d'emploi</div>
+          <div class="mfield"><span class="mnum">10</span><span class="tval">{{ e.province }}</span></div>
+        </div>
+        <div class="mbox">
+          <div class="mlabel">Employment code<br>Code d'emploi</div>
+          <div class="mfield"><span class="mnum">29</span><span class="tval"></span></div>
+        </div>
+      </div>
+
+      <div class="rightcol">
+        {% set rows = [
+          [('14','Employment income – Revenus d\\'emploi', e.b14), ('22','Income tax deducted – Impôt retenu', e.b22)],
+          [('16','CPP contributions – RPC', e.b16), ('17','QPP contributions – RRQ', e.b17)],
+          [('16A','Second CPP – RPC2', e.b16A), ('17A','Second QPP – RRQ2', e.b17A)],
+          [('24','EI insurable earnings – Gains AE', e.b24), ('26','CPP/QPP pensionable – RPC/RRQ', e.b26)],
+          [('18','EI premiums – AE', e.b18), ('44','Union dues – Cotisations', e.b44)],
+          [('20','RPP – RPA', e.b20), ('46','Charitable donations – Dons', e.b46)],
+          [('52','Pension adjustment – PA', e.b52), ('50','RPP registration – N° RPA', e.b50)],
+          [('55','PPIP premiums – RPAP', e.b55), ('56','PPIP insurable – Gains RPAP', e.b56)]
+        ] %}
+        {% for row in rows %}
+        <div class="mrow">
+          {% for num, label, val in row %}
+          <div class="mbox">
+            <div class="mlabel">{{ label }}</div>
+            <div class="mfield">
+              <span class="mnum">{{ num }}</span>
+              {% if val is not none %}
+                {% set dollars = ('%.2f' % val).split('.')[0] %}
+                {% set cents = ('%.2f' % val).split('.')[1] %}
+                <span class="mval">{{ dollars }}</span><span class="mcents">{{ cents }}</span>
+              {% else %}
+                <span class="mval"></span><span class="mcents"></span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="other">
+      <div style="font-size:7pt">Other information (see over) &ndash; Autres renseignements (voir au verso)</div>
+      <div class="orow">
+        <div class="ocell"><div class="och">Box &ndash; Case &nbsp;&nbsp; Amount &ndash; Montant</div><span class="obc"></span><span class="oam"></span></div>
+        <div class="ocell"><div class="och">Box &ndash; Case &nbsp;&nbsp; Amount &ndash; Montant</div><span class="obc"></span><span class="oam"></span></div>
+        <div class="ocell"><div class="och">Box &ndash; Case &nbsp;&nbsp; Amount &ndash; Montant</div><span class="obc"></span><span class="oam"></span></div>
+      </div>
+    </div>
+
+    <div class="sfoot"><div><b>T4 (25)</b></div><div>REV &nbsp; OSP</div></div>
+  </div>
+  {% if not loop.last %}<div class="cutline"></div>{% endif %}
+  {% endfor %}
+</div>
+{% endfor %}
+</body>
+</html>
+"""
+
+
+@router.get("/taxes/t4-employer-slips.pdf")
+async def get_t4_employer_slips_pdf(
+    year: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Generate T4 employer slips as a downloadable PDF.
+
+    Uses the same data aggregation as GET /taxes/t4-preview, renders it
+    through a Jinja2 HTML template, and converts to PDF via WeasyPrint.
+
+    Returns application/pdf inline so browsers display it in a new tab
+    with their native PDF viewer (which has proper Print + Download).
+    """
+    from datetime import date
+    from fastapi.responses import Response
+    from jinja2 import Template
+    from weasyprint import HTML
+    from app.models.models import CompanyProfile
+
+    if year < 2020 or year > 2030:
+        raise HTTPException(status_code=400, detail="year must be between 2020 and 2030")
+
+    period_start = date(year, 1, 1)
+    period_end = date(year, 12, 31)
+
+    # ==========================================================
+    # 1) Company profile
+    # ==========================================================
+    comp_res = await db.execute(
+        select(CompanyProfile).where(CompanyProfile.user_id == current_user.id)
+    )
+    company = comp_res.scalar_one_or_none()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company profile not set")
+
+    bn = (company.business_number or "").strip()
+    rp = (company.payroll_rp_account or "").strip()
+    cra_account = bn + rp if bn and rp else (bn or rp or "")
+
+    employer = {
+        "name": company.company_name or "",
+        "addr1": (company.address_street or "").strip(),
+        "addr2": (company.address_city or "").strip(),
+        "prov": _t4_fmt_province(company.province_state or ""),
+        "postal": _t4_fmt_postal(company.address_postal_code or ""),
+        "account": cra_account,
     }
+
+    # ==========================================================
+    # 2) Aggregate paycheque data per employee
+    # ==========================================================
+    result = await db.execute(
+        select(
+            PayStub.employee_id.label("employee_id"),
+            func.coalesce(func.sum(PayStub.gross_pay), 0).label("gross"),
+            func.coalesce(func.sum(PayStub.federal_tax), 0).label("federal_tax"),
+            func.coalesce(func.sum(PayStub.provincial_or_state_tax), 0).label("provincial_tax"),
+            func.coalesce(func.sum(PayStub.social_security_employee), 0).label("cpp_employee"),
+            func.coalesce(func.sum(PayStub.social_security_2_employee), 0).label("cpp2_employee"),
+            func.coalesce(func.sum(PayStub.unemployment_employee), 0).label("ei_employee"),
+        )
+        .select_from(PayStub)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(
+            PayRun.owner_id == current_user.id,
+            PayRun.pay_date >= period_start,
+            PayRun.pay_date <= period_end,
+            PayStub.voided == False,
+            PayRun.status != "voided",
+        )
+        .group_by(PayStub.employee_id)
+    )
+    stub_agg = {row.employee_id: row for row in result.all()}
+
+    if not stub_agg:
+        raise HTTPException(status_code=404, detail=f"No paycheques found for {year}")
+
+    # ==========================================================
+    # 3) Fetch employee records and build per-employee slip data
+    # ==========================================================
+    employee_ids = list(stub_agg.keys())
+    emp_res = await db.execute(select(Employee).where(Employee.id.in_(employee_ids)))
+    employees = emp_res.scalars().all()
+
+    def r2(v):
+        v = float(v or 0)
+        return round(v, 2) if v > 0 else None
+
+    employee_slips = []
+    for emp in employees:
+        agg = stub_agg.get(emp.id)
+        if not agg:
+            continue
+        gross = float(agg.gross or 0)
+        federal_tax = float(agg.federal_tax or 0)
+        provincial_tax = float(agg.provincial_tax or 0)
+        income_tax_deducted = federal_tax + provincial_tax
+
+        employee_slips.append({
+            "last": (emp.last_name or "").strip(),
+            "first": (emp.first_name or "").strip(),
+            "init": "",
+            "sin": _t4_fmt_sin(emp.sin_or_ssn or ""),
+            "addr1": (emp.address_line1 or "").strip(),
+            "addr2": (emp.city or "").strip(),
+            "province": _t4_fmt_province(emp.province_or_state or ""),
+            "postal": _t4_fmt_postal(emp.postal_or_zip or ""),
+            "b14": r2(gross),
+            "b16": r2(agg.cpp_employee),
+            "b16A": r2(agg.cpp2_employee),
+            "b17": None,
+            "b17A": None,
+            "b18": r2(agg.ei_employee),
+            "b20": None,
+            "b22": r2(income_tax_deducted),
+            "b24": r2(gross),
+            "b26": r2(gross),
+            "b44": None,
+            "b46": None,
+            "b50": None,
+            "b52": None,
+            "b55": None,
+            "b56": None,
+            "b45": (emp.dental_benefit_code or "1"),
+        })
+
+    employee_slips.sort(key=lambda e: (e["last"].upper(), e["first"].upper()))
+
+    # Group into pairs (2 slips per page)
+    pages = []
+    for i in range(0, len(employee_slips), 2):
+        pages.append(employee_slips[i:i+2])
+
+    # ==========================================================
+    # 4) Render HTML and generate PDF
+    # ==========================================================
+    template = Template(T4_EMPLOYER_SLIPS_HTML_TEMPLATE)
+    html_content = template.render(
+        year=year,
+        employer=employer,
+        pages=pages,
+    )
+
+    pdf_bytes = HTML(string=html_content).write_pdf()
+
+    filename = f"T4-Employer-Slips-{year}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )
