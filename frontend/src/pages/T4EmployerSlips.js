@@ -396,7 +396,15 @@ function T4EmployerSlips() {
           {"\u2190"} Back
         </button>
         <button
-          onClick={() => window.print()}
+          onClick={async () => {
+            const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+            const res = await fetch(`${API_URL}/api/v1/payroll/taxes/t4-employer-slips.pdf?year=${year}`, {
+              headers: { Authorization: "Bearer " + token },
+            });
+            if (!res.ok) { alert("Could not generate PDF"); return; }
+            const blob = await res.blob();
+            window.open(URL.createObjectURL(blob), "_blank");
+          }}
           disabled={loading || employees.length === 0}
           style={{
             font: "inherit", fontWeight: 600, fontSize: 14,
