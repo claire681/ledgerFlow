@@ -416,7 +416,7 @@ function T4EmployeeSlips({ year = 2026, employer = SAMPLE_EMPLOYER, employees = 
         @media print {
           @page { size: letter; margin: 0; }
           .t4-noprint { display: none !important; }
-          .t4-page { box-shadow:none !important; margin:0 !important; width: auto !important; max-width: none !important; min-height: 0 !important; height: auto !important; padding:0.35in; page-break-after: always !important; break-after: page !important; }
+          .t4-page { box-shadow: none !important; margin: 0 !important; width: auto !important; max-width: none !important; min-height: 0 !important; height: auto !important; padding: 0.35in !important; page-break-after: always !important; break-after: page !important; }
           .t4-page:last-child { page-break-after: auto; }
         }
         .t4-cutline { border-top:1px dashed #666; margin:20px 0; position:relative; }
