@@ -373,37 +373,10 @@ function T4EmployerSlips() {
     <div style={{ background: "#EDEFF2", fontFamily: "Arial, Helvetica, sans-serif", color: "#000" }}>
       <style>{`
         @media print {
-          @page { size: letter; margin: 0.35in; }
-
-          html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
-
+          @page { size: letter; margin: 0; }
           .t4-noprint { display: none !important; }
-
-          /* The grey outer wrapper on the T4 pages must NOT constrain height */
-          body > div, body > div > div { background: #fff !important; }
-
-          /* Each .t4-page prints as its own sheet */
-          .t4-page {
-            background: #fff !important;
-            box-shadow: none !important;
-            border: none !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            width: auto !important;
-            max-width: 100% !important;
-            min-height: 0 !important;
-            height: auto !important;
-            page-break-inside: avoid !important;
-            page-break-after: always !important;
-            break-after: page !important;
-          }
-          .t4-page:last-child {
-            page-break-after: auto !important;
-            break-after: auto !important;
-          }
-
-          /* Hide the cut-line scissors marker during print */
-          .t4-cutline:after { display: none !important; }
+          .t4-page { box-shadow: none !important; margin: 0 !important; width: auto !important; max-width: none !important; min-height: 0 !important; height: auto !important; padding: 0.35in !important; page-break-after: always !important; break-after: page !important; }
+          .t4-page:last-child { page-break-after: auto; }
         }
         .t4-cutline { border-top: 1px dashed #666; margin: 22px 0; position: relative; }
         .t4-cutline:after { content: "\\2702"; position: absolute; left: 6px; top: -10px; font-size: 14px; background: #fff; padding: 0 5px; color: #555; }
