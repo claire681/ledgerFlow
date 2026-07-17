@@ -1,142 +1,217 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>T4 Slips Print</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T4 Slips</title>
 <style>
-  @page { size: Letter; margin: 0.35in; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { font-family: Arial, Helvetica, sans-serif; color: #000; font-size: 9pt; background: #fff; }
-  .page { page-break-after: always; }
-  .page:last-child { page-break-after: auto; }
-  .slip { border: 1px solid #000; position: relative; padding: 6px 8px 7px 22px; margin-bottom: 22px; }
-  .cutline { border-top: 1px dashed #666; margin: 18px 0; }
-  .vprot { position: absolute; left: 0; top: 0; bottom: 0; width: 18px; border-right: 1px solid #000; text-align: center; font-size: 6pt; padding: 6px 2px; writing-mode: vertical-rl; transform: rotate(180deg); }
-  .vprot .prot-a { display: block; margin-bottom: 20px; font-weight: bold; }
-  .vprot .prot-b { display: block; }
-  .topband { display: table; width: 100%; border-collapse: collapse; table-layout: fixed; }
-  .topband > div { display: table-cell; vertical-align: top; }
-  .cell-employer { border: 1px solid #000; padding: 4px 6px; width: 40%; height: 62px; }
-  .cell-cra { border-bottom: 1px solid #000; border-right: 1px solid #000; width: 33%; padding: 3px 5px; }
-  .cell-t4title { text-align: right; padding: 2px 4px 3px; border-bottom: 1px solid #000; }
-  .cap-label { font-size: 6.5pt; line-height: 1.15; margin-bottom: 3px; }
-  .emp-addr { font-family: "Courier New", monospace; font-size: 10pt; line-height: 1.5; }
-  .cra-row1 { display: table; width: 100%; margin-bottom: 4px; }
-  .cra-flag-cell { display: table-cell; width: 38px; vertical-align: middle; }
-  .cra-name-cell { display: table-cell; vertical-align: middle; font-size: 7pt; line-height: 1.2; padding-left: 5px; }
-  .flag { display: inline-block; width: 32px; height: 17px; background: linear-gradient(to right, #000 25%, #fff 25%, #fff 75%, #000 75%); border: 0.5px solid #999; text-align: center; line-height: 17px; font-size: 13px; color: #000; }
-  .cra-row2 { display: table; width: 100%; }
-  .yrlbl { display: table-cell; font-size: 6.5pt; line-height: 1.15; vertical-align: middle; padding-right: 8px; width: 55%; }
-  .yrbox { display: table-cell; vertical-align: middle; }
-  .yrbox span { display: inline-block; border: 1px solid #000; padding: 2px 10px; font-size: 12pt; font-family: "Courier New", monospace; }
-  .t4-big { font-size: 22pt; font-weight: bold; line-height: 1; }
-  .t4-sub { font-size: 8.5pt; font-weight: bold; margin-top: 2px; }
-  .t4-sub-fr { font-size: 8pt; font-style: italic; }
-  .bodyrow { display: table; width: 100%; table-layout: fixed; margin-top: 0; }
-  .leftcol { display: table-cell; width: 40%; vertical-align: top; }
-  .midcol { display: table-cell; width: 15%; vertical-align: top; }
-  .rightcol { display: table-cell; width: 45%; vertical-align: top; }
-  .box54 { border: 1px solid #000; border-top: none; display: table; width: 100%; min-height: 28px; }
-  .box54-num { display: table-cell; border-right: 1px solid #000; font-weight: bold; font-size: 9pt; padding: 2px 5px; vertical-align: top; width: 22px; }
-  .box54-body { display: table-cell; padding: 2px 6px; }
-  .box54-lbl { font-size: 6.5pt; }
-  .box54-val { font-family: "Courier New", monospace; font-size: 12pt; letter-spacing: 1px; margin-top: 2px; }
-  .sin-exempt-row { display: table; width: 100%; table-layout: fixed; }
-  .sin-cell, .exempt-cell { display: table-cell; vertical-align: top; }
-  .sin-cell { width: 55%; }
-  .exempt-cell { width: 45%; }
-  .field-lbl { text-align: center; font-size: 6pt; line-height: 1.1; padding: 2px 2px 0; min-height: 14px; }
-  .field-box { border: 1px solid #000; border-top: none; display: table; width: 100%; min-height: 20px; }
-  .field-num { display: table-cell; border-right: 1px solid #000; font-weight: bold; font-size: 8pt; padding: 1px 3px; vertical-align: top; width: 18px; }
-  .field-val { display: table-cell; text-align: left; font-family: "Courier New", monospace; font-size: 10pt; padding: 2px 4px; vertical-align: middle; }
-  .exempt-box { border: 1px solid #000; border-top: none; display: table; width: 100%; min-height: 30px; }
-  .exempt-num { display: table-cell; border-right: 1px solid #000; font-weight: bold; font-size: 9pt; padding: 2px 3px; vertical-align: top; width: 18px; }
-  .exempt-cols { display: table-cell; text-align: center; font-size: 5.5pt; padding: 3px 0; }
-  .exempt-cols > span { display: inline-block; margin: 0 4px; text-align: center; }
-  .cbx { border: 1px solid #000; width: 12px; height: 10px; display: inline-block; margin: 1px auto; vertical-align: middle; }
-  .empname { border: 1px solid #000; padding: 4px 6px; min-height: 82px; margin-top: 3px; }
-  .empname-hdr { font-size: 6pt; display: table; width: 100%; margin: 3px 0; }
-  .empname-hdr > span { display: table-cell; padding-right: 4px; }
-  .nameline { border: 1px solid #000; display: table; width: 100%; padding: 3px 5px; font-family: "Courier New", monospace; font-size: 10pt; table-layout: fixed; }
-  .nameline > span { display: table-cell; }
-  .nameline .ln { width: 58%; }
-  .nameline .fn { width: 34%; }
-  .nameline .inch { width: 8%; text-align: right; }
-  .empaddr { font-family: "Courier New", monospace; font-size: 10pt; margin-top: 8px; line-height: 1.6; }
-  .mid-box { display: block; margin-bottom: 0; }
-  .money-row { display: table; width: 100%; table-layout: fixed; }
-  .money-row > .money-box { display: table-cell; width: 50%; vertical-align: top; }
-  .money-box { display: block; }
-  .money-lbl { text-align: center; font-size: 5.5pt; line-height: 1; padding: 1px 2px 0; min-height: 14px; }
-  .money-field { border: 1px solid #000; border-top: none; display: table; width: 100%; min-height: 18px; table-layout: fixed; }
-  .money-field > span { display: table-cell; vertical-align: middle; }
-  .money-num { border-right: 1px solid #000; font-weight: bold; font-size: 7.5pt; padding: 1px 2px; width: 22px; }
-  .money-dollars { text-align: right; font-family: "Courier New", monospace; font-size: 10pt; padding: 1px 3px; }
-  .money-cents { border-left: 1px solid #000; text-align: right; font-family: "Courier New", monospace; font-size: 10pt; padding: 1px 3px; width: 22px; }
-  .other-section { border: 1px solid #000; margin-top: 6px; padding: 4px 6px; }
-  .other-title { font-size: 6.5pt; margin-bottom: 3px; }
-  .other-row { display: table; width: 100%; table-layout: fixed; margin-top: 2px; }
-  .other-cell { display: table-cell; padding-right: 5px; vertical-align: top; width: 33.33%; }
-  .other-cell:last-child { padding-right: 0; }
-  .other-header { font-size: 6pt; display: table; width: 100%; }
-  .other-header > span { display: table-cell; }
-  .other-boxes { display: table; width: 100%; margin-top: 1px; }
-  .other-boxes > span { display: table-cell; }
-  .other-boxnum { border: 1px solid #000; width: 34px; height: 18px; background: #fff; }
-  .other-boxval { border: 1px solid #000; border-left: none; height: 18px; background: #fff; }
-  .slip-foot { display: table; width: 100%; margin-top: 4px; font-size: 7.5pt; }
-  .slip-foot > div { display: table-cell; }
-  .slip-foot > div:last-child { text-align: right; font-family: "Courier New", monospace; }
-  .reverse-page { padding: 30px; font-size: 9pt; line-height: 1.4; page-break-before: always; }
-  .reverse-title { font-size: 12pt; font-weight: bold; margin-bottom: 12px; }
-  .reverse-cols { column-count: 2; column-gap: 24px; }
-  .reverse-box { margin-bottom: 4px; break-inside: avoid; }
-  .reverse-note { border: 1px solid #000; padding: 8px 10px; margin-top: 12px; font-size: 8pt; }
+  *{box-sizing:border-box}
+  body{margin:0;background:#EDEFF2;font-family:Arial,Helvetica,sans-serif;color:#000}
+  .bar{background:#fff;border-bottom:1px solid #E3E7EC;padding:12px 20px;display:flex;gap:10px;align-items:center;position:sticky;top:0;z-index:5}
+  .btn{font:inherit;font-weight:600;font-size:14px;border:none;border-radius:10px;padding:9px 18px;cursor:pointer;background:#15A08C;color:#fff}
+  .btn:hover{background:#0F8474}
+  .btn.ghost{background:#fff;color:#12262B;border:1px solid #C9CED6}
+  .bar .note{color:#5F6B7A;font-size:13px;margin-left:auto}
+  .copytag{background:#12262B;color:#fff;font-size:11px;font-weight:700;letter-spacing:.5px;padding:6px 12px;border-radius:6px;margin:18px auto 0;width:880px;max-width:100%}
+  .page{background:#fff;width:880px;max-width:100%;min-height:1120px;margin:12px auto 24px;padding:30px 32px;box-shadow:0 1px 6px rgba(16,30,40,.16);font-size:9px}
+  .mono{font-family:"Courier New",monospace}
+  .slip{border:1px solid #000;position:relative;padding:6px 8px 7px 20px}
+  .cutline{border-top:1px dashed #666;margin:22px 0;position:relative}
+  .cutline:after{content:"\2702";position:absolute;left:6px;top:-10px;font-size:14px;background:#fff;padding:0 5px;color:#555}
+  .vprot{position:absolute;left:0;top:0;bottom:0;width:16px;border-right:1px solid #000;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-size:7.5px;padding:6px 2px;display:flex;flex-direction:column;justify-content:space-between}
+  .topband{display:flex;gap:0;align-items:stretch;margin-bottom:3px}
+  .empbox{border:1px solid #000;padding:4px 8px;flex:0 0 38%;min-height:44px}
+  .cap{font-size:7px;line-height:1.15;margin-bottom:4px}
+  .cracell{flex:0 0 32%;text-align:left;font-size:8.5px;line-height:1.2;padding:2px 6px 4px;border-bottom:1.5px solid #000}
+  .crarow1{display:flex;gap:5px;align-items:flex-start}
+  .flag{flex:0 0 auto;display:inline-flex;width:32px;height:17px;border:0.5px solid #999;background:linear-gradient(to right,#000 25%,#fff 25%,#fff 75%,#000 75%);align-items:center;justify-content:center;overflow:hidden}
+  .leaf{font-size:14px;line-height:1;filter:grayscale(1) brightness(0)}
+  .craname{display:flex;gap:9px;font-size:8px;line-height:1.25}
+  .craname span{width:54px;display:inline-block}
+  .crarow2{display:flex;gap:8px;align-items:center;margin-top:3px}
+  .yrlbl{font-size:7px;line-height:1.1}
+  .yrbox{border:1px solid #000;display:inline-block;padding:2px 12px;font-size:13px}
+  .t4title{flex:1;text-align:right;padding:2px 0 4px;border-bottom:1.5px solid #000}
+  .t4title .t4{font-size:22px;font-weight:bold}
+  .t4title .st{font-size:10px;font-weight:bold}
+  .bodyrow{display:flex;gap:3px;align-items:stretch}
+  .leftcol{flex:0 0 40%;display:flex;flex-direction:column;gap:2px}
+  .midcol{flex:0 0 15%;display:flex;flex-direction:column;gap:2px}
+  .rightcol{flex:1;display:flex;flex-direction:column;gap:2px}
+  .mbox{display:flex;flex-direction:column}
+  .mlabel{text-align:center;font-size:6.5px;line-height:1.05;padding:1px 2px 0;min-height:13px;display:flex;align-items:flex-end;justify-content:center}
+  .mfield{border:1px solid #000;display:flex;align-items:stretch;min-height:20px}
+  .mnum{border-right:1px solid #000;font-weight:bold;font-size:8px;padding:1px 3px;display:flex;align-items:flex-start}
+  .mval{flex:1;text-align:right;font-family:"Courier New",monospace;font-size:11px;padding:1px 4px;display:flex;align-items:center;justify-content:flex-end}
+  .mcents{border-left:1px solid #000;width:22px;text-align:right;font-family:"Courier New",monospace;font-size:11px;padding:1px 3px;display:flex;align-items:center;justify-content:flex-end}
+  .tval{flex:1;font-family:"Courier New",monospace;font-size:11px;padding:1px 6px;display:flex;align-items:center}
+  .mrow{display:flex;gap:3px}
+  .mrow .mbox{flex:1}
+  .mrow .mbox+.mbox .mfield{border-left:1px solid #000}
+  .box54{border:1px solid #000;display:flex;align-items:stretch;min-height:28px}
+  .box54 .n{border-right:1px solid #000;font-weight:bold;font-size:8.5px;padding:2px 5px;display:flex;align-items:flex-start}
+  .box54 .b{flex:1;padding:2px 7px}
+  .box54 .l{font-size:6.5px}
+  .box54 .v{font-family:"Courier New",monospace;font-size:12px;letter-spacing:1px;margin-top:2px}
+  .lrow{display:flex;gap:3px}
+  .exf{border:1px solid #000;display:flex;align-items:stretch;min-height:32px}
+  .exf .n{border-right:1px solid #000;font-weight:bold;font-size:8.5px;padding:2px 3px;display:flex;align-items:flex-start}
+  .excols{flex:1;display:flex;justify-content:space-around;align-items:center;text-align:center;font-size:6px;padding:2px 0}
+  .excols .cbx{border:1px solid #000;width:14px;height:11px;margin:2px auto}
+  .empname{border:1px solid #000;padding:4px 7px;flex:1;min-height:80px;position:relative}
+  .nhdr{font-size:6.5px;display:flex;justify-content:space-between;margin:3px 0}
+  .nameline{border:1px solid #000;display:flex;padding:3px 6px;font-family:"Courier New",monospace;font-size:12px;position:relative}
+  .nameline .arw{position:absolute;left:-11px;top:4px;font-size:11px}
+  .nameline .ln{flex:1}
+  .nameline .fn{flex:0 0 34%}
+  .nameline .in{flex:0 0 8%;text-align:right}
+  .addr{font-family:"Courier New",monospace;font-size:11px;margin-top:10px;line-height:1.8}
+  .other{border:1px solid #000;margin-top:6px;padding:5px 8px}
+  .orow{display:flex;gap:6px;margin-top:3px}
+  .ocell{flex:1;display:flex;flex-direction:column}
+  .ocell .h{display:flex;font-size:6.5px}
+  .ocell .h .a{flex:1;text-align:center}
+  .ocell .f{display:flex;margin-top:1px}
+  .ocell .f .bc{border:1px solid #000;width:34px;height:18px}
+  .ocell .f .am{border:1px solid #000;border-left:none;flex:1;height:18px}
+  .rev{font-size:8.5px;line-height:1.3}
+  .rev h3{font-size:11px;font-weight:bold;margin:4px 0 5px}
+  .rtwo{display:flex;gap:22px}
+  .rtwo .rc{flex:1}
+  .ritem{margin-bottom:4px}
+  .ritem b{font-weight:bold}
+  .rbox{border:1px solid #000;padding:5px 7px;margin:5px 0;display:flex;justify-content:space-between;gap:10px}
+  .rbox .rl{flex:1}
+  .rbox .rr{width:150px}
+  .donot{border:1px solid #000;padding:7px 9px;margin-top:8px}
+  .dcols{display:flex;gap:18px;margin-top:5px}
+  .dcols .dc{flex:1}
+  .rfoot{display:flex;justify-content:space-between;font-size:8px;margin-top:6px}
+  .rcut{border-top:1px dashed #666;margin:14px 0;position:relative}
+  .rcut:after{content:"\2702";position:absolute;left:6px;top:-9px;font-size:12px;background:#fff;padding:0 4px;color:#555}
+  .rev h3{font-size:12px;margin:14px 0 6px}
+  .rev .box{margin-bottom:4px}
+  .rev .bn{font-weight:bold}
+  .rev .cols{column-count:2;column-gap:28px}
+  .rev .grp{border:1px solid #000;padding:8px 10px;margin-top:10px}
+  .revfoot{display:flex;justify-content:space-between;font-size:9px;margin-top:12px;border-top:1px solid #000;padding-top:4px}
+  @media print{
+    @page{size:letter;margin:0}
+    body{background:#fff}
+    .bar,.copytag{display:none}
+    .page{box-shadow:none;margin:0;width:100%;max-width:none;min-height:100vh;padding:0.35in;page-break-after:always}
+    .page:last-child{page-break-after:auto}
+  }
 </style>
 </head>
 <body>
-<div id="slips-root"></div>
+    <div id="doc"></div>
+
+  <template id="revtpl"><div class="page">
+    <div class="rev">
+      <h3>Report these amounts on your tax return.</h3>
+      <div class="rtwo">
+        <div class="rc"><div class="ritem"><b>14</b> &ndash; Employment income &ndash; Enter on line 10100.</div><div class="ritem"><b>16</b> &ndash; Employee's CPP contributions &ndash; includes base CPP contributions (Go to canada.ca/line-30800) and first additional CPP contributions (Go to canada.ca/line-22215).</div><div class="ritem"><b>16A</b> &ndash; Employee's second CPP contributions &ndash; Employee's second additional CPP contributions (CPP2). Go to canada.ca/line-22215.</div><div class="ritem"><b>17</b> &ndash; Employee's QPP contributions &ndash; includes base QPP contributions (Go to canada.ca/line-30800) and first additional QPP contributions (Go to canada.ca/line-22215).</div><div class="ritem"><b>17A</b> &ndash; Employee's second QPP contributions &ndash; Employee's second additional QPP contributions (QPP2). Go to canada.ca/line-22215.</div><div class="ritem"><b>18</b> &ndash; Employee's EI premiums &ndash; Go to canada.ca/line-31200.</div><div class="ritem"><b>20</b> &ndash; RPP contributions &ndash; Includes past service contributions. Go to canada.ca/line-20700.</div><div class="ritem"><b>22</b> &ndash; Income tax deducted &ndash; Enter on line 43700.</div><div class="ritem"><b>39</b> &ndash; Security options deduction 110(1)(d) &ndash; Enter on line 24900.</div><div class="ritem"><b>41</b> &ndash; Security options deduction 110(1)(d.1) &ndash; Enter on line 24900.</div><div class="ritem"><b>42</b> &ndash; Employment commissions &ndash; Enter on line 10120. This amount is already included in box 14.</div><div class="ritem"><b>43</b> &ndash; Canadian Armed Forces personnel and police deduction &ndash; Enter on line 24400. This amount is already included in box 14.</div><div class="ritem"><b>44</b> &ndash; Union dues &ndash; Enter on line 21200.</div><div class="ritem"><b>45</b> &ndash; Employer-offered dental benefits &ndash; Go to canada.ca/t4-information-employers.</div><div class="ritem"><b>46</b> &ndash; Charitable donations &ndash; Go to canada.ca/t4-information-employers.</div><div class="ritem"><b>52</b> &ndash; Pension adjustment &ndash; Enter on line 20600.</div><div class="ritem"><b>55</b> &ndash; Provincial parental insurance plan (PPIP) &ndash; Residents of Quebec, go to canada.ca/line-31205. Residents of provinces or territories other than Quebec, go to canada.ca/line-31200.</div><div class="ritem"><b>66</b> &ndash; Eligible retiring allowances &ndash; Go to canada.ca/line-13000.</div></div>
+        <div class="rc"><div class="ritem"><b>67</b> &ndash; Non-eligible retiring allowances &ndash; Go to canada.ca/line-13000.</div><div class="ritem"><b>74</b> &ndash; Past service contributions for 1989 or earlier years while a contributor &ndash; Go to canada.ca/line-20700.</div><div class="ritem"><b>75</b> &ndash; Past service contributions for 1989 or earlier years while not a contributor &ndash; Go to canada.ca/line-20700.</div><div class="ritem"><b>77</b> &ndash; Workers' compensation benefits repaid to the employer &ndash; Enter on line 22900.</div><div class="rbox"><div class="rl"><b>78</b> &ndash; Fishers &ndash; Gross income<br><b>79</b> &ndash; Fishers &ndash; Net partnership amount<br><b>80</b> &ndash; Fishers &ndash; Shareperson amount</div><div class="rr">See Form T2121. <b>Do not</b> enter on line 10100.</div></div><div class="rbox"><div class="rl"><b>81</b> &ndash; Placement or employment agency workers<br><b>82</b> &ndash; Taxi drivers and drivers of other passenger-carrying vehicles<br><b>83</b> &ndash; Barbers or hairdressers</div><div class="rr">Gross income. See Form T2125. <b>Do not</b> enter on line 10100.</div></div><div class="ritem"><b>85</b> &ndash; Employee-paid premiums for private health services plans &ndash; Go to canada.ca/line-33099.</div><div class="ritem"><b>87</b> &ndash; Emergency services volunteer exempt amount &ndash; Go to canada.ca/line-10100.</div><div class="ritem"><b>91</b> &ndash; Security options deduction 110(1)(d) &ndash; Enter on line 24900.</div><div class="ritem"><b>92</b> &ndash; Security options deduction 110(1)(d.1) &ndash; Enter on line 24900.</div><div class="rbox"><div class="rl">The Canada Revenue Agency uses the term <b>Indian</b> because it has legal meaning in the Indian Act.<br><b>69</b> &ndash; Indian Act (exempt income) &ndash; Non-eligible retiring allowances<br><b>71</b> &ndash; Indian Act (exempt income) &ndash; Employment<br><b>88</b> &ndash; Indian Act (exempt income) &ndash; Self-employed<br><b>94</b> &ndash; Indian Act (exempt income) &ndash; RPP contributions<br><b>95</b> &ndash; Indian Act (exempt income) &ndash; Union dues</div><div class="rr">See Form T90. <b>Do not</b> enter these amounts on line 10100, line 13000 or lines 13499 to 14300.</div></div></div>
+      </div>
+      <div class="donot">
+<b>Do not report these amounts on your tax return. For Canada Revenue Agency use only.</b> (Amounts in boxes 30, 32, 34, 36, 38, 40, 57, 58, 59, 60, 86 and 90 are already included in box 14.)
+<div class="dcols">
+<div class="dc"><div class="ritem"><b>30</b> &ndash; Board and lodging</div><div class="ritem"><b>31</b> &ndash; Special work site</div><div class="ritem"><b>32</b> &ndash; Travel in a prescribed zone</div><div class="ritem"><b>33</b> &ndash; Medical travel assistance</div><div class="ritem"><b>34</b> &ndash; Personal use of employer's automobile or motor vehicle</div></div>
+<div class="dc"><div class="ritem"><b>36</b> &ndash; Interest-free and low-interest loans</div><div class="ritem"><b>38</b> &ndash; Security options benefits</div><div class="ritem"><b>40</b> &ndash; Other taxable allowances and benefits</div><div class="ritem"><b>57</b> &ndash; Employment Income &ndash; March 15 to May 9, 2020</div><div class="ritem"><b>58</b> &ndash; Employment Income &ndash; May 10 to July 4, 2020</div></div>
+<div class="dc"><div class="ritem"><b>59</b> &ndash; Employment Income &ndash; July 5 to August 29, 2020</div><div class="ritem"><b>60</b> &ndash; Employment Income &ndash; August 30 to September 26, 2020</div><div class="ritem"><b>86</b> &ndash; Security options election</div><div class="ritem"><b>90</b> &ndash; Security option benefits</div></div>
+</div></div>
+      <div class="rfoot"><span><b>T4 (25)</b></span><span>Privacy Act, personal information bank numbers CRA PPU 005 and CRA PPU 047</span></div>
+      <div class="rcut"></div>
+      <h3>Veuillez déclarer ces montants dans votre déclaration de revenus.</h3>
+      <div class="rtwo">
+        <div class="rc"><div class="ritem"><b>14</b> &ndash; Revenus d'emploi &ndash; Inscrivez à la ligne 10100.</div><div class="ritem"><b>16</b> &ndash; Cotisations de l'employé &ndash; comprend les cotisations de base au RPC (Allez à canada.ca/ligne-30800) et les premières cotisations supplémentaires au RPC (Allez à canada.ca/ligne-22215).</div><div class="ritem"><b>16A</b> &ndash; Deuxièmes cotisations de l'employé au RPC &ndash; Deuxièmes cotisations supplémentaires de l'employé au RPC (RPC2). Allez à canada.ca/ligne-22215.</div><div class="ritem"><b>17</b> &ndash; Cotisations de l'employé au RRQ &ndash; comprend les cotisations de base au RRQ (Allez à canada.ca/ligne-30800) et les premières cotisations supplémentaires au RRQ (Allez à canada.ca/ligne-22215).</div><div class="ritem"><b>17A</b> &ndash; Deuxièmes cotisations de l'employé au RRQ &ndash; Deuxièmes cotisations supplémentaires de l'employé au RRQ (RRQ2). Allez à canada.ca/ligne-22215.</div><div class="ritem"><b>18</b> &ndash; Cotisations de l'employé à l'AE &ndash; Allez à canada.ca/ligne-31200.</div><div class="ritem"><b>20</b> &ndash; Cotisations à un RPA &ndash; Comprend les cotisations pour services passés. Allez à canada.ca/ligne-20700.</div><div class="ritem"><b>22</b> &ndash; Impôt sur le revenu retenu &ndash; Inscrivez à la ligne 43700.</div><div class="ritem"><b>39</b> &ndash; Déduction pour options d'achat de titres 110(1)d) &ndash; Inscrivez à la ligne 24900.</div><div class="ritem"><b>41</b> &ndash; Déduction pour options d'achat de titres 110(1)d.1) &ndash; Inscrivez à la ligne 24900.</div><div class="ritem"><b>42</b> &ndash; Commissions d'emploi &ndash; Inscrivez à la ligne 10120. Ce montant est déjà compris dans la case 14.</div><div class="ritem"><b>43</b> &ndash; Déduction pour le personnel des Forces armées canadiennes et des forces policières &ndash; Inscrivez à la ligne 24400. Ce montant est déjà compris dans la case 14.</div><div class="ritem"><b>44</b> &ndash; Cotisations syndicales &ndash; Inscrivez à la ligne 21200.</div><div class="ritem"><b>45</b> &ndash; Prestations dentaires offertes par l'employeur &ndash; Allez à canada.ca/t4-information-employeurs.</div><div class="ritem"><b>46</b> &ndash; Dons de bienfaisance &ndash; Allez à canada.ca/t4-information-employeurs.</div><div class="ritem"><b>52</b> &ndash; Facteur d'équivalence &ndash; Inscrivez à la ligne 20600.</div><div class="ritem"><b>55</b> &ndash; Régime provincial d'assurance parentale (RPAP) &ndash; Résidents du Québec, allez à canada.ca/ligne-31205. Résidents des autres provinces ou territoires, allez à canada.ca/ligne-31200.</div><div class="ritem"><b>66</b> &ndash; Allocations de retraite admissibles &ndash; Allez à canada.ca/ligne-13000.</div></div>
+        <div class="rc"><div class="ritem"><b>67</b> &ndash; Allocations de retraite non admissibles &ndash; Allez à canada.ca/ligne-13000.</div><div class="ritem"><b>74</b> &ndash; Services passés pour 1989 et les années précédentes pendant que l'employé cotisait &ndash; Allez à canada.ca/ligne-20700.</div><div class="ritem"><b>75</b> &ndash; Services passés pour 1989 et les années précédentes pendant que l'employé ne cotisait pas &ndash; Allez à canada.ca/ligne-20700.</div><div class="ritem"><b>77</b> &ndash; Indemnités pour accidents du travail remboursées à l'employeur &ndash; Inscrivez à la ligne 22900.</div><div class="rbox"><div class="rl"><b>78</b> &ndash; Pêcheurs &ndash; Revenus bruts<br><b>79</b> &ndash; Pêcheurs &ndash; Montant net d'un associé de la société de personnes<br><b>80</b> &ndash; Pêcheurs &ndash; Montant du pêcheur à part</div><div class="rr">Consultez le formulaire T2121. <b>N'inscrivez pas</b> ce montant à la ligne 10100.</div></div><div class="rbox"><div class="rl"><b>81</b> &ndash; Travailleurs d'agences ou de bureaux de placement<br><b>82</b> &ndash; Chauffeurs de taxi ou d'un autre véhicule de transport de passagers<br><b>83</b> &ndash; Barbiers et coiffeurs</div><div class="rr">Revenus bruts. Consultez le formulaire T2125. <b>N'inscrivez pas</b> ce montant à la ligne 10100.</div></div><div class="ritem"><b>85</b> &ndash; Primes versées par l'employé à un régime privé d'assurance-maladie &ndash; Allez à canada.ca/ligne-33099.</div><div class="ritem"><b>87</b> &ndash; Montant exempt d'impôt versé à un volontaire des services d'urgence &ndash; Allez à canada.ca/ligne-10100.</div><div class="ritem"><b>91</b> &ndash; Déduction pour options d'achat de titres 110(1)(d) &ndash; Inscrivez à la ligne 24900.</div><div class="ritem"><b>92</b> &ndash; Déduction pour options d'achat de titres 110(1)(d.1) &ndash; Inscrivez à la ligne 24900.</div><div class="rbox"><div class="rl">L'Agence du revenu du Canada utilise le terme <b>Indien</b> en raison de sa signification légale dans la Loi sur les Indiens.<br><b>69</b> &ndash; Loi sur les Indiens (revenu d'emploi exonéré) &ndash; Allocations de retraite non admissibles<br><b>71</b> &ndash; Loi sur les Indiens (revenu d'emploi exonéré) &ndash; emploi<br><b>88</b> &ndash; Loi sur les Indiens (revenu d'emploi exonéré) &ndash; travail indépendant<br><b>94</b> &ndash; Loi sur les Indiens (revenu d'emploi exonéré) &ndash; cotisations à un RPA<br><b>95</b> &ndash; Loi sur les Indiens (revenu d'emploi exonéré) &ndash; cotisations syndicales</div><div class="rr">Consultez le formulaire T90. <b>N'inscrivez pas</b> ces montants à la ligne 10100, la ligne 13000 ou aux lignes 13499 à 14300.</div></div></div>
+      </div>
+      <div class="donot">
+<b>Ne déclarez pas ces montants à votre déclaration d'impôt. À l'usage de l'Agence du revenu du Canada seulement.</b> (Les montants des cases 30, 32, 34, 36, 38, 40, 57, 58, 59, 60, 86 et 90 sont déjà inclus à la case 14.)
+<div class="dcols">
+<div class="dc"><div class="ritem"><b>30</b> &ndash; Pension et logement</div><div class="ritem"><b>31</b> &ndash; Chantier particulier</div><div class="ritem"><b>32</b> &ndash; Voyages dans une zone visée par règlement</div><div class="ritem"><b>33</b> &ndash; Aide accordée pour les voyages pour soins médicaux</div><div class="ritem"><b>34</b> &ndash; Usage personnel de l'automobile ou du véhicule à moteur de l'employeur</div></div>
+<div class="dc"><div class="ritem"><b>36</b> &ndash; Prêts sans intérêt ou à faible intérêt</div><div class="ritem"><b>38</b> &ndash; Avantages liés aux options d'achat de titres</div><div class="ritem"><b>40</b> &ndash; Autres allocations et avantages imposables</div><div class="ritem"><b>57</b> &ndash; Revenus d'emploi &ndash; Du 15 mars au 9 mai 2020</div><div class="ritem"><b>58</b> &ndash; Revenus d'emploi &ndash; Du 10 mai au 4 juillet 2020</div></div>
+<div class="dc"><div class="ritem"><b>59</b> &ndash; Revenus d'emploi &ndash; Du 5 juillet au 29 août 2020</div><div class="ritem"><b>60</b> &ndash; Revenus d'emploi &ndash; Du 30 août au 26 septembre 2020</div><div class="ritem"><b>86</b> &ndash; Choix liés aux options d'achat de titres</div><div class="ritem"><b>90</b> &ndash; Avantages liés aux options d'achat de titres</div></div>
+</div></div>
+      <div class="rfoot"><span><b>T4 (25)</b></span><span>Loi sur la protection des renseignements personnels, fichiers de renseignements personnels ARC PPU 005 et ARC PPU 047</span></div>
+    </div>
+  </div></template>
+
 <script>
-(function() {
-  var data = window.__T4DATA__ || { year: 2026, employer: {}, employees: [] };
-  var employer = data.employer || {};
-  var employees = data.employees || [];
-  var year = data.year || new Date().getFullYear();
-  var root = document.getElementById("slips-root");
-  function esc(s) { if (s == null) return ""; return String(s).replace(/[&<>"']/g, function(c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-  function moneyField(num, label, val) {
-    var dollars = "", cents = "";
-    if (val && Array.isArray(val)) { dollars = val[0] || ""; cents = val[1] || ""; }
-    return '<div class="money-box"><div class="money-lbl">' + esc(label) + '</div><div class="money-field"><span class="money-num">' + esc(num) + '</span><span class="money-dollars">' + esc(dollars) + '</span><span class="money-cents">' + esc(cents) + '</span></div></div>';
-  }
-  var moneyRows = [
-    [["14","Employment income - Revenus d'emploi","b14"], ["22","Income tax deducted - Impot retenu","b22"]],
-    [["16","CPP contributions - RPC","b16"], ["17","QPP contributions - RRQ","b17"]],
-    [["16A","Second CPP - RPC2","b16A"], ["17A","Second QPP - RRQ2","b17A"]],
-    [["24","EI insurable earnings - Gains AE","b24"], ["26","CPP/QPP pensionable - Gains RPC/RRQ","b26"]],
-    [["18","EI premiums - Cotisations AE","b18"], ["44","Union dues - Cotisations syndicales","b44"]],
-    [["20","RPP contributions - RPA","b20"], ["46","Charitable donations - Dons","b46"]],
-    [["52","Pension adjustment - Facteur d equivalence","b52"], ["50","RPP registration number","b50"]],
-    [["55","PPIP premiums - Cotisations RPAP","b55"], ["56","PPIP insurable earnings - Gains RPAP","b56"]]
+  var DATA = (typeof window !== "undefined" && window.__T4DATA__) ? window.__T4DATA__ : null;
+  var acct = DATA ? DATA.acct : "746043769RP0001";
+  var year = DATA ? DATA.year : 2026;
+  var employer = DATA ? DATA.employer : { name:"BrightCare Home Healthcare Services Inc.", addr1:"8460-106A Avenue NW", addr2:"Edmonton &nbsp;&nbsp;&nbsp; AB &nbsp; T5H 0S3" };
+  var employees = [
+    {last:"Kemanzi", first:"Claire", init:"", sin:"973-066-707", b14:["2300","00"], b16:["118","01"], b18:["37","50"], b24:["2300","00"], b26:["2300","00"], b22:["156","77"], addr1:"8460 106A Avenue NW", addr2:"Edmonton &nbsp;&nbsp;&nbsp; AB &nbsp; T5H 0S4"}
   ];
-  function renderSlip(e) {
-    var moneyRowsHtml = moneyRows.map(function(row) { return '<div class="money-row">' + moneyField(row[0][0], row[0][1], e[row[0][2]]) + moneyField(row[1][0], row[1][1], e[row[1][2]]) + '</div>'; }).join("");
-    var otherCells = '<div class="other-cell"><div class="other-header"><span>Box - Case</span><span>Amount - Montant</span></div><div class="other-boxes"><span class="other-boxnum"></span><span class="other-boxval"></span></div></div>';
-    return '<div class="slip"><div class="vprot"><span class="prot-a">Protected B when completed / Protege B une fois rempli</span><span class="prot-b">T4 (25)</span></div><div class="topband"><div class="cell-employer"><div class="cap-label">Employer name - Nom de l employeur</div><div class="emp-addr">' + esc(employer.name) + '<br>' + esc(employer.addr1) + '<br>' + esc(employer.addr2) + ' &nbsp;&nbsp;&nbsp; ' + esc(employer.prov) + ' &nbsp; ' + esc(employer.postal) + '</div></div><div class="cell-cra"><div class="cra-row1"><div class="cra-flag-cell"><span class="flag">' + "\uD83C\uDF41" + '</span></div><div class="cra-name-cell">Canada Revenue Agency<br>Agence du revenu du Canada</div></div><div class="cra-row2"><span class="yrlbl">Year<br>Annee</span><span class="yrbox"><span>' + esc(year) + '</span></span></div></div><div class="cell-t4title"><div class="t4-big">T4</div><div class="t4-sub">Statement of Remuneration Paid</div><div class="t4-sub-fr">Etat de la remuneration payee</div></div></div><div class="bodyrow"><div class="leftcol"><div class="box54"><span class="box54-num">54</span><div class="box54-body"><div class="box54-lbl">Employer account number - Numero de compte de l employeur</div><div class="box54-val">' + esc(employer.account) + '</div></div></div><div class="sin-exempt-row"><div class="sin-cell"><div class="field-lbl">Social insurance number<br>Numero d assurance sociale</div><div class="field-box"><span class="field-num">12</span><span class="field-val">' + esc(e.sin) + '</span></div></div><div class="exempt-cell"><div class="field-lbl"><b>Exempt - Exemption</b></div><div class="exempt-box"><span class="exempt-num">28</span><div class="exempt-cols"><span>CPP<br>QPP<br><span class="cbx"></span></span><span>EI<br>AE<br><span class="cbx"></span></span><span>PPIP<br>RPAP<br><span class="cbx"></span></span></div></div></div></div><div class="empname"><div class="cap-label">Employee name and address - Nom et adresse de l employe</div><div class="empname-hdr"><span>Last name (capitals) / Nom de famille</span><span>First name / Prenom</span><span>Init.</span></div><div class="nameline"><span class="ln">' + esc(e.last) + '</span><span class="fn">' + esc(e.first) + '</span><span class="inch">' + esc(e.init) + '</span></div><div class="empaddr">' + esc(e.addr1) + '<br>' + esc(e.addr2) + ' &nbsp;&nbsp;&nbsp; ' + esc(e.province) + ' &nbsp; ' + esc(e.postal) + '</div></div></div><div class="midcol"><div class="mid-box"><div class="field-lbl">Dental benefits<br>Prestations dentaires</div><div class="field-box"><span class="field-num">45</span><span class="field-val">' + esc(e.b45 || "") + '</span></div></div><div class="mid-box"><div class="field-lbl">Province of employment<br>Province d emploi</div><div class="field-box"><span class="field-num">10</span><span class="field-val">' + esc(e.province) + '</span></div></div><div class="mid-box"><div class="field-lbl">Employment code<br>Code d emploi</div><div class="field-box"><span class="field-num">29</span><span class="field-val"></span></div></div></div><div class="rightcol">' + moneyRowsHtml + '</div></div><div class="other-section"><div class="other-title">Other information (see over) - Autres renseignements (voir au verso)</div><div class="other-row">' + otherCells + otherCells + otherCells + '</div><div class="other-row">' + otherCells + otherCells + otherCells + '</div></div><div class="slip-foot"><div><b>T4 (25)</b></div><div>REV &nbsp; OSP</div></div></div>';
+  if (DATA && DATA.employees) { employees = DATA.employees; }
+
+  function mbox(label,num,v){
+    var d = v ? v[0] : '';
+    var c = v ? (v[1]||'') : '';
+    return '<div class="mbox"><div class="mlabel">'+label+'</div><div class="mfield"><span class="mnum">'+num+'</span><span class="mval">'+d+'</span><span class="mcents">'+c+'</span></div></div>';
   }
-  var html = "";
-  for (var i = 0; i < employees.length; i += 2) {
-    var pair = employees.slice(i, i + 2);
-    html += '<div class="page">' + renderSlip(pair[0]);
-    if (pair[1]) { html += '<div class="cutline"></div>' + renderSlip(pair[1]); }
-    html += '</div>';
+  function tbox(label,num,v){
+    return '<div class="mbox"><div class="mlabel">'+label+'</div><div class="mfield"><span class="mnum">'+num+'</span><span class="tval">'+(v||'')+'</span></div></div>';
   }
-  html += '<div class="reverse-page"><div class="reverse-title">Report these amounts on your tax return. / Declarez ces montants dans votre declaration.</div><div class="reverse-cols">';
-  var boxes = [["14","Employment income - Enter on line 10100. Revenus d emploi - ligne 10100."],["16","Employee CPP contributions - see line 30800. Cotisations RPC."],["16A","Employee second CPP contributions (CPP2). Deuxiemes cotisations au RPC."],["17","Employee QPP contributions. Cotisations RRQ."],["17A","Employee second QPP contributions (QPP2). Deuxiemes cotisations au RRQ."],["18","Employee EI premiums - line 31200. Cotisations AE - ligne 31200."],["20","RPP contributions - line 20700. Cotisations RPA."],["22","Income tax deducted - line 43700. Impot retenu - ligne 43700."],["24","EI insurable earnings. Gains assurables d AE."],["26","CPP/QPP pensionable earnings. Gains ouvrant droit a pension."],["44","Union dues - line 21200. Cotisations syndicales - ligne 21200."],["45","Employer-offered dental benefits. Prestations dentaires."],["46","Charitable donations. Dons de bienfaisance."],["50","RPP or DPSP registration number. N d agrement RPA/RPDB."],["52","Pension adjustment - line 20600. Facteur d equivalence - ligne 20600."],["54","Employer account number. Numero de compte de l employeur."],["55","PPIP premiums. Cotisations RPAP."],["56","PPIP insurable earnings. Gains assurables RPAP."]];
-  boxes.forEach(function(b) { html += '<div class="reverse-box"><b>' + b[0] + '</b> ' + b[1] + '</div>'; });
-  html += '</div><div class="reverse-note"><b>Do not report these amounts on your tax return.</b> For CRA use only. (Amounts in boxes 30, 32, 34, 36, 38, 40, 57, 58, 59, 60, 86 and 90 are already included in box 14.)<br><b>Ne declarez pas ces montants.</b> A l usage de l ARC seulement.</div></div>';
-  root.innerHTML = html;
-})();
+  function slip(e){
+    var money =
+      '<div class="mrow">'+mbox("Employment income &ndash; Revenus d'emploi","14",e.b14)+mbox("Income tax deducted &ndash; Impôt sur le revenu retenu","22",e.b22)+'</div>'
+     +'<div class="mrow">'+mbox("Employee's CPP contributions &ndash; see over<br>Cotisations de l'employé au RPC &ndash; voir au verso","16",e.b16)+mbox("Employee's QPP contributions &ndash; see over<br>Cotisations de l'employé au RRQ &ndash; voir au verso","17",null)+'</div>'
+     +'<div class="mrow">'+mbox("Employee's second CPP contributions &ndash; see over<br>Deuxièmes cotisations de l'employé au RPC &ndash; voir au verso","16A",null)+mbox("Employee's second QPP contributions &ndash; see over<br>Deuxièmes cotisations de l'employé au RRQ &ndash; voir au verso","17A",null)+'</div>'
+     +'<div class="mrow">'+mbox("EI insurable earnings &ndash; Gains assurables d'AE","24",e.b24)+mbox("CPP/QPP pensionable earnings<br>Gains ouvrant droit à pension &ndash; RPC/RRQ","26",e.b26)+'</div>'
+     +'<div class="mrow">'+mbox("Employee's EI premiums &ndash; Cotisations de l'employé à l'AE","18",e.b18)+mbox("Union dues &ndash; Cotisations syndicales","44",null)+'</div>'
+     +'<div class="mrow">'+mbox("RPP contributions &ndash; Cotisations à un RPA","20",null)+mbox("Charitable donations &ndash; Dons de bienfaisance","46",null)+'</div>'
+     +'<div class="mrow">'+mbox("Pension adjustment &ndash; Facteur d'équivalence","52",null)+mbox("RPP or DPSP registration number<br>N° d'agrément d'un RPA ou d'un RPDB","50",null)+'</div>'
+     +'<div class="mrow">'+mbox("Employee's PPIP premiums &ndash; see over<br>Cotisations de l'employé au RPAP &ndash; voir au verso","55",null)+mbox("PPIP insurable earnings &ndash; Gains assurables du RPAP","56",null)+'</div>';
+
+    var exempt = '<div class="mbox"><div class="mlabel"><b>Exempt &ndash; Exemption</b></div><div class="exf"><span class="n">28</span><div class="excols"><div>CPP/QPP<div class="cbx"></div>RPC/RRQ</div><div>EI<div class="cbx"></div>AE</div><div>PPIP<div class="cbx"></div>RPAP</div></div></div></div>';
+
+    var other = '<div class="other"><div style="font-size:7px">Other information (see over) &ndash; Autres renseignements (voir au verso)</div>'
+      +'<div class="orow">'+oc()+oc()+oc()+'</div>'
+      +'<div class="orow">'+oc()+oc()+oc()+'</div></div>';
+
+    return '<div class="slip"><div class="vprot"><span>Protected B when completed / Protégé B une fois rempli</span><span style="font-weight:normal">T4 (25)</span></div>'
+    +'<div class="topband">'
+    +'<div class="empbox"><div class="cap">Employer\'s name &ndash; Nom de l\'employeur</div><div class="mono" style="font-size:10.5px;line-height:1.35">'+employer.name+'<br>'+employer.addr1+'<br>'+employer.addr2+'</div></div>'
+    +'<div class="cracell"><div class="crarow1"><span class="flag"><svg viewBox="0 0 256 136" style="display:block;width:100%;height:100%"><rect width="256" height="136" fill="#fff"/><rect width="64" height="136" fill="#000"/><rect x="192" width="64" height="136" fill="#000"/><g transform="translate(64,4) scale(0.25)"><path fill="#000" d="M256 21.3l-24.3 45.4c-2.8 4.9-7.7 4.4-12.6 1.7l-17.6-9.1 13.1 69.6c2.8 12.7-6.1 12.7-10.5 7.2l-30.7-34.4-5 17.5c-.6 2.3-3.1 4.7-6.9 4.1l-38.8-8.2 10.2 37.1c2.2 8.3 3.9 11.7-2.2 13.9l-13.9 6.5 67.1 54.5c2.7 2.1 4 5.9 3 9.3l-5.9 19.3c23.1-2.7 43.8-6.7 66.9-9.2 2-.2 5.5 3.1 5.4 5.4l-3.1 68.9h11.3l-1.8-68.8c-.1-2.3 3.3-5.7 5.4-5.5 23.1 2.5 43.8 6.5 66.9 9.2l-5.9-19.3c-1-3.4.3-7.2 3-9.3l67.1-54.5-13.9-6.5c-6.1-2.2-4.4-5.6-2.2-13.9l10.2-37.1-38.8 8.2c-3.8.6-6.3-1.8-6.9-4.1l-5-17.5-30.7 34.4c-4.4 5.5-13.3 5.5-10.5-7.2l13.1-69.6-17.6 9.1c-4.9 2.7-9.8 3.2-12.6-1.7z"/></g></svg></span><div class="craname"><span>Canada Revenue Agency</span><span>Agence du revenu du Canada</span></div></div><div class="crarow2"><span class="yrlbl">Year<br>Année</span><span class="yrbox mono">'+year+'</span></div></div>'
+    +'<div class="t4title"><div class="t4">T4</div><div class="st">Statement of Remuneration Paid</div><div style="font-size:10px">État de la rémunération payée</div></div>'
+    +'</div>'
+    +'<div class="bodyrow">'
+    +'<div class="leftcol">'
+    +'<div class="box54"><span class="n">54</span><div class="b"><div class="l">Employer\'s account number &ndash; Numéro de compte de l\'employeur</div><div class="v">'+acct+'</div></div></div>'
+    +'<div class="lrow">'+tbox("Social insurance number<br>Numéro d'assurance sociale","12",e.sin).replace('class="mbox"','class="mbox" style="flex:1.5"')+exempt.replace('class="mbox"','class="mbox" style="flex:1"')+'</div>'
+    +'<div class="empname"><div class="cap">Employee\'s name and address &ndash; Nom et adresse de l\'employé</div>'
+    +'<div class="nhdr"><span>Last name (in capital letters) &ndash; Nom de famille (en lettres moulées)</span><span>First name &ndash; Prénom</span><span>Initial &ndash; Initiale</span></div>'
+    +'<div class="nameline"><span class="arw">&#9654;</span><span class="ln">'+e.last+'</span><span class="fn">'+e.first+'</span><span class="in">'+e.init+'</span></div>'
+    +'<div class="addr">'+e.addr1+'<br>'+e.addr2+'</div></div>'
+    +'</div>'
+    +'<div class="midcol">'
+    +tbox("Employer-offered dental benefits<br>Prestations dentaires offertes par l'employeur","45","")
+    +tbox("Province of employment<br>Province d'emploi","10","AB")
+    +tbox("Employment code<br>Code d'emploi","29","")
+    +'</div>'
+    +'<div class="rightcol">'+money+'</div>'
+    +'</div>'
+    +other
+    +'</div>';
+  }
+  function oc(){
+    return '<div class="ocell"><div class="h"><span style="width:34px">Box&ndash;Case</span><span class="a">Amount &ndash; Montant</span></div><div class="f"><span class="bc"></span><span class="am"></span></div></div>';
+  }
+
+  var REVERSE = document.getElementById("revtpl").innerHTML;
+  var pages = [];
+  for(var i=0;i<employees.length;i+=2){
+    var pair = employees.slice(i,i+2);
+    var slips = pair.map(function(e){return slip(e)+'<div class="cutline"></div>';}).join('');
+    pages.push('<div class="page">'+slips+'</div>');
+    pages.push(REVERSE);
+  }
+  document.getElementById("doc").innerHTML = pages.join('');
 </script>
 </body>
 </html>

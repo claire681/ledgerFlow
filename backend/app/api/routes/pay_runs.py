@@ -4038,6 +4038,7 @@ async def get_t4_employer_slips_pdf_v2(
 
     data = {
         "year": year,
+        "acct": cra_account,
         "employer": employer,
         "employees": employee_slips,
     }
