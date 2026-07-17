@@ -162,7 +162,7 @@ function AppLayout({ onLogout }) {
       <div data-print="hide"><PromoBanner/></div>
 
       {/* Main header */}
-      {(
+      {!location.pathname.startsWith("/payroll/taxes/t4-preview") && (
           <div data-print="hide">
           <TopBar
         onLogout={onLogout}
