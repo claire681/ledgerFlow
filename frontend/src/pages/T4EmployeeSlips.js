@@ -426,6 +426,17 @@ function T4EmployeeSlips({ year = 2026, employer = SAMPLE_EMPLOYER, employees = 
       `}</style>
 
       <div className="t4-noprint" style={{ background: "#fff", borderBottom: "1px solid #E3E7EC", padding: "12px 20px", display: "flex", gap: 10, alignItems: "center", position: "sticky", top: 0, zIndex: 5 }}>
+        <button
+          onClick={() => window.location.href = "/payroll/taxes/filings"}
+          style={{
+            font: "inherit", fontWeight: 600, fontSize: 14,
+            border: "1px solid #E3E7EC", borderRadius: 10, padding: "9px 14px",
+            cursor: "pointer", background: "#fff", color: "#0E1A1A",
+            display: "inline-flex", alignItems: "center", gap: 6,
+          }}
+        >
+          {"\u2190"} Back
+        </button>
         <button onClick={() => window.print()} style={{ font: "inherit", fontWeight: 600, fontSize: 14, border: "none", borderRadius: 10, padding: "9px 18px", cursor: "pointer", background: "#15A08C", color: "#fff" }}>Print</button>
         <span style={{ color: "#5F6B7A", fontSize: 13, marginLeft: "auto" }}>Employee copies · cut along the dashed line and give to each employee</span>
       </div>

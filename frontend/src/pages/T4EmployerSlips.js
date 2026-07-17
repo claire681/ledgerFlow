@@ -375,7 +375,7 @@ function T4EmployerSlips() {
         @media print {
           @page { size: letter; margin: 0; }
           .t4-noprint { display: none !important; }
-          .t4-page { box-shadow: none; margin: 0; width: 100%; max-width: none; min-height: 100vh; padding: 0.35in; page-break-after: always; }
+          .t4-page { box-shadow: none; margin: 0; width: 100%; max-width: none; min-height: 0; padding: 0.35in; page-break-after: always; }
           .t4-page:last-child { page-break-after: auto; }
         }
         .t4-cutline { border-top: 1px dashed #666; margin: 22px 0; position: relative; }
@@ -383,6 +383,17 @@ function T4EmployerSlips() {
       `}</style>
 
       <div className="t4-noprint" style={{ background: "#fff", borderBottom: "1px solid #E3E7EC", padding: "12px 20px", display: "flex", gap: 10, alignItems: "center", position: "sticky", top: 0, zIndex: 5 }}>
+        <button
+          onClick={() => window.location.href = "/payroll/taxes/filings"}
+          style={{
+            font: "inherit", fontWeight: 600, fontSize: 14,
+            border: "1px solid #E3E7EC", borderRadius: 10, padding: "9px 14px",
+            cursor: "pointer", background: "#fff", color: "#0E1A1A",
+            display: "inline-flex", alignItems: "center", gap: 6,
+          }}
+        >
+          {"\u2190"} Back
+        </button>
         <button
           onClick={() => window.print()}
           disabled={loading || employees.length === 0}

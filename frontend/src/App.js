@@ -176,7 +176,7 @@ function AppLayout({ onLogout }) {
 
       <div style={{ display:'flex', flex:1, overflow:'hidden', position:'relative' }}>
 
-        {!(location.pathname.startsWith("/invoices/new") || location.pathname.match(/^\/invoices\/[^/]+\/(edit|send)$/)) && (
+        {!(location.pathname.startsWith("/invoices/new") || location.pathname.match(/^\/invoices\/[^/]+\/(edit|send)$/) || location.pathname.startsWith("/payroll/taxes/t4-preview")) && (
             <div data-print="hide">
             <Sidebar
           onLogout={onLogout}
