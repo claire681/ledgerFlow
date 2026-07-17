@@ -417,10 +417,37 @@ function T4Summary() {
       <style>{`
         .t4-page { background:#fff; width:900px; max-width:100%; min-height:1160px; margin:24px auto; padding:26px 28px; box-shadow:0 1px 6px rgba(16,30,40,.16); font-size:10px; }
         @media print {
-          @page { size: letter; margin: 0; }
+          @page { size: letter; margin: 0.35in; }
+
+          html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+
           .t4-noprint { display: none !important; }
-          .t4-page { box-shadow: none !important; margin: 0 !important; width: auto !important; max-width: none !important; min-height: 0 !important; height: auto !important; padding: 0.4in !important; page-break-after: always !important; break-after: page !important; }
-          .t4-page:last-child { page-break-after: auto; }
+
+          /* The grey outer wrapper on the T4 pages must NOT constrain height */
+          body > div, body > div > div { background: #fff !important; }
+
+          /* Each .t4-page prints as its own sheet */
+          .t4-page {
+            background: #fff !important;
+            box-shadow: none !important;
+            border: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: auto !important;
+            max-width: 100% !important;
+            min-height: 0 !important;
+            height: auto !important;
+            page-break-inside: avoid !important;
+            page-break-after: always !important;
+            break-after: page !important;
+          }
+          .t4-page:last-child {
+            page-break-after: auto !important;
+            break-after: auto !important;
+          }
+
+          /* Hide the cut-line scissors marker during print */
+          .t4-cutline:after { display: none !important; }
         }
       `}</style>
 
