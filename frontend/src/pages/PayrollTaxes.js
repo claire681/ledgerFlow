@@ -326,16 +326,7 @@ function FilingsTab({ navigate, onResourcesOpen, onPrint }) {
       <SectionHead label="COMING UP" count={3} />
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <FilingCard title="T4 summary" sub={t4PeriodStart + " to " + t4PeriodEnd} dueDate={t4DueDate} method="Manually file" onPreview={() => window.open("/payroll/taxes/t4-preview/summary", "_blank")} />
-        <FilingCard title="T4 employer slips" sub="Employer copy of T4 slips" dueDate={t4DueDate} method="Manually file with XML" onPreview={async () => {
-          const token = localStorage.getItem("access_token") || localStorage.getItem("token");
-          const y = new Date().getFullYear();
-          const res = await fetch(`${API_URL}/api/v1/payroll/taxes/t4-employer-slips.pdf?year=${y}`, {
-            headers: { Authorization: "Bearer " + token }
-          });
-          if (!res.ok) { alert("Could not generate PDF"); return; }
-          const blob = await res.blob();
-          window.open(URL.createObjectURL(blob), "_blank");
-        }} />
+        <FilingCard title="T4 employer slips" sub="Employer copy of T4 slips" dueDate={t4DueDate} method="Manually file with XML" onPreview={() => window.open("/payroll/taxes/t4-preview/employer", "_blank")} />
         <FilingCard title="T4 employee slips" sub="T4 slip for employee" dueDate={t4DueDate} method="Manually file" onPreview={() => window.open("/payroll/taxes/t4-preview/employee", "_blank")} />
       </div>
 
