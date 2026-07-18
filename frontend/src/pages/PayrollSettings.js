@@ -2023,13 +2023,13 @@ function TaxRegistrationSection({ businessCountry }) {
           ))}
         </CardSection>
 
-        <CardSection label="Filing cadence">
-          <Field label="How often do you remit payroll taxes?" help="This affects when remittance deadlines appear on your payroll overview.">
-            <SelectInput value={data.filing_cadence} onChange={v => set("filing_cadence", v)}>
-              <option value="">Select cadence</option>
-              <option value="monthly">Monthly</option>
-              <option value="quarterly">Quarterly</option>
-              <option value="annually">Annually</option>
+        <CardSection label="Remittance schedule">
+          <Field label="Remitter type" help={<>Determines when you must remit CPP, EI, and income tax to CRA. Assigned by CRA based on your average monthly withholding two calendar years ago. <a href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/remitting-source-deductions/how-often.html" target="_blank" rel="noopener noreferrer" style={{ color: C.teal, fontWeight: 600, textDecoration: "none" }}>View CRA guide &rarr;</a></>}>
+            <SelectInput value={data.remitter_type || "regular"} onChange={v => set("remitter_type", v)}>
+              <option value="regular">Regular (monthly, less than $25,000 avg)</option>
+              <option value="quarterly">Quarterly (eligible small employers)</option>
+              <option value="threshold_1">Accelerated: Threshold 1 ($25,000 to $99,999)</option>
+              <option value="threshold_2">Accelerated: Threshold 2 ($100,000 or more)</option>
             </SelectInput>
           </Field>
         </CardSection>
