@@ -35,6 +35,7 @@ class CompanyProfileSchema(BaseModel):
     address_postal_code: Optional[str]  = None
     business_number:    Optional[str]   = None
     payroll_rp_account: Optional[str]   = None
+    remitter_type:      Optional[str]   = None
     country:            Optional[str]   = "US"
     province_state:     Optional[str]   = None
     currency:           Optional[str]   = "USD"
