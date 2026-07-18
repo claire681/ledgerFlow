@@ -2144,6 +2144,34 @@ function BankAccountSection() {
             Connect account
           </button>
         )}
+        {country === "ca" && (
+          <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>Remitter type</label>
+            <select
+              value={data.remitter_type || "regular"}
+              onChange={e => set("remitter_type", e.target.value)}
+              style={{
+                padding: "9px 12px",
+                border: "1px solid " + C.line,
+                borderRadius: 6,
+                fontSize: 14,
+                color: C.ink,
+                fontFamily: "inherit",
+                outline: "none",
+                background: "#fff",
+                maxWidth: 480,
+              }}
+            >
+              <option value="regular">Regular (monthly, less than $25,000 avg)</option>
+              <option value="quarterly">Quarterly (eligible small employers)</option>
+              <option value="threshold_1">Accelerated: Threshold 1 ($25,000 to $99,999)</option>
+              <option value="threshold_2">Accelerated: Threshold 2 ($100,000 or more)</option>
+            </select>
+            <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.4 }}>
+              Determines when you must remit CPP, EI, and income tax to CRA. Assigned by CRA based on your average monthly withholding two calendar years ago. <a href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/remitting-source-deductions/how-often.html" target="_blank" rel="noopener noreferrer" style={{ color: C.teal, fontWeight: 600, textDecoration: "none" }}>View CRA guide &rarr;</a>
+            </div>
+          </div>
+        )}
       </div>
 
       {hasAccount ? (
