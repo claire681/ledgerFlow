@@ -1383,22 +1383,24 @@ function SectionHead({ title, subtitle }) {
   );
 }
 
-function Field({ label, help, children }) {
+function Field({ label, help, children, error }) {
   return (
     <div style={{ marginBottom: 16 }}>
       <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: "block", marginBottom: 5 }}>{label}</label>
       {children}
-      {help && <div style={{ fontSize: 11.5, color: C.muted, marginTop: 5, lineHeight: 1.5 }}>{help}</div>}
+      {error && <div style={{ fontSize: 11.5, color: "#C41E1E", marginTop: 5, lineHeight: 1.5, fontWeight: 500 }}>{error}</div>}
+      {!error && help && <div style={{ fontSize: 11.5, color: C.muted, marginTop: 5, lineHeight: 1.5 }}>{help}</div>}
     </div>
   );
 }
 
-function TextInput({ value, onChange, placeholder, type = "text", maxLength }) {
+function TextInput({ value, onChange, placeholder, type = "text", maxLength, error }) {
+  const borderColor = error ? "#C41E1E" : C.line;
   return (
     <input type={type} value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} maxLength={maxLength}
-      style={{ width: "100%", fontFamily: FONT, fontSize: 13.5, color: C.ink, padding: "9px 12px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", outline: "none" }}
-      onFocus={(e) => { e.target.style.borderColor = C.teal; e.target.style.boxShadow = "0 0 0 3px " + C.tealSoft; }}
-      onBlur={(e) => { e.target.style.borderColor = C.line; e.target.style.boxShadow = "none"; }}
+      style={{ width: "100%", fontFamily: FONT, fontSize: 13.5, color: C.ink, padding: "9px 12px", border: "1px solid " + borderColor, borderRadius: 6, background: "#fff", outline: "none" }}
+      onFocus={(e) => { e.target.style.borderColor = error ? "#C41E1E" : C.teal; e.target.style.boxShadow = error ? "0 0 0 3px rgba(196,30,30,0.15)" : "0 0 0 3px " + C.tealSoft; }}
+      onBlur={(e) => { e.target.style.borderColor = borderColor; e.target.style.boxShadow = "none"; }}
     />
   );
 }
@@ -1885,6 +1887,23 @@ function PayScheduleSection() {
       </>
     );
   }
+// Validates Canadian tax registration field formats
+// Returns error message string or null if valid
+function validateTaxField(key, value) {
+  if (!value || value.trim() === "") return null;
+  const v = value.trim();
+  if (key === "cra_bn") {
+    if (!/^[0-9]{9}$/.test(v)) return "CRA Business Number must be exactly 9 digits.";
+  }
+  if (key === "cra_payroll") {
+    if (!/^[0-9]{9}RP[0-9]{4}$/i.test(v)) return "Format: 9 digits + RP + 4 digits. Example: 123456789RP0001";
+  }
+  if (key === "rq_account") {
+    if (!/^[0-9]{10}[A-Z]{2}[0-9]{4}$/i.test(v)) return "Format: 10 digits + 2 letters + 4 digits. Example: 1234567890TQ0001";
+  }
+  return null;
+}
+
 function TaxRegistrationSection({ businessCountry }) {
   const country = (businessCountry || "ca").toLowerCase();
   const STORAGE_KEY = "novala_tax_registration";
@@ -2013,14 +2032,17 @@ function TaxRegistrationSection({ businessCountry }) {
 
   return (
     <>
-      <SectionHead title="Tax registration" subtitle={"Your business tax IDs and filing cadence with the tax authority. Fields below are based on " + countryName + "."} />
+      <SectionHead title="Tax registration" subtitle={"These numbers auto-fill every T4 slip, PD7A remittance, and CRA filing Novala generates. Fields below are based on " + countryName + "."} />
       <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "24px 26px" }}>
         <CardSection label="Tax identifiers">
-          {fields.map(f => (
-            <Field key={f.key} label={f.label} help={f.help}>
-              <TextInput value={data[f.key]} onChange={v => set(f.key, v)} placeholder={f.ph || ""} />
-            </Field>
-          ))}
+          {fields.map(f => {
+            const err = validateTaxField(f.key, data[f.key]);
+            return (
+              <Field key={f.key} label={f.label} help={f.help} error={err}>
+                <TextInput value={data[f.key]} onChange={v => set(f.key, v)} placeholder={f.ph || ""} error={!!err} />
+              </Field>
+            );
+          })}
         </CardSection>
 
         <CardSection label="Remittance schedule">
