@@ -5,6 +5,7 @@ import {
   ChevronDown, ChevronRight, CheckCircle2, Clock, AlertTriangle, X,
 } from "lucide-react";
 import ResourcesDrawer from "../components/payroll/ResourcesDrawer";
+import SchedulePaymentPanel from "../components/payroll/SchedulePaymentPanel";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -167,6 +168,7 @@ function tabStyle(active) {
 // PAYMENTS TAB
 // ============================================================
 function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen, onPrint }) {
+  const [payObligation, setPayObligation] = useState(null);
   const hasData = pd7a && pd7a.paycheque_count > 0;
   const currentPayment = pd7a ? pd7a.current_payment : 0;
   const dueDateDisplay = pd7a ? pd7a.due_date_display : "";
@@ -226,6 +228,19 @@ function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen, onPrint 
             amount={money(currentPayment)}
             breakdownOpen={breakdownOpen}
             onToggleBreakdown={() => setBreakdownOpen(!breakdownOpen)}
+            onPayFile={() => setPayObligation({
+              taxName: "Federal Taxes",
+              period: periodLabel,
+              liability: periodLabel,
+              dueDate: dueDateDisplay,
+              amount: currentPayment.toFixed(2),
+              status: status === "overdue" ? "pastDue" : "due",
+              breakdown: [
+                ["Income tax deducted (federal)", pd7a.tax_deductions.toFixed(2)],
+                ["CPP contributions (employee and employer)", (pd7a.cpp_employee + pd7a.cpp_employer).toFixed(2)],
+                ["EI premiums (employee and employer)", (pd7a.ei_employee + pd7a.ei_employer).toFixed(2)],
+              ],
+            })}
           />
           {breakdownOpen && (
             <BreakdownPanel
@@ -249,6 +264,14 @@ function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen, onPrint 
 
       <SectionHead label="SCHEDULED" count={0} />
       <EmptyBox text="Nothing to see here (yet)!" />
+
+      <SchedulePaymentPanel
+        open={!!payObligation}
+        onClose={() => setPayObligation(null)}
+        obligation={payObligation}
+        recordTo={{ name: "BrightCare-RBC Chequing", balance: "-13,340.91", negative: true }}
+        onPaid={() => { setPayObligation(null); }}
+      />
 
       <SectionHead label="PAYMENT RESOURCES" />
       <ResourceLinkList
@@ -592,7 +615,7 @@ function SectionHead({ label, count }) {
 
 function ObligationCard({
   title, sub, status, dueDate, amount,
-  breakdownOpen, onToggleBreakdown,
+  breakdownOpen, onToggleBreakdown, onPayFile,
 }) {
   const pillMeta =
     status === "ready_to_pay" ? { bg: TOKENS.tealTint, color: TOKENS.tealInk, icon: <CheckCircle2 size={14} strokeWidth={2.5} />, text: "Ready to pay" } :
@@ -662,6 +685,7 @@ function ObligationCard({
         }}
         onMouseEnter={(e) => e.currentTarget.style.background = TOKENS.tealHover}
         onMouseLeave={(e) => e.currentTarget.style.background = TOKENS.teal}
+        onClick={onPayFile}
       >
         Pay and file
         <ChevronDown size={14} strokeWidth={2.5} />
