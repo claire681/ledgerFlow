@@ -635,6 +635,41 @@ export default function RunPayroll() {
 
         // Call backend calculate endpoint - runs the Canada tax engine
         const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+
+        // PATCH: sync pay run dates to DB before calculating
+
+        try {
+
+          await fetch(API + "/api/v1/payroll/runs/" + payRunId, {
+
+            method: "PATCH",
+
+            headers: {
+
+              "Content-Type": "application/json",
+
+              "Authorization": "Bearer " + token
+
+            },
+
+            body: JSON.stringify({
+
+              pay_period_start: periodStart,
+
+              pay_period_end: periodEnd,
+
+              pay_date: payDate
+
+            })
+
+          });
+
+        } catch (syncErr) {
+
+          console.warn("Could not sync dates to backend:", syncErr);
+
+        }
+
         const resp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/calculate", {
           method: "POST",
           headers: {
