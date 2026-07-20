@@ -997,23 +997,6 @@ export default function RunPayroll() {
                   </div>
                 ))}
               </div>
-            {/* Funding not connected notice */}
-            <div style={{ background: "#FAEEDA", borderRadius: 8, padding: "10px 14px", marginBottom: 14, display: "flex", alignItems: "center", gap: 10, borderLeft: "3px solid #EF9F27" }}>
-              <span style={{ fontSize: 16, color: "#854F0B" }}>&#9432;</span>
-              <div style={{ flex: 1, fontSize: 12.5, color: "#633806" }}>
-                <span style={{ fontWeight: 600 }}>Funding account not connected.</span> You're paying by cheque this run.
-              </div>
-              <button type="button" onClick={() => navigate("/payroll/bank/connect")} style={{ background: "transparent", border: "1px solid #EF9F27", color: "#633806", fontSize: 11.5, fontWeight: 600, padding: "5px 12px", borderRadius: 6, cursor: "pointer", fontFamily: FONT }}>Connect bank</button>
-            </div>
-
-            {/* pay period + next pay date + posting account */}
-            <div id="tour-pay-period" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 14 }}>
-
-              <div style={{ position: "relative", border: "2px solid " + C.brand, borderRadius: 10, background: "#fff", padding: "6px 12px" }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Pay period</div>
-                <div style={{ border: "1px solid #D3D1C7", borderRadius: 6, background: "#F1EFE8", padding: "5px 10px" }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>{periodStart && periodEnd ? formatPeriodLabel(periodStart, periodEnd) : "Loading..."}</div>
-                </div>
                 <button type="button" onClick={() => setPeriodOpen((o) => !o)} style={{ marginTop: 4, background: "none", border: "none", padding: 0, fontSize: 11.5, color: C.brand, textDecoration: "underline", cursor: "pointer", fontWeight: 600, fontFamily: FONT }}>Edit dates</button>
                 {periodOpen && (
                   <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: 82, left: 14, right: 14, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 20px 48px rgba(8,32,31,0.14)", maxHeight: 248, overflowY: "auto", zIndex: 30, padding: 4 }}>
@@ -1039,14 +1022,6 @@ export default function RunPayroll() {
                   <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>{payDate ? new Date(payDate + "T00:00:00").toLocaleDateString("en-CA", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }) : "-"}</div>
                 </div>
                 <div style={{ marginTop: 4, fontSize: 11.5, color: C.muted }}>Auto-filled from schedule</div>
-              </div>
-
-              <div style={{ border: "1px solid " + C.line, borderRadius: 10, background: "#fff", padding: "6px 12px" }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Posting account</div>
-                <div style={{ border: "1px solid " + C.line, borderRadius: 6, background: C.page, padding: "5px 10px" }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>BrightCare RBC</div>
-                </div>
-                <div style={{ marginTop: 4, fontSize: 11.5, color: C.muted }}>Chequing account</div>
               </div>
 
             </div>
