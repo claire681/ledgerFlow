@@ -997,39 +997,61 @@ export default function RunPayroll() {
                   </div>
                 ))}
               </div>
+            {/* Funding not connected notice */}
+            <div style={{ background: "#FAEEDA", borderRadius: 8, padding: "10px 14px", marginBottom: 14, display: "flex", alignItems: "center", gap: 10, borderLeft: "3px solid #EF9F27" }}>
+              <span style={{ fontSize: 16, color: "#854F0B" }}>&#9432;</span>
+              <div style={{ flex: 1, fontSize: 12.5, color: "#633806" }}>
+                <span style={{ fontWeight: 600 }}>Funding account not connected.</span> You're paying by cheque this run.
+              </div>
+              <button type="button" onClick={() => navigate("/payroll/bank/connect")} style={{ background: "transparent", border: "1px solid #EF9F27", color: "#633806", fontSize: 11.5, fontWeight: 600, padding: "5px 12px", borderRadius: 6, cursor: "pointer", fontFamily: FONT }}>Connect bank</button>
+            </div>
 
-              {/* pay period + next pay date */}
-              <div id="tour-pay-period" style={{ display: "flex", gap: 12, alignItems: "stretch", marginBottom: 14 }}>
-                <div style={{ position: "relative", width: 300, border: "1.5px solid " + C.night, borderRadius: 12, background: "#fff", padding: "14px 16px" }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.08, marginBottom: 9 }}>Pay period</div>
-                  <button type="button" onClick={() => setPeriodOpen((o) => !o)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "10px 12px", border: "1px solid " + C.ink, borderRadius: 8, background: "#fff", fontSize: 15, fontWeight: 500, color: C.ink, cursor: "pointer", fontFamily: FONT, textAlign: "left" }}>
-                    <span>{periodStart && periodEnd ? formatPeriodLabel(periodStart, periodEnd) : "Select period"}</span>
-                    <ChevronDown size={17} color={C.ink} style={{ transform: periodOpen ? "rotate(180deg)" : "none", transition: "transform 150ms" }} />
-                  </button>
-                  {periodOpen && (
-                    <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: 76, left: 16, right: 16, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 20px 48px rgba(8,32,31,0.14)", maxHeight: 248, overflowY: "auto", zIndex: 30, padding: 4 }}>
-                      {periodOptions.map((p, idx) => {
-                        const isSel = p.start === periodStart && p.end === periodEnd;
-                        return (
-                          <button key={idx} type="button" onClick={() => { setPeriodStart(p.start); setPeriodEnd(p.end); setPeriodOpen(false); }}
-                            onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.background = C.page; }}
-                            onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.background = "transparent"; }}
-                            style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 12px", background: isSel ? C.tint : "transparent", border: "none", borderRadius: 6, fontSize: 13.5, color: C.ink, cursor: "pointer", textAlign: "left", fontFamily: FONT }}>
-                            <span style={{ display: "inline-flex", width: 16, color: C.brand }}>{isSel ? <Check size={15} /> : null}</span>
-                            <span>{formatPeriodLabel(p.start, p.end)}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+            {/* pay period + next pay date + posting account */}
+            <div id="tour-pay-period" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 14 }}>
+
+              <div style={{ position: "relative", border: "2px solid " + C.brand, borderRadius: 10, background: "#fff", padding: "10px 14px" }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 7 }}>Pay period</div>
+                <div style={{ border: "1px solid #D3D1C7", borderRadius: 6, background: "#F1EFE8", padding: "7px 12px" }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>{periodStart && periodEnd ? formatPeriodLabel(periodStart, periodEnd) : "Loading..."}</div>
                 </div>
-                <div style={{ flex: "0 0 220px", border: "1.5px solid " + C.night, borderRadius: 12, background: "#fff", padding: "14px 16px" }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.08, marginBottom: 9 }}>Next pay date</div>
-                  <input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", border: "1px solid " + C.ink, borderRadius: 8, background: "#fff", fontSize: 15, fontWeight: 500, color: C.ink, fontFamily: FONT, outline: "none" }} />
-                </div>
+                <button type="button" onClick={() => setPeriodOpen((o) => !o)} style={{ marginTop: 6, background: "none", border: "none", padding: 0, fontSize: 11.5, color: C.brand, textDecoration: "underline", cursor: "pointer", fontWeight: 600, fontFamily: FONT }}>Edit dates</button>
+                {periodOpen && (
+                  <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: 82, left: 14, right: 14, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 20px 48px rgba(8,32,31,0.14)", maxHeight: 248, overflowY: "auto", zIndex: 30, padding: 4 }}>
+                    {periodOptions.map((p, idx) => {
+                      const isSel = p.start === periodStart && p.end === periodEnd;
+                      return (
+                        <button key={idx} type="button" onClick={() => { setPeriodStart(p.start); setPeriodEnd(p.end); setPeriodOpen(false); }}
+                          onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.background = C.page; }}
+                          onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.background = "transparent"; }}
+                          style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 12px", background: isSel ? C.tint : "transparent", border: "none", borderRadius: 6, fontSize: 13.5, color: C.ink, cursor: "pointer", textAlign: "left", fontFamily: FONT }}>
+                          <span style={{ display: "inline-flex", width: 16, color: C.brand }}>{isSel ? <Check size={15} /> : null}</span>
+                          <span>{formatPeriodLabel(p.start, p.end)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
-              {/* toolbar */}
+              <div style={{ border: "2px solid " + C.brand, borderRadius: 10, background: "#fff", padding: "10px 14px" }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 7 }}>Next pay date</div>
+                <div style={{ border: "1px solid #D3D1C7", borderRadius: 6, background: "#F1EFE8", padding: "7px 12px" }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>{payDate ? new Date(payDate + "T00:00:00").toLocaleDateString("en-CA", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }) : "-"}</div>
+                </div>
+                <div style={{ marginTop: 6, fontSize: 11.5, color: C.muted }}>Auto-filled from schedule</div>
+              </div>
+
+              <div style={{ border: "1px solid " + C.line, borderRadius: 10, background: "#fff", padding: "10px 14px" }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 7 }}>Posting account</div>
+                <div style={{ border: "1px solid " + C.line, borderRadius: 6, background: C.page, padding: "7px 12px" }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>BrightCare RBC</div>
+                </div>
+                <div style={{ marginTop: 6, fontSize: 11.5, color: C.muted }}>Chequing account</div>
+              </div>
+
+            </div>
+
+            {/* toolbar */}
               <div id="tour-toolbar" style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
                 <div style={{ position: "relative" }}>
                   <button style={{ ...toolBtn, background: filtersApplied > 0 ? C.tint : "#fff", color: filtersApplied > 0 ? C.brandDark : C.ink, borderColor: filtersApplied > 0 ? C.brand : C.line }} onClick={() => setFiltersOpen((o) => !o)}>
