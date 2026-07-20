@@ -110,6 +110,7 @@ const ALL_APPS = [
     id: 'payroll', label: 'Payroll', color: '#3B82F6', icon: Users,
     items: [
       { label: 'Overview',      path: '/payroll/overview'   },
+      { label: 'Pay schedules',   path: '/payroll/schedules'  },
       { label: 'Employees',     path: '/payroll/employees'  },
       { label: 'Paycheque list', path: '/payroll/paycheques' },
       { label: 'Payroll taxes', path: '/payroll/taxes'      },
