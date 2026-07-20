@@ -1009,12 +1009,12 @@ export default function RunPayroll() {
             {/* pay period + next pay date + posting account */}
             <div id="tour-pay-period" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 14 }}>
 
-              <div style={{ position: "relative", border: "2px solid " + C.brand, borderRadius: 10, background: "#fff", padding: "10px 14px" }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 7 }}>Pay period</div>
-                <div style={{ border: "1px solid #D3D1C7", borderRadius: 6, background: "#F1EFE8", padding: "7px 12px" }}>
+              <div style={{ position: "relative", border: "2px solid " + C.brand, borderRadius: 10, background: "#fff", padding: "6px 12px" }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Pay period</div>
+                <div style={{ border: "1px solid #D3D1C7", borderRadius: 6, background: "#F1EFE8", padding: "5px 10px" }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>{periodStart && periodEnd ? formatPeriodLabel(periodStart, periodEnd) : "Loading..."}</div>
                 </div>
-                <button type="button" onClick={() => setPeriodOpen((o) => !o)} style={{ marginTop: 6, background: "none", border: "none", padding: 0, fontSize: 11.5, color: C.brand, textDecoration: "underline", cursor: "pointer", fontWeight: 600, fontFamily: FONT }}>Edit dates</button>
+                <button type="button" onClick={() => setPeriodOpen((o) => !o)} style={{ marginTop: 4, background: "none", border: "none", padding: 0, fontSize: 11.5, color: C.brand, textDecoration: "underline", cursor: "pointer", fontWeight: 600, fontFamily: FONT }}>Edit dates</button>
                 {periodOpen && (
                   <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: 82, left: 14, right: 14, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 20px 48px rgba(8,32,31,0.14)", maxHeight: 248, overflowY: "auto", zIndex: 30, padding: 4 }}>
                     {periodOptions.map((p, idx) => {
@@ -1033,20 +1033,20 @@ export default function RunPayroll() {
                 )}
               </div>
 
-              <div style={{ border: "2px solid " + C.brand, borderRadius: 10, background: "#fff", padding: "10px 14px" }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 7 }}>Next pay date</div>
-                <div style={{ border: "1px solid #D3D1C7", borderRadius: 6, background: "#F1EFE8", padding: "7px 12px" }}>
+              <div style={{ border: "2px solid " + C.brand, borderRadius: 10, background: "#fff", padding: "6px 12px" }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Next pay date</div>
+                <div style={{ border: "1px solid #D3D1C7", borderRadius: 6, background: "#F1EFE8", padding: "5px 10px" }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>{payDate ? new Date(payDate + "T00:00:00").toLocaleDateString("en-CA", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }) : "-"}</div>
                 </div>
-                <div style={{ marginTop: 6, fontSize: 11.5, color: C.muted }}>Auto-filled from schedule</div>
+                <div style={{ marginTop: 4, fontSize: 11.5, color: C.muted }}>Auto-filled from schedule</div>
               </div>
 
-              <div style={{ border: "1px solid " + C.line, borderRadius: 10, background: "#fff", padding: "10px 14px" }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 7 }}>Posting account</div>
-                <div style={{ border: "1px solid " + C.line, borderRadius: 6, background: C.page, padding: "7px 12px" }}>
+              <div style={{ border: "1px solid " + C.line, borderRadius: 10, background: "#fff", padding: "6px 12px" }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Posting account</div>
+                <div style={{ border: "1px solid " + C.line, borderRadius: 6, background: C.page, padding: "5px 10px" }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>BrightCare RBC</div>
                 </div>
-                <div style={{ marginTop: 6, fontSize: 11.5, color: C.muted }}>Chequing account</div>
+                <div style={{ marginTop: 4, fontSize: 11.5, color: C.muted }}>Chequing account</div>
               </div>
 
             </div>
