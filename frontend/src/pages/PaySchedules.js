@@ -242,7 +242,7 @@ export default function PaySchedules() {
             )}
 
             {!loading && !error && filteredSchedules.length > 0 && (
-                <div style={{ border: "1px solid #E5E7EB", borderRadius: 12, overflow: "hidden" }}>
+                <div style={{ border: "1px solid #E5E7EB", borderRadius: 12 }}>
                     {filteredSchedules.map((schedule, idx) => (
                         <div
                             key={schedule.id}
@@ -313,7 +313,7 @@ export default function PaySchedules() {
                                 >⋮</button>
                                 {openMenuId === schedule.id && (
                                     <div style={{
-                                        position: "absolute", top: 32, right: 0,
+                                        position: "absolute", top: 32, right: 20,
                                         background: "#FFFFFF", border: "1px solid #E5E7EB",
                                         borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
                                         width: 220, overflow: "hidden", zIndex: 10, textAlign: "left"
