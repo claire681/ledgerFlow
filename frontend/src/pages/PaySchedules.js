@@ -156,7 +156,7 @@ export default function PaySchedules() {
         .sort((a, b) => (a.next_pay_date || "").localeCompare(b.next_pay_date || ""))[0];
 
     return (
-        <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 32px", fontFamily: "Inter, -apple-system, sans-serif" }}>
+        <div style={{ maxWidth: "100%", margin: 0, padding: "28px 32px 90px", fontFamily: "Inter, -apple-system, sans-serif" }}>
 
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
                 <div>
