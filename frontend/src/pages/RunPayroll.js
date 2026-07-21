@@ -338,7 +338,7 @@ export default function RunPayroll() {
   if (loading) return <div style={{ padding: "28px 32px", fontFamily: FONT }}><div style={{ padding: 40, color: C.muted }}>Loading...</div></div>;
   if (error && !payRun) return <div style={{ padding: "28px 32px", fontFamily: FONT }}><div style={{ padding: 16, background: "#FCEBEB", borderRadius: 10, color: "#791F1F" }}>{error}</div></div>;
 
-  const gridCols = "30px 2fr 0.9fr 0.9fr 0.9fr 0.9fr 0.8fr 1fr 40px 1.1fr 40px";
+  const gridCols = "30px 2fr 1fr 1fr 1fr 1fr 1fr 44px 1fr 40px";
   const displayBox = { display: "inline-block", boxSizing: "border-box", padding: "6px 10px", border: "1px solid " + C.line, borderRadius: 6, fontSize: 13, textAlign: "right", color: C.faint, background: C.page, fontFamily: FONT, fontVariantNumeric: "tabular-nums" };
   const inputBox = { boxSizing: "border-box", padding: "6px 10px", border: "1px solid " + C.line, borderRadius: 6, fontSize: 13, textAlign: "right", color: C.ink, fontFamily: FONT };
 
@@ -429,11 +429,10 @@ export default function RunPayroll() {
       </div>
 
       <div style={{ border: "1px solid " + C.line, borderRadius: 12, background: "#fff", overflow: "visible" }}>
-        <div style={{ padding: "14px 20px", background: C.page, borderBottom: "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 14, fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 0.4, position: "relative" }}>
+        <div style={{ padding: "14px 20px", background: C.page, borderBottom: "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 0.4, position: "relative" }}>
           <div></div>
           <div>EMPLOYEE &middot; {includedRows.length} OF {readyRows.length}</div>
           <ColumnHeader label="REGULAR HOURS" />
-          <ColumnHeader label="REGULAR PAY" />
           <ColumnHeader label="STAT HOURS" />
           <ColumnHeader label="STAT PAY (AVG)" />
           <ColumnHeader label="TOTAL HRS" />
@@ -454,7 +453,7 @@ export default function RunPayroll() {
           const gross = regPay + statPay;
           const isLast = idx === filteredRows.length - 1;
           return (
-            <div key={r.id} id={"row-" + r.id} style={{ padding: "16px 20px", borderBottom: isLast ? "none" : "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 14, alignItems: "center", opacity: r.ready ? 1 : 0.5, position: "relative" }}>
+            <div key={r.id} id={"row-" + r.id} style={{ padding: "16px 20px", borderBottom: isLast ? "none" : "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, alignItems: "center", opacity: r.ready ? 1 : 0.5, position: "relative" }}>
               <div>
                 <input type="checkbox" checked={r.included} disabled={!r.ready} onChange={function() { toggleIncluded(r.id); }} style={{ width: 16, height: 16, accentColor: C.brand, cursor: r.ready ? "pointer" : "not-allowed" }} />
               </div>
@@ -464,9 +463,6 @@ export default function RunPayroll() {
               </div>
               <div style={{ textAlign: "right" }}>
                 <input type="text" inputMode="decimal" value={r.regular} onChange={function(e) { updateRow(r.id, "regular", e.target.value); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 60 })} />
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={Object.assign({}, displayBox, { width: 70 })}>{regPay > 0 ? fmtMoney(regPay) : "$0.00"}</div>
               </div>
               <div style={{ textAlign: "right" }}>
                 <input type="text" inputMode="decimal" value={r.statHoliday} onChange={function(e) { updateRow(r.id, "statHoliday", e.target.value); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 60 })} />
