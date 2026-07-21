@@ -464,14 +464,14 @@ export default function RunPayroll() {
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ position: "relative", display: "inline-block" }}>
-                  <input type="text" inputMode="decimal" value={r.regular} onChange={function(e) { updateRow(r.id, "regular", e.target.value.replace(/[^0-9.]/g, "")); }} disabled={!r.ready} placeholder="0" style={Object.assign({}, inputBox, { width: 90, paddingRight: 22 })} />
-                  <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: r.regular ? C.ink : C.faint, pointerEvents: "none", fontFamily: FONT }}>h</span>
+                  <input type="text" inputMode="decimal" value={r.regular} onChange={function(e) { updateRow(r.id, "regular", e.target.value.replace(/[^0-9.]/g, "")); }} disabled={!r.ready} placeholder="0" style={Object.assign({}, inputBox, { width: 90, paddingRight: 26 })} />
+                  <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: r.regular ? C.ink : C.faint, pointerEvents: "none", fontFamily: FONT }}>h</span>
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ position: "relative", display: "inline-block" }}>
-                  <input type="text" inputMode="decimal" value={r.statHoliday} onChange={function(e) { updateRow(r.id, "statHoliday", e.target.value.replace(/[^0-9.]/g, "")); }} disabled={!r.ready} placeholder="0" style={Object.assign({}, inputBox, { width: 90, paddingRight: 22 })} />
-                  <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: r.statHoliday ? C.ink : C.faint, pointerEvents: "none", fontFamily: FONT }}>h</span>
+                  <input type="text" inputMode="decimal" value={r.statHoliday} onChange={function(e) { updateRow(r.id, "statHoliday", e.target.value.replace(/[^0-9.]/g, "")); }} disabled={!r.ready} placeholder="0" style={Object.assign({}, inputBox, { width: 90, paddingRight: 26 })} />
+                  <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: r.statHoliday ? C.ink : C.faint, pointerEvents: "none", fontFamily: FONT }}>h</span>
                 </div>
               </div>
               <div style={{ textAlign: "right", position: "relative" }}>
