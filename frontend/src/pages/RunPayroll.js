@@ -64,7 +64,7 @@ function ColumnHeader(props) {
   return (
     <div ref={ref} onMouseEnter={function() { setHover(true); }} onMouseLeave={function() { setHover(false); }} style={{ textAlign: props.align || "right", cursor: "pointer", position: "relative", userSelect: "none" }} onClick={function() { setOpen(function(o) { return !o; }); }}>
       <span>{props.label}</span>
-      <span style={{ marginLeft: 4, color: C.brand, visibility: showArrow ? "visible" : "hidden" }}>&#9662;</span>
+      <span style={{ marginLeft: 5, fontSize: 12, color: showArrow ? C.brand : C.faint, transition: "color 0.15s" }}>&#9660;</span>
       {open && (
         <div style={{ position: "absolute", top: 24, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", width: 200, zIndex: 25, overflow: "hidden", textAlign: "left", fontWeight: 400, textTransform: "none", letterSpacing: 0, fontSize: 13, color: C.ink }}>
           <div style={{ padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }} onClick={function() { setOpen(false); }}>
@@ -472,7 +472,7 @@ export default function RunPayroll() {
                 <input type="text" inputMode="decimal" value={r.statHoliday} onChange={function(e) { updateRow(r.id, "statHoliday", e.target.value); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 60 })} />
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={Object.assign({}, displayBox, { width: 70 })}>{fmtMoney(Number(r.statAvgDaily))}</div>
+                <input type="text" inputMode="decimal" value={r.statAvgDaily ? String(r.statAvgDaily) : ""} onChange={function(e) { updateRow(r.id, "statAvgDaily", parseFloat(e.target.value) || 0); }} disabled={!r.ready} placeholder="$0.00" style={Object.assign({}, inputBox, { width: 70 })} />
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={Object.assign({}, displayBox, { width: 55 })}>{total > 0 ? total.toFixed(2) + "h" : "0h"}</div>
