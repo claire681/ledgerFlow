@@ -471,7 +471,7 @@ export default function RunPayroll() {
                 <input type="text" inputMode="decimal" value={r.statAvgDaily ? String(r.statAvgDaily) : ""} onChange={function(e) { updateRow(r.id, "statAvgDaily", parseFloat(e.target.value) || 0); }} disabled={!r.ready} placeholder="$0.00" style={Object.assign({}, inputBox, { width: 70 })} />
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={Object.assign({}, displayBox, { width: 55 })}>{total > 0 ? total.toFixed(2) + "h" : "0h"}</div>
+                <div style={Object.assign({}, displayBox, { width: 55 })}>{total > 0 ? (total % 1 === 0 ? String(total) : total.toFixed(2)) + "h" : "0h"}</div>
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={Object.assign({}, displayBox, { width: 80 })}>{fmtMoney(gross)}</div>
