@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -43,6 +43,115 @@ function fmtDateWithWeekday(iso) {
   return d.toLocaleDateString("en-CA", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
+const STATUS_OPTIONS = [
+  { key: "in_crew", label: "In crew" },
+  { key: "desks", label: "Desks" },
+  { key: "skipped", label: "Skipped" },
+  { key: "not_ready", label: "Not ready" },
+];
+
+function ColumnHeader(props) {
+  const [open, setOpen] = useState(false);
+  const [hover, setHover] = useState(false);
+  const ref = useRef(null);
+  useEffect(function() {
+    function onDoc(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener("mousedown", onDoc);
+    return function() { document.removeEventListener("mousedown", onDoc); };
+  }, []);
+  const showArrow = hover || open;
+  return (
+    <div ref={ref} onMouseEnter={function() { setHover(true); }} onMouseLeave={function() { setHover(false); }} style={{ textAlign: props.align || "right", cursor: "pointer", position: "relative", userSelect: "none" }} onClick={function() { setOpen(function(o) { return !o; }); }}>
+      <span>{props.label}</span>
+      <span style={{ marginLeft: 4, color: C.brand, visibility: showArrow ? "visible" : "hidden" }}>&#9662;</span>
+      {open && (
+        <div style={{ position: "absolute", top: 24, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", width: 200, zIndex: 25, overflow: "hidden", textAlign: "left", fontWeight: 400, textTransform: "none", letterSpacing: 0, fontSize: 13, color: C.ink }}>
+          <div style={{ padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }} onClick={function() { setOpen(false); }}>
+            <span style={{ color: C.brand, fontSize: 14 }}>&uarr;</span>
+            <span>Sort ascending</span>
+          </div>
+          <div style={{ padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, borderTop: "1px solid " + C.line }} onClick={function() { setOpen(false); }}>
+            <span style={{ color: C.brand, fontSize: 14 }}>&darr;</span>
+            <span>Sort descending</span>
+          </div>
+          <div style={{ padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, borderTop: "1px solid " + C.line }} onClick={function() { setOpen(false); }}>
+            <span style={{ color: C.muted, fontSize: 14 }}>&times;</span>
+            <span>Hide column</span>
+          </div>
+          <div style={{ padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, borderTop: "1px solid " + C.line }} onClick={function() { setOpen(false); }}>
+            <span style={{ color: C.muted, fontSize: 14 }}>&#9881;</span>
+            <span>Customize</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FilterPopover(props) {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState(props.value || []);
+  const [search, setSearch] = useState("");
+  const ref = useRef(null);
+  useEffect(function() {
+    function onDoc(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener("mousedown", onDoc);
+    return function() { document.removeEventListener("mousedown", onDoc); };
+  }, []);
+  function toggle(key) { setSelected(function(s) { return s.includes(key) ? s.filter(function(k) { return k !== key; }) : s.concat([key]); }); }
+  function remove(key) { setSelected(function(s) { return s.filter(function(k) { return k !== key; }); }); }
+  function clear() { setSelected([]); }
+  function apply() { if (props.onApply) props.onApply(selected); setOpen(false); }
+  const filtered = STATUS_OPTIONS.filter(function(o) { return o.label.toLowerCase().includes(search.toLowerCase()); });
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button onClick={function() { setOpen(function(o) { return !o; }); }} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", background: selected.length > 0 ? C.brandBg : "#fff", border: "1px solid " + (selected.length > 0 ? C.brand : C.line), borderRadius: 8, fontSize: 13, color: selected.length > 0 ? C.brandDark : C.ink, fontWeight: 600, cursor: "pointer", fontFamily: FONT }}>
+        Filters{selected.length > 0 ? " (" + selected.length + ")" : ""} &#9662;
+      </button>
+      {open && (
+        <div style={{ position: "absolute", top: 42, left: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", width: 300, zIndex: 30 }}>
+          <div style={{ padding: "14px 18px", borderBottom: "1px solid " + C.line }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Filter by</div>
+          </div>
+          <div style={{ padding: "14px 18px" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Status</div>
+            <div style={{ border: "1px solid " + C.line, borderRadius: 8, padding: "8px 10px", marginBottom: 10, minHeight: 38, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+              {selected.map(function(k) {
+                const opt = STATUS_OPTIONS.find(function(o) { return o.key === k; });
+                if (!opt) return null;
+                return (
+                  <span key={k} style={{ background: C.brandBg, color: C.brandDarkText, fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                    {opt.label}
+                    <span onClick={function() { remove(k); }} style={{ cursor: "pointer", opacity: 0.6 }}>&times;</span>
+                  </span>
+                );
+              })}
+              <input type="text" placeholder={selected.length === 0 ? "Search status..." : ""} value={search} onChange={function(e) { setSearch(e.target.value); }} style={{ border: "none", outline: "none", fontSize: 12, color: C.muted, flex: 1, minWidth: 80, padding: "2px 4px", fontFamily: FONT }} />
+            </div>
+            <div style={{ border: "1px solid " + C.line, borderRadius: 8, overflow: "hidden" }}>
+              {filtered.map(function(o, idx) {
+                const isSel = selected.includes(o.key);
+                return (
+                  <div key={o.key} onClick={function() { toggle(o.key); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", fontSize: 13, color: C.ink, cursor: "pointer", borderTop: idx === 0 ? "none" : "1px solid " + C.line, background: isSel ? C.page : "#fff" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ color: isSel ? C.brand : "transparent", fontWeight: 700 }}>&#10003;</span>
+                      <span>{o.label}</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{ padding: "12px 18px", borderTop: "1px solid " + C.line, display: "flex", justifyContent: "space-between", gap: 10 }}>
+            <button onClick={clear} style={{ flex: 1, background: "transparent", border: "1px solid " + C.line, color: C.ink, fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 8, cursor: "pointer", fontFamily: FONT }}>Clear all</button>
+            <button onClick={apply} style={{ flex: 1, background: C.ink, color: "white", fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: FONT }}>Apply</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function RunPayroll() {
   const { payRunId } = useParams();
   const navigate = useNavigate();
@@ -57,6 +166,7 @@ export default function RunPayroll() {
   const [searchQuery, setSearchQuery] = useState("");
   const [openMenuId, setOpenMenuId] = useState(null);
   const [openPayMethodId, setOpenPayMethodId] = useState(null);
+  const [statusFilter, setStatusFilter] = useState([]);
 
   useEffect(() => {
     async function loadAll() {
@@ -70,10 +180,7 @@ export default function RunPayroll() {
 
         if (runData.pay_schedule_id) {
           const schedResp = await fetch(API + "/api/v1/payroll/schedules/" + runData.pay_schedule_id, { headers: authHeaders() });
-          if (schedResp.ok) {
-            const schedData = await schedResp.json();
-            setSchedule(schedData);
-          }
+          if (schedResp.ok) setSchedule(await schedResp.json());
         }
 
         const empResp = await fetch(API + "/api/v1/payroll/employees", { headers: authHeaders() });
@@ -103,151 +210,87 @@ export default function RunPayroll() {
           const setupComplete = e.setup_complete !== false;
           const payMethodRaw = (e.default_pay_method || e.pay_method || "direct_deposit").toString().toLowerCase();
           const payMethod = payMethodRaw.includes("cheque") || payMethodRaw.includes("check") ? "Cheque" : "Direct deposit";
-
           return {
-            id: eid,
-            name: name,
-            position: e.position_title || "",
+            id: eid, name: name, position: e.position_title || "",
             hourlyRate: rate ? Number(rate) : 0,
             regular: hoursRegularVal != null && hoursRegularVal > 0 ? String(hoursRegularVal) : "",
             statHoliday: hoursStatVal != null && hoursStatVal > 0 ? String(hoursStatVal) : "",
-            statAvgDaily: statAvgDaily,
-            payMethod: payMethod,
-            ready: setupComplete,
-            included: setupComplete,
+            statAvgDaily: statAvgDaily, payMethod: payMethod,
+            ready: setupComplete, included: setupComplete, skipped: false,
             memo: line.memo || "",
           };
         });
         setRows(mapped);
         setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
-      }
+      } catch (err) { setError(err.message); setLoading(false); }
     }
     loadAll();
   }, [payRunId]);
 
   function updateRow(id, field, value) {
-    setRows(function(rs) {
-      return rs.map(function(r) {
-        return r.id === id ? Object.assign({}, r, { [field]: value }) : r;
-      });
-    });
+    setRows(function(rs) { return rs.map(function(r) { return r.id === id ? Object.assign({}, r, { [field]: value }) : r; }); });
   }
-
   function toggleIncluded(id) {
-    setRows(function(rs) {
-      return rs.map(function(r) {
-        return r.id === id ? Object.assign({}, r, { included: !r.included }) : r;
-      });
-    });
+    setRows(function(rs) { return rs.map(function(r) { return r.id === id ? Object.assign({}, r, { included: !r.included }) : r; }); });
+  }
+  function skipFromRun(id) {
+    setRows(function(rs) { return rs.map(function(r) { return r.id === id ? Object.assign({}, r, { included: false, skipped: true }) : r; }); });
   }
 
   const filteredRows = useMemo(function() {
-    if (!searchQuery) return rows;
-    const q = searchQuery.toLowerCase();
-    return rows.filter(function(r) { return r.name.toLowerCase().includes(q); });
-  }, [rows, searchQuery]);
+    let list = rows;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(function(r) { return r.name.toLowerCase().includes(q); });
+    }
+    if (statusFilter.length > 0) {
+      list = list.filter(function(r) {
+        if (statusFilter.includes("in_crew") && r.included && r.ready) return true;
+        if (statusFilter.includes("skipped") && r.skipped) return true;
+        if (statusFilter.includes("not_ready") && !r.ready) return true;
+        if (statusFilter.includes("desks") && !r.included && r.ready) return true;
+        return false;
+      });
+    }
+    return list;
+  }, [rows, searchQuery, statusFilter]);
 
   const readyRows = rows.filter(function(r) { return r.ready; });
   const includedRows = rows.filter(function(r) { return r.included && r.ready; });
-  const needsHoursRows = readyRows.filter(function(r) {
-    return (parseFloat(r.regular) || 0) === 0 && (parseFloat(r.statHoliday) || 0) === 0;
-  });
-
-  const totalHours = includedRows.reduce(function(s, r) {
-    return s + (parseFloat(r.regular) || 0) + (parseFloat(r.statHoliday) || 0);
-  }, 0);
+  const needsHoursRows = readyRows.filter(function(r) { return (parseFloat(r.regular) || 0) === 0 && (parseFloat(r.statHoliday) || 0) === 0; });
+  const totalHours = includedRows.reduce(function(s, r) { return s + (parseFloat(r.regular) || 0) + (parseFloat(r.statHoliday) || 0); }, 0);
   const totalGross = includedRows.reduce(function(s, r) {
     const regular = parseFloat(r.regular) || 0;
     const stat = parseFloat(r.statHoliday) || 0;
-    const statPay = stat * (Number(r.statAvgDaily) / 8 || 0);
-    return s + (regular * r.hourlyRate) + statPay;
+    return s + (regular * r.hourlyRate) + (stat * (Number(r.statAvgDaily) / 8 || 0));
   }, 0);
 
   async function handleReview() {
     if (saving) return;
-    if (includedRows.length === 0) {
-      window.alert("No employees ready to pay. Add hours and mark employees as included.");
-      return;
-    }
-    setSaving(true);
-    setError("");
-
+    if (includedRows.length === 0) { window.alert("No employees ready to pay. Add hours and mark employees as included."); return; }
+    setSaving(true); setError("");
     try {
       const employeeInputs = includedRows.map(function(r) {
-        return {
-          employee_id: r.id,
-          hours: {
-            regular: parseFloat(r.regular) || 0,
-            stat_holiday: parseFloat(r.statHoliday) || 0,
-          },
-          bonus: 0,
-          commission: 0,
-          reimbursement: 0,
-        };
+        return { employee_id: r.id, hours: { regular: parseFloat(r.regular) || 0, stat_holiday: parseFloat(r.statHoliday) || 0 }, bonus: 0, commission: 0, reimbursement: 0 };
       });
-
       const resp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/calculate", {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({
-          employee_inputs: employeeInputs,
-          pay_periods_per_year: schedule ? schedule.periods_per_year : 26,
-          subnational: "AB",
-        }),
+        method: "POST", headers: authHeaders(),
+        body: JSON.stringify({ employee_inputs: employeeInputs, pay_periods_per_year: schedule ? schedule.periods_per_year : 26, subnational: "AB" }),
       });
-
-      if (!resp.ok) {
-        const errText = await resp.text();
-        throw new Error("Calculation failed: " + errText);
-      }
-
+      if (!resp.ok) throw new Error("Calculation failed: " + (await resp.text()));
       const runData = await resp.json();
       navigate("/payroll/run/" + payRunId + "/preview", {
-        state: {
-          calculation: {
-            employee_count: runData.employee_count,
-            total_gross: runData.total_gross,
-            total_deductions: runData.total_deductions,
-            total_net: runData.total_net,
-            stubs: runData.stubs || [],
-            source: "backend",
-          },
-        },
+        state: { calculation: { employee_count: runData.employee_count, total_gross: runData.total_gross, total_deductions: runData.total_deductions, total_net: runData.total_net, stubs: runData.stubs || [], source: "backend" } },
       });
-    } catch (err) {
-      setError(err.message);
-      setSaving(false);
-    }
+    } catch (err) { setError(err.message); setSaving(false); }
   }
 
-  function handleCancel() {
-    if (window.confirm("Cancel this pay run? Any unsaved changes will be lost.")) {
-      navigate("/payroll/overview");
-    }
-  }
+  function handleCancel() { if (window.confirm("Cancel this pay run? Any unsaved changes will be lost.")) navigate("/payroll/overview"); }
+  function handleSaveForLater() { navigate("/payroll/overview"); }
+  function handleAddEmployee() { navigate("/payroll/employees"); }
 
-  function handleSaveForLater() {
-    navigate("/payroll/overview");
-  }
-
-  if (loading) {
-    return (
-      <div style={{ maxWidth: "100%", margin: 0, padding: "28px 32px 90px", fontFamily: FONT }}>
-        <div style={{ padding: 40, color: C.muted }}>Loading payroll run...</div>
-      </div>
-    );
-  }
-
-  if (error && !payRun) {
-    return (
-      <div style={{ maxWidth: "100%", margin: 0, padding: "28px 32px 90px", fontFamily: FONT }}>
-        <div style={{ padding: 16, background: "#FCEBEB", borderRadius: 10, color: "#791F1F" }}>{error}</div>
-      </div>
-    );
-  }
+  if (loading) return <div style={{ padding: "28px 32px", fontFamily: FONT }}><div style={{ padding: 40, color: C.muted }}>Loading...</div></div>;
+  if (error && !payRun) return <div style={{ padding: "28px 32px", fontFamily: FONT }}><div style={{ padding: 16, background: "#FCEBEB", borderRadius: 10, color: "#791F1F" }}>{error}</div></div>;
 
   const gridCols = "30px 2fr 1.2fr 1.3fr 1.1fr 0.9fr 1.1fr 70px 1.3fr 40px";
 
@@ -303,46 +346,50 @@ export default function RunPayroll() {
         </div>
       )}
 
-      <div style={{ display: "flex", justifyContent: "flex-start", gap: 14, marginBottom: 22 }}>
-        <div style={{ border: "2px solid " + C.brand, borderRadius: 10, padding: "10px 16px", background: "#fff", width: 320 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Pay period</div>
-          <div style={{ border: "1px solid " + C.creamBorder, borderRadius: 6, background: C.cream, padding: "8px 14px" }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{fmtDateShort(payRun.pay_period_start)} to {fmtDateShort(payRun.pay_period_end)}</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14, marginBottom: 22 }}>
+        <div style={{ display: "flex", gap: 14 }}>
+          <div style={{ border: "2px solid " + C.brand, borderRadius: 10, padding: "10px 16px", background: "#fff", width: 320 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Pay period</div>
+            <div style={{ border: "1px solid " + C.creamBorder, borderRadius: 6, background: C.cream, padding: "8px 14px" }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{fmtDateShort(payRun.pay_period_start)} to {fmtDateShort(payRun.pay_period_end)}</div>
+            </div>
+            <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>Auto-filled from schedule</div>
           </div>
-          <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>Auto-filled from schedule</div>
-        </div>
-        <div style={{ border: "2px solid " + C.brand, borderRadius: 10, padding: "10px 16px", background: "#fff", width: 320 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Next pay date</div>
-          <div style={{ border: "1px solid " + C.creamBorder, borderRadius: 6, background: C.cream, padding: "8px 14px" }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{fmtDateWithWeekday(payRun.pay_date)}</div>
+          <div style={{ border: "2px solid " + C.brand, borderRadius: 10, padding: "10px 16px", background: "#fff", width: 320 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Next pay date</div>
+            <div style={{ border: "1px solid " + C.creamBorder, borderRadius: 6, background: C.cream, padding: "8px 14px" }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{fmtDateWithWeekday(payRun.pay_date)}</div>
+            </div>
+            <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>Auto-filled from schedule</div>
           </div>
-          <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>Auto-filled from schedule</div>
         </div>
+        <button onClick={handleAddEmployee} style={{ background: C.ink, color: "white", border: "none", padding: "12px 22px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, fontFamily: FONT }}>
+          <span style={{ fontSize: 16 }}>&#128100;+</span>
+          Add employee
+        </button>
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-        <button style={{ padding: "8px 14px", background: "#fff", border: "1px solid " + C.line, borderRadius: 8, fontSize: 13, color: C.ink, fontWeight: 600, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 6 }}>Filters &#9662;</button>
+        <FilterPopover value={statusFilter} onApply={function(v) { setStatusFilter(v); }} />
         <input type="text" placeholder="Search employees" value={searchQuery} onChange={function(e) { setSearchQuery(e.target.value); }} style={{ flex: 1, padding: "9px 14px", border: "1px solid " + C.line, borderRadius: 8, fontSize: 13, color: C.muted, fontFamily: FONT }} />
         <button style={{ padding: "8px 14px", background: "#fff", border: "1px solid " + C.line, borderRadius: 8, fontSize: 13, color: C.ink, fontWeight: 600, cursor: "pointer", fontFamily: FONT }}>Export</button>
       </div>
 
       <div style={{ border: "1px solid " + C.line, borderRadius: 12, background: "#fff", overflow: "visible" }}>
-        <div style={{ padding: "14px 20px", background: C.page, borderBottom: "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 18, fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 0.4 }}>
+        <div style={{ padding: "14px 20px", background: C.page, borderBottom: "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 18, fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 0.4, position: "relative" }}>
           <div></div>
           <div>EMPLOYEE &middot; {includedRows.length} OF {readyRows.length}</div>
-          <div style={{ textAlign: "right", cursor: "pointer" }}>REGULAR HOURS &#9662;</div>
-          <div style={{ textAlign: "right", cursor: "pointer" }}>STAT HOLIDAY HOURS &#9662;</div>
-          <div style={{ textAlign: "right", cursor: "pointer" }}>STAT PAY (AVG) &#9662;</div>
-          <div style={{ textAlign: "right", cursor: "pointer" }}>TOTAL HOURS &#9662;</div>
-          <div style={{ textAlign: "right", cursor: "pointer" }}>GROSS PAY &#9662;</div>
+          <ColumnHeader label="REGULAR HOURS" />
+          <ColumnHeader label="STAT HOLIDAY HOURS" />
+          <ColumnHeader label="STAT PAY (AVG)" />
+          <ColumnHeader label="TOTAL HOURS" />
+          <ColumnHeader label="GROSS PAY" />
           <div style={{ textAlign: "center" }}>MEMO</div>
-          <div style={{ cursor: "pointer" }}>PAY METHOD &#9662;</div>
+          <ColumnHeader label="PAY METHOD" align="left" />
           <div></div>
         </div>
 
-        {filteredRows.length === 0 && (
-          <div style={{ padding: 30, textAlign: "center", color: C.muted, fontSize: 14 }}>No employees found.</div>
-        )}
+        {filteredRows.length === 0 && <div style={{ padding: 30, textAlign: "center", color: C.muted, fontSize: 14 }}>No employees found.</div>}
 
         {filteredRows.map(function(r, idx) {
           const regular = parseFloat(r.regular) || 0;
@@ -385,11 +432,13 @@ export default function RunPayroll() {
               <div style={{ textAlign: "center", position: "relative" }}>
                 <button onClick={function() { setOpenMenuId(openMenuId === r.id ? null : r.id); }} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 18, color: C.muted, padding: 4 }}>&#8942;</button>
                 {openMenuId === r.id && (
-                  <div style={{ position: "absolute", top: 30, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 8, boxShadow: "0 6px 18px rgba(0,0,0,0.08)", width: 180, overflow: "hidden", zIndex: 10, textAlign: "left" }}>
+                  <div style={{ position: "absolute", top: 30, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", width: 200, overflow: "hidden", zIndex: 20, textAlign: "left" }}>
                     <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer" }} onClick={function() { setOpenMenuId(null); }}>Edit hours</div>
+                    <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { setOpenMenuId(null); }}>Edit paycheck</div>
                     <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { setOpenMenuId(null); }}>Add memo</div>
                     <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { navigate("/payroll/employees/" + r.id); }}>View profile</div>
                     <div style={{ padding: "10px 14px", fontSize: 13, color: C.danger, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { toggleIncluded(r.id); setOpenMenuId(null); }}>Skip this employee</div>
+                    <div style={{ padding: "10px 14px", fontSize: 13, color: C.danger, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { skipFromRun(r.id); setOpenMenuId(null); }}>Skip from payroll run</div>
                   </div>
                 )}
               </div>
@@ -398,11 +447,9 @@ export default function RunPayroll() {
         })}
       </div>
 
-      {error && (
-        <div style={{ padding: 12, background: "#FCEBEB", borderRadius: 8, color: "#791F1F", fontSize: 13, marginTop: 14 }}>{error}</div>
-      )}
+      {error && <div style={{ padding: 12, background: "#FCEBEB", borderRadius: 8, color: "#791F1F", fontSize: 13, marginTop: 14 }}>{error}</div>}
 
-      <div style={{ position: "fixed", bottom: 0, left: 240, right: 0, background: "#fff", borderTop: "1px solid " + C.line, padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 -2px 12px rgba(0,0,0,0.06)", zIndex: 20 }}>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#fff", borderTop: "1px solid " + C.line, padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 -2px 12px rgba(0,0,0,0.06)", zIndex: 20 }}>
         <button onClick={handleCancel} style={{ background: "transparent", border: "1px solid " + C.line, color: C.ink, fontSize: 14, fontWeight: 600, padding: "10px 20px", borderRadius: 10, cursor: "pointer", fontFamily: FONT }}>Cancel</button>
         <div style={{ display: "flex", gap: 12 }}>
           <button onClick={handleSaveForLater} style={{ background: "transparent", border: "1px solid " + C.line, color: C.ink, fontSize: 14, fontWeight: 600, padding: "10px 20px", borderRadius: 10, cursor: "pointer", fontFamily: FONT }}>Save for later</button>
