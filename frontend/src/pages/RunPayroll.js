@@ -463,10 +463,16 @@ export default function RunPayroll() {
                 <div style={{ fontSize: 12, color: C.muted }}>${r.hourlyRate.toFixed(2)}/hr {r.position ? "\u00b7 " + r.position : ""}</div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <input type="text" inputMode="decimal" value={focusedField === r.id + ":regular" || !r.regular ? r.regular : r.regular + "h"} onFocus={function() { setFocusedField(r.id + ":regular"); }} onBlur={function() { setFocusedField(null); }} onChange={function(e) { updateRow(r.id, "regular", e.target.value.replace(/h$/i, "")); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 90 })} />
+                <div style={{ position: "relative", display: "inline-block" }}>
+                  <input type="text" inputMode="decimal" value={r.regular} onChange={function(e) { updateRow(r.id, "regular", e.target.value.replace(/[^0-9.]/g, "")); }} disabled={!r.ready} placeholder="0" style={Object.assign({}, inputBox, { width: 90, paddingRight: 22 })} />
+                  <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: C.faint, pointerEvents: "none", fontFamily: FONT }}>h</span>
+                </div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <input type="text" inputMode="decimal" value={focusedField === r.id + ":statHoliday" || !r.statHoliday ? r.statHoliday : r.statHoliday + "h"} onFocus={function() { setFocusedField(r.id + ":statHoliday"); }} onBlur={function() { setFocusedField(null); }} onChange={function(e) { updateRow(r.id, "statHoliday", e.target.value.replace(/h$/i, "")); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 90 })} />
+                <div style={{ position: "relative", display: "inline-block" }}>
+                  <input type="text" inputMode="decimal" value={r.statHoliday} onChange={function(e) { updateRow(r.id, "statHoliday", e.target.value.replace(/[^0-9.]/g, "")); }} disabled={!r.ready} placeholder="0" style={Object.assign({}, inputBox, { width: 90, paddingRight: 22 })} />
+                  <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: C.faint, pointerEvents: "none", fontFamily: FONT }}>h</span>
+                </div>
               </div>
               <div style={{ textAlign: "right", position: "relative" }}>
                 <div style={{ position: "relative", display: "inline-block" }}>
