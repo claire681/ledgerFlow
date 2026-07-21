@@ -255,7 +255,7 @@ export default function RunPayroll() {
             hourlyRate: rate ? Number(rate) : 0,
             regular: hoursRegularVal != null && hoursRegularVal > 0 ? String(hoursRegularVal) : "",
             statHoliday: hoursStatVal != null && hoursStatVal > 0 ? String(hoursStatVal) : "",
-            statAvgDaily: statAvgDaily, payMethod: payMethod,
+            statAvgDaily: line.stat_pay_avg != null ? line.stat_pay_avg : "", payMethod: payMethod,
             ready: setupComplete, included: setupComplete, skipped: false,
             memo: line.memo || "",
           };
@@ -416,8 +416,8 @@ export default function RunPayroll() {
             <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>Auto-filled from schedule</div>
           </div>
         </div>
-        <button onClick={handleAddEmployee} style={{ background: C.ink, color: "white", border: "none", padding: "12px 22px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, fontFamily: FONT }}>
-          <span style={{ fontSize: 16 }}>&#128100;+</span>
+        <button onClick={handleAddEmployee} style={{ background: "#FFFFFF", color: C.brandDark, border: "1.5px solid " + C.brand, padding: "10.5px 22px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, fontFamily: FONT }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
           Add employee
         </button>
       </div>
@@ -449,7 +449,7 @@ export default function RunPayroll() {
           const stat = parseFloat(r.statHoliday) || 0;
           const total = regular + stat;
           const regPay = regular * r.hourlyRate;
-          const statPay = stat * (Number(r.statAvgDaily) / 8 || 0);
+          const statPay = stat * ((Number(r.statAvgDaily) || 0) / 8);
           const gross = regPay + statPay;
           const isLast = idx === filteredRows.length - 1;
           return (
@@ -469,8 +469,8 @@ export default function RunPayroll() {
               </div>
               <div style={{ textAlign: "right", position: "relative" }}>
                 <div style={{ position: "relative", display: "inline-block" }}>
-                  <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: C.faint, pointerEvents: "none" }}>$</span>
-                  <input type="text" inputMode="decimal" value={r.statAvgDaily ? String(r.statAvgDaily) : ""} onChange={function(e) { updateRow(r.id, "statAvgDaily", parseFloat(e.target.value) || 0); }} disabled={!r.ready} placeholder="0.00" style={Object.assign({}, inputBox, { width: 90, paddingLeft: 20 })} />
+                  <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: r.statAvgDaily === "" || r.statAvgDaily == null ? C.faint : C.ink, pointerEvents: "none", fontFamily: FONT }}>$</span>
+                  <input type="text" inputMode="decimal" value={r.statAvgDaily === "" || r.statAvgDaily == null ? "" : String(r.statAvgDaily)} onChange={function(e) { const v = e.target.value; updateRow(r.id, "statAvgDaily", v === "" ? "" : (parseFloat(v) || 0)); }} disabled={!r.ready} placeholder="0.00" style={Object.assign({}, inputBox, { width: 90, paddingLeft: 20 })} />
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
