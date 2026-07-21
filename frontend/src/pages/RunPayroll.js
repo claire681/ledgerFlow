@@ -11,6 +11,7 @@ const C = {
   brandBg: "#E1F5EE",
   brandDarkText: "#04342C",
   muted: "#1A2332",
+  faint: "#6B7280",
   line: "#E5E7EB",
   page: "#F8F9FA",
   cream: "#F1EFE8",
@@ -152,6 +153,45 @@ function FilterPopover(props) {
   );
 }
 
+function MemoPopover(props) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState(props.value || "");
+  const [applyAll, setApplyAll] = useState(false);
+  const ref = useRef(null);
+  useEffect(function() {
+    function onDoc(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener("mousedown", onDoc);
+    return function() { document.removeEventListener("mousedown", onDoc); };
+  }, []);
+  function save() { if (props.onSave) props.onSave(text, applyAll); setOpen(false); }
+  function clear() { setText(""); }
+  const hasMemo = !!props.value;
+  const remaining = 250 - text.length;
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <div onClick={function() { setOpen(function(o) { return !o; }); setText(props.value || ""); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, border: "1.5px solid " + (hasMemo ? C.brand : C.line), borderRadius: 6, background: hasMemo ? C.brandBg : "#fff", cursor: "pointer", color: hasMemo ? C.brandDark : C.muted, fontSize: 16, fontWeight: hasMemo ? 700 : 400 }}>+</div>
+      {open && (
+        <div style={{ position: "absolute", top: 32, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", width: 320, zIndex: 30, padding: "16px 18px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Memo</div>
+            <a onClick={clear} style={{ fontSize: 12, color: C.brandDark, fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}>Clear</a>
+          </div>
+          <textarea value={text} onChange={function(e) { setText(e.target.value.slice(0, 250)); }} placeholder="Write a memo for this employee..." maxLength={250} style={{ width: "100%", boxSizing: "border-box", minHeight: 80, padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 8, fontSize: 13, color: C.ink, fontFamily: FONT, resize: "vertical" }} />
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4, fontSize: 11, color: C.muted }}>{remaining} characters left</div>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, cursor: "pointer" }}>
+            <input type="checkbox" checked={applyAll} onChange={function(e) { setApplyAll(e.target.checked); }} style={{ width: 16, height: 16, accentColor: C.brand }} />
+            <span style={{ fontSize: 13, color: C.ink }}>Apply to all employees</span>
+          </label>
+          <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+            <button onClick={function() { setOpen(false); }} style={{ flex: 1, background: "transparent", border: "1px solid " + C.line, color: C.ink, fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 8, cursor: "pointer", fontFamily: FONT }}>Cancel</button>
+            <button onClick={save} style={{ flex: 1, background: C.ink, color: "white", fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: FONT }}>Save</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function RunPayroll() {
   const { payRunId } = useParams();
   const navigate = useNavigate();
@@ -236,6 +276,12 @@ export default function RunPayroll() {
   function skipFromRun(id) {
     setRows(function(rs) { return rs.map(function(r) { return r.id === id ? Object.assign({}, r, { included: false, skipped: true }) : r; }); });
   }
+  function saveMemo(id, text, applyAll) {
+    setRows(function(rs) { return rs.map(function(r) {
+      if (applyAll) return Object.assign({}, r, { memo: text });
+      return r.id === id ? Object.assign({}, r, { memo: text }) : r;
+    }); });
+  }
 
   const filteredRows = useMemo(function() {
     let list = rows;
@@ -292,10 +338,17 @@ export default function RunPayroll() {
   if (loading) return <div style={{ padding: "28px 32px", fontFamily: FONT }}><div style={{ padding: 40, color: C.muted }}>Loading...</div></div>;
   if (error && !payRun) return <div style={{ padding: "28px 32px", fontFamily: FONT }}><div style={{ padding: 16, background: "#FCEBEB", borderRadius: 10, color: "#791F1F" }}>{error}</div></div>;
 
-  const gridCols = "30px 2fr 1.2fr 1.3fr 1.1fr 0.9fr 1.1fr 70px 1.3fr 40px";
+  const gridCols = "30px 2fr 0.9fr 0.9fr 0.9fr 0.9fr 0.8fr 1fr 40px 1.1fr 40px";
+  const displayBox = { display: "inline-block", boxSizing: "border-box", padding: "6px 10px", border: "1px solid " + C.line, borderRadius: 6, fontSize: 13, textAlign: "right", color: C.faint, background: C.page, fontFamily: FONT, fontVariantNumeric: "tabular-nums" };
+  const inputBox = { boxSizing: "border-box", padding: "6px 10px", border: "1px solid " + C.line, borderRadius: 6, fontSize: 13, textAlign: "right", color: C.ink, fontFamily: FONT };
 
   return (
-    <div style={{ maxWidth: "100%", margin: 0, padding: "28px 32px 110px", fontFamily: FONT }}>
+    <>
+    <style>{`
+      .novala-page-scroll::-webkit-scrollbar { display: none; }
+      .novala-page-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+    `}</style>
+    <div className="novala-page-scroll" style={{ maxWidth: "100%", margin: 0, padding: "28px 32px 110px", fontFamily: FONT, overflowY: "auto", height: "100vh" }}>
 
       <div style={{ marginBottom: 22 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: C.brand, letterSpacing: "0.5px", marginBottom: 5 }}>PAYROLL</div>
@@ -376,13 +429,14 @@ export default function RunPayroll() {
       </div>
 
       <div style={{ border: "1px solid " + C.line, borderRadius: 12, background: "#fff", overflow: "visible" }}>
-        <div style={{ padding: "14px 20px", background: C.page, borderBottom: "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 18, fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 0.4, position: "relative" }}>
+        <div style={{ padding: "14px 20px", background: C.page, borderBottom: "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 14, fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 0.4, position: "relative" }}>
           <div></div>
           <div>EMPLOYEE &middot; {includedRows.length} OF {readyRows.length}</div>
           <ColumnHeader label="REGULAR HOURS" />
-          <ColumnHeader label="STAT HOLIDAY HOURS" />
+          <ColumnHeader label="REGULAR PAY" />
+          <ColumnHeader label="STAT HOURS" />
           <ColumnHeader label="STAT PAY (AVG)" />
-          <ColumnHeader label="TOTAL HOURS" />
+          <ColumnHeader label="TOTAL HRS" />
           <ColumnHeader label="GROSS PAY" />
           <div style={{ textAlign: "center" }}>MEMO</div>
           <ColumnHeader label="PAY METHOD" align="left" />
@@ -400,7 +454,7 @@ export default function RunPayroll() {
           const gross = regPay + statPay;
           const isLast = idx === filteredRows.length - 1;
           return (
-            <div key={r.id} id={"row-" + r.id} style={{ padding: "16px 20px", borderBottom: isLast ? "none" : "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 18, alignItems: "center", opacity: r.ready ? 1 : 0.5, position: "relative" }}>
+            <div key={r.id} id={"row-" + r.id} style={{ padding: "16px 20px", borderBottom: isLast ? "none" : "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 14, alignItems: "center", opacity: r.ready ? 1 : 0.5, position: "relative" }}>
               <div>
                 <input type="checkbox" checked={r.included} disabled={!r.ready} onChange={function() { toggleIncluded(r.id); }} style={{ width: 16, height: 16, accentColor: C.brand, cursor: r.ready ? "pointer" : "not-allowed" }} />
               </div>
@@ -409,16 +463,25 @@ export default function RunPayroll() {
                 <div style={{ fontSize: 12, color: C.muted }}>${r.hourlyRate.toFixed(2)}/hr {r.position ? "\u00b7 " + r.position : ""}</div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <input type="text" inputMode="decimal" value={r.regular} onChange={function(e) { updateRow(r.id, "regular", e.target.value); }} disabled={!r.ready} placeholder="0h" style={{ width: 60, padding: "6px 10px", border: "1px solid " + C.line, borderRadius: 6, fontSize: 13, textAlign: "right", color: C.ink, fontFamily: FONT }} />
+                <input type="text" inputMode="decimal" value={r.regular} onChange={function(e) { updateRow(r.id, "regular", e.target.value); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 60 })} />
               </div>
               <div style={{ textAlign: "right" }}>
-                <input type="text" inputMode="decimal" value={r.statHoliday} onChange={function(e) { updateRow(r.id, "statHoliday", e.target.value); }} disabled={!r.ready} placeholder="0h" style={{ width: 60, padding: "6px 10px", border: "1px solid " + C.line, borderRadius: 6, fontSize: 13, textAlign: "right", color: C.ink, fontFamily: FONT }} />
+                <div style={Object.assign({}, displayBox, { width: 70 })}>{regPay > 0 ? fmtMoney(regPay) : "$0.00"}</div>
               </div>
-              <div style={{ textAlign: "right", fontSize: 13, color: C.muted, fontVariantNumeric: "tabular-nums" }}>{fmtMoney(Number(r.statAvgDaily))}</div>
-              <div style={{ textAlign: "right", fontSize: 14, fontWeight: 600, color: C.ink, fontVariantNumeric: "tabular-nums" }}>{total.toFixed(2)}</div>
-              <div style={{ textAlign: "right", fontSize: 14, fontWeight: 600, color: C.ink, fontVariantNumeric: "tabular-nums" }}>{fmtMoney(gross)}</div>
+              <div style={{ textAlign: "right" }}>
+                <input type="text" inputMode="decimal" value={r.statHoliday} onChange={function(e) { updateRow(r.id, "statHoliday", e.target.value); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 60 })} />
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={Object.assign({}, displayBox, { width: 70 })}>{fmtMoney(Number(r.statAvgDaily))}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={Object.assign({}, displayBox, { width: 55 })}>{total > 0 ? total.toFixed(2) + "h" : "0h"}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={Object.assign({}, displayBox, { width: 80 })}>{fmtMoney(gross)}</div>
+              </div>
               <div style={{ textAlign: "center" }}>
-                <span title={r.memo || "Add memo"} style={{ fontSize: 16, color: r.memo ? C.brand : C.muted, cursor: "pointer" }}>&#128172;</span>
+                <MemoPopover value={r.memo} onSave={function(text, applyAll) { saveMemo(r.id, text, applyAll); }} />
               </div>
               <div style={{ position: "relative" }}>
                 <span onClick={function() { setOpenPayMethodId(openPayMethodId === r.id ? null : r.id); }} style={{ background: r.payMethod === "Cheque" ? C.amberBg : C.brandBg, color: r.payMethod === "Cheque" ? C.amberText : C.brandDarkText, fontSize: 12, padding: "5px 12px", borderRadius: 6, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>{r.payMethod} &#9662;</span>
@@ -461,5 +524,6 @@ export default function RunPayroll() {
       </div>
 
     </div>
+    </>
   );
 }
