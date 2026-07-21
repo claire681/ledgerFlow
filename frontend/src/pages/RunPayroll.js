@@ -463,16 +463,10 @@ export default function RunPayroll() {
                 <div style={{ fontSize: 12, color: C.muted }}>${r.hourlyRate.toFixed(2)}/hr {r.position ? "\u00b7 " + r.position : ""}</div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ position: "relative", display: "inline-block" }}>
-                  <input type="text" inputMode="decimal" value={r.regular} onChange={function(e) { updateRow(r.id, "regular", e.target.value.replace(/[^0-9.]/g, "")); }} disabled={!r.ready} placeholder="0" style={Object.assign({}, inputBox, { width: 90, paddingRight: 26 })} />
-                  <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: r.regular ? C.ink : C.faint, pointerEvents: "none", fontFamily: FONT }}>h</span>
-                </div>
+                <input type="text" inputMode="decimal" value={r.regular ? r.regular + "h" : ""} onChange={function(e) { const digits = e.target.value.replace(/[^0-9.]/g, ""); updateRow(r.id, "regular", digits); }} onKeyDown={function(e) { if (e.key === "ArrowRight" || e.key === "End") { const inp = e.target; setTimeout(function() { const pos = inp.value.length - (r.regular ? 1 : 0); inp.setSelectionRange(pos, pos); }, 0); } }} onClick={function(e) { const inp = e.target; const pos = inp.value.length - (r.regular ? 1 : 0); inp.setSelectionRange(pos, pos); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 90 })} />
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ position: "relative", display: "inline-block" }}>
-                  <input type="text" inputMode="decimal" value={r.statHoliday} onChange={function(e) { updateRow(r.id, "statHoliday", e.target.value.replace(/[^0-9.]/g, "")); }} disabled={!r.ready} placeholder="0" style={Object.assign({}, inputBox, { width: 90, paddingRight: 26 })} />
-                  <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: r.statHoliday ? C.ink : C.faint, pointerEvents: "none", fontFamily: FONT }}>h</span>
-                </div>
+                <input type="text" inputMode="decimal" value={r.statHoliday ? r.statHoliday + "h" : ""} onChange={function(e) { const digits = e.target.value.replace(/[^0-9.]/g, ""); updateRow(r.id, "statHoliday", digits); }} onKeyDown={function(e) { if (e.key === "ArrowRight" || e.key === "End") { const inp = e.target; setTimeout(function() { const pos = inp.value.length - (r.statHoliday ? 1 : 0); inp.setSelectionRange(pos, pos); }, 0); } }} onClick={function(e) { const inp = e.target; const pos = inp.value.length - (r.statHoliday ? 1 : 0); inp.setSelectionRange(pos, pos); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 90 })} />
               </div>
               <div style={{ textAlign: "right", position: "relative" }}>
                 <div style={{ position: "relative", display: "inline-block" }}>
