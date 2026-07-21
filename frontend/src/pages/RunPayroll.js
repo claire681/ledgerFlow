@@ -207,6 +207,7 @@ export default function RunPayroll() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [openPayMethodId, setOpenPayMethodId] = useState(null);
   const [statusFilter, setStatusFilter] = useState([]);
+  const [focusedField, setFocusedField] = useState(null);
 
   useEffect(() => {
     async function loadAll() {
@@ -433,9 +434,9 @@ export default function RunPayroll() {
           <div></div>
           <div>EMPLOYEE &middot; {includedRows.length} OF {readyRows.length}</div>
           <ColumnHeader label="REGULAR HOURS" />
-          <ColumnHeader label="STAT HOURS" />
+          <ColumnHeader label="STAT HOLIDAY HOURS" />
           <ColumnHeader label="STAT PAY (AVG)" />
-          <ColumnHeader label="TOTAL HRS" />
+          <ColumnHeader label="TOTAL HOURS" />
           <ColumnHeader label="GROSS PAY" />
           <div style={{ textAlign: "center" }}>MEMO</div>
           <ColumnHeader label="PAY METHOD" align="left" />
@@ -462,10 +463,10 @@ export default function RunPayroll() {
                 <div style={{ fontSize: 12, color: C.muted }}>${r.hourlyRate.toFixed(2)}/hr {r.position ? "\u00b7 " + r.position : ""}</div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <input type="text" inputMode="decimal" value={r.regular} onChange={function(e) { updateRow(r.id, "regular", e.target.value); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 90 })} />
+                <input type="text" inputMode="decimal" value={focusedField === r.id + ":regular" || !r.regular ? r.regular : r.regular + "h"} onFocus={function() { setFocusedField(r.id + ":regular"); }} onBlur={function() { setFocusedField(null); }} onChange={function(e) { updateRow(r.id, "regular", e.target.value.replace(/h$/i, "")); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 90 })} />
               </div>
               <div style={{ textAlign: "right" }}>
-                <input type="text" inputMode="decimal" value={r.statHoliday} onChange={function(e) { updateRow(r.id, "statHoliday", e.target.value); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 90 })} />
+                <input type="text" inputMode="decimal" value={focusedField === r.id + ":statHoliday" || !r.statHoliday ? r.statHoliday : r.statHoliday + "h"} onFocus={function() { setFocusedField(r.id + ":statHoliday"); }} onBlur={function() { setFocusedField(null); }} onChange={function(e) { updateRow(r.id, "statHoliday", e.target.value.replace(/h$/i, "")); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 90 })} />
               </div>
               <div style={{ textAlign: "right", position: "relative" }}>
                 <div style={{ position: "relative", display: "inline-block" }}>
