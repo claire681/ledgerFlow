@@ -338,9 +338,9 @@ export default function RunPayroll() {
   if (loading) return <div style={{ padding: "28px 32px", fontFamily: FONT }}><div style={{ padding: 40, color: C.muted }}>Loading...</div></div>;
   if (error && !payRun) return <div style={{ padding: "28px 32px", fontFamily: FONT }}><div style={{ padding: 16, background: "#FCEBEB", borderRadius: 10, color: "#791F1F" }}>{error}</div></div>;
 
-  const gridCols = "30px 2fr 1fr 1fr 1fr 1fr 1fr 44px 1fr 40px";
-  const displayBox = { display: "block", boxSizing: "border-box", width: "100%", padding: "6px 10px", border: "1px solid " + C.line, borderRadius: 6, fontSize: 13, textAlign: "right", color: C.faint, background: C.page, fontFamily: FONT, fontVariantNumeric: "tabular-nums" };
-  const inputBox = { boxSizing: "border-box", width: "100%", padding: "6px 10px", border: "1px solid " + C.line, borderRadius: 6, fontSize: 13, textAlign: "right", color: C.ink, fontFamily: FONT };
+  const gridCols = "30px 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 40px";
+  const displayBox = { display: "inline-block", boxSizing: "border-box", padding: "6px 10px", border: "1px solid " + C.line, borderRadius: 6, fontSize: 13, textAlign: "right", color: C.faint, background: C.page, fontFamily: FONT, fontVariantNumeric: "tabular-nums" };
+  const inputBox = { boxSizing: "border-box", padding: "6px 10px", border: "1px solid " + C.line, borderRadius: 6, fontSize: 13, textAlign: "right", color: C.ink, fontFamily: FONT };
 
   return (
     <>
@@ -462,19 +462,22 @@ export default function RunPayroll() {
                 <div style={{ fontSize: 12, color: C.muted }}>${r.hourlyRate.toFixed(2)}/hr {r.position ? "\u00b7 " + r.position : ""}</div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <input type="text" inputMode="decimal" value={r.regular} onChange={function(e) { updateRow(r.id, "regular", e.target.value); }} disabled={!r.ready} placeholder="0h" style={inputBox} />
+                <input type="text" inputMode="decimal" value={r.regular} onChange={function(e) { updateRow(r.id, "regular", e.target.value); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 90 })} />
               </div>
               <div style={{ textAlign: "right" }}>
-                <input type="text" inputMode="decimal" value={r.statHoliday} onChange={function(e) { updateRow(r.id, "statHoliday", e.target.value); }} disabled={!r.ready} placeholder="0h" style={inputBox} />
+                <input type="text" inputMode="decimal" value={r.statHoliday} onChange={function(e) { updateRow(r.id, "statHoliday", e.target.value); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 90 })} />
+              </div>
+              <div style={{ textAlign: "right", position: "relative" }}>
+                <div style={{ position: "relative", display: "inline-block" }}>
+                  <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: C.faint, pointerEvents: "none" }}>$</span>
+                  <input type="text" inputMode="decimal" value={r.statAvgDaily ? String(r.statAvgDaily) : ""} onChange={function(e) { updateRow(r.id, "statAvgDaily", parseFloat(e.target.value) || 0); }} disabled={!r.ready} placeholder="0.00" style={Object.assign({}, inputBox, { width: 90, paddingLeft: 20 })} />
+                </div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <input type="text" inputMode="decimal" value={r.statAvgDaily ? String(r.statAvgDaily) : ""} onChange={function(e) { updateRow(r.id, "statAvgDaily", parseFloat(e.target.value) || 0); }} disabled={!r.ready} placeholder="$0.00" style={inputBox} />
+                <div style={Object.assign({}, displayBox, { width: 90 })}>{total > 0 ? (total % 1 === 0 ? String(total) : total.toFixed(2)) + "h" : "0h"}</div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={displayBox}>{total > 0 ? (total % 1 === 0 ? String(total) : total.toFixed(2)) + "h" : "0h"}</div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={displayBox}>{fmtMoney(gross)}</div>
+                <div style={Object.assign({}, displayBox, { width: 90 })}>{fmtMoney(gross)}</div>
               </div>
               <div style={{ textAlign: "center" }}>
                 <MemoPopover value={r.memo} onSave={function(text, applyAll) { saveMemo(r.id, text, applyAll); }} />
