@@ -44,7 +44,8 @@ function periodBadgeText(freq) {
 
 export default function PaySchedules() {
     const navigate = useNavigate();
-    const [schedules, setSchedules] = useState([]);
+    const [overrideModal, setOverrideModal] = useState(null);
+  const [schedules, setSchedules] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [modalOpen, setModalOpen] = useState(false);
@@ -299,6 +300,7 @@ export default function PaySchedules() {
                                             padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600
                                         }}>
                                             {formatDate(schedule.next_pay_date)}
+                                <button onClick={(e) => { e.stopPropagation(); setOverrideModal(schedule); }} style={{ marginLeft: 10, background: "#FFFFFF", color: "#0F6E56", border: "1.5px solid #15A08C", padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Override</button>
                                         </div>
                                     )}
                                 </div>
@@ -352,6 +354,111 @@ export default function PaySchedules() {
                     onClose={handleModalClose}
                 />
             )}
-        </div>
+        
+      {overrideModal && (
+        <OverrideDateModal
+          schedule={overrideModal}
+          onClose={() => setOverrideModal(null)}
+          onSaved={async () => {
+            setOverrideModal(null);
+            // Reload schedules
+            try {
+              const r = await fetch(API + "/api/v1/payroll/schedules", { headers: authHeaders() });
+              if (r.ok) {
+                const data = await r.json();
+                setSchedules(Array.isArray(data) ? data : []);
+              }
+            } catch(e) { console.error(e); }
+          }}
+        />
+      )}
+</div>
     );
+}
+
+// ============================================================
+// OVERRIDE DATE MODAL
+// ============================================================
+function OverrideDateModal({ schedule, onClose, onSaved }) {
+  const [newDate, setNewDate] = React.useState(schedule.next_pay_date || "");
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState("");
+  const [draftCount, setDraftCount] = React.useState(null);
+
+  React.useEffect(function() {
+    async function checkDrafts() {
+      try {
+        const r = await fetch(API + "/api/v1/payroll/runs?status=draft", { headers: authHeaders() });
+        if (r.ok) {
+          const data = await r.json();
+          setDraftCount(Array.isArray(data) ? data.length : 0);
+        }
+      } catch (e) {
+        setDraftCount(0);
+      }
+    }
+    checkDrafts();
+  }, []);
+
+  async function handleSave() {
+    if (!newDate) { setError("Please choose a date"); return; }
+    setSaving(true);
+    setError("");
+    try {
+      const r = await fetch(API + "/api/v1/payroll/schedules/" + schedule.id, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({ first_pay_date: newDate })
+      });
+      if (!r.ok) {
+        const txt = await r.text();
+        throw new Error("Save failed: " + txt);
+      }
+      onSaved();
+    } catch (e) {
+      setError(e.message);
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 100, display: "grid", placeItems: "center", padding: 20 }} onClick={onClose}>
+      <div onClick={function(e) { e.stopPropagation(); }} style={{ background: "#fff", borderRadius: 14, padding: 24, maxWidth: 460, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: "#0E1A1A", marginBottom: 6 }}>Override next pay date</div>
+        <div style={{ fontSize: 13, color: "#1A2332", marginBottom: 18, lineHeight: 1.5 }}>
+          Manually set the next pay date. Useful for corrections, off-cycle payroll, or testing specific periods.
+        </div>
+
+        <div style={{ background: "#FAEEDA", border: "1px solid #F0D89A", borderRadius: 8, padding: "12px 14px", marginBottom: 18, display: "flex", gap: 10, alignItems: "flex-start" }}>
+          <div style={{ color: "#854F0B", fontSize: 16, fontWeight: 700 }}>&#9888;</div>
+          <div style={{ fontSize: 12, color: "#854F0B", lineHeight: 1.5 }}>
+            This shifts the schedule anchor. Following pay dates will follow from this new date using the same frequency. Finalized pay runs are not affected.
+          </div>
+        </div>
+
+        {draftCount !== null && draftCount > 0 && (
+          <div style={{ background: "#FCE9E9", border: "1px solid #F0C4C4", borderRadius: 8, padding: "12px 14px", marginBottom: 18, display: "flex", gap: 10, alignItems: "flex-start" }}>
+            <div style={{ color: "#A32D2D", fontSize: 16, fontWeight: 700 }}>&#9888;</div>
+            <div style={{ fontSize: 12, color: "#A32D2D", lineHeight: 1.5 }}>
+              You have {draftCount} draft pay run{draftCount === 1 ? "" : "s"}. They may become inconsistent after this change. Review the drafts page before saving.
+            </div>
+          </div>
+        )}
+
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#1A2332", letterSpacing: 0.3, textTransform: "uppercase", marginBottom: 8 }}>NEW NEXT PAY DATE</label>
+          <input type="date" value={newDate} onChange={function(e) { setNewDate(e.target.value); }} style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", border: "1px solid #E5E7EB", borderRadius: 8, fontSize: 14, color: "#0E1A1A", fontFamily: "inherit" }} />
+        </div>
+
+        {error && (
+          <div style={{ background: "#FCE9E9", color: "#A32D2D", padding: "10px 12px", borderRadius: 8, fontSize: 12, marginBottom: 14 }}>{error}</div>
+        )}
+
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+          <button onClick={onClose} disabled={saving} style={{ background: "transparent", border: "1px solid #E5E7EB", color: "#0E1A1A", padding: "10px 18px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1 }}>Cancel</button>
+          <button onClick={handleSave} disabled={saving} style={{ background: "#0E1A1A", color: "white", border: "none", padding: "10px 18px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1 }}>{saving ? "Saving..." : "Save override"}</button>
+        </div>
+      </div>
+    </div>
+  );
 }
