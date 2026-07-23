@@ -267,7 +267,7 @@ export default function RunPayroll() {
         const empData = await empResp.json();
         const empArr = Array.isArray(empData) ? empData : (empData.employees || []);
 
-        const linesResp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/lines", { headers: authHeaders() });
+        const linesResp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/stubs", { headers: authHeaders() });
         let lines = [];
         if (linesResp.ok) {
           const linesData = await linesResp.json();
