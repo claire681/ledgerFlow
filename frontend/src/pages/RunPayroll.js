@@ -204,6 +204,14 @@ export default function RunPayroll() {
   const [payRun, setPayRun] = useState(null);
   const [schedule, setSchedule] = useState(null);
   const [rows, setRows] = useState([]);
+  function stripHourZeros(val) {
+    if (val == null || val === "") return "";
+    var s = String(val);
+    if (s.indexOf(".") === -1) return s;
+    // Remove trailing zeros and trailing dot: "40.00" -> "40", "40.50" -> "40.5"
+    s = s.replace(/\.?0+$/, "");
+    return s === "" ? "0" : s;
+  }
   const saveTimerRef = useRef(null);
   const latestRowsRef = useRef([]);
 
@@ -283,8 +291,8 @@ export default function RunPayroll() {
           const last = e.last_name || "";
           const name = (last && first) ? (last + ", " + first) : (first || last || "Unnamed");
           const rate = e.hourly_rate || e.pay_rate || e.rate;
-          const hoursRegularVal = line.hours_regular;
-          const hoursStatVal = line.hours_stat_holiday;
+          const hoursRegularVal = stripHourZeros(line.hours_regular);
+          const hoursStatVal = stripHourZeros(line.hours_stat_holiday);
           const statAvgDaily = e.stat_pay_avg_daily || (rate ? Number(rate) * 8 : 0);
           const setupComplete = e.setup_complete !== false;
           const payMethodRaw = (e.default_pay_method || e.pay_method || "direct_deposit").toString().toLowerCase();
