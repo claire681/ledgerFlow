@@ -62,15 +62,6 @@ function ColumnHeader(props) {
   }, []);
   const showArrow = hover || open;
 
-  useEffect(function() {
-    return function() {
-      if (saveTimerRef.current) {
-        clearTimeout(saveTimerRef.current);
-        saveHoursDraft(payRunId, latestRowsRef.current);
-      }
-    };
-  }, [payRunId]);
-
   return (
     <div ref={ref} onMouseEnter={function() { setHover(true); }} onMouseLeave={function() { setHover(false); }} style={{ textAlign: props.align || "right", cursor: "pointer", position: "relative", userSelect: "none" }} onClick={function() { setOpen(function(o) { return !o; }); }}>
       <span>{props.label}</span>
@@ -241,6 +232,15 @@ export default function RunPayroll() {
       saveHoursDraft(runId, latestRowsRef.current);
     }, 1000);
   }
+
+  useEffect(function() {
+    return function() {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveHoursDraft(payRunId, latestRowsRef.current);
+      }
+    };
+  }, [payRunId]);
   const [searchQuery, setSearchQuery] = useState("");
   const [openMenuId, setOpenMenuId] = useState(null);
   const [openPayMethodId, setOpenPayMethodId] = useState(null);
