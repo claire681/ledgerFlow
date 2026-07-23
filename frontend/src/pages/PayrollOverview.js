@@ -118,7 +118,45 @@ export default function PayrollOverview() {
           if (finalized.length > 0) setLastRun(finalized[0]);
         }
         setAutoPayroll(localStorage.getItem("novala_auto_payroll") === "true");
-        setAttentionItems([{ id: "fed_tax", icon: "red", title: "Pay federal taxes", desc: "Due 14 Jul 2026", action: "Pay", onClick: () => navigate("/payroll/settings") }]);
+        (async function loadPd7aAttention() {
+      try {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1;
+        const resp = await fetch(API_URL + "/api/v1/payroll/taxes/pd7a?year=" + year + "&month=" + month, { headers: authHeaders() });
+        if (!resp.ok) { setAttentionItems([]); return; }
+        const data = await resp.json();
+        const amount = Number(data.current_payment || 0);
+        if (amount <= 0) { setAttentionItems([]); return; }
+        const dueDateStr = data.due_date || null;
+        let dueDate = null;
+        if (dueDateStr) { dueDate = new Date(dueDateStr + (dueDateStr.length === 10 ? "T00:00:00" : "")); }
+        const daysUntil = dueDate ? Math.floor((dueDate.getTime() - Date.now()) / 86400000) : null;
+        let urgency = "normal";
+        if (daysUntil !== null) {
+          if (daysUntil < 0) urgency = "overdue";
+          else if (daysUntil <= 2) urgency = "urgent";
+          else if (daysUntil <= 7) urgency = "approaching";
+        }
+        const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+        const monthName = monthNames[month - 1];
+        const dueDisplay = dueDate ? dueDate.toLocaleDateString("en-CA", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }) : "";
+        setAttentionItems([{
+          id: "fed_tax",
+          icon: urgency === "urgent" || urgency === "overdue" ? "red" : "amber",
+          title: "Pay federal taxes for " + monthName + " " + year,
+          amount: amount,
+          dueDate: dueDisplay,
+          daysUntil: daysUntil,
+          urgency: urgency,
+          action: urgency === "urgent" || urgency === "overdue" ? "Pay now" : "Pay",
+          onClick: function() { navigate("/payroll/taxes/payments"); }
+        }]);
+      } catch (e) {
+        console.error("Failed to load PD7A", e);
+        setAttentionItems([]);
+      }
+    })();
       } catch (err) { console.error("[PayrollOverview] load error:", err); }
       finally { setLoading(false); }
     };
@@ -378,7 +416,7 @@ function AttentionItem({ item, isLast, onMarkDone }) {
       <div style={{ width: 38, height: 38, borderRadius: 10, display: "grid", placeItems: "center", flex: "0 0 38px", background: ic.bg, color: ic.fg }}><Icon size={19} /></div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>{item.title}</div>
-        <div style={{ fontSize: 12.5, color: C.muted }}>{item.desc}</div>
+        <div style={{ fontSize: 12.5, color: C.muted }}>{item.amount ? (<React.Fragment><span style={{ color: "#0E1A1A", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>${Number(item.amount).toFixed(2)}</span><span style={{ color: "#1A2332" }}> {item.urgency === "overdue" ? "was due" : "due"} </span><span style={{ color: item.urgency === "urgent" || item.urgency === "overdue" ? "#A32D2D" : item.urgency === "approaching" ? "#854F0B" : "#1A2332", fontWeight: item.urgency === "normal" ? 600 : 700 }}>{item.dueDate}{item.daysUntil !== null && item.daysUntil !== undefined ? (item.daysUntil < 0 ? " · " + Math.abs(item.daysUntil) + " day" + (Math.abs(item.daysUntil) === 1 ? "" : "s") + " ago" : item.daysUntil === 0 ? " · today" : item.daysUntil === 1 ? " · tomorrow" : item.urgency === "approaching" ? " · " + item.daysUntil + " days" : "") : ""}</span></React.Fragment>) : item.desc}</div>
       </div>
       <button onClick={item.onClick || onMarkDone} style={{ background: "#fff", color: C.ink, border: "1px solid " + C.line, borderRadius: 9, padding: "8px 16px", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: FONT }}>{item.action}</button>
     </div>
