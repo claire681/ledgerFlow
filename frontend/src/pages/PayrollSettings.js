@@ -56,7 +56,7 @@ const IconClipboardSign = (props) => (
 
 const SECTIONS = [
   { id: "company", group: "Setup", label: "Company details", Icon: IconBriefcase },
-  { id: "schedule", group: "Setup", label: "Pay schedule", Icon: IconCalendarCheck },
+  { id: "schedule", group: "Setup", label: "Default pay schedule", Icon: IconCalendarCheck },
   { id: "tax", group: "Setup", label: "Tax registration", Icon: IconReceipt },
   { id: "bank", group: "Setup", label: "Bank account", Icon: IconBankColumns },
   { id: "items", group: "Payroll items", label: "Pay types & deductions", Icon: IconStackedCoins },

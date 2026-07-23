@@ -68,6 +68,7 @@ export default function PayrollOverview() {
   const [paySchedule, setPaySchedule] = useState(null);
   const [lastRun, setLastRun] = useState(null);
   const [autoPayroll, setAutoPayroll] = useState(false);
+  const [draftsCount, setDraftsCount] = useState(0);
   const [attentionItems, setAttentionItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [attentionCollapsed, setAttentionCollapsed] = useState(false);
@@ -78,6 +79,19 @@ export default function PayrollOverview() {
   const [showGuide, setShowGuide] = useState(false);
   const [showThingsNeeded, setShowThingsNeeded] = useState(false);
   const [showSettingUp, setShowSettingUp] = useState(false);
+
+  useEffect(() => {
+    async function loadDraftsCount() {
+      try {
+        const r = await fetch(API_URL + "/api/v1/payroll/runs?status=draft", { headers: authHeaders() });
+        if (r.ok) {
+          const data = await r.json();
+          setDraftsCount(Array.isArray(data) ? data.length : 0);
+        }
+      } catch (e) { console.error("Failed to load drafts count", e); }
+    }
+    loadDraftsCount();
+  }, []);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -158,11 +172,18 @@ export default function PayrollOverview() {
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <h1 style={{ fontSize: 26, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em" }}>Payroll overview</h1>
+          <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={() => navigate("/payroll/schedules")} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", color: C.ink, border: "1px solid " + C.line, borderRadius: 9, padding: "8px 14px", fontWeight: 600, fontSize: 13.5, cursor: "pointer", fontFamily: FONT, transition: "0.12s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.teal; e.currentTarget.style.color = C.tealInk; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.line; e.currentTarget.style.color = C.ink; }}>
+            <Calendar size={15} /> Pay schedules
+          </button>
           <button onClick={() => navigate("/payroll/settings")} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", color: C.ink, border: "1px solid " + C.line, borderRadius: 9, padding: "8px 14px", fontWeight: 600, fontSize: 13.5, cursor: "pointer", fontFamily: FONT, transition: "0.12s" }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.teal; e.currentTarget.style.color = C.tealInk; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.line; e.currentTarget.style.color = C.ink; }}>
             <Settings size={15} /> Payroll settings
           </button>
+          </div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 22 }}>
@@ -240,6 +261,19 @@ export default function PayrollOverview() {
               </div>
               <button onClick={() => navigate("/payroll/settings")} style={{ background: C.teal, color: "#fff", padding: "12px 22px", border: "none", borderRadius: 11, fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: FONT, boxShadow: "0 2px 8px rgba(21,160,140,0.28)" }}>Set up pay schedule</button>
             </div>
+          </div>
+        )}
+
+        {draftsCount > 0 && (
+          <div onClick={() => navigate("/payroll/drafts")} style={{ background: C.amberSoft || "#FBF1DD", border: "1px solid " + (C.amber ? C.amber + "40" : "#F4E0B0"), borderRadius: 12, padding: "14px 18px", marginBottom: 22, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, cursor: "pointer" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: "#F4E0B0", color: "#854F0B", display: "grid", placeItems: "center", fontSize: 18 }}>&#128221;</div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>You have {draftsCount} draft pay run{draftsCount === 1 ? "" : "s"}</div>
+                <div style={{ fontSize: 12, color: "#854F0B" }}>Auto-delete after 7 days</div>
+              </div>
+            </div>
+            <button onClick={(e) => { e.stopPropagation(); navigate("/payroll/drafts"); }} style={{ background: C.ink, color: "white", border: "none", padding: "9px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: FONT }}>View drafts &rarr;</button>
           </div>
         )}
 
