@@ -61,6 +61,16 @@ function ColumnHeader(props) {
     return function() { document.removeEventListener("mousedown", onDoc); };
   }, []);
   const showArrow = hover || open;
+
+  useEffect(function() {
+    return function() {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveHoursDraft(payRunId, latestRowsRef.current);
+      }
+    };
+  }, [payRunId]);
+
   return (
     <div ref={ref} onMouseEnter={function() { setHover(true); }} onMouseLeave={function() { setHover(false); }} style={{ textAlign: props.align || "right", cursor: "pointer", position: "relative", userSelect: "none" }} onClick={function() { setOpen(function(o) { return !o; }); }}>
       <span>{props.label}</span>
@@ -203,6 +213,34 @@ export default function RunPayroll() {
   const [payRun, setPayRun] = useState(null);
   const [schedule, setSchedule] = useState(null);
   const [rows, setRows] = useState([]);
+  const saveTimerRef = useRef(null);
+  const latestRowsRef = useRef([]);
+
+  function saveHoursDraft(runId, rowsToSave) {
+    if (!runId) return;
+    const entries = (rowsToSave || []).map(function(r) {
+      return {
+        employee_id: r.id,
+        hours_regular: parseFloat(r.regular) || 0,
+        hours_stat_holiday: parseFloat(r.statHoliday) || 0,
+        stat_pay_amount: parseFloat(r.statAvgDaily) || 0,
+        memo: r.memo || null,
+      };
+    });
+    fetch(API + "/api/v1/payroll/runs/" + runId + "/hours", {
+      method: "PATCH",
+      headers: authHeaders(),
+      body: JSON.stringify({ entries: entries })
+    }).catch(function(e) { console.error("Autosave failed", e); });
+  }
+
+  function scheduleAutosave(runId, currentRows) {
+    latestRowsRef.current = currentRows;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(function() {
+      saveHoursDraft(runId, latestRowsRef.current);
+    }, 1000);
+  }
   const [searchQuery, setSearchQuery] = useState("");
   const [openMenuId, setOpenMenuId] = useState(null);
   const [openPayMethodId, setOpenPayMethodId] = useState(null);
@@ -269,7 +307,11 @@ export default function RunPayroll() {
   }, [payRunId]);
 
   function updateRow(id, field, value) {
-    setRows(function(rs) { return rs.map(function(r) { return r.id === id ? Object.assign({}, r, { [field]: value }) : r; }); });
+    setRows(function(rs) {
+      const next = rs.map(function(r) { return r.id === id ? Object.assign({}, r, { [field]: value }) : r; });
+      scheduleAutosave(payRunId, next);
+      return next;
+    });
   }
   function toggleIncluded(id) {
     setRows(function(rs) { return rs.map(function(r) { return r.id === id ? Object.assign({}, r, { included: !r.included }) : r; }); });
