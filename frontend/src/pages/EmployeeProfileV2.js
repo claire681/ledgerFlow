@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import BasePayModal from "../components/modals/BasePayModal";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
@@ -72,6 +73,7 @@ function buildSections(country) {
       { k: "transit", l: "Transit number", t: "text", showIf: function(v) { return v.method === "Direct deposit"; } },
       { k: "account", l: "Account number", t: "text", showIf: function(v) { return v.method === "Direct deposit"; } },
     ]},
+    { id: "basepay", title: "Base pay", icon: DollarSign, required: true, isCustomSection: true, fields: [] },
     { id: "compensation", title: "Compensation", icon: DollarSign, required: true, isCustomSection: true, fields: [] },
     { id: "timeoff", title: "Time off", icon: Calendar, fields: [
       { k: "vacationPolicy", l: "Vacation policy", t: "select", opts: ["Accrued by hours worked","Fixed annual","Unpaid"] },
@@ -517,6 +519,65 @@ function Rail({ sections, values, openId, onPick, editingId }) {
   );
 }
 
+
+function BasePaySectionCard({ section, isOpen, onToggleOpen, employee, onEditClick }) {
+  const Icon = section.icon;
+  const payType = (employee.payType || employee.pay_type || "hourly").toLowerCase();
+  const displayRate = payType === "hourly"
+    ? (employee.hourly_rate ? "$" + Number(employee.hourly_rate).toFixed(2) + "/hr" : "-")
+    : payType === "salary"
+    ? (employee.salary_amount ? "$" + Number(employee.salary_amount).toLocaleString("en-CA", { minimumFractionDigits: 2 }) + "/year" : "-")
+    : "Commission only";
+  const displayFreq = employee.pay_frequency || "-";
+  const displayHours = employee.hours_per_day || "-";
+  const displayDays = employee.days_per_week || "-";
+  const isEmpty = payType === "hourly" ? !employee.hourly_rate : payType === "salary" ? !employee.salary_amount : false;
+  const pillStyle = isEmpty
+    ? { bg: C.amberSoft, fg: C.amber, label: "Start" }
+    : { bg: C.greenSoft, fg: C.green, label: "Done" };
+  return (
+    <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
+      <div onClick={onToggleOpen} style={{ display: "flex", alignItems: "center", gap: 13, padding: "18px 22px", cursor: "pointer" }}>
+        <span style={{ width: 30, height: 30, borderRadius: 9, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 30px" }}>
+          <Icon size={17} />
+        </span>
+        <h3 style={{ flex: 1, fontSize: 16, fontWeight: 700, color: C.ink }}>{section.title}</h3>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: pillStyle.bg, color: pillStyle.fg }}>
+          {pillStyle.label}
+        </span>
+        <button onClick={function(e) { e.stopPropagation(); onEditClick(); }}
+          style={{ fontSize: 13.5, fontWeight: 600, color: C.tealInk, background: "none", border: 0, cursor: "pointer", padding: "6px 8px", borderRadius: 8 }}>
+          {pillStyle.label === "Start" ? "Start" : "Edit"}
+        </button>
+        <ChevronDown size={18} color={C.muted} style={{ transform: isOpen ? "none" : "rotate(-90deg)", transition: "transform 0.2s" }} />
+      </div>
+      {isOpen && (
+        <div style={{ padding: "4px 22px 22px", borderTop: "1px solid " + C.lineSoft }}>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "13px 0", borderBottom: "1px solid " + C.lineSoft }}>
+            <span style={{ fontSize: 13.5, color: C.muted }}>Compensation type</span>
+            <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500 }}>{payType === "hourly" ? "Hourly" : payType === "salary" ? "Salary" : "Commission only"}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "13px 0", borderBottom: "1px solid " + C.lineSoft }}>
+            <span style={{ fontSize: 13.5, color: C.muted }}>Rate</span>
+            <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{displayRate}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "13px 0", borderBottom: "1px solid " + C.lineSoft }}>
+            <span style={{ fontSize: 13.5, color: C.muted }}>Pay frequency</span>
+            <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, textTransform: "capitalize" }}>{displayFreq}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "13px 0", borderBottom: "1px solid " + C.lineSoft }}>
+            <span style={{ fontSize: 13.5, color: C.muted }}>Hours per day</span>
+            <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{displayHours}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "13px 0" }}>
+            <span style={{ fontSize: 13.5, color: C.muted }}>Days per week</span>
+            <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{displayDays}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) {
   const Icon = section.icon;
@@ -1318,6 +1379,18 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
   const actLabel = status === "start" ? "Start" : "Edit";
   const v = isEditing ? draft : values;
 
+  // Special-case rendering for Base pay section
+  if (section.id === "basepay") {
+    return (
+      <BasePaySectionCard
+        section={section}
+        isOpen={isOpen}
+        onToggleOpen={onToggleOpen}
+        employee={values}
+        onEditClick={onEdit}
+      />
+    );
+  }
   // Special-case rendering for Compensation section
   if (section.id === "compensation") {
     return (
