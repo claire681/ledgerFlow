@@ -191,7 +191,7 @@ const SECTIONS = [
   { id: "payment_method", label: "Payment method", Icon: CreditCard, drawerTitle: "Edit payment method" },
   { id: "base_pay", label: "Base pay", Icon: DollarSign, drawerTitle: "Edit base pay" },
   { id: "additional_pay", label: "Additional pay types", Icon: PlusCircle, Plus, drawerTitle: "Edit additional pay types" },
-  { id: "stat_holiday", label: "Stat holiday pay", Icon: Calendar, drawerTitle: "Edit stat holiday pay" },
+  { id: "stat_holiday", label: "Stat holiday pay", Icon: CalIcon, drawerTitle: "Edit stat holiday pay" },
   { id: "time_off", label: "Time off", Icon: CalIcon, drawerTitle: "Edit time off" },
   { id: "tax", label: "Tax withholdings", Icon: Receipt, drawerTitle: "Edit tax withholdings" },
   { id: "deductions", label: "Deductions and contributions", Icon: MinusCircle, drawerTitle: "Edit deductions and contributions" },
