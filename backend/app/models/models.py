@@ -699,6 +699,8 @@ class Employee(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    pay_schedule_id = Column(UUID(as_uuid=True), ForeignKey("pay_schedules.id", ondelete="SET NULL"), nullable=True, index=True)
+
 
 
 class PayrollSettings(Base):
@@ -745,6 +747,8 @@ class PayrollSettings(Base):
 
 
 
+
+
 # === PAY RUN MODELS ===
 
 class PayRun(Base):
@@ -779,6 +783,8 @@ class PayRun(Base):
     voided_at = Column(DateTime(timezone=True), nullable=True)
     void_reason = Column(Text, nullable=True)
 
+
+    pay_schedule_id = Column(UUID(as_uuid=True), ForeignKey("pay_schedules.id", ondelete="SET NULL"), nullable=True, index=True)
 
 class PayStub(Base):
     __tablename__ = "pay_stubs"
@@ -1135,3 +1141,32 @@ class AuditEvent(Base):
     details = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
 
+
+class PaySchedule(Base):
+    __tablename__ = "pay_schedules"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    name = Column(String(120), nullable=False)
+    frequency = Column(String(20), nullable=False)
+
+    pay_day_of_week = Column(Integer, nullable=True)
+    pay_day_1 = Column(Integer, nullable=True)
+    pay_day_2 = Column(Integer, nullable=True)
+
+    first_pay_date = Column(Date, nullable=False)
+    first_period_end = Column(Date, nullable=False)
+    first_period_start = Column(Date, nullable=False)
+
+    holiday_shift = Column(Boolean, default=True, nullable=False)
+    weekend_shift = Column(Boolean, default=True, nullable=False)
+    auto_run_enabled = Column(Boolean, default=False, nullable=False)
+    auto_run_days_before = Column(Integer, default=2, nullable=False)
+
+    is_default = Column(Boolean, default=False, nullable=False)
+    is_paused = Column(Boolean, default=False, nullable=False)
+    color = Column(String(20), default="#15A08C", nullable=False)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

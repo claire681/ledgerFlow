@@ -77,6 +77,10 @@ class EarningsInput(BaseModel):
     bonus: Decimal = Decimal("0")
     commission: Decimal = Decimal("0")
     reimbursement: Decimal = Decimal("0")  # not taxed
+    # Alberta ESA stat holiday - endpoint sets these based on policy
+    stat_pay_amount: Decimal = Decimal("0")  # flat ADW premium
+    stat_holiday_hours_at_premium: Decimal = Decimal("0")  # 1.5x
+    stat_holiday_hours_at_regular: Decimal = Decimal("0")  # 1.0x
 
 
 class JurisdictionContext(BaseModel):
@@ -154,6 +158,10 @@ class PayRunEmployeeInput(BaseModel):
     bonus: Decimal = Decimal("0")
     commission: Decimal = Decimal("0")
     reimbursement: Decimal = Decimal("0")
+    # Alberta ESA stat holiday (calculated by endpoint per policy)
+    stat_pay_amount: Decimal = Decimal("0")  # flat ADW premium
+    stat_holiday_hours_at_premium: Decimal = Decimal("0")  # hours × rate × 1.5
+    stat_holiday_hours_at_regular: Decimal = Decimal("0")  # hours × rate × 1.0
 
 
 class CalculatedPayStub(BaseModel):

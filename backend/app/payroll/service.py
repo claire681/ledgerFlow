@@ -97,6 +97,9 @@ class PayrollService:
             bonus=hours_input.bonus,
             commission=hours_input.commission,
             reimbursement=hours_input.reimbursement,
+            stat_pay_amount=hours_input.stat_pay_amount,
+            stat_holiday_hours_at_premium=hours_input.stat_holiday_hours_at_premium,
+            stat_holiday_hours_at_regular=hours_input.stat_holiday_hours_at_regular,
         )
 
         ytd_ctx = YTDContext(

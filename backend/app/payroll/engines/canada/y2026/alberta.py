@@ -54,23 +54,21 @@ def _q(amount: Decimal) -> Decimal:
 
 
 def _annual_tax(annual_taxable: Decimal) -> Decimal:
+    """T4127 Option 1: annual Alberta tax = V * A - KP using Table 8.1 constants."""
     if annual_taxable <= 0:
         return Decimal("0")
-    tax = Decimal("0")
-    remaining = annual_taxable
-    prev_top = Decimal("0")
-    for top, rate in BRACKETS_AB_2026:
-        if top is None:
-            tax += remaining * rate
-            return tax
-        band_size = top - prev_top
-        if remaining <= band_size:
-            tax += remaining * rate
-            return tax
-        tax += band_size * rate
-        remaining -= band_size
-        prev_top = top
-    return tax
+    A = annual_taxable
+    if A <= Decimal("61200.00"):
+        return A * Decimal("0.0800") - Decimal("0")
+    if A <= Decimal("154259.00"):
+        return A * Decimal("0.1000") - Decimal("1224.00")
+    if A <= Decimal("185111.00"):
+        return A * Decimal("0.1200") - Decimal("4309.00")
+    if A <= Decimal("246813.00"):
+        return A * Decimal("0.1300") - Decimal("6160.00")
+    if A <= Decimal("370220.00"):
+        return A * Decimal("0.1400") - Decimal("8628.00")
+    return A * Decimal("0.1500") - Decimal("12331.00")
 
 
 def calculate_alberta_tax(
@@ -79,6 +77,9 @@ def calculate_alberta_tax(
     td1_provincial_claim: Optional[Decimal] = None,
     cpp_contribution: Decimal = Decimal("0"),
     ei_contribution: Decimal = Decimal("0"),
+    ytd_cpp_base: Decimal = Decimal("0"),
+    ytd_ei: Decimal = Decimal("0"),
+    cpp2_contribution: Decimal = Decimal("0"),
 ) -> Decimal:
     """Alberta provincial income tax for one pay period.
 
@@ -94,10 +95,14 @@ def calculate_alberta_tax(
     if td1_provincial_claim is None:
         td1_provincial_claim = BPA_AB_2026
 
-    # Deduct F5A: First Additional CPP portion reduces taxable income
-    # (T4127 Step 1). Mirrors the same treatment as federal.
-    first_additional_cpp = cpp_contribution * (FIRST_ADDITIONAL_CPP_RATE_2026 / TOTAL_CPP_RATE_2026)
-    taxable_gross = gross_pay - first_additional_cpp
+    # Deduct F5A: First Additional CPP + CPP2 reduce taxable income
+    # T4127 Step 1: F5 = C * (0.01/0.0595) + C2
+    # First Additional CPP is the 1% portion of base CPP contribution.
+    # CPP2 is the full second additional contribution.
+    # T4127 Chapter 1: round F5A to 2 decimals before using in taxable_gross.
+    first_additional_cpp = _q(cpp_contribution * (FIRST_ADDITIONAL_CPP_RATE_2026 / TOTAL_CPP_RATE_2026))
+    f5a = first_additional_cpp + cpp2_contribution
+    taxable_gross = gross_pay - f5a
 
     annual_gross = taxable_gross * Decimal(pay_periods_per_year)
     P = Decimal(pay_periods_per_year)
@@ -109,9 +114,16 @@ def calculate_alberta_tax(
     k1p = td1_provincial_claim * LOWEST_RATE_AB
 
     # K2P: Alberta credit for base CPP and EI contributions
-    base_cpp_this_period = cpp_contribution * (BASE_CPP_RATE_2026 / TOTAL_CPP_RATE_2026)
-    annual_base_cpp = min(P * base_cpp_this_period, MAX_BASE_CPP_ANNUAL_2026)
-    annual_ei = min(P * ei_contribution, MAX_EI_PREMIUM_ANNUAL_2026)
+    # T4127 Chapter 4: if YTD is at max, use annual max in credit
+    if ytd_cpp_base >= MAX_BASE_CPP_ANNUAL_2026:
+        annual_base_cpp = MAX_BASE_CPP_ANNUAL_2026
+    else:
+        base_cpp_this_period = cpp_contribution * (BASE_CPP_RATE_2026 / TOTAL_CPP_RATE_2026)
+        annual_base_cpp = min(P * base_cpp_this_period, MAX_BASE_CPP_ANNUAL_2026)
+    if ytd_ei >= MAX_EI_PREMIUM_ANNUAL_2026:
+        annual_ei = MAX_EI_PREMIUM_ANNUAL_2026
+    else:
+        annual_ei = min(P * ei_contribution, MAX_EI_PREMIUM_ANNUAL_2026)
     k2p = LOWEST_RATE_AB * (annual_base_cpp + annual_ei)
 
     # T2: final annual Alberta tax (never negative)

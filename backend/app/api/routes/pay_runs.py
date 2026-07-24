@@ -28,6 +28,7 @@ from app.models.models import (
     YTDBalance, PayrollAuditLog,
 )
 from app.payroll.service import PayrollService
+from app.payroll.engines.canada.alberta_stat_policy import apply_alberta_stat_holiday_policy
 from app.payroll.types import (
     PayRunEmployeeInput,
     JurisdictionContext,
@@ -65,6 +66,7 @@ class PayRunResponse(BaseModel):
     voided_at: Optional[str] = None
     notes: Optional[str] = None
     created_at: Optional[str] = None
+    pay_schedule_id: Optional[str] = None
 
 
 class PreviewRequest(BaseModel):
@@ -93,6 +95,7 @@ def _employee_to_dict(emp) -> dict:
         "currency": emp.currency or "CAD",
         "tax_info": emp.tax_info or {},
         "vacation_pay_pct": "4.0",
+        "weekly_schedule": emp.weekly_schedule if hasattr(emp, "weekly_schedule") else None,
     }
 
 
@@ -113,6 +116,7 @@ def _run_to_response(run: PayRun) -> PayRunResponse:
         voided_at=run.voided_at.isoformat() if run.voided_at else None,
         notes=run.notes,
         created_at=run.created_at.isoformat() if run.created_at else None,
+        pay_schedule_id=str(run.pay_schedule_id) if run.pay_schedule_id else None,
     )
 
 
@@ -120,14 +124,19 @@ def _run_to_response(run: PayRun) -> PayRunResponse:
 
 @router.get("/runs", response_model=List[PayRunResponse])
 async def list_pay_runs(
+    status: Optional[str] = None,
+    limit: Optional[int] = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    result = await db.execute(
-        select(PayRun)
-        .where(PayRun.owner_id == current_user.id)
-        .order_by(PayRun.pay_date.desc())
-    )
+    """List pay runs. Optional status filter (draft/finalized/voided) and limit."""
+    query = select(PayRun).where(PayRun.owner_id == current_user.id)
+    if status:
+        query = query.where(PayRun.status == status)
+    query = query.order_by(PayRun.pay_date.desc())
+    if limit:
+        query = query.limit(limit)
+    result = await db.execute(query)
     runs = result.scalars().all()
     return [_run_to_response(r) for r in runs]
 
@@ -143,18 +152,41 @@ async def create_pay_run(
     )
     settings = settings_result.scalar_one_or_none()
 
+    # Auto-attach default pay schedule if user has one
+    from app.models.models import PaySchedule
+    from app.payroll.schedule_helpers import next_pay_date, compute_period_for_pay_date
+    schedule_result = await db.execute(
+        select(PaySchedule).where(
+            PaySchedule.owner_id == current_user.id,
+            PaySchedule.is_paused.is_(False),
+        ).order_by(PaySchedule.is_default.desc(), PaySchedule.created_at.asc())
+    )
+    default_schedule = schedule_result.scalars().first()
+
+    pay_period_start_v = body.pay_period_start
+    pay_period_end_v = body.pay_period_end
+    pay_date_v = body.pay_date
+    if default_schedule:
+        from datetime import date as date_cls
+        pd = next_pay_date(default_schedule, date_cls.today())
+        ps, pe = compute_period_for_pay_date(default_schedule, pd)
+        pay_period_start_v = ps
+        pay_period_end_v = pe
+        pay_date_v = pd
+
     country = body.country or (settings.country if settings else "CA")
     currency = settings.currency if settings else "CAD"
 
     new_run = PayRun(
         owner_id=current_user.id,
-        pay_period_start=body.pay_period_start,
-        pay_period_end=body.pay_period_end,
-        pay_date=body.pay_date,
+        pay_period_start=pay_period_start_v,
+        pay_period_end=pay_period_end_v,
+        pay_date=pay_date_v,
         status="draft",
         country=country,
         currency=currency,
-        total_gross=Decimal("0"),
+        total_gross=Decimal("0",
+        pay_schedule_id=default_schedule.id if default_schedule else None),
         total_deductions=Decimal("0"),
         total_net=Decimal("0"),
         employee_count=0,
@@ -277,6 +309,13 @@ async def list_run_stubs(
             "total_employee_deductions": str(s.total_employee_deductions),
             "net_pay": str(s.net_pay),
             "currency": s.currency,
+            "hours_regular": str(s.hours_regular or 0),
+            "hours_overtime": str(s.hours_overtime or 0),
+            "hours_stat_holiday": str(s.hours_stat_holiday or 0),
+            "hours_vacation": str(s.hours_vacation or 0),
+            "hours_sick": str(s.hours_sick or 0),
+            "stat_pay_avg": str(getattr(s, "stat_pay_amount", 0) or 0),
+            "memo": s.memo,
         }
         for s in stubs
     ]
@@ -347,6 +386,48 @@ def _periods_per_year(settings, override: Optional[int]) -> int:
         return override
     if settings and settings.default_pay_schedule:
         return PAY_FREQUENCY_TO_PERIODS.get(settings.default_pay_schedule.lower(), 26)
+    return 26
+
+
+def _periods_from_dates(period_start, period_end) -> Optional[int]:
+    """Derive pay_periods_per_year from period start/end dates.
+
+    Returns:
+      52 for weekly (5-8 days inclusive)
+      26 for bi-weekly (12-13 days inclusive)
+      24 for semi-monthly (14-17 days inclusive)
+      12 for monthly (28-31 days inclusive)
+      None if dates don't match a known frequency.
+    """
+    if not period_start or not period_end:
+        return None
+    days = (period_end - period_start).days + 1
+    if 5 <= days <= 8:
+        return 52
+    if 12 <= days <= 13:
+        return 26
+    if 14 <= days <= 17:
+        return 24
+    if 28 <= days <= 31:
+        return 12
+    return None
+
+
+def _resolve_pay_periods(run, settings, override: Optional[int]) -> int:
+    """Resolve pay_periods_per_year with intelligent priority.
+
+    Date-derived value takes highest priority because frontends have been
+    seen to hardcode 26 (bi-weekly) regardless of actual pay run frequency.
+    """
+    date_derived = _periods_from_dates(run.pay_period_start, run.pay_period_end)
+    if date_derived:
+        return date_derived
+    if override:
+        return override
+    if settings and settings.default_pay_schedule:
+        return PAY_FREQUENCY_TO_PERIODS.get(
+            settings.default_pay_schedule.lower(), 26
+        )
     return 26
 
 
@@ -473,7 +554,7 @@ async def calculate_pay_run(
     )
     settings = settings_result.scalar_one_or_none()
 
-    pay_periods = _periods_per_year(settings, body.pay_periods_per_year)
+    pay_periods = _resolve_pay_periods(run, settings, body.pay_periods_per_year)
     subnational = body.subnational or (
         settings.province_or_state if settings else None
     )
@@ -511,13 +592,24 @@ async def calculate_pay_run(
     )
     ytd_by_emp = {str(y.employee_id): _ytd_to_dict(y) for y in ytd_result.scalars().all()}
 
+    # Apply Alberta ESA stat holiday policy before calculation
+    stat_option = getattr(settings, "stat_holiday_option", 1) if settings else 1
+    updated_inputs = await apply_alberta_stat_holiday_policy(
+        db=db,
+        employee_inputs=body.employee_inputs,
+        employees_by_id=employees_by_id,
+        pay_period_start=run.pay_period_start,
+        pay_period_end=run.pay_period_end,
+        stat_holiday_option=stat_option,
+    )
+
     # Calculate
     service = PayrollService()
     try:
         preview = service.preview_run(
             employees_by_id=employees_by_id,
             ytd_by_employee_id=ytd_by_emp,
-            employee_inputs=body.employee_inputs,
+            employee_inputs=updated_inputs,
             jurisdiction=jurisdiction,
             pay_run_id=str(run.id),
         )
@@ -711,6 +803,118 @@ async def update_stub_memo(
 # ============================================================
 # POST /runs/{id}/finalize
 # ============================================================
+
+
+
+# ============================================================
+# Autosave hours (draft persistence)
+# ============================================================
+
+class HoursEntry(BaseModel):
+    """One employee's hours for autosave."""
+    employee_id: str
+    hours_regular: Optional[Decimal] = Decimal("0")
+    hours_overtime: Optional[Decimal] = Decimal("0")
+    hours_stat_holiday: Optional[Decimal] = Decimal("0")
+    hours_vacation: Optional[Decimal] = Decimal("0")
+    hours_sick: Optional[Decimal] = Decimal("0")
+    stat_pay_amount: Optional[Decimal] = Decimal("0")
+    memo: Optional[str] = None
+    pay_method: Optional[str] = None
+
+
+class SaveHoursRequest(BaseModel):
+    """Body for PATCH /runs/{id}/hours."""
+    entries: List[HoursEntry]
+
+
+@router.patch("/runs/{run_id}/hours")
+async def save_hours_draft(
+    run_id: UUID,
+    body: SaveHoursRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Autosave hours to pay_stubs without running tax calculation.
+
+    Creates a placeholder stub if none exists for the employee, or updates
+    the hours fields on the existing stub. Used by the Run Payroll page
+    for autosave-as-you-type persistence.
+    """
+    # Verify run exists and belongs to user
+    run_res = await db.execute(
+        select(PayRun).where(
+            PayRun.id == run_id,
+            PayRun.owner_id == current_user.id,
+        )
+    )
+    run = run_res.scalar_one_or_none()
+    if not run:
+        raise HTTPException(404, "Pay run not found")
+
+    if run.status == "finalized":
+        raise HTTPException(400, "Cannot modify a finalized pay run")
+
+    # Load existing stubs for this run
+    stubs_res = await db.execute(
+        select(PayStub).where(PayStub.pay_run_id == run_id)
+    )
+    existing = {str(s.employee_id): s for s in stubs_res.scalars().all()}
+
+    # Load employees to get name/details for new stubs
+    emp_ids = [entry.employee_id for entry in body.entries]
+    emp_res = await db.execute(
+        select(Employee).where(
+            Employee.id.in_([UUID(eid) for eid in emp_ids]),
+            Employee.owner_id == current_user.id,
+        )
+    )
+    emp_by_id = {str(e.id): e for e in emp_res.scalars().all()}
+
+    saved = 0
+    for entry in body.entries:
+        stub = existing.get(entry.employee_id)
+        if stub:
+            # Update existing stub hours only
+            stub.hours_regular = entry.hours_regular or Decimal("0")
+            stub.hours_overtime = entry.hours_overtime or Decimal("0")
+            stub.hours_stat_holiday = entry.hours_stat_holiday or Decimal("0")
+            stub.hours_vacation = entry.hours_vacation or Decimal("0")
+            stub.hours_sick = entry.hours_sick or Decimal("0")
+            if entry.memo is not None:
+                stub.memo = entry.memo
+        else:
+            # Create placeholder stub with just hours
+            emp = emp_by_id.get(entry.employee_id)
+            if not emp:
+                continue
+            new_stub = PayStub(
+                pay_run_id=run.id,
+                employee_id=UUID(entry.employee_id),
+                employee_name=(emp.first_name or "") + " " + (emp.last_name or ""),
+                employee_email=emp.personal_email or "",
+                position_title=emp.position_title or "",
+                pay_type=emp.pay_type or "hourly",
+                hourly_rate=emp.hourly_rate,
+                salary_amount=emp.salary_amount or Decimal("0"),
+                currency=emp.currency or "CAD",
+                hours_regular=entry.hours_regular or Decimal("0"),
+                hours_overtime=entry.hours_overtime or Decimal("0"),
+                hours_stat_holiday=entry.hours_stat_holiday or Decimal("0"),
+                hours_vacation=entry.hours_vacation or Decimal("0"),
+                hours_sick=entry.hours_sick or Decimal("0"),
+                hours_evening=Decimal("0"),
+                gross_pay=Decimal("0"),
+                total_deductions=Decimal("0"),
+                net_pay=Decimal("0"),
+                memo=entry.memo,
+            )
+            db.add(new_stub)
+        saved += 1
+
+    await db.commit()
+    return {"saved": saved}
+
 
 @router.post("/runs/{run_id}/finalize", response_model=PayRunResponse)
 async def finalize_pay_run(

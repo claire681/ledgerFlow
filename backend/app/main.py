@@ -33,6 +33,7 @@ from app.api.routes import payroll
 from app.api.routes import subscriptions
 from app.api.routes import billing
 from app.api.routes import pay_runs
+from app.api.routes import pay_schedules
 from app.api.routes import work_locations
 from app.api.routes import pay_types
 from app.api.routes import deduction_types
@@ -109,6 +110,7 @@ app.include_router(bills.router, prefix="/api/v1")
 app.include_router(apikeys.router, prefix="/api/v1")
 app.include_router(payroll.router,       prefix="/api/v1")
 app.include_router(pay_runs.router, prefix="/api/v1/payroll", tags=["payroll"])
+app.include_router(pay_schedules.router, prefix="/api/v1/payroll", tags=["schedules"])
 app.include_router(feedback.router, prefix="/api/v1", tags=["feedback"])
 
 

@@ -12,7 +12,7 @@ import traceback
 
 from app.db.database import get_db
 from app.core.security import get_current_user
-from app.models.models import Employee, PayrollSettings, PayRun, PayStub
+from app.models.models import (Employee, PayrollSettings, PayRun, PayStub, PaySchedule)
 from pydantic import BaseModel, EmailStr
 
 router = APIRouter(prefix="/payroll", tags=["Payroll"])
@@ -588,11 +588,30 @@ async def get_or_create_draft(
 
     if pr is None:
         # Create a new draft. Seed one PayStub per active employee.
+        # Auto-attach default schedule for draft creation
+        sched_res = await db.execute(
+            select(PaySchedule).where(
+                PaySchedule.owner_id == current_user.id,
+                PaySchedule.is_paused.is_(False),
+            ).order_by(PaySchedule.is_default.desc(), PaySchedule.created_at.asc())
+        )
+        default_sched = sched_res.scalars().first()
+
+        _ps = period_start_d
+        _pe = period_end_d
+        _pd = pay_date_d
+        if default_sched:
+            from app.payroll.schedule_helpers import next_pay_date, compute_period_for_pay_date
+            from datetime import date as _date_cls
+            _pd = next_pay_date(default_sched, _date_cls.today())
+            _ps, _pe = compute_period_for_pay_date(default_sched, _pd)
+
         pr = PayRun(
             owner_id=current_user.id,
-            pay_period_start=period_start_d,
-            pay_period_end=period_end_d,
-            pay_date=pay_date_d,
+            pay_period_start=_ps,
+            pay_period_end=_pe,
+            pay_date=_pd,
+            pay_schedule_id=default_sched.id if default_sched else None,
             status="draft",
             country=body.get("country", "CA"),
             currency=body.get("currency", "CAD"),
@@ -708,11 +727,21 @@ async def create_pay_run(body: PayRunCreateBody, current_user=Depends(get_curren
     total_deductions = sum(s.deductions_total for s in body.pay_stubs)
     total_net = sum(s.net for s in body.pay_stubs)
 
+    # Auto-attach default schedule
+    sched_res2 = await db.execute(
+        select(PaySchedule).where(
+            PaySchedule.owner_id == current_user.id,
+            PaySchedule.is_paused.is_(False),
+        ).order_by(PaySchedule.is_default.desc(), PaySchedule.created_at.asc())
+    )
+    _default_sched2 = sched_res2.scalars().first()
+
     pr = PayRun(
         owner_id=current_user.id,
         pay_period_start=body.pay_period_start,
         pay_period_end=body.pay_period_end,
         pay_date=body.pay_date,
+        pay_schedule_id=_default_sched2.id if _default_sched2 else None,
         status="approved",
         country=body.country,
         currency=body.currency,

@@ -82,7 +82,7 @@ def calculate_cpp(
     )
 
     # Total pensionable this period treats the YMPE cap separately; CPP2 needs gross
-    period_for_cpp2 = max(gross_pay - period_exemption, Decimal("0"))
+    period_for_cpp2 = gross_pay  # CPP2 has no basic exemption (T4127 Chapter 6)
     new_ytd_gross = (
         ytd_pensionable_earnings + period_for_cpp2
         if ytd_above_ympe_before == 0

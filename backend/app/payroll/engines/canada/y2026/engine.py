@@ -21,13 +21,14 @@ from ....types import (
     EarningsInput,
 )
 from ....base import PayrollEngine
-from . import cpp, ei, federal_tax, alberta
+from . import cpp, ei, federal_tax, alberta, ontario
 
 
 # province code -> tax calculator function
 PROVINCIAL_TAX_HANDLERS = {
     "AB": alberta.calculate_alberta_tax,
-    # ON, BC, MB, SK, NS, NB, PE, NL, NT, NU, YT, QC: to be added
+    "ON": ontario.calculate_ontario_tax,
+    # BC, MB, SK, NS, NB, PE, NL, NT, NU, YT, QC: to be added
 }
 
 
@@ -204,17 +205,22 @@ class CanadaPayrollEngine(PayrollEngine):
             h = earn.hours
             rate = earn.hourly_rate or Decimal("0")
 
-            # Regular-rate hours (premium policies layered later)
+            # Regular-rate hours (paid at 1.0x)
+            # Note: h.stat_holiday no longer used directly; stat holiday hours
+            # are explicitly split into premium/regular by endpoint policy.
             regular_rate_hours = (
                 h.regular + h.vacation + h.sick
                 + h.evening + h.overnight + h.weekend
                 + h.on_call + h.travel
+                + earn.stat_holiday_hours_at_regular  # Alberta ESA Option 2
             )
 
-            # 1.5x rate: overtime + stat_holiday
-            premium_hours = h.overtime + h.stat_holiday
+            # 1.5x rate: overtime + stat holiday premium hours
+            premium_hours = h.overtime + earn.stat_holiday_hours_at_premium
 
             base = (regular_rate_hours * rate) + (premium_hours * rate * Decimal("1.5"))
+            # Alberta ESA flat average-daily-wage premium (added regardless of hours)
+            base = base + earn.stat_pay_amount
 
         return (base + earn.bonus + earn.commission).quantize(Decimal("0.01"))
 
