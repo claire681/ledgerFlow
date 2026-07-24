@@ -191,6 +191,7 @@ const SECTIONS = [
   { id: "payment_method", label: "Payment method", Icon: CreditCard, drawerTitle: "Edit payment method" },
   { id: "base_pay", label: "Base pay", Icon: DollarSign, drawerTitle: "Edit base pay" },
   { id: "additional_pay", label: "Additional pay types", Icon: PlusCircle, Plus, drawerTitle: "Edit additional pay types" },
+  { id: "stat_holiday", label: "Stat holiday pay", Icon: Calendar, drawerTitle: "Edit stat holiday pay" },
   { id: "time_off", label: "Time off", Icon: CalIcon, drawerTitle: "Edit time off" },
   { id: "tax", label: "Tax withholdings", Icon: Receipt, drawerTitle: "Edit tax withholdings" },
   { id: "deductions", label: "Deductions and contributions", Icon: MinusCircle, drawerTitle: "Edit deductions and contributions" },
@@ -663,6 +664,60 @@ export default function EmployeeProfile() {
   } else if (sectionId === "additional_pay") {
     sectionContent = (
       <DetailRow last label="Enabled pay types" value={enabledLabels} />
+    );
+  } else if (sectionId === "stat_holiday") {
+    const weeklySchedule = employee.weekly_schedule || { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false };
+    const activeDays = ["mon","tue","wed","thu","fri","sat","sun"].filter(d => weeklySchedule[d]);
+    const dayLabels = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
+    const activeDayLabels = activeDays.map(d => dayLabels[d]).join(", ") || "No days set";
+    const hireDate = employee.hire_date ? new Date(employee.hire_date) : null;
+    const daysWorked = hireDate ? Math.max(0, Math.floor((Date.now() - hireDate.getTime()) / 86400000)) : 0;
+    const eligible = daysWorked >= 30;
+    const currentAdw = employee.hourly_rate && employee.hours_per_day ? Number(employee.hourly_rate) * Number(employee.hours_per_day || 8) : 0;
+    sectionContent = (
+      <>
+        <div style={{ padding: "16px 0", borderBottom: "1px solid #E5E7EB" }}>
+          <div style={{ background: eligible ? "#E1F5EE" : "#FCE9E9", borderLeft: "3px solid " + (eligible ? "#15A08C" : "#A32D2D"), borderRadius: 8, padding: "12px 16px", display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <div style={{ width: 24, height: 24, borderRadius: "50%", background: eligible ? "#15A08C" : "#A32D2D", color: "white", display: "grid", placeItems: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{eligible ? "✓" : "!"}</div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: eligible ? "#04342C" : "#791F1F", marginBottom: 2 }}>{eligible ? "Eligible for stat holiday pay" : "Not yet eligible"}</div>
+              <div style={{ fontSize: 12, color: eligible ? "#04342C" : "#791F1F", lineHeight: 1.5 }}>
+                {(employee.first_name || "Employee") + " has worked approximately "}
+                <b>{daysWorked} days</b>
+                {" in the past 12 months. Alberta ESA requires 30+ days worked."}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style={{ padding: "16px 0", borderBottom: "1px solid #E5E7EB" }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#0E1A1A", marginBottom: 4 }}>Regular workdays</div>
+          <div style={{ fontSize: 12, color: "#1A2332", marginBottom: 10, lineHeight: 1.5 }}>Which days does {employee.first_name || "this employee"} normally work?</div>
+          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+            {[
+              { key: "mon", letter: "M", label: "Monday" },
+              { key: "tue", letter: "T", label: "Tuesday" },
+              { key: "wed", letter: "W", label: "Wednesday" },
+              { key: "thu", letter: "T", label: "Thursday" },
+              { key: "fri", letter: "F", label: "Friday" },
+              { key: "sat", letter: "S", label: "Saturday" },
+              { key: "sun", letter: "S", label: "Sunday" }
+            ].map(d => (
+              <div key={d.key} title={d.label} style={{ width: 38, height: 38, borderRadius: "50%", background: weeklySchedule[d.key] ? "#15A08C" : "#F8F9FA", color: weeklySchedule[d.key] ? "white" : "#6B7280", border: weeklySchedule[d.key] ? "none" : "1px solid #E5E7EB", display: "grid", placeItems: "center", fontSize: 13, fontWeight: 700 }}>{d.letter}</div>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, color: "#1A2332" }}>Currently: <b style={{ color: "#0E1A1A" }}>{activeDayLabels}</b> ({activeDays.length} day{activeDays.length === 1 ? "" : "s"}/week)</div>
+        </div>
+        <div style={{ padding: "16px 0" }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#0E1A1A", marginBottom: 6 }}>Current average daily wage (ADW)</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 6 }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: "#0E1A1A", fontVariantNumeric: "tabular-nums" }}>{currentAdw > 0 ? "$" + currentAdw.toFixed(2) : "-"}</div>
+            <div style={{ fontSize: 12, color: "#1A2332" }}>per day</div>
+          </div>
+          <div style={{ fontSize: 12, color: "#1A2332", lineHeight: 1.5 }}>
+            Updated automatically from the last 4 weeks of pay stubs. Overtime is excluded per Alberta ESA.
+          </div>
+        </div>
+      </>
     );
   } else if (sectionId === "time_off") {
     const vacationLabel = employee.vacation_policy
