@@ -294,6 +294,13 @@ export default function EmployeeProfileV2() {
       .catch(function() {});
   }, []);
   const [openId, setOpenId] = useState("personal");
+  const [basePayModalOpen, setBasePayModalOpen] = useState(false);
+
+  useEffect(function() {
+    function handleOpen() { setBasePayModalOpen(true); }
+    window.addEventListener("novala:openBasePayModal", handleOpen);
+    return function() { window.removeEventListener("novala:openBasePayModal", handleOpen); };
+  }, []);
   const [searchParams] = useSearchParams();
   useEffect(function() {
     const section = searchParams.get("section");
@@ -477,11 +484,7 @@ export default function EmployeeProfileV2() {
       <BasePayModal
         isOpen={basePayModalOpen}
         onClose={function() { setBasePayModalOpen(false); }}
-        onSaved={function() {
-          setBasePayModalOpen(false);
-          if (typeof loadEmployee === "function") { loadEmployee(); }
-          else { window.location.reload(); }
-        }}
+        onSaved={function() { setBasePayModalOpen(false); window.location.reload(); }}
         employee={values}
       />
       {toast && (
@@ -1397,10 +1400,7 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
         isOpen={isOpen}
         onToggleOpen={onToggleOpen}
         employee={values}
-        onEditClick={function() {
-          // Trigger the modal open via a global window event that the parent listens to
-          window.dispatchEvent(new CustomEvent("novala:openBasePayModal"));
-        }}
+        onEditClick={function() { window.dispatchEvent(new CustomEvent("novala:openBasePayModal")); }}
       />
     );
   }
