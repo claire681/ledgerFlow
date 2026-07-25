@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import BasePayModal from "../components/modals/BasePayModal";
+import TaxWithholdingsModal from "../components/modals/TaxWithholdingsModal";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
@@ -295,11 +296,17 @@ export default function EmployeeProfileV2() {
   }, []);
   const [openId, setOpenId] = useState("personal");
   const [basePayModalOpen, setBasePayModalOpen] = useState(false);
+  const [taxModalOpen, setTaxModalOpen] = useState(false);
 
   useEffect(function() {
     function handleOpen() { setBasePayModalOpen(true); }
+    function handleOpenTax() { setTaxModalOpen(true); }
     window.addEventListener("novala:openBasePayModal", handleOpen);
-    return function() { window.removeEventListener("novala:openBasePayModal", handleOpen); };
+    window.addEventListener("novala:openTaxModal", handleOpenTax);
+    return function() {
+      window.removeEventListener("novala:openBasePayModal", handleOpen);
+      window.removeEventListener("novala:openTaxModal", handleOpenTax);
+    };
   }, []);
   const [searchParams] = useSearchParams();
   useEffect(function() {
@@ -487,6 +494,12 @@ export default function EmployeeProfileV2() {
         onClose={function() { setBasePayModalOpen(false); }}
         onSaved={function() { setBasePayModalOpen(false); window.location.reload(); }}
       />
+      <TaxWithholdingsModal
+        isOpen={taxModalOpen}
+        employee={{ ...(employee || {}), ...(values || {}), id: id }}
+        onClose={function() { setTaxModalOpen(false); }}
+        onSaved={function() { setTaxModalOpen(false); window.location.reload(); }}
+      />
       {toast && (
         <div style={{ position: "fixed", bottom: 26, left: "50%", transform: "translateX(-50%)", background: toast.kind === "err" ? "#7F1D1D" : C.ink, color: "#fff", fontSize: 13, fontWeight: 500, padding: "11px 18px", borderRadius: 10, zIndex: 80, display: "flex", alignItems: "center", gap: 9, boxShadow: "0 8px 24px rgba(16,26,43,0.3)" }}>
           {toast.kind === "ok" ? <Check size={16} color="#7FE3D2" /> : <span style={{ color: "#FCA5A5", fontWeight: 700 }}>!</span>}
@@ -532,6 +545,67 @@ function Rail({ sections, values, openId, onPick, editingId }) {
   );
 }
 
+
+function TaxSectionCard({ section, isOpen, onToggleOpen, employee, onEditClick }) {
+  const ti = (employee && employee.tax_info) || {};
+  const province = (ti.provinceEmp || "").toUpperCase();
+  const fmt = function(v) {
+    if (v == null || v === "") return "-";
+    const n = Number(v);
+    if (isNaN(n)) return String(v);
+    return "$" + n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+  const yn = function(v) {
+    if (v === true || v === "Yes") return "Yes";
+    return "No";
+  };
+  const anyExempt = yn(ti.cppExempt) === "Yes" || yn(ti.eiExempt) === "Yes" || yn(ti.fedTaxExempt) === "Yes";
+  return (
+    <div style={{ background: "#FFFFFF", border: "1px solid " + C.line, borderRadius: 12, marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", padding: "16px 20px", cursor: "pointer" }} onClick={onToggleOpen}>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: C.tealSoft, color: C.tealInk, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginRight: 12 }}>%</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{section.title}</div>
+        </div>
+        <a
+          onClick={function(e) { e.stopPropagation(); onEditClick && onEditClick(); }}
+          style={{ color: C.tealInk, fontWeight: 700, fontSize: 13, textDecoration: "underline", cursor: "pointer", marginRight: 12 }}
+        >
+          {(!ti.federalTD1 && !ti.provincialTD1) ? "Start" : "Edit"}
+        </a>
+        <span style={{ color: C.muted, fontSize: 14 }}>{isOpen ? "▾" : "▸"}</span>
+      </div>
+      {isOpen && (
+        <div style={{ padding: "4px 20px 18px", borderTop: "1px solid " + C.line }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 24px", padding: "12px 0" }}>
+            <span style={{ fontSize: 13.5, color: "#12262B", fontWeight: 700 }}>Province of employment</span>
+            <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500 }}>{province || "-"}</span>
+
+            <span style={{ fontSize: 13.5, color: "#12262B", fontWeight: 700 }}>Federal TD1 amount</span>
+            <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{fmt(ti.federalTD1)}</span>
+
+            <span style={{ fontSize: 13.5, color: "#12262B", fontWeight: 700 }}>Provincial TD1 amount</span>
+            <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{fmt(ti.provincialTD1)}</span>
+
+            <span style={{ fontSize: 13.5, color: "#12262B", fontWeight: 700 }}>Additional tax per pay</span>
+            <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{fmt(ti.additionalTax)}</span>
+
+            <span style={{ fontSize: 13.5, color: "#12262B", fontWeight: 700 }}>Exemptions</span>
+            <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500 }}>
+              {anyExempt
+                ? [
+                    yn(ti.cppExempt) === "Yes" ? "CPP" : null,
+                    yn(ti.eiExempt) === "Yes" ? "EI" : null,
+                    yn(ti.fedTaxExempt) === "Yes" ? "Federal tax" : null,
+                  ].filter(Boolean).join(", ")
+                : "None"}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function BasePaySectionCard({ section, isOpen, onToggleOpen, employee, onEditClick }) {
   const Icon = section.icon;
