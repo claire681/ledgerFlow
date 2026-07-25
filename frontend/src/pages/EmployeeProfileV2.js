@@ -474,6 +474,16 @@ export default function EmployeeProfileV2() {
           })}
         </div>
       </div>
+      <BasePayModal
+        isOpen={basePayModalOpen}
+        onClose={function() { setBasePayModalOpen(false); }}
+        onSaved={function() {
+          setBasePayModalOpen(false);
+          if (typeof loadEmployee === "function") { loadEmployee(); }
+          else { window.location.reload(); }
+        }}
+        employee={values}
+      />
       {toast && (
         <div style={{ position: "fixed", bottom: 26, left: "50%", transform: "translateX(-50%)", background: toast.kind === "err" ? "#7F1D1D" : C.ink, color: "#fff", fontSize: 13, fontWeight: 500, padding: "11px 18px", borderRadius: 10, zIndex: 80, display: "flex", alignItems: "center", gap: 9, boxShadow: "0 8px 24px rgba(16,26,43,0.3)" }}>
           {toast.kind === "ok" ? <Check size={16} color="#7FE3D2" /> : <span style={{ color: "#FCA5A5", fontWeight: 700 }}>!</span>}
@@ -1387,7 +1397,10 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
         isOpen={isOpen}
         onToggleOpen={onToggleOpen}
         employee={values}
-        onEditClick={onEdit}
+        onEditClick={function() {
+          // Trigger the modal open via a global window event that the parent listens to
+          window.dispatchEvent(new CustomEvent("novala:openBasePayModal"));
+        }}
       />
     );
   }
