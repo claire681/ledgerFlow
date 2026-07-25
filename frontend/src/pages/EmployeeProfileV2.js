@@ -1478,6 +1478,18 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
       />
     );
   }
+  // Special-case rendering for Tax setup section
+  if (section.id === "tax") {
+    return (
+      <TaxSectionCard
+        section={section}
+        isOpen={isOpen}
+        onToggleOpen={onToggleOpen}
+        employee={values}
+        onEditClick={function() { window.dispatchEvent(new CustomEvent("novala:openTaxModal")); }}
+      />
+    );
+  }
   // Special-case rendering for Compensation section
   if (section.id === "compensation") {
     return (
