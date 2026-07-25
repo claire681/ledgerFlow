@@ -103,6 +103,20 @@ export default function EditPayTypeModal(props) {
     }
   }, [isOpen, initialRate]);
 
+  // If a kebab-menu Unassign fires the confirm-unassign event, jump straight
+  // into the confirm view for THIS item.
+  useEffect(function() {
+    function handleConfirm(e) {
+      var it = e && e.detail;
+      if (!it || !item) return;
+      if (String(it.id) === String(item.id)) {
+        setConfirmUnassign(true);
+      }
+    }
+    window.addEventListener("novala:confirmUnassignPayItem", handleConfirm);
+    return function() { window.removeEventListener("novala:confirmUnassignPayItem", handleConfirm); };
+  }, [item]);
+
   const hasChanges = rateOverride !== initialRate;
 
   async function handleSave() {

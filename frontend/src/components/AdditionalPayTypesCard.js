@@ -111,8 +111,12 @@ export default function AdditionalPayTypesCard(props) {
   function openAdd() { window.dispatchEvent(new CustomEvent("novala:openAddPayTypeModal")); }
   function openEdit(item) { window.dispatchEvent(new CustomEvent("novala:openEditPayTypeModal", { detail: item })); }
   function unassign(item) {
-    if (!window.confirm("Unassign " + nameOf(item) + " from this employee?")) return;
-    window.dispatchEvent(new CustomEvent("novala:unassignPayItem", { detail: item }));
+    // Delegate to EditPayTypeModal which handles the styled unassign confirm.
+    window.dispatchEvent(new CustomEvent("novala:openEditPayTypeModal", { detail: item }));
+    // Signal to the modal that it should open directly into the confirm view
+    window.setTimeout(function() {
+      window.dispatchEvent(new CustomEvent("novala:confirmUnassignPayItem", { detail: item }));
+    }, 0);
   }
 
   const empty = !loading && items.length === 0;
