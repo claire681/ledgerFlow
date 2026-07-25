@@ -550,10 +550,13 @@ function TaxSectionCard({ section, isOpen, onToggleOpen, employee, onEditClick }
   const ti = (employee && employee.tax_info) || {};
   const province = (ti.provinceEmp || "").toUpperCase();
   const fmt = function(v) {
-    if (v == null || v === "") return "-";
-    const n = Number(v);
-    if (isNaN(n)) return String(v);
-    return "$" + n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (v === null || v === undefined || v === "") return "-";
+    var s = String(v).replace(/[$,\s]/g, "");
+    var n = parseFloat(s);
+    if (isNaN(n)) return "-";
+    var parts = n.toFixed(2).split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return "$" + parts.join(".");
   };
   const yn = function(v) {
     if (v === true || v === "Yes") return "Yes";
