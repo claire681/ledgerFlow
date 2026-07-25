@@ -567,23 +567,23 @@ function BasePaySectionCard({ section, isOpen, onToggleOpen, employee, onEditCli
       {isOpen && (
         <div style={{ padding: "4px 22px 22px", borderTop: "1px solid " + C.lineSoft }}>
           <div style={{ display: "flex", justifyContent: "space-between", padding: "13px 0", borderBottom: "1px solid " + C.lineSoft }}>
-            <span style={{ fontSize: 13.5, color: C.muted }}>Compensation type</span>
+            <span style={{ fontSize: 13.5, color: "#12262B", fontWeight: 700 }}>Compensation type</span>
             <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500 }}>{payType === "hourly" ? "Hourly" : payType === "salary" ? "Salary" : "Commission only"}</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", padding: "13px 0", borderBottom: "1px solid " + C.lineSoft }}>
-            <span style={{ fontSize: 13.5, color: C.muted }}>Rate</span>
+            <span style={{ fontSize: 13.5, color: "#12262B", fontWeight: 700 }}>Rate</span>
             <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{displayRate}</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", padding: "13px 0", borderBottom: "1px solid " + C.lineSoft }}>
-            <span style={{ fontSize: 13.5, color: C.muted }}>Pay frequency</span>
+            <span style={{ fontSize: 13.5, color: "#12262B", fontWeight: 700 }}>Pay frequency</span>
             <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, textTransform: "capitalize" }}>{displayFreq}</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", padding: "13px 0", borderBottom: "1px solid " + C.lineSoft }}>
-            <span style={{ fontSize: 13.5, color: C.muted }}>Hours per day</span>
+            <span style={{ fontSize: 13.5, color: "#12262B", fontWeight: 700 }}>Hours per day</span>
             <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{displayHours}</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", padding: "13px 0" }}>
-            <span style={{ fontSize: 13.5, color: C.muted }}>Days per week</span>
+            <span style={{ fontSize: 13.5, color: "#12262B", fontWeight: 700 }}>Days per week</span>
             <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{displayDays}</span>
           </div>
         </div>
