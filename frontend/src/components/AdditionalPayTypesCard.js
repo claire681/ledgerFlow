@@ -94,6 +94,10 @@ export default function AdditionalPayTypesCard(props) {
         });
         setItems(filtered);
         setLoading(false);
+        try {
+          var ids = list.map(function(it) { return (it.pay_type && it.pay_type.id) || it.pay_type_id; }).filter(Boolean);
+          window.dispatchEvent(new CustomEvent("novala:payItemsLoaded", { detail: { assignedPayTypeIds: ids } }));
+        } catch (err) { /* noop */ }
       })
       .catch(function(e) { setError(e.message || "Load failed"); setLoading(false); });
   }, [employeeId]);

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import BasePayModal from "../components/modals/BasePayModal";
 import TaxWithholdingsModal from "../components/modals/TaxWithholdingsModal";
 import AdditionalPayTypesCard from "../components/AdditionalPayTypesCard";
+import AddPayTypeModal from "../components/modals/AddPayTypeModal";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
@@ -299,15 +300,26 @@ export default function EmployeeProfileV2() {
   const [openId, setOpenId] = useState("personal");
   const [basePayModalOpen, setBasePayModalOpen] = useState(false);
   const [taxModalOpen, setTaxModalOpen] = useState(false);
+  const [addPayModalOpen, setAddPayModalOpen] = useState(false);
+  const [assignedPayTypeIds, setAssignedPayTypeIds] = useState([]);
 
   useEffect(function() {
     function handleOpen() { setBasePayModalOpen(true); }
     function handleOpenTax() { setTaxModalOpen(true); }
+    function handleOpenAddPay() { setAddPayModalOpen(true); }
+    function handlePayItemsLoaded(e) {
+      var ids = (e.detail && e.detail.assignedPayTypeIds) || [];
+      setAssignedPayTypeIds(ids);
+    }
     window.addEventListener("novala:openBasePayModal", handleOpen);
     window.addEventListener("novala:openTaxModal", handleOpenTax);
+    window.addEventListener("novala:openAddPayTypeModal", handleOpenAddPay);
+    window.addEventListener("novala:payItemsLoaded", handlePayItemsLoaded);
     return function() {
       window.removeEventListener("novala:openBasePayModal", handleOpen);
       window.removeEventListener("novala:openTaxModal", handleOpenTax);
+      window.removeEventListener("novala:openAddPayTypeModal", handleOpenAddPay);
+      window.removeEventListener("novala:payItemsLoaded", handlePayItemsLoaded);
     };
   }, []);
   const [searchParams] = useSearchParams();
@@ -501,6 +513,13 @@ export default function EmployeeProfileV2() {
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setTaxModalOpen(false); }}
         onSaved={function() { setTaxModalOpen(false); window.location.reload(); }}
+      />
+      <AddPayTypeModal
+        isOpen={addPayModalOpen}
+        employee={{ ...(employee || {}), ...(values || {}), id: id }}
+        alreadyAssignedPayTypeIds={assignedPayTypeIds}
+        onClose={function() { setAddPayModalOpen(false); }}
+        onSaved={function() { setAddPayModalOpen(false); window.location.reload(); }}
       />
       {toast && (
         <div style={{ position: "fixed", bottom: 26, left: "50%", transform: "translateX(-50%)", background: toast.kind === "err" ? "#7F1D1D" : C.ink, color: "#fff", fontSize: 13, fontWeight: 500, padding: "11px 18px", borderRadius: 10, zIndex: 80, display: "flex", alignItems: "center", gap: 9, boxShadow: "0 8px 24px rgba(16,26,43,0.3)" }}>
