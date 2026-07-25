@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import BasePayModal from "../components/modals/BasePayModal";
 import TaxWithholdingsModal from "../components/modals/TaxWithholdingsModal";
+import AdditionalPayTypesCard from "../components/AdditionalPayTypesCard";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
@@ -75,7 +76,7 @@ function buildSections(country) {
       { k: "account", l: "Account number", t: "text", showIf: function(v) { return v.method === "Direct deposit"; } },
     ]},
     { id: "basepay", title: "Base pay", icon: DollarSign, required: true, isCustomSection: true, fields: [] },
-    { id: "compensation", title: "Compensation", icon: DollarSign, required: true, isCustomSection: true, fields: [] },
+    { id: "addpay", title: "Additional pay types", icon: DollarSign, required: false, fields: [], intro: "Bonus, overtime, stat pay, and other earnings for this employee." },
     { id: "timeoff", title: "Time off", icon: Calendar, fields: [
       { k: "vacationPolicy", l: "Vacation policy", t: "select", opts: ["Accrued by hours worked","Fixed annual","Unpaid"] },
       { k: "accrualRate", l: "Accrual rate", t: "text" },
@@ -1491,6 +1492,17 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
         onToggleOpen={onToggleOpen}
         employee={values}
         onEditClick={function() { window.dispatchEvent(new CustomEvent("novala:openTaxModal")); }}
+      />
+    );
+  }
+  // Special-case rendering for Additional pay types section
+  if (section.id === "addpay") {
+    return (
+      <AdditionalPayTypesCard
+        section={section}
+        isOpen={isOpen}
+        onToggleOpen={onToggleOpen}
+        employeeId={employeeId}
       />
     );
   }
