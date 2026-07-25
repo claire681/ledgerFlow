@@ -110,6 +110,7 @@ function employeeToValues(emp, country) {
   const payScheduleMap = { weekly: "Weekly", bi_weekly: "Bi-weekly", semi_monthly: "Semi-monthly", monthly: "Monthly" };
   const rate = emp.pay_type === "hourly" ? emp.hourly_rate : emp.salary_amount;
   const result = {
+    tax_info: emp.tax_info || {},
     name: [emp.first_name, emp.last_name].filter(Boolean).join(" "),
     preferred: emp.preferred_name || "",
     email: emp.personal_email || "",
