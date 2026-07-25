@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, Search, MessageSquare, HelpCircle } from "lucide-react";
 import EditModal from "./EditModal";
 
@@ -41,6 +42,7 @@ function authHeaders() {
 }
 
 export default function AddPayTypeModal(props) {
+  const navigate = useNavigate();
   const isOpen = props.isOpen;
   const onClose = props.onClose;
   const onSaved = props.onSaved;
@@ -114,7 +116,9 @@ export default function AddPayTypeModal(props) {
   }
 
   function requestNewPayType() {
-    window.alert("Creating a new pay type from here is coming soon. For now, go to Payroll settings > Pay types to add a custom one.");
+    if (onClose) onClose();
+    // route by tab if the settings page supports it, else fall back to root
+    navigate("/payroll/settings/pay-types");
   }
 
   const employeeName = [employee.first_name, employee.last_name].filter(Boolean).join(" ") || "this employee";
