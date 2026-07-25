@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Info, HelpCircle, Lock, CalendarClock } from "lucide-react";
 import EditModal, { CollapsibleSection } from "./EditModal";
 
@@ -36,6 +37,7 @@ const SALARY_PERIODS = [
 ];
 
 export default function BasePayModal(props) {
+  const navigate = useNavigate();
   const isOpen = props.isOpen;
   const onClose = props.onClose;
   const onSaved = props.onSaved;
@@ -290,7 +292,10 @@ export default function BasePayModal(props) {
           </div>
           <div style={{ fontSize: 12.5, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
             Used to categorize and map your payroll transactions. To edit, see Accounting under{" "}
-            <a style={{ color: C.brandDark, fontWeight: 700, textDecoration: "underline", cursor: "pointer" }}>
+            <a
+              onClick={function() { onClose && onClose(); navigate("/payroll/settings"); }}
+              style={{ color: C.brandDark, fontWeight: 700, textDecoration: "underline", cursor: "pointer" }}
+            >
               Payroll settings
             </a>
             .
