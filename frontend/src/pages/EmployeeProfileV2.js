@@ -483,6 +483,7 @@ export default function EmployeeProfileV2() {
       </div>
       <BasePayModal
         isOpen={basePayModalOpen}
+        employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setBasePayModalOpen(false); }}
         onSaved={function() { setBasePayModalOpen(false); window.location.reload(); }}
         employee={values}
