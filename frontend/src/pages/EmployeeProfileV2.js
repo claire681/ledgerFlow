@@ -85,7 +85,6 @@ function buildSections(country) {
     { id: "addpay", title: "Additional pay types", icon: DollarSign, required: false, fields: [], intro: "Bonus, overtime, stat pay, and other earnings for this employee." },
       { id: "statholiday", title: "Stat holiday pay", icon: Calendar, required: false, fields: [], intro: "Regular workdays and eligibility for statutory holiday pay." },
     { id: "timeoff", title: "Time off", icon: Calendar, isCustomSection: true, required: false, fields: [], intro: "Vacation, sick pay, and unpaid leave policies for this employee." },
-    ]},
     { id: "tax", title: "Tax setup (" + country.taxForm + ")", icon: Receipt, required: true, fields: country.taxFields, intro: taxIntroFor(country) },
   ];
 }
