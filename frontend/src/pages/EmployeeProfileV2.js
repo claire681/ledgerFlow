@@ -11,6 +11,14 @@ import TimeOffModal from "../components/modals/TimeOffModal";
 import DeductionsCard from "../components/DeductionsCard";
 import AddDeductionModal from "../components/modals/AddDeductionModal";
 import DentalT4CodeModal from "../components/modals/DentalT4CodeModal";
+import PersonalInfoCard from "../components/PersonalInfoCard";
+import PersonalInfoModal from "../components/modals/PersonalInfoModal";
+import EmergencyContactsCard from "../components/EmergencyContactsCard";
+import EmergencyContactsModal from "../components/modals/EmergencyContactsModal";
+import EmploymentDetailsCard from "../components/EmploymentDetailsCard";
+import EmploymentDetailsModal from "../components/modals/EmploymentDetailsModal";
+import PaymentMethodCard from "../components/PaymentMethodCard";
+import PaymentMethodModal from "../components/modals/PaymentMethodModal";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
@@ -48,38 +56,22 @@ function taxIntroFor(country) {
 
 function buildSections(country) {
   return [
-    { id: "personal", title: "Personal info", icon: User, required: true, fields: [
-      { k: "name", l: "Name", t: "text", req: true },
-      { k: "preferred", l: "Preferred first name", t: "text" },
-      { k: "email", l: "Email", t: "email" },
-      { k: "mobilePhone", l: "Mobile phone number", t: "tel" },
-      { k: "street", l: "Home address", t: "text", full: true },
-      { k: "city", l: "City", t: "text" },
-      { k: "province", l: country.regionLabel, t: "select", opts: country.regions },
-      { k: "postal", l: "Postal code", t: "text" },
-      { k: "birth", l: "Birth date", t: "date", req: true },
-      { k: "gender", l: "Gender", t: "select", opts: ["Female","Male","Non-binary","Prefer not to say"] },
+    { id: "personal", title: "Personal information", icon: User, isCustomSection: true, required: true, fields: [], intro: "Name, contact, address, and identification for this employee." },
       { k: "taxId", l: country.taxId.label, t: "text", req: true,
         placeholder: country.taxId.placeholder,
         validate: country.taxId.validate, errorMsg: country.taxId.errorMsg },
     ]},
-    { id: "emergency", title: "Emergency contact", icon: Phone, fields: [
-      { k: "ecName", l: "Contact name", t: "text" },
-      { k: "ecRel", l: "Relationship", t: "select", opts: ["Spouse","Parent","Sibling","Child","Friend","Other"] },
+    { id: "emergency", title: "Emergency contacts", icon: Heart, isCustomSection: true, required: false, fields: [], intro: "People to contact in case of emergency." },
       { k: "ecPhone", l: "Phone number", t: "tel" },
       { k: "ecEmail", l: "Email", t: "email" },
     ]},
-    { id: "employment", title: "Employment details", icon: Briefcase, required: true, fields: [
-      { k: "empId", l: "Employee ID", t: "text" },
-      { k: "jobTitle", l: "Job title", t: "text" },
-      { k: "empType", l: "Employment type", t: "select", req: true, opts: ["Full-time","Part-time","Casual"] },
+    { id: "employment", title: "Employment details", icon: Briefcase, isCustomSection: true, required: true, fields: [], intro: "Role, dates, work location, and tenure." },
       { k: "startDate", l: "Start date", t: "date", req: true },
       { k: "workLocationId", l: "Work location", t: "wloc-select" },
     { k: "department", l: "Department", t: "text" },
       { k: "manager", l: "Manager", t: "text" },
     ]},
-    { id: "payment", title: "Payment method", icon: CreditCard, required: true, fields: [
-      { k: "method", l: "Payment method", t: "select", req: true, opts: ["Direct deposit","Cheque"] },
+    { id: "payment", title: "Payment method", icon: CreditCard, isCustomSection: true, required: true, fields: [], intro: "How this employee receives their pay." },
       { k: "institution", l: "Financial institution", t: "text", showIf: function(v) { return v.method === "Direct deposit"; } },
       { k: "transit", l: "Transit number", t: "text", showIf: function(v) { return v.method === "Direct deposit"; } },
       { k: "account", l: "Account number", t: "text", showIf: function(v) { return v.method === "Direct deposit"; } },
@@ -317,6 +309,11 @@ export default function EmployeeProfileV2() {
   const [addDeductionOpen, setAddDeductionOpen] = useState(false);
   const [dentalCodeOpen, setDentalCodeOpen] = useState(false);
   const [dentalCodeCurrent, setDentalCodeCurrent] = useState(null);
+  const [personalInfoModalOpen, setPersonalInfoModalOpen] = useState(false);
+  const [emergencyContactsModalOpen, setEmergencyContactsModalOpen] = useState(false);
+  const [employmentModalOpen, setEmploymentModalOpen] = useState(false);
+  const [employmentLocations, setEmploymentLocations] = useState([]);
+  const [paymentMethodModalOpen, setPaymentMethodModalOpen] = useState(false);
 
   useEffect(function() {
     function handleOpen() { setBasePayModalOpen(true); }
@@ -356,6 +353,14 @@ export default function EmployeeProfileV2() {
         headers: { "Authorization": "Bearer " + t },
       }).then(function() { window.location.reload(); });
     }
+    function handleOpenPersonalInfo() { setPersonalInfoModalOpen(true); }
+    function handleOpenEmergency() { setEmergencyContactsModalOpen(true); }
+    function handleOpenEmployment(e) {
+      var payload = e.detail || null;
+      if (payload && Array.isArray(payload.locations)) setEmploymentLocations(payload.locations);
+      setEmploymentModalOpen(true);
+    }
+    function handleOpenPaymentMethod() { setPaymentMethodModalOpen(true); }
     window.addEventListener("novala:openBasePayModal", handleOpen);
     window.addEventListener("novala:openTaxModal", handleOpenTax);
     window.addEventListener("novala:openAddPayTypeModal", handleOpenAddPay);
@@ -365,6 +370,10 @@ export default function EmployeeProfileV2() {
     window.addEventListener("novala:openAddDeductionModal", handleOpenAddDeduction);
     window.addEventListener("novala:openDentalCodeModal", handleOpenDentalCode);
     window.addEventListener("novala:unassignDeductionItem", handleUnassignDeduction);
+    window.addEventListener("novala:openPersonalInfoModal", handleOpenPersonalInfo);
+    window.addEventListener("novala:openEmergencyContactsModal", handleOpenEmergency);
+    window.addEventListener("novala:openEmploymentDetailsModal", handleOpenEmployment);
+    window.addEventListener("novala:openPaymentMethodModal", handleOpenPaymentMethod);
     window.addEventListener("novala:payItemsLoaded", handlePayItemsLoaded);
     return function() {
       window.removeEventListener("novala:openBasePayModal", handleOpen);
@@ -376,6 +385,10 @@ export default function EmployeeProfileV2() {
       window.removeEventListener("novala:openAddDeductionModal", handleOpenAddDeduction);
       window.removeEventListener("novala:openDentalCodeModal", handleOpenDentalCode);
       window.removeEventListener("novala:unassignDeductionItem", handleUnassignDeduction);
+      window.removeEventListener("novala:openPersonalInfoModal", handleOpenPersonalInfo);
+      window.removeEventListener("novala:openEmergencyContactsModal", handleOpenEmergency);
+      window.removeEventListener("novala:openEmploymentDetailsModal", handleOpenEmployment);
+      window.removeEventListener("novala:openPaymentMethodModal", handleOpenPaymentMethod);
       window.removeEventListener("novala:payItemsLoaded", handlePayItemsLoaded);
     };
   }, []);
@@ -620,6 +633,31 @@ export default function EmployeeProfileV2() {
         current={dentalCodeCurrent}
         onClose={function() { setDentalCodeOpen(false); }}
         onSaved={function() { setDentalCodeOpen(false); window.location.reload(); }}
+      />
+      <PersonalInfoModal
+        isOpen={personalInfoModalOpen}
+        employee={{ ...(employee || {}), ...(values || {}), id: id }}
+        onClose={function() { setPersonalInfoModalOpen(false); }}
+        onSaved={function() { setPersonalInfoModalOpen(false); window.location.reload(); }}
+      />
+      <EmergencyContactsModal
+        isOpen={emergencyContactsModalOpen}
+        employee={{ ...(employee || {}), ...(values || {}), id: id }}
+        onClose={function() { setEmergencyContactsModalOpen(false); }}
+        onSaved={function() { setEmergencyContactsModalOpen(false); window.location.reload(); }}
+      />
+      <EmploymentDetailsModal
+        isOpen={employmentModalOpen}
+        employee={{ ...(employee || {}), ...(values || {}), id: id }}
+        locations={employmentLocations}
+        onClose={function() { setEmploymentModalOpen(false); }}
+        onSaved={function() { setEmploymentModalOpen(false); window.location.reload(); }}
+      />
+      <PaymentMethodModal
+        isOpen={paymentMethodModalOpen}
+        employee={{ ...(employee || {}), ...(values || {}), id: id }}
+        onClose={function() { setPaymentMethodModalOpen(false); }}
+        onSaved={function() { setPaymentMethodModalOpen(false); window.location.reload(); }}
       />
       {toast && (
         <div style={{ position: "fixed", bottom: 26, left: "50%", transform: "translateX(-50%)", background: toast.kind === "err" ? "#7F1D1D" : C.ink, color: "#fff", fontSize: 13, fontWeight: 500, padding: "11px 18px", borderRadius: 10, zIndex: 80, display: "flex", alignItems: "center", gap: 9, boxShadow: "0 8px 24px rgba(16,26,43,0.3)" }}>
@@ -1657,6 +1695,30 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
         employeeId={employeeId}
         employee={values}
       />
+    );
+  }
+  // Custom Personal information section
+  if (section.id === "personal") {
+    return (
+      <PersonalInfoCard section={section} isOpen={isOpen} onToggleOpen={onToggleOpen} employee={values} />
+    );
+  }
+  // Custom Emergency contacts section
+  if (section.id === "emergency") {
+    return (
+      <EmergencyContactsCard section={section} isOpen={isOpen} onToggleOpen={onToggleOpen} employee={values} />
+    );
+  }
+  // Custom Employment details section
+  if (section.id === "employment") {
+    return (
+      <EmploymentDetailsCard section={section} isOpen={isOpen} onToggleOpen={onToggleOpen} employee={values} />
+    );
+  }
+  // Custom Payment method section
+  if (section.id === "payment") {
+    return (
+      <PaymentMethodCard section={section} isOpen={isOpen} onToggleOpen={onToggleOpen} employee={values} />
     );
   }
   // Special-case rendering for Compensation section
