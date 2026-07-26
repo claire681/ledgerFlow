@@ -6,6 +6,8 @@ import AddPayTypeModal from "../components/modals/AddPayTypeModal";
 import EditPayTypeModal from "../components/modals/EditPayTypeModal";
 import StatHolidayPayCard from "../components/StatHolidayPayCard";
 import StatHolidayModal from "../components/modals/StatHolidayModal";
+import TimeOffCard from "../components/TimeOffCard";
+import TimeOffModal from "../components/modals/TimeOffModal";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
@@ -82,8 +84,7 @@ function buildSections(country) {
     { id: "basepay", title: "Base pay", icon: DollarSign, required: true, isCustomSection: true, fields: [] },
     { id: "addpay", title: "Additional pay types", icon: DollarSign, required: false, fields: [], intro: "Bonus, overtime, stat pay, and other earnings for this employee." },
       { id: "statholiday", title: "Stat holiday pay", icon: Calendar, required: false, fields: [], intro: "Regular workdays and eligibility for statutory holiday pay." },
-    { id: "timeoff", title: "Time off", icon: Calendar, fields: [
-      { k: "vacationPolicy", l: "Vacation policy", t: "select", opts: ["Accrued by hours worked","Fixed annual","Unpaid"] },
+    { id: "timeoff", title: "Time off", icon: Calendar, isCustomSection: true, required: false, fields: [], intro: "Vacation, sick pay, and unpaid leave policies for this employee." },
       { k: "accrualRate", l: "Accrual rate", t: "text" },
       { k: "balanceHours", l: "Current balance (hours)", t: "number" },
     ]},
@@ -310,6 +311,8 @@ export default function EmployeeProfileV2() {
   const [editingPayItem, setEditingPayItem] = useState(null);
   const [statHolidayModalOpen, setStatHolidayModalOpen] = useState(false);
   const [statHolidayData, setStatHolidayData] = useState(null);
+  const [timeOffModalOpen, setTimeOffModalOpen] = useState(false);
+  const [timeOffData, setTimeOffData] = useState(null);
 
   useEffect(function() {
     function handleOpen() { setBasePayModalOpen(true); }
@@ -329,11 +332,17 @@ export default function EmployeeProfileV2() {
       setStatHolidayData(payload && payload.data ? payload.data : null);
       setStatHolidayModalOpen(true);
     }
+    function handleOpenTimeOff(e) {
+      var payload = e.detail || null;
+      setTimeOffData(payload && payload.data ? payload.data : null);
+      setTimeOffModalOpen(true);
+    }
     window.addEventListener("novala:openBasePayModal", handleOpen);
     window.addEventListener("novala:openTaxModal", handleOpenTax);
     window.addEventListener("novala:openAddPayTypeModal", handleOpenAddPay);
     window.addEventListener("novala:openEditPayTypeModal", handleOpenEditPay);
     window.addEventListener("novala:openStatHolidayModal", handleOpenStatHoliday);
+    window.addEventListener("novala:openTimeOffModal", handleOpenTimeOff);
     window.addEventListener("novala:payItemsLoaded", handlePayItemsLoaded);
     return function() {
       window.removeEventListener("novala:openBasePayModal", handleOpen);
@@ -341,6 +350,7 @@ export default function EmployeeProfileV2() {
       window.removeEventListener("novala:openAddPayTypeModal", handleOpenAddPay);
       window.removeEventListener("novala:openEditPayTypeModal", handleOpenEditPay);
       window.removeEventListener("novala:openStatHolidayModal", handleOpenStatHoliday);
+      window.removeEventListener("novala:openTimeOffModal", handleOpenTimeOff);
       window.removeEventListener("novala:payItemsLoaded", handlePayItemsLoaded);
     };
   }, []);
@@ -556,6 +566,13 @@ export default function EmployeeProfileV2() {
         data={statHolidayData}
         onClose={function() { setStatHolidayModalOpen(false); }}
         onSaved={function() { setStatHolidayModalOpen(false); window.location.reload(); }}
+      />
+      <TimeOffModal
+        isOpen={timeOffModalOpen}
+        employee={{ ...(employee || {}), ...(values || {}), id: id }}
+        data={timeOffData}
+        onClose={function() { setTimeOffModalOpen(false); }}
+        onSaved={function() { setTimeOffModalOpen(false); window.location.reload(); }}
       />
       {toast && (
         <div style={{ position: "fixed", bottom: 26, left: "50%", transform: "translateX(-50%)", background: toast.kind === "err" ? "#7F1D1D" : C.ink, color: "#fff", fontSize: 13, fontWeight: 500, padding: "11px 18px", borderRadius: 10, zIndex: 80, display: "flex", alignItems: "center", gap: 9, boxShadow: "0 8px 24px rgba(16,26,43,0.3)" }}>
@@ -1565,6 +1582,17 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
   if (section.id === "statholiday") {
     return (
       <StatHolidayPayCard
+        section={section}
+        isOpen={isOpen}
+        onToggleOpen={onToggleOpen}
+        employeeId={employeeId}
+      />
+    );
+  }
+  // Special-case rendering for Time off section
+  if (section.id === "timeoff") {
+    return (
+      <TimeOffCard
         section={section}
         isOpen={isOpen}
         onToggleOpen={onToggleOpen}
