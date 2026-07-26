@@ -94,6 +94,14 @@ export default function AddDeductionModal(props) {
     }
   }
 
+  function handleSaveOrContinue() {
+    if (step === 1) {
+      if (canContinue) setStep(2);
+    } else {
+      handleSave();
+    }
+  }
+
   const employeeName = [employee.first_name, employee.last_name].filter(Boolean).join(" ") || "this employee";
   const positionRaw = employee.position_title || "";
   const subtitle = positionRaw ? (employeeName + " \u00b7 " + positionRaw) : employeeName;
@@ -103,7 +111,7 @@ export default function AddDeductionModal(props) {
     <EditModal
       isOpen={isOpen}
       onClose={onClose}
-      onSave={step === 2 ? handleSave : null}
+      onSave={handleSaveOrContinue}
       title="Add deduction or contribution"
       subtitle={subtitle}
       iconLetter={"\u2212"}
