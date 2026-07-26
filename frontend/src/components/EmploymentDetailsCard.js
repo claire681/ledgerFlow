@@ -119,7 +119,7 @@ export default function EmploymentDetailsCard(props) {
           <SubCard title="Role" icon={<User size={13} strokeWidth={2.5} />}>
             <Row label="Position title" value={title} />
             <Row label="Department" value={dept} />
-            <Row label="Employee ID" value={empId} mono />
+            <Row label="Employee ID number" value={empId} mono />
             <Row label="Employment type" value={empType} isLast />
           </SubCard>
 

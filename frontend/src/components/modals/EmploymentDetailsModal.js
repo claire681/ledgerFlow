@@ -96,7 +96,7 @@ export default function EmploymentDetailsModal(props) {
     >
       <CollapsibleSection title="Role" defaultOpen={true}>
         <Field label="Position title"><TextInput value={title} onChange={setTitle} placeholder="Home care worker" /></Field>
-        <Field label="Employee number"><TextInput value={empNumber} onChange={setEmpNumber} placeholder="Optional. Auto-generated if left blank." /></Field>
+        <Field label="Employee ID number"><TextInput value={empNumber} onChange={setEmpNumber} placeholder="Optional. Auto-generated if left blank." /></Field>
         <TwoCol>
           <Field label="Department"><TextInput value={dept} onChange={setDept} placeholder="Care team" /></Field>
           <Field label="Employment type">

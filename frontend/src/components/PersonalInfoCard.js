@@ -94,7 +94,7 @@ export default function PersonalInfoCard(props) {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 20, fontWeight: 700, color: C.ink, letterSpacing: "-0.01em" }}>{fullName}</div>
-                <div style={{ fontSize: 13, color: C.muted, fontWeight: 500, marginTop: 3 }}>{position} · Employee ID {empId}</div>
+                <div style={{ fontSize: 13, color: C.muted, fontWeight: 500, marginTop: 3 }}>{position} · Employee ID number {empId}</div>
               </div>
               <span style={{ padding: "5px 12px", background: C.brandBg, color: C.brandDark, borderRadius: 6, fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>Active</span>
             </div>
