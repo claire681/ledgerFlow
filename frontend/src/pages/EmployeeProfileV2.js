@@ -57,8 +57,6 @@ function taxIntroFor(country) {
 function buildSections(country) {
   return [
     { id: "personal", title: "Personal information", icon: User, isCustomSection: true, required: true, fields: [], intro: "Name, contact, address, and identification for this employee." },
-        placeholder: country.taxId.placeholder,
-        validate: country.taxId.validate, errorMsg: country.taxId.errorMsg },
     { id: "emergency", title: "Emergency contacts", icon: Heart, isCustomSection: true, required: false, fields: [], intro: "People to contact in case of emergency." },
     { id: "employment", title: "Employment details", icon: Briefcase, isCustomSection: true, required: true, fields: [], intro: "Role, dates, work location, and tenure." },
     { id: "payment", title: "Payment method", icon: CreditCard, isCustomSection: true, required: true, fields: [], intro: "How this employee receives their pay." },
