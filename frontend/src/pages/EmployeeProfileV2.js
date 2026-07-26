@@ -747,7 +747,7 @@ function BasePaySectionCard({ section, isOpen, onToggleOpen, employee, onEditCli
     ? { bg: C.amberSoft, fg: C.amber, label: "Start" }
     : { bg: C.greenSoft, fg: C.green, label: "Done" };
   return (
-    <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
+    <div style={{ background: "#FFFFFF", border: "1px solid " + C.line, borderRadius: 12, overflow: "hidden", marginBottom: 12 }}>
       <div onClick={onToggleOpen} style={{ display: "flex", alignItems: "center", gap: 13, padding: "18px 22px", cursor: "pointer" }}>
         <span style={{ width: 30, height: 30, borderRadius: 9, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 30px" }}>
           <Icon size={17} />
@@ -1675,21 +1675,28 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
   return (
     <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
       <div onClick={function() { if (!isEditing && !disabledByOtherEdit) onToggleOpen(); }}
-        style={{ display: "flex", alignItems: "center", gap: 13, padding: "18px 22px", cursor: isEditing || disabledByOtherEdit ? "default" : "pointer" }}>
-        <span style={{ width: 30, height: 30, borderRadius: 9, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 30px" }}>
-          <Icon size={17} />
-        </span>
-        <h3 style={{ flex: 1, fontSize: 16, fontWeight: 600, color: C.ink }}>{section.title}</h3>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: pill.bg, color: pill.fg }}>
-          {status === "done" && <Check size={12} />} {pill.label}
-        </span>
-        {!isEditing && (
-          <button onClick={function(e) { e.stopPropagation(); onEdit(); }} disabled={disabledByOtherEdit}
-            style={{ fontSize: 13.5, fontWeight: 600, color: C.tealInk, background: "none", border: 0, cursor: disabledByOtherEdit ? "not-allowed" : "pointer", padding: "6px 8px", borderRadius: 8, opacity: disabledByOtherEdit ? 0.5 : 1 }}>
-            {actLabel}
-          </button>
+        style={{ display: "flex", alignItems: "center", padding: "16px 20px", cursor: isEditing || disabledByOtherEdit ? "default" : "pointer" }}>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: "#E1F5EE", color: "#0F6E56", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginRight: 12 }}>
+          <Icon size={16} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#0E1A1A" }}>{section.title}</div>
+          {section.intro && (
+            <div style={{ fontSize: 12, color: "#12262B", fontWeight: 500, marginTop: 2 }}>{section.intro}</div>
+          )}
+        </div>
+        {status !== "done" && (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 6, background: pill.bg, color: pill.fg, marginRight: 10, letterSpacing: 0.3, textTransform: "uppercase" }}>
+            {pill.label}
+          </span>
         )}
-        <ChevronDown size={18} color={C.muted} style={{ transform: isOpen ? "none" : "rotate(-90deg)", transition: "transform 0.2s" }} />
+        {!isEditing && (
+          <a onClick={function(e) { e.stopPropagation(); if (!disabledByOtherEdit) onEdit(); }}
+            style={{ fontSize: 13, color: "#0F6E56", fontWeight: 700, textDecoration: "underline", cursor: disabledByOtherEdit ? "not-allowed" : "pointer", marginRight: 12, opacity: disabledByOtherEdit ? 0.5 : 1 }}>
+            {actLabel}
+          </a>
+        )}
+        <span style={{ color: "#12262B", fontSize: 14 }}>{isOpen ? "\u25be" : "\u25b8"}</span>
       </div>
       {isOpen && (
         <div style={{ padding: "4px 22px 22px", borderTop: "1px solid " + C.lineSoft }}>
@@ -1720,9 +1727,9 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
               {visibleFields.map(function(f) {
                 const display = formatViewValue(f.t === "wloc-select" ? Object.assign({}, f, { workLocations: workLocations }) : f, v[f.k]);
                 return (
-                  <div key={f.k} style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, padding: "13px 0", borderBottom: "1px solid " + C.lineSoft }}>
-                    <span style={{ fontSize: 13.5, color: C.muted }}>{f.l}</span>
-                    <span style={{ fontSize: 13.5, color: display ? C.ink : C.faint, fontWeight: display ? 500 : 400, fontStyle: display ? "normal" : "italic", textAlign: "right" }}>
+                  <div key={f.k} style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: "10px 24px", alignItems: "start", padding: "14px 0", borderBottom: "1px solid " + C.lineSoft }}>
+                    <span style={{ fontSize: 13.5, color: "#12262B", fontWeight: 700 }}>{f.l}</span>
+                    <span style={{ fontSize: 13.5, color: display ? "#0E1A1A" : "#94A0B2", fontWeight: 500 }}>
                       {display || "Not set"}
                     </span>
                   </div>
