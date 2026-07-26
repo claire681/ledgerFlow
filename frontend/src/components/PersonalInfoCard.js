@@ -27,9 +27,9 @@ function fmtDateDDMMYYYY(iso) {
 function maskSIN(sin) {
   if (!sin) return null;
   var digits = String(sin).replace(/\D/g, "");
-  if (digits.length < 4) return "\u2022\u2022\u2022";
+  if (digits.length < 3) return "XXX-XXX-XXX";
   var last3 = digits.slice(-3);
-  return "\u2022\u2022\u2022 \u2022\u2022\u2022 " + last3;
+  return "XXX-XXX-" + last3;
 }
 
 export default function PersonalInfoCard(props) {
@@ -91,7 +91,7 @@ export default function PersonalInfoCard(props) {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 20, fontWeight: 700, color: C.ink, letterSpacing: "-0.01em" }}>{fullName}</div>
-                <div style={{ fontSize: 13, color: C.muted, fontWeight: 500, marginTop: 3 }}>{position} \u00b7 Employee ID {empId}</div>
+                <div style={{ fontSize: 13, color: C.muted, fontWeight: 500, marginTop: 3 }}>{position} · Employee ID {empId}</div>
               </div>
               <span style={{ padding: "5px 12px", background: C.brandBg, color: C.brandDark, borderRadius: 6, fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>Active</span>
             </div>
@@ -107,7 +107,7 @@ export default function PersonalInfoCard(props) {
           {/* Address */}
           <SubCard title="Address" icon={<Home size={13} strokeWidth={2.5} />} rightTag={mailingSame ? "Mailing same" : "Different mailing"}>
             <Row label="Street" value={line2 ? (street + " " + line2) : street} />
-            <Row label="City / Province" value={city && prov ? (city + " \u00b7 " + prov) : (city || prov)} />
+            <Row label="City / Province" value={city && prov ? (city + " · " + prov) : (city || prov)} />
             <Row label="Postal code" value={postal} mono isLast />
           </SubCard>
 
