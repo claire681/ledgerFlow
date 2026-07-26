@@ -1603,7 +1603,7 @@ function CompensationDrawer({ mode, employeeId, editItem, onClose, onSaved }) {
   );
 }
 
-function Section({ section, values, draft, country, isOpen, isEditing, isSaving, disabledByOtherEdit, fieldErrors, onToggleOpen, onEdit, onCancel, onSave, onChange, workLocations, employeeId }) {
+function Section({ section, values, draft, country, isOpen, isEditing, isSaving, disabledByOtherEdit, fieldErrors, onToggleOpen, onEdit, onCancel, onSave, onChange, workLocations, employeeId, fullEmployee }) {
   const Icon = section.icon;
   const status = sectionStatus(section, values);
   const pill = status === "done" ? { bg: C.greenSoft, fg: C.green, label: "Done" }
@@ -1684,25 +1684,25 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
   // Custom Personal information section
   if (section.id === "personal") {
     return (
-      <PersonalInfoCard section={section} isOpen={isOpen} onToggleOpen={onToggleOpen} employee={values} />
+      <PersonalInfoCard section={section} isOpen={isOpen} onToggleOpen={onToggleOpen} employee={fullEmployee || values} />
     );
   }
   // Custom Emergency contacts section
   if (section.id === "emergency") {
     return (
-      <EmergencyContactsCard section={section} isOpen={isOpen} onToggleOpen={onToggleOpen} employee={values} />
+      <EmergencyContactsCard section={section} isOpen={isOpen} onToggleOpen={onToggleOpen} employee={fullEmployee || values} />
     );
   }
   // Custom Employment details section
   if (section.id === "employment") {
     return (
-      <EmploymentDetailsCard section={section} isOpen={isOpen} onToggleOpen={onToggleOpen} employee={values} />
+      <EmploymentDetailsCard section={section} isOpen={isOpen} onToggleOpen={onToggleOpen} employee={fullEmployee || values} />
     );
   }
   // Custom Payment method section
   if (section.id === "payment") {
     return (
-      <PaymentMethodCard section={section} isOpen={isOpen} onToggleOpen={onToggleOpen} employee={values} />
+      <PaymentMethodCard section={section} isOpen={isOpen} onToggleOpen={onToggleOpen} employee={fullEmployee || values} />
     );
   }
   // Special-case rendering for Compensation section
