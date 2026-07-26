@@ -45,7 +45,7 @@ export default function PersonalInfoModal(props) {
     if (!isOpen) return;
     setFirstName(employee.first_name || "");
     setLastName(employee.last_name || "");
-    setEmail(employee.email || "");
+    setEmail(employee.personal_email || employee.email || "");
     setPhone(employee.phone || "");
     setDob(employee.date_of_birth ? String(employee.date_of_birth).slice(0, 10) : "");
     setSin(employee.sin_or_ssn || employee.sin || "");
@@ -64,7 +64,7 @@ export default function PersonalInfoModal(props) {
     var body = {
       first_name: firstName || null,
       last_name: lastName || null,
-      email: email || null,
+      personal_email: email || null,
       phone: phone || null,
       date_of_birth: dob || null,
       sin_or_ssn: sin || null,

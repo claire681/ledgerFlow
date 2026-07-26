@@ -26,9 +26,12 @@ function fmtDateDDMMYYYY(iso) {
 
 function maskSIN(sin) {
   if (!sin) return null;
-  var digits = String(sin).replace(/\D/g, "");
-  if (digits.length < 3) return "XXX-XXX-XXX";
-  var last3 = digits.slice(-3);
+  var raw = String(sin).trim();
+  // If already masked (contains asterisks or Xs), extract visible digits
+  var visible = raw.replace(/[^0-9]/g, "");
+  if (visible.length === 0) return "XXX-XXX-XXX";
+  if (visible.length < 3) return "XXX-XXX-" + visible.padStart(3, "X");
+  var last3 = visible.slice(-3);
   return "XXX-XXX-" + last3;
 }
 
@@ -46,8 +49,8 @@ export default function PersonalInfoCard(props) {
   const last = employee.last_name || "";
   const fullName = (first + " " + last).trim() || "Unnamed employee";
   const position = employee.position_title || "-";
-  const empId = employee.id ? String(employee.id).slice(0, 8).toUpperCase() : "-";
-  const email = employee.email || null;
+  const empId = employee.employee_number || (employee.id ? String(employee.id).slice(0, 8).toUpperCase() : "-");
+  const email = employee.personal_email || employee.email || null;
   const phone = employee.phone || null;
   const dob = fmtDateDDMMYYYY(employee.date_of_birth);
   const sin = maskSIN(employee.sin_or_ssn || employee.sin);

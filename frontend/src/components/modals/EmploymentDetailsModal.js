@@ -23,6 +23,7 @@ export default function EmploymentDetailsModal(props) {
   const providedLocations = props.locations || [];
 
   const [title, setTitle] = useState("");
+  const [empNumber, setEmpNumber] = useState("");
   const [dept, setDept] = useState("");
   const [empType, setEmpType] = useState("Full-time");
   const [payType, setPayType] = useState("hourly");
@@ -36,6 +37,7 @@ export default function EmploymentDetailsModal(props) {
   useEffect(function() {
     if (!isOpen) return;
     setTitle(employee.position_title || "");
+    setEmpNumber(employee.employee_number || "");
     setDept(employee.department || "");
     setEmpType(employee.employment_type || "Full-time");
     setPayType(employee.pay_type || "hourly");
@@ -58,6 +60,7 @@ export default function EmploymentDetailsModal(props) {
     setSaving(true); setSaveError(null);
     var body = {
       position_title: title || null,
+      employee_number: empNumber || null,
       department: dept || null,
       employment_type: empType || null,
       pay_type: payType || null,
@@ -93,6 +96,7 @@ export default function EmploymentDetailsModal(props) {
     >
       <CollapsibleSection title="Role" defaultOpen={true}>
         <Field label="Position title"><TextInput value={title} onChange={setTitle} placeholder="Home care worker" /></Field>
+        <Field label="Employee number"><TextInput value={empNumber} onChange={setEmpNumber} placeholder="Optional. Auto-generated if left blank." /></Field>
         <TwoCol>
           <Field label="Department"><TextInput value={dept} onChange={setDept} placeholder="Care team" /></Field>
           <Field label="Employment type">
