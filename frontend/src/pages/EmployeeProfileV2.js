@@ -654,7 +654,7 @@ function Rail({ sections, values, openId, onPick, editingId }) {
               background: on ? C.tealSoft : "none", fontFamily: FONT, fontSize: 13.5,
               fontWeight: on ? 600 : 500, color: on ? C.tealInk : C.text, padding: "11px 12px",
               borderRadius: 10, cursor: disabled ? "not-allowed" : "pointer", textAlign: "left", opacity: disabled ? 0.5 : 1 }}>
-            <span style={{ width: 18, height: 18, color: on ? C.tealInk : C.faint, flex: "0 0 18px" }}>
+            <span style={{ width: 18, height: 18, color: on ? C.tealInk : "#000000", flex: "0 0 18px" }}>
               <Icon size={18} />
             </span>
             <span style={{ flex: 1 }}>{s.title}</span>
