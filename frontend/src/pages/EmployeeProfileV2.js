@@ -8,6 +8,9 @@ import StatHolidayPayCard from "../components/StatHolidayPayCard";
 import StatHolidayModal from "../components/modals/StatHolidayModal";
 import TimeOffCard from "../components/TimeOffCard";
 import TimeOffModal from "../components/modals/TimeOffModal";
+import DeductionsCard from "../components/DeductionsCard";
+import AddDeductionModal from "../components/modals/AddDeductionModal";
+import DentalT4CodeModal from "../components/modals/DentalT4CodeModal";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
@@ -85,6 +88,7 @@ function buildSections(country) {
     { id: "addpay", title: "Additional pay types", icon: DollarSign, required: false, fields: [], intro: "Bonus, overtime, stat pay, and other earnings for this employee." },
       { id: "statholiday", title: "Stat holiday pay", icon: Calendar, required: false, fields: [], intro: "Regular workdays and eligibility for statutory holiday pay." },
     { id: "timeoff", title: "Time off", icon: Calendar, isCustomSection: true, required: false, fields: [], intro: "Vacation, sick pay, and unpaid leave policies for this employee." },
+      { id: "deductions", title: "Deductions and contributions", icon: Receipt, isCustomSection: true, required: false, fields: [], intro: "Voluntary items like RRSP, health insurance, or garnishments." },
     { id: "tax", title: "Tax setup (" + country.taxForm + ")", icon: Receipt, required: true, fields: country.taxFields, intro: taxIntroFor(country) },
   ];
 }
@@ -310,6 +314,9 @@ export default function EmployeeProfileV2() {
   const [statHolidayData, setStatHolidayData] = useState(null);
   const [timeOffModalOpen, setTimeOffModalOpen] = useState(false);
   const [timeOffData, setTimeOffData] = useState(null);
+  const [addDeductionOpen, setAddDeductionOpen] = useState(false);
+  const [dentalCodeOpen, setDentalCodeOpen] = useState(false);
+  const [dentalCodeCurrent, setDentalCodeCurrent] = useState(null);
 
   useEffect(function() {
     function handleOpen() { setBasePayModalOpen(true); }
@@ -334,12 +341,30 @@ export default function EmployeeProfileV2() {
       setTimeOffData(payload && payload.data ? payload.data : null);
       setTimeOffModalOpen(true);
     }
+    function handleOpenAddDeduction() { setAddDeductionOpen(true); }
+    function handleOpenDentalCode(e) {
+      var payload = e.detail || null;
+      setDentalCodeCurrent(payload && payload.current ? payload.current : null);
+      setDentalCodeOpen(true);
+    }
+    function handleUnassignDeduction(e) {
+      var it = e.detail || null;
+      if (!it || !it.id) return;
+      var t = localStorage.getItem("access_token") || localStorage.getItem("token") || "";
+      fetch((process.env.REACT_APP_API_URL || "https://api.getnovala.com") + "/api/v1/employee-deduction-items/" + it.id, {
+        method: "DELETE",
+        headers: { "Authorization": "Bearer " + t },
+      }).then(function() { window.location.reload(); });
+    }
     window.addEventListener("novala:openBasePayModal", handleOpen);
     window.addEventListener("novala:openTaxModal", handleOpenTax);
     window.addEventListener("novala:openAddPayTypeModal", handleOpenAddPay);
     window.addEventListener("novala:openEditPayTypeModal", handleOpenEditPay);
     window.addEventListener("novala:openStatHolidayModal", handleOpenStatHoliday);
     window.addEventListener("novala:openTimeOffModal", handleOpenTimeOff);
+    window.addEventListener("novala:openAddDeductionModal", handleOpenAddDeduction);
+    window.addEventListener("novala:openDentalCodeModal", handleOpenDentalCode);
+    window.addEventListener("novala:unassignDeductionItem", handleUnassignDeduction);
     window.addEventListener("novala:payItemsLoaded", handlePayItemsLoaded);
     return function() {
       window.removeEventListener("novala:openBasePayModal", handleOpen);
@@ -348,6 +373,9 @@ export default function EmployeeProfileV2() {
       window.removeEventListener("novala:openEditPayTypeModal", handleOpenEditPay);
       window.removeEventListener("novala:openStatHolidayModal", handleOpenStatHoliday);
       window.removeEventListener("novala:openTimeOffModal", handleOpenTimeOff);
+      window.removeEventListener("novala:openAddDeductionModal", handleOpenAddDeduction);
+      window.removeEventListener("novala:openDentalCodeModal", handleOpenDentalCode);
+      window.removeEventListener("novala:unassignDeductionItem", handleUnassignDeduction);
       window.removeEventListener("novala:payItemsLoaded", handlePayItemsLoaded);
     };
   }, []);
@@ -570,6 +598,19 @@ export default function EmployeeProfileV2() {
         data={timeOffData}
         onClose={function() { setTimeOffModalOpen(false); }}
         onSaved={function() { setTimeOffModalOpen(false); window.location.reload(); }}
+      />
+      <AddDeductionModal
+        isOpen={addDeductionOpen}
+        employee={{ ...(employee || {}), ...(values || {}), id: id }}
+        onClose={function() { setAddDeductionOpen(false); }}
+        onSaved={function() { setAddDeductionOpen(false); window.location.reload(); }}
+      />
+      <DentalT4CodeModal
+        isOpen={dentalCodeOpen}
+        employee={{ ...(employee || {}), ...(values || {}), id: id }}
+        current={dentalCodeCurrent}
+        onClose={function() { setDentalCodeOpen(false); }}
+        onSaved={function() { setDentalCodeOpen(false); window.location.reload(); }}
       />
       {toast && (
         <div style={{ position: "fixed", bottom: 26, left: "50%", transform: "translateX(-50%)", background: toast.kind === "err" ? "#7F1D1D" : C.ink, color: "#fff", fontSize: 13, fontWeight: 500, padding: "11px 18px", borderRadius: 10, zIndex: 80, display: "flex", alignItems: "center", gap: 9, boxShadow: "0 8px 24px rgba(16,26,43,0.3)" }}>
@@ -1594,6 +1635,18 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
         isOpen={isOpen}
         onToggleOpen={onToggleOpen}
         employeeId={employeeId}
+      />
+    );
+  }
+  // Special-case rendering for Deductions and contributions section
+  if (section.id === "deductions") {
+    return (
+      <DeductionsCard
+        section={section}
+        isOpen={isOpen}
+        onToggleOpen={onToggleOpen}
+        employeeId={employeeId}
+        employee={values}
       />
     );
   }
