@@ -23,7 +23,7 @@ const FONT = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
 const C = {
-  ink: "#12262B", teal: "#15A08C", tealDark: "#0F8474", tealInk: "#0E8A78", tealSoft: "#E3F4F0",
+  ink: "#12262B", teal: "#15A08C", tealDark: "#0F8474", tealInk: "#0F6E56", tealSoft: "#E1F5EE",
   text: "#1B2533", muted: "#66748B", faint: "#94A0B2",
   line: "#E7EAF0", lineSoft: "#F1F3F7", surface: "#F4F6F8",
   amber: "#B7791F", amberSoft: "#FBF1DD", green: "#1F9D6B", greenSoft: "#E4F5EC",
