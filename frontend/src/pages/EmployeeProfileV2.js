@@ -452,6 +452,15 @@ export default function EmployeeProfileV2() {
   const cancelEdit = function() { setEditingId(null); setDraft({}); setFieldErrors({}); };
   const setOpen = function(sid) {
     if (editingId) return;
+    // Close any open edit modal before switching sections
+    if (typeof setBasePayModalOpen === "function") setBasePayModalOpen(false);
+    if (typeof setTaxModalOpen === "function") setTaxModalOpen(false);
+    if (typeof setAddPayModalOpen === "function") setAddPayModalOpen(false);
+    if (typeof setEditPayModalOpen === "function") setEditPayModalOpen(false);
+    if (typeof setStatHolidayModalOpen === "function") setStatHolidayModalOpen(false);
+    if (typeof setTimeOffModalOpen === "function") setTimeOffModalOpen(false);
+    if (typeof setAddDeductionOpen === "function") setAddDeductionOpen(false);
+    if (typeof setDentalCodeOpen === "function") setDentalCodeOpen(false);
     setOpenId(function(cur) { return cur === sid ? null : sid; });
   };
   const onFieldChange = function(k, val) {
