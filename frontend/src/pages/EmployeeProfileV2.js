@@ -22,8 +22,8 @@ import PaymentMethodModal from "../components/modals/PaymentMethodModal";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
-  ChevronLeft, ChevronDown, Check, User, Phone, Briefcase, CreditCard,
-  DollarSign, PlusCircle, Calendar, Receipt, MinusCircle
+  ChevronLeft, ChevronDown, Check, User, Heart, Phone, Briefcase, CreditCard,
+  DollarSign, PlusCircle, Calendar, CalendarCheck, Receipt, MinusCircle, Banknote, FileCheck
 } from "lucide-react";
 import { getCountryConfig, validateField } from "../utils/countryPayroll";
 
