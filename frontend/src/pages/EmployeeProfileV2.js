@@ -1532,7 +1532,7 @@ function CompensationDrawer({ mode, employeeId, editItem, onClose, onSaved }) {
 
           {selectedItem && (
             <div style={{ marginTop: 22 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: C.text, marginBottom: 6, display: "block" }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: "#12262B", marginBottom: 6, display: "block" }}>
                 {isEarning ? "Rate for this employee" : "Amount for this employee"}
               </label>
               <div style={{ fontSize: 11.5, color: C.muted, marginBottom: 8, lineHeight: 1.5 }}>
@@ -1774,7 +1774,7 @@ function FieldEditor({ field, value, error, onChange }) {
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gridColumn: field.full ? "1 / -1" : "auto" }}>
-      <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: C.faint, marginBottom: 6 }}>
+      <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: "#12262B", marginBottom: 6 }}>
         {field.l}{field.req && <span style={{ color: C.amber, marginLeft: 3 }}>*</span>}
       </label>
       {control}
