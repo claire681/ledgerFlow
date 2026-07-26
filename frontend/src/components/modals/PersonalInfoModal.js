@@ -48,7 +48,7 @@ export default function PersonalInfoModal(props) {
     setEmail(employee.email || "");
     setPhone(employee.phone || "");
     setDob(employee.date_of_birth ? String(employee.date_of_birth).slice(0, 10) : "");
-    setSin(employee.sin || "");
+    setSin(employee.sin_or_ssn || employee.sin || "");
     setStreet(employee.address_line1 || employee.address || "");
     setLine2(employee.address_line2 || "");
     setCity(employee.city || "");
@@ -67,7 +67,7 @@ export default function PersonalInfoModal(props) {
       email: email || null,
       phone: phone || null,
       date_of_birth: dob || null,
-      sin: sin || null,
+      sin_or_ssn: sin || null,
       address_line1: street || null,
       address_line2: line2 || null,
       city: city || null,
@@ -122,7 +122,7 @@ export default function PersonalInfoModal(props) {
         </TwoCol>
         <TwoCol>
           <Field label="Date of birth"><TextInput type="date" value={dob} onChange={setDob} /></Field>
-          <Field label="SIN"><TextInput value={sin} onChange={setSin} placeholder="XXX XXX XXX" /></Field>
+          <Field label="Social Insurance Number"><TextInput value={sin} onChange={setSin} placeholder="XXX-XXX-XXX" /></Field>
         </TwoCol>
       </CollapsibleSection>
 

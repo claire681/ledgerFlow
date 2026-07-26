@@ -50,7 +50,7 @@ export default function PersonalInfoCard(props) {
   const email = employee.email || null;
   const phone = employee.phone || null;
   const dob = fmtDateDDMMYYYY(employee.date_of_birth);
-  const sin = maskSIN(employee.sin);
+  const sin = maskSIN(employee.sin_or_ssn || employee.sin);
   const street = employee.address_line1 || employee.address || null;
   const line2 = employee.address_line2 || null;
   const city = employee.city || null;
@@ -113,7 +113,7 @@ export default function PersonalInfoCard(props) {
 
           {/* Identification */}
           <SubCard title="Identification" icon={<IdCard size={13} strokeWidth={2.5} />}>
-            <Row label="SIN" value={sin} mono isLast />
+            <Row label="Social Insurance Number" value={sin} mono isLast />
           </SubCard>
         </div>
       )}
