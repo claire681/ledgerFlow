@@ -551,7 +551,7 @@ export default function EmployeeProfileV2() {
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {sections.map(function(s) {
             return (
-              <Section workLocations={workLocations} key={s.id} section={s} values={values} draft={draft} country={country} employeeId={id}
+              <Section workLocations={workLocations} key={s.id} section={s} values={values} draft={draft} country={country} employeeId={id} fullEmployee={employee}
                 isOpen={openId === s.id} isEditing={editingId === s.id} isSaving={savingId === s.id}
                 disabledByOtherEdit={!!editingId && editingId !== s.id}
                 fieldErrors={fieldErrors}
