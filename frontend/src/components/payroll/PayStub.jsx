@@ -229,15 +229,29 @@ export default function PayStub({ data }) {
               </tr>
             </thead>
             <tbody>
-              {earnings.map((row, i) => (
-                <tr key={"pay-" + i}>
-                  <td style={{ paddingTop: i === 0 ? "5px" : 0 }}>{row.type || row.label}</td>
-                  <td style={{ textAlign: "right" }}>{num(row.hours)}</td>
-                  <td style={{ textAlign: "right" }}>{num(row.rate)}</td>
-                  <td style={{ textAlign: "right" }}>{money(row.current)}</td>
-                  <td style={{ textAlign: "right" }}>{money(row.ytd)}</td>
-                </tr>
-              ))}
+              {earnings.map((row, i) => {
+                const label = row.type || row.label || "";
+                const isStat = /stat|holiday/i.test(label);
+                const STAT_AMBER_BG = "#FEF6E7";
+                const cellStyle = isStat
+                  ? { background: STAT_AMBER_BG, padding: "10px 6px" }
+                  : { paddingTop: i === 0 ? "5px" : 0 };
+                const subtitle = row.holiday_name || row.subtitle || null;
+                return (
+                  <tr key={"pay-" + i}>
+                    <td style={cellStyle}>
+                      <div style={{ fontWeight: isStat ? 700 : "inherit", color: "#0E1A1A" }}>{label}</div>
+                      {isStat && subtitle && (
+                        <div style={{ fontSize: 11, color: "#0E1A1A", fontWeight: 700, marginTop: 2 }}>{subtitle}</div>
+                      )}
+                    </td>
+                    <td style={{ ...cellStyle, textAlign: "right" }}>{num(row.hours)}</td>
+                    <td style={{ ...cellStyle, textAlign: "right" }}>{num(row.rate)}</td>
+                    <td style={{ ...cellStyle, textAlign: "right", fontWeight: isStat ? 700 : "inherit" }}>{money(row.current)}</td>
+                    <td style={{ ...cellStyle, textAlign: "right" }}>{money(row.ytd)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
 
