@@ -54,6 +54,10 @@ const IconClipboardSign = (props) => (
   <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="5" y="4" width="14" height="18" rx="1.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 4h6"/><path d="M9 11h6M9 14h6"/><path d="M9 18c1-1 2.5-1 3.5 0s2.5 1 3.5 0"/></svg>
 );
 
+const IconStatHoliday = (props) => (
+  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M12 13l1.4 2.9 3.1.3-2.3 2.1.7 3-2.9-1.6-2.9 1.6.7-3-2.3-2.1 3.1-.3z"/></svg>
+);
+
 const SECTIONS = [
   { id: "company", group: "Setup", label: "Company details", Icon: IconBriefcase },
   { id: "schedule", group: "Setup", label: "Default pay schedule", Icon: IconCalendarCheck },
@@ -61,6 +65,7 @@ const SECTIONS = [
   { id: "bank", group: "Setup", label: "Bank account", Icon: IconBankColumns },
   { id: "items", group: "Payroll items", label: "Pay types & deductions", Icon: IconStackedCoins },
   { id: "locations", group: "Payroll items", label: "Work locations", Icon: IconOfficeBuilding },
+  { id: "stat_holiday", group: "Payroll items", label: "Stat holiday method", Icon: IconStatHoliday },
   { id: "review", group: "Final step", label: "Review & authorize", Icon: IconClipboardSign, comingSoon: true },
 ];
 
@@ -1363,7 +1368,7 @@ export default function PayrollSettings() {
           {activeId === "schedule" && <PayScheduleSection />}
           {activeId === "tax" && <TaxRegistrationSection businessCountry={businessCountry} />}
           {activeId === "bank" && <BankAccountSection />}
-          {activeId === "locations" && <WorkLocationsSection businessCountry={businessCountry} />}
+          {activeId === "stat_holiday" ? <StatHolidayMethodSection businessCountry={businessCountry} /> : activeId === "locations" && <WorkLocationsSection businessCountry={businessCountry} />}
                     {activeId === "items" && <PayTypesSection businessCountry={businessCountry} />}
           {activeId === "review" && <ComingSoonSection title={SECTIONS.find(s => s.id === activeId)?.label} />}
         </div>
@@ -2068,6 +2073,158 @@ function TaxRegistrationSection({ businessCountry }) {
 }
 
 // === Coming soon stub ===
+
+function StatHolidayMethodSection({ businessCountry = "CA" }) {
+  const [option, setOption] = React.useState(1);
+  const [saving, setSaving] = React.useState(false);
+  const [savedNotice, setSavedNotice] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(function() {
+    async function load() {
+      try {
+        const r = await fetch(API_URL + "/api/v1/payroll/settings", { headers: authHeaders() });
+        if (r.ok) {
+          const data = await r.json();
+          if (data && typeof data.stat_holiday_option === "number") {
+            setOption(data.stat_holiday_option);
+          }
+        }
+      } catch (e) {}
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  async function save() {
+    setSaving(true);
+    setSavedNotice(false);
+    try {
+      const r = await fetch(API_URL + "/api/v1/payroll/settings", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ stat_holiday_option: option }),
+      });
+      if (r.ok) {
+        setSavedNotice(true);
+        setTimeout(function() { setSavedNotice(false); }, 3000);
+      }
+    } catch (e) {}
+    setSaving(false);
+  }
+
+  const isCanada = (businessCountry || "CA").toUpperCase() === "CA";
+
+  return (
+    <div style={{ maxWidth: 860, fontFamily: FONT }}>
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: C.ink, letterSpacing: "-0.01em" }}>Statutory holiday method</div>
+        <div style={{ fontSize: 13.5, color: C.slate, fontWeight: 500, marginTop: 6, lineHeight: 1.55 }}>
+          {isCanada
+            ? "How your business pays employees for statutory holidays. Alberta ESA gives you two options. This is the default for all pay runs. You can adjust for a specific pay run."
+            : "How your business pays employees for statutory holidays. This is the default for all pay runs. You can adjust for a specific pay run."}
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ padding: 40, textAlign: "center", color: C.muted, fontSize: 13 }}>Loading current setting...</div>
+      ) : (
+        <React.Fragment>
+          {/* Info banner */}
+          <div style={{ padding: "14px 16px", background: C.amberSoft, border: "1px solid #F4E0B0", borderRadius: 10, display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 22 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.ink} strokeWidth="2" style={{ flexShrink: 0, marginTop: 1 }}>
+              <circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" />
+            </svg>
+            <div style={{ fontSize: 12.5, color: C.ink, fontWeight: 500, lineHeight: 1.5 }}>
+              This is your default method. When a statutory holiday falls in a pay period, Novala uses this to calculate eligible employees' stat pay automatically. You'll see the calculation and can adjust before finalizing.
+            </div>
+          </div>
+
+          {/* Two option cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
+            <StatOptionCard
+              selected={option === 1}
+              onClick={function() { setOption(1); }}
+              title="Time-and-a-half + Average Daily Wage"
+              subtitle="Most common for home care, retail, hospitality"
+              description="Employee works on the holiday and is paid 1.5x their hourly rate for hours worked, PLUS their Average Daily Wage (last 4 weeks)."
+            />
+            <StatOptionCard
+              selected={option === 2}
+              onClick={function() { setOption(2); }}
+              title="Regular pay + Substitute day off"
+              subtitle="Common for unionized workplaces"
+              description="Employee is paid their Average Daily Wage on the holiday AND receives a paid substitute day off later."
+            />
+          </div>
+
+          {/* Save row */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12 }}>
+            {savedNotice && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: C.green, fontWeight: 700 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                Saved
+              </span>
+            )}
+            <button
+              onClick={save}
+              disabled={saving}
+              style={{ height: 40, padding: "0 22px", background: saving ? "#C3CBD6" : C.ink, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13.5, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", fontFamily: FONT }}
+            >
+              {saving ? "Saving..." : "Save method"}
+            </button>
+          </div>
+
+          {/* Pay stub note */}
+          <div style={{ marginTop: 40, padding: "20px 22px", background: C.surface, border: "1px solid " + C.line, borderRadius: 12 }}>
+            <div style={{ fontSize: 12, color: C.ink, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>How this appears on pay stubs</div>
+            <div style={{ fontSize: 13, color: C.ink, fontWeight: 500, lineHeight: 1.55 }}>
+              Whatever stat holiday amount is paid, it always appears as its own line on the pay stub with the holiday name (e.g., "Statutory holiday pay: Canada Day"). Employees always see exactly what they were paid for holidays.
+            </div>
+          </div>
+        </React.Fragment>
+      )}
+    </div>
+  );
+}
+
+function StatOptionCard({ selected, onClick, title, subtitle, description }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        border: selected ? "2px solid " + C.teal : "1px solid " + C.line,
+        background: selected ? C.tealSoft : "#FFFFFF",
+        borderRadius: 12,
+        padding: "18px 20px",
+        cursor: "pointer",
+        position: "relative",
+        transition: "background 0.15s ease, border-color 0.15s ease",
+      }}
+    >
+      {selected && (
+        <div style={{ position: "absolute", top: 14, right: 14, width: 22, height: 22, borderRadius: 11, background: C.teal, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
+        </div>
+      )}
+      {!selected && (
+        <div style={{ position: "absolute", top: 14, right: 14, width: 22, height: 22, borderRadius: 11, border: "2px solid " + C.line, background: "#FFFFFF" }}></div>
+      )}
+
+      <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 4, paddingRight: 34, letterSpacing: "-0.01em" }}>{title}</div>
+      {selected && (
+        <div style={{ display: "inline-block", padding: "3px 9px", background: "#FFFFFF", color: C.tealInk, borderRadius: 5, fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 10 }}>Selected</div>
+      )}
+      <div style={{ fontSize: 12.5, color: C.ink, fontWeight: 500, lineHeight: 1.55, marginBottom: 12 }}>
+        {description}
+      </div>
+      <div style={{ paddingTop: 12, borderTop: "1px solid " + (selected ? "rgba(21,160,140,0.25)" : C.lineSoft), fontSize: 11.5, color: selected ? C.tealInk : C.muted, fontWeight: 700, lineHeight: 1.5 }}>
+        {subtitle}
+      </div>
+    </div>
+  );
+}
+
 function ComingSoonSection({ title }) {
   return (
     <>
