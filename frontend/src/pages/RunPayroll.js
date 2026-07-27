@@ -489,7 +489,7 @@ export default function RunPayroll() {
             <div style={{ border: "1px solid " + C.creamBorder, borderRadius: 6, background: C.cream, padding: "8px 14px" }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{fmtDateShort(payRun.pay_period_start)} to {fmtDateShort(payRun.pay_period_end)}</div>
             </div>
-            <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>Auto-filled from schedule</div>
+            <div style={{ marginTop: 6, fontSize: 12, display: "flex", gap: 10, alignItems: "center" }}><span style={{ color: C.muted }}>Auto-filled from schedule</span><span style={{ color: C.line }}>|</span><a onClick={function() { setChangePeriodOpen(true); }} style={{ color: C.brandDark, fontWeight: 700, textDecoration: "underline", cursor: "pointer" }}>Change period</a></div>
           </div>
           <div style={{ border: "2px solid " + C.brand, borderRadius: 10, padding: "10px 16px", background: "#fff", width: 320 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Next pay date</div>
