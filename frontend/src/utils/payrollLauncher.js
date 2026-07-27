@@ -1,11 +1,8 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
-
 const getToken = () =>
   localStorage.getItem("access_token") || localStorage.getItem("token") || "";
-
 const formatError = (err) => {
   if (!err) return "Unknown error";
   if (Array.isArray(err.detail)) {
@@ -19,7 +16,6 @@ const formatError = (err) => {
   if (typeof err === "string") return err;
   return JSON.stringify(err);
 };
-
 const computeDefaults = () => {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -38,8 +34,43 @@ const computeDefaults = () => {
   };
 };
 
+/**
+ * Try to find an existing draft pay run. If found, return its id.
+ * If none, return null.
+ */
+async function findExistingDraft() {
+  try {
+    const res = await fetch(API_URL + "/api/v1/payroll/runs", {
+      headers: { Authorization: "Bearer " + getToken() },
+    });
+    if (!res.ok) return null;
+    const runs = await res.json();
+    if (!Array.isArray(runs) || runs.length === 0) return null;
+    // Find the most recent draft (list is usually newest-first, but sort to be safe)
+    const drafts = runs.filter((r) => r.status === "draft");
+    if (drafts.length === 0) return null;
+    drafts.sort((a, b) => {
+      const ad = a.updated_at || a.created_at || a.pay_period_start || "";
+      const bd = b.updated_at || b.created_at || b.pay_period_start || "";
+      return bd.localeCompare(ad);
+    });
+    return drafts[0].id;
+  } catch (e) {
+    console.warn("findExistingDraft failed:", e);
+    return null;
+  }
+}
+
 export async function startNewPayroll(navigate) {
   try {
+    // 1. Check for an existing draft first (smart button: reuse instead of duplicate).
+    const existingDraftId = await findExistingDraft();
+    if (existingDraftId) {
+      navigate("/payroll/run/" + existingDraftId, { replace: true });
+      return;
+    }
+
+    // 2. None found - create a new draft.
     const body = computeDefaults();
     const res = await fetch(API_URL + "/api/v1/payroll/pay-runs/draft", {
       method: "POST",
@@ -57,7 +88,7 @@ export async function startNewPayroll(navigate) {
     if (!run.id) throw new Error("Pay run created without an id.");
     navigate("/payroll/run/" + run.id, { replace: true });
   } catch (e) {
-    console.error("Pay run creation failed:", e);
+    console.error("Pay run launch failed:", e);
     alert("Could not start payroll: " + e.message);
     navigate("/payroll/overview", { replace: true });
   }
