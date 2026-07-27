@@ -191,7 +191,7 @@ export default function StatHolidayEligibilityPopup(props) {
             <div key={hol.date} style={{ marginBottom: 20 }}>
               {data.holidays.length > 1 && (
                 <div style={{ fontSize: 12.5, color: C.ink, fontWeight: 700, marginBottom: 10 }}>
-                  {hol.name} \u2014 {formatDate(hol.date)}
+                  {hol.name} — {formatDate(hol.date)}
                 </div>
               )}
               {data.holidays.length === 1 && (
@@ -239,7 +239,7 @@ export default function StatHolidayEligibilityPopup(props) {
             </button>
             <button onClick={function() { onContinue && onContinue(ov); }}
               style={{ height: 40, padding: "0 22px", background: C.ink, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
-              I understand \u2014 continue
+              I understand — continue
             </button>
           </div>
         </div>
@@ -373,7 +373,7 @@ function EmployeeCard(props) {
           )}
           {!isEligible && (
             <a onClick={props.onOverrideEligible} style={{ fontSize: 12, color: C.brandDark, fontWeight: 700, textDecoration: "underline", cursor: "pointer" }}>
-              Override \u2014 mark as eligible
+              Override — mark as eligible
             </a>
           )}
         </div>

@@ -67,7 +67,7 @@ export function AdjustStatPayModal(props) {
               Adjust stat pay for {emp.first_name} {emp.last_name}
             </div>
             <div style={{ fontSize: 12.5, color: C.muted, fontWeight: 500, marginTop: 2 }}>
-              {holiday.name} \u2014 {formatDate(holiday.date)}
+              {holiday.name} — {formatDate(holiday.date)}
             </div>
           </div>
         </div>
@@ -164,7 +164,7 @@ export function MarkNotEligibleModal(props) {
               Mark {emp.first_name} as not eligible?
             </div>
             <div style={{ fontSize: 12.5, color: C.muted, fontWeight: 500, marginTop: 2 }}>
-              {holiday.name} \u2014 {formatDate(holiday.date)}
+              {holiday.name} — {formatDate(holiday.date)}
             </div>
           </div>
         </div>
@@ -227,7 +227,7 @@ export function MarkNotEligibleModal(props) {
             disabled={!ack || !reason.trim()}
             onClick={function() { onConfirm({ eligible: false, stat_pay_amount: 0, reason: reason }); }}
             style={{ height: 38, padding: "0 22px", background: (!ack || !reason.trim()) ? "#C3CBD6" : C.danger, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: (!ack || !reason.trim()) ? "not-allowed" : "pointer", fontFamily: FONT }}>
-            Confirm \u2014 no stat pay
+            Confirm — no stat pay
           </button>
         </div>
       </div>
@@ -270,7 +270,7 @@ export function OverrideEligibleModal(props) {
               Pay {emp.first_name} stat pay anyway?
             </div>
             <div style={{ fontSize: 12.5, color: C.muted, fontWeight: 500, marginTop: 2 }}>
-              {holiday.name} \u2014 {formatDate(holiday.date)}
+              {holiday.name} — {formatDate(holiday.date)}
             </div>
           </div>
         </div>
@@ -278,7 +278,7 @@ export function OverrideEligibleModal(props) {
 
       <div style={{ padding: "22px 24px" }}>
         <div style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, lineHeight: 1.6, marginBottom: 16 }}>
-          Novala determined {emp.first_name} is <strong>NOT eligible</strong> ({emp.ineligibility_reason || "does not meet Alberta ESA rules"}). You can still choose to pay them \u2014 you're paying MORE than Alberta ESA requires, which is always legal.
+          Novala determined {emp.first_name} is <strong>NOT eligible</strong> ({emp.ineligibility_reason || "does not meet Alberta ESA rules"}). You can still choose to pay them — you're paying MORE than Alberta ESA requires, which is always legal.
         </div>
 
         <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: C.ink, marginBottom: 8 }}>Amount to pay</label>
@@ -304,7 +304,7 @@ export function OverrideEligibleModal(props) {
           </button>
           <button onClick={function() { onConfirm({ eligible: true, stat_pay_amount: entered, reason: reason }); }}
             style={{ height: 38, padding: "0 22px", background: C.ink, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
-            Confirm \u2014 pay {money(entered)}
+            Confirm — pay {money(entered)}
           </button>
         </div>
       </div>
