@@ -181,7 +181,7 @@ function PayStubDrawer({ employee, run, onClose, currency }) {
   const regHrs = Math.max(0, Number(e.total_hours||0) - Number(e.statHoliday||0));
   const shHrs = Number(e.statHoliday||0);
   const rate = Number(e.rate||0);
-  const stat = Number(e.statPay||0);
+  const stat = Number(e.statAvgDaily || e.statPay || e.stat_pay_amount || 0);
   const gross = Number(e.gross_pay||0);
   const empTax = Number(e.employee_taxes||0);
   const net = Number(e.net_pay || (gross - empTax));
