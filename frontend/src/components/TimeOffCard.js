@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Palmtree, Stethoscope, Clock } from "lucide-react";
+import { Palmtree, Stethoscope, Clock, Calendar } from "lucide-react";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const FONT = "Inter, -apple-system, BlinkMacSystemFont, sans-serif";
@@ -85,7 +85,7 @@ export default function TimeOffCard(props) {
     <div style={{ background: "#FFFFFF", border: "1px solid " + C.line, borderRadius: 12, marginBottom: 12, fontFamily: FONT }}>
       <div style={{ display: "flex", alignItems: "center", padding: "16px 20px", cursor: "pointer" }} onClick={onToggleOpen}>
         <div style={{ width: 32, height: 32, borderRadius: 8, background: isOpen ? C.brandBg : "#E7EAF0", color: isOpen ? C.brandDark : "#000000", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginRight: 12 }}>
-          <Palmtree size={16} />
+          <Calendar size={16} />
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{section.title}</div>

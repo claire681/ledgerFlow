@@ -46,7 +46,7 @@ export default function EmergencyContactsCard(props) {
           display: "flex", alignItems: "center", justifyContent: "center", marginRight: 12,
           transition: "background 0.15s ease, color 0.15s ease",
         }}>
-          <Heart size={16} strokeWidth={isOpen ? 2 : 2.5} />
+          <Phone size={16} strokeWidth={isOpen ? 2 : 2.5} />
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>Emergency contacts</div>

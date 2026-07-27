@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, CalendarCheck } from "lucide-react";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const FONT = "Inter, -apple-system, BlinkMacSystemFont, sans-serif";
@@ -72,10 +72,7 @@ export default function StatHolidayPayCard(props) {
     <div style={{ background: "#FFFFFF", border: "1px solid " + C.line, borderRadius: 12, marginBottom: 12, fontFamily: FONT }}>
       <div style={{ display: "flex", alignItems: "center", padding: "16px 20px", cursor: "pointer" }} onClick={onToggleOpen}>
         <div style={{ width: 32, height: 32, borderRadius: 8, background: isOpen ? C.brandBg : "#E7EAF0", color: isOpen ? C.brandDark : "#000000", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginRight: 12 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="4" width="18" height="18" rx="2"/>
-            <path d="M16 2v4M8 2v4M3 10h18"/>
-          </svg>
+          <CalendarCheck size={16} />
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{section.title}</div>
