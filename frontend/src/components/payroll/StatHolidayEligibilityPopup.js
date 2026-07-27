@@ -179,7 +179,7 @@ export default function StatHolidayEligibilityPopup(props) {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Check size={16} strokeWidth={2.5} color={C.brandDark} />
             <span style={{ fontSize: 13.5, color: C.ink, fontWeight: 700 }}>{methodLabel}</span>
-            <a href="/payroll/settings" style={{ marginLeft: "auto", fontSize: 12.5, color: C.brandDark, fontWeight: 700, textDecoration: "underline" }}>
+            <a href="/payroll/settings/stat_holiday" style={{ marginLeft: "auto", fontSize: 12.5, color: C.brandDark, fontWeight: 700, textDecoration: "underline" }}>
               Change
             </a>
           </div>
