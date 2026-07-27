@@ -136,7 +136,7 @@ export default function DeductionsCard(props) {
   return (
     <div style={{ background: "#FFFFFF", border: "1px solid " + C.line, borderRadius: 12, marginBottom: 12, fontFamily: FONT }}>
       <div style={{ display: "flex", alignItems: "center", padding: "16px 20px", cursor: "pointer" }} onClick={onToggleOpen}>
-        <div style={{ width: 32, height: 32, borderRadius: 8, background: C.brandBg, color: C.brandDark, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginRight: 12 }}>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: isOpen ? C.brandBg : "#E7EAF0", color: isOpen ? C.brandDark : "#000000", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginRight: 12 }}>
           <Minus size={16} />
         </div>
         <div style={{ flex: 1 }}>
@@ -168,7 +168,7 @@ export default function DeductionsCard(props) {
 
           {!loading && !error && empty && (
             <div style={{ padding: "36px 22px", textAlign: "center" }}>
-              <div style={{ width: 44, height: 44, margin: "0 auto 12px", borderRadius: 10, background: C.brandBg, color: C.brandDark, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 44, height: 44, margin: "0 auto 12px", borderRadius: 10, background: "#E7EAF0", color: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Minus size={20} />
               </div>
               <div style={{ fontSize: 14.5, fontWeight: 700, color: C.ink, marginBottom: 4 }}>No deductions or contributions yet</div>
@@ -229,7 +229,7 @@ export default function DeductionsCard(props) {
               {/* Dental banner */}
               <div style={{ padding: "14px 20px", background: C.page, borderBottom: "1px solid " + C.line }}>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                  <div style={{ width: 24, height: 24, borderRadius: 6, background: C.brandBg, color: C.brandDark, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <div style={{ width: 24, height: 24, borderRadius: 6, background: "#E7EAF0", color: "#000000", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5.5c-3.5-3-8-2.5-9 2 0 4.5 1 6 3.5 10.5 1 1.5 1.5 3.5 2.5 3.5 1 0 1.5-2 2.5-4 1 2 1.5 4 2.5 4 1 0 1.5-2 2.5-3.5 2.5-4.5 3.5-6 3.5-10.5-1-4.5-5.5-5-9-2z"/></svg>
                   </div>
                   <div style={{ flex: 1 }}>

@@ -125,7 +125,7 @@ export default function AdditionalPayTypesCard(props) {
     <div style={{ background: "#FFFFFF", border: "1px solid " + C.line, borderRadius: 12, marginBottom: 12, fontFamily: FONT }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", padding: "16px 20px", cursor: "pointer" }} onClick={onToggleOpen}>
-        <div style={{ width: 32, height: 32, borderRadius: 8, background: C.brandBg, color: C.brandDark, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginRight: 12 }}>+</div>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: isOpen ? C.brandBg : "#E7EAF0", color: isOpen ? C.brandDark : "#000000", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginRight: 12 }}>+</div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{section.title}</div>
           <div style={{ fontSize: 12, color: C.muted, fontWeight: 500, marginTop: 2 }}>Bonus, overtime, stat pay, and other earnings for this employee.</div>
@@ -153,7 +153,7 @@ export default function AdditionalPayTypesCard(props) {
 
           {!loading && !error && empty && (
             <div style={{ padding: "36px 20px", textAlign: "center" }}>
-              <div style={{ width: 44, height: 44, margin: "0 auto 12px", borderRadius: 10, background: C.brandBg, color: C.brandDark, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 44, height: 44, margin: "0 auto 12px", borderRadius: 10, background: "#E7EAF0", color: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Plus size={20} />
               </div>
               <div style={{ fontSize: 14.5, fontWeight: 700, color: C.ink, marginBottom: 4 }}>No additional pay types yet</div>

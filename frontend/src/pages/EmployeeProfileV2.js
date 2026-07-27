@@ -57,15 +57,15 @@ function taxIntroFor(country) {
 function buildSections(country) {
   return [
     { id: "personal", title: "Personal information", icon: User, isCustomSection: true, required: true, fields: [], intro: "Name, contact, address, and identification for this employee." },
-    { id: "emergency", title: "Emergency contacts", icon: Heart, isCustomSection: true, required: false, fields: [], intro: "People to contact in case of emergency." },
+    { id: "emergency", title: "Emergency contacts", icon: Phone, isCustomSection: true, required: false, fields: [], intro: "People to contact in case of emergency." },
     { id: "employment", title: "Employment details", icon: Briefcase, isCustomSection: true, required: true, fields: [], intro: "Role, dates, work location, and tenure." },
     { id: "payment", title: "Payment method", icon: CreditCard, isCustomSection: true, required: true, fields: [], intro: "How this employee receives their pay." },
     { id: "basepay", title: "Base pay", icon: DollarSign, required: true, isCustomSection: true, fields: [] },
-    { id: "addpay", title: "Additional pay types", icon: DollarSign, required: false, fields: [], intro: "Bonus, overtime, stat pay, and other earnings for this employee." },
-      { id: "statholiday", title: "Stat holiday pay", icon: Calendar, required: false, fields: [], intro: "Regular workdays and eligibility for statutory holiday pay." },
+    { id: "addpay", title: "Additional pay types", icon: Banknote, required: false, fields: [], intro: "Bonus, overtime, stat pay, and other earnings for this employee." },
+      { id: "statholiday", title: "Stat holiday pay", icon: CalendarCheck, required: false, fields: [], intro: "Regular workdays and eligibility for statutory holiday pay." },
     { id: "timeoff", title: "Time off", icon: Calendar, isCustomSection: true, required: false, fields: [], intro: "Vacation, sick pay, and unpaid leave policies for this employee." },
-      { id: "deductions", title: "Deductions and contributions", icon: Receipt, isCustomSection: true, required: false, fields: [], intro: "Voluntary items like RRSP, health insurance, or garnishments." },
-    { id: "tax", title: "Tax setup (" + country.taxForm + ")", icon: Receipt, required: true, fields: country.taxFields, intro: taxIntroFor(country) },
+      { id: "deductions", title: "Deductions and contributions", icon: MinusCircle, isCustomSection: true, required: false, fields: [], intro: "Voluntary items like RRSP, health insurance, or garnishments." },
+    { id: "tax", title: "Tax setup (" + country.taxForm + ")", icon: FileCheck, required: true, fields: country.taxFields, intro: taxIntroFor(country) },
   ];
 }
 

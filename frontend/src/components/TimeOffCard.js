@@ -84,7 +84,7 @@ export default function TimeOffCard(props) {
   return (
     <div style={{ background: "#FFFFFF", border: "1px solid " + C.line, borderRadius: 12, marginBottom: 12, fontFamily: FONT }}>
       <div style={{ display: "flex", alignItems: "center", padding: "16px 20px", cursor: "pointer" }} onClick={onToggleOpen}>
-        <div style={{ width: 32, height: 32, borderRadius: 8, background: C.brandBg, color: C.brandDark, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginRight: 12 }}>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: isOpen ? C.brandBg : "#E7EAF0", color: isOpen ? C.brandDark : "#000000", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginRight: 12 }}>
           <Palmtree size={16} />
         </div>
         <div style={{ flex: 1 }}>
@@ -111,7 +111,7 @@ export default function TimeOffCard(props) {
 
           {!loading && !error && !configured && (
             <div style={{ padding: "36px 22px", textAlign: "center" }}>
-              <div style={{ width: 44, height: 44, margin: "0 auto 12px", borderRadius: 10, background: C.brandBg, color: C.brandDark, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 44, height: 44, margin: "0 auto 12px", borderRadius: 10, background: "#E7EAF0", color: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Palmtree size={20} />
               </div>
               <div style={{ fontSize: 14.5, fontWeight: 700, color: C.ink, marginBottom: 4 }}>No time off policies set</div>
@@ -133,7 +133,7 @@ export default function TimeOffCard(props) {
               <div style={{ marginTop: 14, border: "1px solid " + C.line, borderRadius: 10, padding: "14px 18px" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 26, height: 26, borderRadius: 7, background: C.brandBg, color: C.brandDark, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 7, background: "#E7EAF0", color: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <Palmtree size={13} />
                     </div>
                     <span style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>Vacation</span>
@@ -171,7 +171,7 @@ export default function TimeOffCard(props) {
               <div style={{ marginTop: 14, border: "1px solid " + C.line, borderRadius: 10, padding: "14px 18px" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 26, height: 26, borderRadius: 7, background: C.brandBg, color: C.brandDark, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 7, background: "#E7EAF0", color: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <Stethoscope size={13} />
                     </div>
                     <span style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>Sick pay</span>
@@ -204,7 +204,7 @@ export default function TimeOffCard(props) {
               <div style={{ marginTop: 14, border: "1px solid " + C.line, borderRadius: 10, padding: "14px 18px" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 26, height: 26, borderRadius: 7, background: C.brandBg, color: C.brandDark, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 7, background: "#E7EAF0", color: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <Clock size={13} />
                     </div>
                     <span style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>Unpaid leave</span>
