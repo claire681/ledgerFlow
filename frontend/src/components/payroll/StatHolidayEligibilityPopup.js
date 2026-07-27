@@ -237,7 +237,19 @@ export default function StatHolidayEligibilityPopup(props) {
               style={{ height: 40, padding: "0 18px", background: "#FFFFFF", color: C.ink, border: "1px solid " + C.line, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
               Cancel pay run
             </button>
-            <button onClick={function() { onContinue && onContinue(ov); }}
+            <button onClick={function() {
+              var applied = {};
+              for (var hi = 0; hi < data.holidays.length; hi++) {
+                var hol = data.holidays[hi];
+                for (var ei = 0; ei < hol.employees.length; ei++) {
+                  var em = effectiveEmployee(hol.employees[ei]);
+                  if (em.eligible && em.stat_pay_amount != null && Number(em.stat_pay_amount) > 0) {
+                    applied[em.employee_id] = em;
+                  }
+                }
+              }
+              onContinue && onContinue(applied);
+            }}
               style={{ height: 40, padding: "0 22px", background: C.ink, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
               I understand — continue
             </button>
