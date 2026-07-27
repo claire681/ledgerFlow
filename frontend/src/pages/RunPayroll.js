@@ -210,6 +210,23 @@ export default function RunPayroll() {
   const [statHolidayApplied, setStatHolidayApplied] = useState(null);
   const [statHolidayOverrides, setStatHolidayOverrides] = useState({});
   const [statSubModal, setStatSubModal] = useState(null);
+
+  function applyStatHolidayToRows(overrides) {
+    setRows(function(prevRows) {
+      return prevRows.map(function(r) {
+        var o = overrides[r.id];
+        if (!o) return r;
+        if (o.eligible && o.stat_pay_amount != null) {
+          return Object.assign({}, r, {
+            statAvgDaily: Number(o.stat_pay_amount).toFixed(2),
+            statHoliday: r.statHoliday || "0",
+          });
+        }
+        return r;
+      });
+    });
+    setStatHolidayApplied(true);
+  }
   function stripHourZeros(val) {
     if (val == null || val === "") return "";
     var s = String(val);
@@ -516,25 +533,7 @@ export default function RunPayroll() {
           const statPay = stat * ((Number(r.statAvgDaily) || 0) / 8);
           const gross = regPay + statPay;
           const isLast = idx === filteredRows.length - 1;
-        
-  function applyStatHolidayToRows(overrides) {
-    setRows(function(prevRows) {
-      return prevRows.map(function(r) {
-        // employee_id in rows is r.id
-        var o = overrides[r.id];
-        if (!o) return r;
-        if (o.eligible && o.stat_pay_amount != null) {
-          return Object.assign({}, r, {
-            statAvgDaily: Number(o.stat_pay_amount).toFixed(2),
-            statHoliday: r.statHoliday || "0",
-          });
-        }
-        return r;
-      });
-    });
-    setStatHolidayApplied(true);
-  }
-  return (
+          return (
             <div key={r.id} id={"row-" + r.id} style={{ padding: "16px 20px", borderBottom: isLast ? "none" : "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, alignItems: "center", opacity: r.ready ? 1 : 0.5, position: "relative" }}>
               <div>
                 <input type="checkbox" checked={r.included} disabled={!r.ready} onChange={function() { toggleIncluded(r.id); }} style={{ width: 16, height: 16, accentColor: C.brand, cursor: r.ready ? "pointer" : "not-allowed" }} />
