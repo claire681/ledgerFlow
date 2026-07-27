@@ -400,7 +400,7 @@ export default function RunPayroll() {
     setSaving(true); setError("");
     try {
       const employeeInputs = includedRows.map(function(r) {
-        return { employee_id: r.id, hours: { regular: parseFloat(r.regular) || 0, stat_holiday: parseFloat(r.statHoliday) || 0 }, bonus: 0, commission: 0, reimbursement: 0 };
+        return { employee_id: r.id, hours: { regular: parseFloat(r.regular) || 0, stat_holiday: parseFloat(r.statHoliday) || 0 }, bonus: 0, commission: 0, reimbursement: 0, stat_pay_amount: parseFloat(r.statAvgDaily) || 0 };
       });
       const resp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/calculate", {
         method: "POST", headers: authHeaders(),
