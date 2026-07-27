@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import StatHolidayEligibilityPopup from "../components/payroll/StatHolidayEligibilityPopup";
 import { AdjustStatPayModal, MarkNotEligibleModal, OverrideEligibleModal } from "../components/payroll/StatHolidaySubModals";
+import ChangePeriodModal from "../components/payroll/ChangePeriodModal";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const FONT = "Inter, -apple-system, sans-serif";
@@ -210,6 +211,7 @@ export default function RunPayroll() {
   const [statHolidayApplied, setStatHolidayApplied] = useState(null);
   const [statHolidayOverrides, setStatHolidayOverrides] = useState({});
   const [statSubModal, setStatSubModal] = useState(null);
+  const [changePeriodOpen, setChangePeriodOpen] = useState(false);
 
   function applyStatHolidayToRows(overrides) {
     setRows(function(prevRows) {
@@ -604,6 +606,20 @@ export default function RunPayroll() {
       </div>
 
     
+      {changePeriodOpen && payRun && (
+        <ChangePeriodModal
+          isOpen={true}
+          payRun={payRun}
+          onCancel={function() { setChangePeriodOpen(false); }}
+          onSaved={function(updated) {
+            setChangePeriodOpen(false);
+            setPayRun(function(prev) { return Object.assign({}, prev, updated); });
+            // Reset so stat holiday popup can re-check the new period
+            setStatHolidayApplied(null);
+            setStatHolidayOverrides({});
+          }}
+        />
+      )}
       {statHolidayPopupOpen && payRun && (
         <StatHolidayEligibilityPopup
           periodStart={payRun.pay_period_start}
