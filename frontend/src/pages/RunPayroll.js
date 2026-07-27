@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import StatHolidayEligibilityPopup from "../components/payroll/StatHolidayEligibilityPopup";
+import { AdjustStatPayModal, MarkNotEligibleModal, OverrideEligibleModal } from "../components/payroll/StatHolidaySubModals";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const FONT = "Inter, -apple-system, sans-serif";
@@ -204,6 +206,10 @@ export default function RunPayroll() {
   const [payRun, setPayRun] = useState(null);
   const [schedule, setSchedule] = useState(null);
   const [rows, setRows] = useState([]);
+  const [statHolidayPopupOpen, setStatHolidayPopupOpen] = useState(false);
+  const [statHolidayApplied, setStatHolidayApplied] = useState(null);
+  const [statHolidayOverrides, setStatHolidayOverrides] = useState({});
+  const [statSubModal, setStatSubModal] = useState(null);
   function stripHourZeros(val) {
     if (val == null || val === "") return "";
     var s = String(val);
@@ -503,7 +509,25 @@ export default function RunPayroll() {
           const statPay = stat * ((Number(r.statAvgDaily) || 0) / 8);
           const gross = regPay + statPay;
           const isLast = idx === filteredRows.length - 1;
-          return (
+        
+  function applyStatHolidayToRows(overrides) {
+    setRows(function(prevRows) {
+      return prevRows.map(function(r) {
+        // employee_id in rows is r.id
+        var o = overrides[r.id];
+        if (!o) return r;
+        if (o.eligible && o.stat_pay_amount != null) {
+          return Object.assign({}, r, {
+            statAvgDaily: Number(o.stat_pay_amount).toFixed(2),
+            statHoliday: r.statHoliday || "0",
+          });
+        }
+        return r;
+      });
+    });
+    setStatHolidayApplied(true);
+  }
+  return (
             <div key={r.id} id={"row-" + r.id} style={{ padding: "16px 20px", borderBottom: isLast ? "none" : "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, alignItems: "center", opacity: r.ready ? 1 : 0.5, position: "relative" }}>
               <div>
                 <input type="checkbox" checked={r.included} disabled={!r.ready} onChange={function() { toggleIncluded(r.id); }} style={{ width: 16, height: 16, accentColor: C.brand, cursor: r.ready ? "pointer" : "not-allowed" }} />
@@ -573,7 +597,68 @@ export default function RunPayroll() {
         </div>
       </div>
 
-    </div>
+    
+      {statHolidayPopupOpen && payRun && (
+        <StatHolidayEligibilityPopup
+          periodStart={payRun.pay_period_start}
+          periodEnd={payRun.pay_period_end}
+          subnational="AB"
+          overrides={statHolidayOverrides}
+          onCancel={function() { setStatHolidayPopupOpen(false); navigate("/payroll/overview"); }}
+          onContinue={function(overrides) {
+            setStatHolidayPopupOpen(false);
+            setStatHolidayOverrides(overrides || {});
+            // Apply computed stat_pay_amount to each row
+            applyStatHolidayToRows(overrides || {});
+          }}
+          onOpenAdjust={function(emp, hol) { setStatSubModal({ type: "adjust", emp: emp, hol: hol }); }}
+          onOpenMarkNotEligible={function(emp, hol) { setStatSubModal({ type: "not_eligible", emp: emp, hol: hol }); }}
+          onOpenOverrideEligible={function(emp, hol) { setStatSubModal({ type: "override_eligible", emp: emp, hol: hol }); }}
+        />
+      )}
+      {statSubModal && statSubModal.type === "adjust" && (
+        <AdjustStatPayModal
+          isOpen={true}
+          emp={statSubModal.emp}
+          holiday={statSubModal.hol}
+          onCancel={function() { setStatSubModal(null); }}
+          onSave={function(patch) {
+            var next = Object.assign({}, statHolidayOverrides);
+            next[statSubModal.emp.employee_id] = Object.assign({}, statSubModal.emp, patch);
+            setStatHolidayOverrides(next);
+            setStatSubModal(null);
+          }}
+        />
+      )}
+      {statSubModal && statSubModal.type === "not_eligible" && (
+        <MarkNotEligibleModal
+          isOpen={true}
+          emp={statSubModal.emp}
+          holiday={statSubModal.hol}
+          onCancel={function() { setStatSubModal(null); }}
+          onConfirm={function(patch) {
+            var next = Object.assign({}, statHolidayOverrides);
+            next[statSubModal.emp.employee_id] = Object.assign({}, statSubModal.emp, patch);
+            setStatHolidayOverrides(next);
+            setStatSubModal(null);
+          }}
+        />
+      )}
+      {statSubModal && statSubModal.type === "override_eligible" && (
+        <OverrideEligibleModal
+          isOpen={true}
+          emp={statSubModal.emp}
+          holiday={statSubModal.hol}
+          onCancel={function() { setStatSubModal(null); }}
+          onConfirm={function(patch) {
+            var next = Object.assign({}, statHolidayOverrides);
+            next[statSubModal.emp.employee_id] = Object.assign({}, statSubModal.emp, patch);
+            setStatHolidayOverrides(next);
+            setStatSubModal(null);
+          }}
+        />
+      )}
+</div>
     </>
   );
 }
