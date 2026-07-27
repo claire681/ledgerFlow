@@ -255,6 +255,13 @@ export default function RunPayroll() {
       }
     };
   }, [payRunId]);
+
+  // Open stat holiday eligibility popup once when pay run loads
+  useEffect(function() {
+    if (payRun && payRun.pay_period_start && payRun.pay_period_end && !statHolidayApplied) {
+      setStatHolidayPopupOpen(true);
+    }
+  }, [payRun, statHolidayApplied]);
   const [searchQuery, setSearchQuery] = useState("");
   const [openMenuId, setOpenMenuId] = useState(null);
   const [openPayMethodId, setOpenPayMethodId] = useState(null);
