@@ -244,9 +244,34 @@ export default function PaychequeList() {
         alert("Could not load pay stub PDF");
         return;
       }
+      // Extract filename from Content-Disposition (backend sets it), fallback to lookup
+      let filename = null;
+      const disp = res.headers.get("content-disposition");
+      if (disp) {
+        const m = disp.match(/filename="?([^"]+)"?/);
+        if (m) filename = m[1];
+      }
+      if (!filename) {
+        // Fallback: build from paycheque data we have in state
+        const pc = paycheques.find((p) => p.id === paychequeId);
+        if (pc) {
+          const safe_name = (pc.employee_name || "employee").replace(/[^A-Za-z0-9_-]/g, "_");
+          const d = pc.pay_date || pc.pay_period_end || "";
+          filename = "paystub_" + safe_name + "_" + d + ".pdf";
+        } else {
+          filename = "paystub.pdf";
+        }
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
+      // Create an anchor with download attribute holding our filename, click it
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (e) {
       alert("Error loading pay stub: " + e.message);
