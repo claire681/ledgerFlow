@@ -59,15 +59,25 @@ function PayTable({ lines = [], total }) {
         <div style={{ textAlign: "right" }}>Current</div>
         <div style={{ textAlign: "right" }}>YTD</div>
       </div>
-      {lines.map((l, i) => (
-        <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 56px 70px 80px 80px", alignItems: "center", padding: "9px 14px", fontSize: 12, color: TEXT_PRIMARY, borderBottom: "0.5px solid #F3F4F6" }}>
-          <div>{l.type}</div>
-          <div style={{ textAlign: "right" }}>{l.hours != null ? Number(l.hours).toFixed(2) : ""}</div>
-          <div style={{ textAlign: "right" }}>{l.rate != null ? formatCurrency(l.rate) : ""}</div>
-          <div style={{ textAlign: "right" }}>{formatCurrency(l.current)}</div>
-          <div style={{ textAlign: "right" }}>{formatCurrency(l.ytd)}</div>
-        </div>
-      ))}
+      {lines.map((l, i) => {
+        const STAT_AMBER_BG = "#FEF6E7";
+        const isStat = /stat|holiday/i.test(l.type || l.label || "");
+        const subtitle = l.holiday_name || l.subtitle || null;
+        return (
+          <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 56px 70px 80px 80px", alignItems: "center", padding: "9px 14px", fontSize: 12, color: TEXT_PRIMARY, borderBottom: "0.5px solid #F3F4F6", background: isStat ? STAT_AMBER_BG : "transparent" }}>
+            <div style={{ fontWeight: isStat ? 700 : "inherit" }}>
+              {l.type}
+              {isStat && subtitle && (
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#0E1A1A", marginTop: 2 }}>{subtitle}</div>
+              )}
+            </div>
+            <div style={{ textAlign: "right" }}>{l.hours != null ? Number(l.hours).toFixed(2) : ""}</div>
+            <div style={{ textAlign: "right" }}>{l.rate != null ? formatCurrency(l.rate) : ""}</div>
+            <div style={{ textAlign: "right", fontWeight: isStat ? 700 : "inherit" }}>{formatCurrency(l.current)}</div>
+            <div style={{ textAlign: "right" }}>{formatCurrency(l.ytd)}</div>
+          </div>
+        );
+      })}
       {total && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 56px 70px 80px 80px", alignItems: "center", padding: "9px 14px", fontSize: 12, color: TEXT_PRIMARY, background: BG_PAGE, fontWeight: 500 }}>
           <div>Total</div><div></div><div></div>
