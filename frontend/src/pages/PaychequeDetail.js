@@ -231,29 +231,41 @@ export default function PaychequeDetail() {
       <style>{`
         @page {
           margin: 12mm 10mm;
+          size: A4;
         }
         @media print {
-          /* Hide everything, then show only the pay stub */
-          body * { visibility: hidden; }
-          .pay-stub-print-only, .pay-stub-print-only * { visibility: visible; }
+          /* Hide all non-print elements */
+          .no-print { display: none !important; }
+          /* Show pay stub, let it flow naturally for proper pagination */
           .pay-stub-print-only {
             display: block !important;
-            position: absolute;
-            left: 0;
-            top: 0;
             width: 100%;
             background: white !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             color-adjust: exact !important;
+            page-break-inside: auto;
           }
           .pay-stub-print-only * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          .no-print { display: none !important; }
+          /* Prevent tables from breaking mid-row */
+          .pay-stub-print-only table { page-break-inside: auto; }
+          .pay-stub-print-only tr { page-break-inside: avoid; page-break-after: auto; }
+          .pay-stub-print-only thead { display: table-header-group; }
+          /* Reset body background for print */
+          body {
+            background: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          /* Hide interactive nav elements */
+          .paycheque-print-area > .no-print,
+          nav, header, aside, .sidebar,
+          button, .action-menu { display: none !important; }
         }
-        /* On screen, hide the pay stub - it's only for print */
+        /* On screen, hide the print-only pay stub - it's only for print */
         @media screen {
           .pay-stub-print-only { display: none; }
         }
