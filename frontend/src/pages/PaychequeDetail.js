@@ -154,6 +154,12 @@ export default function PaychequeDetail() {
       }
       const data = await res.json();
       setPc(data);
+        // Set page title so browser Print > Save uses proper filename
+        try {
+          const safeName = (data.employee_name || 'employee').replace(/[^A-Za-z0-9_-]/g, '_');
+          const dateStr = data.pay_date || data.pay_period_end || '';
+          document.title = 'paystub_' + safeName + '_' + dateStr;
+        } catch (e) {}
       setMemo(data.memo || "");
     } catch (e) {
       setError(e.message);
