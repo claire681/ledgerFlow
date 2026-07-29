@@ -415,7 +415,18 @@ export default function RunPayroll() {
   }
 
   function handleCancel() { if (window.confirm("Cancel this pay run? Any unsaved changes will be lost.")) navigate("/payroll/overview"); }
-  function handleSaveForLater() { navigate("/payroll/overview"); }
+  function handleSaveForLater() {
+    // Cancel any pending debounced autosave to avoid a double request
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    // Force a final save of the current rows to the draft
+    if (payRunId) {
+      saveHoursDraft(payRunId, rows);
+    }
+    navigate("/payroll/overview");
+  }
   function handleAddEmployee() { navigate("/payroll/employees"); }
 
   if (loading) return <div style={{ padding: "28px 32px", fontFamily: FONT }}><div style={{ padding: 40, color: C.muted }}>Loading...</div></div>;
