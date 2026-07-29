@@ -589,11 +589,8 @@ export default function RunPayroll() {
                 <button onClick={function() { setOpenMenuId(openMenuId === r.id ? null : r.id); }} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 18, color: C.muted, padding: 4 }}>&#8942;</button>
                 {openMenuId === r.id && (
                   <div style={{ position: "absolute", top: 30, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", width: 200, overflow: "hidden", zIndex: 20, textAlign: "left" }}>
-                    <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer" }} onClick={function() { setOpenMenuId(null); }}>Edit hours</div>
-                    <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { setOpenMenuId(null); }}>Edit paycheck</div>
-                    <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { setOpenMenuId(null); }}>Add memo</div>
+                    <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer" }} onClick={function() { setOpenMenuId(null); }}>Edit paycheque</div>
                     <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { navigate("/payroll/employees/" + r.id); }}>View profile</div>
-                    <div style={{ padding: "10px 14px", fontSize: 13, color: C.danger, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { toggleIncluded(r.id); setOpenMenuId(null); }}>Skip this employee</div>
                     <div style={{ padding: "10px 14px", fontSize: 13, color: C.danger, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { skipFromRun(r.id); setOpenMenuId(null); }}>Skip from payroll run</div>
                   </div>
                 )}
