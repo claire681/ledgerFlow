@@ -475,7 +475,7 @@ export default function RunPayroll() {
       </div>
 
       {schedule && (
-        <div style={{ border: "2px solid " + C.brand, borderRadius: 10, padding: "10px 16px", marginBottom: 14, background: "#fff", display: "inline-flex", alignItems: "center", gap: 10 }}>
+        <div style={{ border: "2px solid " + C.ink, borderRadius: 10, padding: "10px 16px", marginBottom: 14, background: "#fff", display: "inline-flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 10, height: 10, background: schedule.color || C.brand, borderRadius: "50%" }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{schedule.name}</span>
           <span style={{ fontSize: 12, color: C.brandDark }}>&middot; {schedule.periods_per_year} pay periods per year</span>
@@ -484,19 +484,19 @@ export default function RunPayroll() {
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14, marginBottom: 22 }}>
         <div style={{ display: "flex", gap: 14 }}>
-          <div style={{ border: "2px solid " + C.brand, borderRadius: 10, padding: "10px 16px", background: "#fff", width: 320 }}>
+          <div style={{ border: "2px solid " + C.ink, borderRadius: 10, padding: "10px 16px", background: "#fff", width: 320 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Pay period</div>
-            <div style={{ border: "1px solid " + C.creamBorder, borderRadius: 6, background: C.cream, padding: "8px 14px" }}>
+            <div style={{ border: "1.5px solid " + C.ink, borderRadius: 6, background: "#F4F6F8", padding: "8px 14px" }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{fmtDateShort(payRun.pay_period_start)} to {fmtDateShort(payRun.pay_period_end)}</div>
             </div>
-            <div style={{ marginTop: 6, fontSize: 12, display: "flex", gap: 10, alignItems: "center" }}><span style={{ color: C.muted }}>Auto-filled from schedule</span><span style={{ color: C.line }}>|</span><a onClick={function() { setChangePeriodOpen(true); }} style={{ color: C.brandDark, fontWeight: 700, textDecoration: "underline", cursor: "pointer" }}>Change period</a></div>
+            <div style={{ marginTop: 6, fontSize: 12, display: "flex", gap: 10, alignItems: "center" }}><span style={{ color: C.ink, fontWeight: 600 }}>Auto-filled from schedule</span><span style={{ color: C.ink }}>|</span><a onClick={function() { setChangePeriodOpen(true); }} style={{ color: C.brandDark, fontWeight: 700, textDecoration: "underline", cursor: "pointer" }}>Change period</a></div>
           </div>
-          <div style={{ border: "2px solid " + C.brand, borderRadius: 10, padding: "10px 16px", background: "#fff", width: 320 }}>
+          <div style={{ border: "2px solid " + C.ink, borderRadius: 10, padding: "10px 16px", background: "#fff", width: 320 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Next pay date</div>
-            <div style={{ border: "1px solid " + C.creamBorder, borderRadius: 6, background: C.cream, padding: "8px 14px" }}>
+            <div style={{ border: "1.5px solid " + C.ink, borderRadius: 6, background: "#F4F6F8", padding: "8px 14px" }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{fmtDateWithWeekday(payRun.pay_date)}</div>
             </div>
-            <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>Auto-filled from schedule</div>
+            <div style={{ marginTop: 6, fontSize: 12, color: C.ink, fontWeight: 600 }}>Auto-filled from schedule</div>
           </div>
         </div>
         <button onClick={handleAddEmployee} style={{ background: "#FFFFFF", color: C.brandDark, border: "1.5px solid " + C.brand, padding: "10.5px 22px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, fontFamily: FONT }}>
