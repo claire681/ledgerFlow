@@ -111,7 +111,7 @@ function FilterPopover(props) {
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <button onClick={function() { setOpen(function(o) { return !o; }); }} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", background: selected.length > 0 ? C.brandBg : "#fff", border: "1px solid " + (selected.length > 0 ? C.brand : C.line), borderRadius: 8, fontSize: 13, color: selected.length > 0 ? C.brandDark : C.ink, fontWeight: 600, cursor: "pointer", fontFamily: FONT }}>
-        Filters{selected.length > 0 ? " (" + selected.length + ")" : ""} &#9662;
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 2 }}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>Filters{selected.length > 0 ? " (" + selected.length + ")" : ""} &#9662;
       </button>
       {open && (
         <div style={{ position: "absolute", top: 42, left: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", width: 300, zIndex: 30 }}>
@@ -282,7 +282,10 @@ export default function RunPayroll() {
     }
   }, [payRun, statHolidayApplied]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const searchInputRef = useRef(null);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [selectedRowId, setSelectedRowId] = useState(null);
   const [openPayMethodId, setOpenPayMethodId] = useState(null);
   const [statusFilter, setStatusFilter] = useState([]);
   const [focusedField, setFocusedField] = useState(null);
@@ -518,7 +521,17 @@ export default function RunPayroll() {
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
         <FilterPopover value={statusFilter} onApply={function(v) { setStatusFilter(v); }} />
-        <input type="text" placeholder="Search employees" value={searchQuery} onChange={function(e) { setSearchQuery(e.target.value); }} style={{ flex: 1, padding: "9px 14px", border: "1px solid " + C.line, borderRadius: 8, fontSize: 13, color: C.muted, fontFamily: FONT }} />
+        {!searchExpanded && !searchQuery ? (
+          <div onClick={function() { setSearchExpanded(true); setTimeout(function() { if (searchInputRef.current) searchInputRef.current.focus(); }, 0); }} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 12px", border: "1px solid " + C.line, borderRadius: 999, background: C.page, cursor: "pointer", fontFamily: FONT }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.ink} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span style={{ fontSize: 12, color: C.ink, fontWeight: 600 }}>Search</span>
+          </div>
+        ) : (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 12px", border: "1px solid " + C.ink, borderRadius: 999, background: "#fff", width: 240, fontFamily: FONT }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.ink} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input ref={searchInputRef} type="text" placeholder="Search employees..." value={searchQuery} onChange={function(e) { setSearchQuery(e.target.value); }} onBlur={function() { if (!searchQuery) setSearchExpanded(false); }} style={{ border: "none", outline: "none", fontSize: 12, color: C.ink, flex: 1, background: "transparent", fontFamily: FONT }} />
+          </div>
+        )}
         <button style={{ padding: "8px 14px", background: "#fff", border: "1px solid " + C.line, borderRadius: 8, fontSize: 13, color: C.ink, fontWeight: 600, cursor: "pointer", fontFamily: FONT }}>Export</button>
       </div>
 
@@ -547,7 +560,7 @@ export default function RunPayroll() {
           const gross = regPay + statPay;
           const isLast = idx === filteredRows.length - 1;
           return (
-            <div key={r.id} id={"row-" + r.id} style={{ padding: "16px 20px", borderBottom: isLast ? "none" : "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, alignItems: "center", opacity: r.ready ? 1 : 0.5, position: "relative" }}>
+            <div key={r.id} id={"row-" + r.id} onClick={function() { setSelectedRowId(selectedRowId === r.id ? null : r.id); }} style={{ padding: "16px 20px", borderBottom: isLast ? "none" : "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, alignItems: "center", opacity: r.ready ? 1 : 0.5, position: "relative", background: selectedRowId === r.id ? C.brandBg : "transparent", borderLeft: selectedRowId === r.id ? "3px solid " + C.brand : "3px solid transparent", cursor: "pointer" }}>
               <div>
                 <input type="checkbox" checked={r.included} disabled={!r.ready} onChange={function() { toggleIncluded(r.id); }} style={{ width: 16, height: 16, accentColor: C.brand, cursor: r.ready ? "pointer" : "not-allowed" }} />
               </div>
