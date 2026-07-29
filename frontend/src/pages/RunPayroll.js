@@ -532,7 +532,34 @@ export default function RunPayroll() {
             <input ref={searchInputRef} type="text" placeholder="Search employees..." value={searchQuery} onChange={function(e) { setSearchQuery(e.target.value); }} onBlur={function() { if (!searchQuery) setSearchExpanded(false); }} style={{ border: "none", outline: "none", fontSize: 12, color: C.ink, flex: 1, background: "transparent", fontFamily: FONT }} />
           </div>
         )}
-        <button style={{ padding: "8px 14px", background: "#fff", border: "1px solid " + C.line, borderRadius: 8, fontSize: 13, color: C.ink, fontWeight: 600, cursor: "pointer", fontFamily: FONT }}>Export</button>
+        <button onClick={async function() {
+          if (!payRunId) return;
+          try {
+            const res = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/export", {
+              headers: authHeaders(),
+            });
+            if (!res.ok) { alert("Could not export"); return; }
+            const disp = res.headers.get("content-disposition") || "";
+            let filename = "payroll_export.csv";
+            const m = disp.match(/filename="?([^";]+)"?/);
+            if (m) filename = m[1];
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+          } catch (e) {
+            console.error("Export failed", e);
+            alert("Export failed: " + e.message);
+          }
+        }} style={{ padding: "5px 12px", background: "#fff", border: "1.5px solid " + C.ink, borderRadius: 8, fontSize: 12, color: C.ink, fontWeight: 700, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Export
+        </button>
       </div>
 
       <div style={{ border: "1px solid " + C.line, borderRadius: 12, background: "#fff", overflow: "visible" }}>
