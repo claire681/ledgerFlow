@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import EditPaychequeDrawer from "../components/EditPaychequeDrawer";
 import { useNavigate, useParams } from "react-router-dom";
 import StatHolidayEligibilityPopup from "../components/payroll/StatHolidayEligibilityPopup";
 import { AdjustStatPayModal, MarkNotEligibleModal, OverrideEligibleModal } from "../components/payroll/StatHolidaySubModals";
@@ -286,6 +287,7 @@ export default function RunPayroll() {
   const searchInputRef = useRef(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [selectedRowId, setSelectedRowId] = useState(null);
+  const [editDrawerEmployeeId, setEditDrawerEmployeeId] = useState(null);
   const [openPayMethodId, setOpenPayMethodId] = useState(null);
   const [statusFilter, setStatusFilter] = useState([]);
   const [focusedField, setFocusedField] = useState(null);
@@ -592,7 +594,7 @@ export default function RunPayroll() {
                 <input type="checkbox" checked={r.included} disabled={!r.ready} onChange={function() { toggleIncluded(r.id); }} style={{ width: 16, height: 16, accentColor: C.brand, cursor: r.ready ? "pointer" : "not-allowed" }} />
               </div>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>{r.name}</div>
+                <div onClick={function(e) { e.stopPropagation(); setEditDrawerEmployeeId(r.id); }} style={{ fontSize: 14, fontWeight: 600, color: C.ink, cursor: "pointer", textDecoration: "none" }} onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; }} onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}>{r.name}</div>
                 <div style={{ fontSize: 12, color: C.muted }}>${r.hourlyRate.toFixed(2)}/hr {r.position ? "\u00b7 " + r.position : ""}</div>
               </div>
               <div style={{ textAlign: "right" }}>
@@ -629,7 +631,7 @@ export default function RunPayroll() {
                 <button onClick={function() { setOpenMenuId(openMenuId === r.id ? null : r.id); }} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 18, color: C.muted, padding: 4 }}>&#8942;</button>
                 {openMenuId === r.id && (
                   <div style={{ position: "absolute", top: 30, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", width: 200, overflow: "hidden", zIndex: 20, textAlign: "left" }}>
-                    <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer" }} onClick={function() { setOpenMenuId(null); }}>Edit paycheque</div>
+                    <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer" }} onClick={function() { setEditDrawerEmployeeId(r.id); setOpenMenuId(null); }}>Edit paycheque</div>
                     <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { navigate("/payroll/employees/" + r.id); }}>View profile</div>
                     <div style={{ padding: "10px 14px", fontSize: 13, color: C.danger, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { skipFromRun(r.id); setOpenMenuId(null); }}>Skip from payroll run</div>
                   </div>
