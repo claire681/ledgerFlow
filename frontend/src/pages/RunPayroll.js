@@ -735,6 +735,32 @@ export default function RunPayroll() {
             runId={payRunId}
             employeeId={editDrawerEmployeeId}
             onClose={function() { setEditDrawerEmployeeId(null); }}
+            onSaved={function() {
+              const empId = editDrawerEmployeeId;
+              if (!empId || !payRunId) return;
+              fetch(API + "/api/v1/payroll/pay-runs/" + payRunId + "/paycheques/" + empId, {
+                headers: authHeaders(),
+              })
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .then(function(d) {
+                  if (!d) return;
+                  const regular = (d.earnings || []).find(function(e) { return e.type === "Regular Pay"; });
+                  const stat = (d.earnings || []).find(function(e) { return e.type === "Stat Holiday Pay"; });
+                  const statAdw = (d.earnings || []).find(function(e) { return e.type === "Stat pay - average daily wage"; });
+                  setRows(function(prev) {
+                    return prev.map(function(row) {
+                      if (row.id !== empId) return row;
+                      return Object.assign({}, row, {
+                        regular: regular ? String(regular.hours || 0) : row.regular,
+                        statHoliday: stat ? String(stat.hours || 0) : row.statHoliday,
+                        statAvgDaily: statAdw ? Number(statAdw.current || 0) : row.statAvgDaily,
+                        memo: d.memo || "",
+                      });
+                    });
+                  });
+                })
+                .catch(function(e) { console.error("Refresh row failed:", e); });
+            }}
           />
         )}
 </div>
