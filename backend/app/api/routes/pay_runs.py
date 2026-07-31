@@ -1098,7 +1098,7 @@ async def get_paycheque_edit_data(
                 "hours": round(hours_regular, 2),
                 "rate": round(hourly_rate, 2),
                 "current": round(regular_current, 2),
-                "ytd": d(ytd.ytd_gross) if ytd else 0.0,
+                "ytd": round((d(ytd.ytd_gross) if ytd else 0.0) + regular_current + stat_current + stat_adw_current, 2),
                 "editable_field": "hours",
                 "is_overridden": overrides.get("hours_regular", False),
             },
@@ -1125,19 +1125,19 @@ async def get_paycheque_edit_data(
             {
                 "type": "Income Tax",
                 "current": d(stub.federal_tax) + d(stub.provincial_or_state_tax) if stub else 0.0,
-                "ytd": (d(ytd.ytd_federal_tax) + d(ytd.ytd_provincial_or_state_tax)) if ytd else 0.0,
+                "ytd": round(((d(ytd.ytd_federal_tax) + d(ytd.ytd_provincial_or_state_tax)) if ytd else 0.0) + ((d(stub.federal_tax) + d(stub.provincial_or_state_tax)) if stub else 0.0), 2),
                 "is_overridden": overrides.get("income_tax", False),
             },
             {
                 "type": "Employment Insurance",
                 "current": d(stub.unemployment_employee) if stub else 0.0,
-                "ytd": d(ytd.ytd_unemployment_employee) if ytd else 0.0,
+                "ytd": round((d(ytd.ytd_unemployment_employee) if ytd else 0.0) + (d(stub.unemployment_employee) if stub else 0.0), 2),
                 "is_overridden": overrides.get("ei_employee", False),
             },
             {
                 "type": "Canada Pension Plan",
                 "current": d(stub.social_security_employee) if stub else 0.0,
-                "ytd": d(ytd.ytd_social_security_employee) if ytd else 0.0,
+                "ytd": round((d(ytd.ytd_social_security_employee) if ytd else 0.0) + (d(stub.social_security_employee) if stub else 0.0), 2),
                 "is_overridden": overrides.get("cpp_employee", False),
             },
             {
@@ -1151,13 +1151,13 @@ async def get_paycheque_edit_data(
             {
                 "type": "Employment Insurance Employer",
                 "current": d(stub.unemployment_employer) if stub else 0.0,
-                "ytd": d(ytd.ytd_unemployment_employer) if ytd else 0.0,
+                "ytd": round((d(ytd.ytd_unemployment_employer) if ytd else 0.0) + (d(stub.unemployment_employer) if stub else 0.0), 2),
                 "is_overridden": overrides.get("ei_employer", False),
             },
             {
                 "type": "Canada Pension Plan Employer",
                 "current": d(stub.social_security_employer) if stub else 0.0,
-                "ytd": d(ytd.ytd_social_security_employer) if ytd else 0.0,
+                "ytd": round((d(ytd.ytd_social_security_employer) if ytd else 0.0) + (d(stub.social_security_employer) if stub else 0.0), 2),
                 "is_overridden": overrides.get("cpp_employer", False),
             },
             {
