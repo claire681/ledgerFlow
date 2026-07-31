@@ -453,9 +453,17 @@ export default function RunPayroll() {
     <div className="novala-page-scroll" style={{ maxWidth: "100%", margin: 0, padding: "28px 32px 110px", fontFamily: FONT, overflowY: "auto", height: "100vh" }}>
 
       <div style={{ marginBottom: 22 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: C.brand, letterSpacing: "0.5px", marginBottom: 5 }}>PAYROLL</div>
-        <div style={{ fontSize: 26, fontWeight: 700, color: C.ink, marginBottom: 4 }}>Run payroll</div>
-        <div style={{ fontSize: 14, color: C.muted }}>Review hours, then submit to finalize the run</div>
+        {/* Breadcrumb - QuickBooks/Xero pattern */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.ink, fontWeight: 500, marginBottom: 14 }}>
+          <a onClick={function() { navigate("/payroll/overview"); }} style={{ color: C.ink, fontWeight: 600, textDecoration: "none", cursor: "pointer", opacity: 0.7 }} onMouseEnter={function(e) { e.currentTarget.style.opacity = 1; e.currentTarget.style.textDecoration = "underline"; }} onMouseLeave={function(e) { e.currentTarget.style.opacity = 0.7; e.currentTarget.style.textDecoration = "none"; }}>Payroll</a>
+          <span style={{ color: C.ink, opacity: 0.4 }}>/</span>
+          <a onClick={function() { navigate("/payroll/drafts"); }} style={{ color: C.ink, fontWeight: 600, textDecoration: "none", cursor: "pointer", opacity: 0.7 }} onMouseEnter={function(e) { e.currentTarget.style.opacity = 1; e.currentTarget.style.textDecoration = "underline"; }} onMouseLeave={function(e) { e.currentTarget.style.opacity = 0.7; e.currentTarget.style.textDecoration = "none"; }}>Pay runs</a>
+          <span style={{ color: C.ink, opacity: 0.4 }}>/</span>
+          <span style={{ color: C.ink, fontWeight: 700 }}>Run payroll</span>
+        </div>
+        {/* Page title */}
+        <div style={{ fontSize: 34, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", lineHeight: 1.1, marginBottom: 8 }}>Run payroll</div>
+        <div style={{ fontSize: 14, color: C.ink, fontWeight: 500 }}>Review hours, then submit to finalize the run</div>
       </div>
 
       {needsHoursRows.length > 0 && (
