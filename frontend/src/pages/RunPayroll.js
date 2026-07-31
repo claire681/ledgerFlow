@@ -216,7 +216,7 @@ export default function RunPayroll() {
 
   function applyStatHolidayToRows(overrides) {
     setRows(function(prevRows) {
-      return prevRows.map(function(r) {
+      var next = prevRows.map(function(r) {
         var o = overrides[r.id];
         if (!o) return r;
         if (o.eligible && o.stat_pay_amount != null) {
@@ -227,6 +227,9 @@ export default function RunPayroll() {
         }
         return r;
       });
+      // Trigger autosave so stat_pay_amount persists to DB
+      scheduleAutosave(payRunId, next);
+      return next;
     });
     setStatHolidayApplied(true);
   }
