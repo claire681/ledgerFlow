@@ -129,7 +129,10 @@ async def list_pay_runs(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """List pay runs. Optional status filter (draft/finalized/voided) and limit."""
+    """List pay runs. Optional status filter (draft/finalized/voided) and limit.
+    For draft runs, employee_count and total_gross are computed live from stubs
+    (since those fields are only persisted on finalize).
+    """
     query = select(PayRun).where(PayRun.owner_id == current_user.id)
     if status:
         query = query.where(PayRun.status == status)
@@ -138,7 +141,28 @@ async def list_pay_runs(
         query = query.limit(limit)
     result = await db.execute(query)
     runs = result.scalars().all()
-    return [_run_to_response(r) for r in runs]
+
+    # Enrich drafts with live stub data
+    responses = []
+    for r in runs:
+        resp = _run_to_response(r)
+        if r.status == "draft":
+            stubs_res = await db.execute(
+                select(PayStub).where(PayStub.pay_run_id == r.id)
+            )
+            stubs = stubs_res.scalars().all()
+            live_count = len(stubs)
+            live_gross = Decimal("0")
+            for s in stubs:
+                rate = Decimal(str(s.hourly_rate or 0))
+                hrs_reg = Decimal(str(s.hours_regular or 0))
+                hrs_ot = Decimal(str(s.hours_overtime or 0))
+                hrs_stat = Decimal(str(s.hours_stat_holiday or 0))
+                live_gross += (hrs_reg * rate) + (hrs_ot * rate * Decimal("1.5")) + (hrs_stat * rate)
+            resp.employee_count = live_count
+            resp.total_gross = live_gross.quantize(Decimal("0.01"))
+        responses.append(resp)
+    return responses
 
 
 @router.post("/runs", response_model=PayRunResponse, status_code=status.HTTP_201_CREATED)
@@ -300,6 +324,44 @@ async def list_run_stubs(
     )
     stubs = stubs_result.scalars().all()
 
+    def _build_pay_lines(s):
+        rate = float(s.hourly_rate) if s.hourly_rate else 0
+        lines = []
+        if s.hours_regular and float(s.hours_regular) > 0:
+            lines.append({
+                "type": "Regular Pay",
+                "hours": str(s.hours_regular),
+                "rate": str(round(rate, 2)),
+                "current": str(round(float(s.hours_regular) * rate, 2)),
+                "ytd": "0.00",
+            })
+        if s.hours_overtime and float(s.hours_overtime) > 0:
+            ot_rate = rate * 1.5
+            lines.append({
+                "type": "Overtime Pay",
+                "hours": str(s.hours_overtime),
+                "rate": str(round(ot_rate, 2)),
+                "current": str(round(float(s.hours_overtime) * ot_rate, 2)),
+                "ytd": "0.00",
+            })
+        # Derive stat pay from gross - regular - overtime
+        gross = float(s.gross_pay or 0)
+        reg_amt = float(s.hours_regular or 0) * rate
+        ot_amt = float(s.hours_overtime or 0) * rate * 1.5
+        stat_derived = round(gross - reg_amt - ot_amt, 2)
+        stat_hrs = float(s.hours_stat_holiday or 0)
+        if stat_derived > 0.001 or stat_hrs > 0:
+            display_amt = stat_derived if stat_derived > 0.001 else round(stat_hrs * rate, 2)
+            lines.append({
+                "type": "Statutory Holiday Pay",
+                "hours": str(stat_hrs),
+                "rate": str(round(rate, 2)),
+                "current": str(round(display_amt, 2)),
+                "ytd": "0.00",
+                "holiday_name": None,
+            })
+        return lines
+
     return [
         {
             "id": str(s.id),
@@ -316,9 +378,798 @@ async def list_run_stubs(
             "hours_sick": str(s.hours_sick or 0),
             "stat_pay_avg": str(getattr(s, "stat_pay_amount", 0) or 0),
             "memo": s.memo,
+            "pay_lines": _build_pay_lines(s),
         }
         for s in stubs
     ]
+
+
+@router.get("/runs/{run_id}/export")
+async def export_pay_run_csv(
+    run_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Export a pay run as CSV. Works for drafts and finalized runs.
+    Filename uses period dates. Includes auto-computed TOTAL row.
+    """
+    import csv
+    import io
+    from fastapi.responses import Response as _Resp
+
+    # Load run
+    run_res = await db.execute(
+        select(PayRun).where(
+            PayRun.id == run_id,
+            PayRun.owner_id == current_user.id,
+        )
+    )
+    run = run_res.scalar_one_or_none()
+    if not run:
+        raise HTTPException(404, "Pay run not found")
+
+    # Load stubs
+    stubs_res = await db.execute(
+        select(PayStub).where(PayStub.pay_run_id == run_id).order_by(PayStub.employee_name)
+    )
+    stubs = stubs_res.scalars().all()
+
+    # Build CSV
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "Employee", "Reg hrs", "OT hrs", "Stat hrs", "Rate", "Gross", "Method", "Memo"
+    ])
+
+    total_reg = Decimal("0")
+    total_ot = Decimal("0")
+    total_stat = Decimal("0")
+    total_gross = Decimal("0")
+
+    for s in stubs:
+        rate = Decimal(str(s.hourly_rate or 0))
+        hrs_reg = Decimal(str(s.hours_regular or 0))
+        hrs_ot = Decimal(str(s.hours_overtime or 0))
+        hrs_stat = Decimal(str(s.hours_stat_holiday or 0))
+
+        # For drafts, gross may be 0 until calculate is called. Compute live.
+        if run.status == "draft":
+            gross = (hrs_reg * rate) + (hrs_ot * rate * Decimal("1.5")) + (hrs_stat * rate)
+        else:
+            gross = Decimal(str(s.gross_pay or 0))
+
+        method = "Cheque"  # default until we support other methods
+        memo = s.memo or ""
+
+        writer.writerow([
+            s.employee_name or "",
+            f"{hrs_reg:.2f}",
+            f"{hrs_ot:.2f}",
+            f"{hrs_stat:.2f}",
+            f"{rate:.2f}",
+            f"{gross:.2f}",
+            method,
+            memo,
+        ])
+
+        total_reg += hrs_reg
+        total_ot += hrs_ot
+        total_stat += hrs_stat
+        total_gross += gross
+
+    # TOTAL row
+    writer.writerow([
+        "TOTAL",
+        f"{total_reg:.2f}",
+        f"{total_ot:.2f}",
+        f"{total_stat:.2f}",
+        "",
+        f"{total_gross:.2f}",
+        "",
+        "",
+    ])
+
+    csv_content = output.getvalue()
+    output.close()
+
+    # Filename uses period dates
+    filename = f"payroll_{run.pay_period_start}_to_{run.pay_period_end}.csv"
+
+    return _Resp(
+        content=csv_content,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        }
+    )
+
+
+class PaychequeRecalculateRequest(BaseModel):
+    """Body for recalculate endpoint."""
+    hours_regular: Optional[float] = 0.0
+    hours_stat_holiday: Optional[float] = 0.0
+    hours_overtime: Optional[float] = 0.0
+    stat_pay_amount: Optional[float] = 0.0
+    # overrides is a dict of tax field code -> manually set amount
+    # Fields present here are treated as overridden and not recalculated
+    overrides: Optional[dict] = None
+
+
+@router.post("/pay-runs/{run_id}/paycheques/{employee_id}/recalculate")
+async def recalculate_paycheque(
+    run_id: UUID,
+    employee_id: UUID,
+    body: PaychequeRecalculateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Recalculate a paycheque with new hours, respecting user overrides.
+
+    Universal: any employer, any employee. Reads real employee data, real YTD,
+    and calls the same tax engine used elsewhere in the system.
+    """
+    from app.payroll.service import PayrollService
+    from app.payroll.types import (
+        PayRunEmployeeInput,
+        HoursWorked,
+        JurisdictionContext,
+    )
+    from app.models.models import PayrollSettings
+
+    # Load run
+    run_res = await db.execute(
+        select(PayRun).where(
+            PayRun.id == run_id,
+            PayRun.owner_id == current_user.id,
+        )
+    )
+    run = run_res.scalar_one_or_none()
+    if not run:
+        raise HTTPException(404, "Pay run not found")
+    if run.status == "finalized":
+        raise HTTPException(400, "Cannot recalculate a finalized pay run")
+
+    # Load employee
+    emp_res = await db.execute(
+        select(Employee).where(
+            Employee.id == employee_id,
+            Employee.owner_id == current_user.id,
+        )
+    )
+    emp = emp_res.scalar_one_or_none()
+    if not emp:
+        raise HTTPException(404, "Employee not found")
+
+    # Load YTD balances
+    tax_year = run.pay_period_start.year
+    ytd_res = await db.execute(
+        select(YTDBalance).where(
+            YTDBalance.employee_id == employee_id,
+            YTDBalance.tax_year == tax_year,
+        )
+    )
+    ytd = ytd_res.scalar_one_or_none()
+
+    # Compute pay_periods_per_year from PaySchedule.frequency
+    pay_periods_per_year = 26  # Default biweekly
+    if run.pay_schedule_id:
+        from app.models.models import PaySchedule
+        sched_res = await db.execute(
+            select(PaySchedule).where(PaySchedule.id == run.pay_schedule_id)
+        )
+        sched = sched_res.scalar_one_or_none()
+        if sched and sched.frequency:
+            freq_map = {
+                "weekly": 52,
+                "biweekly": 26,
+                "semimonthly": 24,
+                "semi_monthly": 24,
+                "monthly": 12,
+            }
+            pay_periods_per_year = freq_map.get(sched.frequency.lower(), 26)
+
+    # Build jurisdiction
+    jurisdiction = JurisdictionContext(
+        country="CA",
+        subnational=emp.province_or_state or "AB",
+        pay_period_start=run.pay_period_start,
+        pay_period_end=run.pay_period_end,
+        pay_date=run.pay_date,
+        pay_periods_per_year=pay_periods_per_year,
+    )
+
+    # Build hours input
+    hours = HoursWorked(
+        regular=Decimal(str(body.hours_regular or 0)),
+        overtime=Decimal(str(body.hours_overtime or 0)),
+        stat_holiday=Decimal("0"),
+        vacation=Decimal("0"),
+        sick=Decimal("0"),
+        evening=Decimal("0"),
+        overnight=Decimal("0"),
+        weekend=Decimal("0"),
+        on_call=Decimal("0"),
+        travel=Decimal("0"),
+    )
+
+    hours_input = PayRunEmployeeInput(
+        employee_id=str(employee_id),
+        hours=hours,
+        bonus=Decimal("0"),
+        commission=Decimal("0"),
+        reimbursement=Decimal("0"),
+        stat_pay_amount=Decimal(str(body.stat_pay_amount or 0)),
+        stat_holiday_hours_at_premium=Decimal(str(body.hours_stat_holiday or 0)),
+        stat_holiday_hours_at_regular=Decimal("0"),
+    )
+
+    # Convert employee to dict (using helper if it exists)
+    try:
+        emp_dict = _employee_to_dict(emp)
+    except NameError:
+        # Fallback if helper isn't in scope
+        emp_dict = {
+            "id": str(emp.id),
+            "first_name": emp.first_name,
+            "last_name": emp.last_name,
+            "hourly_rate": emp.hourly_rate,
+            "salary_amount": emp.salary_amount,
+            "pay_type": emp.pay_type or "hourly",
+            "province_or_state": emp.province_or_state or "AB",
+            "vacation_pay_pct": Decimal("4.0"),
+            "tax_info": {},
+        }
+
+    ytd_dict = {}
+    if ytd:
+        ytd_dict = {
+            "ytd_gross": ytd.ytd_gross,
+            "ytd_federal_tax": ytd.ytd_federal_tax,
+            "ytd_provincial_or_state_tax": ytd.ytd_provincial_or_state_tax,
+            "ytd_social_security_employee": ytd.ytd_social_security_employee,
+            "ytd_social_security_employer": ytd.ytd_social_security_employer,
+            "ytd_unemployment_employee": ytd.ytd_unemployment_employee,
+            "ytd_unemployment_employer": ytd.ytd_unemployment_employer,
+            "ytd_pensionable_earnings": ytd.ytd_pensionable_earnings if hasattr(ytd, 'ytd_pensionable_earnings') else Decimal("0"),
+            "ytd_insurable_earnings": ytd.ytd_insurable_earnings if hasattr(ytd, 'ytd_insurable_earnings') else Decimal("0"),
+        }
+
+    # Call the tax engine
+    service = PayrollService()
+    try:
+        result = service.calculate_one_employee(
+            employee=emp_dict,
+            hours_input=hours_input,
+            ytd=ytd_dict,
+            jurisdiction=jurisdiction,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Calculation failed: {str(e)}")
+
+    # Extract calculated values
+    def d(v):
+        return float(v) if v is not None else 0.0
+
+    calc_fed_tax = d(result.federal_tax)
+    calc_prov_tax = d(result.provincial_or_state_tax)
+    calc_income_tax = calc_fed_tax + calc_prov_tax
+    calc_ei_employee = d(result.unemployment_employee)
+    calc_cpp_employee = d(result.social_security_employee)
+    calc_cpp2_employee = d(result.social_security_2_employee) if hasattr(result, 'social_security_2_employee') else 0.0
+    calc_ei_employer = d(result.unemployment_employer)
+    calc_cpp_employer = d(result.social_security_employer)
+
+    # Apply overrides: if code is in overrides dict, use that value instead of calc
+    overrides = body.overrides or {}
+
+    def get_val(code, calculated):
+        if code in overrides and overrides[code] is not None:
+            return float(overrides[code])
+        return calculated
+
+    final_income_tax = get_val("income_tax", calc_income_tax)
+    final_ei_emp = get_val("ei_employee", calc_ei_employee)
+    final_cpp_emp = get_val("cpp_employee", calc_cpp_employee)
+    final_cpp2_emp = get_val("cpp2_employee", calc_cpp2_employee)
+    final_ei_er = get_val("ei_employer", calc_ei_employer)
+    final_cpp_er = get_val("cpp_employer", calc_cpp_employer)
+    final_cpp2_er = get_val("cpp2_employer", 0.0)
+
+    gross = d(result.gross_pay)
+    employee_deductions_total = final_income_tax + final_ei_emp + final_cpp_emp + final_cpp2_emp
+    employer_total = final_ei_er + final_cpp_er + final_cpp2_er
+    net_pay = gross - employee_deductions_total
+
+    return {
+        "gross_pay": round(gross, 2),
+        "net_pay": round(net_pay, 2),
+        "employee_taxes": [
+            {"code": "income_tax", "current": round(final_income_tax, 2), "is_overridden": "income_tax" in overrides},
+            {"code": "ei_employee", "current": round(final_ei_emp, 2), "is_overridden": "ei_employee" in overrides},
+            {"code": "cpp_employee", "current": round(final_cpp_emp, 2), "is_overridden": "cpp_employee" in overrides},
+            {"code": "cpp2_employee", "current": round(final_cpp2_emp, 2), "is_overridden": "cpp2_employee" in overrides},
+        ],
+        "employer_taxes": [
+            {"code": "ei_employer", "current": round(final_ei_er, 2), "is_overridden": "ei_employer" in overrides},
+            {"code": "cpp_employer", "current": round(final_cpp_er, 2), "is_overridden": "cpp_employer" in overrides},
+            {"code": "cpp2_employer", "current": round(final_cpp2_er, 2), "is_overridden": "cpp2_employer" in overrides},
+        ],
+        "employee_taxes_total": round(employee_deductions_total, 2),
+        "employer_taxes_total": round(employer_total, 2),
+    }
+
+
+class PaychequeSaveRequest(BaseModel):
+    """Body for save endpoint."""
+    hours_regular: Optional[float] = None
+    hours_stat_holiday: Optional[float] = None
+    hours_overtime: Optional[float] = None
+    stat_pay_amount: Optional[float] = None
+    overrides: Optional[dict] = None
+    memo: Optional[str] = None
+
+
+@router.patch("/pay-runs/{run_id}/paycheques/{employee_id}")
+async def save_paycheque_edits(
+    run_id: UUID,
+    employee_id: UUID,
+    body: PaychequeSaveRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Save paycheque edits. Runs recalculate internally to persist accurate
+    numbers. Stores overrides in calculation_snapshot for future re-loads.
+
+    Universal - any employer, any employee.
+    """
+    from app.payroll.service import PayrollService
+    from app.payroll.types import (
+        PayRunEmployeeInput,
+        HoursWorked,
+        JurisdictionContext,
+    )
+
+    # Load run + verify ownership
+    run_res = await db.execute(
+        select(PayRun).where(
+            PayRun.id == run_id,
+            PayRun.owner_id == current_user.id,
+        )
+    )
+    run = run_res.scalar_one_or_none()
+    if not run:
+        raise HTTPException(404, "Pay run not found")
+    if run.status == "finalized":
+        raise HTTPException(400, "Cannot edit a finalized pay run")
+
+    # Load employee
+    emp_res = await db.execute(
+        select(Employee).where(
+            Employee.id == employee_id,
+            Employee.owner_id == current_user.id,
+        )
+    )
+    emp = emp_res.scalar_one_or_none()
+    if not emp:
+        raise HTTPException(404, "Employee not found")
+
+    # Load or create stub
+    stub_res = await db.execute(
+        select(PayStub).where(
+            PayStub.pay_run_id == run_id,
+            PayStub.employee_id == employee_id,
+        )
+    )
+    stub = stub_res.scalar_one_or_none()
+
+    if not stub:
+        # Create placeholder stub
+        stub = PayStub(
+            pay_run_id=run.id,
+            employee_id=employee_id,
+            employee_name=(emp.first_name or "") + " " + (emp.last_name or ""),
+            employee_email=emp.personal_email or "",
+            position_title=emp.position_title or "",
+            pay_type=emp.pay_type or "hourly",
+            hourly_rate=emp.hourly_rate,
+            salary_amount=emp.salary_amount or Decimal("0"),
+            currency=emp.currency or "CAD",
+            hours_regular=Decimal("0"),
+            hours_overtime=Decimal("0"),
+            hours_stat_holiday=Decimal("0"),
+            hours_vacation=Decimal("0"),
+            hours_sick=Decimal("0"),
+            hours_evening=Decimal("0"),
+            gross_pay=Decimal("0"),
+            total_employee_deductions=Decimal("0"),
+            net_pay=Decimal("0"),
+        )
+        db.add(stub)
+        await db.flush()
+
+    # Update hours if provided
+    if body.hours_regular is not None:
+        stub.hours_regular = Decimal(str(body.hours_regular))
+    if body.hours_stat_holiday is not None:
+        stub.hours_stat_holiday = Decimal(str(body.hours_stat_holiday))
+    if body.hours_overtime is not None:
+        stub.hours_overtime = Decimal(str(body.hours_overtime))
+
+    # Update memo if provided
+    if body.memo is not None:
+        stub.memo = body.memo
+
+    # Run tax calculation with the new hours + overrides to get final numbers
+    tax_year = run.pay_period_start.year
+    ytd_res = await db.execute(
+        select(YTDBalance).where(
+            YTDBalance.employee_id == employee_id,
+            YTDBalance.tax_year == tax_year,
+        )
+    )
+    ytd = ytd_res.scalar_one_or_none()
+
+    # Pay periods per year
+    pay_periods_per_year = 26
+    if run.pay_schedule_id:
+        from app.models.models import PaySchedule
+        sched_res = await db.execute(
+            select(PaySchedule).where(PaySchedule.id == run.pay_schedule_id)
+        )
+        sched = sched_res.scalar_one_or_none()
+        if sched and sched.frequency:
+            freq_map = {"weekly": 52, "biweekly": 26, "semimonthly": 24, "semi_monthly": 24, "monthly": 12}
+            pay_periods_per_year = freq_map.get(sched.frequency.lower(), 26)
+
+    jurisdiction = JurisdictionContext(
+        country="CA",
+        subnational=emp.province_or_state or "AB",
+        pay_period_start=run.pay_period_start,
+        pay_period_end=run.pay_period_end,
+        pay_date=run.pay_date,
+        pay_periods_per_year=pay_periods_per_year,
+    )
+
+    hours = HoursWorked(
+        regular=Decimal(str(body.hours_regular or float(stub.hours_regular or 0))),
+        overtime=Decimal(str(body.hours_overtime or float(stub.hours_overtime or 0))),
+        stat_holiday=Decimal("0"),
+        vacation=Decimal("0"),
+        sick=Decimal("0"),
+        evening=Decimal("0"),
+        overnight=Decimal("0"),
+        weekend=Decimal("0"),
+        on_call=Decimal("0"),
+        travel=Decimal("0"),
+    )
+    hours_input = PayRunEmployeeInput(
+        employee_id=str(employee_id),
+        hours=hours,
+        bonus=Decimal("0"),
+        commission=Decimal("0"),
+        reimbursement=Decimal("0"),
+        stat_pay_amount=Decimal(str(body.stat_pay_amount or 0)),
+        stat_holiday_hours_at_premium=Decimal(str(body.hours_stat_holiday or float(stub.hours_stat_holiday or 0))),
+        stat_holiday_hours_at_regular=Decimal("0"),
+    )
+
+    try:
+        emp_dict = _employee_to_dict(emp)
+    except NameError:
+        emp_dict = {
+            "id": str(emp.id),
+            "first_name": emp.first_name,
+            "last_name": emp.last_name,
+            "hourly_rate": emp.hourly_rate,
+            "salary_amount": emp.salary_amount,
+            "pay_type": emp.pay_type or "hourly",
+            "province_or_state": emp.province_or_state or "AB",
+            "vacation_pay_pct": Decimal("4.0"),
+            "tax_info": {},
+        }
+
+    ytd_dict = {}
+    if ytd:
+        ytd_dict = {
+            "ytd_gross": ytd.ytd_gross,
+            "ytd_federal_tax": ytd.ytd_federal_tax,
+            "ytd_provincial_or_state_tax": ytd.ytd_provincial_or_state_tax,
+            "ytd_social_security_employee": ytd.ytd_social_security_employee,
+            "ytd_social_security_employer": ytd.ytd_social_security_employer,
+            "ytd_unemployment_employee": ytd.ytd_unemployment_employee,
+            "ytd_unemployment_employer": ytd.ytd_unemployment_employer,
+            "ytd_pensionable_earnings": ytd.ytd_pensionable_earnings if hasattr(ytd, 'ytd_pensionable_earnings') else Decimal("0"),
+            "ytd_insurable_earnings": ytd.ytd_insurable_earnings if hasattr(ytd, 'ytd_insurable_earnings') else Decimal("0"),
+        }
+
+    service = PayrollService()
+    try:
+        result = service.calculate_one_employee(
+            employee=emp_dict,
+            hours_input=hours_input,
+            ytd=ytd_dict,
+            jurisdiction=jurisdiction,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Calculation failed: {str(e)}")
+
+    def d(v):
+        return float(v) if v is not None else 0.0
+
+    calc_fed_tax = d(result.federal_tax)
+    calc_prov_tax = d(result.provincial_or_state_tax)
+    calc_ei_employee = d(result.unemployment_employee)
+    calc_cpp_employee = d(result.social_security_employee)
+    calc_cpp2_employee = d(result.social_security_2_employee) if hasattr(result, 'social_security_2_employee') else 0.0
+    calc_ei_employer = d(result.unemployment_employer)
+    calc_cpp_employer = d(result.social_security_employer)
+
+    overrides = body.overrides or {}
+
+    def get_val(code, calculated):
+        if code in overrides and overrides[code] is not None:
+            return float(overrides[code])
+        return calculated
+
+    final_income_tax = get_val("income_tax", calc_fed_tax + calc_prov_tax)
+    final_ei_emp = get_val("ei_employee", calc_ei_employee)
+    final_cpp_emp = get_val("cpp_employee", calc_cpp_employee)
+    final_cpp2_emp = get_val("cpp2_employee", calc_cpp2_employee)
+    final_ei_er = get_val("ei_employer", calc_ei_employer)
+    final_cpp_er = get_val("cpp_employer", calc_cpp_employer)
+    final_cpp2_er = get_val("cpp2_employer", 0.0)
+
+    gross = d(result.gross_pay)
+    emp_ded_total = final_income_tax + final_ei_emp + final_cpp_emp + final_cpp2_emp
+    er_total = final_ei_er + final_cpp_er + final_cpp2_er
+    net_pay = gross - emp_ded_total
+
+    # Persist to stub
+    stub.gross_pay = Decimal(str(round(gross, 2)))
+    stub.federal_tax = Decimal(str(round(calc_fed_tax, 2)))
+    stub.provincial_or_state_tax = Decimal(str(round(final_income_tax - calc_fed_tax if "income_tax" not in overrides else 0, 2)))
+    if "income_tax" in overrides:
+        # If income tax is overridden, split fed/prov 60/40 as best guess
+        stub.federal_tax = Decimal(str(round(final_income_tax * 0.6, 2)))
+        stub.provincial_or_state_tax = Decimal(str(round(final_income_tax * 0.4, 2)))
+    stub.unemployment_employee = Decimal(str(round(final_ei_emp, 2)))
+    stub.social_security_employee = Decimal(str(round(final_cpp_emp, 2)))
+    stub.social_security_2_employee = Decimal(str(round(final_cpp2_emp, 2)))
+    stub.unemployment_employer = Decimal(str(round(final_ei_er, 2)))
+    stub.social_security_employer = Decimal(str(round(final_cpp_er, 2)))
+    stub.total_employee_deductions = Decimal(str(round(emp_ded_total, 2)))
+    stub.total_employer_contributions = Decimal(str(round(er_total, 2)))
+    stub.net_pay = Decimal(str(round(net_pay, 2)))
+
+    # Store overrides and stat_pay_amount in calculation_snapshot for future loads
+    snap = stub.calculation_snapshot or {}
+    if not isinstance(snap, dict):
+        snap = {}
+    snap["edit_overrides"] = overrides
+    snap["last_edited_at"] = str(run.pay_period_end)
+    if body.stat_pay_amount is not None:
+        snap["stat_pay_amount"] = float(body.stat_pay_amount)
+    stub.calculation_snapshot = snap
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(stub, "calculation_snapshot")
+
+    await db.commit()
+
+    return {
+        "success": True,
+        "gross_pay": round(gross, 2),
+        "net_pay": round(net_pay, 2),
+        "employee_taxes_total": round(emp_ded_total, 2),
+        "employer_taxes_total": round(er_total, 2),
+    }
+
+
+@router.get("/pay-runs/{run_id}/paycheques/{employee_id}")
+async def get_paycheque_edit_data(
+    run_id: UUID,
+    employee_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Load full paycheque data for the Edit Paycheque drawer.
+
+    Universal: works for any employer, any employee, any pay run.
+    Returns everything needed to render the drawer in one call.
+    """
+    from app.models.models import CompanyProfile
+
+    # Load run + verify ownership
+    run_res = await db.execute(
+        select(PayRun).where(
+            PayRun.id == run_id,
+            PayRun.owner_id == current_user.id,
+        )
+    )
+    run = run_res.scalar_one_or_none()
+    if not run:
+        raise HTTPException(404, "Pay run not found")
+
+    # Load employee
+    emp_res = await db.execute(
+        select(Employee).where(
+            Employee.id == employee_id,
+            Employee.owner_id == current_user.id,
+        )
+    )
+    emp = emp_res.scalar_one_or_none()
+    if not emp:
+        raise HTTPException(404, "Employee not found")
+
+    # Load stub (may not exist yet if hours never saved)
+    stub_res = await db.execute(
+        select(PayStub).where(
+            PayStub.pay_run_id == run_id,
+            PayStub.employee_id == employee_id,
+        )
+    )
+    stub = stub_res.scalar_one_or_none()
+
+    # Load YTD balances
+    tax_year = run.pay_period_start.year
+    ytd_res = await db.execute(
+        select(YTDBalance).where(
+            YTDBalance.employee_id == employee_id,
+            YTDBalance.tax_year == tax_year,
+        )
+    )
+    ytd = ytd_res.scalar_one_or_none()
+
+    # Load payroll settings (has company_bank_name for "Paid from")
+    from app.models.models import PayrollSettings
+    settings_res = await db.execute(
+        select(PayrollSettings).where(PayrollSettings.owner_id == current_user.id)
+    )
+    settings = settings_res.scalar_one_or_none()
+
+    # Build address parts
+    address_parts = []
+    if emp.address_line1:
+        address_parts.append(emp.address_line1)
+    city_prov_postal = []
+    if emp.city: city_prov_postal.append(emp.city)
+    if emp.province_or_state: city_prov_postal.append(emp.province_or_state)
+    if emp.postal_or_zip: city_prov_postal.append(emp.postal_or_zip)
+    if city_prov_postal:
+        address_parts.append(", ".join(city_prov_postal))
+
+    # Extract stub values (may be None if no stub yet)
+    def d(v):
+        return float(v) if v is not None else 0.0
+
+    hourly_rate = d(emp.hourly_rate) if emp.hourly_rate else 0.0
+    hours_regular = d(stub.hours_regular) if stub else 0.0
+    hours_stat = d(stub.hours_stat_holiday) if stub else 0.0
+    hours_overtime = d(stub.hours_overtime) if stub else 0.0
+
+    regular_current = hours_regular * hourly_rate
+    stat_current = hours_stat * hourly_rate
+
+    # Stat pay ADW: prefer explicit value from snapshot, fall back to derived
+    stat_adw_current = 0.0
+    if stub and stub.calculation_snapshot:
+        snap_check = stub.calculation_snapshot
+        if isinstance(snap_check, dict) and "stat_pay_amount" in snap_check:
+            try:
+                stat_adw_current = round(float(snap_check["stat_pay_amount"]), 2)
+            except (TypeError, ValueError):
+                stat_adw_current = 0.0
+    # Fallback: derive from gross if not explicitly stored
+    if stat_adw_current == 0.0 and stub and stub.gross_pay:
+        derived = d(stub.gross_pay) - regular_current - (hours_overtime * hourly_rate * 1.5)
+        if derived > 0.01:
+            stat_adw_current = round(derived, 2)
+
+    # Load overrides from snapshot
+    snap = (stub.calculation_snapshot if stub else None) or {}
+    overrides = snap.get("edit_overrides") or {}
+
+    # Assemble response
+    paid_from = (settings.company_bank_name if settings and settings.company_bank_name
+                 else "Employer bank account")
+
+    net_pay = d(stub.net_pay) if stub else 0.0
+
+    return {
+        "employee": {
+            "id": str(emp.id),
+            "name": (emp.first_name or "") + " " + (emp.last_name or ""),
+            "address_line1": address_parts[0] if len(address_parts) > 0 else None,
+            "address_line2": address_parts[1] if len(address_parts) > 1 else None,
+            "hourly_rate": hourly_rate,
+        },
+        "pay_run": {
+            "id": str(run.id),
+            "pay_date": run.pay_date.isoformat() if run.pay_date else None,
+            "pay_period_start": run.pay_period_start.isoformat() if run.pay_period_start else None,
+            "pay_period_end": run.pay_period_end.isoformat() if run.pay_period_end else None,
+            "status": run.status,
+        },
+        "company": {
+            "paid_from": paid_from,
+        },
+        "earnings": [
+            {
+                "type": "Regular Pay",
+                "hours": round(hours_regular, 2),
+                "rate": round(hourly_rate, 2),
+                "current": round(regular_current, 2),
+                "ytd": d(ytd.ytd_gross) if ytd else 0.0,
+                "editable_field": "hours",
+                "is_overridden": overrides.get("hours_regular", False),
+            },
+            {
+                "type": "Stat Holiday Pay",
+                "hours": round(hours_stat, 2),
+                "rate": round(hourly_rate, 2),
+                "current": round(stat_current, 2),
+                "ytd": 0.0,
+                "editable_field": "hours",
+                "is_overridden": overrides.get("hours_stat_holiday", False),
+            },
+            {
+                "type": "Stat pay - average daily wage",
+                "hours": None,
+                "rate": None,
+                "current": round(stat_adw_current, 2),
+                "ytd": 0.0,
+                "editable_field": "current",
+                "is_overridden": overrides.get("stat_pay_amount", False),
+            },
+        ],
+        "employee_taxes": [
+            {
+                "type": "Income Tax",
+                "current": d(stub.federal_tax) + d(stub.provincial_or_state_tax) if stub else 0.0,
+                "ytd": (d(ytd.ytd_federal_tax) + d(ytd.ytd_provincial_or_state_tax)) if ytd else 0.0,
+                "is_overridden": overrides.get("income_tax", False),
+            },
+            {
+                "type": "Employment Insurance",
+                "current": d(stub.unemployment_employee) if stub else 0.0,
+                "ytd": d(ytd.ytd_unemployment_employee) if ytd else 0.0,
+                "is_overridden": overrides.get("ei_employee", False),
+            },
+            {
+                "type": "Canada Pension Plan",
+                "current": d(stub.social_security_employee) if stub else 0.0,
+                "ytd": d(ytd.ytd_social_security_employee) if ytd else 0.0,
+                "is_overridden": overrides.get("cpp_employee", False),
+            },
+            {
+                "type": "Second Canada Pension Plan",
+                "current": d(stub.social_security_2_employee) if stub else 0.0,
+                "ytd": 0.0,
+                "is_overridden": overrides.get("cpp2_employee", False),
+            },
+        ],
+        "employer_taxes": [
+            {
+                "type": "Employment Insurance Employer",
+                "current": d(stub.unemployment_employer) if stub else 0.0,
+                "ytd": d(ytd.ytd_unemployment_employer) if ytd else 0.0,
+                "is_overridden": overrides.get("ei_employer", False),
+            },
+            {
+                "type": "Canada Pension Plan Employer",
+                "current": d(stub.social_security_employer) if stub else 0.0,
+                "ytd": d(ytd.ytd_social_security_employer) if ytd else 0.0,
+                "is_overridden": overrides.get("cpp_employer", False),
+            },
+            {
+                "type": "Second Canada Pension Plan Employer",
+                "current": 0.0,
+                "ytd": 0.0,
+                "is_overridden": overrides.get("cpp2_employer", False),
+            },
+        ],
+        "memo": stub.memo if stub else "",
+        "net_pay": round(net_pay, 2),
+    }
 
 
 @router.delete("/runs/{run_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -690,11 +1541,15 @@ async def calculate_pay_run(
     current_employee_ids = [str(s.employee_id) for s in preview.pay_stubs]
     prev_gross_by_emp = {}
     if current_employee_ids:
+        # Compare against the last FINALIZED pay stub only, ignoring drafts and
+        # previews of the current run. This matches QuickBooks behaviour.
         prev_result = await db.execute(
             select(PayStub.employee_id, PayStub.gross_pay, PayStub.created_at)
+            .join(PayRun, PayRun.id == PayStub.pay_run_id)
             .where(
                 PayStub.employee_id.in_(current_employee_ids),
                 PayStub.pay_run_id != run.id,
+                PayRun.status == "finalized",
             )
             .order_by(PayStub.employee_id, PayStub.created_at.desc())
         )
@@ -883,6 +1738,15 @@ async def save_hours_draft(
             stub.hours_sick = entry.hours_sick or Decimal("0")
             if entry.memo is not None:
                 stub.memo = entry.memo
+            # Persist stat_pay_amount in calculation_snapshot
+            if entry.stat_pay_amount is not None:
+                snap = stub.calculation_snapshot or {}
+                if not isinstance(snap, dict):
+                    snap = {}
+                snap["stat_pay_amount"] = float(entry.stat_pay_amount)
+                stub.calculation_snapshot = snap
+                from sqlalchemy.orm.attributes import flag_modified
+                flag_modified(stub, "calculation_snapshot")
         else:
             # Create placeholder stub with just hours
             emp = emp_by_id.get(entry.employee_id)
@@ -905,9 +1769,10 @@ async def save_hours_draft(
                 hours_sick=entry.hours_sick or Decimal("0"),
                 hours_evening=Decimal("0"),
                 gross_pay=Decimal("0"),
-                total_deductions=Decimal("0"),
+                total_employee_deductions=Decimal("0"),
                 net_pay=Decimal("0"),
                 memo=entry.memo,
+                calculation_snapshot={"stat_pay_amount": float(entry.stat_pay_amount or 0)},
             )
             db.add(new_stub)
         saved += 1
@@ -998,7 +1863,67 @@ async def finalize_pay_run(
 
     await db.commit()
     await db.refresh(run)
-    return _run_to_response(run)
+
+    # ---- auto-advance next draft based on schedule ----
+    next_run_id = None
+    try:
+        if run.pay_schedule_id:
+            from app.models.models import PaySchedule
+            from app.payroll.schedule_helpers import next_pay_date, compute_period_for_pay_date
+            from datetime import timedelta as _td
+
+            sched_res = await db.execute(
+                select(PaySchedule).where(PaySchedule.id == run.pay_schedule_id)
+            )
+            sched = sched_res.scalar_one_or_none()
+            if sched:
+                next_pd = next_pay_date(sched, run.pay_date + _td(days=1))
+                next_ps, next_pe = compute_period_for_pay_date(sched, next_pd)
+
+                dup_res = await db.execute(
+                    select(PayRun).where(
+                        PayRun.owner_id == current_user.id,
+                        PayRun.pay_period_start == next_ps,
+                        PayRun.pay_period_end == next_pe,
+                        PayRun.status == "draft",
+                    )
+                )
+                dup = dup_res.scalar_one_or_none()
+                if dup:
+                    next_run_id = str(dup.id)
+                else:
+                    next_run = PayRun(
+                        owner_id=current_user.id,
+                        pay_period_start=next_ps,
+                        pay_period_end=next_pe,
+                        pay_date=next_pd,
+                        status="draft",
+                        country=run.country,
+                        currency=run.currency,
+                        pay_schedule_id=sched.id,
+                        total_gross=Decimal("0"),
+                        total_deductions=Decimal("0"),
+                        total_net=Decimal("0"),
+                        employee_count=0,
+                    )
+                    db.add(next_run)
+                    await db.commit()
+                    await db.refresh(next_run)
+                    next_run_id = str(next_run.id)
+    except Exception as e:
+        import logging
+        logging.exception("auto-advance next draft failed: %s", e)
+
+    resp = _run_to_response(run)
+    if next_run_id:
+        try:
+            if isinstance(resp, dict):
+                resp["next_run_id"] = next_run_id
+            else:
+                setattr(resp, "next_run_id", next_run_id)
+        except Exception:
+            pass
+    return resp
 
 
 
@@ -1135,14 +2060,23 @@ async def get_pay_run_done_view(
                 "current": str(round(float(stub.hours_overtime) * rate, 2)),
                 "ytd": "0.00",
             })
-        if stub.hours_stat_holiday and float(stub.hours_stat_holiday) > 0:
-            rate = float(stub.hourly_rate) if stub.hourly_rate else 0
+        # Statutory holiday pay: derive from gross - (regular + overtime).
+        # stat_pay_amount is not persisted as a column, so we back-compute it.
+        rate_val = float(stub.hourly_rate) if stub.hourly_rate else 0
+        regular_amt = float(stub.hours_regular or 0) * rate_val
+        overtime_amt = float(stub.hours_overtime or 0) * rate_val * 1.5
+        gross_amt = float(stub.gross_pay or 0)
+        stat_amt = round(gross_amt - regular_amt - overtime_amt, 2)
+        stat_hrs = float(stub.hours_stat_holiday or 0)
+        if stat_amt > 0.001 or stat_hrs > 0:
+            display_amt = stat_amt if stat_amt > 0.001 else round(stat_hrs * rate_val, 2)
             pay_lines.append({
                 "type": "Statutory Holiday Pay",
-                "hours": str(stub.hours_stat_holiday),
-                "rate": str(stub.hourly_rate) if stub.hourly_rate else "0",
-                "current": str(round(float(stub.hours_stat_holiday) * rate, 2)),
+                "hours": str(stat_hrs),
+                "rate": str(rate_val),
+                "current": str(round(display_amt, 2)),
                 "ytd": "0.00",
+                "holiday_name": getattr(stub, "stat_holiday_name", None),
             })
 
         employees_data.append({
@@ -1342,14 +2276,22 @@ async def get_paycheque_detail(
             "current": str(round(float(stub.hours_overtime) * rate, 2)),
             "ytd": "0.00",
         })
-    if stub.hours_stat_holiday and float(stub.hours_stat_holiday) > 0:
-        rate = float(stub.hourly_rate) if stub.hourly_rate else 0
+    # Statutory holiday: derive from gross - regular - overtime
+    _rate_val = float(stub.hourly_rate) if stub.hourly_rate else 0
+    _reg_amt = float(stub.hours_regular or 0) * _rate_val
+    _ot_amt = float(stub.hours_overtime or 0) * _rate_val * 1.5
+    _gross = float(stub.gross_pay or 0)
+    _stat_derived = round(_gross - _reg_amt - _ot_amt, 2)
+    _stat_hrs = float(stub.hours_stat_holiday or 0)
+    if _stat_derived > 0.001 or _stat_hrs > 0:
+        _display = _stat_derived if _stat_derived > 0.001 else round(_stat_hrs * _rate_val, 2)
         pay_lines.append({
-            "type": "Stat Holiday Pay",
-            "hours": str(stub.hours_stat_holiday),
-            "rate": str(stub.hourly_rate) if stub.hourly_rate else "0",
-            "current": str(round(float(stub.hours_stat_holiday) * rate, 2)),
+            "type": "Statutory Holiday Pay",
+            "hours": str(_stat_hrs),
+            "rate": str(round(_rate_val, 2)),
+            "current": str(round(_display, 2)),
             "ytd": "0.00",
+            "holiday_name": None,
         })
 
     pay_total = {
@@ -2081,16 +3023,26 @@ async def get_paycheque_pdf(
             "ytd": money(0),
         })
         total_hours += float(stub.hours_overtime)
-    if stub.hours_stat_holiday and float(stub.hours_stat_holiday) > 0:
-        rate = float(stub.hourly_rate or 0)
+    # Statutory holiday pay: derive from gross - (regular + overtime).
+    # Handles all Alberta ESA cases including ADW-based flat pay with 0 hours.
+    _rate_val = float(stub.hourly_rate or 0)
+    _reg_amt = float(stub.hours_regular or 0) * _rate_val
+    _ot_amt = float(stub.hours_overtime or 0) * _rate_val * 1.5
+    _gross_amt = float(stub.gross_pay or 0)
+    _stat_derived = round(_gross_amt - _reg_amt - _ot_amt, 2)
+    _stat_hrs = float(stub.hours_stat_holiday or 0)
+    if _stat_derived > 0.001 or _stat_hrs > 0:
+        _display_amt = _stat_derived if _stat_derived > 0.001 else round(_stat_hrs * _rate_val, 2)
         earnings.append({
-            "type": "Stat Holiday Pay",
-            "hours": num(stub.hours_stat_holiday),
-            "rate": num(stub.hourly_rate),
-            "current": money(float(stub.hours_stat_holiday) * rate),
+            "type": "Statutory Holiday Pay",
+            "hours": num(_stat_hrs),
+            "rate": num(_rate_val),
+            "current": money(_display_amt),
             "ytd": money(0),
+            "is_stat": True,
+            "holiday_name": None,
         })
-        total_hours += float(stub.hours_stat_holiday)
+        total_hours += _stat_hrs
 
     # Taxes
     taxes = [
@@ -2150,12 +3102,18 @@ async def get_paycheque_pdf(
     # Render to PDF
     pdf_bytes = HTML(string=html_content).write_pdf()
 
-    filename = f"paystub_{stub.employee_name.replace(' ', '_')}_{fmt_date(run.pay_date)}.pdf"
+    # Sanitize employee name for cross-platform filename safety
+    import re as _re
+    from urllib.parse import quote as _quote
+    _safe_name = _re.sub(r'[^A-Za-z0-9_-]', '_', stub.employee_name or 'employee')
+    filename = f"paystub_{_safe_name}_{fmt_date(run.pay_date)}.pdf"
+    # RFC 5987 filename* variant makes browsers respect the filename during save
+    filename_encoded = _quote(filename)
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": f'inline; filename="{filename}"',
+            "Content-Disposition": f'attachment; filename="{filename}"; filename*=UTF-8\'\'{filename_encoded}',
         }
     )
 

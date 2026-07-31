@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, String, Float, Boolean, Integer, Numeric,
+    Column, String, Float, Boolean, Integer, SmallInteger, Numeric,
     DateTime, Date, Text, ForeignKey, JSON,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
@@ -740,6 +740,7 @@ class PayrollSettings(Base):
 
     # Active flag (set true when owner finishes setup)
     payroll_active = Column(Boolean, default=False)
+    stat_holiday_option = Column(SmallInteger, nullable=False, default=1, server_default="1")
     bank_details = Column(JSONB, nullable=True, default=dict)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -992,6 +993,7 @@ class PayType(Base):
     is_default = Column(Boolean, default=False, nullable=False, index=True)  # Seeded vs custom
     is_active = Column(Boolean, default=True, nullable=False)
 
+    is_required_by_law = Column(Boolean, default=False, nullable=False, server_default="false")
     # Calculation method: fixed | rate_hours | rate_units | percent_gross
     calc_method = Column(String, nullable=False, default="fixed")
     default_rate = Column(Numeric(12, 4), nullable=True)  # Used as starting rate per employee

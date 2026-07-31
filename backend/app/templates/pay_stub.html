@@ -263,13 +263,31 @@
         </thead>
         <tbody>
           {% for row in earnings %}
-          <tr>
-            <td class="padtop">{{ row.type }}</td>
-            <td class="right">{{ row.hours }}</td>
-            <td class="right">{{ row.rate }}</td>
-            <td class="right">{{ row.current }}</td>
-            <td class="right">{{ row.ytd }}</td>
+
+          <tr{% if row.is_stat %} style="background: #FEF6E7;"{% endif %}>
+
+            <td class="padtop"{% if row.is_stat %} style="background: #FEF6E7; font-weight: 700;"{% endif %}>
+
+              {{ row.type }}
+
+              {% if row.is_stat and row.holiday_name %}
+
+              <div style="font-size: 10px; font-weight: 700; color: #0E1A1A; margin-top: 2px;">{{ row.holiday_name }}</div>
+
+              {% endif %}
+
+            </td>
+
+            <td class="right"{% if row.is_stat %} style="background: #FEF6E7;"{% endif %}>{{ row.hours }}</td>
+
+            <td class="right"{% if row.is_stat %} style="background: #FEF6E7;"{% endif %}>{{ row.rate }}</td>
+
+            <td class="right"{% if row.is_stat %} style="background: #FEF6E7; font-weight: 700;"{% endif %}>{{ row.current }}</td>
+
+            <td class="right"{% if row.is_stat %} style="background: #FEF6E7;"{% endif %}>{{ row.ytd }}</td>
+
           </tr>
+
           {% endfor %}
         </tbody>
       </table>

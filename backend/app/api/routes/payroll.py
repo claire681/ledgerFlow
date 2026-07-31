@@ -12,7 +12,7 @@ import traceback
 
 from app.db.database import get_db
 from app.core.security import get_current_user
-from app.models.models import (Employee, PayrollSettings, PayRun, PayStub, PaySchedule)
+from app.models.models import (Employee, PayrollSettings, PayRun, PayStub, PaySchedule, PayType, EmployeePayItem)
 from pydantic import BaseModel, EmailStr
 
 router = APIRouter(prefix="/payroll", tags=["Payroll"])
@@ -56,6 +56,7 @@ class EmployeeUpdateBody(BaseModel):
     gender: Optional[str] = None
     marital_status: Optional[str] = None
     sin_or_ssn: Optional[str] = None
+    personal_email: Optional[str] = None
     phone: Optional[str] = None
     personal_email: Optional[EmailStr] = None
     address_line1: Optional[str] = None
@@ -76,6 +77,9 @@ class EmployeeUpdateBody(BaseModel):
     salary_amount: Optional[float] = None
     hourly_rate: Optional[float] = None
     hours_per_week: Optional[float] = None
+    hours_per_day: Optional[float] = None
+    days_per_week: Optional[float] = None
+    pay_frequency: Optional[str] = None
     pay_schedule: Optional[str] = None
     currency: Optional[str] = None
     bank_name: Optional[str] = None
@@ -91,6 +95,7 @@ class EmployeeUpdateBody(BaseModel):
     emergency_contact_email: Optional[str] = None
     notes: Optional[str] = None
     work_location_id: Optional[UUID] = None
+    dental_benefit_code: Optional[str] = None
 
 
 class EmployeeSelfCompleteBody(BaseModel):
@@ -135,6 +140,7 @@ class PayrollSettingsBody(BaseModel):
     ein: Optional[str] = None
     payroll_active: Optional[bool] = None
     bank_details: Optional[Dict[str, Any]] = None
+    stat_holiday_option: Optional[int] = None
 
 
 # ============================================================================
@@ -198,6 +204,7 @@ def serialize_settings(s):
         "business_number": s.business_number, "ein": s.ein,
         "payroll_active": s.payroll_active,
         "bank_details": s.bank_details or {},
+        "stat_holiday_option": s.stat_holiday_option if s.stat_holiday_option is not None else 1,
         "created_at": s.created_at.isoformat() if s.created_at else None,
         "updated_at": s.updated_at.isoformat() if s.updated_at else None,
     }
@@ -240,6 +247,26 @@ async def create_employee(body: EmployeeCreateBody, current_user=Depends(get_cur
     db.add(emp)
     await db.commit()
     await db.refresh(emp)
+
+    # auto-assign required PayTypes as EmployeePayItem rows.
+    # Stat holiday pay, ADW, and any future required-by-law pay types are
+    # attached to every new employee for this owner. Idempotent by design.
+    required = await db.execute(
+        select(PayType).where(
+            PayType.owner_id == current_user.id,
+            PayType.is_required_by_law == True,
+            PayType.is_active == True,
+        )
+    )
+    for pt in required.scalars().all():
+        db.add(EmployeePayItem(
+            employee_id=emp.id,
+            pay_type_id=pt.id,
+            owner_id=current_user.id,
+            is_active=True,
+        ))
+    await db.commit()
+
     return serialize_employee(emp)
 
 
@@ -420,6 +447,7 @@ async def get_payroll_settings(current_user=Depends(get_current_user), db: Async
             "company_bank_name": None, "company_transit_number": None,
             "company_institution_number": None, "company_routing_number": None,
             "business_number": None, "ein": None, "payroll_active": False,
+            "stat_holiday_option": 1,
         }
     return {**serialize_settings(settings), "exists": True}
 
@@ -444,6 +472,255 @@ async def upsert_payroll_settings(body: PayrollSettingsBody, current_user=Depend
     await db.refresh(settings)
     return serialize_settings(settings)
 
+
+
+# ============================================================================
+# Pay Run - Change Period
+# ============================================================================
+class PayRunPeriodBody(BaseModel):
+    pay_period_start: date
+    pay_period_end: date
+    pay_date: date
+
+
+@router.patch("/pay-runs/{run_id}/period")
+async def update_pay_run_period(
+    run_id: str,
+    body: PayRunPeriodBody,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Override the auto-filled pay period start, end, and pay date."""
+    result = await db.execute(
+        select(PayRun).where(PayRun.id == run_id, PayRun.owner_id == current_user.id)
+    )
+    run = result.scalar_one_or_none()
+    if not run:
+        return {"error": "Pay run not found"}, 404
+
+    if body.pay_period_end < body.pay_period_start:
+        return {"error": "End date must be on or after start date"}, 400
+
+    run.pay_period_start = body.pay_period_start
+    run.pay_period_end = body.pay_period_end
+    run.pay_date = body.pay_date
+    await db.commit()
+    await db.refresh(run)
+
+    return {
+        "id": str(run.id),
+        "pay_period_start": run.pay_period_start.isoformat(),
+        "pay_period_end": run.pay_period_end.isoformat(),
+        "pay_date": run.pay_date.isoformat(),
+    }
+
+
+# ============================================================================
+# Stat Holiday Preview (Phase 2)
+# ============================================================================
+from datetime import date as _date, timedelta as _td
+
+# Alberta ESA general holidays. Heritage Day (first Mon in Aug) is OPTIONAL and excluded.
+# For 2026 fixed-date holidays are listed; Easter and Victoria Day computed.
+_AB_FIXED_HOLIDAYS_2026 = [
+    (_date(2026, 1, 1), "New Year's Day"),
+    (_date(2026, 2, 16), "Alberta Family Day"),
+    (_date(2026, 4, 3), "Good Friday"),
+    (_date(2026, 5, 18), "Victoria Day"),
+    (_date(2026, 7, 1), "Canada Day"),
+    (_date(2026, 9, 7), "Labour Day"),
+    (_date(2026, 10, 12), "Thanksgiving Day"),
+    (_date(2026, 11, 11), "Remembrance Day"),
+    (_date(2026, 12, 25), "Christmas Day"),
+]
+
+_AB_FIXED_HOLIDAYS_2027 = [
+    (_date(2027, 1, 1), "New Year's Day"),
+    (_date(2027, 2, 15), "Alberta Family Day"),
+    (_date(2027, 3, 26), "Good Friday"),
+    (_date(2027, 5, 24), "Victoria Day"),
+    (_date(2027, 7, 1), "Canada Day"),
+    (_date(2027, 9, 6), "Labour Day"),
+    (_date(2027, 10, 11), "Thanksgiving Day"),
+    (_date(2027, 11, 11), "Remembrance Day"),
+    (_date(2027, 12, 27), "Christmas Day (observed)"),
+]
+
+def _get_ab_holidays_in_range(start: _date, end: _date):
+    """Return list of (date, name) tuples for Alberta stat holidays within [start, end]."""
+    all_holidays = _AB_FIXED_HOLIDAYS_2026 + _AB_FIXED_HOLIDAYS_2027
+    return [(d, name) for d, name in all_holidays if start <= d <= end]
+
+
+class StatHolidayPreviewBody(BaseModel):
+    period_start: date
+    period_end: date
+    subnational: Optional[str] = "AB"
+
+
+@router.post("/stat-holidays/preview")
+async def preview_stat_holidays(
+    body: StatHolidayPreviewBody,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return stat holidays in the pay period + per-employee eligibility."""
+
+    # 1. Only Alberta supported today
+    if (body.subnational or "AB").upper() != "AB":
+        return {"holidays": [], "stat_holiday_method": 1, "total_stat_pay": 0}
+
+    holidays = _get_ab_holidays_in_range(body.period_start, body.period_end)
+    if not holidays:
+        return {"holidays": [], "stat_holiday_method": 1, "total_stat_pay": 0}
+
+    # 2. Load settings (get chosen method)
+    settings_row = await db.execute(
+        select(PayrollSettings).where(PayrollSettings.owner_id == current_user.id)
+    )
+    settings = settings_row.scalar_one_or_none()
+    method = getattr(settings, "stat_holiday_option", 1) if settings else 1
+
+    # 3. Load active employees
+    emp_res = await db.execute(
+        select(Employee).where(
+            Employee.owner_id == current_user.id,
+            Employee.status == "active",
+        )
+    )
+    employees = emp_res.scalars().all()
+
+    holiday_blocks = []
+    total_stat_pay = 0.0
+
+    for h_date, h_name in holidays:
+        emp_results = []
+        for e in employees:
+            # ---- Employed >= 30 days check ----
+            start = e.start_date
+            if not start:
+                emp_results.append({
+                    "employee_id": str(e.id),
+                    "first_name": e.first_name,
+                    "last_name": e.last_name,
+                    "position_title": e.position_title,
+                    "eligible": False,
+                    "checks": {
+                        "employed_30_days": {"pass": False, "days_employed": None},
+                    },
+                    "adw": 0,
+                    "stat_pay_amount": 0,
+                    "ineligibility_reason": "No start date on file",
+                    "method_applied": method,
+                    "hourly_rate": float(e.hourly_rate) if e.hourly_rate else 0,
+                })
+                continue
+
+            days_employed = (h_date - start).days
+            passed_30 = days_employed >= 30
+            if not passed_30:
+                emp_results.append({
+                    "employee_id": str(e.id),
+                    "first_name": e.first_name,
+                    "last_name": e.last_name,
+                    "position_title": e.position_title,
+                    "eligible": False,
+                    "checks": {
+                        "employed_30_days": {"pass": False, "days_employed": days_employed},
+                    },
+                    "adw": 0,
+                    "stat_pay_amount": 0,
+                    "ineligibility_reason": f"Employed {days_employed} days (Alberta ESA requires 30)",
+                    "method_applied": method,
+                    "hourly_rate": float(e.hourly_rate) if e.hourly_rate else 0,
+                })
+                continue
+
+            # ---- ADW: last 4 weeks of finalized stubs ----
+            # Fallback if not enough data: hourly_rate * hours_per_day
+            adw = None
+            try:
+                four_weeks_ago = h_date - _td(days=28)
+                stub_res = await db.execute(
+                    select(PayStub).where(
+                        PayStub.employee_id == e.id,
+                        PayStub.pay_period_end >= four_weeks_ago,
+                        PayStub.pay_period_end < h_date,
+                        PayStub.finalized_at.isnot(None),
+                    )
+                )
+                stubs = stub_res.scalars().all()
+                total_gross = 0.0
+                total_days = 0.0
+                for s in stubs:
+                    if s.gross_pay:
+                        total_gross += float(s.gross_pay)
+                    hrs = 0
+                    try:
+                        if s.regular_hours:
+                            hrs += float(s.regular_hours)
+                    except Exception:
+                        pass
+                    # Rough days estimate: hours / 8 per day
+                    if hrs > 0:
+                        total_days += hrs / 8.0
+                if total_days > 0:
+                    adw = round(total_gross / total_days, 2)
+            except Exception:
+                adw = None
+
+            if adw is None:
+                # Fallback: hourly_rate * hours_per_day
+                hr = float(e.hourly_rate) if e.hourly_rate else 0
+                hpd = float(e.hours_per_day) if e.hours_per_day else 8
+                adw = round(hr * hpd, 2) if hr > 0 else 0
+
+            # For MVP the 5-of-9 and day-before/day-after checks are assumed pass
+            # (no Workforce clock data yet). Employer can override in the popup.
+            checks = {
+                "employed_30_days": {"pass": True, "days_employed": days_employed},
+                "worked_5_of_9": {"pass": True, "assumed": True},
+                "worked_before_after": {"pass": True, "assumed": True},
+            }
+
+            # Hours worked on the holiday itself. Zero unless explicitly logged.
+            hours_worked_on_holiday = 0.0
+
+            # Compute stat pay per method
+            if method == 1:
+                # Time and a half for hours worked + ADW
+                rate = float(e.hourly_rate) if e.hourly_rate else 0
+                stat_pay = round(adw + (1.5 * rate * hours_worked_on_holiday), 2)
+            else:
+                # Regular pay (ADW) + substitute day off later
+                stat_pay = adw
+
+            emp_results.append({
+                "employee_id": str(e.id),
+                "first_name": e.first_name,
+                "last_name": e.last_name,
+                "position_title": e.position_title,
+                "eligible": True,
+                "checks": checks,
+                "adw": adw,
+                "hours_worked_on_holiday": hours_worked_on_holiday,
+                "stat_pay_amount": stat_pay,
+                "method_applied": method,
+                "hourly_rate": float(e.hourly_rate) if e.hourly_rate else 0,
+            })
+            total_stat_pay += stat_pay
+
+        holiday_blocks.append({
+            "name": h_name,
+            "date": h_date.isoformat(),
+            "employees": emp_results,
+        })
+
+    return {
+        "holidays": holiday_blocks,
+        "stat_holiday_method": method,
+        "total_stat_pay": round(total_stat_pay, 2),
+    }
 
 
 # ============================================================================
@@ -885,3 +1162,218 @@ async def check_verification_code(body: VerifyCodeCheckBody, current_user=Depend
     # Valid — consume it
     _VERIFICATION_CODES.pop(user_id, None)
     return {"valid": True}
+
+
+# ---------------------------------------------------------------------------
+# Stat holiday: eligibility + ADW
+# ---------------------------------------------------------------------------
+@router.get("/stat-holiday/{employee_id}")
+async def get_stat_holiday_info(
+    employee_id: str,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return stat holiday eligibility and average daily wage for an employee.
+
+    Alberta ESA rule: employee must have worked 30 workdays in the past 12 months.
+    ADW = last 4 weeks of wages (excluding overtime) divided by days worked.
+    """
+    try:
+        emp_uuid = uuid.UUID(employee_id)
+    except ValueError:
+        raise HTTPException(400, "Invalid employee ID")
+
+    # Load the employee
+    result = await db.execute(
+        select(Employee).where(
+            Employee.id == emp_uuid,
+            Employee.owner_id == current_user.id,
+        )
+    )
+    emp = result.scalar_one_or_none()
+    if not emp:
+        raise HTTPException(404, "Employee not found")
+
+    today = date.today()
+    year_ago = today - timedelta(days=365)
+    four_weeks_ago = today - timedelta(days=28)
+
+    hours_per_day = float(emp.hours_per_day) if getattr(emp, "hours_per_day", None) else 8.0
+    if hours_per_day <= 0:
+        hours_per_day = 8.0
+
+    # Fetch pay stubs from the last 365 days (via pay_run.pay_period_end or pay_stub.created_at)
+    # For simplicity we filter by created_at on PayStub.
+    stubs_365 = await db.execute(
+        select(PayStub).where(
+            PayStub.employee_id == emp.id,
+            PayStub.created_at >= datetime.combine(year_ago, datetime.min.time()),
+        )
+    )
+    stubs_365_list = stubs_365.scalars().all()
+
+    # Days worked in last 365 days
+    total_work_hours_365 = 0.0
+    for s in stubs_365_list:
+        hr = float(s.hours_regular or 0)
+        hs = float(s.hours_stat_holiday or 0)
+        hv = float(s.hours_vacation or 0)
+        total_work_hours_365 += hr + hs + hv
+    days_worked_365 = total_work_hours_365 / hours_per_day if hours_per_day > 0 else 0.0
+
+    # Alberta ESA: 30 workdays in prior 12 months
+    days_needed = 30
+    eligible = days_worked_365 >= days_needed
+
+    # ADW: last 4 weeks wages (excluding overtime, bonus, commission, reimbursement)
+    stubs_28 = [s for s in stubs_365_list if s.created_at.date() >= four_weeks_ago]
+    adw_wages = 0.0
+    adw_days = 0.0
+    for s in stubs_28:
+        hr = float(s.hours_regular or 0)
+        hs = float(s.hours_stat_holiday or 0)
+        h_ot = float(s.hours_overtime or 0)
+        rate = float(s.hourly_rate or 0)
+        gross = float(s.gross_pay or 0)
+        bonus = float(s.bonus or 0)
+        commission = float(s.commission or 0)
+        reimb = float(s.reimbursement or 0)
+        overtime_earnings = h_ot * rate * 1.5
+        wages = gross - overtime_earnings - bonus - commission - reimb
+        if wages < 0:
+            wages = 0.0
+        adw_wages += wages
+        adw_days += (hr + hs) / hours_per_day if hours_per_day > 0 else 0.0
+
+    adw_calc_available = adw_days > 0
+    adw = (adw_wages / adw_days) if adw_calc_available else None
+
+    # Regular workdays from tax_info
+    tax_info = emp.tax_info if isinstance(emp.tax_info, dict) else (emp.tax_info or {})
+    regular_workdays = tax_info.get("regular_workdays") if isinstance(tax_info, dict) else None
+    if not isinstance(regular_workdays, list):
+        # Default: guess from days_per_week (fall back to Mon-Fri)
+        dpw = int(float(emp.days_per_week)) if getattr(emp, "days_per_week", None) else 5
+        default_map = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+        regular_workdays = default_map[:max(0, min(7, dpw))]
+
+    hire_date_str = emp.start_date.isoformat() if getattr(emp, "start_date", None) else None
+    days_since_hire = (today - emp.start_date).days if getattr(emp, "start_date", None) else None
+
+    return {
+        "eligible": bool(eligible),
+        "days_worked": round(days_worked_365, 1),
+        "days_needed": days_needed,
+        "hours_worked": round(total_work_hours_365, 2),
+        "hours_per_day": hours_per_day,
+        "adw": round(adw, 2) if adw is not None else None,
+        "adw_calc_available": adw_calc_available,
+        "regular_workdays": regular_workdays,
+        "hire_date": hire_date_str,
+        "days_since_hire": days_since_hire,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Time off: vacation and sick pay info
+# ---------------------------------------------------------------------------
+@router.get("/time-off/{employee_id}")
+async def get_time_off_info(
+    employee_id: str,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return vacation and sick pay balances plus accrual estimates for an employee.
+
+    Policy fields live in employee.tax_info JSON:
+      - accrual_rate (percent of gross, e.g. 4.0)
+      - balance_hours (current vacation hours balance)
+      - sick_policy ("none" | "fixed" | "accrued")
+      - sick_days_per_year (integer)
+      - unpaid_leave_policy ("not_allowed" | "as_requested" | "with_approval")
+
+    Accrued-this-year comes from finalized PayStubs in the current calendar year.
+    Sick days used comes from finalized PayStubs with hours_sick > 0 this year.
+    """
+    try:
+        emp_uuid = uuid.UUID(employee_id)
+    except ValueError:
+        raise HTTPException(400, "Invalid employee ID")
+
+    result = await db.execute(
+        select(Employee).where(
+            Employee.id == emp_uuid,
+            Employee.owner_id == current_user.id,
+        )
+    )
+    emp = result.scalar_one_or_none()
+    if not emp:
+        raise HTTPException(404, "Employee not found")
+
+    tax_info = emp.tax_info if isinstance(emp.tax_info, dict) else (emp.tax_info or {})
+
+    # Policy fields (with sensible defaults)
+    vacation_policy = emp.vacation_policy or "Accrued by hours worked"
+    accrual_rate = float(tax_info.get("accrual_rate") or 0)  # percent
+    balance_hours = float(tax_info.get("balance_hours") or 0)
+    sick_policy = tax_info.get("sick_policy") or "none"
+    sick_days_per_year = int(tax_info.get("sick_days_per_year") or 0)
+    unpaid_leave_policy = tax_info.get("unpaid_leave_policy") or "as_requested"
+
+    # Compute this-year accruals from finalized pay stubs
+    from datetime import date as _date
+    year_start = _date(_date.today().year, 1, 1)
+    year_end = _date(_date.today().year, 12, 31)
+
+    stubs_result = await db.execute(
+        select(PayStub)
+        .join(PayRun, PayRun.id == PayStub.pay_run_id)
+        .where(
+            PayStub.employee_id == emp.id,
+            PayRun.status == "finalized",
+            PayStub.created_at >= datetime.combine(year_start, datetime.min.time()),
+            PayStub.created_at <= datetime.combine(year_end, datetime.max.time()),
+        )
+    )
+    year_stubs = stubs_result.scalars().all()
+
+    # Vacation accrued = sum of (gross_pay * accrual_rate%) OR sum of (hours_regular * rate) depending on policy.
+    # For "Accrued by hours worked" style: accrued_dollars = accrual_rate% of gross.
+    # We display hours: convert dollars back using average hourly rate from stubs.
+    total_gross = sum(float(s.gross_pay or 0) for s in year_stubs)
+    total_reg_hours = sum(float(s.hours_regular or 0) for s in year_stubs)
+    avg_rate = (total_gross / total_reg_hours) if total_reg_hours > 0 else float(emp.hourly_rate or 0)
+    accrued_dollars = total_gross * (accrual_rate / 100.0) if accrual_rate > 0 else 0.0
+    accrued_hours = (accrued_dollars / avg_rate) if avg_rate > 0 else 0.0
+
+    # Estimated payout on current balance at avg rate (or hourly_rate fallback)
+    payout_rate = avg_rate if avg_rate > 0 else float(emp.hourly_rate or 0)
+    estimated_payout = balance_hours * payout_rate
+
+    # Sick days used this year
+    sick_days_used = sum(1 for s in year_stubs if float(s.hours_sick or 0) > 0)
+    sick_days_remaining = max(0, sick_days_per_year - sick_days_used) if sick_policy != "none" else 0
+    yearly_reset = _date(_date.today().year + 1, 1, 1).isoformat()
+
+    return {
+        "vacation": {
+            "policy": vacation_policy,
+            "accrual_rate": accrual_rate,
+            "balance_hours": round(balance_hours, 2),
+            "estimated_payout": round(estimated_payout, 2),
+            "accrued_this_year_hours": round(accrued_hours, 2),
+            "accrued_this_year_dollars": round(accrued_dollars, 2),
+        },
+        "sick_pay": {
+            "policy": sick_policy,
+            "days_per_year": sick_days_per_year,
+            "days_used": sick_days_used,
+            "days_remaining": sick_days_remaining,
+            "yearly_reset": yearly_reset,
+        },
+        "unpaid_leave": {
+            "policy": unpaid_leave_policy,
+        },
+        "configured": (accrual_rate > 0 or balance_hours > 0 or sick_days_per_year > 0),
+    }
+

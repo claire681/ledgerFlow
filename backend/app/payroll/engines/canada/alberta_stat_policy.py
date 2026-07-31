@@ -120,10 +120,19 @@ async def apply_alberta_stat_holiday_policy(
                 # Path D: not regular + worked -> 1.5x hours only
                 total_premium_hours += hours_per_holiday
 
-        # Create new input with computed values
+        # Check for popup override: if the caller passed a positive
+        # stat_pay_amount, that's an employer override from the eligibility
+        # popup. Respect it instead of auto-computing.
+        override_amt = Decimal(str(getattr(inp, "stat_pay_amount", 0) or 0))
+        if override_amt > 0:
+            final_stat_pay = override_amt
+        else:
+            final_stat_pay = total_flat_adw.quantize(Decimal("0.01"))
+
+        # Create new input with computed values (override respected)
         updated = inp.model_copy(
             update={
-                "stat_pay_amount": total_flat_adw.quantize(Decimal("0.01")),
+                "stat_pay_amount": final_stat_pay,
                 "stat_holiday_hours_at_premium": total_premium_hours.quantize(
                     Decimal("0.01")
                 ),

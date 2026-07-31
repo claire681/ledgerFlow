@@ -64,6 +64,7 @@ def _serialize(item: EmployeePayItem, pay_type: Optional[PayType] = None) -> dic
             "vacationable": pay_type.vacationable,
             "wcb_reportable": pay_type.wcb_reportable,
             "t4_box": pay_type.t4_box,
+            "is_required_by_law": bool(getattr(pay_type, "is_required_by_law", False)),
         }
     return base
 
