@@ -730,6 +730,13 @@ export default function RunPayroll() {
           }}
         />
       )}
+        {editDrawerEmployeeId && (
+          <EditPaychequeDrawer
+            runId={payRunId}
+            employeeId={editDrawerEmployeeId}
+            onClose={function() { setEditDrawerEmployeeId(null); }}
+          />
+        )}
 </div>
     </>
   );
