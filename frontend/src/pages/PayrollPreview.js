@@ -71,8 +71,9 @@ export default function PayrollPreview() {
       const token = getToken();
       const headers = { "Authorization": "Bearer " + token, "Content-Type": "application/json" };
       try {
-        const [runRes, settingsRes, runsRes] = await Promise.all([
+        const [runRes, stubsRes, settingsRes, runsRes] = await Promise.all([
           fetch(API + "/api/v1/payroll/runs/" + payRunId, { headers }).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+          fetch(API + "/api/v1/payroll/runs/" + payRunId + "/stubs", { headers }).then(function(r) { return r.ok ? r.json() : []; }).catch(function() { return []; }),
           fetch(API + "/api/v1/payroll/settings", { headers }).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
           fetch(API + "/api/v1/payroll/runs", { headers }).then(function(r) { return r.ok ? r.json() : []; }).catch(function() { return []; }),
         ]);
@@ -97,22 +98,24 @@ export default function PayrollPreview() {
         const priorRunsData = Array.isArray(runsRes) ? runsRes.filter(function(r) { return r.status === "finalized" && r.id !== payRunId; }) : [];
         setPriorRuns(priorRunsData);
 
-        // Extract employee lines from run - real data only, no demos
-        const runLines = Array.isArray(runRes.lines) ? runRes.lines : [];
-        const mapped = runLines.map(function(l) {
+        // Extract employee stubs from /runs/{id}/stubs endpoint
+        const stubs = Array.isArray(stubsRes) ? stubsRes : [];
+        const mapped = stubs.map(function(l) {
           const hours = (Number(l.hours_regular || 0) + Number(l.hours_overtime || 0) + Number(l.hours_stat_holiday || 0) + Number(l.hours_vacation || 0) + Number(l.hours_sick || 0));
+          const gross = Number(l.gross_pay || 0);
+          const rate = hours > 0 && gross > 0 ? Number((gross / hours).toFixed(2)) : 0;
           return {
-            employee_id: l.employee_id || l.id,
-            stub_id: l.id || l.stub_id,
-            name: l.name || l.employee_name || "",
-            classification: l.classification || (l.employment_type === "salaried" ? "Salary" : "Hourly"),
-            hourly_rate: Number(l.hourly_rate || 0),
+            employee_id: l.employee_id,
+            stub_id: l.id,
+            name: l.employee_name || "",
+            classification: l.classification || "Hourly",
+            hourly_rate: rate,
             payment_method: l.payment_method || "cheque",
             total_hours: hours,
-            gross_pay: Number(l.gross_pay || 0),
-            employee_taxes: Number(l.total_employee_deductions || l.employee_taxes || 0),
+            gross_pay: gross,
+            employee_taxes: Number(l.total_employee_deductions || 0),
             net_pay: Number(l.net_pay || 0),
-            employer_taxes: Number(l.total_employer_contributions || l.employer_taxes || 0),
+            employer_taxes: Number(l.total_employer_contributions || 0),
             change_in_gross_pct: l.change_in_gross_pct != null ? Number(l.change_in_gross_pct) : null,
             includes_stat: Number(l.hours_stat_holiday || 0) > 0,
           };
