@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { AlertTriangle, ArrowUp, ArrowDown, Check } from "lucide-react";
+import EditPaychequeDrawer from "../components/EditPaychequeDrawer";
+import { AlertTriangle, ArrowUp, ArrowDown, Check, Search } from "lucide-react";
 
 const C = {
   ink: "#12262B",
@@ -64,6 +65,7 @@ export default function PayrollPreview() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [finalizing, setFinalizing] = useState(false);
+  const [editingEmployeeId, setEditingEmployeeId] = useState(null);
 
   useEffect(function() {
     let cancelled = false;
@@ -324,7 +326,7 @@ export default function PayrollPreview() {
           ) : (
             <>
               {/* Header */}
-              <div style={{ padding: "12px 0", display: "grid", gridTemplateColumns: "1.6fr 70px 100px 110px 110px 110px 80px 100px", gap: 12, fontSize: 10, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid " + C.line }}>
+              <div style={{ padding: "12px 0", display: "grid", gridTemplateColumns: "1fr 90px 130px 140px 140px 140px 90px 110px", gap: 12, fontSize: 10, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid " + C.line }}>
                 <div>EMPLOYEE</div>
                 <div style={{ textAlign: "right" }}>HOURS</div>
                 <div style={{ textAlign: "right" }}>GROSS PAY</div>
@@ -338,7 +340,7 @@ export default function PayrollPreview() {
               {/* Employee rows */}
               {lines.map(function(l) {
                 return (
-                  <div key={l.employee_id} style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "1.6fr 70px 100px 110px 110px 110px 80px 100px", gap: 12, alignItems: "center", borderBottom: "1px solid " + C.line, fontSize: 13.5, color: C.ink, ...tabular }}>
+                  <div key={l.employee_id} style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "1fr 90px 130px 140px 140px 140px 90px 110px", gap: 12, alignItems: "center", borderBottom: "1px solid " + C.line, fontSize: 13.5, color: C.ink, ...tabular }}>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 14 }}>{l.name}</div>
                       <div style={{ fontSize: 11.5, color: C.ink, marginTop: 2, fontWeight: 500 }}>
@@ -349,7 +351,17 @@ export default function PayrollPreview() {
                     <div style={{ textAlign: "right", fontWeight: 500 }}>{l.total_hours}h</div>
                     <div style={{ textAlign: "right", fontWeight: 500 }}>{fmtMoney(l.gross_pay)}</div>
                     <div style={{ textAlign: "right", fontWeight: 500 }}>{fmtMoney(l.employee_taxes)}</div>
-                    <div style={{ textAlign: "right", fontWeight: 700, fontSize: 14 }}>{fmtMoney(l.net_pay)}</div>
+                    <div style={{ textAlign: "right", fontWeight: 700, fontSize: 14, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 }}>
+                      {fmtMoney(l.net_pay)}
+                      <button
+                        onClick={function() { setEditingEmployeeId(l.employee_id); }}
+                        title="View or edit paycheque"
+                        aria-label="View or edit paycheque"
+                        style={{ background: C.card, border: "1px solid " + C.line, borderRadius: 6, padding: "3px 5px", cursor: "pointer", display: "inline-flex", alignItems: "center", color: C.ink }}
+                      >
+                        <Search size={12} strokeWidth={2.5} />
+                      </button>
+                    </div>
                     <div style={{ textAlign: "right", fontWeight: 500 }}>{fmtMoney(l.employer_taxes)}</div>
                     <div style={{ textAlign: "right", fontSize: 12, fontWeight: 700, color: C.ink }}>
                       {l.change_in_gross_pct != null ? (
@@ -368,7 +380,7 @@ export default function PayrollPreview() {
               })}
 
               {/* Total row */}
-              <div style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "1.6fr 70px 100px 110px 110px 110px 80px 100px", gap: 12, alignItems: "center", fontSize: 13.5, color: C.ink, fontWeight: 700, ...tabular, borderTop: "1.5px solid " + C.ink }}>
+              <div style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "1fr 90px 130px 140px 140px 140px 90px 110px", gap: 12, alignItems: "center", fontSize: 13.5, color: C.ink, fontWeight: 700, ...tabular, borderTop: "1.5px solid " + C.ink }}>
                 <div>Total</div>
                 <div style={{ textAlign: "right" }}>{totals.total_hours}h</div>
                 <div style={{ textAlign: "right" }}>{fmtMoney(totals.gross)}</div>
@@ -433,6 +445,48 @@ export default function PayrollPreview() {
             {finalizing ? "Submitting..." : "Submit payroll"}
           </button>
         </div>
+
+        {/* Edit paycheque drawer */}
+        {editingEmployeeId && (
+          <EditPaychequeDrawer
+            runId={payRunId}
+            employeeId={editingEmployeeId}
+            onClose={function() { setEditingEmployeeId(null); }}
+            onSaved={function() {
+              // Refetch stubs to update the row
+              const token = getToken();
+              fetch(API + "/api/v1/payroll/runs/" + payRunId + "/stubs", {
+                headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+              })
+                .then(function(r) { return r.ok ? r.json() : []; })
+                .then(function(stubs) {
+                  if (!Array.isArray(stubs)) return;
+                  const remapped = stubs.map(function(l) {
+                    const hours = (Number(l.hours_regular || 0) + Number(l.hours_overtime || 0) + Number(l.hours_stat_holiday || 0) + Number(l.hours_vacation || 0) + Number(l.hours_sick || 0));
+                    const gross = Number(l.gross_pay || 0);
+                    const rate = hours > 0 && gross > 0 ? Number((gross / hours).toFixed(2)) : 0;
+                    return {
+                      employee_id: l.employee_id,
+                      stub_id: l.id,
+                      name: l.employee_name || "",
+                      classification: l.classification || "Hourly",
+                      hourly_rate: rate,
+                      payment_method: l.payment_method || "cheque",
+                      total_hours: hours,
+                      gross_pay: gross,
+                      employee_taxes: Number(l.total_employee_deductions || 0),
+                      net_pay: Number(l.net_pay || 0),
+                      employer_taxes: Number(l.total_employer_contributions || 0),
+                      change_in_gross_pct: l.change_in_gross_pct != null ? Number(l.change_in_gross_pct) : null,
+                      includes_stat: Number(l.hours_stat_holiday || 0) > 0,
+                    };
+                  });
+                  setLines(remapped);
+                })
+                .catch(function() {});
+            }}
+          />
+        )}
 
       </div>
     </div>
