@@ -490,34 +490,19 @@ export default function PayrollPreview() {
             )}
           </div>
 
-          {/* Where cash goes */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, paddingTop: 24, borderTop: "1px solid " + C.line }}>
+          {/* Where cash goes - Option D minimal split */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 40, paddingTop: 28, borderTop: "1px solid " + C.line, alignItems: "center" }}>
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: C.ink, fontWeight: 600 }}>
-                  <span style={{ width: 10, height: 10, background: C.brand, borderRadius: 3 }} />
-                  To employees
-                </span>
-                <span style={{ fontSize: 15, fontWeight: 700, color: C.ink, ...tabular }}>{fmtMoney(totals.net)}</span>
-              </div>
-              <div style={{ fontSize: 12, color: C.ink, fontWeight: 500, marginLeft: 20 }}>Net pay after deductions {totals.take_home_pct > 0 && "· " + totals.take_home_pct + "%"}</div>
+              <div style={{ fontSize: 11, color: C.ink, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.7, marginBottom: 8 }}>TO EMPLOYEES</div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", lineHeight: 1, ...tabular, marginBottom: 6 }}>{fmtMoney(totals.net)}</div>
+              <div style={{ fontSize: 12, color: C.ink, fontWeight: 500 }}>Net pay after deductions{totals.take_home_pct > 0 && " · " + totals.take_home_pct + "%"}</div>
             </div>
+            <div style={{ width: 1, height: 90, background: C.line }} />
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: C.ink, fontWeight: 600 }}>
-                  <span style={{ width: 10, height: 10, background: C.ink, borderRadius: 3 }} />
-                  To CRA
-                </span>
-                <span style={{ fontSize: 15, fontWeight: 700, color: C.ink, ...tabular }}>{fmtMoney(totals.cra_remittance)}</span>
-              </div>
-              <div style={{ fontSize: 12, color: C.ink, fontWeight: 500, marginLeft: 20 }}>Employee {fmtMoney(totals.employee_taxes)} + Employer {fmtMoney(totals.employer_taxes)}{totals.remit_pct > 0 && " · " + totals.remit_pct + "%"}</div>
+              <div style={{ fontSize: 11, color: C.ink, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.7, marginBottom: 8 }}>TO CRA</div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", lineHeight: 1, ...tabular, marginBottom: 6 }}>{fmtMoney(totals.cra_remittance)}</div>
+              <div style={{ fontSize: 12, color: C.ink, fontWeight: 500 }}>Employee {fmtMoney(totals.employee_taxes)} + Employer {fmtMoney(totals.employer_taxes)}</div>
             </div>
-          </div>
-
-          {/* Split bar */}
-          <div style={{ height: 6, borderRadius: 4, overflow: "hidden", display: "flex", background: C.page, marginTop: 20 }}>
-            <div style={{ background: C.brand, width: totals.take_home_pct + "%" }} />
-            <div style={{ background: C.ink, width: totals.remit_pct + "%" }} />
           </div>
         </div>
 
