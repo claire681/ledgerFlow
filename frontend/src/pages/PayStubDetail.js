@@ -1,174 +1,43 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  ArrowLeft, Printer, Receipt, User, MinusCircle, Building2,
-  AlertCircle, Wallet,
-} from "lucide-react";
-import {
-  Button, Card, CardHeader, StatusPill, Spinner,
-  colors, typography, spacing, radius,
-} from "../design-system";
+import { ArrowLeft, Printer, Download } from "lucide-react";
 
-const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
-
-const getToken = () =>
-  localStorage.getItem("access_token") || localStorage.getItem("token") || "";
-
-const authHeaders = () => ({
-  "Authorization": `Bearer ${getToken()}`,
-  "Content-Type": "application/json",
-});
-
-const formatCurrency = (value, currency) => {
-  if (value === null || value === undefined) return "$0.00";
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) return "$0.00";
-  try {
-    return new Intl.NumberFormat("en-CA", {
-      style: "currency", currency: currency || "CAD",
-    }).format(num);
-  } catch (e) { return num.toFixed(2); }
+const C = {
+  ink: "#12262B",
+  inkDark: "#0E1A1A",
+  brand: "#15A08C",
+  brandDark: "#0F6E56",
+  brandBg: "#E1F5EE",
+  page: "#F4F6F8",
+  card: "#FFFFFF",
+  line: "#E7EAF0",
+  muted: "#66748B",
 };
 
-const formatHours = (h) => {
-  if (h === null || h === undefined || h === "") return "";
-  const num = typeof h === "string" ? parseFloat(h) : h;
-  if (isNaN(num) || num === 0) return "";
-  return num.toFixed(2);
-};
+const FONT = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+const tabular = { fontVariantNumeric: "tabular-nums" };
+const API = "https://api.getnovala.com";
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return "";
-  try {
-    return new Date(dateStr).toLocaleDateString("en-CA", {
-      year: "numeric", month: "short", day: "numeric",
-    });
-  } catch (e) { return dateStr; }
-};
-
-const pick = (obj, ...keys) => {
-  for (const k of keys) {
-    if (obj && obj[k] !== undefined && obj[k] !== null && obj[k] !== "") return obj[k];
-  }
-  return null;
-};
-
-const getStubName = (stub) =>
-  pick(stub, "employee_name", "name", "full_name") ||
-  [pick(stub, "first_name"), pick(stub, "last_name")].filter(Boolean).join(" ") ||
-  (stub.employee &&
-    (pick(stub.employee, "name", "full_name") ||
-      [pick(stub.employee, "first_name"), pick(stub.employee, "last_name")].filter(Boolean).join(" "))) ||
-  "Unnamed";
-
-const iconWrapStyle = {
-  width: 38, height: 38,
-  background: colors.brandSoft,
-  borderRadius: radius.lg,
-  display: "flex", alignItems: "center", justifyContent: "center",
-  flexShrink: 0,
-};
-
-function ErrorBlock({ title, message }) {
-  return (
-    <Card style={{
-      background: colors.dangerSoft,
-      border: `1px solid ${colors.danger}40`,
-      display: "flex", alignItems: "flex-start",
-      gap: spacing[3], marginBottom: spacing[5],
-    }}>
-      <AlertCircle size={20} color={colors.danger} style={{ flexShrink: 0, marginTop: 2 }} />
-      <div style={{ flex: 1 }}>
-        <div style={{ ...typography.bodyStrong, color: colors.dangerText, marginBottom: 4 }}>
-          {title || "Something went wrong"}
-        </div>
-        <div style={{ ...typography.caption, color: colors.dangerText }}>{message}</div>
-      </div>
-    </Card>
-  );
+function getToken() {
+  return localStorage.getItem("access_token") || localStorage.getItem("token") || "";
 }
 
-function SummaryStat({ label, value, emphasis }) {
-  return (
-    <div>
-      <div style={{
-        ...typography.tiny, color: colors.textMuted,
-        textTransform: "uppercase", letterSpacing: "0.08em",
-        marginBottom: 6,
-      }}>{label}</div>
-      <div style={{
-        fontSize: emphasis ? 28 : 20,
-        fontWeight: 700,
-        color: emphasis ? colors.brandPrimary : colors.textPrimary,
-        fontFeatureSettings: '"tnum" 1',
-        letterSpacing: "-0.02em",
-        lineHeight: 1.2,
-      }}>{value}</div>
-    </div>
-  );
+function fmtMoney(n) {
+  const v = Number(n) || 0;
+  return "$" + v.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-const itemTd = (extra = {}) => ({
-  padding: "10px 12px",
-  ...typography.bodySm,
-  fontFeatureSettings: '"tnum" 1',
-  ...extra,
-});
-
-function LineRow({ label, hours, rate, current, ytd, bold, currency }) {
-  return (
-    <tr style={{ borderBottom: `1px solid ${colors.borderSubtle}` }}>
-      <td style={itemTd({
-        color: bold ? colors.textPrimary : colors.textSecondary,
-        fontWeight: bold ? 600 : 400,
-      })}>{label}</td>
-      <td style={itemTd({ textAlign: "right", color: colors.textSecondary })}>
-        {formatHours(hours)}
-      </td>
-      <td style={itemTd({ textAlign: "right", color: colors.textSecondary })}>
-        {rate !== undefined && rate !== null && rate !== 0 ? formatCurrency(rate, currency) : ""}
-      </td>
-      <td style={itemTd({
-        textAlign: "right",
-        color: colors.textPrimary,
-        fontWeight: bold ? 700 : 500,
-      })}>{formatCurrency(current, currency)}</td>
-      <td style={itemTd({ textAlign: "right", color: colors.textMuted })}>
-        {ytd !== undefined && ytd !== null ? formatCurrency(ytd, currency) : ""}
-      </td>
-    </tr>
-  );
+function fmtHours(h) {
+  const n = Number(h) || 0;
+  return n.toFixed(2);
 }
 
-function DeductionRow({ label, current, ytd, bold, currency }) {
-  return (
-    <tr style={{ borderBottom: `1px solid ${colors.borderSubtle}` }}>
-      <td style={itemTd({
-        color: bold ? colors.textPrimary : colors.textSecondary,
-        fontWeight: bold ? 600 : 400,
-      })}>{label}</td>
-      <td style={itemTd({
-        textAlign: "right",
-        color: colors.textPrimary,
-        fontWeight: bold ? 700 : 500,
-      })}>{formatCurrency(current, currency)}</td>
-      <td style={itemTd({ textAlign: "right", color: colors.textMuted })}>
-        {ytd !== undefined && ytd !== null ? formatCurrency(ytd, currency) : ""}
-      </td>
-    </tr>
-  );
+function fmtDate(iso) {
+  if (!iso) return "";
+  const parts = String(iso).split("-");
+  if (parts.length !== 3) return iso;
+  return parts[2] + "/" + parts[1] + "/" + parts[0];
 }
-
-const thLeft = {
-  textAlign: "left",
-  padding: "10px 12px",
-  ...typography.labelUppercase,
-  color: colors.textMuted,
-  whiteSpace: "nowrap",
-  background: colors.bgCardActive,
-  borderBottom: `1px solid ${colors.borderSubtle}`,
-};
-const thRight = { ...thLeft, textAlign: "right" };
 
 export default function PayStubDetail() {
   const { runId, stubId } = useParams();
@@ -176,228 +45,218 @@ export default function PayStubDetail() {
 
   const [run, setRun] = useState(null);
   const [stub, setStub] = useState(null);
+  const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Load run (for context: pay dates, status, currency)
-      let runData = null;
-      let runRes = await fetch(`${API_URL}/api/v1/payroll/runs/${runId}`, { headers: authHeaders() });
-      if (runRes.status === 404 || runRes.status === 405) {
-        const listRes = await fetch(`${API_URL}/api/v1/payroll/runs`, { headers: authHeaders() });
-        if (listRes.ok) {
-          const list = await listRes.json();
-          runData = (Array.isArray(list) ? list : []).find((r) => String(r.id) === String(runId));
+  useEffect(function() {
+    let cancelled = false;
+    async function load() {
+      const token = getToken();
+      const headers = { "Authorization": "Bearer " + token, "Content-Type": "application/json" };
+      try {
+        const [runRes, stubsRes, companyRes] = await Promise.all([
+          fetch(API + "/api/v1/payroll/runs/" + runId, { headers }).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+          fetch(API + "/api/v1/payroll/runs/" + runId + "/stubs", { headers }).then(function(r) { return r.ok ? r.json() : []; }).catch(function() { return []; }),
+          fetch(API + "/api/v1/company/profile", { headers }).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+        ]);
+        if (cancelled) return;
+
+        setRun(runRes);
+        setCompany(companyRes);
+
+        const list = Array.isArray(stubsRes) ? stubsRes : (stubsRes.stubs || stubsRes.data || []);
+        const found = list.find(function(s) { return String(s.stub_id || s.id) === String(stubId); });
+        if (!found) {
+          setError("Pay stub not found");
+        } else {
+          setStub(found);
         }
-      } else if (runRes.ok) {
-        runData = await runRes.json();
+        setLoading(false);
+      } catch (e) {
+        if (!cancelled) {
+          setError(String((e && e.message) || e));
+          setLoading(false);
+        }
       }
-      setRun(runData);
-
-      // Load stubs and find the matching one
-      const stubsRes = await fetch(`${API_URL}/api/v1/payroll/runs/${runId}/stubs`, { headers: authHeaders() });
-      if (!stubsRes.ok) {
-        throw new Error(`Could not load pay stubs (HTTP ${stubsRes.status})`);
-      }
-      const stubsData = await stubsRes.json();
-      const list = Array.isArray(stubsData) ? stubsData : (stubsData.stubs || stubsData.data || []);
-      const found = list.find((s) => String(s.id) === String(stubId));
-      if (!found) throw new Error("Pay stub not found");
-      setStub(found);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
     }
-  };
-
-  useEffect(() => { load(); }, [runId, stubId]);
+    load();
+    return function() { cancelled = true; };
+  }, [runId, stubId]);
 
   if (loading) {
     return (
-      <div style={{ background: colors.bgPage, minHeight: "100%", padding: `${spacing[10]}px` }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", textAlign: "center", paddingTop: spacing[12] }}>
-          <Spinner size={20} label="Loading pay stub..." inline />
-        </div>
+      <div style={{ padding: "40px 32px", background: C.page, minHeight: "100vh", fontFamily: FONT }}>
+        <div style={{ fontSize: 15, color: C.ink, fontWeight: 500 }}>Loading pay stub...</div>
       </div>
     );
   }
 
   if (error || !stub) {
     return (
-      <div style={{
-        background: colors.bgPage, minHeight: "100%",
-        fontFamily: typography.fontFamily,
-        padding: `${spacing[6]}px ${spacing[8]}px`,
-        boxSizing: "border-box",
-      }}>
-        <div style={{ width: "100%" }}>
-          <button onClick={() => navigate(`/payroll/runs/${runId}`)} style={{
-            background: "none", border: "none", cursor: "pointer",
-            display: "inline-flex", alignItems: "center", gap: 6,
-            ...typography.bodySm, color: colors.textSecondary,
-            padding: 0, marginBottom: spacing[6],
-            fontFamily: typography.fontFamily,
-          }}>
-            <ArrowLeft size={16} /> Back to pay run
-          </button>
-          <ErrorBlock title="Could not load pay stub" message={error || "Not found"} />
-          <Button variant="secondary" onClick={load}>Try again</Button>
-        </div>
+      <div style={{ padding: "40px 32px", background: C.page, minHeight: "100vh", fontFamily: FONT }}>
+        <div style={{ fontSize: 18, color: C.ink, fontWeight: 700, marginBottom: 8 }}>Could not load pay stub.</div>
+        <div style={{ fontSize: 14, color: C.ink, fontWeight: 500, marginBottom: 20 }}>{error || "Unknown error"}</div>
+        <button onClick={function() { navigate(-1); }} style={{ padding: "10px 16px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Back</button>
       </div>
     );
   }
 
-  const currency = stub.currency || run?.currency || "CAD";
-  const status = (run?.status || stub.status || "draft").toLowerCase();
+  const empName = stub.employee_name || stub.name || "";
+  const positionTitle = stub.position_title || "";
+  const paymentMethod = stub.payment_method || "Cheque";
 
-  // Defensive field accessors for the 43-col pay_stubs schema
-  const regularHours = pick(stub, "regular_hours", "hours_regular");
-  const regularPay = pick(stub, "regular_pay", "pay_regular");
-  const overtimeHours = pick(stub, "overtime_hours", "hours_overtime", "ot_hours");
-  const overtimePay = pick(stub, "overtime_pay", "ot_pay");
-  const vacationHours = pick(stub, "vacation_hours", "hours_vacation");
-  const vacationPay = pick(stub, "vacation_pay", "pay_vacation");
-  const sickHours = pick(stub, "sick_hours", "hours_sick");
-  const sickPay = pick(stub, "sick_pay", "pay_sick");
-  const holidayHours = pick(stub, "stat_holiday_hours", "holiday_hours");
-  const holidayPay = pick(stub, "stat_holiday_pay", "holiday_pay");
-  const bonus = pick(stub, "bonus", "bonus_pay");
-  const commission = pick(stub, "commission", "commission_pay");
-  const reimbursement = pick(stub, "reimbursement", "reimbursements");
-  const grossPay = pick(stub, "gross_pay", "total_gross", "gross") || 0;
+  const rate = Number(stub.hourly_rate || 0);
+  const hrsReg = Number(stub.hours_regular || 0);
+  const hrsOT = Number(stub.hours_overtime || 0);
+  const hrsStat = Number(stub.hours_stat_holiday || 0);
+  const gross = Number(stub.gross_pay || 0);
+  const net = Number(stub.net_pay || 0);
 
-  const federalTax = pick(stub, "federal_tax", "federal_income_tax", "tax_federal");
-  const provincialTax = pick(stub, "provincial_tax", "state_tax", "tax_provincial", "tax_state");
-  const cpp = pick(stub, "cpp_employee", "cpp", "social_security_employee", "social_security");
-  const ei = pick(stub, "ei_employee", "ei", "medicare_employee", "medicare");
-  const otherDed = pick(stub, "other_deductions", "additional_deductions");
-  const totalDed = pick(stub, "total_deductions", "deductions", "employee_deductions") || 0;
-  const netPay = pick(stub, "net_pay", "total_net", "net") || 0;
+  // Deductions
+  const fed = Number(stub.federal_tax || 0);
+  const prov = Number(stub.provincial_or_state_tax || 0);
+  const ei = Number(stub.unemployment_employee || 0);
+  const cpp = Number(stub.social_security_employee || 0);
+  const cpp2 = Number(stub.social_security_2_employee || 0);
+  const totalDeductions = Number(stub.total_employee_deductions || 0);
 
-  const cppEr = pick(stub, "cpp_employer", "social_security_employer");
-  const eiEr = pick(stub, "ei_employer", "medicare_employer");
-  const wcb = pick(stub, "wcb_employer", "wcb", "workers_comp");
-  const employerTotal = pick(stub, "employer_contributions", "total_employer_contributions") || 0;
-  const remittance = pick(stub, "remittance_owed", "total_remittance_owed");
+  // Employer contributions
+  const eiEmployer = Number(stub.unemployment_employer || 0);
+  const cppEmployer = Number(stub.social_security_employer || 0);
+  const cpp2Employer = Number(stub.social_security_2_employer || 0);
 
-  const ytdGross = pick(stub, "ytd_gross", "ytd_gross_pay");
-  const ytdRegular = pick(stub, "ytd_regular_pay", "ytd_regular");
-  const ytdOT = pick(stub, "ytd_overtime_pay", "ytd_overtime");
-  const ytdVacation = pick(stub, "ytd_vacation_pay", "ytd_vacation");
-  const ytdSick = pick(stub, "ytd_sick_pay", "ytd_sick");
-  const ytdHoliday = pick(stub, "ytd_stat_holiday_pay", "ytd_holiday");
-  const ytdBonus = pick(stub, "ytd_bonus");
-  const ytdCommission = pick(stub, "ytd_commission");
-  const ytdFederal = pick(stub, "ytd_federal_tax");
-  const ytdProvincial = pick(stub, "ytd_provincial_tax", "ytd_state_tax");
-  const ytdCpp = pick(stub, "ytd_cpp_employee", "ytd_cpp");
-  const ytdEi = pick(stub, "ytd_ei_employee", "ytd_ei");
-  const ytdOther = pick(stub, "ytd_other_deductions");
-  const ytdDed = pick(stub, "ytd_total_deductions", "ytd_deductions");
-  const ytdNet = pick(stub, "ytd_net_pay", "ytd_net");
+  // YTD - stored + current
+  const ytdRegular = Number(stub.ytd_regular_pay || 0) + (hrsReg * rate);
+  const ytdGross = Number(stub.ytd_gross_pay || 0) + gross;
+  const ytdFederal = Number(stub.ytd_federal_tax || 0) + fed;
+  const ytdProv = Number(stub.ytd_provincial_or_state_tax || 0) + prov;
+  const ytdEI = Number(stub.ytd_unemployment_employee || 0) + ei;
+  const ytdCPP = Number(stub.ytd_social_security_employee || 0) + cpp;
+  const ytdDeductions = Number(stub.ytd_total_employee_deductions || 0) + totalDeductions;
+  const ytdEIEmployer = Number(stub.ytd_unemployment_employer || 0) + eiEmployer;
+  const ytdCPPEmployer = Number(stub.ytd_social_security_employer || 0) + cppEmployer;
 
-  const employeeRate = pick(stub, "hourly_rate", "pay_rate", "rate");
+  const companyName = (company && company.legal_name) || (company && company.name) || "Company Name";
+  const companyLocation = (company && [company.city, company.province_or_state, company.country].filter(Boolean).join(", ")) || "";
+
+  const periodStart = run ? run.pay_period_start : null;
+  const periodEnd = run ? run.pay_period_end : null;
+  const payDate = run ? run.pay_date : null;
+
+  // Table styles
+  const thStyle = { textAlign: "left", padding: "10px 0", fontSize: 10, fontWeight: 700, color: C.ink, letterSpacing: "0.08em", textTransform: "uppercase" };
+  const thRight = Object.assign({}, thStyle, { textAlign: "right" });
+  const tdStyle = { padding: "10px 0", color: C.ink, fontSize: 13 };
+  const tdRight = Object.assign({}, tdStyle, { textAlign: "right", ...tabular });
+  const tdRightBold = Object.assign({}, tdRight, { fontWeight: 700 });
+  const totalRow = { borderTop: "1.5px solid " + C.ink };
+  const rowLine = { borderBottom: "1px solid " + C.line };
 
   return (
-    <div style={{
-      background: colors.bgPage,
-      minHeight: "100%",
-      fontFamily: typography.fontFamily,
-      padding: `${spacing[6]}px ${spacing[8]}px`,
-      boxSizing: "border-box",
-    }}>
-      <div style={{ width: "100%" }}>
+    <>
+      {/* Print CSS - hide everything except the stub area */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #paystub-print-area, #paystub-print-area * { visibility: visible; }
+          #paystub-print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+          }
+          .no-print { display: none !important; }
+          @page { margin: 0.5in; }
+        }
+      `}</style>
 
-        {/* Back link */}
-        <button onClick={() => navigate(`/payroll/runs/${runId}`)} style={{
-          background: "none", border: "none", cursor: "pointer",
-          display: "inline-flex", alignItems: "center", gap: 6,
-          ...typography.bodySm, color: colors.textSecondary,
-          padding: 0, marginBottom: spacing[3],
-          fontFamily: typography.fontFamily,
-        }}>
-          <ArrowLeft size={16} /> Back to pay run
-        </button>
+      <div style={{ maxWidth: "100%", margin: 0, padding: "28px 32px 90px", fontFamily: FONT, background: C.page, minHeight: "100vh" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
 
-        {/* Header */}
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: spacing[4],
-          flexWrap: "wrap",
-          marginBottom: spacing[8],
-        }}>
-          <div style={{ flex: 1, minWidth: 280 }}>
-            <div style={{
-              ...typography.tiny,
-              color: colors.textMuted,
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              marginBottom: 4,
-            }}>Pay stub</div>
-            <div style={{ display: "flex", alignItems: "center", gap: spacing[3], marginBottom: spacing[1] }}>
-              <h1 style={{ ...typography.displaySm, color: colors.textPrimary, margin: 0 }}>
-                {getStubName(stub)}
-              </h1>
-              <StatusPill status={status} />
+          <div className="no-print">
+            {/* Breadcrumb */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.ink, marginBottom: 14 }}>
+              <a onClick={function() { navigate("/payroll/overview"); }} style={{ color: C.ink, fontWeight: 600, textDecoration: "none", opacity: 0.7, cursor: "pointer" }}>Payroll</a>
+              <span style={{ color: C.ink, opacity: 0.4 }}>/</span>
+              <a onClick={function() { navigate(-1); }} style={{ color: C.ink, fontWeight: 600, textDecoration: "none", opacity: 0.7, cursor: "pointer" }}>Pay runs</a>
+              <span style={{ color: C.ink, opacity: 0.4 }}>/</span>
+              <span style={{ color: C.ink, fontWeight: 700 }}>Pay stub</span>
             </div>
-            <p style={{ ...typography.body, color: colors.textSecondary, margin: 0 }}>
-              {formatDate(run?.pay_period_start || stub.pay_period_start)}
-              {" to "}
-              {formatDate(run?.pay_period_end || stub.pay_period_end)}
-              {(run?.pay_date || stub.pay_date) && (
-                <>{" · Pay date "}{formatDate(run?.pay_date || stub.pay_date)}</>
-              )}
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: spacing[2], flexWrap: "wrap" }}>
-            <Button variant="secondary" onClick={() => window.print()} iconLeft={<Printer size={14} />}>
-              Print
-            </Button>
-          </div>
-        </div>
 
-        {/* Summary strip */}
-        <Card style={{ marginBottom: spacing[5] }}>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-            gap: spacing[6],
-          }}>
-            <SummaryStat label="Gross pay" value={formatCurrency(grossPay, currency)} />
-            <SummaryStat label="Deductions" value={formatCurrency(totalDed, currency)} />
-            <SummaryStat label="Employer cost" value={formatCurrency(employerTotal, currency)} />
-            <SummaryStat label="Net pay" value={formatCurrency(netPay, currency)} emphasis />
-          </div>
-        </Card>
-
-        {/* Two-column grid */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))",
-          gap: spacing[5],
-          marginBottom: spacing[5],
-        }}>
-
-          {/* Earnings */}
-          <Card noPadding>
-            <div style={{ padding: spacing[6], borderBottom: `1px solid ${colors.borderSubtle}` }}>
-              <CardHeader
-                title="Earnings"
-                subtitle="Hours, rate, current pay, and year to date"
-                icon={<div style={iconWrapStyle}><Wallet size={18} color={colors.brandPrimary} /></div>}
-              />
+            {/* Title + actions */}
+            <div style={{ background: C.card, borderRadius: 12, padding: "32px 40px 24px", marginBottom: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div>
+                  <div style={{ fontSize: 30, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", lineHeight: 1, marginBottom: 8 }}>Pay stub</div>
+                  <div style={{ fontSize: 14, color: C.ink, fontWeight: 500 }}>{empName} · Pay date {fmtDate(payDate)}</div>
+                </div>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    onClick={function() { window.print(); }}
+                    style={{ padding: "10px 16px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 6 }}
+                  >
+                    <Download size={14} strokeWidth={2} />
+                    Download PDF
+                  </button>
+                  <button
+                    onClick={function() { window.print(); }}
+                    style={{ padding: "10px 16px", background: C.inkDark, border: "none", borderRadius: 10, color: C.card, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 6 }}
+                  >
+                    <Printer size={14} strokeWidth={2} />
+                    Print
+                  </button>
+                </div>
+              </div>
             </div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: typography.fontFamily }}>
+          </div>
+
+          {/* PRINT AREA - the actual pay stub document */}
+          <div id="paystub-print-area" style={{ background: C.card, borderRadius: 12, padding: 40, border: "1px solid " + C.line }}>
+
+            {/* Company header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingBottom: 24, borderBottom: "1.5px solid " + C.ink, marginBottom: 32 }}>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: C.ink, marginBottom: 4 }}>{companyName}</div>
+                {companyLocation && (<div style={{ fontSize: 12, color: C.ink, fontWeight: 500 }}>{companyLocation}</div>)}
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>PAY STUB</div>
+                <div style={{ fontSize: 12, color: C.ink, fontWeight: 500, ...tabular }}>{fmtDate(periodStart)} to {fmtDate(periodEnd)}</div>
+              </div>
+            </div>
+
+            {/* Employee + Payment info */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, marginBottom: 32 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>EMPLOYEE</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{empName}</div>
+                {positionTitle && (<div style={{ fontSize: 12, color: C.ink, fontWeight: 500 }}>{positionTitle}</div>)}
+              </div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>PAYMENT</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{paymentMethod}</div>
+                <div style={{ fontSize: 12, color: C.ink, fontWeight: 500, ...tabular }}>Pay date: {fmtDate(payDate)}</div>
+              </div>
+            </div>
+
+            {/* Big Net Pay */}
+            <div style={{ padding: "20px 0", marginBottom: 32, borderTop: "1px solid " + C.line, borderBottom: "1px solid " + C.line }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>NET PAY</div>
+              <div style={{ fontSize: 44, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", lineHeight: 1, ...tabular }}>{fmtMoney(net)}</div>
+            </div>
+
+            {/* Earnings */}
+            <div style={{ marginBottom: 32 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, paddingBottom: 8, borderBottom: "1.5px solid " + C.ink, marginBottom: 12, letterSpacing: "0.06em", textTransform: "uppercase" }}>EARNINGS</div>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
-                  <tr>
-                    <th style={thLeft}>Item</th>
+                  <tr style={rowLine}>
+                    <th style={thStyle}>Type</th>
                     <th style={thRight}>Hours</th>
                     <th style={thRight}>Rate</th>
                     <th style={thRight}>Current</th>
@@ -405,153 +264,161 @@ export default function PayStubDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(regularPay || regularHours) && (
-                    <LineRow label="Regular pay" hours={regularHours} rate={employeeRate} current={regularPay} ytd={ytdRegular} currency={currency} />
+                  {hrsReg > 0 && (
+                    <tr style={rowLine}>
+                      <td style={tdStyle}>Regular Pay</td>
+                      <td style={tdRight}>{fmtHours(hrsReg)}</td>
+                      <td style={tdRight}>{fmtMoney(rate)}</td>
+                      <td style={Object.assign({}, tdRight, { fontWeight: 600 })}>{fmtMoney(hrsReg * rate)}</td>
+                      <td style={tdRight}>{fmtMoney(ytdRegular)}</td>
+                    </tr>
                   )}
-                  {(overtimePay || overtimeHours) && (
-                    <LineRow label="Overtime" hours={overtimeHours} rate={employeeRate ? employeeRate * 1.5 : null} current={overtimePay} ytd={ytdOT} currency={currency} />
+                  {hrsOT > 0 && (
+                    <tr style={rowLine}>
+                      <td style={tdStyle}>Overtime Pay</td>
+                      <td style={tdRight}>{fmtHours(hrsOT)}</td>
+                      <td style={tdRight}>{fmtMoney(rate * 1.5)}</td>
+                      <td style={Object.assign({}, tdRight, { fontWeight: 600 })}>{fmtMoney(hrsOT * rate * 1.5)}</td>
+                      <td style={tdRight}>-</td>
+                    </tr>
                   )}
-                  {(holidayPay || holidayHours) && (
-                    <LineRow label="Stat holiday" hours={holidayHours} rate={employeeRate} current={holidayPay} ytd={ytdHoliday} currency={currency} />
+                  {hrsStat > 0 && (
+                    <tr style={rowLine}>
+                      <td style={tdStyle}>Stat Holiday Pay</td>
+                      <td style={tdRight}>{fmtHours(hrsStat)}</td>
+                      <td style={tdRight}>{fmtMoney(rate)}</td>
+                      <td style={Object.assign({}, tdRight, { fontWeight: 600 })}>{fmtMoney(hrsStat * rate)}</td>
+                      <td style={tdRight}>-</td>
+                    </tr>
                   )}
-                  {(vacationPay || vacationHours) && (
-                    <LineRow label="Vacation" hours={vacationHours} rate={employeeRate} current={vacationPay} ytd={ytdVacation} currency={currency} />
-                  )}
-                  {(sickPay || sickHours) && (
-                    <LineRow label="Sick" hours={sickHours} rate={employeeRate} current={sickPay} ytd={ytdSick} currency={currency} />
-                  )}
-                  {bonus > 0 && (
-                    <LineRow label="Bonus" current={bonus} ytd={ytdBonus} currency={currency} />
-                  )}
-                  {commission > 0 && (
-                    <LineRow label="Commission" current={commission} ytd={ytdCommission} currency={currency} />
-                  )}
-                  {reimbursement > 0 && (
-                    <LineRow label="Reimbursement" current={reimbursement} currency={currency} />
-                  )}
-                  <LineRow label="Total gross" current={grossPay} ytd={ytdGross} bold currency={currency} />
+                  <tr style={totalRow}>
+                    <td style={Object.assign({}, tdStyle, { fontWeight: 700 })}>Gross Pay</td>
+                    <td style={tdRightBold}>{fmtHours(hrsReg + hrsOT + hrsStat)}</td>
+                    <td></td>
+                    <td style={tdRightBold}>{fmtMoney(gross)}</td>
+                    <td style={tdRightBold}>{fmtMoney(ytdGross)}</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
-          </Card>
 
-          {/* Deductions */}
-          <Card noPadding>
-            <div style={{ padding: spacing[6], borderBottom: `1px solid ${colors.borderSubtle}` }}>
-              <CardHeader
-                title="Employee deductions"
-                subtitle="Taxes and other amounts withheld from gross pay"
-                icon={<div style={iconWrapStyle}><MinusCircle size={18} color={colors.brandPrimary} /></div>}
-              />
-            </div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: typography.fontFamily }}>
+            {/* Deductions */}
+            <div style={{ marginBottom: 32 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, paddingBottom: 8, borderBottom: "1.5px solid " + C.ink, marginBottom: 12, letterSpacing: "0.06em", textTransform: "uppercase" }}>DEDUCTIONS</div>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
-                  <tr>
-                    <th style={thLeft}>Item</th>
+                  <tr style={rowLine}>
+                    <th style={thStyle}>Type</th>
                     <th style={thRight}>Current</th>
                     <th style={thRight}>YTD</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {federalTax !== null && <DeductionRow label="Federal income tax" current={federalTax} ytd={ytdFederal} currency={currency} />}
-                  {provincialTax !== null && <DeductionRow label={(run?.country || stub.country) === "US" ? "State income tax" : "Provincial income tax"} current={provincialTax} ytd={ytdProvincial} currency={currency} />}
-                  {cpp !== null && <DeductionRow label={(run?.country || stub.country) === "US" ? "Social Security" : "CPP"} current={cpp} ytd={ytdCpp} currency={currency} />}
-                  {ei !== null && <DeductionRow label={(run?.country || stub.country) === "US" ? "Medicare" : "EI"} current={ei} ytd={ytdEi} currency={currency} />}
-                  {otherDed !== null && otherDed > 0 && <DeductionRow label="Other deductions" current={otherDed} ytd={ytdOther} currency={currency} />}
-                  <DeductionRow label="Total deductions" current={totalDed} ytd={ytdDed} bold currency={currency} />
+                  <tr style={rowLine}>
+                    <td style={tdStyle}>Federal Income Tax</td>
+                    <td style={tdRight}>{fmtMoney(fed)}</td>
+                    <td style={tdRight}>{fmtMoney(ytdFederal)}</td>
+                  </tr>
+                  <tr style={rowLine}>
+                    <td style={tdStyle}>Provincial Income Tax</td>
+                    <td style={tdRight}>{fmtMoney(prov)}</td>
+                    <td style={tdRight}>{fmtMoney(ytdProv)}</td>
+                  </tr>
+                  <tr style={rowLine}>
+                    <td style={tdStyle}>Employment Insurance (EI)</td>
+                    <td style={tdRight}>{fmtMoney(ei)}</td>
+                    <td style={tdRight}>{fmtMoney(ytdEI)}</td>
+                  </tr>
+                  <tr style={rowLine}>
+                    <td style={tdStyle}>Canada Pension Plan (CPP)</td>
+                    <td style={tdRight}>{fmtMoney(cpp)}</td>
+                    <td style={tdRight}>{fmtMoney(ytdCPP)}</td>
+                  </tr>
+                  {cpp2 > 0 && (
+                    <tr style={rowLine}>
+                      <td style={tdStyle}>CPP2 (Second)</td>
+                      <td style={tdRight}>{fmtMoney(cpp2)}</td>
+                      <td style={tdRight}>-</td>
+                    </tr>
+                  )}
+                  <tr style={totalRow}>
+                    <td style={Object.assign({}, tdStyle, { fontWeight: 700 })}>Total Deductions</td>
+                    <td style={tdRightBold}>{fmtMoney(totalDeductions)}</td>
+                    <td style={tdRightBold}>{fmtMoney(ytdDeductions)}</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
-          </Card>
-        </div>
 
-        {/* Net pay highlight */}
-        <Card style={{
-          background: colors.brandSoft,
-          border: `1px solid ${colors.brandSoftStrong}`,
-          marginBottom: spacing[5],
-        }}>
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: spacing[4],
-            flexWrap: "wrap",
-          }}>
-            <div>
-              <div style={{
-                ...typography.tiny,
-                color: colors.brandPrimary,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                marginBottom: 6,
-                fontWeight: 600,
-              }}>
-                Net pay this period
-              </div>
-              <div style={{
-                fontSize: 36,
-                fontWeight: 700,
-                color: colors.brandPrimary,
-                fontFeatureSettings: '"tnum" 1',
-                letterSpacing: "-0.02em",
-                lineHeight: 1,
-              }}>
-                {formatCurrency(netPay, currency)}
-              </div>
-            </div>
-            {ytdNet !== null && (
-              <div style={{ textAlign: "right" }}>
-                <div style={{
-                  ...typography.tiny, color: colors.textMuted,
-                  textTransform: "uppercase", letterSpacing: "0.08em",
-                  marginBottom: 6,
-                }}>YTD net</div>
-                <div style={{
-                  ...typography.bodyStrong,
-                  color: colors.textPrimary,
-                  fontFeatureSettings: '"tnum" 1',
-                  fontSize: 20,
-                }}>{formatCurrency(ytdNet, currency)}</div>
+            {/* Employer contributions */}
+            {(eiEmployer > 0 || cppEmployer > 0) && (
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, paddingBottom: 8, borderBottom: "1.5px solid " + C.ink, marginBottom: 12, letterSpacing: "0.06em", textTransform: "uppercase" }}>EMPLOYER CONTRIBUTIONS</div>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr style={rowLine}>
+                      <th style={thStyle}>Type</th>
+                      <th style={thRight}>Current</th>
+                      <th style={thRight}>YTD</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {eiEmployer > 0 && (
+                      <tr style={rowLine}>
+                        <td style={tdStyle}>Employer EI</td>
+                        <td style={tdRight}>{fmtMoney(eiEmployer)}</td>
+                        <td style={tdRight}>{fmtMoney(ytdEIEmployer)}</td>
+                      </tr>
+                    )}
+                    {cppEmployer > 0 && (
+                      <tr style={rowLine}>
+                        <td style={tdStyle}>Employer CPP</td>
+                        <td style={tdRight}>{fmtMoney(cppEmployer)}</td>
+                        <td style={tdRight}>{fmtMoney(ytdCPPEmployer)}</td>
+                      </tr>
+                    )}
+                    {cpp2Employer > 0 && (
+                      <tr style={rowLine}>
+                        <td style={tdStyle}>Employer CPP2</td>
+                        <td style={tdRight}>{fmtMoney(cpp2Employer)}</td>
+                        <td style={tdRight}>-</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             )}
+
+            {/* Summary */}
+            <div style={{ paddingTop: 20, borderTop: "1.5px solid " + C.ink }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
+                <span style={{ fontSize: 14, color: C.ink, fontWeight: 500 }}>Gross Pay</span>
+                <span style={{ fontSize: 15, fontWeight: 600, color: C.ink, ...tabular }}>{fmtMoney(gross)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
+                <span style={{ fontSize: 14, color: C.ink, fontWeight: 500 }}>Total Deductions</span>
+                <span style={{ fontSize: 15, fontWeight: 600, color: C.ink, ...tabular }}>-{fmtMoney(totalDeductions)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", marginTop: 6, borderTop: "1px solid " + C.ink }}>
+                <span style={{ fontSize: 15, color: C.ink, fontWeight: 700 }}>Net Pay</span>
+                <span style={{ fontSize: 22, fontWeight: 700, color: C.ink, ...tabular }}>{fmtMoney(net)}</span>
+              </div>
+            </div>
           </div>
-        </Card>
 
-        {/* Employer contributions (informational) */}
-        {employerTotal > 0 && (
-          <Card noPadding>
-            <div style={{ padding: spacing[6], borderBottom: `1px solid ${colors.borderSubtle}` }}>
-              <CardHeader
-                title="Employer contributions"
-                subtitle="What the business pays on top of gross pay. Does not reduce employee net pay."
-                icon={<div style={iconWrapStyle}><Building2 size={18} color={colors.brandPrimary} /></div>}
-              />
-            </div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: typography.fontFamily }}>
-                <thead>
-                  <tr>
-                    <th style={thLeft}>Item</th>
-                    <th style={thRight}>Current</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cppEr !== null && <DeductionRow label={(run?.country || stub.country) === "US" ? "Employer Social Security" : "Employer CPP"} current={cppEr} currency={currency} />}
-                  {eiEr !== null && <DeductionRow label={(run?.country || stub.country) === "US" ? "Employer Medicare" : "Employer EI"} current={eiEr} currency={currency} />}
-                  {wcb !== null && wcb > 0 && <DeductionRow label="Workers comp / WCB" current={wcb} currency={currency} />}
-                  <DeductionRow label="Total employer cost" current={employerTotal} bold currency={currency} />
-                  {remittance !== null && remittance > 0 && (
-                    <DeductionRow label="Remittance owed" current={remittance} currency={currency} />
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        )}
+          {/* Footer */}
+          <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 24, marginTop: 24 }}>
+            <button
+              onClick={function() { navigate(-1); }}
+              style={{ padding: "10px 16px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <ArrowLeft size={14} strokeWidth={2.5} />
+              Back
+            </button>
+          </div>
 
+        </div>
       </div>
-    </div>
+    </>
   );
 }
