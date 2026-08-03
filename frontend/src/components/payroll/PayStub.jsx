@@ -1,21 +1,18 @@
 import React from "react";
 
-// PayStub
-// QuickBooks-style pay stub, Novala teal theme.
-// Inline styles only, no new dependencies. JSX double quotes.
-// All money and hour values come in as raw numbers/strings; formatted here.
+// PayStub - Novala canonical pay stub component
+// Reference: mockup-paystub-asbuilt.html
+// Letter proportion (816 x 1056 at screen scale), Inter, tabular numerals.
 
 const TEAL = "#15A08C";
-const BRAND_DARK = "#0B7377";
 const PAPER = "#FFFFFF";
 const INK = "#1A1A1A";
 const MUTED = "#6B7280";
-const FAINT = "#9CA3AF";
 const LINE = "#E5E7EB";
-const RULE = "#1A1A1A";
 const DASH = "#C9CDD2";
 const MINT_BG = "#E1F5EE";
 const MINT_TEXT = "#0B7377";
+const STAT_AMBER_BG = "#FEF6E7";
 
 // money(1667.9, true)  => "$1,667.90"
 // money(2000)          => "2,000.00"
@@ -53,299 +50,260 @@ const formatDate = (iso) => {
 const styles = {
   paper: {
     background: PAPER,
-    border: "1px solid " + LINE,
-    maxWidth: "640px",
+    width: "100%",
+    maxWidth: "816px",
+    minHeight: "1056px",
     margin: "0 auto",
-    fontFamily: "Inter, 'Plus Jakarta Sans', sans-serif",
-    fontSize: "12px",
+    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    fontSize: "13px",
     color: INK,
     lineHeight: 1.5,
+    boxShadow: "0 4px 20px rgba(16,26,43,.10)",
   },
-  bar: { height: "8px", background: TEAL },
-  label: { fontWeight: 600, letterSpacing: "0.3px" },
-  addrMuted: { color: MUTED },
-  colHead: { textAlign: "right", fontWeight: 600 },
-  colHeadLeft: { textAlign: "left", fontWeight: 600 },
-  ruleRow: { borderBottom: "1px solid " + RULE },
+  bar: { height: "9px", background: TEAL },
+  label: { fontWeight: 700, letterSpacing: "0.3px", fontSize: "12.5px" },
+  muted: { color: MUTED },
+  rule: { borderBottom: "1px solid " + INK },
+  n: { fontVariantNumeric: "tabular-nums" },
+  thH: { fontWeight: 700, textAlign: "right", paddingBottom: "5px", fontSize: "12.5px" },
+  thHL: { fontWeight: 700, textAlign: "left", paddingBottom: "5px", fontSize: "12.5px" },
 };
 
-/**
- * PayStub
- * -------
- * Renders a single pay stub for one employee for one pay run.
- *
- * Expects data prop shape (from GET /paycheques/{id}):
- * {
- *   employer: { name, address_street, address_city, address_province, address_postal_code },
- *   employee_name, employee_address,
- *   pay_period_start, pay_period_end, pay_date,
- *   pay: { lines: [{type, hours, rate, current, ytd}], total: {current, ytd} },
- *   employee_taxes: { lines: [{type, current, ytd}], total: {current, ytd} },
- *   deductions_contributions: { lines: [], total: null },
- *   net_pay,
- *   memo
- * }
- */
 export default function PayStub({ data }) {
   if (!data) return null;
 
   const employer = data.employer || {};
   const employerName = employer.name || "";
+  const employerStreet = employer.address_street || "";
+  const employerCityLine = [employer.address_city, employer.address_province, employer.address_postal_code]
+    .filter(Boolean).join(" ");
 
-  // Format employer address as "street" and "city province postal"
-  const employerLine1 = employer.address_street || "";
-  const employerCityProvPostal = [
-    employer.address_city,
-    employer.address_province,
-    employer.address_postal_code,
-  ].filter(Boolean).join(" ");
-  const employerLine2 = employerCityProvPostal;
-
-  // Employee address - already newline-joined from backend
-  const empAddress = data.employee_address || "";
-  const empAddrLines = empAddress.split("\n").filter(Boolean);
+  const empName = data.employee_name || "";
+  const empAddrLines = String(data.employee_address || "").split("\n").filter(Boolean);
   const empLine1 = empAddrLines[0] || "";
   const empLine2 = empAddrLines[1] || "";
 
-  // Pay period display
   const periodBeginning = formatDate(data.pay_period_start);
   const periodEnding = formatDate(data.pay_period_end);
   const payDate = formatDate(data.pay_date);
 
-  // Total hours - sum from pay lines
-  const totalHours = (data.pay && data.pay.lines || []).reduce((sum, line) => {
-    return sum + (Number(line.hours) || 0);
-  }, 0);
+  const payLines = (data.pay && data.pay.lines) || [];
+  const taxLines = (data.employee_taxes && data.employee_taxes.lines) || [];
+  const deductLines = (data.deductions_contributions && data.deductions_contributions.lines) || [];
 
-  const netPay = Number(data.net_pay) || 0;
-  const memo = data.memo;
-  const hasMemo = memo && memo.trim && memo.trim().length > 0;
+  const payTotal = (data.pay && data.pay.total) || { current: 0, ytd: 0 };
+  const taxTotal = (data.employee_taxes && data.employee_taxes.total) || { current: 0, ytd: 0 };
+  const deductTotal = (data.deductions_contributions && data.deductions_contributions.total) || { current: 0, ytd: 0 };
 
-  // Earnings, taxes, deductions
-  const earnings = (data.pay && data.pay.lines) || [];
-  const taxes = (data.employee_taxes && data.employee_taxes.lines) || [];
-  const deductions = (data.deductions_contributions && data.deductions_contributions.lines) || [];
-
-  // Summary values
-  const totalPayCurrent = Number(data.pay && data.pay.total && data.pay.total.current) || 0;
-  const totalPayYtd = Number(data.pay && data.pay.total && data.pay.total.ytd) || 0;
-  const taxesCurrent = Number(data.employee_taxes && data.employee_taxes.total && data.employee_taxes.total.current) || 0;
-  const taxesYtd = Number(data.employee_taxes && data.employee_taxes.total && data.employee_taxes.total.ytd) || 0;
-  const deductionsCurrent = Number(data.deductions_contributions && data.deductions_contributions.total && data.deductions_contributions.total.current) || 0;
-  const deductionsYtd = Number(data.deductions_contributions && data.deductions_contributions.total && data.deductions_contributions.total.ytd) || 0;
+  const totalHours = payLines.reduce(function (sum, l) { return sum + (Number(l.hours) || 0); }, 0);
+  const netPay = data.net_pay;
+  const memo = data.memo || "";
+  const hasMemo = String(memo).trim().length > 0;
 
   return (
     <div style={styles.paper}>
+
+      {/* 3.1 Leading space */}
+      <div style={{ height: "60px" }} />
+
+      {/* 3.2 First teal bar */}
       <div style={styles.bar} />
 
-      {/* Check-stub header */}
-      <div style={{ padding: "20px 28px 8px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
-            <div style={{ fontWeight: 600 }}>{employerName}</div>
-            {employerLine1 && <div style={styles.addrMuted}>{employerLine1}</div>}
-            {employerLine2 && <div style={styles.addrMuted}>{employerLine2}</div>}
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontWeight: 600 }}>Pay Stub Detail</div>
-            <div style={styles.addrMuted}>PAY DATE: {payDate}</div>
-            <div style={styles.addrMuted}>NET PAY: {money(netPay, true)}</div>
-          </div>
+      {/* 3.3 Header block */}
+      <div style={{ padding: "22px 44px 26px", display: "flex", justifyContent: "space-between", gap: "24px" }}>
+        <div>
+          <div style={{ fontWeight: 700 }}>{employerName}</div>
+          {employerStreet && <div style={styles.muted}>{employerStreet}</div>}
+          {employerCityLine && <div style={styles.muted}>{employerCityLine}</div>}
+
+          <div style={{ marginTop: "20px", fontWeight: 700 }}>{empName}</div>
+          {empLine1 && <div style={styles.muted}>{empLine1}</div>}
+          {empLine2 && <div style={styles.muted}>{empLine2}</div>}
         </div>
-        <div style={{ marginTop: "22px" }}>
-          <div style={{ fontWeight: 600 }}>{data.employee_name}</div>
-          {empLine1 && <div style={styles.addrMuted}>{empLine1}</div>}
-          {empLine2 && <div style={styles.addrMuted}>{empLine2}</div>}
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontWeight: 700 }}>Pay Stub Detail</div>
+          <div style={Object.assign({}, styles.muted, styles.n)}>PAY DATE: {payDate}</div>
+          <div style={Object.assign({}, styles.muted, styles.n)}>NET PAY: {money(netPay, true)}</div>
         </div>
       </div>
 
-      <div style={{ ...styles.bar, marginTop: "12px" }} />
+      {/* 3.4 Second teal bar */}
+      <div style={styles.bar} />
 
-      {/* Detail block */}
-      <div style={{ padding: "22px 28px 4px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "24px" }}>
+      {/* 3.5 Detail block */}
+      <div style={{ padding: "26px 44px 4px" }}>
+
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "36px" }}>
           <div style={{ flex: 1 }}>
             <div style={styles.label}>EMPLOYER</div>
             <div>{employerName}</div>
-            {employerLine1 && <div style={styles.addrMuted}>{employerLine1}</div>}
-            {employerLine2 && <div style={styles.addrMuted}>{employerLine2}</div>}
+            {employerStreet && <div style={styles.muted}>{employerStreet}</div>}
+            {employerCityLine && <div style={styles.muted}>{employerCityLine}</div>}
           </div>
           <div style={{ flex: 1 }}>
             <div style={styles.label}>PAY PERIOD</div>
-            <table style={{ width: "100%" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <tbody>
-                <tr>
-                  <td style={{ color: MUTED, padding: "1px 0" }}>Period Beginning</td>
-                  <td style={{ textAlign: "right" }}>{periodBeginning}</td>
-                </tr>
-                <tr>
-                  <td style={{ color: MUTED, padding: "1px 0" }}>Period Ending</td>
-                  <td style={{ textAlign: "right" }}>{periodEnding}</td>
-                </tr>
-                <tr>
-                  <td style={{ color: MUTED, padding: "1px 0" }}>Pay Date</td>
-                  <td style={{ textAlign: "right" }}>{payDate}</td>
-                </tr>
-                <tr>
-                  <td style={{ color: MUTED, padding: "1px 0" }}>Total Hours</td>
-                  <td style={{ textAlign: "right" }}>{num(totalHours)}</td>
-                </tr>
+                <tr><td style={styles.muted}>Period Beginning</td><td style={Object.assign({ textAlign: "right" }, styles.n)}>{periodBeginning}</td></tr>
+                <tr><td style={styles.muted}>Period Ending</td><td style={Object.assign({ textAlign: "right" }, styles.n)}>{periodEnding}</td></tr>
+                <tr><td style={styles.muted}>Pay Date</td><td style={Object.assign({ textAlign: "right" }, styles.n)}>{payDate}</td></tr>
+                <tr><td style={styles.muted}>Total Hours</td><td style={Object.assign({ textAlign: "right" }, styles.n)}>{num(totalHours)}</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <div style={{ marginTop: "18px" }}>
+        <div style={{ marginTop: "22px" }}>
           <div style={styles.label}>EMPLOYEE</div>
-          <div>{data.employee_name}</div>
-          {empLine1 && <div style={styles.addrMuted}>{empLine1}</div>}
-          {empLine2 && <div style={styles.addrMuted}>{empLine2}</div>}
+          <div>{empName}</div>
+          {empLine1 && <div style={styles.muted}>{empLine1}</div>}
+          {empLine2 && <div style={styles.muted}>{empLine2}</div>}
         </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "20px", paddingTop: "8px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "24px", paddingTop: "8px" }}>
           <div style={styles.label}>NET PAY:</div>
-          <div style={{ fontWeight: 600 }}>{money(netPay, true)}</div>
+          <div style={Object.assign({ fontWeight: 700 }, styles.n)}>{money(netPay, true)}</div>
         </div>
 
         {hasMemo && (
-          <div style={{ marginTop: "14px", ...styles.label }}>MEMO: {memo}</div>
+          <div style={Object.assign({ marginTop: "14px" }, styles.label)}>MEMO: {memo}</div>
         )}
+
       </div>
 
-      <div style={{ borderTop: "1px dashed " + DASH, marginTop: "16px" }} />
+      {/* 3.6 Dashed separator */}
+      <div style={{ borderTop: "1px dashed " + DASH, margin: "20px 44px 0" }} />
 
-      {/* Earnings / taxes / summary grid */}
-      <div style={{ padding: "18px 28px 24px", display: "flex", gap: "28px" }}>
-        {/* Left column: PAY + TAXES */}
+      {/* 3.7 Grid */}
+      <div style={{ padding: "22px 44px 28px", display: "flex", gap: "36px" }}>
+
+        {/* Left column */}
         <div style={{ flex: 1 }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={styles.ruleRow}>
-                <th style={{ ...styles.colHeadLeft, paddingBottom: "4px" }}>PAY</th>
-                <th style={styles.colHead}>Hours</th>
-                <th style={styles.colHead}>Rate</th>
-                <th style={styles.colHead}>Current</th>
-                <th style={styles.colHead}>YTD</th>
+              <tr style={styles.rule}>
+                <th style={styles.thHL}>PAY</th>
+                <th style={styles.thH}>Hours</th>
+                <th style={styles.thH}>Rate</th>
+                <th style={styles.thH}>Current</th>
+                <th style={styles.thH}>YTD</th>
               </tr>
             </thead>
             <tbody>
-              {earnings.map((row, i) => {
+              {payLines.map(function (row, i) {
                 const label = row.type || row.label || "";
                 const isStat = /stat|holiday/i.test(label);
-                const STAT_AMBER_BG = "#FEF6E7";
-                const cellStyle = isStat
-                  ? { background: STAT_AMBER_BG, padding: "10px 6px" }
-                  : { paddingTop: i === 0 ? "5px" : 0 };
                 const subtitle = row.holiday_name || row.subtitle || null;
+                const baseCell = isStat
+                  ? { background: STAT_AMBER_BG, padding: "10px 6px" }
+                  : { paddingTop: i === 0 ? "6px" : "2px", paddingBottom: "2px" };
                 return (
                   <tr key={"pay-" + i}>
-                    <td style={cellStyle}>
+                    <td style={baseCell}>
                       <div style={{ fontWeight: isStat ? 700 : "inherit", color: "#0E1A1A" }}>{label}</div>
                       {isStat && subtitle && (
                         <div style={{ fontSize: 11, color: "#0E1A1A", fontWeight: 700, marginTop: 2 }}>{subtitle}</div>
                       )}
                     </td>
-                    <td style={{ ...cellStyle, textAlign: "right" }}>{num(row.hours)}</td>
-                    <td style={{ ...cellStyle, textAlign: "right" }}>{num(row.rate)}</td>
-                    <td style={{ ...cellStyle, textAlign: "right", fontWeight: isStat ? 700 : "inherit" }}>{money(row.current)}</td>
-                    <td style={{ ...cellStyle, textAlign: "right" }}>{money(row.ytd)}</td>
+                    <td style={Object.assign({}, baseCell, { textAlign: "right" }, styles.n)}>{num(row.hours)}</td>
+                    <td style={Object.assign({}, baseCell, { textAlign: "right" }, styles.n)}>{num(row.rate)}</td>
+                    <td style={Object.assign({}, baseCell, { textAlign: "right", fontWeight: isStat ? 700 : "inherit" }, styles.n)}>{money(row.current)}</td>
+                    <td style={Object.assign({}, baseCell, { textAlign: "right" }, styles.n)}>{money(row.ytd)}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
 
-          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "48px" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "56px" }}>
             <thead>
-              <tr style={styles.ruleRow}>
-                <th style={{ ...styles.colHeadLeft, paddingBottom: "4px" }}>TAXES</th>
-                <th style={styles.colHead}>Current</th>
-                <th style={styles.colHead}>YTD</th>
+              <tr style={styles.rule}>
+                <th style={styles.thHL}>TAXES</th>
+                <th style={styles.thH}>Current</th>
+                <th style={styles.thH}>YTD</th>
               </tr>
             </thead>
             <tbody>
-              {taxes.map((row, i) => (
-                <tr key={"tax-" + i}>
-                  <td style={{ paddingTop: i === 0 ? "5px" : 0 }}>{row.type || row.label}</td>
-                  <td style={{ textAlign: "right" }}>{money(row.current)}</td>
-                  <td style={{ textAlign: "right" }}>{money(row.ytd)}</td>
-                </tr>
-              ))}
+              {taxLines.map(function (row, i) {
+                const label = row.type || row.label || "";
+                return (
+                  <tr key={"tax-" + i}>
+                    <td style={{ paddingTop: i === 0 ? "6px" : "2px", paddingBottom: "2px" }}>{label}</td>
+                    <td style={Object.assign({ textAlign: "right", paddingTop: i === 0 ? "6px" : "2px", paddingBottom: "2px" }, styles.n)}>{money(row.current)}</td>
+                    <td style={Object.assign({ textAlign: "right", paddingTop: i === 0 ? "6px" : "2px", paddingBottom: "2px" }, styles.n)}>{money(row.ytd)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* Right column: DEDUCTIONS + SUMMARY + Net Pay bar */}
+        {/* Right column */}
         <div style={{ flex: 1 }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={styles.ruleRow}>
-                <th style={{ ...styles.colHeadLeft, paddingBottom: "4px" }}>DEDUCTIONS</th>
-                <th style={styles.colHead}>Current</th>
-                <th style={styles.colHead}>YTD</th>
+              <tr style={styles.rule}>
+                <th style={styles.thHL}>DEDUCTIONS</th>
+                <th style={styles.thH}>Current</th>
+                <th style={styles.thH}>YTD</th>
               </tr>
             </thead>
             <tbody>
-              {deductions.length === 0 ? (
+              {deductLines.length === 0 ? (
                 <tr>
-                  <td style={{ paddingTop: "5px", color: FAINT }}>None</td>
-                  <td />
-                  <td />
+                  <td style={Object.assign({ paddingTop: "6px" }, styles.muted)}>None</td>
+                  <td></td>
+                  <td></td>
                 </tr>
-              ) : (
-                deductions.map((row, i) => (
+              ) : deductLines.map(function (row, i) {
+                const label = row.type || row.label || "";
+                return (
                   <tr key={"ded-" + i}>
-                    <td style={{ paddingTop: i === 0 ? "5px" : 0 }}>{row.type || row.label}</td>
-                    <td style={{ textAlign: "right" }}>{money(row.current)}</td>
-                    <td style={{ textAlign: "right" }}>{money(row.ytd)}</td>
+                    <td style={{ paddingTop: i === 0 ? "6px" : "2px", paddingBottom: "2px" }}>{label}</td>
+                    <td style={Object.assign({ textAlign: "right", paddingTop: i === 0 ? "6px" : "2px", paddingBottom: "2px" }, styles.n)}>{money(row.current)}</td>
+                    <td style={Object.assign({ textAlign: "right", paddingTop: i === 0 ? "6px" : "2px", paddingBottom: "2px" }, styles.n)}>{money(row.ytd)}</td>
                   </tr>
-                ))
-              )}
+                );
+              })}
             </tbody>
           </table>
 
-          <div style={{ marginTop: "48px", border: "1px solid " + RULE }}>
+          <div style={{ border: "1px solid " + LINE, marginTop: "52px" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={styles.ruleRow}>
-                  <th style={{ textAlign: "left", fontWeight: 600, padding: "5px 10px" }}>SUMMARY</th>
-                  <th style={{ textAlign: "right", fontWeight: 600, padding: "5px 10px" }}>Current</th>
-                  <th style={{ textAlign: "right", fontWeight: 600, padding: "5px 10px" }}>YTD</th>
+                <tr style={{ borderBottom: "1px solid " + LINE }}>
+                  <th style={Object.assign({}, styles.thHL, { padding: "9px 12px" })}>SUMMARY</th>
+                  <th style={Object.assign({}, styles.thH, { padding: "9px 12px" })}>Current</th>
+                  <th style={Object.assign({}, styles.thH, { padding: "9px 12px" })}>YTD</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td style={{ padding: "3px 10px" }}>Total Pay</td>
-                  <td style={{ textAlign: "right", padding: "3px 10px" }}>{money(totalPayCurrent, true)}</td>
-                  <td style={{ textAlign: "right", padding: "3px 10px" }}>{money(totalPayYtd, true)}</td>
+                  <td style={{ padding: "6px 12px" }}>Total Pay</td>
+                  <td style={Object.assign({ padding: "6px 12px", textAlign: "right" }, styles.n)}>{money(payTotal.current, true)}</td>
+                  <td style={Object.assign({ padding: "6px 12px", textAlign: "right" }, styles.n)}>{money(payTotal.ytd, true)}</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: "3px 10px" }}>Taxes</td>
-                  <td style={{ textAlign: "right", padding: "3px 10px" }}>{money(taxesCurrent, true)}</td>
-                  <td style={{ textAlign: "right", padding: "3px 10px" }}>{money(taxesYtd, true)}</td>
+                  <td style={{ padding: "6px 12px" }}>Taxes</td>
+                  <td style={Object.assign({ padding: "6px 12px", textAlign: "right" }, styles.n)}>{money(taxTotal.current, true)}</td>
+                  <td style={Object.assign({ padding: "6px 12px", textAlign: "right" }, styles.n)}>{money(taxTotal.ytd, true)}</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: "3px 10px" }}>Deductions</td>
-                  <td style={{ textAlign: "right", padding: "3px 10px" }}>{money(deductionsCurrent, true)}</td>
-                  <td style={{ textAlign: "right", padding: "3px 10px" }}>{money(deductionsYtd, true)}</td>
+                  <td style={{ padding: "6px 12px" }}>Deductions</td>
+                  <td style={Object.assign({ padding: "6px 12px", textAlign: "right" }, styles.n)}>{money((deductTotal && deductTotal.current) || 0, true)}</td>
+                  <td style={Object.assign({ padding: "6px 12px", textAlign: "right" }, styles.n)}>{money((deductTotal && deductTotal.ytd) || 0, true)}</td>
                 </tr>
               </tbody>
             </table>
-          </div>
-
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginTop: "10px",
-            padding: "8px 10px",
-            background: MINT_BG,
-          }}>
-            <span style={{ fontWeight: 600, color: MINT_TEXT }}>Net Pay</span>
-            <span style={{ fontWeight: 600, color: MINT_TEXT }}>{money(netPay, true)}</span>
+            <div style={{ display: "flex", justifyContent: "space-between", background: MINT_BG, padding: "10px 12px" }}>
+              <div style={{ fontWeight: 700, color: MINT_TEXT }}>Net Pay</div>
+              <div style={Object.assign({ fontWeight: 700, color: MINT_TEXT }, styles.n)}>{money(netPay, true)}</div>
+            </div>
           </div>
         </div>
+
       </div>
+
     </div>
   );
 }
