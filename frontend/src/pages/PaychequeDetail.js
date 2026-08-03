@@ -205,10 +205,10 @@ export default function PaychequeDetail() {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.detail || "Could not delete paycheque");
     }
-    navigate("/payroll/paycheques");
+    navigate(-1);
   };
 
-  const close = () => navigate("/payroll/paycheques");
+  const close = () => navigate(-1);
 
   const totalDeductions = useMemo(() => {
     if (!pc || !pc.deductions_contributions || !pc.deductions_contributions.total) return 0;
@@ -433,7 +433,7 @@ export default function PaychequeDetail() {
         </div>
       </div>
 
-      <div style={{ padding: "12px 24px", borderTop: "0.5px solid " + BORDER, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: BG_CARD }}>
+      <div className="no-print" style={{ padding: "12px 24px", borderTop: "0.5px solid " + BORDER, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: BG_CARD, position: "fixed", bottom: 0, left: 0, right: 0, boxShadow: "0 -4px 12px rgba(0,0,0,0.06)", zIndex: 100 }}>
         <button onClick={close} style={{ fontSize: 12, padding: "8px 16px", borderRadius: 5, background: "white", color: TEXT_PRIMARY, border: "0.5px solid " + BORDER, cursor: "pointer", fontWeight: 500, fontFamily: "inherit" }}>Close</button>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={() => alert("Transaction journal coming soon")} style={{ fontSize: 12, padding: "8px 14px", borderRadius: 5, background: "white", color: BRAND, border: "0.5px solid " + BRAND, cursor: "pointer", fontWeight: 500, fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 5 }}>
