@@ -1,463 +1,355 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { HelpCircle, X, Check, CreditCard, Receipt, ChevronDown, Search } from "lucide-react";
-
-const FONT = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
-const API = "https://api.getnovala.com";
+import { useNavigate, useParams } from "react-router-dom";
+import { Check, FileSearch, ArrowLeft } from "lucide-react";
 
 const C = {
-  ink: "#12262B", teal: "#15A08C", tealDark: "#0F8474", tealInk: "#0E8A78", tealSoft: "#E3F4F0",
-  text: "#1B2533", muted: "#66748B", faint: "#94A0B2", line: "#E7EAF0", lineSoft: "#F1F3F7",
-  surface: "#F4F6F8",
+  ink: "#12262B",
+  inkDark: "#0E1A1A",
+  brand: "#15A08C",
+  brandDark: "#0F6E56",
+  brandBg: "#E1F5EE",
+  page: "#F4F6F8",
+  card: "#FFFFFF",
+  line: "#E7EAF0",
 };
 
-const num = { fontVariantNumeric: "tabular-nums", fontFeatureSettings: '"tnum" 1' };
+const FONT = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+const tabular = { fontVariantNumeric: "tabular-nums" };
+const API = "https://api.getnovala.com";
 
-const fmtMoney = (amount, currency = "CAD") =>
-  new Intl.NumberFormat("en-CA", { style: "currency", currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(amount || 0));
+function getToken() {
+  return localStorage.getItem("access_token") || localStorage.getItem("token") || "";
+}
 
-// TODO: replace PLACEHOLDER_RUN with a fetch by payRunId once the finalized-run API is live.
-const PLACEHOLDER_RUN = {
-  schedule: "Semi-monthly: 15th and End of Month",
-  periodLabel: "15 Jun to 30 Jun", payDate: "30/06/2026", deliverBy: "Tuesday, 30 Jun",
-  employeesPaid: 1, employeeTakeHome: 24.59, totalCost: 25.57,
-  chequeCount: 1, depositCount: 0, employeeTax: 0.41, employerTax: 0.57, agency: "CRA", currency: "CAD",
-  employees: [{
-    id: "emp-1", name: "Kemanzi, Claire", paymentMethod: "Paper cheque", isCheque: true,
-    netPay: 24.59, address: "8460 106A Avenue NW", addressLine2: "Edmonton, AB T5H 0S4",
-    paidFrom: "BrightCare RBC Chequing", paidBy: "Cheque ($24.59)",
-    grossPay: 25.00, employeeDeductions: 0.41, employerCost: 0.57,
-    payLines: [{ type: "Regular Pay", hours: 1.00, rate: 25.00, current: 25.00, ytd: 2300.00 }],
-    employeeTaxes: [
-      { type: "Canada Pension Plan", current: 0.00, ytd: 118.01 },
-      { type: "Employment Insurance", current: 0.41, ytd: 37.50 },
-      { type: "Income Tax", current: 0.00, ytd: 156.77 },
-      { type: "Second Canada Pension Plan", current: 0.00, ytd: 0.00 },
-    ],
-    employerContributions: [
-      { type: "Employment Insurance Employer", current: 0.57, ytd: 52.50 },
-      { type: "Canada Pension Plan Employer", current: 0.00, ytd: 118.01 },
-      { type: "Second Canada Pension Plan Employer", current: 0.00, ytd: 0.00 },
-    ],
-  }],
-};
+function fmtMoney(n) {
+  const v = Number(n) || 0;
+  return "$" + v.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtDate(iso) {
+  if (!iso) return "";
+  const parts = String(iso).split("-");
+  return parts[2] + "/" + parts[1] + "/" + parts[0];
+}
+
+function fmtDateFull(iso) {
+  if (!iso) return "";
+  const dt = new Date(iso + "T00:00:00");
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return days[dt.getDay()] + ", " + fmtDate(iso);
+}
+
+function scheduleFrequencyLabel(freq) {
+  if (!freq) return "";
+  const map = {
+    weekly: "Weekly",
+    biweekly: "Biweekly",
+    semimonthly: "Semi-monthly",
+    monthly: "Monthly",
+  };
+  return map[freq] || freq;
+}
 
 export default function PayrollDone() {
-  const navigate = useNavigate();
   const { payRunId } = useParams();
-  const location = useLocation();
+  const navigate = useNavigate();
 
-  const [runState, setRunState] = useState(null);
-  const [loadingRun, setLoadingRun] = useState(true);
-  const [runError, setRunError] = useState(null);
+  const [run, setRun] = useState(null);
+  const [employees, setEmployees] = useState([]);
+  const [totals, setTotals] = useState(null);
+  const [schedule, setSchedule] = useState(null);
+  const [payrollSettings, setPayrollSettings] = useState(null);
+  const [chequeNumbers, setChequeNumbers] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
+  useEffect(function() {
     let cancelled = false;
-    async function loadDoneView() {
-      const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+    async function fetchAll() {
+      const token = getToken();
+      const headers = { "Authorization": "Bearer " + token, "Content-Type": "application/json" };
       try {
-        const resp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/done-view", {
-          headers: { "Authorization": "Bearer " + token }
-        });
-        if (!resp.ok) {
-          const errText = await resp.text();
-          if (!cancelled) {
-            setRunError("Failed to load pay run: " + errText);
-            setLoadingRun(false);
-          }
+        const [doneRes, settingsRes] = await Promise.all([
+          fetch(API + "/api/v1/payroll/runs/" + payRunId + "/done-view", { headers }).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+          fetch(API + "/api/v1/payroll/settings", { headers }).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+        ]);
+        if (cancelled) return;
+
+        if (!doneRes) {
+          setError("Could not load payroll run.");
+          setLoading(false);
           return;
         }
-        const data = await resp.json();
-        // Transform /done-view response into the run shape the JSX expects
-        const employees = (data.employees || []).map((e) => ({
-          id: e.stub_id,
-          name: e.name,
-          paymentMethod: e.payment_method,
-          isCheque: e.is_cheque,
-          netPay: Number(e.net_pay),
-          address: e.address_line1 || "",
-          addressLine2: e.address_line2 || "",
-          paidFrom: e.paid_from,
-          paidBy: e.paid_by,
-          grossPay: Number(e.gross_pay),
-          employeeDeductions: Number(e.employee_deductions),
-          employerCost: Number(e.employer_cost),
-          memo: e.memo,
-          payLines: (e.pay_lines || []).map((p) => ({
-            type: p.type,
-            hours: Number(p.hours),
-            rate: Number(p.rate),
-            current: Number(p.current),
-            ytd: Number(p.ytd),
-          })),
-          employeeTaxes: (e.employee_taxes || []).map((t) => ({
-            type: t.type,
-            current: Number(t.current),
-            ytd: Number(t.ytd),
-          })),
-          employerContributions: (e.employer_contributions || []).map((t) => ({
-            type: t.type,
-            current: Number(t.current),
-            ytd: Number(t.ytd),
-          })),
-        }));
-        const totals = data.totals || {};
-        const runObj = {
-          schedule: "Bi-weekly",
-          periodLabel: (data.run.pay_period_start || "") + " to " + (data.run.pay_period_end || ""),
-          payDate: data.run.pay_date,
-          deliverBy: data.run.pay_date,
-          employeesPaid: totals.employees_paid || employees.length,
-          employeeTakeHome: Number(totals.employee_take_home),
-          totalCost: Number(totals.total_cost),
-          chequeCount: totals.cheque_count || 0,
-          depositCount: totals.deposit_count || 0,
-          employeeTax: Number(totals.employee_tax),
-          employerTax: Number(totals.employer_tax),
-          agency: "CRA",
-          currency: data.run.currency || "CAD",
-          employees: employees,
-        };
-        if (!cancelled) {
-          setRunState(runObj);
-          setLoadingRun(false);
+
+        setRun(doneRes.run);
+        setEmployees(doneRes.employees || []);
+        setTotals(doneRes.totals);
+        setPayrollSettings(settingsRes);
+
+        if (doneRes.run && doneRes.run.pay_schedule_id) {
+          fetch(API + "/api/v1/payroll/schedules/" + doneRes.run.pay_schedule_id, { headers })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(sched) { if (sched) setSchedule(sched); })
+            .catch(function() {});
         }
+
+        setLoading(false);
       } catch (e) {
         if (!cancelled) {
-          setRunError("Network error: " + (e.message || String(e)));
-          setLoadingRun(false);
+          setError(String((e && e.message) || e));
+          setLoading(false);
         }
       }
     }
-    loadDoneView();
-    return () => { cancelled = true; };
+    fetchAll();
+    return function() { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payRunId]);
 
-  const run = runState || PLACEHOLDER_RUN;
-  const currency = run.currency || "CAD";
+  function saveChequeNumber(stubId, num) {
+    setChequeNumbers(function(prev) {
+      const next = Object.assign({}, prev);
+      next[stubId] = num;
+      return next;
+    });
+  }
 
-  const [activePaystub, setActivePaystub] = useState(null);
-  const [chequeNumbers, setChequeNumbers] = useState({});
-  const [sectionsOpen, setSectionsOpen] = useState({ pay: true, employee: true, employer: true });
-  const [memo, setMemo] = useState("");
-  const [showHeader, setShowHeader] = useState(true);
+  if (loading) {
+    return (
+      <div style={{ padding: "40px 32px", background: C.page, minHeight: "100vh", fontFamily: FONT }}>
+        <div style={{ fontSize: 15, color: C.ink, fontWeight: 500 }}>Loading pay run...</div>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    const handler = (e) => { if (e.key === "Escape" && activePaystub) setActivePaystub(null); };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [activePaystub]);
+  if (error || !run || !totals) {
+    return (
+      <div style={{ padding: "40px 32px", background: C.page, minHeight: "100vh", fontFamily: FONT }}>
+        <div style={{ fontSize: 18, color: C.ink, fontWeight: 700, marginBottom: 8 }}>Could not load this pay run.</div>
+        <div style={{ fontSize: 14, color: C.ink, fontWeight: 500, marginBottom: 20 }}>{error || "Unknown error"}</div>
+        <button onClick={function() { navigate("/payroll/overview"); }} style={{ padding: "10px 16px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Back to Payroll</button>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    document.body.style.overflow = activePaystub ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [activePaystub]);
+  const chequeCount = totals.cheque_count || 0;
+  const empsPaid = totals.employees_paid || 0;
+  const empWord = empsPaid === 1 ? "employee" : "employees";
+  const chequeWord = chequeCount === 1 ? "cheque" : "cheques";
+  const takeHome = Number(totals.employee_take_home || 0);
+  const totalCost = Number(totals.total_cost || 0);
+  const employeeTax = Number(totals.employee_tax || 0);
+  const employerTax = Number(totals.employer_tax || 0);
+  const craTotal = employeeTax + employerTax;
 
-  const saveStubMemo = async (stubId, memoText) => {
-    if (!stubId) return;
-    const token = localStorage.getItem("access_token") || localStorage.getItem("token");
-    try {
-      await fetch(API + "/api/v1/payroll/stubs/" + stubId + "/memo", {
-        method: "PATCH",
-        headers: {
-          "Authorization": "Bearer " + token,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ memo: memoText || "" })
-      });
-    } catch (e) {
-      console.error("Failed to save memo", e);
-    }
-  };
-
-  const totalRemittance = (run.employeeTax || 0) + (run.employerTax || 0);
-  const empWord = run.employeesPaid === 1 ? "employee" : "employees";
-  const chequeWord = run.chequeCount === 1 ? "cheque" : "cheques";
+  const postingAccount = (payrollSettings && payrollSettings.company_bank_name) || "Not set";
+  const scheduleFreq = schedule ? scheduleFrequencyLabel(schedule.frequency) : "";
+  const scheduleName = schedule ? (schedule.name || scheduleFreq) : "";
 
   return (
-    <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text, paddingTop: 0, paddingBottom: 140, overflowY: "auto" }}>
-      <div>
-        {showHeader && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 40px", borderBottom: "1px solid " + C.line, background: "#fff", position: "sticky", top: 0, zIndex: 4 }}>
+    <div style={{ maxWidth: "100%", margin: 0, padding: "28px 32px 110px", fontFamily: FONT, background: C.page, minHeight: "100vh" }}>
+      <div style={{ background: C.card, borderRadius: 12, padding: "40px 48px" }}>
+
+        {/* Breadcrumb */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.ink, marginBottom: 14 }}>
+          <a onClick={function() { navigate("/payroll/overview"); }} style={{ color: C.ink, fontWeight: 600, textDecoration: "none", opacity: 0.7, cursor: "pointer" }}>Payroll</a>
+          <span style={{ color: C.ink, opacity: 0.4 }}>/</span>
+          <a onClick={function() { navigate("/payroll/overview"); }} style={{ color: C.ink, fontWeight: 600, textDecoration: "none", opacity: 0.7, cursor: "pointer" }}>Pay runs</a>
+          <span style={{ color: C.ink, opacity: 0.4 }}>/</span>
+          <span style={{ color: C.ink, fontWeight: 700 }}>Payroll complete</span>
+        </div>
+
+        {/* Title with success checkmark + FINALIZED badge */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 40 }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.13em", textTransform: "uppercase", color: C.faint, marginBottom: 4 }}>Run payroll</div>
-            <h1 style={{ fontSize: 18, fontWeight: 600, color: C.ink, margin: 0 }}>{run.schedule}</h1>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: C.brand, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Check size={22} strokeWidth={3} stroke={C.card} />
+              </div>
+              <div style={{ fontSize: 34, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", lineHeight: 1 }}>Payroll complete</div>
+            </div>
+            <div style={{ fontSize: 14, color: C.ink, fontWeight: 500 }}>
+              You paid <strong>{empsPaid} {empWord}</strong> for the pay period ending {fmtDate(run.pay_period_end)}.
+            </div>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button style={iconBtnStyle} title="Help"><HelpCircle size={17} /></button>
-            <button style={iconBtnStyle} title="Close" onClick={() => setShowHeader(false)}><X size={16} /></button>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: C.brandBg, borderRadius: 6, fontSize: 12, color: C.brandDark, fontWeight: 700 }}>
+            <span style={{ width: 6, height: 6, background: C.brand, borderRadius: "50%" }} />
+            FINALIZED
           </div>
         </div>
-        )}
 
-        <div style={{ background: "linear-gradient(180deg, #F0FAF7, " + C.surface + ")", padding: "46px 40px", display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-            <div style={{ width: 64, height: 64, borderRadius: "50%", background: C.teal, display: "grid", placeItems: "center", flex: "0 0 64px", boxShadow: "0 8px 24px rgba(21,160,140,0.32)" }}>
-              <Check size={32} color="#fff" strokeWidth={3} />
+        {/* Meta info */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32, paddingBottom: 32, borderBottom: "1px solid " + C.line, marginBottom: 40 }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>PAY SCHEDULE</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{scheduleName || "Not set"}</div>
+            {scheduleFreq && scheduleName !== scheduleFreq && (
+              <div style={{ fontSize: 12, color: C.ink, fontWeight: 500, marginTop: 2 }}>{scheduleFreq}</div>
+            )}
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>PAY PERIOD</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, ...tabular }}>{fmtDate(run.pay_period_start)} to {fmtDate(run.pay_period_end)}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>PAY DATE</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, ...tabular }}>{fmtDateFull(run.pay_date)}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>POSTING ACCOUNT</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{postingAccount}</div>
+          </div>
+        </div>
+
+        {/* Total cost + Employees Paid side by side */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.6fr auto 1fr", gap: 40, marginBottom: 40, alignItems: "flex-start" }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>TOTAL PAYROLL COST</div>
+            <div style={{ fontSize: 56, fontWeight: 700, color: C.ink, letterSpacing: "-0.03em", lineHeight: 1, ...tabular }}>{fmtMoney(totalCost)}</div>
+          </div>
+          <div style={{ width: 1, height: 96, background: C.line, marginTop: 20 }} />
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>EMPLOYEES PAID</div>
+            <div style={{ fontSize: 56, fontWeight: 700, color: C.ink, letterSpacing: "-0.03em", lineHeight: 1, ...tabular }}>{empsPaid}</div>
+          </div>
+        </div>
+
+        {/* Option D split */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 40, paddingTop: 28, paddingBottom: 40, borderTop: "1px solid " + C.line, borderBottom: "1px solid " + C.line, marginBottom: 40, alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: 11, color: C.ink, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.7, marginBottom: 8 }}>PAID TO EMPLOYEES</div>
+            <div style={{ fontSize: 32, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", lineHeight: 1, ...tabular, marginBottom: 6 }}>{fmtMoney(takeHome)}</div>
+            <div style={{ fontSize: 12, color: C.ink, fontWeight: 500 }}>Net pay after deductions</div>
+          </div>
+          <div style={{ width: 1, height: 90, background: C.line }} />
+          <div>
+            <div style={{ fontSize: 11, color: C.ink, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.7, marginBottom: 8 }}>OWED TO CRA</div>
+            <div style={{ fontSize: 32, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", lineHeight: 1, ...tabular, marginBottom: 6 }}>{fmtMoney(craTotal)}</div>
+            <div style={{ fontSize: 12, color: C.ink, fontWeight: 500 }}>Employee {fmtMoney(employeeTax)} + Employer {fmtMoney(employerTax)}</div>
+          </div>
+        </div>
+
+        {/* What's next */}
+        <div style={{ marginBottom: 40 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: C.ink, marginBottom: 20, paddingBottom: 12, borderBottom: "1.5px solid " + C.ink }}>What's next</div>
+
+          {chequeCount > 0 && (
+            <div style={{ padding: "20px 0", borderBottom: "1px solid " + C.line, display: "flex", alignItems: "flex-start", gap: 16 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: C.ink, color: C.card, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, flexShrink: 0 }}>1</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 4 }}>Write {chequeCount} {chequeWord}</div>
+                <div style={{ fontSize: 13, color: C.ink, fontWeight: 500, lineHeight: 1.5 }}>Deliver to your {empWord} by <strong>{fmtDateFull(run.pay_date)}</strong>. Enter the cheque number in the table below.</div>
+                <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+                  <button onClick={function() { window.print(); }} style={{ padding: "8px 14px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 8, color: C.ink, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Print pay stubs</button>
+                </div>
+              </div>
             </div>
-            <div>
-              <h2 style={{ fontSize: 30, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em", margin: 0 }}>Payroll is done!</h2>
-              <div style={{ fontSize: 14, color: C.muted, marginTop: 4 }}>You paid {run.employeesPaid} {empWord} for the {run.periodLabel} pay period.</div>
+          )}
+
+          <div style={{ padding: "20px 0", display: "flex", alignItems: "flex-start", gap: 16 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: C.ink, color: C.card, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, flexShrink: 0 }}>{chequeCount > 0 ? 2 : 1}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 4 }}>Remit {fmtMoney(craTotal)} in taxes to CRA</div>
+              <div style={{ fontSize: 13, color: C.ink, fontWeight: 500, lineHeight: 1.5 }}>{fmtMoney(employeeTax)} withheld from {empWord} plus {fmtMoney(employerTax)} in employer contributions. Novala tracks this on your payroll liabilities.</div>
+              <div style={{ marginTop: 12 }}>
+                <button onClick={function() { navigate("/compliance"); }} style={{ padding: "8px 14px", background: "transparent", border: "none", color: C.brandDark, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>View liabilities</button>
+              </div>
             </div>
           </div>
-          {run.chequeCount > 0 ? (
-            <div style={pillStyle}>
-              <div style={pillTitleStyle}><CreditCard size={16} color={C.tealInk} />{run.chequeCount} {chequeWord} to write</div>
-              <div style={{ fontSize: 12.5, color: C.muted, marginTop: 4 }}>Deliver to your {empWord} by <b style={{ color: C.ink, fontWeight: 600 }}>{run.deliverBy}</b>.</div>
-            </div>
+        </div>
+
+        {/* Paid this run table */}
+        <div style={{ marginBottom: 40 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: C.ink, marginBottom: 20, paddingBottom: 12, borderBottom: "1.5px solid " + C.ink }}>Paid this run ({employees.length})</div>
+
+          {employees.length === 0 ? (
+            <div style={{ padding: "24px 0", fontSize: 14, color: C.ink, fontWeight: 500 }}>No employees in this pay run.</div>
           ) : (
-            <div style={pillStyle}>
-              <div style={pillTitleStyle}><CreditCard size={16} color={C.tealInk} />Direct deposits on the way</div>
-              <div style={{ fontSize: 12.5, color: C.muted, marginTop: 4 }}>Arriving by <b style={{ color: C.ink, fontWeight: 600 }}>{run.deliverBy}</b>.</div>
-            </div>
+            <>
+              <div style={{ padding: "12px 0", display: "grid", gridTemplateColumns: "40px 1.4fr 160px 160px 200px", gap: 12, fontSize: 10, fontWeight: 700, color: C.ink, letterSpacing: "0.08em", textTransform: "uppercase", borderBottom: "1px solid " + C.line }}>
+                <div></div>
+                <div>EMPLOYEE NAME</div>
+                <div>PAYMENT METHOD</div>
+                <div style={{ textAlign: "right" }}>NET PAY</div>
+                <div>CHEQUE NUMBER</div>
+              </div>
+
+              {employees.map(function(emp) {
+                return (
+                  <div key={emp.stub_id} style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "40px 1.4fr 160px 160px 200px", gap: 12, alignItems: "center", borderBottom: "1px solid " + C.line, fontSize: 14, color: C.ink }}>
+                    <div>
+                      <div style={{ width: 20, height: 20, borderRadius: 5, background: C.brand, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Check size={12} strokeWidth={3.5} stroke={C.card} />
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700 }}>{emp.name}</div>
+                      {emp.position_title && (
+                        <div style={{ fontSize: 12, color: C.ink, fontWeight: 500, marginTop: 2 }}>{emp.position_title}</div>
+                      )}
+                    </div>
+                    <div>
+                      <span style={{ fontSize: 10.5, color: C.ink, fontWeight: 700, padding: "3px 8px", background: C.page, borderRadius: 5, textTransform: "uppercase" }}>{emp.payment_method || "Cheque"}</span>
+                    </div>
+                    <div style={{ textAlign: "right", fontWeight: 700, fontSize: 15, ...tabular, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 }}>
+                      {fmtMoney(emp.net_pay)}
+                      <button
+                        onClick={function() { window.open("/payroll/pay-stub/" + emp.stub_id, "_blank"); }}
+                        title="View pay stub"
+                        aria-label="View pay stub"
+                        style={{ background: "transparent", border: "none", padding: 4, borderRadius: 6, cursor: "pointer", color: "#66748B", display: "inline-flex", alignItems: "center" }}
+                      >
+                        <FileSearch size={16} strokeWidth={2} />
+                      </button>
+                    </div>
+                    <div>
+                      {emp.is_cheque && (
+                        <input
+                          value={chequeNumbers[emp.stub_id] || ""}
+                          onChange={function(e) { saveChequeNumber(emp.stub_id, e.target.value); }}
+                          placeholder="Enter cheque number"
+                          style={{ width: "100%", border: "1.5px solid " + C.ink, borderRadius: 8, padding: "8px 12px", fontSize: 13, color: C.ink, background: C.card, fontFamily: FONT }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
           )}
         </div>
 
-        <div style={{ padding: "28px 40px 0" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 26 }}>
-            <Tile k="Employees paid" v={run.employeesPaid} />
-            <Tile k="Employee take-home" v={fmtMoney(run.employeeTakeHome, currency)} />
-            <Tile k="Total payroll cost" v={fmtMoney(run.totalCost, currency)} />
-            <Tile k="Pay date" v={run.payDate} />
-          </div>
-
-          <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 14, padding: "6px 4px", marginBottom: 28, overflow: "hidden" }}>
-            {run.chequeCount > 0 && (
-              <NextRow Icon={CreditCard} title={"Write " + run.chequeCount + " " + chequeWord}
-                detail={<>Deliver the cheque to your {empWord} by <b style={{ color: C.ink, fontWeight: 600 }}>{run.deliverBy}</b>. Enter the cheque number in the table below.</>}
-                actions={<><button style={btnGhost}>Print pay stubs</button><button style={btnText}>Set up cheque printing</button></>} />
-            )}
-            <NextRow Icon={Receipt} title={"Remit " + fmtMoney(totalRemittance, currency) + " in taxes to " + run.agency}
-              detail={<>{fmtMoney(run.employeeTax, currency)} withheld from the {empWord} plus {fmtMoney(run.employerTax, currency)} in employer contributions. Novala tracks this on your payroll liabilities.</>}
-              actions={<button style={btnText}>View liabilities</button>} />
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "4px 2px 12px" }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: C.ink, margin: 0 }}>Paid this run</h3>
-          </div>
-          <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 2px rgba(16,26,43,0.04)" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
-              <thead>
-                <tr>
-                  <th style={{ ...thStyle, textAlign: "left", width: 40 }}></th>
-                  <th style={{ ...thStyle, textAlign: "left" }}>Name ({run.employeesPaid} of {run.employees.length})</th>
-                  <th style={{ ...thStyle, textAlign: "left" }}>Payment method</th>
-                  <th style={thStyle}>Net pay</th>
-                  <th style={{ ...thStyle, textAlign: "left" }}>Cheque number</th>
-                </tr>
-              </thead>
-              <tbody>
-                {run.employees.map((emp) => (
-                  <tr key={emp.id}>
-                    <td style={{ ...tdStyle, textAlign: "left" }}>
-                      <span style={{ width: 18, height: 18, borderRadius: 5, border: "1.5px solid " + C.teal, background: C.teal, display: "inline-grid", placeItems: "center" }}>
-                        <Check size={12} color="#fff" strokeWidth={3} />
-                      </span>
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: "left" }}><span style={{ fontWeight: 600, color: C.ink, fontSize: 14 }}>{emp.name}</span></td>
-                    <td style={{ ...tdStyle, textAlign: "left" }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "#EEF1F5", color: "#51627A" }}>{emp.paymentMethod}</span>
-                    </td>
-                    <td style={{ ...tdStyle, ...num }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "flex-end" }}>
-                        {fmtMoney(emp.netPay, currency)}
-                        <button onClick={() => { setActivePaystub(emp); setMemo(emp.memo || ""); }} title="View paystub" aria-label="View paystub"
-                          style={{ width: 26, height: 26, borderRadius: 7, border: "1px solid " + C.line, background: "#fff", color: C.muted, cursor: "pointer", display: "inline-grid", placeItems: "center" }}>
-                          <Search size={15} />
-                        </button>
-                      </span>
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: "left" }}>
-                      {emp.isCheque && (
-                        <input value={chequeNumbers[emp.id] || ""} onChange={(e) => setChequeNumbers((s) => ({ ...s, [emp.id]: e.target.value }))} placeholder="Cheque number"
-                          style={{ width: 150, border: "1px solid " + C.line, borderRadius: 9, padding: "8px 11px", fontFamily: FONT, fontSize: 13.5, color: C.ink }} />
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: "#fff", borderTop: "1px solid " + C.line, padding: "16px 40px 16px 260px", display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 5, boxShadow: "0 -4px 16px rgba(16,26,43,0.05)" }}>
-        <button style={btnGhost}>Download payroll reports</button>
-        <button style={btnPrimary} onClick={() => navigate("/payroll/overview")}>Done</button>
-      </div>
-
-      {activePaystub && <PaystubOverlay emp={activePaystub} run={run} currency={currency}
-        sectionsOpen={sectionsOpen} toggleSection={(k) => setSectionsOpen((s) => ({ ...s, [k]: !s[k] }))}
-        memo={memo} setMemo={setMemo} saveMemo={(m) => saveStubMemo(activePaystub && activePaystub.id, m)} onClose={() => setActivePaystub(null)} />}
-    </div>
-  );
-}
-
-function Tile({ k, v }) {
-  return (
-    <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 14, padding: "18px 20px", boxShadow: "0 1px 2px rgba(16,26,43,0.03)" }}>
-      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", color: C.faint, marginBottom: 8 }}>{k}</div>
-      <div style={{ fontSize: 23, fontWeight: 600, color: C.ink, letterSpacing: "-0.01em", ...num }}>{v}</div>
-    </div>
-  );
-}
-
-function NextRow({ Icon, title, detail, actions }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 20px", borderBottom: "1px solid " + C.lineSoft }}>
-      <div style={{ width: 38, height: 38, borderRadius: 10, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 38px" }}>
-        <Icon size={19} />
-      </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>{title}</div>
-        <div style={{ fontSize: 13, color: C.muted, marginTop: 1 }}>{detail}</div>
-      </div>
-      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>{actions}</div>
-    </div>
-  );
-}
-
-function PaystubOverlay({ emp, run, currency, sectionsOpen, toggleSection, memo, setMemo, saveMemo, onClose }) {
-  const sumCurrent = (rows) => rows.reduce((s, r) => s + (r.current || 0), 0);
-  const sumYtd = (rows) => rows.reduce((s, r) => s + (r.ytd || 0), 0);
-  return (
-    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, height: "100vh", background: "#fff", zIndex: 9999, display: "flex", flexDirection: "column", fontFamily: FONT }}>
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: "14px 40px", borderBottom: "1px solid " + C.line, background: "#FBFCFD" }}>
-        <button style={iconBtnStyle} title="Help"><HelpCircle size={16} /></button>
-        <button style={iconBtnStyle} title="Close" onClick={onClose}><X size={16} /></button>
-      </div>
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "34px 40px 40px", maxWidth: 1280, margin: "0 auto", width: "100%" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24, flexWrap: "wrap" }}>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: C.faint, marginBottom: 6 }}>Pay to</div>
-            <div style={{ fontSize: 30, fontWeight: 600, color: C.ink, letterSpacing: "-0.015em" }}>{emp.name}</div>
-          </div>
-          <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 14 }}>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: C.faint }}>Net pay</div>
-              <div style={{ fontSize: 36, fontWeight: 600, color: C.ink, lineHeight: 1, letterSpacing: "-0.02em", ...num }}>{fmtMoney(emp.netPay, currency)}</div>
-            </div>
-            <button style={{ display: "inline-flex", alignItems: "center", gap: 10, border: "1px solid " + C.line, borderRadius: 9, padding: "8px 14px", fontSize: 13.5, fontWeight: 500, background: "#fff", cursor: "pointer", color: C.text }}>
-              Make adjustment <ChevronDown size={14} color={C.faint} />
-            </button>
+        {/* Footer */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 24, borderTop: "1px solid " + C.line }}>
+          <button onClick={function() { navigate("/payroll/overview"); }} style={{ padding: "12px 18px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <ArrowLeft size={16} strokeWidth={2.5} />
+            Back to Payroll
+          </button>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={function() {
+                const token = getToken();
+                fetch(API + "/api/v1/payroll/runs/" + payRunId + "/export", {
+                  headers: { "Authorization": "Bearer " + token },
+                })
+                  .then(function(r) { return r.blob(); })
+                  .then(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "payroll_" + fmtDate(run.pay_period_start).replace(/\//g, "-") + "_to_" + fmtDate(run.pay_period_end).replace(/\//g, "-") + ".csv";
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  })
+                  .catch(function(e) { alert("Export failed: " + e); });
+              }}
+              style={{ padding: "12px 18px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}
+            >Export CSV</button>
+            <button onClick={function() { window.print(); }} style={{ padding: "12px 24px", background: C.inkDark, border: "none", borderRadius: 10, color: C.card, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT, boxShadow: "0 1px 2px rgba(18,38,43,0.12)" }}>Print all pay stubs</button>
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr", gap: "18px 26px", margin: "26px 0", padding: "22px 0", borderTop: "1px solid " + C.lineSoft, borderBottom: "1px solid " + C.lineSoft }}>
-          <MetaCell k="Employee address" v={emp.address} l2={emp.addressLine2} />
-          <MetaCell k="Pay date" v={run.payDate} numFmt />
-          <MetaCell k="Pay period" v={run.periodLabel} numFmt />
-          <MetaCell k="Paid from" v={emp.paidFrom} />
-          <MetaCell k="Paid by" v={emp.paidBy} />
-        </div>
-
-        <div style={{ margin: "0 0 12px", background: "linear-gradient(180deg, #FBFEFD, #F4FAF8)", border: "1px solid " + C.tealSoft, borderRadius: 13, padding: "18px 22px", maxWidth: 520 }}>
-          <SumRow label="Gross pay" value={fmtMoney(emp.grossPay, currency)} />
-          <SumRow label={"Employee taxes \u0026 deductions"} value={"- " + fmtMoney(emp.employeeDeductions, currency)} />
-          <div style={{ height: 1, background: C.tealSoft, margin: "8px 0" }} />
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 15, color: C.ink, fontWeight: 600, padding: "5px 0" }}>
-            <span>Net pay</span>
-            <span style={{ fontSize: 20, color: C.tealInk, fontWeight: 600, ...num }}>{fmtMoney(emp.netPay, currency)}</span>
-          </div>
-          <div style={{ fontSize: 12, color: C.faint, marginTop: 9 }}>
-            Employer cost this run: {fmtMoney(emp.employerCost, currency)}, paid by you and not deducted from the employee's pay.
-          </div>
-        </div>
-
-        <Section title="Pay" open={sectionsOpen.pay} onToggle={() => toggleSection("pay")}>
-          <SectionTable cols={["Type", "Hours", "Rate", "Current", "YTD"]}
-            rows={emp.payLines.map((r) => [r.type, Number(r.hours).toFixed(2), fmtMoney(r.rate, currency), fmtMoney(r.current, currency), fmtMoney(r.ytd, currency)])}
-            totals={["Total", "", "", fmtMoney(emp.payLines.reduce((s, r) => s + r.current, 0), currency), fmtMoney(emp.payLines.reduce((s, r) => s + r.ytd, 0), currency)]} />
-        </Section>
-
-        <Section title={"Employee taxes \u0026 deductions"} open={sectionsOpen.employee} onToggle={() => toggleSection("employee")}>
-          <SectionTable cols={["Type", "Current", "YTD"]}
-            rows={emp.employeeTaxes.map((r) => [r.type, fmtMoney(r.current, currency), fmtMoney(r.ytd, currency)])}
-            totals={["Total", fmtMoney(sumCurrent(emp.employeeTaxes), currency), fmtMoney(sumYtd(emp.employeeTaxes), currency)]} />
-        </Section>
-
-        <Section title={"Employer taxes \u0026 contributions"} open={sectionsOpen.employer} onToggle={() => toggleSection("employer")}>
-          <SectionTable cols={["Type", "Current", "YTD"]}
-            rows={emp.employerContributions.map((r) => [r.type, fmtMoney(r.current, currency), fmtMoney(r.ytd, currency)])}
-            totals={["Total", fmtMoney(sumCurrent(emp.employerContributions), currency), fmtMoney(sumYtd(emp.employerContributions), currency)]} />
-        </Section>
-
-        <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, margin: "30px 0 8px" }}>Memo</div>
-        <textarea value={memo} onChange={(e) => setMemo(e.target.value)} onBlur={() => saveMemo && saveMemo(memo)} placeholder="Add a note to this paystub"
-          style={{ width: "100%", maxWidth: 520, minHeight: 90, border: "1px solid " + C.line, borderRadius: 11, padding: "12px 14px", fontFamily: FONT, fontSize: 13.5, color: C.ink, resize: "vertical" }} />
-      </div>
-
-      <div style={{ borderTop: "1px solid " + C.line, padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff" }}>
-        <button style={{ ...btnText, color: C.muted }} onClick={onClose}>Close</button>
-        <div style={{ display: "flex", gap: 12 }}>
-          <button style={btnGhost}>Transaction journal</button>
-          <button style={btnPrimary}>Print</button>
-        </div>
       </div>
     </div>
   );
 }
-
-function MetaCell({ k, v, l2, numFmt }) {
-  return (
-    <div>
-      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: C.faint, marginBottom: 5 }}>{k}</div>
-      <div style={{ fontSize: 14, color: C.ink, fontWeight: 500, ...(numFmt ? num : {}) }}>
-        {v}
-        {l2 && <span style={{ display: "block", fontWeight: 450, color: C.muted, marginTop: 1 }}>{l2}</span>}
-      </div>
-    </div>
-  );
-}
-
-function SumRow({ label, value }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13.5, color: C.muted, padding: "5px 0" }}>
-      <span>{label}</span>
-      <span style={{ fontWeight: 600, color: C.ink, ...num }}>{value}</span>
-    </div>
-  );
-}
-
-function Section({ title, open, onToggle, children }) {
-  return (
-    <div style={{ marginTop: 30 }}>
-      <h3 onClick={onToggle} style={{ fontSize: 16, fontWeight: 600, color: C.ink, display: "flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none", margin: 0 }}>
-        <ChevronDown size={18} color={C.muted} style={{ transform: open ? "none" : "rotate(-90deg)", transition: "transform 0.2s" }} />
-        {title}
-      </h3>
-      {open && <div style={{ marginTop: 14 }}>{children}</div>}
-    </div>
-  );
-}
-
-function SectionTable({ cols, rows, totals }) {
-  return (
-    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
-      <thead>
-        <tr>{cols.map((c, i) => (
-          <th key={i} style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: C.faint, padding: "10px 14px", textAlign: i === 0 ? "left" : "right", borderBottom: "1px solid " + C.line }}>{c}</th>
-        ))}</tr>
-      </thead>
-      <tbody>
-        {rows.map((r, ri) => (
-          <tr key={ri}>{r.map((cell, ci) => (
-            <td key={ci} style={{ padding: "13px 14px", textAlign: ci === 0 ? "left" : "right", borderBottom: "1px solid " + C.lineSoft, color: ci === 0 ? C.ink : C.text, ...(ci > 0 ? num : {}) }}>{cell}</td>
-          ))}</tr>
-        ))}
-        <tr>{totals.map((cell, ci) => (
-          <td key={ci} style={{ padding: "13px 14px", textAlign: ci === 0 ? "left" : "right", fontWeight: 700, color: C.ink, background: "#FAFBFC", ...(ci > 0 ? num : {}) }}>{cell}</td>
-        ))}</tr>
-      </tbody>
-    </table>
-  );
-}
-
-const iconBtnStyle = { width: 34, height: 34, borderRadius: 9, border: "1px solid " + C.line, background: "#fff", color: C.muted, cursor: "pointer", display: "grid", placeItems: "center" };
-const pillStyle = { background: "#fff", border: "1px solid " + C.line, borderRadius: 14, padding: "16px 20px", boxShadow: "0 1px 2px rgba(16,26,43,0.04)" };
-const pillTitleStyle = { fontSize: 13, fontWeight: 600, color: C.ink, display: "flex", alignItems: "center", gap: 8 };
-const thStyle = { textAlign: "right", fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: C.faint, padding: "13px 20px", background: "#FAFBFC", borderBottom: "1px solid " + C.line, whiteSpace: "nowrap" };
-const tdStyle = { padding: "16px 20px", borderBottom: "1px solid " + C.lineSoft, textAlign: "right", color: C.text, whiteSpace: "nowrap" };
-const btnGhost = { fontFamily: FONT, fontWeight: 600, fontSize: 14, borderRadius: 10, cursor: "pointer", border: "1px solid " + C.line, background: "#fff", color: C.ink, padding: "9px 16px" };
-const btnPrimary = { fontFamily: FONT, fontWeight: 600, fontSize: 14, borderRadius: 10, cursor: "pointer", border: "1px solid transparent", background: C.teal, color: "#fff", padding: "9px 18px", boxShadow: "0 1px 2px rgba(21,160,140,0.3)" };
-const btnText = { fontFamily: FONT, fontWeight: 600, fontSize: 14, borderRadius: 10, cursor: "pointer", border: "1px solid transparent", background: "none", color: C.tealInk, padding: "10px 6px" };
