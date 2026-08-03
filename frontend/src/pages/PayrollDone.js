@@ -326,7 +326,7 @@ export default function PayrollDone() {
         </div>
 
         {/* Footer */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 24, borderTop: "1px solid " + C.line }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 32px", borderTop: "1px solid " + C.line, position: "sticky", bottom: 0, background: C.card, zIndex: 100, boxShadow: "0 -4px 12px rgba(0,0,0,0.06)", marginLeft: -32, marginRight: -32, marginTop: 32 }}>
           <button onClick={function() { navigate("/payroll/overview"); }} style={{ padding: "12px 18px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 6 }}>
             <ArrowLeft size={16} strokeWidth={2.5} />
             Back to Payroll
