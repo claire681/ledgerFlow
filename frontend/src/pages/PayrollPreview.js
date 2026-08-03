@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import EditPaychequeDrawer from "../components/EditPaychequeDrawer";
-import { AlertTriangle, ArrowUp, ArrowDown, Check, Search, BarChart3, X } from "lucide-react";
+import { AlertTriangle, ArrowUp, ArrowDown, Check, Search, FileSearch, Minus, X } from "lucide-react";
 
 const C = {
   ink: "#12262B",
@@ -54,8 +54,8 @@ function scheduleFrequencyLabel(freq) {
 }
 
 function CompareModal(props) {
-  var e = props.employee;
-  var run = props.run;
+  var stubId = props.employee && props.employee.stub_id;
+  var comparison = props.comparison;
   var onClose = props.onClose;
 
   useEffect(function() {
@@ -64,97 +64,181 @@ function CompareModal(props) {
     return function() { window.removeEventListener("keydown", h); };
   }, [onClose]);
 
-  if (!e) return null;
+  if (!stubId || !comparison || !comparison.employees) return null;
+  var data = comparison.employees[stubId];
+  if (!data || !data.has_comparison) return null;
 
-  var curG = Number(e.gross_pay || 0);
-  var curR = Number(e.hourly_rate || 0);
-  var curH = Number(e.total_hours || 0);
-  var curEI = Number(e.employee_taxes || 0);
-  var curN = Number(e.net_pay || 0);
-  var cP = Number(e.change_in_gross_pct || 0);
-  // Derive last payday values from current + change %
-  var lstG = cP !== 0 ? curG / (1 + cP / 100) : 0;
-  var lstEI = lstG > 0 && curG > 0 ? lstG * (curEI / curG) : 0;
-  var lstN = lstG - lstEI;
-  var lstH = curR > 0 && lstG > 0 ? Math.round(lstG / curR) : 0;
+  var employeeName = data.employee_name || "Employee";
+  var priorDate = comparison.prior_pay_date;
+  var currentDate = comparison.current_pay_date;
 
-  var fmt = function(v) { return v > 0 ? fmtMoney(v) : "\u2014"; };
-  var cD = run && run.pay_date ? fmtDate(run.pay_date) : "Current";
+  function fmtDateLocal(iso) {
+    if (!iso) return "";
+    var parts = String(iso).split("-");
+    return parts[2] + "/" + parts[1] + "/" + parts[0];
+  }
+  function fmtM(s) {
+    if (s === null || s === undefined) return null;
+    var n = Number(s);
+    if (isNaN(n)) return null;
+    return "$" + n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function fmtH(h) {
+    if (h === null || h === undefined) return null;
+    var n = Number(h);
+    if (isNaN(n)) return null;
+    // Trim trailing zeros
+    var s = n.toFixed(2);
+    s = s.replace(/\.?0+$/, "");
+    return s;
+  }
+  function cell(v) {
+    return v == null ? <span style={{ color: "#66748B" }}>-</span> : v;
+  }
 
   var tokens = {
-    ink: "#12262B", card: "#FFFFFF", page: "#F4F6F8", line: "#E7EAF0",
+    ink: "#12262B", card: "#FFFFFF", page: "#F4F6F8", line: "#E7EAF0", muted: "#66748B",
   };
 
-  var thStyle = { padding: "10px 12px", textAlign: "right", fontSize: 11, fontWeight: 700, color: tokens.ink, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1.5px solid " + tokens.ink };
-  var thLStyle = Object.assign({}, thStyle, { textAlign: "left" });
-  var tdStyle = { padding: "10px 12px", textAlign: "right", fontSize: 13, color: tokens.ink, fontVariantNumeric: "tabular-nums", borderBottom: "1px solid " + tokens.line };
-  var tdLStyle = { padding: "10px 12px", textAlign: "left", fontSize: 13, color: tokens.ink, fontWeight: 500, borderBottom: "1px solid " + tokens.line };
-  var trGroup = { background: tokens.page };
+  var thStyle = { padding: "12px 14px", textAlign: "right", fontSize: 12, fontWeight: 600, color: tokens.ink, borderBottom: "1.5px solid " + tokens.ink, verticalAlign: "top" };
+  var thLStyle = { padding: "12px 14px", textAlign: "left", fontSize: 13, fontWeight: 600, color: tokens.ink, borderBottom: "1.5px solid " + tokens.ink };
+  var tdMoney = { padding: "8px 14px", textAlign: "right", fontSize: 13, color: tokens.ink, fontVariantNumeric: "tabular-nums", borderBottom: "1px solid " + tokens.line };
+  var tdLabel = { padding: "8px 14px", textAlign: "left", fontSize: 13, color: tokens.ink, borderBottom: "1px solid " + tokens.line };
+  var sectionRow = { background: tokens.page };
+  var sectionCell = { padding: "10px 14px", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: tokens.ink, borderBottom: "1px solid " + tokens.line };
+  var summaryLabel = Object.assign({}, tdLabel, { fontWeight: 700, paddingLeft: 30 });
+  var summaryVal = Object.assign({}, tdMoney, { fontWeight: 700 });
+
+  // Build comp lines - union of both sides
+  var priorLines = (data.prior && data.prior.compensation_lines) || [];
+  var currentLines = (data.current && data.current.compensation_lines) || [];
+  var lineLabels = [];
+  priorLines.forEach(function(l) { if (lineLabels.indexOf(l.label) < 0) lineLabels.push(l.label); });
+  currentLines.forEach(function(l) { if (lineLabels.indexOf(l.label) < 0) lineLabels.push(l.label); });
+
+  function findLine(lines, label) {
+    for (var i = 0; i < lines.length; i++) if (lines[i].label === label) return lines[i];
+    return null;
+  }
+
+  var priorNet = data.prior && data.prior.net_pay ? data.prior.net_pay : null;
+  var currentNet = data.current && data.current.net_pay ? data.current.net_pay : null;
+  var priorTaxes = data.prior && data.prior.taxes_and_deductions ? data.prior.taxes_and_deductions : null;
+  var currentTaxes = data.current && data.current.taxes_and_deductions ? data.current.taxes_and_deductions : null;
+  var priorTotal = data.prior && data.prior.total_pay ? data.prior.total_pay : null;
+  var currentTotal = data.current && data.current.total_pay ? data.current.total_pay : null;
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(18,38,43,0.4)", zIndex: 1300 }} />
-      <div role="dialog" aria-label="Compare to last payday" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: tokens.card, borderRadius: 12, maxWidth: 720, width: "92%", maxHeight: "88vh", overflow: "auto", zIndex: 1301, boxShadow: "0 12px 40px rgba(18,38,43,0.25)", fontFamily: "Inter, sans-serif" }}>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(14, 26, 26, 0.45)", zIndex: 1300 }} />
+      <div role="dialog" aria-label="Compare to last regular payday" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: tokens.card, borderRadius: 14, maxWidth: 720, width: "calc(100% - 48px)", maxHeight: "calc(100vh - 96px)", overflowY: "auto", padding: 32, zIndex: 1301, boxShadow: "0 12px 40px rgba(18, 38, 43, 0.18)", fontFamily: "Inter, sans-serif" }}>
 
         {/* Header */}
-        <div style={{ padding: "20px 24px", borderBottom: "1px solid " + tokens.line, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: tokens.ink, marginBottom: 4, opacity: 0.7 }}>PAYCHEQUE COMPARISON</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: tokens.ink, letterSpacing: "-0.01em" }}>{e.name || "Employee"}</div>
-          </div>
-          <button onClick={onClose} aria-label="Close" style={{ background: "transparent", border: "none", cursor: "pointer", color: tokens.ink, padding: 4 }}>
-            <X size={20} strokeWidth={2.5} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+          <div style={{ fontSize: 22, fontWeight: 600, color: tokens.ink }}>Compare to last regular payday</div>
+          <button onClick={onClose} aria-label="Close" style={{ background: "transparent", border: "none", cursor: "pointer", color: tokens.muted, padding: 4, borderRadius: 6, display: "inline-flex" }}>
+            <X size={20} strokeWidth={2} />
           </button>
         </div>
 
-        {/* Comparison table */}
-        <div style={{ padding: "12px 24px 24px" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={thLStyle}>Line item</th>
-                <th style={thStyle}>Last payday</th>
-                <th style={thStyle}>Current<br/>{cD}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style={trGroup}>
-                <td style={tdLStyle}><strong>Compensation</strong></td>
-                <td style={tdStyle}><strong>{fmt(lstG)}</strong></td>
-                <td style={tdStyle}><strong>{fmt(curG)}</strong></td>
-              </tr>
-              <tr>
-                <td style={tdLStyle}>Regular pay</td>
-                <td style={tdStyle}>{fmt(lstG)}</td>
-                <td style={tdStyle}>{fmt(curG)}</td>
-              </tr>
-              <tr>
-                <td style={tdLStyle}>Rate</td>
-                <td style={tdStyle}>{curR > 0 ? fmtMoney(curR) + "/hr" : "\u2014"}</td>
-                <td style={tdStyle}>{curR > 0 ? fmtMoney(curR) + "/hr" : "\u2014"}</td>
-              </tr>
-              <tr>
-                <td style={tdLStyle}>Hours</td>
-                <td style={tdStyle}>{lstH > 0 ? lstH + "h" : "\u2014"}</td>
-                <td style={tdStyle}>{curH > 0 ? curH + "h" : "\u2014"}</td>
-              </tr>
-              <tr style={trGroup}>
-                <td style={tdLStyle}><strong>Taxes and deductions</strong></td>
-                <td style={tdStyle}><strong>{fmt(lstEI)}</strong></td>
-                <td style={tdStyle}><strong>{fmt(curEI)}</strong></td>
-              </tr>
-              <tr style={Object.assign({}, trGroup, { borderTop: "1.5px solid " + tokens.ink })}>
-                <td style={Object.assign({}, tdLStyle, { fontWeight: 700, fontSize: 14 })}>Net pay</td>
-                <td style={Object.assign({}, tdStyle, { fontWeight: 700, fontSize: 14 })}>{fmt(lstN)}</td>
-                <td style={Object.assign({}, tdStyle, { fontWeight: 700, fontSize: 14 })}>{fmt(curN)}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div style={{ marginTop: 16, padding: "12px 14px", background: tokens.page, borderRadius: 8, fontSize: 12, color: tokens.ink, fontWeight: 500 }}>
-            Last payday values are derived from the change %. For exact prior period numbers, view the finalized pay stub.
-          </div>
-        </div>
+        {/* Table */}
+        <table style={{ width: "100%", borderCollapse: "collapse", border: "1px solid " + tokens.line }}>
+          <thead>
+            <tr>
+              <th style={thLStyle}>Employee: {employeeName}</th>
+              <th style={thStyle}>
+                <div>Last Payday</div>
+                <div style={{ fontSize: 11, color: tokens.muted, fontWeight: 500, marginTop: 2 }}>({fmtDateLocal(priorDate)})</div>
+              </th>
+              <th style={thStyle}>
+                <div>Current Payday</div>
+                <div style={{ fontSize: 11, color: tokens.muted, fontWeight: 500, marginTop: 2 }}>({fmtDateLocal(currentDate)})</div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* COMPENSATION section */}
+            <tr style={sectionRow}>
+              <td colSpan={3} style={sectionCell}>COMPENSATION</td>
+            </tr>
+            {lineLabels.map(function(label) {
+              var pl = findLine(priorLines, label);
+              var cl = findLine(currentLines, label);
+              var priorAmt = pl ? fmtM(pl.amount) : null;
+              var curAmt = cl ? fmtM(cl.amount) : null;
+              var priorRate = pl ? (pl.rate ? fmtM(pl.rate) : null) : null;
+              var curRate = cl ? (cl.rate ? fmtM(cl.rate) : null) : null;
+              var priorHours = pl ? (pl.hours ? fmtH(pl.hours) : null) : null;
+              var curHours = cl ? (cl.hours ? fmtH(cl.hours) : null) : null;
+              var showSubRows = priorRate || curRate || priorHours || curHours;
+              return (
+                <React.Fragment key={label}>
+                  <tr>
+                    <td style={Object.assign({}, tdLabel, { paddingLeft: 30 })}>{label}</td>
+                    <td style={tdMoney}>{cell(priorAmt)}</td>
+                    <td style={tdMoney}>{cell(curAmt)}</td>
+                  </tr>
+                  {showSubRows && (
+                    <>
+                      <tr>
+                        <td style={Object.assign({}, tdLabel, { paddingLeft: 46, color: tokens.muted, fontSize: 12 })}>Rate</td>
+                        <td style={Object.assign({}, tdMoney, { color: tokens.muted, fontSize: 12 })}>{cell(priorRate ? priorRate + "/hour" : null)}</td>
+                        <td style={Object.assign({}, tdMoney, { color: tokens.muted, fontSize: 12 })}>{cell(curRate ? curRate + "/hour" : null)}</td>
+                      </tr>
+                      <tr>
+                        <td style={Object.assign({}, tdLabel, { paddingLeft: 46, color: tokens.muted, fontSize: 12 })}>Hours</td>
+                        <td style={Object.assign({}, tdMoney, { color: tokens.muted, fontSize: 12 })}>{cell(priorHours)}</td>
+                        <td style={Object.assign({}, tdMoney, { color: tokens.muted, fontSize: 12 })}>{cell(curHours)}</td>
+                      </tr>
+                    </>
+                  )}
+                </React.Fragment>
+              );
+            })}
 
+            {/* TAXES section */}
+            <tr style={sectionRow}>
+              <td colSpan={3} style={sectionCell}>TAXES</td>
+            </tr>
+            <tr>
+              <td style={Object.assign({}, tdLabel, { paddingLeft: 30 })}>Income Tax</td>
+              <td style={tdMoney}>{cell(data.prior ? fmtM(data.prior.income_tax) : null)}</td>
+              <td style={tdMoney}>{cell(data.current ? fmtM(data.current.income_tax) : null)}</td>
+            </tr>
+            <tr>
+              <td style={Object.assign({}, tdLabel, { paddingLeft: 30 })}>Employment Insurance</td>
+              <td style={tdMoney}>{cell(data.prior ? fmtM(data.prior.ei) : null)}</td>
+              <td style={tdMoney}>{cell(data.current ? fmtM(data.current.ei) : null)}</td>
+            </tr>
+            <tr>
+              <td style={Object.assign({}, tdLabel, { paddingLeft: 30 })}>Canada Pension Plan</td>
+              <td style={tdMoney}>{cell(data.prior ? fmtM(data.prior.cpp) : null)}</td>
+              <td style={tdMoney}>{cell(data.current ? fmtM(data.current.cpp) : null)}</td>
+            </tr>
+            <tr>
+              <td style={Object.assign({}, tdLabel, { paddingLeft: 30 })}>Second Canada Pension Plan</td>
+              <td style={tdMoney}>{cell(data.prior ? fmtM(data.prior.cpp2) : null)}</td>
+              <td style={tdMoney}>{cell(data.current ? fmtM(data.current.cpp2) : null)}</td>
+            </tr>
+
+            {/* Summary rows */}
+            <tr>
+              <td style={summaryLabel}>Total pay</td>
+              <td style={summaryVal}>{cell(fmtM(priorTotal))}</td>
+              <td style={summaryVal}>{cell(fmtM(currentTotal))}</td>
+            </tr>
+            <tr>
+              <td style={summaryLabel}>Taxes and deductions</td>
+              <td style={summaryVal}>{cell(fmtM(priorTaxes))}</td>
+              <td style={summaryVal}>{cell(fmtM(currentTaxes))}</td>
+            </tr>
+            <tr>
+              <td style={summaryLabel}>Net pay</td>
+              <td style={summaryVal}>{cell(fmtM(priorNet))}</td>
+              <td style={summaryVal}>{cell(fmtM(currentNet))}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </>
   );
@@ -174,6 +258,7 @@ export default function PayrollPreview() {
   const [finalizing, setFinalizing] = useState(false);
   const [editingEmployeeId, setEditingEmployeeId] = useState(null);
   const [compareFor, setCompareFor] = useState(null);
+  const [comparison, setComparison] = useState(null);
 
   useEffect(function() {
     let cancelled = false;
@@ -181,12 +266,14 @@ export default function PayrollPreview() {
       const token = getToken();
       const headers = { "Authorization": "Bearer " + token, "Content-Type": "application/json" };
       try {
-        const [runRes, stubsRes, settingsRes, runsRes] = await Promise.all([
+        const [runRes, stubsRes, settingsRes, runsRes, comparisonRes] = await Promise.all([
           fetch(API + "/api/v1/payroll/runs/" + payRunId, { headers }).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
           fetch(API + "/api/v1/payroll/runs/" + payRunId + "/stubs", { headers }).then(function(r) { return r.ok ? r.json() : []; }).catch(function() { return []; }),
           fetch(API + "/api/v1/payroll/settings", { headers }).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
           fetch(API + "/api/v1/payroll/runs", { headers }).then(function(r) { return r.ok ? r.json() : []; }).catch(function() { return []; }),
+          fetch(API + "/api/v1/payroll/runs/" + payRunId + "/comparison", { headers }).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
         ]);
+        if (comparisonRes) setComparison(comparisonRes);
         if (cancelled) return;
 
         if (!runRes) {
@@ -471,22 +558,33 @@ export default function PayrollPreview() {
                       </button>
                     </div>
                     <div style={{ textAlign: "right", fontWeight: 500 }}>{fmtMoney(l.employer_taxes)}</div>
-                    <div style={{ textAlign: "right", fontSize: 12, fontWeight: 700, color: C.ink, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 6 }}>
-                      {l.change_in_gross_pct != null ? (
-                        <>
-                          <span>{l.change_in_gross_pct >= 0 ? "↑" : "↓"} {Math.abs(Math.round(l.change_in_gross_pct))}%</span>
-                          <button
-                            onClick={function() { setCompareFor(l); }}
-                            title="Compare to last payday"
-                            aria-label="Compare to last payday"
-                            style={{ background: C.card, border: "1px solid " + C.line, borderRadius: 6, padding: "3px 5px", cursor: "pointer", display: "inline-flex", alignItems: "center", color: C.ink }}
-                          >
-                            <BarChart3 size={12} strokeWidth={2.5} />
-                          </button>
-                        </>
-                      ) : (
-                        <span style={{ fontSize: 11, fontWeight: 500, color: C.ink, opacity: 0.6 }}>New</span>
-                      )}
+                    <div style={{ textAlign: "right", display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 }}>
+                      {(function() {
+                        var compData = comparison && comparison.employees && comparison.employees[l.stub_id];
+                        if (!compData || !compData.has_comparison) return null;
+                        var isDown = compData.direction === "down";
+                        var isFlat = compData.direction === "flat";
+                        var Icon = isFlat ? Minus : (isDown ? ArrowDown : ArrowUp);
+                        var label = isFlat ? "No change" : ((isDown ? "Down " : "Up ") + compData.percent + "%");
+                        return (
+                          <>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 14, fontWeight: 500, color: C.ink }}>
+                              <Icon size={16} strokeWidth={2} />
+                              {label}
+                            </span>
+                            <button
+                              onClick={function() { setCompareFor(l); }}
+                              title={"Compare " + (l.name || "employee") + " to last payday"}
+                              aria-label={"Compare " + (l.name || "employee") + " to last payday"}
+                              style={{ background: "transparent", border: "none", padding: 4, borderRadius: 6, cursor: "pointer", color: "#66748B", display: "inline-flex", alignItems: "center" }}
+                              onMouseEnter={function(e) { e.currentTarget.style.background = C.brandBg; e.currentTarget.style.color = C.brandDark; }}
+                              onMouseLeave={function(e) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#66748B"; }}
+                            >
+                              <FileSearch size={16} strokeWidth={2} />
+                            </button>
+                          </>
+                        );
+                      })()}
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <span style={{ fontSize: 10.5, color: C.ink, fontWeight: 700, padding: "3px 7px", background: C.page, borderRadius: 5, textTransform: "uppercase" }}>{l.payment_method}</span>
@@ -564,7 +662,7 @@ export default function PayrollPreview() {
 
         {/* Edit paycheque drawer */}
         {compareFor && (
-          <CompareModal employee={compareFor} run={run} onClose={function() { setCompareFor(null); }} />
+          <CompareModal employee={compareFor} comparison={comparison} onClose={function() { setCompareFor(null); }} />
         )}
 
         {editingEmployeeId && (
