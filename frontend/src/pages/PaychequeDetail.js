@@ -252,7 +252,20 @@ export default function PaychequeDetail() {
             color-adjust: exact !important;
             page-break-inside: auto;
           }
-          .pay-stub-print-only * {
+
+      /* Strip the on-screen paper look from PayStub when printing:
+         no shadow, no max-width, no min-height, no margin. Let it fill the A4. */
+      .pay-stub-print-only > div {
+        box-shadow: none !important;
+        max-width: none !important;
+        width: 100% !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+      }
+
+      .pay-stub-print-only * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
