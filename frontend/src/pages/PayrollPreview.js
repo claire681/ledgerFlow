@@ -259,6 +259,7 @@ export default function PayrollPreview() {
   const [editingEmployeeId, setEditingEmployeeId] = useState(null);
   const [compareFor, setCompareFor] = useState(null);
   const [comparison, setComparison] = useState(null);
+  const [schedule, setSchedule] = useState(null);
 
   useEffect(function() {
     let cancelled = false;
@@ -284,6 +285,14 @@ export default function PayrollPreview() {
 
         setRun(runRes);
         setPayrollSettings(settingsRes);
+
+        // Fetch schedule if run has a schedule_id
+        if (runRes.pay_schedule_id) {
+          fetch(API + "/api/v1/payroll/pay-schedules/" + runRes.pay_schedule_id, { headers })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(sched) { if (sched) setSchedule(sched); })
+            .catch(function() {});
+        }
 
         // Redirect if already finalized/voided
         if (runRes.status === "finalized" || runRes.status === "voided") {
@@ -385,8 +394,8 @@ export default function PayrollPreview() {
   }
 
   const postingAccount = (payrollSettings && payrollSettings.company_bank_name) || "Not set";
-  const scheduleFreq = run && run.schedule ? scheduleFrequencyLabel(run.schedule.frequency) : "";
-  const scheduleName = run && run.schedule ? (run.schedule.name || scheduleFreq) : "";
+  const scheduleFreq = schedule ? scheduleFrequencyLabel(schedule.frequency) : "";
+  const scheduleName = schedule ? (schedule.name || scheduleFreq) : "";
 
   if (loading) {
     return (
