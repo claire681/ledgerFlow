@@ -288,7 +288,7 @@ export default function PayrollPreview() {
 
         // Fetch schedule if run has a schedule_id
         if (runRes.pay_schedule_id) {
-          fetch(API + "/api/v1/payroll/pay-schedules/" + runRes.pay_schedule_id, { headers })
+          fetch(API + "/api/v1/payroll/schedules/" + runRes.pay_schedule_id, { headers })
             .then(function(r) { return r.ok ? r.json() : null; })
             .then(function(sched) { if (sched) setSchedule(sched); })
             .catch(function() {});
