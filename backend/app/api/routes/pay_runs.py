@@ -1650,6 +1650,233 @@ async def calculate_pay_run(
 
 
 # ============================================================
+
+
+@router.get("/runs/{run_id}/comparison")
+async def get_run_comparison(
+    run_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Side-by-side comparison of current run vs last regular payday per employee."""
+    from decimal import Decimal, ROUND_HALF_UP
+
+    # Load current run
+    run_res = await db.execute(
+        select(PayRun).where(
+            PayRun.id == run_id,
+            PayRun.owner_id == current_user.id,
+        )
+    )
+    run = run_res.scalar_one_or_none()
+    if not run:
+        raise HTTPException(404, "Pay run not found")
+
+    # Load current stubs
+    current_stubs_res = await db.execute(
+        select(PayStub).where(PayStub.pay_run_id == run_id).order_by(PayStub.employee_name)
+    )
+    current_stubs = current_stubs_res.scalars().all()
+
+    if not current_stubs:
+        return {
+            "run_id": str(run_id),
+            "current_pay_date": run.pay_date.isoformat() if run.pay_date else None,
+            "prior_pay_date": None,
+            "employees": {},
+        }
+
+    # For each employee: find their most recent finalized stub on the same schedule
+    # TODO: add off-cycle exclusion when off_cycle flag exists on PayRun
+    employee_ids = [s.employee_id for s in current_stubs]
+
+    prior_stubs_res = await db.execute(
+        select(PayStub, PayRun)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(
+            PayRun.owner_id == current_user.id,
+            PayRun.status == "finalized",
+            PayRun.id != run_id,
+            PayStub.employee_id.in_(employee_ids),
+        )
+        .order_by(PayRun.pay_date.desc())
+    )
+    prior_rows = prior_stubs_res.all()
+
+    # Filter to same schedule if available
+    current_schedule_id = run.pay_schedule_id
+    prior_by_employee = {}
+    for prior_stub, prior_run in prior_rows:
+        # Same-schedule filter (skip if either lacks schedule id)
+        if current_schedule_id and prior_run.pay_schedule_id and prior_run.pay_schedule_id != current_schedule_id:
+            continue
+        # Must be before current pay date
+        if run.pay_date and prior_run.pay_date and prior_run.pay_date >= run.pay_date:
+            continue
+        emp_id = str(prior_stub.employee_id)
+        if emp_id not in prior_by_employee:
+            prior_by_employee[emp_id] = (prior_stub, prior_run)
+
+    # Overall prior pay date - most recent across all employees
+    prior_pay_date = None
+    for _, prior_run in prior_by_employee.values():
+        if prior_run.pay_date and (prior_pay_date is None or prior_run.pay_date > prior_pay_date):
+            prior_pay_date = prior_run.pay_date
+
+    def _fmt_money(v):
+        if v is None:
+            return None
+        return str(Decimal(str(v)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+    def _live_gross(s):
+        # For drafts, compute live gross like CSV export does
+        rate = Decimal(str(s.hourly_rate or 0))
+        hrs_reg = Decimal(str(s.hours_regular or 0))
+        hrs_ot = Decimal(str(s.hours_overtime or 0))
+        hrs_stat = Decimal(str(s.hours_stat_holiday or 0))
+        if run.status == "draft":
+            return (hrs_reg * rate) + (hrs_ot * rate * Decimal("1.5")) + (hrs_stat * rate)
+        return Decimal(str(s.gross_pay or 0))
+
+    def _build_comp_lines(s, is_draft):
+        """Build compensation lines: only include lines nonzero on this side."""
+        rate = Decimal(str(s.hourly_rate or 0))
+        lines = []
+        hrs_reg = Decimal(str(s.hours_regular or 0))
+        if hrs_reg > 0:
+            amt = hrs_reg * rate
+            lines.append({
+                "label": "Regular Pay",
+                "amount": _fmt_money(amt),
+                "rate": _fmt_money(rate),
+                "hours": str(hrs_reg.normalize()) if hrs_reg else "0",
+            })
+        hrs_ot = Decimal(str(s.hours_overtime or 0))
+        if hrs_ot > 0:
+            ot_rate = rate * Decimal("1.5")
+            amt = hrs_ot * ot_rate
+            lines.append({
+                "label": "Overtime Pay",
+                "amount": _fmt_money(amt),
+                "rate": _fmt_money(ot_rate),
+                "hours": str(hrs_ot.normalize()) if hrs_ot else "0",
+            })
+        hrs_stat = Decimal(str(s.hours_stat_holiday or 0))
+        stat_amt = hrs_stat * rate
+        # Also include stat pay ADW if present
+        snap = s.calculation_snapshot or {}
+        if isinstance(snap, dict) and "stat_pay_amount" in snap:
+            try:
+                stat_amt += Decimal(str(snap["stat_pay_amount"]))
+            except Exception:
+                pass
+        if stat_amt > 0:
+            lines.append({
+                "label": "Stat Holiday Pay",
+                "amount": _fmt_money(stat_amt),
+                "rate": None,
+                "hours": None,
+            })
+        hrs_vac = Decimal(str(s.hours_vacation or 0))
+        if hrs_vac > 0:
+            lines.append({
+                "label": "Vacation Pay",
+                "amount": _fmt_money(hrs_vac * rate),
+                "rate": None,
+                "hours": None,
+            })
+        hrs_sick = Decimal(str(s.hours_sick or 0))
+        if hrs_sick > 0:
+            lines.append({
+                "label": "Sick Pay",
+                "amount": _fmt_money(hrs_sick * rate),
+                "rate": None,
+                "hours": None,
+            })
+        return lines
+
+    def _side(s, is_current):
+        is_draft = is_current and run.status == "draft"
+        gross = _live_gross(s) if is_current else Decimal(str(s.gross_pay or 0))
+        comp_lines = _build_comp_lines(s, is_draft)
+
+        # Tax fields - null on drafts, real values otherwise
+        if is_draft:
+            income_tax = None
+            ei = None
+            cpp = None
+            cpp2 = None
+            taxes_total = None
+            net = gross
+        else:
+            fed = Decimal(str(s.federal_tax or 0))
+            prov = Decimal(str(s.provincial_or_state_tax or 0))
+            income_tax = fed + prov
+            ei = Decimal(str(s.unemployment_employee or 0))
+            cpp = Decimal(str(s.social_security_employee or 0))
+            cpp2_raw = Decimal(str(s.social_security_2_employee or 0))
+            cpp2 = cpp2_raw if cpp2_raw > 0 else None
+            taxes_total = Decimal(str(s.total_employee_deductions or 0))
+            net = Decimal(str(s.net_pay or 0))
+
+        return {
+            "compensation_total": _fmt_money(gross),
+            "compensation_lines": comp_lines,
+            "taxes_total": _fmt_money(taxes_total),
+            "income_tax": _fmt_money(income_tax),
+            "ei": _fmt_money(ei),
+            "cpp": _fmt_money(cpp),
+            "cpp2": _fmt_money(cpp2),
+            "total_pay": _fmt_money(gross),
+            "taxes_and_deductions": _fmt_money(taxes_total),
+            "net_pay": _fmt_money(net),
+        }
+
+    def _direction_percent(current_gross, prior_gross):
+        if prior_gross is None or prior_gross <= 0:
+            return None, None
+        delta = current_gross - prior_gross
+        if delta == 0:
+            return "flat", 0
+        pct = (delta / prior_gross) * Decimal("100")
+        pct_int = int(pct.copy_abs().quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+        return ("up" if delta > 0 else "down"), pct_int
+
+    employees_out = {}
+    for cs in current_stubs:
+        emp_id = str(cs.employee_id)
+        pair = prior_by_employee.get(emp_id)
+        current_side = _side(cs, is_current=True)
+        current_gross = _live_gross(cs)
+
+        if pair:
+            prior_stub, prior_run = pair
+            prior_side = _side(prior_stub, is_current=False)
+            prior_gross = Decimal(str(prior_stub.gross_pay or 0))
+            direction, percent = _direction_percent(current_gross, prior_gross)
+            has_comparison = direction is not None
+        else:
+            prior_side = None
+            direction = None
+            percent = None
+            has_comparison = False
+
+        employees_out[str(cs.id)] = {
+            "employee_name": cs.employee_name or "",
+            "has_comparison": has_comparison,
+            "direction": direction,
+            "percent": percent,
+            "prior": prior_side,
+            "current": current_side,
+        }
+
+    return {
+        "run_id": str(run_id),
+        "current_pay_date": run.pay_date.isoformat() if run.pay_date else None,
+        "prior_pay_date": prior_pay_date.isoformat() if prior_pay_date else None,
+        "employees": employees_out,
+    }
+
 # PATCH /stubs/{stub_id}/memo
 # ============================================================
 
