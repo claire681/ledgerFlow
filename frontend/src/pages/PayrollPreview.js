@@ -471,13 +471,21 @@ export default function PayrollPreview() {
                       </button>
                     </div>
                     <div style={{ textAlign: "right", fontWeight: 500 }}>{fmtMoney(l.employer_taxes)}</div>
-                    <div style={{ textAlign: "right", fontSize: 12, fontWeight: 700, color: C.ink }}>
+                    <div style={{ textAlign: "right", fontSize: 12, fontWeight: 700, color: C.ink, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 6 }}>
                       {l.change_in_gross_pct != null ? (
                         <>
-                          {l.change_in_gross_pct >= 0 ? "↑" : "↓"} {Math.abs(Math.round(l.change_in_gross_pct))}%
+                          <span>{l.change_in_gross_pct >= 0 ? "↑" : "↓"} {Math.abs(Math.round(l.change_in_gross_pct))}%</span>
+                          <button
+                            onClick={function() { setCompareFor(l); }}
+                            title="Compare to last payday"
+                            aria-label="Compare to last payday"
+                            style={{ background: C.card, border: "1px solid " + C.line, borderRadius: 6, padding: "3px 5px", cursor: "pointer", display: "inline-flex", alignItems: "center", color: C.ink }}
+                          >
+                            <BarChart3 size={12} strokeWidth={2.5} />
+                          </button>
                         </>
                       ) : (
-                        <span style={{ opacity: 0.5, fontWeight: 500 }}>—</span>
+                        <span style={{ fontSize: 11, fontWeight: 500, color: C.ink, opacity: 0.6 }}>New</span>
                       )}
                     </div>
                     <div style={{ textAlign: "right" }}>
