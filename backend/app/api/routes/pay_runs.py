@@ -1800,24 +1800,18 @@ async def get_run_comparison(
         gross = _live_gross(s) if is_current else Decimal(str(s.gross_pay or 0))
         comp_lines = _build_comp_lines(s, is_draft)
 
-        # Tax fields - null on drafts, real values otherwise
-        if is_draft:
-            income_tax = None
-            ei = None
-            cpp = None
-            cpp2 = None
-            taxes_total = None
-            net = gross
-        else:
-            fed = Decimal(str(s.federal_tax or 0))
-            prov = Decimal(str(s.provincial_or_state_tax or 0))
-            income_tax = fed + prov
-            ei = Decimal(str(s.unemployment_employee or 0))
-            cpp = Decimal(str(s.social_security_employee or 0))
-            cpp2_raw = Decimal(str(s.social_security_2_employee or 0))
-            cpp2 = cpp2_raw if cpp2_raw > 0 else None
-            taxes_total = Decimal(str(s.total_employee_deductions or 0))
-            net = Decimal(str(s.net_pay or 0))
+        # Tax fields - always read from DB, never invent
+        fed = Decimal(str(s.federal_tax or 0))
+        prov = Decimal(str(s.provincial_or_state_tax or 0))
+        income_tax = fed + prov
+        ei = Decimal(str(s.unemployment_employee or 0))
+        cpp = Decimal(str(s.social_security_employee or 0))
+        cpp2_raw = Decimal(str(s.social_security_2_employee or 0))
+        cpp2 = cpp2_raw if cpp2_raw > 0 else None
+        taxes_total = Decimal(str(s.total_employee_deductions or 0))
+        # Net pay: prefer stored value; fall back to gross - taxes for freshly-created drafts
+        stored_net = Decimal(str(s.net_pay or 0))
+        net = stored_net if stored_net > 0 else (gross - taxes_total)
 
         return {
             "compensation_total": _fmt_money(gross),
