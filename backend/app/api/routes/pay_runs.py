@@ -362,13 +362,48 @@ async def list_run_stubs(
             })
         return lines
 
+    # Compute change_in_gross_pct vs last finalized run per employee
+    from sqlalchemy import select as _sel
+    prior_gross_by_employee = {}
+    if stubs:
+        prior_stubs_result = await db.execute(
+            _sel(PayStub, PayRun)
+            .join(PayRun, PayStub.pay_run_id == PayRun.id)
+            .where(
+                PayRun.owner_id == current_user.id,
+                PayRun.status == "finalized",
+                PayRun.id != run_id,
+                PayStub.employee_id.in_([s.employee_id for s in stubs]),
+            )
+            .order_by(PayRun.pay_date.desc())
+        )
+        prior_rows = prior_stubs_result.all()
+        for prior_stub, prior_run in prior_rows:
+            emp_id = str(prior_stub.employee_id)
+            if emp_id not in prior_gross_by_employee:
+                prior_gross_by_employee[emp_id] = float(prior_stub.gross_pay or 0)
+
+    def _change_pct(s):
+        emp_id = str(s.employee_id)
+        prior = prior_gross_by_employee.get(emp_id, 0.0)
+        if prior <= 0:
+            return None
+        current = float(s.gross_pay or 0)
+        if current == 0:
+            return None
+        return round(((current - prior) / prior) * 100, 2)
+
     return [
         {
             "id": str(s.id),
             "employee_id": str(s.employee_id),
             "employee_name": s.employee_name,
+            "hourly_rate": str(s.hourly_rate or 0),
+            "classification": "Salary" if s.pay_type == "salaried" else "Hourly",
+            "payment_method": "cheque",
             "gross_pay": str(s.gross_pay),
             "total_employee_deductions": str(s.total_employee_deductions),
+            "total_employer_contributions": str(s.total_employer_contributions or 0),
             "net_pay": str(s.net_pay),
             "currency": s.currency,
             "hours_regular": str(s.hours_regular or 0),
@@ -377,6 +412,7 @@ async def list_run_stubs(
             "hours_vacation": str(s.hours_vacation or 0),
             "hours_sick": str(s.hours_sick or 0),
             "stat_pay_avg": str(getattr(s, "stat_pay_amount", 0) or 0),
+            "change_in_gross_pct": _change_pct(s),
             "memo": s.memo,
             "pay_lines": _build_pay_lines(s),
         }
