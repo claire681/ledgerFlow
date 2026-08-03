@@ -294,7 +294,7 @@ export default function PayrollDone() {
                     <div style={{ textAlign: "right", fontWeight: 700, fontSize: 15, ...tabular, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 }}>
                       {fmtMoney(emp.net_pay)}
                       <button
-                        onClick={function() { window.open("/payroll/pay-stub/" + emp.stub_id, "_blank"); }}
+                        onClick={function() { window.open("/payroll/runs/" + payRunId + "/stubs/" + emp.stub_id, "_blank"); }}
                         title="View pay stub"
                         aria-label="View pay stub"
                         style={{ background: "transparent", border: "none", padding: 4, borderRadius: 6, cursor: "pointer", color: "#66748B", display: "inline-flex", alignItems: "center" }}
