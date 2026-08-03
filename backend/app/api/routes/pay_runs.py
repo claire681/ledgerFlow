@@ -2366,6 +2366,7 @@ async def get_pay_run_done_view(
         "run": {
             "id": str(run.id),
             "status": run.status,
+            "pay_schedule_id": str(run.pay_schedule_id) if run.pay_schedule_id else None,
             "pay_period_start": run.pay_period_start.isoformat() if run.pay_period_start else None,
             "pay_period_end": run.pay_period_end.isoformat() if run.pay_period_end else None,
             "pay_date": run.pay_date.isoformat() if run.pay_date else None,

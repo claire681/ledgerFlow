@@ -240,7 +240,13 @@ export default function PayrollDone() {
                 <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 4 }}>Write {chequeCount} {chequeWord}</div>
                 <div style={{ fontSize: 13, color: C.ink, fontWeight: 500, lineHeight: 1.5 }}>Deliver to your {empWord} by <strong>{fmtDateFull(run.pay_date)}</strong>. Enter the cheque number in the table below.</div>
                 <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-                  <button onClick={function() { window.print(); }} style={{ padding: "8px 14px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 8, color: C.ink, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Print pay stubs</button>
+                  <button onClick={function() {
+                    employees.forEach(function(emp, idx) {
+                      setTimeout(function() {
+                        window.open("/payroll/paycheques/" + emp.stub_id, "_blank");
+                      }, idx * 200);
+                    });
+                  }} style={{ padding: "8px 14px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 8, color: C.ink, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Print pay stubs</button>
                 </div>
               </div>
             </div>
@@ -345,7 +351,15 @@ export default function PayrollDone() {
               }}
               style={{ padding: "12px 18px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}
             >Export CSV</button>
-            <button onClick={function() { window.print(); }} style={{ padding: "12px 24px", background: C.inkDark, border: "none", borderRadius: 10, color: C.card, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT, boxShadow: "0 1px 2px rgba(18,38,43,0.12)" }}>Print all pay stubs</button>
+            <button onClick={function() {
+              // Open each pay stub in a new tab. User can print each with Ctrl+P.
+              // Alternatively, could open a combined print view. For now, one tab per stub.
+              employees.forEach(function(emp, idx) {
+                setTimeout(function() {
+                  window.open("/payroll/paycheques/" + emp.stub_id, "_blank");
+                }, idx * 200);
+              });
+            }} style={{ padding: "12px 24px", background: C.inkDark, border: "none", borderRadius: 10, color: C.card, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT, boxShadow: "0 1px 2px rgba(18,38,43,0.12)" }}>Print all pay stubs</button>
           </div>
         </div>
 
