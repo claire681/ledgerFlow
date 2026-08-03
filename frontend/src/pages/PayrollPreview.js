@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import EditPaychequeDrawer from "../components/EditPaychequeDrawer";
-import { AlertTriangle, ArrowUp, ArrowDown, Check, Search } from "lucide-react";
+import { AlertTriangle, ArrowUp, ArrowDown, Check, Search, BarChart3, X } from "lucide-react";
 
 const C = {
   ink: "#12262B",
@@ -53,6 +53,113 @@ function scheduleFrequencyLabel(freq) {
   return map[freq] || freq;
 }
 
+function CompareModal(props) {
+  var e = props.employee;
+  var run = props.run;
+  var onClose = props.onClose;
+
+  useEffect(function() {
+    var h = function(ev) { if (ev.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return function() { window.removeEventListener("keydown", h); };
+  }, [onClose]);
+
+  if (!e) return null;
+
+  var curG = Number(e.gross_pay || 0);
+  var curR = Number(e.hourly_rate || 0);
+  var curH = Number(e.total_hours || 0);
+  var curEI = Number(e.employee_taxes || 0);
+  var curN = Number(e.net_pay || 0);
+  var cP = Number(e.change_in_gross_pct || 0);
+  // Derive last payday values from current + change %
+  var lstG = cP !== 0 ? curG / (1 + cP / 100) : 0;
+  var lstEI = lstG > 0 && curG > 0 ? lstG * (curEI / curG) : 0;
+  var lstN = lstG - lstEI;
+  var lstH = curR > 0 && lstG > 0 ? Math.round(lstG / curR) : 0;
+
+  var fmt = function(v) { return v > 0 ? fmtMoney(v) : "\u2014"; };
+  var cD = run && run.pay_date ? fmtDate(run.pay_date) : "Current";
+
+  var tokens = {
+    ink: "#12262B", card: "#FFFFFF", page: "#F4F6F8", line: "#E7EAF0",
+  };
+
+  var thStyle = { padding: "10px 12px", textAlign: "right", fontSize: 11, fontWeight: 700, color: tokens.ink, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1.5px solid " + tokens.ink };
+  var thLStyle = Object.assign({}, thStyle, { textAlign: "left" });
+  var tdStyle = { padding: "10px 12px", textAlign: "right", fontSize: 13, color: tokens.ink, fontVariantNumeric: "tabular-nums", borderBottom: "1px solid " + tokens.line };
+  var tdLStyle = { padding: "10px 12px", textAlign: "left", fontSize: 13, color: tokens.ink, fontWeight: 500, borderBottom: "1px solid " + tokens.line };
+  var trGroup = { background: tokens.page };
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(18,38,43,0.4)", zIndex: 1300 }} />
+      <div role="dialog" aria-label="Compare to last payday" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: tokens.card, borderRadius: 12, maxWidth: 720, width: "92%", maxHeight: "88vh", overflow: "auto", zIndex: 1301, boxShadow: "0 12px 40px rgba(18,38,43,0.25)", fontFamily: "Inter, sans-serif" }}>
+
+        {/* Header */}
+        <div style={{ padding: "20px 24px", borderBottom: "1px solid " + tokens.line, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: tokens.ink, marginBottom: 4, opacity: 0.7 }}>PAYCHEQUE COMPARISON</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: tokens.ink, letterSpacing: "-0.01em" }}>{e.name || "Employee"}</div>
+          </div>
+          <button onClick={onClose} aria-label="Close" style={{ background: "transparent", border: "none", cursor: "pointer", color: tokens.ink, padding: 4 }}>
+            <X size={20} strokeWidth={2.5} />
+          </button>
+        </div>
+
+        {/* Comparison table */}
+        <div style={{ padding: "12px 24px 24px" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                <th style={thLStyle}>Line item</th>
+                <th style={thStyle}>Last payday</th>
+                <th style={thStyle}>Current<br/>{cD}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style={trGroup}>
+                <td style={tdLStyle}><strong>Compensation</strong></td>
+                <td style={tdStyle}><strong>{fmt(lstG)}</strong></td>
+                <td style={tdStyle}><strong>{fmt(curG)}</strong></td>
+              </tr>
+              <tr>
+                <td style={tdLStyle}>Regular pay</td>
+                <td style={tdStyle}>{fmt(lstG)}</td>
+                <td style={tdStyle}>{fmt(curG)}</td>
+              </tr>
+              <tr>
+                <td style={tdLStyle}>Rate</td>
+                <td style={tdStyle}>{curR > 0 ? fmtMoney(curR) + "/hr" : "\u2014"}</td>
+                <td style={tdStyle}>{curR > 0 ? fmtMoney(curR) + "/hr" : "\u2014"}</td>
+              </tr>
+              <tr>
+                <td style={tdLStyle}>Hours</td>
+                <td style={tdStyle}>{lstH > 0 ? lstH + "h" : "\u2014"}</td>
+                <td style={tdStyle}>{curH > 0 ? curH + "h" : "\u2014"}</td>
+              </tr>
+              <tr style={trGroup}>
+                <td style={tdLStyle}><strong>Taxes and deductions</strong></td>
+                <td style={tdStyle}><strong>{fmt(lstEI)}</strong></td>
+                <td style={tdStyle}><strong>{fmt(curEI)}</strong></td>
+              </tr>
+              <tr style={Object.assign({}, trGroup, { borderTop: "1.5px solid " + tokens.ink })}>
+                <td style={Object.assign({}, tdLStyle, { fontWeight: 700, fontSize: 14 })}>Net pay</td>
+                <td style={Object.assign({}, tdStyle, { fontWeight: 700, fontSize: 14 })}>{fmt(lstN)}</td>
+                <td style={Object.assign({}, tdStyle, { fontWeight: 700, fontSize: 14 })}>{fmt(curN)}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style={{ marginTop: 16, padding: "12px 14px", background: tokens.page, borderRadius: 8, fontSize: 12, color: tokens.ink, fontWeight: 500 }}>
+            Last payday values are derived from the change %. For exact prior period numbers, view the finalized pay stub.
+          </div>
+        </div>
+
+      </div>
+    </>
+  );
+}
+
 export default function PayrollPreview() {
   const { payRunId } = useParams();
   const navigate = useNavigate();
@@ -66,6 +173,7 @@ export default function PayrollPreview() {
   const [error, setError] = useState(null);
   const [finalizing, setFinalizing] = useState(false);
   const [editingEmployeeId, setEditingEmployeeId] = useState(null);
+  const [compareFor, setCompareFor] = useState(null);
 
   useEffect(function() {
     let cancelled = false;
@@ -326,21 +434,21 @@ export default function PayrollPreview() {
           ) : (
             <>
               {/* Header */}
-              <div style={{ padding: "12px 0", display: "grid", gridTemplateColumns: "1fr 90px 130px 140px 140px 140px 90px 110px", gap: 12, fontSize: 10, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid " + C.line }}>
+              <div style={{ padding: "12px 0", display: "grid", gridTemplateColumns: "1fr 90px 120px 150px 130px 160px 130px 100px", gap: 12, fontSize: 10, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid " + C.line }}>
                 <div>EMPLOYEE</div>
-                <div style={{ textAlign: "right" }}>HOURS</div>
+                <div style={{ textAlign: "right" }}>TOTAL<br/>HOURS</div>
                 <div style={{ textAlign: "right" }}>GROSS PAY</div>
-                <div style={{ textAlign: "right" }}>EMPLOYEE TAXES</div>
+                <div style={{ textAlign: "right" }}>EMPLOYEE TAXES<br/>& DEDUCTIONS</div>
                 <div style={{ textAlign: "right" }}>NET PAY</div>
-                <div style={{ textAlign: "right" }}>EMPLOYER TAXES</div>
-                <div style={{ textAlign: "right" }}>CHANGE</div>
+                <div style={{ textAlign: "right" }}>EMPLOYER TAXES<br/>& CONTRIBUTIONS</div>
+                <div style={{ textAlign: "right" }}>CHANGE IN<br/>GROSS PAY</div>
                 <div style={{ textAlign: "right" }}>METHOD</div>
               </div>
 
               {/* Employee rows */}
               {lines.map(function(l) {
                 return (
-                  <div key={l.employee_id} style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "1fr 90px 130px 140px 140px 140px 90px 110px", gap: 12, alignItems: "center", borderBottom: "1px solid " + C.line, fontSize: 13.5, color: C.ink, ...tabular }}>
+                  <div key={l.employee_id} style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "1fr 90px 120px 150px 130px 160px 130px 100px", gap: 12, alignItems: "center", borderBottom: "1px solid " + C.line, fontSize: 13.5, color: C.ink, ...tabular }}>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 14 }}>{l.name}</div>
                       <div style={{ fontSize: 11.5, color: C.ink, marginTop: 2, fontWeight: 500 }}>
@@ -380,7 +488,7 @@ export default function PayrollPreview() {
               })}
 
               {/* Total row */}
-              <div style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "1fr 90px 130px 140px 140px 140px 90px 110px", gap: 12, alignItems: "center", fontSize: 13.5, color: C.ink, fontWeight: 700, ...tabular, borderTop: "1.5px solid " + C.ink }}>
+              <div style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "1fr 90px 120px 150px 130px 160px 130px 100px", gap: 12, alignItems: "center", fontSize: 13.5, color: C.ink, fontWeight: 700, ...tabular, borderTop: "1.5px solid " + C.ink }}>
                 <div>Total</div>
                 <div style={{ textAlign: "right" }}>{totals.total_hours}h</div>
                 <div style={{ textAlign: "right" }}>{fmtMoney(totals.gross)}</div>
@@ -447,6 +555,10 @@ export default function PayrollPreview() {
         </div>
 
         {/* Edit paycheque drawer */}
+        {compareFor && (
+          <CompareModal employee={compareFor} run={run} onClose={function() { setCompareFor(null); }} />
+        )}
+
         {editingEmployeeId && (
           <EditPaychequeDrawer
             runId={payRunId}
