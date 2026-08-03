@@ -434,21 +434,21 @@ export default function PayrollPreview() {
           ) : (
             <>
               {/* Header */}
-              <div style={{ padding: "12px 0", display: "grid", gridTemplateColumns: "1fr 90px 120px 150px 130px 160px 130px 100px", gap: 12, fontSize: 10, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid " + C.line }}>
+              <div style={{ padding: "12px 0", display: "grid", gridTemplateColumns: "1.2fr 100px 120px 140px 130px 140px 100px 100px", gap: 12, fontSize: 10, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid " + C.line }}>
                 <div>EMPLOYEE</div>
-                <div style={{ textAlign: "right" }}>TOTAL<br/>HOURS</div>
+                <div style={{ textAlign: "right" }}>TOTAL HOURS</div>
                 <div style={{ textAlign: "right" }}>GROSS PAY</div>
-                <div style={{ textAlign: "right" }}>EMPLOYEE TAXES<br/>& DEDUCTIONS</div>
+                <div style={{ textAlign: "right" }}>EMPLOYEE TAXES</div>
                 <div style={{ textAlign: "right" }}>NET PAY</div>
-                <div style={{ textAlign: "right" }}>EMPLOYER TAXES<br/>& CONTRIBUTIONS</div>
-                <div style={{ textAlign: "right" }}>CHANGE IN<br/>GROSS PAY</div>
+                <div style={{ textAlign: "right" }}>EMPLOYER TAXES</div>
+                <div style={{ textAlign: "right" }}>CHANGE</div>
                 <div style={{ textAlign: "right" }}>METHOD</div>
               </div>
 
               {/* Employee rows */}
               {lines.map(function(l) {
                 return (
-                  <div key={l.employee_id} style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "1fr 90px 120px 150px 130px 160px 130px 100px", gap: 12, alignItems: "center", borderBottom: "1px solid " + C.line, fontSize: 13.5, color: C.ink, ...tabular }}>
+                  <div key={l.employee_id} style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "1.2fr 100px 120px 140px 130px 140px 100px 100px", gap: 12, alignItems: "center", borderBottom: "1px solid " + C.line, fontSize: 13.5, color: C.ink, ...tabular }}>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 14 }}>{l.name}</div>
                       <div style={{ fontSize: 11.5, color: C.ink, marginTop: 2, fontWeight: 500 }}>
@@ -496,7 +496,7 @@ export default function PayrollPreview() {
               })}
 
               {/* Total row */}
-              <div style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "1fr 90px 120px 150px 130px 160px 130px 100px", gap: 12, alignItems: "center", fontSize: 13.5, color: C.ink, fontWeight: 700, ...tabular, borderTop: "1.5px solid " + C.ink }}>
+              <div style={{ padding: "16px 0", display: "grid", gridTemplateColumns: "1.2fr 100px 120px 140px 130px 140px 100px 100px", gap: 12, alignItems: "center", fontSize: 13.5, color: C.ink, fontWeight: 700, ...tabular, borderTop: "1.5px solid " + C.ink }}>
                 <div>Total</div>
                 <div style={{ textAlign: "right" }}>{totals.total_hours}h</div>
                 <div style={{ textAlign: "right" }}>{fmtMoney(totals.gross)}</div>
