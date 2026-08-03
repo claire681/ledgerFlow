@@ -258,7 +258,7 @@ export default function PayrollDone() {
               <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 4 }}>Remit {fmtMoney(craTotal)} in taxes to CRA</div>
               <div style={{ fontSize: 13, color: C.ink, fontWeight: 500, lineHeight: 1.5 }}>{fmtMoney(employeeTax)} withheld from {empWord} plus {fmtMoney(employerTax)} in employer contributions. Novala tracks this on your payroll liabilities.</div>
               <div style={{ marginTop: 12 }}>
-                <button onClick={function() { navigate("/compliance"); }} style={{ padding: "8px 14px", background: "transparent", border: "none", color: C.brandDark, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>View liabilities</button>
+                <button onClick={function() { navigate("/payroll/compliance"); }} style={{ padding: "8px 14px", background: "transparent", border: "none", color: C.brandDark, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>View liabilities</button>
               </div>
             </div>
           </div>
@@ -326,7 +326,7 @@ export default function PayrollDone() {
         </div>
 
         {/* Footer */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 32px", borderTop: "1px solid " + C.line, position: "sticky", bottom: 0, background: C.card, zIndex: 100, boxShadow: "0 -4px 12px rgba(0,0,0,0.06)", marginLeft: -32, marginRight: -32, marginTop: 32 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 32px", borderTop: "1px solid " + C.line, position: "fixed", bottom: 0, left: 0, right: 0, background: C.card, zIndex: 100, boxShadow: "0 -4px 12px rgba(0,0,0,0.06)" }}>
           <button onClick={function() { navigate("/payroll/overview"); }} style={{ padding: "12px 18px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 6 }}>
             <ArrowLeft size={16} strokeWidth={2.5} />
             Back to Payroll
