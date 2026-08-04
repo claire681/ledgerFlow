@@ -628,8 +628,8 @@ export default function PayrollPreview() {
           </div>
         )}
 
-        {/* Footer buttons */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        {/* Footer buttons - fixed */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "fixed", bottom: 0, left: 0, right: 0, background: C.card, padding: "16px 32px", borderTop: "1px solid " + C.line, boxShadow: "0 -4px 12px rgba(0,0,0,0.06)", zIndex: 100 }}>
           <button onClick={function() { navigate("/payroll/run/" + payRunId); }} style={{ padding: "12px 18px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
             {"\u2190"} Back to hours
           </button>
