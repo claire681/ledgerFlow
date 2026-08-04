@@ -333,7 +333,7 @@ export default function PaychequeDetail() {
         <X size={18} style={{ color: TEXT_SECONDARY, cursor: "pointer" }} onClick={close} />
       </div>
 
-      <div className="no-print" style={{ flex: 1, overflowY: "auto", padding: "20px 24px 16px", maxWidth: 880, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+      <div className="no-print" style={{ flex: 1, overflowY: "auto", padding: "20px 24px 100px", maxWidth: 880, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
           {pc && pc.is_adjustment && (
             <div className="no-print" style={{
               background: "#FEF3C7", border: "1px solid #FDE68A",
