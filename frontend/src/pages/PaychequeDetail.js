@@ -208,7 +208,18 @@ export default function PaychequeDetail() {
     navigate(-1);
   };
 
-  const close = () => navigate(-1);
+  const close = () => {
+    // If page was opened in a new tab (no history), close the tab.
+    // Otherwise, go back to the previous page in history.
+    if (window.history.length > 1 && document.referrer) {
+      navigate(-1);
+    } else {
+      // Try to close the window (works if opened by window.open)
+      window.close();
+      // If close didn't work (browser blocked it), fall back to paycheques list
+      setTimeout(() => { navigate("/payroll/paycheques"); }, 100);
+    }
+  };
 
   const totalDeductions = useMemo(() => {
     if (!pc || !pc.deductions_contributions || !pc.deductions_contributions.total) return 0;
