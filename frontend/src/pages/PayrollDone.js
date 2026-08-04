@@ -127,7 +127,7 @@ export default function PayrollDone() {
       <div style={{ padding: "40px 32px", background: C.page, minHeight: "100vh", fontFamily: FONT }}>
         <div style={{ fontSize: 18, color: C.ink, fontWeight: 700, marginBottom: 8 }}>Could not load this pay run.</div>
         <div style={{ fontSize: 14, color: C.ink, fontWeight: 500, marginBottom: 20 }}>{error || "Unknown error"}</div>
-        <button onClick={function() { navigate("/payroll/run/" + payRunId); }} style={{ padding: "10px 16px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Back to Run Payroll</button>
+        <button onClick={function() { navigate("/payroll/pay-runs"); }} style={{ padding: "10px 16px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Back to Pay Runs</button>
       </div>
     );
   }
