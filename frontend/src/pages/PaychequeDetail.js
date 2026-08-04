@@ -296,7 +296,12 @@ export default function PaychequeDetail() {
           button, .action-menu { display: none !important; }
         }
         /* On screen, hide the print-only pay stub - it's only for print */
-        @media screen {
+            /* Hide app chrome (top bar, sidebar, promo banner) during print */
+    @media print {
+      [data-print="hide"], [data-print='hide'] { display: none !important; }
+      html, body { background: white !important; }
+    }
+    @media screen {
           .pay-stub-print-only { display: none; }
         }
       `}</style>
