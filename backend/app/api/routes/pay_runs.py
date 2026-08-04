@@ -3364,7 +3364,7 @@ async def get_paycheque_pdf(
     import re as _re
     from urllib.parse import quote as _quote
     _safe_name = _re.sub(r'[^A-Za-z0-9_-]', '_', stub.employee_name or 'employee')
-    filename = f"paystub_{_safe_name}_{fmt_date(run.pay_date)}.pdf"
+    filename = f"paystub_{_safe_name.lower()}_{run.pay_date.strftime('%Y-%m-%d') if run.pay_date else 'undated'}.pdf"
     # RFC 5987 filename* variant makes browsers respect the filename during save
     filename_encoded = _quote(filename)
     return Response(
@@ -3524,7 +3524,7 @@ async def email_paycheque(
 
     # Build filename
     safe_name = stub.employee_name.replace(" ", "_")
-    filename = f"paystub_{safe_name}_{fmt_date(run.pay_date)}.pdf"
+    filename = f"paystub_{safe_name.lower()}_{run.pay_date.strftime('%Y-%m-%d') if run.pay_date else 'undated'}.pdf"
 
     # SendGrid mail
     mail = Mail(
