@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import EditPaychequeDrawer from "../components/EditPaychequeDrawer";
-import { AlertTriangle, ArrowUp, ArrowDown, Check, Search, FileSearch, Minus, X } from "lucide-react";
+import { AlertTriangle, ArrowUp, ArrowDown, Check, Search, FileSearch, Minus, X, ChevronDown } from "lucide-react";
 
 const C = {
   ink: "#12262B",
@@ -260,6 +260,38 @@ export default function PayrollPreview() {
   const [compareFor, setCompareFor] = useState(null);
   const [comparison, setComparison] = useState(null);
   const [schedule, setSchedule] = useState(null);
+  const [submitMenuOpen, setSubmitMenuOpen] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const submitMenuRef = useRef(null);
+
+  useEffect(function() {
+    if (!submitMenuOpen) return;
+    function onDocClick(e) {
+      if (submitMenuRef.current && !submitMenuRef.current.contains(e.target)) {
+        setSubmitMenuOpen(false);
+      }
+    }
+    function onKey(e) { if (e.key === "Escape") setSubmitMenuOpen(false); }
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return function() {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [submitMenuOpen]);
+
+  async function handleSaveForLater() {
+    setSavingDraft(true);
+    try {
+      navigate("/payroll/overview");
+    } finally {
+      setSavingDraft(false);
+    }
+  }
+
+  function handlePreviewDetails() {
+    alert("Preview payroll details popup coming next.");
+  }
 
   useEffect(function() {
     let cancelled = false;
@@ -633,25 +665,100 @@ export default function PayrollPreview() {
           <button onClick={function() { navigate("/payroll/run/" + payRunId); }} style={{ padding: "12px 18px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
             {"\u2190"} Back to hours
           </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <button
-            onClick={handleSubmit}
-            disabled={finalizing || submitBlocked || lines.length === 0}
+            onClick={handlePreviewDetails}
+            disabled={lines.length === 0}
             style={{
-              padding: "14px 28px",
-              background: C.inkDark,
-              border: "none",
+              padding: "12px 20px",
+              background: C.card,
+              border: "1.5px solid " + C.ink,
               borderRadius: 10,
-              color: C.card,
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: (finalizing || submitBlocked || lines.length === 0) ? "not-allowed" : "pointer",
+              color: C.ink,
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: lines.length === 0 ? "not-allowed" : "pointer",
               fontFamily: FONT,
-              opacity: (finalizing || submitBlocked || lines.length === 0) ? 0.45 : 1,
-              boxShadow: "0 1px 2px rgba(18,38,43,0.12)",
+              opacity: lines.length === 0 ? 0.45 : 1,
             }}
           >
-            {finalizing ? "Submitting..." : "Submit payroll"}
+            Preview payroll details
           </button>
+
+          <div ref={submitMenuRef} style={{ display: "flex", position: "relative" }}>
+            <button
+              onClick={handleSubmit}
+              disabled={finalizing || submitBlocked || lines.length === 0}
+              style={{
+                padding: "14px 28px",
+                background: C.inkDark,
+                border: "none",
+                borderRadius: "10px 0 0 10px",
+                color: C.card,
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: (finalizing || submitBlocked || lines.length === 0) ? "not-allowed" : "pointer",
+                fontFamily: FONT,
+                boxShadow: "0 1px 2px rgba(18,38,43,0.12)",
+                opacity: (finalizing || submitBlocked || lines.length === 0) ? 0.45 : 1,
+              }}
+            >
+              {finalizing ? "Submitting..." : (savingDraft ? "Saving..." : "Submit payroll")}
+            </button>
+            <button
+              onClick={function() { setSubmitMenuOpen(function(o) { return !o; }); }}
+              disabled={finalizing || submitBlocked || lines.length === 0}
+              aria-label="More submit options"
+              style={{
+                padding: "13px 12px",
+                background: C.inkDark,
+                border: "none",
+                borderLeft: "1px solid rgba(255,255,255,0.22)",
+                borderRadius: "0 10px 10px 0",
+                cursor: (finalizing || submitBlocked || lines.length === 0) ? "not-allowed" : "pointer",
+                boxShadow: "0 1px 2px rgba(18,38,43,0.12)",
+                opacity: (finalizing || submitBlocked || lines.length === 0) ? 0.45 : 1,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <ChevronDown size={15} color="#FFFFFF" strokeWidth={2.5} />
+            </button>
+
+            {submitMenuOpen && (
+              <div style={{
+                position: "absolute",
+                bottom: "100%",
+                right: 0,
+                marginBottom: 8,
+                background: C.card,
+                border: "1px solid " + C.line,
+                borderRadius: 10,
+                padding: 6,
+                boxShadow: "0 6px 20px rgba(16,26,43,0.14)",
+                minWidth: 170,
+                zIndex: 200,
+              }}>
+                <div
+                  onClick={function() { setSubmitMenuOpen(false); handleSaveForLater(); }}
+                  style={{
+                    padding: "9px 12px",
+                    fontSize: 14,
+                    borderRadius: 7,
+                    color: C.ink,
+                    cursor: "pointer",
+                    fontFamily: FONT,
+                  }}
+                  onMouseEnter={function(e) { e.currentTarget.style.background = C.tealTint; e.currentTarget.style.color = C.tealInk; }}
+                  onMouseLeave={function(e) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.ink; }}
+                >
+                  Save for later
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
         </div>
 
         {/* Edit paycheque drawer */}
