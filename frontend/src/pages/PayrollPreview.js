@@ -298,7 +298,7 @@ export default function PayrollPreview() {
       return;
     }
 
-    const companyName = (payrollSettings && payrollSettings.company_name) || (payRun && payRun.company_name) || "";
+    const companyName = (payrollSettings && payrollSettings.company_name) || (run && run.company_name) || "";
     const fmtM = function(v) {
       const n = Number(v) || 0;
       const body = Math.abs(n).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -348,8 +348,8 @@ export default function PayrollPreview() {
         '<tr>' +
           '<td rowspan="4" class="emp"><div class="name">' + (l.employee_name || "") + '</div>' +
             '<div>Net pay ' + fmtM(net) + '</div>' +
-            '<div class="sub">Pay date: ' + fmtD(payRun && payRun.pay_date) + '</div>' +
-            '<div class="sub">' + fmtD(payRun && payRun.pay_period_start) + ' to ' + fmtD(payRun && payRun.pay_period_end) + '</div>' +
+            '<div class="sub">Pay date: ' + fmtD(run && run.pay_date) + '</div>' +
+            '<div class="sub">' + fmtD(run && run.pay_period_start) + ' to ' + fmtD(run && run.pay_period_end) + '</div>' +
           '</td>' +
           '<td>Regular Pay</td><td class="r">' + fmtH(hoursReg) + '</td><td class="r">' + fmtM(gross) + '</td>' +
           '<td class="muted">None</td><td class="r muted">$0.00</td>' +
