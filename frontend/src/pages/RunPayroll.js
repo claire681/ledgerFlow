@@ -394,6 +394,10 @@ export default function RunPayroll() {
 
   const readyRows = rows.filter(function(r) { return r.ready; });
   const includedRows = rows.filter(function(r) { return r.included && r.ready; });
+  const hasAnyHours = includedRows.some(function(r) {
+    const hrs = (parseFloat(r.regular) || 0) + (parseFloat(r.overtime) || 0) + (parseFloat(r.statHoliday) || 0) + (parseFloat(r.vacation) || 0) + (parseFloat(r.sick) || 0);
+    return hrs > 0;
+  });
   const needsHoursRows = readyRows.filter(function(r) { return (parseFloat(r.regular) || 0) === 0 && (parseFloat(r.statHoliday) || 0) === 0; });
   const totalHours = includedRows.reduce(function(s, r) { return s + (parseFloat(r.regular) || 0) + (parseFloat(r.statHoliday) || 0); }, 0);
   const totalGross = includedRows.reduce(function(s, r) {
@@ -659,7 +663,7 @@ export default function RunPayroll() {
         <button onClick={handleCancel} style={{ background: "transparent", border: "1px solid " + C.line, color: C.ink, fontSize: 14, fontWeight: 600, padding: "10px 20px", borderRadius: 10, cursor: "pointer", fontFamily: FONT }}>Cancel</button>
         <div style={{ display: "flex", gap: 12 }}>
           <button onClick={handleSaveForLater} style={{ background: "transparent", border: "1px solid " + C.line, color: C.ink, fontSize: 14, fontWeight: 600, padding: "10px 20px", borderRadius: 10, cursor: "pointer", fontFamily: FONT }}>Save for later</button>
-          <button onClick={handleReview} disabled={saving || includedRows.length === 0} style={{ background: C.ink, color: "white", fontSize: 14, fontWeight: 600, padding: "10px 22px", borderRadius: 10, border: "none", cursor: (saving || includedRows.length === 0) ? "not-allowed" : "pointer", opacity: (saving || includedRows.length === 0) ? 0.5 : 1, fontFamily: FONT, display: "flex", alignItems: "center", gap: 6 }}>
+          <button onClick={handleReview} disabled={saving || includedRows.length === 0 || !hasAnyHours} style={{ background: C.ink, color: "white", fontSize: 14, fontWeight: 600, padding: "10px 22px", borderRadius: 10, border: "none", cursor: (saving || includedRows.length === 0 || !hasAnyHours) ? "not-allowed" : "pointer", opacity: (saving || includedRows.length === 0 || !hasAnyHours) ? 0.5 : 1, fontFamily: FONT, display: "flex", alignItems: "center", gap: 6 }}>
             {saving ? "Calculating..." : ("Review payroll for " + includedRows.length + " employee" + (includedRows.length === 1 ? "" : "s"))}
             <span>&rarr;</span>
           </button>
