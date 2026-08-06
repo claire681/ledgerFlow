@@ -401,7 +401,8 @@ export default function RunPayroll() {
   const includedRows = rows.filter(function(r) { return r.included && r.ready; });
   const hasAnyHours = includedRows.some(function(r) {
     const hrs = (parseFloat(r.regular) || 0) + (parseFloat(r.overtime) || 0) + (parseFloat(r.statHoliday) || 0) + (parseFloat(r.vacation) || 0) + (parseFloat(r.sick) || 0);
-    return hrs > 0;
+    const statPay = parseFloat(r.statAvgDaily) || 0;
+    return hrs > 0 || statPay > 0;
   });
   const needsHoursRows = readyRows.filter(function(r) { return (parseFloat(r.regular) || 0) === 0 && (parseFloat(r.statHoliday) || 0) === 0; });
   const totalHours = includedRows.reduce(function(s, r) { return s + (parseFloat(r.regular) || 0) + (parseFloat(r.statHoliday) || 0); }, 0);
