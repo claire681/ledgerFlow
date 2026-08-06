@@ -279,9 +279,15 @@ export default function RunPayroll() {
     };
   }, [payRunId]);
 
-  // Reset stat holiday applied flag when pay period changes so popup reopens.
+  // Reset stat holiday applied flag AND clear stat pay values on all rows
+  // when pay period changes so popup can re-evaluate.
   useEffect(function() {
     setStatHolidayApplied(null);
+    setRows(function(prevRows) {
+      return prevRows.map(function(r) {
+        return Object.assign({}, r, { statAvgDaily: "", statHoliday: "" });
+      });
+    });
   }, [payRun && payRun.pay_period_start, payRun && payRun.pay_period_end]);
 
   // Open stat holiday eligibility popup once when pay run loads
