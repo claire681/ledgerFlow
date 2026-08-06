@@ -290,7 +290,169 @@ export default function PayrollPreview() {
   }
 
   function handlePreviewDetails() {
-    alert("Preview payroll details popup coming next.");
+    // Must open the window SYNCHRONOUSLY inside the click handler
+    // otherwise popup blockers will kill it.
+    const w = window.open("", "_blank", "width=1200,height=900");
+    if (!w) {
+      alert("Popup blocked. Please allow popups for this site to preview payroll details.");
+      return;
+    }
+
+    const companyName = (payrollSettings && payrollSettings.company_name) || (payRun && payRun.company_name) || "";
+    const fmtM = function(v) {
+      const n = Number(v) || 0;
+      const body = Math.abs(n).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return (n < 0 ? "-" : "") + "$" + body;
+    };
+    const fmtH = function(v) {
+      return (Number(v) || 0).toFixed(2);
+    };
+    const fmtD = function(iso) {
+      if (!iso) return "";
+      const d = new Date(iso);
+      if (isNaN(d)) return iso;
+      const dd = String(d.getUTCDate()).padStart(2, "0");
+      const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+      return dd + "/" + mm + "/" + d.getUTCFullYear();
+    };
+
+    // Build per-employee blocks
+    let blocksHtml = "";
+    let totalGross = 0, totalNet = 0, totalHours = 0;
+    let totalFed = 0, totalProv = 0, totalEiEmp = 0, totalCppEmp = 0, totalCpp2Emp = 0;
+    let totalEiEr = 0, totalCppEr = 0, totalCpp2Er = 0;
+
+    lines.forEach(function(l) {
+      const gross = Number(l.gross_pay || 0);
+      const net = Number(l.net_pay || 0);
+      const hoursReg = Number(l.hours_regular || 0);
+      const hoursOt = Number(l.hours_overtime || 0);
+      const hoursStat = Number(l.hours_stat_holiday || 0);
+      const totalH = hoursReg + hoursOt + hoursStat + Number(l.hours_vacation || 0) + Number(l.hours_sick || 0);
+      const rate = hoursReg > 0 && gross > 0 ? (gross / totalH) : 0;
+
+      const fed = Number(l.federal_tax || 0);
+      const prov = Number(l.provincial_or_state_tax || 0);
+      const eiEmp = Number(l.unemployment_employee || 0);
+      const cppEmp = Number(l.social_security_employee || 0);
+      const cpp2Emp = Number(l.second_cpp_employee || 0);
+      const eiEr = Number(l.unemployment_employer || 0);
+      const cppEr = Number(l.social_security_employer || 0);
+      const cpp2Er = Number(l.second_cpp_employer || 0);
+
+      totalGross += gross; totalNet += net; totalHours += totalH;
+      totalFed += fed; totalProv += prov; totalEiEmp += eiEmp; totalCppEmp += cppEmp; totalCpp2Emp += cpp2Emp;
+      totalEiEr += eiEr; totalCppEr += cppEr; totalCpp2Er += cpp2Er;
+
+      blocksHtml += (
+        '<tr>' +
+          '<td rowspan="4" class="emp"><div class="name">' + (l.employee_name || "") + '</div>' +
+            '<div>Net pay ' + fmtM(net) + '</div>' +
+            '<div class="sub">Pay date: ' + fmtD(payRun && payRun.pay_date) + '</div>' +
+            '<div class="sub">' + fmtD(payRun && payRun.pay_period_start) + ' to ' + fmtD(payRun && payRun.pay_period_end) + '</div>' +
+          '</td>' +
+          '<td>Regular Pay</td><td class="r">' + fmtH(hoursReg) + '</td><td class="r">' + fmtM(gross) + '</td>' +
+          '<td class="muted">None</td><td class="r muted">$0.00</td>' +
+          '<td>Income Tax</td><td class="r">' + fmtM(fed + prov) + '</td>' +
+          '<td>EI Employer</td><td class="r">' + fmtM(eiEr) + '</td>' +
+        '</tr>' +
+        '<tr>' +
+          '<td>Stat Holiday Pay</td><td class="r">' + fmtH(hoursStat) + '</td><td class="r">' + fmtM(hoursStat * rate) + '</td>' +
+          '<td></td><td></td>' +
+          '<td>Employment Insurance</td><td class="r">' + fmtM(eiEmp) + '</td>' +
+          '<td>CPP Employer</td><td class="r">' + fmtM(cppEr) + '</td>' +
+        '</tr>' +
+        '<tr>' +
+          '<td>Overtime Pay</td><td class="r">' + fmtH(hoursOt) + '</td><td class="r">' + fmtM(hoursOt * rate * 1.5) + '</td>' +
+          '<td></td><td></td>' +
+          '<td>Canada Pension Plan</td><td class="r">' + fmtM(cppEmp) + '</td>' +
+          '<td>Second CPP Employer</td><td class="r">' + fmtM(cpp2Er) + '</td>' +
+        '</tr>' +
+        '<tr class="subtotal">' +
+          '<td>Subtotal</td><td class="r"><b>' + fmtH(totalH) + '</b></td><td class="r"><b>' + fmtM(gross) + '</b></td>' +
+          '<td></td><td></td>' +
+          '<td>Second CPP</td><td class="r">' + fmtM(cpp2Emp) + '</td>' +
+          '<td></td><td></td>' +
+        '</tr>'
+      );
+    });
+
+    const totalsBlock = (
+      '<tr>' +
+        '<td rowspan="3" class="emp"><div class="name">Net pay ' + fmtM(totalNet) + '</div></td>' +
+        '<td>Regular Pay</td><td class="r">' + fmtH(totalHours) + '</td><td class="r">' + fmtM(totalGross) + '</td>' +
+        '<td class="muted">None</td><td class="r muted">$0.00</td>' +
+        '<td>Income Tax</td><td class="r">' + fmtM(totalFed + totalProv) + '</td>' +
+        '<td>EI Employer</td><td class="r">' + fmtM(totalEiEr) + '</td>' +
+      '</tr>' +
+      '<tr>' +
+        '<td>Stat Holiday Pay</td><td class="r">0.00</td><td class="r">$0.00</td>' +
+        '<td></td><td></td>' +
+        '<td>Employment Insurance</td><td class="r">' + fmtM(totalEiEmp) + '</td>' +
+        '<td>CPP Employer</td><td class="r">' + fmtM(totalCppEr) + '</td>' +
+      '</tr>' +
+      '<tr>' +
+        '<td>Overtime Pay</td><td class="r">0.00</td><td class="r">$0.00</td>' +
+        '<td></td><td></td>' +
+        '<td>Canada Pension Plan</td><td class="r">' + fmtM(totalCppEmp) + '</td>' +
+        '<td>Second CPP Employer</td><td class="r">' + fmtM(totalCpp2Er) + '</td>' +
+      '</tr>'
+    );
+
+    const html = (
+      '<!DOCTYPE html>' +
+      '<html lang="en"><head><meta charset="utf-8"><title>Preview payroll details</title>' +
+      '<style>' +
+        'body { margin: 0; padding: 40px 60px; font-family: Inter, -apple-system, sans-serif; color: #12262B; background: #FFFFFF; position: relative; }' +
+        '.wm { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-28deg); font-family: Georgia, serif; font-style: italic; font-size: 104px; color: rgba(18,38,43,0.07); pointer-events: none; user-select: none; z-index: 1; white-space: nowrap; }' +
+        '.head { position: relative; z-index: 2; text-align: center; margin-bottom: 20px; }' +
+        '.head .co { font-size: 15px; font-weight: 500; }' +
+        '.head .ti { font-size: 23px; font-weight: 600; margin-top: 6px; }' +
+        '.actions { position: relative; z-index: 2; display: flex; justify-content: flex-end; margin-bottom: 20px; }' +
+        '.actions button { padding: 8px 14px; background: #FFFFFF; border: 1px solid #12262B; border-radius: 8px; color: #12262B; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }' +
+        'table { position: relative; z-index: 2; width: 100%; border-collapse: collapse; font-size: 12px; }' +
+        'th, td { padding: 10px; border: 1px solid #E7EAF0; text-align: left; }' +
+        'th { background: #F4F6F8; font-weight: 700; }' +
+        '.r { text-align: right; font-variant-numeric: tabular-nums; }' +
+        '.muted { color: #66748B; }' +
+        '.emp .name { font-weight: 600; }' +
+        '.emp .sub { font-size: 11px; }' +
+        '.subtotal { background: #F4F6F8; font-weight: 600; }' +
+        '.band td { background: #12262B; color: #FFFFFF; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; font-size: 11px; text-align: center; padding: 12px; }' +
+        '.grand td { background: #F4F6F8; font-weight: 700; }' +
+        '@media print { .actions { display: none; } }' +
+      '</style></head><body>' +
+        '<div class="wm">Preview only</div>' +
+        '<div class="head"><div class="co">' + companyName + '</div><div class="ti">Preview payroll details</div></div>' +
+        '<div class="actions"><button onclick="window.print()">Print or save PDF</button></div>' +
+        '<table>' +
+          '<thead><tr>' +
+            '<th>Employee</th>' +
+            '<th>Pay</th><th class="r">Hours</th><th class="r">Amount</th>' +
+            '<th>Deductions</th><th class="r">Amount</th>' +
+            '<th>Employee taxes</th><th class="r">Amount</th>' +
+            '<th>Employer taxes</th><th class="r">Amount</th>' +
+          '</tr></thead>' +
+          '<tbody>' +
+            blocksHtml +
+            '<tr class="band"><td colspan="10">Total</td></tr>' +
+            totalsBlock +
+            '<tr class="band"><td colspan="10">Total payroll cost</td></tr>' +
+            '<tr class="grand"><td>Net pay ' + fmtM(totalNet) + '</td>' +
+              '<td colspan="2" class="r">' + fmtH(totalHours) + ' hrs</td>' +
+              '<td class="r">' + fmtM(totalGross) + '</td>' +
+              '<td colspan="2" class="r">$0.00</td>' +
+              '<td colspan="2" class="r">' + fmtM(totalFed + totalProv + totalEiEmp + totalCppEmp + totalCpp2Emp) + '</td>' +
+              '<td colspan="2" class="r">' + fmtM(totalEiEr + totalCppEr + totalCpp2Er) + '</td>' +
+            '</tr>' +
+          '</tbody>' +
+        '</table>' +
+      '</body></html>'
+    );
+
+    w.document.write(html);
+    w.document.close();
+    w.document.title = "Preview payroll details";
   }
 
   useEffect(function() {
