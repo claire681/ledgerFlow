@@ -853,7 +853,7 @@ export default function PayrollPreview() {
               disabled={finalizing || submitBlocked || lines.length === 0}
               style={{
                 padding: "14px 28px",
-                background: C.inkDark,
+                background: C.teal,
                 border: "none",
                 borderRadius: "10px 0 0 10px",
                 color: C.card,
@@ -873,7 +873,7 @@ export default function PayrollPreview() {
               aria-label="More submit options"
               style={{
                 padding: "13px 12px",
-                background: C.inkDark,
+                background: C.teal,
                 border: "none",
                 borderLeft: "1px solid rgba(255,255,255,0.22)",
                 borderRadius: "0 10px 10px 0",

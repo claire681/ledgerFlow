@@ -150,7 +150,7 @@ function FilterPopover(props) {
           </div>
           <div style={{ padding: "12px 18px", borderTop: "1px solid " + C.line, display: "flex", justifyContent: "space-between", gap: 10 }}>
             <button onClick={clear} style={{ flex: 1, background: "transparent", border: "1px solid " + C.line, color: C.ink, fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 8, cursor: "pointer", fontFamily: FONT }}>Clear all</button>
-            <button onClick={apply} style={{ flex: 1, background: C.ink, color: "white", fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: FONT }}>Apply</button>
+            <button onClick={apply} style={{ flex: 1, background: C.teal, color: "white", fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: FONT }}>Apply</button>
           </div>
         </div>
       )}
@@ -189,7 +189,7 @@ function MemoPopover(props) {
           </label>
           <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
             <button onClick={function() { setOpen(false); }} style={{ flex: 1, background: "transparent", border: "1px solid " + C.line, color: C.ink, fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 8, cursor: "pointer", fontFamily: FONT }}>Cancel</button>
-            <button onClick={save} style={{ flex: 1, background: C.ink, color: "white", fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: FONT }}>Save</button>
+            <button onClick={save} style={{ flex: 1, background: C.teal, color: "white", fontSize: 13, fontWeight: 600, padding: "8px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: FONT }}>Save</button>
           </div>
         </div>
       )}
@@ -675,7 +675,7 @@ export default function RunPayroll() {
         <button onClick={handleCancel} style={{ background: "transparent", border: "1px solid " + C.line, color: C.ink, fontSize: 14, fontWeight: 600, padding: "10px 20px", borderRadius: 10, cursor: "pointer", fontFamily: FONT }}>Cancel</button>
         <div style={{ display: "flex", gap: 12 }}>
           <button onClick={handleSaveForLater} style={{ background: "transparent", border: "1px solid " + C.line, color: C.ink, fontSize: 14, fontWeight: 600, padding: "10px 20px", borderRadius: 10, cursor: "pointer", fontFamily: FONT }}>Save for later</button>
-          <button onClick={handleReview} disabled={saving || includedRows.length === 0 || !hasAnyHours} style={{ background: C.ink, color: "white", fontSize: 14, fontWeight: 600, padding: "10px 22px", borderRadius: 10, border: "none", cursor: (saving || includedRows.length === 0 || !hasAnyHours) ? "not-allowed" : "pointer", opacity: (saving || includedRows.length === 0 || !hasAnyHours) ? 0.5 : 1, fontFamily: FONT, display: "flex", alignItems: "center", gap: 6 }}>
+          <button onClick={handleReview} disabled={saving || includedRows.length === 0 || !hasAnyHours} style={{ background: C.teal, color: "white", fontSize: 14, fontWeight: 600, padding: "10px 22px", borderRadius: 10, border: "none", cursor: (saving || includedRows.length === 0 || !hasAnyHours) ? "not-allowed" : "pointer", opacity: (saving || includedRows.length === 0 || !hasAnyHours) ? 0.5 : 1, fontFamily: FONT, display: "flex", alignItems: "center", gap: 6 }}>
             {saving ? "Calculating..." : ("Review payroll for " + includedRows.length + " employee" + (includedRows.length === 1 ? "" : "s"))}
             <span>&rarr;</span>
           </button>

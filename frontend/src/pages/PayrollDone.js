@@ -359,7 +359,7 @@ export default function PayrollDone() {
                   window.open("/payroll/paycheques/" + emp.stub_id, "_blank");
                 }, idx * 200);
               });
-            }} style={{ padding: "12px 24px", background: C.inkDark, border: "none", borderRadius: 10, color: C.card, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT, boxShadow: "0 1px 2px rgba(18,38,43,0.12)" }}>Print all pay stubs</button>
+            }} style={{ padding: "12px 24px", background: C.teal, border: "none", borderRadius: 10, color: C.card, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT, boxShadow: "0 1px 2px rgba(18,38,43,0.12)" }}>Print all pay stubs</button>
           </div>
         </div>
 
