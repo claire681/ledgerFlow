@@ -6,7 +6,7 @@ const FONT = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
 
 const C = {
   ink: "#12262B", teal: "#15A08C", tealDark: "#0F8474", tealInk: "#0E8A78", tealSoft: "#E3F4F0",
-  text: "#1B2533", muted: "#66748B", faint: "#94A0B2",
+  text: "#1B2533", muted: "#12262B", faint: "#12262B",
   line: "#E7EAF0", lineSoft: "#F1F3F7", surface: "#F4F6F8",
   amber: "#B7791F", green: "#1F9D6B",
 };

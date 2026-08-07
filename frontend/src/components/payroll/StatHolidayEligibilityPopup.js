@@ -44,7 +44,7 @@ function money(n) {
  *   periodStart, periodEnd - ISO date strings
  *   subnational - "AB" for now
  *   onCancel - called when user clicks "Cancel pay run"
- *   onContinue - called with the overrides object when user clicks "I understand — continue"
+ *   onContinue - called with the overrides object when user clicks "I understand, continue"
  *              overrides is { [employeeId]: { stat_pay_amount, eligible, reason } }
  *   onOpenAdjust(employee, holiday) - opens Adjust amount sub-modal
  *   onOpenMarkNotEligible(employee, holiday) - opens Mark-not-eligible sub-modal
@@ -250,8 +250,8 @@ export default function StatHolidayEligibilityPopup(props) {
               }
               onContinue && onContinue(applied);
             }}
-              style={{ height: 40, padding: "0 22px", background: C.ink, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
-              I understand — continue
+              style={{ height: 40, padding: "0 22px", background: C.teal, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
+              I understand, continue
             </button>
           </div>
         </div>

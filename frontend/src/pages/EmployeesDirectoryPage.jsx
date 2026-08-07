@@ -7,7 +7,7 @@ const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const BRAND = "#0F9599";
 const BRAND_DARK = "#0F6E56";
 const TEXT_PRIMARY = "#111827";
-const TEXT_SECONDARY = "#6B7280";
+const TEXT_SECONDARY = "#12262B";
 const BG_PAGE = "#F7F9F9";
 const BORDER = "#E5E7EB";
 
