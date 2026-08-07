@@ -118,7 +118,7 @@ export default function StatHolidayEligibilityPopup(props) {
       <div style={{ padding: 40, textAlign: "center", fontFamily: FONT }}>
         <div style={{ color: C.danger, fontSize: 14, fontWeight: 700, marginBottom: 14 }}>{error}</div>
         <button onClick={onCancel}
-          style={{ height: 38, padding: "0 20px", background: C.teal, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
+          style={{ height: 38, padding: "0 20px", background: C.brand, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
           Close
         </button>
       </div>
@@ -250,7 +250,7 @@ export default function StatHolidayEligibilityPopup(props) {
               }
               onContinue && onContinue(applied);
             }}
-              style={{ height: 40, padding: "0 22px", background: C.teal, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
+              style={{ height: 40, padding: "0 22px", background: C.brand, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
               I understand, continue
             </button>
           </div>

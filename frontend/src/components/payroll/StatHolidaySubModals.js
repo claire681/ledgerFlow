@@ -127,7 +127,7 @@ export function AdjustStatPayModal(props) {
             Cancel
           </button>
           <button onClick={function() { onSave({ stat_pay_amount: entered, eligible: true, reason: reason, method_applied: emp.method_applied }); }}
-            style={{ height: 38, padding: "0 22px", background: C.teal, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
+            style={{ height: 38, padding: "0 22px", background: C.brand, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
             Save {money(entered)}
           </button>
         </div>
@@ -303,7 +303,7 @@ export function OverrideEligibleModal(props) {
             Cancel
           </button>
           <button onClick={function() { onConfirm({ eligible: true, stat_pay_amount: entered, reason: reason }); }}
-            style={{ height: 38, padding: "0 22px", background: C.teal, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
+            style={{ height: 38, padding: "0 22px", background: C.brand, color: "#FFFFFF", border: 0, borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>
             Confirm — pay {money(entered)}
           </button>
         </div>
