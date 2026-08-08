@@ -1,714 +1,560 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ChevronLeft, ChevronDown, ChevronRight, Filter, Lock,
-  MoreVertical, ArrowUp, ArrowDown, FileText, Building2, Printer,
-  X, AlertTriangle, MessageCircle, RefreshCw, RotateCcw,
-} from "lucide-react";
+import { Search, ChevronDown, Check, MoreVertical, Filter, Download, Printer, Eye, Mail, RotateCcw, FileText, X as XIcon, Lock, Play } from "lucide-react";
 
-import {
-  STATUS, STATUS_LABELS, STATUS_COLORS,
-  formatCurrency, formatPeriodShort, employeeNameFromPaycheque,
-} from "../utils/paychequeStatus";
-import PaychequeFilterPopover from "../components/payroll/PaychequeFilterPopover";
-import PaychequeRowMenu from "../components/payroll/PaychequeRowMenu";
-import VoidPaychequeModal from "../components/payroll/VoidPaychequeModal";
-import DeletePaychequeModal from "../components/payroll/DeletePaychequeModal";
-
-import CreateAdjustmentModal from "../components/payroll/CreateAdjustmentModal";
-import AdjustmentGuardModal from "../components/payroll/AdjustmentGuardModal";
-import DeleteGuardModal from "../components/payroll/DeleteGuardModal";
-import BulkVoidModal from "../components/payroll/BulkVoidModal";
-
+const FONT = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
-const BRAND = "#0F9599";
-const BRAND_DARK = "#0F6E56";
-const BRAND_SOFT = "#E1F5EE";
-const BRAND_SOFT_BORDER = "#B8E2D2";
-const TEXT_PRIMARY = "#111827";
-const TEXT_SECONDARY = "#4B5563";
-const TEXT_TERTIARY = "#6B7280";
-const BG_CARD = "#FFFFFF";
-const BG_PAGE = "#F9FAFB";
-const BORDER = "#E5E7EB";
-const WARNING_SOFT = "#FEF3C7";
-const WARNING_BORDER = "#FCD34D";
-const WARNING_BG = "#FFFBEB";
+const C = {
+  ink: "#12262B",
+  inkDark: "#0E1A1A",
+  brand: "#15A08C",
+  brandDark: "#0F6E56",
+  brandBg: "#E1F5EE",
+  amber: "#A67312",
+  amberBg: "#FEF6E7",
+  grey: "#6B7280",
+  greyBg: "#F3F4F6",
+  err: "#DC2626",
+  errBg: "#FEE2E2",
+  page: "#F4F6F8",
+  card: "#FFFFFF",
+  line: "#E7EAF0",
+  lineSoft: "#F1F3F7",
+  chequePaper: "#FFFEF7",
+  chequeBorder: "#C7CBD1",
+};
 
-const PRIVACY_KEY = "novala_privacy";
-const GRID = "22px 84px 1fr 54px 54px 60px 86px 80px 76px";
+const TABULAR = { fontVariantNumeric: "tabular-nums" };
 
-const getToken = () =>
-  localStorage.getItem("access_token") || localStorage.getItem("token") || "";
-
-const authHeaders = () => ({
-  Authorization: "Bearer " + getToken(),
-  "Content-Type": "application/json",
-});
-
-const formatDateCell = (iso) => {
+function fmtDate(iso) {
   if (!iso) return "";
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" });
-};
+  if (isNaN(d)) return iso;
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  return dd + "/" + mm + "/" + d.getUTCFullYear();
+}
 
-const getMethodLabel = (method) => {
-  if (method === "direct_deposit") return "Dir. dep.";
-  if (method === "cheque" || method === "check") return "Cheque";
-  return method || "";
-};
+function fmtMoney(v) {
+  const n = Number(v || 0);
+  return "$" + n.toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
-const isCheque = (m) => (m === "cheque" || m === "check");
+function numberToWords(n) {
+  // Convert number to English words for cheque
+  const num = Math.floor(Math.abs(n));
+  const cents = Math.round((Math.abs(n) - num) * 100);
+  const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+  function under1000(x) {
+    if (x < 20) return ones[x];
+    if (x < 100) return tens[Math.floor(x / 10)] + (x % 10 ? "-" + ones[x % 10].toLowerCase() : "");
+    return ones[Math.floor(x / 100)] + " hundred" + (x % 100 ? " " + under1000(x % 100).toLowerCase() : "");
+  }
+  let words = "";
+  if (num === 0) words = "Zero";
+  else if (num < 1000) words = under1000(num);
+  else if (num < 1000000) {
+    words = under1000(Math.floor(num / 1000)) + " thousand";
+    if (num % 1000) words += " " + under1000(num % 1000).toLowerCase();
+  } else {
+    words = under1000(Math.floor(num / 1000000)) + " million";
+    if (Math.floor((num % 1000000) / 1000)) words += " " + under1000(Math.floor((num % 1000000) / 1000)).toLowerCase() + " thousand";
+    if (num % 1000) words += " " + under1000(num % 1000).toLowerCase();
+  }
+  return words + " and " + String(cents).padStart(2, "0") + "/100 DOLLARS";
+}
+
+function authHeaders() {
+  const t = localStorage.getItem("access_token") || localStorage.getItem("token") || "";
+  return { Authorization: "Bearer " + t, "Content-Type": "application/json" };
+}
+
+function initialsOf(name) {
+  if (!name) return "?";
+  const parts = String(name).trim().split(/\s+/);
+  return ((parts[0]?.[0] || "") + (parts[parts.length - 1]?.[0] || "")).toUpperCase();
+}
 
 export default function PaychequeList() {
   const navigate = useNavigate();
-  const filterButtonRef = useRef(null);
-
   const [paycheques, setPaycheques] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [paySchedules, setPaySchedules] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const [selected, setSelected] = useState(new Set());
-  const [privacy, setPrivacy] = useState(localStorage.getItem(PRIVACY_KEY) === "on");
-  const [sortField, setSortField] = useState("pay_date");
-  const [sortDir, setSortDir] = useState("desc");
-
-  const [filter, setFilter] = useState({ employee: "all", paySchedule: "all", datePreset: "last_pay", from: "", to: "" });
+  const [tab, setTab] = useState("all");
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("newest");
+  const [methodFilter, setMethodFilter] = useState("all");
+  const [privacy, setPrivacy] = useState(localStorage.getItem("novala_privacy") === "on");
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filterAnchor, setFilterAnchor] = useState({ top: 0, left: 0 });
+  const [exportOpen, setExportOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [openKebabId, setOpenKebabId] = useState(null);
+  const [editingChq, setEditingChq] = useState(null); // stub_id being edited
+  const [chqInput, setChqInput] = useState("");
+  const [savingChq, setSavingChq] = useState(false);
+  const [chequeModal, setChequeModal] = useState(null); // stub object
+  const [company, setCompany] = useState({ name: "", address: "" });
 
-  const [editingCheque, setEditingCheque] = useState({});
-  const [rowMenuId, setRowMenuId] = useState(null);
-  const [voidTarget, setVoidTarget] = useState(null);
-    const [adjustTarget, setAdjustTarget] = useState(null);
-    const [exportMenuOpen, setExportMenuOpen] = useState(false);
-    const [moreMenuOpen, setMoreMenuOpen] = useState(false);
-    const [bulkVoidStubs, setBulkVoidStubs] = useState(null);
-    const [guardTarget, setGuardTarget] = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
+  const filterRef = useRef(null);
+  const exportRef = useRef(null);
+  const moreRef = useRef(null);
+  const searchRef = useRef(null);
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(function() { fetchPaycheques(); fetchCompany(); }, []);
 
-  const loadAll = async () => {
-    setLoading(true);
-    setError(null);
+  useEffect(function() {
+    function onClick(e) {
+      if (filterRef.current && !filterRef.current.contains(e.target)) setFilterOpen(false);
+      if (exportRef.current && !exportRef.current.contains(e.target)) setExportOpen(false);
+      if (moreRef.current && !moreRef.current.contains(e.target)) setMoreOpen(false);
+      if (!e.target.closest(".row-kebab")) setOpenKebabId(null);
+    }
+    function onEsc(e) {
+      if (e.key === "Escape") {
+        setFilterOpen(false); setExportOpen(false); setMoreOpen(false); setOpenKebabId(null);
+        setEditingChq(null); setChequeModal(null);
+      }
+    }
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onEsc);
+    return function() {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, []);
+
+  async function fetchPaycheques() {
+    setLoading(true); setError(null);
     try {
-      const headers = authHeaders();
-      const [pcRes, empRes, schRes] = await Promise.all([
-        fetch(API_URL + "/api/v1/payroll/paycheques", { headers }).catch(() => null),
-        fetch(API_URL + "/api/v1/payroll/employees", { headers }).catch(() => null),
-        fetch(API_URL + "/api/v1/payroll/pay-schedules", { headers }).catch(() => null),
-      ]);
-
-      if (pcRes && pcRes.ok) {
-        const data = await pcRes.json();
-        setPaycheques(Array.isArray(data) ? data : (data.items || data.paycheques || []));
-      } else if (pcRes && pcRes.status === 401) {
-        throw new Error("Invalid or expired token. Please log in again.");
-      } else {
-        setPaycheques([]);
-      }
-
-      if (empRes && empRes.ok) {
-        const data = await empRes.json();
-        setEmployees(Array.isArray(data) ? data : (data.items || data.employees || []));
-      }
-
-      if (schRes && schRes.ok) {
-        const data = await schRes.json();
-        setPaySchedules(Array.isArray(data) ? data : (data.items || data.schedules || []));
-      }
+      const res = await fetch(API_URL + "/api/v1/payroll/paycheques", { headers: authHeaders() });
+      if (!res.ok) throw new Error("Could not load paycheques");
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : (data.paycheques || data.items || []);
+      setPaycheques(list);
     } catch (e) {
       setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    } finally { setLoading(false); }
+  }
 
-  const togglePrivacy = () => {
+  async function fetchCompany() {
+    try {
+      const res = await fetch(API_URL + "/api/v1/payroll/settings", { headers: authHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setCompany({
+          name: data.company_name || localStorage.getItem("company_name") || "",
+          address: data.company_address || "",
+        });
+      }
+    } catch (e) {}
+  }
+
+  function togglePrivacy() {
     const next = !privacy;
     setPrivacy(next);
-    localStorage.setItem(PRIVACY_KEY, next ? "on" : "off");
-  };
+    localStorage.setItem("novala_privacy", next ? "on" : "off");
+  }
 
-  const toggleAll = () => {
-    if (selected.size === visiblePaycheques.length) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(visiblePaycheques.map((p) => p.id)));
+  const counts = useMemo(function() {
+    return {
+      all: paycheques.length,
+      pending: paycheques.filter(function(p) { return (p.status || "pending") === "pending"; }).length,
+      paid: paycheques.filter(function(p) { return p.status === "paid"; }).length,
+      voided: paycheques.filter(function(p) { return p.status === "voided"; }).length,
+    };
+  }, [paycheques]);
+
+  const filtered = useMemo(function() {
+    let list = paycheques.slice();
+    if (tab !== "all") list = list.filter(function(p) {
+      const s = p.status || "pending";
+      return s === tab;
+    });
+    if (methodFilter !== "all") {
+      list = list.filter(function(p) {
+        const m = (p.payment_method || p.pay_method || "").toLowerCase();
+        if (methodFilter === "cheque") return m.includes("cheque") || m.includes("check");
+        if (methodFilter === "direct") return m.includes("direct") || m.includes("deposit");
+        return true;
+      });
     }
-  };
-
-  const toggleOne = (id) => {
-    const next = new Set(selected);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    setSelected(next);
-  };
-
-  const openFilter = () => {
-    if (filterButtonRef.current) {
-      const rect = filterButtonRef.current.getBoundingClientRect();
-      setFilterAnchor({ top: rect.bottom + window.scrollY + 6, left: rect.left + window.scrollX });
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(function(p) {
+        const name = (p.employee_name || "").toLowerCase();
+        const chq = String(p.cheque_number || "").toLowerCase();
+        return name.includes(q) || chq.includes(q);
+      });
     }
-    setFilterOpen(true);
-  };
+    if (sort === "newest") list.sort(function(a, b) { return new Date(b.pay_date || 0) - new Date(a.pay_date || 0); });
+    else if (sort === "oldest") list.sort(function(a, b) { return new Date(a.pay_date || 0) - new Date(b.pay_date || 0); });
+    else if (sort === "net-high") list.sort(function(a, b) { return Number(b.net_pay || 0) - Number(a.net_pay || 0); });
+    else if (sort === "net-low") list.sort(function(a, b) { return Number(a.net_pay || 0) - Number(b.net_pay || 0); });
+    else if (sort === "name-az") list.sort(function(a, b) { return (a.employee_name || "").localeCompare(b.employee_name || ""); });
+    return list;
+  }, [paycheques, tab, methodFilter, search, sort]);
 
-  const applyFilter = (next) => {
-    setFilter(next);
-  };
+  const sectionTitle = tab === "pending" ? "Pending paycheques" : tab === "paid" ? "Paid paycheques" : tab === "voided" ? "Voided paycheques" : "Paycheque history";
 
-  const removeFilter = (key) => {
-    if (key === "employee") setFilter({ ...filter, employee: "all" });
-    else if (key === "paySchedule") setFilter({ ...filter, paySchedule: "all" });
-    else if (key === "date") setFilter({ ...filter, datePreset: "last_pay", from: "", to: "" });
-  };
-
-  const clearAllFilters = () => setFilter({ employee: "all", paySchedule: "all", datePreset: "last_pay", from: "", to: "" });
-
-  const setSort = (field) => {
-    if (sortField === field) setSortDir(sortDir === "asc" ? "desc" : "asc");
-    else { setSortField(field); setSortDir(field === "pay_date" ? "desc" : "asc"); }
-  };
-
-  const sortIcon = (field) => sortField === field ? (sortDir === "asc" ? <ArrowUp size={10} /> : <ArrowDown size={10} />) : null;
-
-  const handleChequeChange = (id, value) => {
-    setEditingCheque({ ...editingCheque, [id]: value });
-  };
-
-  const handleChequeBlur = async (id) => {
-    const value = editingCheque[id];
-    if (value === undefined) return;
-    const target = paycheques.find((p) => p.id === id);
-    if (!target || target.cheque_number === value) return;
+  async function saveChequeNumber(stubId, value) {
+    setSavingChq(true);
     try {
-      const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + id, {
+      const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + stubId + "/cheque-number", {
         method: "PATCH",
         headers: authHeaders(),
         body: JSON.stringify({ cheque_number: value }),
       });
-      if (!res.ok) throw new Error("Could not save cheque number");
-      setPaycheques(paycheques.map((p) => p.id === id ? { ...p, cheque_number: value } : p));
-    } catch (e) {
-      console.warn(e);
-    }
-  };
-
-  const openPaycheque = (id) => navigate("/payroll/paycheques/" + id);
-
-  const exportExcel = async () => {
-      try {
-        const res = await fetch(API_URL + "/api/v1/payroll/paycheques/export/excel", {
-          headers: authHeaders(),
+      if (!res.ok) throw new Error("Save failed");
+      const data = await res.json();
+      // Update local state
+      setPaycheques(function(prev) {
+        return prev.map(function(p) {
+          return p.id === stubId ? Object.assign({}, p, { cheque_number: data.cheque_number }) : p;
         });
-        if (!res.ok) { alert("Could not export Excel (HTTP " + res.status + ")"); return; }
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "paycheques_" + new Date().toISOString().slice(0,10) + ".xlsx";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 30000);
-      } catch (e) {
-        alert("Export failed: " + e.message);
-      }
-    };
-
-    const exportPdf = async () => {
-      try {
-        const res = await fetch(API_URL + "/api/v1/payroll/paycheques/export/pdf", {
-          headers: authHeaders(),
-        });
-        if (!res.ok) { alert("Could not export PDF (HTTP " + res.status + ")"); return; }
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        window.open(url, "_blank");
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-      } catch (e) {
-        alert("Export failed: " + e.message);
-      }
-    };
-
-    const openPaychequePdf = async (paychequeId) => {
-    try {
-      const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + paychequeId + "/pdf", {
-        headers: authHeaders(),
       });
-      if (!res.ok) {
-        alert("Could not load pay stub PDF");
-        return;
-      }
-      // Extract filename from Content-Disposition (backend sets it), fallback to lookup
-      let filename = null;
-      const disp = res.headers.get("content-disposition");
-      if (disp) {
-        const m = disp.match(/filename="?([^"]+)"?/);
-        if (m) filename = m[1];
-      }
-      if (!filename) {
-        // Fallback: build from paycheque data we have in state
-        const pc = paycheques.find((p) => p.id === paychequeId);
-        if (pc) {
-          const safe_name = (pc.employee_name || "employee").replace(/[^A-Za-z0-9_-]/g, "_");
-          const d = pc.pay_date || pc.pay_period_end || "";
-          filename = "paystub_" + safe_name + "_" + d + ".pdf";
-        } else {
-          filename = "paystub.pdf";
-        }
-      }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      // Create an anchor with download attribute holding our filename, click it
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.target = "_blank";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      setEditingChq(null);
+      setChqInput("");
     } catch (e) {
-      alert("Error loading pay stub: " + e.message);
-    }
-  };
+      alert("Could not save: " + e.message);
+    } finally { setSavingChq(false); }
+  }
 
-  const handleRowAction = (paycheque, actionId) => {
-    if (actionId === "view") return openPaycheque(paycheque.id);
-    if (actionId === "print") { openPaychequePdf(paycheque.id); return; }
-    if (actionId === "email") return alert("Email pay stub coming soon");
-    if (actionId === "edit") {
-        if (paycheque.is_adjustment) return setGuardTarget(paycheque);
-        return setAdjustTarget(paycheque);
-      }
-    if (actionId === "void") return setVoidTarget(paycheque);
-    if (actionId === "delete") return setDeleteTarget(paycheque);
-  };
+  function openCheque(p) {
+    setChequeModal(p);
+    setOpenKebabId(null);
+  }
 
-  const confirmVoid = async (reason) => {
-    if (!voidTarget) return;
-    const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + voidTarget.id + "/void", {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify({ reason }),
+  function isCheque(p) {
+    const m = (p.payment_method || p.pay_method || "").toLowerCase();
+    return m.includes("cheque") || m.includes("check");
+  }
+
+  function handleExportCSV() {
+    const header = ["Pay date", "Employee", "Gross pay", "Net pay", "Method", "Cheque/Ref", "Status"];
+    const rows = filtered.map(function(p) {
+      return [
+        fmtDate(p.pay_date),
+        p.employee_name || "",
+        Number(p.gross_pay || 0).toFixed(2),
+        Number(p.net_pay || 0).toFixed(2),
+        p.payment_method || p.pay_method || "",
+        p.cheque_number || "",
+        p.status || "pending",
+      ];
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || "Could not void paycheque");
-    }
-    setPaycheques(paycheques.map((p) => p.id === voidTarget.id ? { ...p, status: STATUS.VOIDED } : p));
-  };
+    const csv = [header, ...rows].map(function(r) {
+      return r.map(function(v) { return String(v).indexOf(",") >= 0 ? "\"" + v + "\"" : v; }).join(",");
+    }).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "paycheques_" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setExportOpen(false);
+  }
 
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
-    const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + deleteTarget.id, {
-      method: "DELETE",
-      headers: authHeaders(),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || "Could not delete paycheque");
-    }
-    setPaycheques(paycheques.filter((p) => p.id !== deleteTarget.id));
-  };
+  const outlineBtn = { padding: "6px 12px", background: "transparent", border: "1.5px solid " + C.ink, borderRadius: 8, color: C.ink, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 6 };
+  const outlineBtnLarger = Object.assign({}, outlineBtn, { padding: "10px 14px", borderRadius: 10, fontSize: 13 });
+  const footerBtn = { padding: "12px 18px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT };
+  const menuItem = { display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", fontSize: 13, color: C.ink, cursor: "pointer", border: "none", background: "transparent", width: "100%", textAlign: "left", fontFamily: FONT };
 
-  // Filter the list client-side as a fallback. Backend filter would be preferred.
-  const visiblePaycheques = useMemo(() => {
-    let list = [...paycheques];
-
-    if (filter.employee && filter.employee !== "all") {
-      if (filter.employee === "active") {
-        list = list.filter((p) => p.employee_status === "active" || !p.employee_status);
-      } else if (filter.employee === "inactive") {
-        list = list.filter((p) => ["inactive", "terminated"].includes(p.employee_status));
-      } else {
-        list = list.filter((p) => p.employee_id === filter.employee);
-      }
-    }
-    if (filter.paySchedule && filter.paySchedule !== "all") {
-      list = list.filter((p) => p.pay_schedule_id === filter.paySchedule);
-    }
-    if (filter.from) list = list.filter((p) => p.pay_date >= filter.from);
-    if (filter.to) list = list.filter((p) => p.pay_date <= filter.to);
-
-    list.sort((a, b) => {
-      let av, bv;
-      if (sortField === "pay_date") { av = a.pay_date || ""; bv = b.pay_date || ""; }
-      else if (sortField === "name") {
-        av = employeeNameFromPaycheque(a).toLowerCase();
-        bv = employeeNameFromPaycheque(b).toLowerCase();
-      } else if (sortField === "total") {
-        av = parseFloat(a.total_pay || a.gross_pay || 0);
-        bv = parseFloat(b.total_pay || b.gross_pay || 0);
-      } else if (sortField === "net") {
-        av = parseFloat(a.net_pay || 0);
-        bv = parseFloat(b.net_pay || 0);
-      } else { av = ""; bv = ""; }
-      if (av < bv) return sortDir === "asc" ? -1 : 1;
-      if (av > bv) return sortDir === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return list;
-  }, [paycheques, filter, sortField, sortDir]);
-
-  const totals = useMemo(() => {
-    return visiblePaycheques.reduce((acc, p) => ({
-      gross: acc.gross + (parseFloat(p.total_pay || p.gross_pay || 0) || 0),
-      net: acc.net + (parseFloat(p.net_pay || 0) || 0),
-    }), { gross: 0, net: 0 });
-  }, [visiblePaycheques]);
-
-  const activeFilters = useMemo(() => {
-    const out = [];
-    if (filter.employee && filter.employee !== "all") {
-      let label = filter.employee;
-      const groups = { active: "Active employees", inactive: "Inactive employees" };
-      if (groups[filter.employee]) label = groups[filter.employee];
-      else {
-        const emp = employees.find((e) => e.id === filter.employee);
-        if (emp) {
-          const last = (emp.last_name || "").trim();
-          const first = (emp.first_name || "").trim();
-          label = last && first ? last + ", " + first : (emp.name || emp.email || "Unnamed");
-        }
-      }
-      out.push({ key: "employee", category: "Employee:", value: label });
-    }
-    if (filter.paySchedule && filter.paySchedule !== "all") {
-      const sch = paySchedules.find((s) => s.id === filter.paySchedule);
-      out.push({ key: "paySchedule", category: "Schedule:", value: sch ? sch.name : filter.paySchedule });
-    }
-    if (filter.from && filter.to) {
-      const fmt = (s) => { const d = new Date(s); return isNaN(d.getTime()) ? s : d.toLocaleDateString("en-CA"); };
-      out.push({ key: "date", category: "Range:", value: fmt(filter.from) + " to " + fmt(filter.to) });
-    }
-    return out;
-  }, [filter, employees, paySchedules]);
-
-  const allSelected = visiblePaycheques.length > 0 && selected.size === visiblePaycheques.length;
-  const someSelected = selected.size > 0;
-
-  const colHdrStyle = { fontSize: 10, fontWeight: 500, color: TEXT_SECONDARY, textTransform: "uppercase", letterSpacing: 0.4, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 3, userSelect: "none" };
+  function tabStyle(active) {
+    return {
+      padding: "10px 16px", fontSize: 14, fontWeight: 700, color: C.ink,
+      background: "transparent", border: "none",
+      borderBottom: active ? "2px solid " + C.brand : "2px solid transparent",
+      marginBottom: -1, cursor: "pointer", fontFamily: FONT, opacity: active ? 1 : 0.7,
+    };
+  }
 
   return (
-    <div style={{ position: "relative", padding: 24, paddingRight: 40, background: BG_PAGE, minHeight: "100vh", fontFamily: "inherit" }}>
-
-      <div onClick={() => alert("Feedback widget coming soon")} title="Send feedback" style={{ position: "fixed", right: 0, top: 300, background: BRAND, color: "white", padding: "14px 6px", borderRadius: "4px 0 0 4px", writingMode: "vertical-rl", textOrientation: "mixed", fontSize: 11, fontWeight: 500, letterSpacing: 0.4, cursor: "pointer", zIndex: 10, display: "flex", alignItems: "center", gap: 5 }}>
-        <MessageCircle size={13} />Feedback
+    <div style={{ background: C.page, minHeight: "100vh", fontFamily: FONT, color: C.ink, padding: "28px 32px 100px", boxSizing: "border-box" }}>
+      {/* Breadcrumb */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.ink, marginBottom: 14 }}>
+        <span style={{ fontWeight: 600, opacity: 0.7, cursor: "pointer" }} onClick={function() { navigate("/payroll/overview"); }}>Payroll</span>
+        <span style={{ opacity: 0.4 }}>/</span>
+        <span style={{ fontWeight: 700 }}>Paycheques</span>
       </div>
 
-      <a onClick={() => navigate("/payroll/overview")} style={{ display: "inline-flex", alignItems: "center", gap: 4, color: BRAND, fontSize: 13, cursor: "pointer", marginBottom: 14, fontWeight: 500 }}>
-        <ChevronLeft size={15} />Back to Overview
-      </a>
-
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, gap: 10 }}>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-            <h1 style={{ fontSize: 22, fontWeight: 500, color: TEXT_PRIMARY, margin: 0 }}>Paycheque list</h1>
-            <a onClick={() => alert("Feedback coming soon")} style={{ color: BRAND, fontSize: 12, cursor: "pointer" }}>Feedback</a>
-          </div>
-          <a onClick={() => alert("Paycheque printing setup coming soon")} style={{ display: "inline-block", marginTop: 3, color: BRAND, fontSize: 13, cursor: "pointer" }}>Set up paycheque printing</a>
+      {/* Title + top-right actions */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24, gap: 12, flexWrap: "wrap" }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 34, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em" }}>Paycheques</h1>
+          <div style={{ fontSize: 14, color: C.ink, fontWeight: 500, marginTop: 4 }}>All employee paycheques from finalized pay runs.</div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          <div onClick={togglePrivacy} title="Mask money columns" style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", padding: "4px 6px" }}>
-            <div style={{ width: 30, height: 17, borderRadius: 9, background: privacy ? BRAND : "#D1D5DB", position: "relative", transition: "background 0.15s" }}>
-              <div style={{ position: "absolute", top: 2, left: privacy ? 15 : 2, width: 13, height: 13, borderRadius: "50%", background: "white", transition: "left 0.15s" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 10, position: "relative" }}>
+          {/* Privacy */}
+          <button onClick={togglePrivacy} style={Object.assign({}, outlineBtnLarger, { background: privacy ? C.brandBg : "transparent", borderColor: privacy ? C.brand : C.ink })}>
+            <div style={{ width: 32, height: 18, borderRadius: 10, background: privacy ? C.brand : "#D1D5DB", position: "relative", transition: "0.2s" }}>
+              <div style={{ position: "absolute", top: 2, left: privacy ? 16 : 2, width: 14, height: 14, borderRadius: "50%", background: "#fff", transition: "0.2s" }} />
             </div>
-            <span style={{ fontSize: 12, color: TEXT_PRIMARY, display: "inline-flex", alignItems: "center", gap: 3, fontWeight: 500 }}>
-              <Lock size={12} />Privacy
-            </span>
-          </div>
-          <div style={{ position: "relative", display: "inline-block" }}>
-            <button onClick={() => setExportMenuOpen(!exportMenuOpen)} style={{ fontSize: 12, padding: "7px 12px", borderRadius: 6, background: "white", border: "0.5px solid " + BORDER, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, color: TEXT_PRIMARY, fontFamily: "inherit", fontWeight: 500 }}>
-              Export <ChevronDown size={12} />
-            </button>
-            {exportMenuOpen && (
-              <>
-                <div onClick={() => setExportMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
-                <div style={{ position: "absolute", top: 38, right: 0, background: "white", border: "1px solid " + BORDER, borderRadius: 10, padding: 4, width: 200, boxShadow: "0 8px 24px rgba(0,0,0,0.10)", zIndex: 50 }}>
-                  <div onClick={() => { setExportMenuOpen(false); exportExcel(); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 6, cursor: "pointer", fontSize: 13, color: "#000000", fontWeight: 500 }} onMouseEnter={e => e.currentTarget.style.background = "#F0FAFA"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                    <FileText size={15} style={{ color: "#1A2332" }} />
-                    Export to Excel
-                  </div>
-                  <div onClick={() => { setExportMenuOpen(false); exportPdf(); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 6, cursor: "pointer", fontSize: 13, color: "#000000", fontWeight: 500 }} onMouseEnter={e => e.currentTarget.style.background = "#F0FAFA"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                    <FileText size={15} style={{ color: "#1A2332" }} />
-                    Save as PDF
-                  </div>
-
-                </div>
-              </>
-            )}
-          </div>
-          <div style={{ position: "relative", display: "inline-block" }}>
-            <button onClick={() => setMoreMenuOpen(!moreMenuOpen)} title="More" style={{ width: 30, height: 30, borderRadius: 6, background: "white", border: "0.5px solid " + BORDER, cursor: "pointer", color: TEXT_SECONDARY, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-              <MoreVertical size={14} />
-            </button>
-            {moreMenuOpen && (
-              <>
-                <div onClick={() => setMoreMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
-                <div style={{ position: "absolute", top: 38, right: 0, background: "white", border: "1px solid " + BORDER, borderRadius: 10, padding: 4, width: 220, boxShadow: "0 8px 24px rgba(0,0,0,0.10)", zIndex: 50 }}>
-                  <div
-                    onClick={() => {
-                      if (selected.size === 0) return;
-                      setMoreMenuOpen(false);
-                      const stubs = paycheques.filter(p => selected.has(p.id));
-                      setBulkVoidStubs(stubs);
-                    }}
-                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 6, cursor: selected.size > 0 ? "pointer" : "not-allowed", fontSize: 13, color: selected.size > 0 ? "#000000" : "#9CA3AF", fontWeight: 500, opacity: selected.size > 0 ? 1 : 0.6 }}
-                    onMouseEnter={e => { if (selected.size > 0) e.currentTarget.style.background = "#F0FAFA"; }}
-                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                  >
-                    <RotateCcw size={15} style={{ color: selected.size > 0 ? "#1A2332" : "#9CA3AF" }} />
-                    Bulk void selected {selected.size > 0 ? "(" + selected.size + ")" : ""}
-                  </div>
-                  <div
-                    onClick={() => { setMoreMenuOpen(false); navigate("/tools/audit-log"); }}
-                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 6, cursor: "pointer", fontSize: 13, color: "#000000", fontWeight: 500 }}
-                    onMouseEnter={e => e.currentTarget.style.background = "#F0FAFA"}
-                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                  >
-                    <FileText size={15} style={{ color: "#1A2332" }} />
-                    View audit log
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-          <button onClick={loadAll} title="Refresh" style={{ width: 30, height: 30, borderRadius: 6, background: "white", border: "0.5px solid " + BORDER, cursor: "pointer", color: TEXT_SECONDARY, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-            <RefreshCw size={14} style={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
+            {privacy ? "Privacy on" : "Privacy"}
           </button>
+
+          {/* Export */}
+          <div ref={exportRef} style={{ position: "relative" }}>
+            <button onClick={function() { setExportOpen(!exportOpen); setMoreOpen(false); }} style={outlineBtnLarger}>Export <ChevronDown size={12} /></button>
+            {exportOpen && (
+              <div style={{ position: "absolute", top: 46, right: 0, background: C.card, border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", padding: "6px 0", minWidth: 200, zIndex: 100 }}>
+                <button onClick={handleExportCSV} style={menuItem}><FileText size={14} /> Export to CSV</button>
+                <button onClick={function() { window.print(); setExportOpen(false); }} style={menuItem}><Printer size={14} /> Save as PDF</button>
+              </div>
+            )}
+          </div>
+
+          {/* More menu */}
+          <div ref={moreRef} style={{ position: "relative" }}>
+            <button onClick={function() { setMoreOpen(!moreOpen); setExportOpen(false); }} style={{ width: 40, height: 40, background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <MoreVertical size={16} />
+            </button>
+            {moreOpen && (
+              <div style={{ position: "absolute", top: 46, right: 0, background: C.card, border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", padding: "6px 0", minWidth: 220, zIndex: 100 }}>
+                <button disabled style={Object.assign({}, menuItem, { opacity: 0.4, cursor: "not-allowed" })}><RotateCcw size={14} /> Bulk void selected</button>
+                <button onClick={function() { setMoreOpen(false); navigate("/tools/audit-log"); }} style={menuItem}><FileText size={14} /> View audit log</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-        <button ref={filterButtonRef} onClick={openFilter} style={{ fontSize: 12, padding: "7px 12px", borderRadius: 6, background: filterOpen ? BRAND_SOFT : "white", border: "0.5px solid " + (filterOpen ? BRAND : BORDER), color: filterOpen ? BRAND_DARK : TEXT_PRIMARY, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "inherit", fontWeight: 500 }}>
-          <Filter size={13} />Filter <ChevronDown size={11} />
-        </button>
-        {someSelected && (
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "6px 14px", background: BRAND_SOFT, border: "0.5px solid " + BRAND_SOFT_BORDER, borderRadius: 6 }}>
-            <span style={{ fontSize: 12, color: BRAND_DARK, fontWeight: 500 }}>{selected.size} selected</span>
-            <span style={{ color: BRAND_SOFT_BORDER }}>|</span>
-            <span onClick={() => alert("Bulk print coming soon")} style={{ fontSize: 12, color: BRAND_DARK, cursor: "pointer" }}>Print stubs</span>
-            <span onClick={() => alert("Bulk mark printed coming soon")} style={{ fontSize: 12, color: BRAND_DARK, cursor: "pointer" }}>Mark printed</span>
-          </div>
+      {/* Search */}
+      <div style={{ position: "relative", marginBottom: 20, maxWidth: 500 }}>
+        <Search size={18} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: C.ink }} />
+        <input ref={searchRef} type="text" value={search} onChange={function(e) { setSearch(e.target.value); }}
+          placeholder="Search by employee name or cheque number..."
+          style={{ width: "100%", padding: "12px 14px 12px 44px", border: "1.5px solid " + C.ink, borderRadius: 10, fontFamily: FONT, fontSize: 14, color: C.ink, background: C.card, fontWeight: 500, boxSizing: "border-box", outline: "none" }} />
+        {search && (
+          <button onClick={function() { setSearch(""); }} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", width: 22, height: 22, borderRadius: "50%", background: C.ink, color: "#fff", border: "none", cursor: "pointer", display: "grid", placeItems: "center", padding: 0 }}>
+            <XIcon size={14} />
+          </button>
         )}
       </div>
 
-      {activeFilters.length > 0 && (
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 10, color: TEXT_SECONDARY, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4, marginRight: 4 }}>Filters</span>
-          {activeFilters.map((f) => (
-            <span key={f.key} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", background: BRAND_SOFT, border: "0.5px solid " + BRAND_SOFT_BORDER, borderRadius: 12, fontSize: 11, color: BRAND_DARK }}>
-              <span style={{ color: TEXT_SECONDARY }}>{f.category}</span>
-              <span style={{ fontWeight: 500 }}>{f.value}</span>
-              <X size={11} onClick={() => removeFilter(f.key)} style={{ cursor: "pointer", opacity: 0.7 }} />
-            </span>
-          ))}
-          <span onClick={clearAllFilters} style={{ fontSize: 12, color: BRAND, cursor: "pointer", fontWeight: 500, marginLeft: 4 }}>Clear all</span>
-        </div>
-      )}
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 20, borderBottom: "1px solid " + C.line }}>
+        <button onClick={function() { setTab("all"); }} style={tabStyle(tab === "all")}>All <span style={{ color: C.ink, fontWeight: 700, marginLeft: 4 }}>{counts.all}</span></button>
+        <button onClick={function() { setTab("pending"); }} style={tabStyle(tab === "pending")}>Pending <span style={{ color: C.ink, fontWeight: 700, marginLeft: 4 }}>{counts.pending}</span></button>
+        <button onClick={function() { setTab("paid"); }} style={tabStyle(tab === "paid")}>Paid <span style={{ color: C.ink, fontWeight: 700, marginLeft: 4 }}>{counts.paid}</span></button>
+        <button onClick={function() { setTab("voided"); }} style={tabStyle(tab === "voided")}>Voided <span style={{ color: C.ink, fontWeight: 700, marginLeft: 4 }}>{counts.voided}</span></button>
+      </div>
 
-      {error && (
-        <div style={{ padding: 12, background: "#FEE2E2", border: "0.5px solid #F87171", borderRadius: 8, color: "#991B1B", fontSize: 13, marginBottom: 14 }}>
+      {/* Section header + filter */}
+      <div style={{ paddingBottom: 8, borderBottom: "1.5px solid " + C.ink, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: C.ink }}>{sectionTitle}</h2>
+        <div ref={filterRef} style={{ position: "relative" }}>
+          <button onClick={function() { setFilterOpen(!filterOpen); }} style={outlineBtn}>Filter <ChevronDown size={10} /></button>
+          {filterOpen && (
+            <div style={{ position: "absolute", top: 36, right: 0, background: C.card, border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", padding: "10px 0", minWidth: 240, zIndex: 100 }}>
+              <div style={{ padding: "4px 14px 8px", fontSize: 10, fontWeight: 700, color: C.ink, letterSpacing: "0.1em", textTransform: "uppercase" }}>Sort by</div>
+              {[["newest", "Newest first"], ["oldest", "Oldest first"], ["net-high", "Net pay, highest first"], ["net-low", "Net pay, lowest first"], ["name-az", "Employee A to Z"]].map(function(opt) {
+                return (
+                  <button key={opt[0]} onClick={function() { setSort(opt[0]); }} style={Object.assign({}, menuItem, { justifyContent: "space-between" })}>
+                    <span>{opt[1]}</span>
+                    {sort === opt[0] && <Check size={14} style={{ color: C.brand }} strokeWidth={3} />}
+                  </button>
+                );
+              })}
+              <div style={{ height: 1, background: C.line, margin: "6px 0" }} />
+              <div style={{ padding: "4px 14px 8px", fontSize: 10, fontWeight: 700, color: C.ink, letterSpacing: "0.1em", textTransform: "uppercase" }}>Payment method</div>
+              {[["all", "All methods"], ["cheque", "Cheque only"], ["direct", "Direct deposit only"]].map(function(opt) {
+                return (
+                  <button key={opt[0]} onClick={function() { setMethodFilter(opt[0]); }} style={Object.assign({}, menuItem, { justifyContent: "space-between" })}>
+                    <span>{opt[1]}</span>
+                    {methodFilter === opt[0] && <Check size={14} style={{ color: C.brand }} strokeWidth={3} />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {loading && <div style={{ padding: "48px 20px", textAlign: "center", color: C.ink, fontSize: 14 }}>Loading paycheques...</div>}
+
+      {error && !loading && (
+        <div style={{ padding: 16, background: C.errBg, border: "1px solid #F87171", borderRadius: 10, color: "#991B1B", fontSize: 13 }}>
           <strong>Could not load:</strong> {error}
         </div>
       )}
 
-      <div style={{ background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 8 }}>
-
-        <div style={{ display: "grid", gridTemplateColumns: GRID, alignItems: "center", columnGap: 6, padding: "9px 12px", background: BG_PAGE, borderBottom: "0.5px solid " + BORDER }}>
-          <input type="checkbox" checked={allSelected} onChange={toggleAll} style={{ margin: 0, width: 13, height: 13 }} />
-          <div onClick={() => setSort("pay_date")} style={colHdrStyle}>Pay date {sortIcon("pay_date")}</div>
-          <div onClick={() => setSort("name")} style={colHdrStyle}>Name {sortIcon("name")}</div>
-          <div onClick={() => setSort("total")} style={{ ...colHdrStyle, justifyContent: "flex-end", textAlign: "right" }}>Total {sortIcon("total")}</div>
-          <div onClick={() => setSort("net")} style={{ ...colHdrStyle, justifyContent: "flex-end", textAlign: "right" }}>Net {sortIcon("net")}</div>
-          <div style={{ ...colHdrStyle, cursor: "default" }}>Method</div>
-          <div style={{ ...colHdrStyle, cursor: "default" }}>Cheque #</div>
-          <div style={{ ...colHdrStyle, cursor: "default" }}>Status</div>
-          <div style={{ ...colHdrStyle, cursor: "default" }}>Action</div>
-        </div>
-
-        {loading && paycheques.length === 0 ? (
-          <div style={{ padding: 20, textAlign: "center", color: TEXT_SECONDARY, fontSize: 13 }}>Loading...</div>
-        ) : visiblePaycheques.length === 0 ? (
-          <div style={{ padding: 40, textAlign: "center", color: TEXT_SECONDARY, fontSize: 13 }}>
-            {paycheques.length === 0 ? "No paycheques yet. They appear here after a pay run." : "No paycheques match your filters."}
+      {!loading && !error && filtered.length === 0 && (
+        <div style={{ padding: "60px 20px", textAlign: "center" }}>
+          <FileText size={48} style={{ color: C.ink, opacity: 0.4, marginBottom: 12 }} />
+          <div style={{ fontSize: 18, fontWeight: 700, color: C.ink, marginBottom: 6 }}>
+            {search ? "No matches" : paycheques.length === 0 ? "No paycheques yet" : "Nothing to show"}
           </div>
-        ) : visiblePaycheques.map((pc) => {
-          const isSelected = selected.has(pc.id);
-          const status = pc.status || STATUS.PENDING;
-          const isVoided = status === STATUS.VOIDED;
-          const isPending = status === STATUS.PENDING;
-          const isChqMethod = isCheque(pc.pay_method);
-          const chequeValue = editingCheque[pc.id] !== undefined ? editingCheque[pc.id] : (pc.cheque_number || "");
-          const pillColors = STATUS_COLORS[status] || STATUS_COLORS.pending;
-          const rowOpacity = isVoided ? 0.7 : 1;
-          const rowColor = isVoided ? TEXT_TERTIARY : TEXT_PRIMARY;
-        const isAdjustment = pc.is_adjustment === true;
+          <div style={{ fontSize: 14, color: C.ink, maxWidth: 400, margin: "0 auto" }}>
+            {search ? ("No paycheques match \"" + search + "\".") : paycheques.length === 0 ? "Paycheques appear here after a pay run is finalized." : "Try switching tabs or adjusting filters."}
+          </div>
+        </div>
+      )}
 
-          return (
-            <div
-              key={pc.id}
-              onClick={() => openPaycheque(pc.id)}
-              style={{
-                display: "grid", gridTemplateColumns: GRID, alignItems: "center", columnGap: 6,
-                padding: "11px 12px", borderBottom: "0.5px solid #F3F4F6",
-                fontSize: 11, color: rowColor, opacity: rowOpacity,
-                background: isAdjustment ? "#FEF3C7" : (isSelected ? "#F0FAFA" : "white"),
-                cursor: "pointer",
-              }}
-              onMouseOver={(e) => { if (!isSelected && !isVoided && !isAdjustment) e.currentTarget.style.background = "#FAFBFC"; }}
-              onMouseOut={(e) => { if (!isSelected) e.currentTarget.style.background = isAdjustment ? "#FEF3C7" : "white"; }}
-            >
-              <input type="checkbox" checked={isSelected} onClick={(e) => e.stopPropagation()} onChange={() => toggleOne(pc.id)} style={{ margin: 0, width: 13, height: 13, accentColor: BRAND }} />
+      {!loading && !error && filtered.length > 0 && (
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
+          <thead>
+            <tr>
+              <th style={thStyle}><input type="checkbox" style={{ cursor: "pointer" }} /></th>
+              <th style={thStyle}>PAY DATE</th>
+              <th style={thStyle}>EMPLOYEE</th>
+              <th style={{ ...thStyle, textAlign: "right" }}>GROSS PAY</th>
+              <th style={{ ...thStyle, textAlign: "right" }}>NET PAY</th>
+              <th style={thStyle}>METHOD</th>
+              <th style={thStyle}>CHEQUE / REF NO</th>
+              <th style={thStyle}>STATUS</th>
+              <th style={{ ...thStyle, textAlign: "right", width: 60 }}>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(function(p) {
+              const status = p.status || "pending";
+              const isVoided = status === "voided";
+              const isCheq = isCheque(p);
+              const isEditingThis = editingChq === p.id;
+              const menuOpen = openKebabId === p.id;
 
-              <div>
-                <div style={{ fontWeight: 500, textDecoration: isVoided ? "line-through" : "none" }}>{formatDateCell(pc.pay_date)}</div>
-                {(pc.pay_period_start || pc.payPeriod) && (
-                  <div style={{ fontSize: 10, color: TEXT_TERTIARY }}>
-                    {formatPeriodShort(pc.pay_period_start || (pc.payPeriod && pc.payPeriod.start), pc.pay_period_end || (pc.payPeriod && pc.payPeriod.end))}
-                  </div>
-                )}
-              </div>
+              return (
+                <tr key={p.id} style={{ borderBottom: "1px solid " + C.lineSoft, opacity: isVoided ? 0.6 : 1 }}>
+                  <td style={tdStyle}><input type="checkbox" onClick={function(e) { e.stopPropagation(); }} style={{ cursor: "pointer" }} /></td>
+                  <td style={{ ...tdStyle, ...TABULAR, cursor: "pointer" }} onClick={function() { navigate("/payroll/paycheques/" + p.id); }}>{fmtDate(p.pay_date)}</td>
+                  <td style={{ ...tdStyle, cursor: "pointer" }} onClick={function() { navigate("/payroll/paycheques/" + p.id); }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 30, height: 30, borderRadius: "50%", background: C.brandBg, color: C.brandDark, display: "grid", placeItems: "center", fontSize: 11, fontWeight: 700 }}>{initialsOf(p.employee_name)}</div>
+                      <span style={{ color: C.ink, fontWeight: 600 }}>{p.employee_name || "Unnamed"}</span>
+                    </div>
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: "right", ...TABULAR }}>
+                    {privacy ? <span style={{ letterSpacing: 4 }}>••••</span> : fmtMoney(p.gross_pay)}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: "right", fontWeight: 700, ...TABULAR }}>
+                    {privacy ? <span style={{ letterSpacing: 4 }}>••••</span> : fmtMoney(p.net_pay)}
+                  </td>
+                  <td style={tdStyle}>{p.payment_method || p.pay_method || ""}</td>
+                  <td style={tdStyle}>
+                    {isEditingThis ? (
+                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                        <input
+                          type="text" value={chqInput}
+                          onChange={function(e) { setChqInput(e.target.value); }}
+                          onKeyDown={function(e) {
+                            if (e.key === "Enter") saveChequeNumber(p.id, chqInput);
+                            if (e.key === "Escape") { setEditingChq(null); setChqInput(""); }
+                          }}
+                          autoFocus
+                          disabled={savingChq}
+                          placeholder="Number"
+                          style={{ width: 100, padding: "6px 8px", border: "1.5px solid " + C.brand, borderRadius: 6, fontFamily: FONT, fontSize: 13, color: C.ink, outline: "none" }}
+                        />
+                        <button onClick={function() { saveChequeNumber(p.id, chqInput); }} disabled={savingChq} style={{ padding: "4px 8px", background: C.brand, border: "none", borderRadius: 6, color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>{savingChq ? "..." : "Save"}</button>
+                      </div>
+                    ) : p.cheque_number ? (
+                      <span onClick={function(e) { e.stopPropagation(); openCheque(p); }} style={{ color: C.brandDark, fontWeight: 700, cursor: "pointer", textDecoration: "underline", ...TABULAR }}>{p.cheque_number}</span>
+                    ) : isCheq ? (
+                      <span onClick={function(e) { e.stopPropagation(); setEditingChq(p.id); setChqInput(""); }} style={{ color: C.brandDark, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>+ Add cheque number</span>
+                    ) : (
+                      <span style={{ color: C.ink }}>Direct deposit</span>
+                    )}
+                  </td>
+                  <td style={tdStyle}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, color: status === "paid" ? C.brandDark : status === "voided" ? C.grey : C.amber, background: status === "paid" ? C.brandBg : status === "voided" ? C.greyBg : C.amberBg, padding: "3px 10px", borderRadius: 5, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                      <span style={{ width: 6, height: 6, background: status === "paid" ? C.brandDark : status === "voided" ? C.grey : C.amber, borderRadius: "50%" }} />
+                      {status === "paid" ? "Paid" : status === "voided" ? "Voided" : "Pending"}
+                    </span>
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: "right", position: "relative", width: 60 }} className="row-kebab">
+                    <button onClick={function(e) { e.stopPropagation(); setOpenKebabId(menuOpen ? null : p.id); }} style={{ width: 30, height: 30, border: "none", background: "transparent", borderRadius: 6, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", color: C.ink }}>
+                      <MoreVertical size={16} />
+                    </button>
+                    {menuOpen && (
+                      <div className="row-kebab" style={{ position: "absolute", top: 40, right: 10, background: C.card, border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", padding: "6px 0", minWidth: 200, zIndex: 50, textAlign: "left" }}>
+                        <button onClick={function() { setOpenKebabId(null); navigate("/payroll/paycheques/" + p.id); }} style={menuItem}><Eye size={14} /> View pay stub</button>
+                        <button onClick={function() { setOpenKebabId(null); window.open("/payroll/paycheques/" + p.id + "?print=1", "_blank"); }} style={menuItem}><Printer size={14} /> Print pay stub</button>
+                        {isCheq && p.cheque_number && (
+                          <button onClick={function() { openCheque(p); }} style={menuItem}><FileText size={14} /> View cheque</button>
+                        )}
+                        {isCheq && !p.cheque_number && (
+                          <button onClick={function() { setOpenKebabId(null); setEditingChq(p.id); setChqInput(""); }} style={Object.assign({}, menuItem, { color: C.brandDark, fontWeight: 700 })}>+ Add cheque number</button>
+                        )}
+                        {status !== "voided" && (
+                          <>
+                            <div style={{ height: 1, background: C.line, margin: "4px 0" }} />
+                            <button onClick={function() { setOpenKebabId(null); alert("Void functionality: opens confirmation modal"); }} style={Object.assign({}, menuItem, { color: C.err })}><RotateCcw size={14} /> Void this paycheque</button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
 
-              <div style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: isVoided ? "line-through" : "none" }}><span>{employeeNameFromPaycheque(pc)}</span>{isAdjustment && (<span style={{ fontSize: 9, fontWeight: 700, color: "#92400E", background: "#FDE68A", padding: "2px 6px", borderRadius: 4, letterSpacing: "0.3px", textTransform: "uppercase", marginLeft: 6 }}>Adjustment</span>)}</div>
-
-              <div style={{ textAlign: "right", textDecoration: isVoided ? "line-through" : "none" }}>
-                {privacy ? <span style={{ fontFamily: "monospace", color: TEXT_TERTIARY, letterSpacing: 1 }}>{"\u2022\u2022\u2022\u2022"}</span> : formatCurrency(pc.total_pay || pc.gross_pay, pc.currency)}
-              </div>
-              <div style={{ textAlign: "right", fontWeight: 500, textDecoration: isVoided ? "line-through" : "none" }}>
-                {privacy ? <span style={{ fontFamily: "monospace", color: TEXT_TERTIARY, letterSpacing: 1 }}>{"\u2022\u2022\u2022\u2022"}</span> : formatCurrency(pc.net_pay, pc.currency)}
-              </div>
-
-              <div style={{ color: TEXT_SECONDARY, display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11 }}>
-                {isChqMethod ? <FileText size={11} /> : <Building2 size={11} />}
-                {getMethodLabel(pc.pay_method)}
-              </div>
-
-              {isChqMethod ? (
-                <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <input
-                    value={chequeValue}
-                    onChange={(e) => handleChequeChange(pc.id, e.target.value)}
-                    onBlur={() => handleChequeBlur(pc.id)}
-                    disabled={isVoided}
-                    placeholder={isPending ? "Cheque #" : ""}
-                    style={{
-                      flex: 1, minWidth: 0, padding: "5px 6px", fontSize: 11,
-                      border: "1px solid " + (isPending && !chequeValue ? WARNING_BORDER : BORDER),
-                      borderRadius: 4, fontFamily: "inherit",
-                      color: isVoided ? TEXT_TERTIARY : TEXT_PRIMARY,
-                      boxSizing: "border-box",
-                      background: isPending && !chequeValue ? WARNING_BG : (isVoided ? BG_PAGE : "white"),
-                      textDecoration: isVoided ? "line-through" : "none",
-                    }}
-                  />
-                  <ChevronRight onClick={(e) => { e.stopPropagation(); openPaycheque(pc.id); }} size={14} style={{ color: isVoided ? TEXT_TERTIARY : BRAND, cursor: "pointer", flexShrink: 0 }} />
+      {/* Cheque modal */}
+      {chequeModal && (
+        <div onClick={function() { setChequeModal(null); }} style={{ position: "fixed", inset: 0, background: "rgba(18,38,43,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={function(e) { e.stopPropagation(); }} style={{ background: C.chequePaper, border: "1px solid " + C.chequeBorder, borderRadius: 4, boxShadow: "0 24px 60px rgba(0,0,0,0.3)", width: 720, maxWidth: "94vw", maxHeight: "90vh", overflow: "auto" }}>
+            <div style={{ padding: "32px 40px", fontFamily: "Georgia, serif", color: C.ink }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 32 }}>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{company.name || "Company"}</div>
+                  <div style={{ fontSize: 12, whiteSpace: "pre-line" }}>{company.address}</div>
                 </div>
-              ) : (
-                <div style={{ color: TEXT_TERTIARY, fontSize: 11, paddingLeft: 6 }}>N/A</div>
-              )}
-
-              <div>
-                <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: 8, fontSize: 10, fontWeight: 500, background: pillColors.bg, color: pillColors.fg }}>
-                  {STATUS_LABELS[status] || status}
-                </span>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: FONT }}>Cheque no</div>
+                  <div style={{ fontSize: 28, fontWeight: 700, fontVariantNumeric: "tabular-nums lining-nums" }}>{chequeModal.cheque_number || ""}</div>
+                </div>
               </div>
-
-              <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 1 }} onClick={(e) => e.stopPropagation()}>
-                <span onClick={() => handleRowAction(pc, "print")} style={{ color: isVoided ? TEXT_TERTIARY : BRAND, fontWeight: 500, cursor: isVoided ? "not-allowed" : "pointer", fontSize: 11 }}>Print stub</span>
-                <ChevronDown onClick={() => setRowMenuId(rowMenuId === pc.id ? null : pc.id)} size={18} style={{ color: isVoided ? TEXT_TERTIARY : TEXT_SECONDARY, cursor: "pointer", padding: 4, borderRadius: 4, background: rowMenuId === pc.id ? "#F3F4F6" : "transparent" }} />
-                <PaychequeRowMenu
-                  open={rowMenuId === pc.id}
-                  onClose={() => setRowMenuId(null)}
-                  onAction={(actionId) => handleRowAction(pc, actionId)}
-                  filedOrRemitted={pc.filed_or_remitted}
-                  voided={isVoided}
-                />
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 32, marginBottom: 32 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: FONT }}>Pay to the order of</div>
+                  <div style={{ fontSize: 18, fontWeight: 600, borderBottom: "1px solid " + C.ink, paddingBottom: 6 }}>{chequeModal.employee_name}</div>
+                </div>
+                <div style={{ width: 220 }}>
+                  <div style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: FONT }}>Date</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, borderBottom: "1px solid " + C.ink, paddingBottom: 6, fontVariantNumeric: "tabular-nums lining-nums" }}>{fmtDate(chequeModal.pay_date)}</div>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 16, marginBottom: 40 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontStyle: "italic", borderBottom: "1px solid " + C.ink, paddingBottom: 6 }}>{numberToWords(chequeModal.net_pay)}</div>
+                </div>
+                <div style={{ minWidth: 180, border: "2px solid " + C.ink, padding: "10px 16px", textAlign: "right" }}>
+                  <span style={{ fontSize: 22, fontWeight: 700, fontVariantNumeric: "tabular-nums lining-nums" }}>{fmtMoney(chequeModal.net_pay)}</span>
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
+                <div style={{ flex: 1, marginRight: 40 }}>
+                  <div style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: FONT }}>Memo</div>
+                  <div style={{ fontSize: 13, fontStyle: "italic", borderBottom: "1px solid " + C.ink, paddingBottom: 6 }}>Payroll paycheque</div>
+                </div>
+                <div style={{ width: 260 }}>
+                  <div style={{ height: 24, borderBottom: "1px solid " + C.ink }} />
+                  <div style={{ fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 6, textAlign: "center", fontFamily: FONT }}>Authorized signature</div>
+                </div>
               </div>
             </div>
-          );
-        })}
+            <div style={{ padding: "16px 40px 24px", borderTop: "1px solid " + C.line, background: "#FFFFFF", display: "flex", gap: 10, justifyContent: "center", fontFamily: FONT }}>
+              <button onClick={function() { window.print(); }} style={{ padding: "12px 24px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Print cheque</button>
+              <button onClick={function() { window.print(); }} style={{ padding: "12px 24px", background: C.brand, border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Save as PDF</button>
+              <button onClick={function() { setChequeModal(null); }} style={{ padding: "12px 24px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
 
+      {/* Fixed footer */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: C.card, padding: "16px 32px", borderTop: "1px solid " + C.line, boxShadow: "0 -4px 12px rgba(0,0,0,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 90 }}>
+        <button onClick={function() { navigate("/payroll/overview"); }} style={footerBtn}>&larr; Back to Payroll</button>
+        <button onClick={handleExportCSV} style={footerBtn}>Export all</button>
       </div>
-
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, fontSize: 11, color: TEXT_SECONDARY }}>
-        <span>Showing {visiblePaycheques.length} of {paycheques.length} paycheques{activeFilters.length > 0 ? " · " + activeFilters.length + " filter" + (activeFilters.length === 1 ? "" : "s") + " applied" : ""}</span>
-        <span>Total gross: {formatCurrency(totals.gross)} · Total net: {formatCurrency(totals.net)}</span>
-      </div>
-
-      <PaychequeFilterPopover
-        open={filterOpen}
-        onClose={() => setFilterOpen(false)}
-        anchor={filterAnchor}
-        initial={filter}
-        employees={employees}
-        paySchedules={paySchedules}
-        onApply={applyFilter}
-      />
-
-      <AdjustmentGuardModal
-        open={!!guardTarget}
-        onClose={() => setGuardTarget(null)}
-        stub={guardTarget}
-        onVoid={() => {
-          if (guardTarget) setVoidTarget(guardTarget);
-        }}
-      />
-
-      <CreateAdjustmentModal
-        open={!!adjustTarget}
-        onClose={() => setAdjustTarget(null)}
-        originalStub={adjustTarget}
-        onCreated={(data) => {
-          // Refresh the list to show the new adjustment
-          fetch(API_URL + "/api/v1/payroll/paycheques", { headers: authHeaders() })
-            .then(r => r.json())
-            .then(setPaycheques)
-            .catch(() => {});
-        }}
-      />
-
-      <VoidPaychequeModal
-        open={!!voidTarget}
-        onClose={() => setVoidTarget(null)}
-        paycheque={voidTarget}
-        onConfirm={confirmVoid}
-      />
-
-      <BulkVoidModal
-        open={!!bulkVoidStubs}
-        onClose={() => setBulkVoidStubs(null)}
-        stubs={bulkVoidStubs || []}
-        onDone={(result) => {
-          if (result.success > 0) {
-            // Refresh list
-            fetch(API_URL + "/api/v1/payroll/paycheques", { headers: authHeaders() })
-              .then(r => r.json())
-              .then(setPaycheques)
-              .catch(() => {});
-            setSelected(new Set());
-          }
-          if (result.failed > 0) {
-            alert(`Voided ${result.success}, failed ${result.failed}.\n` + result.errors.slice(0, 3).join("\n"));
-          }
-        }}
-      />
-
-      <DeleteGuardModal
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        stub={deleteTarget}
-        onVoid={() => { if (deleteTarget) setVoidTarget(deleteTarget); }}
-      />
-
-      <style>{"@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}"}</style>
     </div>
   );
 }
+
+const thStyle = { textAlign: "left", padding: "12px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#12262B", borderBottom: "1px solid #E7EAF0" };
+const tdStyle = { padding: "14px 10px", color: "#12262B", fontWeight: 500 };
