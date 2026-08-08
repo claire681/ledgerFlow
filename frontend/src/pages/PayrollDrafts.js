@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Play, Filter, ChevronDown, Check, Search, ChevronRight, FileText } from "lucide-react";
+import { Play, Filter, ChevronDown, Check, MoreVertical, FileText, Trash2, Eye, Download } from "lucide-react";
 
 const FONT = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -13,6 +13,8 @@ const C = {
   brandBg: "#E1F5EE",
   amber: "#A67312",
   amberBg: "#FEF6E7",
+  err: "#DC2626",
+  errBg: "#FEE2E2",
   page: "#F4F6F8",
   card: "#FFFFFF",
   line: "#E7EAF0",
@@ -49,22 +51,28 @@ export default function PayrollDrafts() {
   const [sort, setSort] = useState("newest");
   const [period, setPeriod] = useState("all");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const filterRef = useRef(null);
   const [company] = useState(localStorage.getItem("company_name") || "");
 
   useEffect(function() { fetchRuns(); }, []);
 
   useEffect(function() {
-    if (!filterOpen) return;
-    function onClick(e) { if (filterRef.current && !filterRef.current.contains(e.target)) setFilterOpen(false); }
-    function onEsc(e) { if (e.key === "Escape") setFilterOpen(false); }
+    if (!filterOpen && openMenuId == null) return;
+    function onClick(e) {
+      if (filterOpen && filterRef.current && !filterRef.current.contains(e.target)) setFilterOpen(false);
+      if (!e.target.closest(".row-kebab")) setOpenMenuId(null);
+    }
+    function onEsc(e) { if (e.key === "Escape") { setFilterOpen(false); setOpenMenuId(null); setConfirmDelete(null); } }
     document.addEventListener("mousedown", onClick);
     document.addEventListener("keydown", onEsc);
     return function() {
       document.removeEventListener("mousedown", onClick);
       document.removeEventListener("keydown", onEsc);
     };
-  }, [filterOpen]);
+  }, [filterOpen, openMenuId]);
 
   async function fetchRuns() {
     setLoading(true); setError(null);
@@ -76,6 +84,24 @@ export default function PayrollDrafts() {
     } catch (e) {
       setError(e.message || "Could not load pay runs");
     } finally { setLoading(false); }
+  }
+
+  async function handleDelete(runId) {
+    setDeleting(true);
+    try {
+      const res = await fetch(API_URL + "/api/v1/payroll/runs/" + runId, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+      if (!res.ok && res.status !== 204) {
+        const txt = await res.text();
+        throw new Error(txt || "Delete failed");
+      }
+      setConfirmDelete(null);
+      await fetchRuns();
+    } catch (e) {
+      alert("Could not delete: " + (e.message || e));
+    } finally { setDeleting(false); }
   }
 
   const counts = useMemo(function() {
@@ -130,6 +156,12 @@ export default function PayrollDrafts() {
     URL.revokeObjectURL(url);
   }
 
+  function openRun(r) {
+    // Draft: goes to Run Payroll (edit mode). Finalized: goes to Done page.
+    if (r.status === "draft") navigate("/payroll/run/" + r.id);
+    else navigate("/payroll/run/" + r.id + "/done");
+  }
+
   const tabBtnStyle = function(active) {
     return {
       padding: "10px 16px", fontSize: 14, fontWeight: 700, color: C.ink,
@@ -142,6 +174,7 @@ export default function PayrollDrafts() {
   const outlineBtnStyle = { padding: "6px 12px", background: "transparent", border: "1.5px solid " + C.ink, borderRadius: 8, color: C.ink, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 6 };
   const footerBtnStyle = { padding: "12px 18px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT };
   const filterOptionStyle = { padding: "8px 14px", fontSize: 13, color: C.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: FONT, border: "none", background: "transparent", width: "100%", textAlign: "left" };
+  const kebabItemStyle = { display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", fontSize: 13, color: C.ink, cursor: "pointer", fontFamily: FONT, border: "none", background: "transparent", width: "100%", textAlign: "left" };
 
   return (
     <div style={{ background: C.page, minHeight: "100vh", fontFamily: FONT, color: C.ink, padding: "28px 32px 100px", boxSizing: "border-box" }}>
@@ -205,7 +238,7 @@ export default function PayrollDrafts() {
       {loading && <div style={{ padding: "48px 20px", textAlign: "center", color: C.ink, fontSize: 14 }}>Loading pay runs...</div>}
 
       {error && !loading && (
-        <div style={{ padding: 16, background: "#FEE2E2", border: "1px solid #F87171", borderRadius: 10, color: "#991B1B", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ padding: 16, background: C.errBg, border: "1px solid #F87171", borderRadius: 10, color: "#991B1B", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div><strong>Could not load:</strong> {error}</div>
           <button onClick={fetchRuns} style={outlineBtnStyle}>Try again</button>
         </div>
@@ -237,32 +270,77 @@ export default function PayrollDrafts() {
               <th style={{ ...thStyle, textAlign: "right" }}>EMPLOYEES</th>
               <th style={{ ...thStyle, textAlign: "right" }}>NET TOTAL</th>
               <th style={thStyle}>STATUS</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>OPEN</th>
+              <th style={{ ...thStyle, textAlign: "right", width: 60 }}>ACTIONS</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map(function(r) {
               const isDraft = r.status === "draft";
+              const menuOpen = openMenuId === r.id;
               return (
-                <tr key={r.id} onClick={function() { navigate("/payroll/run/" + r.id + (isDraft ? "" : "/done")); }} style={{ borderBottom: "1px solid " + C.lineSoft, cursor: "pointer" }}>
-                  <td style={tdStyle}>{fmtDate(r.pay_period_start)} to {fmtDate(r.pay_period_end)}</td>
-                  <td style={{ ...tdStyle, ...TABULAR }}>{fmtDate(r.pay_date)}</td>
-                  <td style={{ ...tdStyle, textAlign: "right", ...TABULAR }}>{r.employee_count || 0}</td>
-                  <td style={{ ...tdStyle, textAlign: "right", fontWeight: 600, ...TABULAR }}>{fmtMoney(r.total_net)}</td>
-                  <td style={tdStyle}>
+                <tr key={r.id} style={{ borderBottom: "1px solid " + C.lineSoft }}>
+                  <td style={{ ...tdStyle, cursor: "pointer" }} onClick={function() { openRun(r); }}>{fmtDate(r.pay_period_start)} to {fmtDate(r.pay_period_end)}</td>
+                  <td style={{ ...tdStyle, ...TABULAR, cursor: "pointer" }} onClick={function() { openRun(r); }}>{fmtDate(r.pay_date)}</td>
+                  <td style={{ ...tdStyle, textAlign: "right", ...TABULAR, cursor: "pointer" }} onClick={function() { openRun(r); }}>{r.employee_count || 0}</td>
+                  <td style={{ ...tdStyle, textAlign: "right", fontWeight: 600, ...TABULAR, cursor: "pointer" }} onClick={function() { openRun(r); }}>{fmtMoney(r.total_net)}</td>
+                  <td style={{ ...tdStyle, cursor: "pointer" }} onClick={function() { openRun(r); }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, color: isDraft ? C.amber : C.brandDark, background: isDraft ? C.amberBg : C.brandBg, padding: "3px 10px", borderRadius: 5, letterSpacing: "0.04em", textTransform: "uppercase" }}>
                       <span style={{ width: 6, height: 6, background: isDraft ? C.amber : C.brandDark, borderRadius: "50%" }} />
                       {isDraft ? "Draft" : "Finalized"}
                     </span>
                   </td>
-                  <td style={{ ...tdStyle, textAlign: "right" }}>
-                    <Search size={16} style={{ color: C.brand, cursor: "pointer" }} />
+                  <td style={{ ...tdStyle, textAlign: "right", position: "relative", width: 60 }} className="row-kebab">
+                    <button onClick={function(e) { e.stopPropagation(); setOpenMenuId(menuOpen ? null : r.id); }} style={{ width: 30, height: 30, border: "none", background: "transparent", borderRadius: 6, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", color: C.ink }}>
+                      <MoreVertical size={16} />
+                    </button>
+                    {menuOpen && (
+                      <div className="row-kebab" style={{ position: "absolute", top: 40, right: 10, background: C.card, border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", padding: "6px 0", minWidth: 180, zIndex: 50, textAlign: "left" }}>
+                        {isDraft ? (
+                          <>
+                            <button onClick={function() { setOpenMenuId(null); openRun(r); }} style={kebabItemStyle}>
+                              <Play size={14} style={{ color: C.brand }} /> Continue
+                            </button>
+                            <div style={{ height: 1, background: C.line, margin: "4px 0" }} />
+                            <button onClick={function() { setOpenMenuId(null); setConfirmDelete(r); }} style={{ ...kebabItemStyle, color: C.err }}>
+                              <Trash2 size={14} /> Delete draft
+                            </button>
+                          </>
+                        ) : (
+                          <button onClick={function() { setOpenMenuId(null); openRun(r); }} style={kebabItemStyle}>
+                            <Eye size={14} style={{ color: C.brand }} /> View
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+      )}
+
+      {confirmDelete && (
+        <>
+          <div onClick={function() { if (!deleting) setConfirmDelete(null); }} style={{ position: "fixed", inset: 0, background: "rgba(16,26,43,0.42)", zIndex: 9998 }} />
+          <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: C.card, borderRadius: 14, width: "min(440px, 92vw)", boxShadow: "0 24px 60px rgba(16,26,43,0.28)", zIndex: 9999, fontFamily: FONT, padding: "24px 22px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: C.errBg, display: "grid", placeItems: "center" }}>
+                <Trash2 size={20} style={{ color: C.err }} />
+              </div>
+              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: C.ink }}>Delete draft pay run?</h3>
+            </div>
+            <div style={{ fontSize: 14, color: C.ink, marginBottom: 20, lineHeight: 1.5 }}>
+              This will permanently delete the draft pay run for the period <strong>{fmtDate(confirmDelete.pay_period_start)} to {fmtDate(confirmDelete.pay_period_end)}</strong>. This action cannot be undone.
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <button onClick={function() { setConfirmDelete(null); }} disabled={deleting} style={{ padding: "10px 16px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: deleting ? "not-allowed" : "pointer", fontFamily: FONT, opacity: deleting ? 0.5 : 1 }}>Cancel</button>
+              <button onClick={function() { handleDelete(confirmDelete.id); }} disabled={deleting} style={{ padding: "10px 16px", background: C.err, border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: deleting ? "not-allowed" : "pointer", fontFamily: FONT, opacity: deleting ? 0.5 : 1 }}>
+                {deleting ? "Deleting..." : "Delete draft"}
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: C.card, padding: "16px 32px", borderTop: "1px solid " + C.line, boxShadow: "0 -4px 12px rgba(0,0,0,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 100 }}>
