@@ -95,6 +95,9 @@ export default function PaychequeList() {
   const [chqInput, setChqInput] = useState("");
   const [savingChq, setSavingChq] = useState(false);
   const [chequeModal, setChequeModal] = useState(null); // stub object
+  const [voidTarget, setVoidTarget] = useState(null); // paycheque being voided
+  const [voidReason, setVoidReason] = useState("");
+  const [voiding, setVoiding] = useState(false);
   const [company, setCompany] = useState({ name: "", address: "" });
 
   const filterRef = useRef(null);
@@ -219,6 +222,26 @@ export default function PaychequeList() {
     } catch (e) {
       alert("Could not save: " + e.message);
     } finally { setSavingChq(false); }
+  }
+
+  async function handleVoid(stubId, reason) {
+    setVoiding(true);
+    try {
+      const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + stubId + "/void", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || "Void failed");
+      }
+      setVoidTarget(null);
+      setVoidReason("");
+      await fetchPaycheques();
+    } catch (e) {
+      alert("Could not void: " + e.message);
+    } finally { setVoiding(false); }
   }
 
   function openCheque(p) {
@@ -481,7 +504,7 @@ export default function PaychequeList() {
                         {status !== "voided" && (
                           <>
                             <div style={{ height: 1, background: C.line, margin: "4px 0" }} />
-                            <button onClick={function() { setOpenKebabId(null); alert("Void functionality: opens confirmation modal"); }} style={Object.assign({}, menuItem, { color: C.err })}><RotateCcw size={14} /> Void this paycheque</button>
+                            <button onClick={function() { setOpenKebabId(null); setVoidTarget(p); setVoidReason(""); }} style={Object.assign({}, menuItem, { color: C.err })}><RotateCcw size={14} /> Void this paycheque</button>
                           </>
                         )}
                       </div>
@@ -492,6 +515,34 @@ export default function PaychequeList() {
             })}
           </tbody>
         </table>
+      )}
+
+      {/* Void confirmation modal */}
+      {voidTarget && (
+        <div onClick={function() { if (!voiding) setVoidTarget(null); }} style={{ position: "fixed", inset: 0, background: "rgba(18,38,43,0.5)", zIndex: 250, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={function(e) { e.stopPropagation(); }} style={{ background: C.card, borderRadius: 14, padding: "24px 22px", width: 460, maxWidth: "94vw", boxShadow: "0 24px 60px rgba(18,26,43,0.28)", fontFamily: FONT }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: C.errBg, display: "grid", placeItems: "center" }}>
+                <RotateCcw size={20} style={{ color: C.err }} />
+              </div>
+              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: C.ink }}>Void this paycheque?</h3>
+            </div>
+            <div style={{ fontSize: 13.5, color: C.ink, marginBottom: 16, lineHeight: 1.5 }}>
+              This will mark {voidTarget.employee_name}'s paycheque for <strong>{fmtDate(voidTarget.pay_date)}</strong> as voided. This reverses their YTD totals and cannot be undone.
+            </div>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Reason for voiding</label>
+            <textarea value={voidReason} onChange={function(e) { setVoidReason(e.target.value); }} disabled={voiding}
+              placeholder="e.g. Wrong hours entered, employee received duplicate payment..."
+              rows={3}
+              style={{ width: "100%", padding: "10px 12px", border: "1.5px solid " + C.ink, borderRadius: 8, fontFamily: FONT, fontSize: 13, color: C.ink, resize: "vertical", boxSizing: "border-box", marginBottom: 16, outline: "none" }} />
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <button onClick={function() { setVoidTarget(null); }} disabled={voiding} style={{ padding: "10px 16px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: voiding ? "not-allowed" : "pointer", opacity: voiding ? 0.5 : 1, fontFamily: FONT }}>Cancel</button>
+              <button onClick={function() { handleVoid(voidTarget.id, voidReason); }} disabled={voiding || !voidReason.trim()} style={{ padding: "10px 16px", background: C.err, border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: (voiding || !voidReason.trim()) ? "not-allowed" : "pointer", opacity: (voiding || !voidReason.trim()) ? 0.5 : 1, fontFamily: FONT }}>
+                {voiding ? "Voiding..." : "Void paycheque"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Cheque modal */}
