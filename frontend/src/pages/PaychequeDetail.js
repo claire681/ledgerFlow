@@ -265,8 +265,8 @@ export default function PaychequeDetail() {
         [data-print="hide"], [data-print='hide'], .no-print { display: none !important; }
         html, body { background: white !important; }
         body * { visibility: hidden; }
-        .paystub-container, .paystub-container * { visibility: visible; }
-        .paystub-container { position: absolute; left: 0; top: 0; width: 100%; padding: 0 !important; background: white !important; display: block !important; }
+        .paystub-container, .paystub-container * { visibility: visible; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .paystub-container { position: absolute; left: 0; top: 0; width: 100%; padding: 0 !important; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; display: block !important; }
       }
     @media screen {
           .pay-stub-print-only { display: none; }
