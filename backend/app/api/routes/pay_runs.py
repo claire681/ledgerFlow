@@ -15,7 +15,7 @@ from datetime import date, datetime, timezone
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, func
 from pydantic import BaseModel
@@ -33,6 +33,40 @@ from app.payroll.types import (
     PayRunEmployeeInput,
     JurisdictionContext,
 )
+
+
+
+
+async def get_current_user_or_token(
+    request: Request,
+    token: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """Allow auth via Authorization header (normal) OR ?token=xxx query param
+    (for opening PDF URLs directly in browser PDF viewer)."""
+    from jose import jwt, JWTError
+    from app.core.config import settings
+    from sqlalchemy import select as _select
+    auth_header = request.headers.get("Authorization", "")
+    jwt_token = None
+    if auth_header.startswith("Bearer "):
+        jwt_token = auth_header[7:]
+    elif token:
+        jwt_token = token
+    if not jwt_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        payload = jwt.decode(jwt_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    result = await db.execute(_select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
 
 
 router = APIRouter()
@@ -1234,6 +1268,49 @@ async def delete_pay_run(
     await db.commit()
 
 
+
+
+class UpdateChequeNumberRequest(BaseModel):
+    cheque_number: Optional[str] = None
+    cheque_date: Optional[str] = None
+
+
+@router.patch("/paycheques/{stub_id}/cheque-number")
+async def update_cheque_number(
+    stub_id: UUID,
+    body: UpdateChequeNumberRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Update the cheque number and date for a paycheque."""
+    result = await db.execute(
+        select(PayStub).join(PayRun, PayStub.pay_run_id == PayRun.id).where(
+            PayStub.id == stub_id, PayRun.owner_id == current_user.id
+        )
+    )
+    stub = result.scalar_one_or_none()
+    if not stub:
+        raise HTTPException(status_code=404, detail="Paycheque not found")
+
+    if body.cheque_number is not None:
+        cn = body.cheque_number.strip()
+        stub.cheque_number = cn if cn else None
+
+    if body.cheque_date:
+        from datetime import date
+        try:
+            stub.cheque_date = date.fromisoformat(body.cheque_date)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="cheque_date must be YYYY-MM-DD")
+
+    await db.commit()
+    await db.refresh(stub)
+
+    return {
+        "id": str(stub.id),
+        "cheque_number": stub.cheque_number,
+        "cheque_date": stub.cheque_date.isoformat() if stub.cheque_date else None,
+    }
 # ============================================================
 # Calculate / Finalize / Void requests
 # ============================================================
@@ -2435,7 +2512,7 @@ async def list_paycheques(
             "net": str(stub.net_pay),
             "net_pay": str(stub.net_pay),
             "pay_method": "cheque",  # defaults per current strategy
-            "cheque_number": None,  # not stored yet
+            "cheque_number": stub.cheque_number,
             "status": pc_status,
             "currency": run.currency,
             "pay_run_id": str(run.id),
@@ -2593,7 +2670,7 @@ async def get_paycheque_detail(
         "pay_period_end": run.pay_period_end.isoformat() if run.pay_period_end else None,
         "paid_from": emp.bank_name if emp and emp.bank_name else "Employer bank account",
         "pay_method": "cheque",
-        "cheque_number": None,
+        "cheque_number": stub.cheque_number,
         "gross_pay": str(stub.gross_pay),
         "total_pay": str(stub.gross_pay),
         "net_pay": str(stub.net_pay),
@@ -3166,8 +3243,9 @@ async def export_paycheques_pdf(
 @router.get("/paycheques/{stub_id}/pdf")
 async def get_paycheque_pdf(
     stub_id: UUID,
+    token: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_or_token),
 ):
     """Generate a PDF pay stub for the given stub.
 

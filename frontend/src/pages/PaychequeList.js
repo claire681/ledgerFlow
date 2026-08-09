@@ -226,50 +226,12 @@ export default function PaychequeList() {
     } finally { setSavingChq(false); }
   }
 
-  async function printPayStub(p) {
+  function printPayStub(p) {
     setOpenKebabId(null);
-    try {
-      const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + p.id + "/pdf", {
-        headers: authHeaders(),
-      });
-      if (!res.ok) throw new Error("Could not generate PDF");
-      const blob = await res.blob();
-
-      // Build meaningful filename
-      var name = (p.employee_name || "Employee").replace(/[^a-zA-Z0-9 -]/g, "").replace(/\s+/g, " ").trim();
-      var dateStr = "";
-      if (p.pay_date) {
-        var d = new Date(p.pay_date);
-        if (!isNaN(d)) {
-          var dd = String(d.getUTCDate()).padStart(2, "0");
-          var mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-          dateStr = dd + "-" + mm + "-" + d.getUTCFullYear();
-        }
-      }
-      const filename = "Pay stub - " + name + (dateStr ? " - " + dateStr : "") + ".pdf";
-
-      // Create a File from the blob with the proper filename (Chrome respects this for viewer title)
-      const file = new File([blob], filename, { type: "application/pdf" });
-      const url = URL.createObjectURL(file);
-
-      // Open in new tab
-      const w = window.open(url, "_blank");
-      if (w) {
-        // Set tab title after load
-        const tryTitle = function() {
-          try { w.document.title = filename; } catch(e) {}
-        };
-        tryTitle();
-        setTimeout(tryTitle, 300);
-        setTimeout(tryTitle, 1000);
-        setTimeout(tryTitle, 2000);
-      }
-
-      // Release blob URL after 2 minutes
-      setTimeout(function() { URL.revokeObjectURL(url); }, 120000);
-    } catch (e) {
-      alert("Could not open pay stub PDF: " + e.message);
-    }
+    // Get token from localStorage and open direct URL - Chrome PDF viewer will show proper filename
+    const token = localStorage.getItem("access_token") || localStorage.getItem("token") || "";
+    const pdfUrl = API_URL + "/api/v1/payroll/paycheques/" + p.id + "/pdf?token=" + encodeURIComponent(token);
+    window.open(pdfUrl, "_blank");
   }
 
   async function handleVoid(stubId, reason) {
