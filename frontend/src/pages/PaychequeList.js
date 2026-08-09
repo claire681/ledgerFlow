@@ -234,11 +234,9 @@ export default function PaychequeList() {
       });
       if (!res.ok) throw new Error("Could not generate PDF");
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      // Open in new tab - browser will show PDF viewer with download/print icons
-      const w = window.open(url, "_blank");
-      // Set filename for download (Chrome uses this as suggested filename)
-      var name = (p.employee_name || "Employee").replace(/[^a-zA-Z0-9 -]/g, "");
+
+      // Build meaningful filename
+      var name = (p.employee_name || "Employee").replace(/[^a-zA-Z0-9 -]/g, "").replace(/\s+/g, " ").trim();
       var dateStr = "";
       if (p.pay_date) {
         var d = new Date(p.pay_date);
@@ -248,11 +246,27 @@ export default function PaychequeList() {
           dateStr = dd + "-" + mm + "-" + d.getUTCFullYear();
         }
       }
+      const filename = "Pay stub - " + name + (dateStr ? " - " + dateStr : "") + ".pdf";
+
+      // Create a File from the blob with the proper filename (Chrome respects this for viewer title)
+      const file = new File([blob], filename, { type: "application/pdf" });
+      const url = URL.createObjectURL(file);
+
+      // Open in new tab
+      const w = window.open(url, "_blank");
       if (w) {
-        w.document.title = "Pay stub - " + name + (dateStr ? " - " + dateStr : "");
+        // Set tab title after load
+        const tryTitle = function() {
+          try { w.document.title = filename; } catch(e) {}
+        };
+        tryTitle();
+        setTimeout(tryTitle, 300);
+        setTimeout(tryTitle, 1000);
+        setTimeout(tryTitle, 2000);
       }
-      // Release blob URL after a bit
-      setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+
+      // Release blob URL after 2 minutes
+      setTimeout(function() { URL.revokeObjectURL(url); }, 120000);
     } catch (e) {
       alert("Could not open pay stub PDF: " + e.message);
     }
