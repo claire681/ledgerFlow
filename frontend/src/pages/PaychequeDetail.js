@@ -226,6 +226,17 @@ export default function PaychequeDetail() {
     return parseFloat(pc.deductions_contributions.total.current || 0) || 0;
   }, [pc]);
 
+  // Auto-trigger browser print dialog when URL has ?print=1  (used from paycheque list kebab menu)
+  useEffect(function() { /* useAutoPrint_added_by_patch */
+    if (!pc) return;
+    var params = new URLSearchParams(window.location.search);
+    if (params.get("print") === "1") {
+      // small delay so PayStub has time to render
+      var timer = setTimeout(function() { window.print(); }, 500);
+      return function() { clearTimeout(timer); };
+    }
+  }, [pc]);
+
   if (loading) {
     return <div style={{ padding: 40, textAlign: "center", color: TEXT_SECONDARY, fontFamily: "inherit" }}>Loading...</div>;
   }
@@ -251,56 +262,12 @@ export default function PaychequeDetail() {
           size: A4;
         }
         @media print {
-          /* Hide all non-print elements */
-          .no-print { display: none !important; }
-          /* Show pay stub, let it flow naturally for proper pagination */
-          .pay-stub-print-only {
-            display: block !important;
-            width: 100%;
-            background: white !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            color-adjust: exact !important;
-            page-break-inside: auto;
-          }
-
-      /* Strip the on-screen paper look from PayStub when printing:
-         no shadow, no max-width, no min-height, no margin. Let it fill the A4. */
-      .pay-stub-print-only > div {
-        box-shadow: none !important;
-        max-width: none !important;
-        width: 100% !important;
-        min-height: 0 !important;
-        margin: 0 !important;
-        border: none !important;
-        border-radius: 0 !important;
+        [data-print="hide"], [data-print='hide'], .no-print { display: none !important; }
+        html, body { background: white !important; }
+        body * { visibility: hidden; }
+        .paystub-container, .paystub-container * { visibility: visible; }
+        .paystub-container { position: absolute; left: 0; top: 0; width: 100%; padding: 0 !important; background: white !important; display: block !important; }
       }
-
-      .pay-stub-print-only * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          /* Prevent tables from breaking mid-row */
-          .pay-stub-print-only table { page-break-inside: auto; }
-          .pay-stub-print-only tr { page-break-inside: avoid; page-break-after: auto; }
-          .pay-stub-print-only thead { display: table-header-group; }
-          /* Reset body background for print */
-          body {
-            background: white !important;
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-          /* Hide interactive nav elements */
-          .paycheque-print-area > .no-print,
-          nav, header, aside, .sidebar,
-          button, .action-menu { display: none !important; }
-        }
-        /* On screen, hide the print-only pay stub - it's only for print */
-            /* Hide app chrome (top bar, sidebar, promo banner) during print */
-    @media print {
-      [data-print="hide"], [data-print='hide'] { display: none !important; }
-      html, body { background: white !important; }
-    }
     @media screen {
           .pay-stub-print-only { display: none; }
         }
