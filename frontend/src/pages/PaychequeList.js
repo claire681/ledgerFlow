@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import PayStub from "../components/payroll/PayStub";
 import { Search, ChevronDown, Check, MoreVertical, Filter, Download, Printer, Eye, Mail, RotateCcw, FileText, X as XIcon, Lock, Play } from "lucide-react";
 
 const FONT = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
@@ -95,6 +96,7 @@ export default function PaychequeList() {
   const [chqInput, setChqInput] = useState("");
   const [savingChq, setSavingChq] = useState(false);
   const [chequeModal, setChequeModal] = useState(null); // stub object
+  const [printTarget, setPrintTarget] = useState(null); // paycheque to print
   const [voidTarget, setVoidTarget] = useState(null); // paycheque being voided
   const [voidReason, setVoidReason] = useState("");
   const [voiding, setVoiding] = useState(false);
@@ -222,6 +224,32 @@ export default function PaychequeList() {
     } catch (e) {
       alert("Could not save: " + e.message);
     } finally { setSavingChq(false); }
+  }
+
+  function printPayStub(p) {
+    setOpenKebabId(null);
+    // Set employee name in title for PDF filename
+    var name = (p.employee_name || "Employee").replace(/[^a-zA-Z0-9 -]/g, "");
+    var dateStr = "";
+    if (p.pay_date) {
+      var d = new Date(p.pay_date);
+      if (!isNaN(d)) {
+        var dd = String(d.getUTCDate()).padStart(2, "0");
+        var mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        dateStr = dd + "-" + mm + "-" + d.getUTCFullYear();
+      }
+    }
+    var originalTitle = document.title;
+    document.title = "Pay stub - " + name + (dateStr ? " - " + dateStr : "");
+    setPrintTarget(p);
+    // Wait for React to render the hidden PayStub, then print
+    setTimeout(function() {
+      document.body.classList.add("printing-paystub");
+      window.print();
+      document.body.classList.remove("printing-paystub");
+      setPrintTarget(null);
+      document.title = originalTitle;
+    }, 50);
   }
 
   async function handleVoid(stubId, reason) {
@@ -494,7 +522,7 @@ export default function PaychequeList() {
                     {menuOpen && (
                       <div className="row-kebab" style={{ position: "absolute", top: 40, right: 10, background: C.card, border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", padding: "6px 0", minWidth: 200, zIndex: 50, textAlign: "left" }}>
                         <button onClick={function() { setOpenKebabId(null); navigate("/payroll/paycheques/" + p.id); }} style={menuItem}><Eye size={14} /> View pay stub</button>
-                        <button onClick={function() { setOpenKebabId(null); window.open("/payroll/paycheques/" + p.id + "?print=1", "_blank"); }} style={menuItem}><Printer size={14} /> Print pay stub</button>
+                        <button onClick={function() { printPayStub(p); }} style={menuItem}><Printer size={14} /> Print pay stub</button>
                         {isCheq && p.cheque_number && (
                           <button onClick={function() { openCheque(p); }} style={menuItem}><FileText size={14} /> View cheque</button>
                         )}
@@ -597,6 +625,22 @@ export default function PaychequeList() {
           </div>
         </div>
       )}
+
+      {/* Hidden PayStub for print (only visible when printing) */}
+      <div className="print-hidden-paystub" style={{ position: "fixed", left: -99999, top: 0, width: 816, height: "auto" }}>
+        {printTarget && <PayStub data={printTarget} />}
+      </div>
+
+      {/* Print-only CSS */}
+      <style>{`
+        @media print {
+          body.printing-paystub > * { display: none !important; }
+          body.printing-paystub .print-hidden-paystub { display: block !important; position: static !important; left: 0 !important; top: 0 !important; width: 100% !important; }
+          body.printing-paystub .print-hidden-paystub * { visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+          body.printing-paystub { background: white !important; }
+          @page { size: letter; margin: 0.5in; }
+        }
+      `}</style>
 
       {/* Fixed footer */}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: C.card, padding: "16px 32px", borderTop: "1px solid " + C.line, boxShadow: "0 -4px 12px rgba(0,0,0,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 90 }}>
