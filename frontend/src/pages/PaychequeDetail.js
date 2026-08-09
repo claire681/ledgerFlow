@@ -227,15 +227,26 @@ export default function PaychequeDetail() {
   }, [pc]);
 
   // Auto-trigger browser print dialog when URL has ?print=1  (used from paycheque list kebab menu)
+  var isPrintMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("print") === "1";
+
   useEffect(function() { /* useAutoPrint_added_by_patch */
-    if (!pc) return;
-    var params = new URLSearchParams(window.location.search);
-    if (params.get("print") === "1") {
-      // small delay so PayStub has time to render
-      var timer = setTimeout(function() { window.print(); }, 500);
-      return function() { clearTimeout(timer); };
+    if (!pc || !isPrintMode) return;
+    // Set document title so PDF filename is meaningful
+    var name = (pc.employee_name || "Employee").replace(/[^a-zA-Z0-9 -]/g, "");
+    var dateStr = "";
+    if (pc.pay_date) {
+      var d = new Date(pc.pay_date);
+      if (!isNaN(d)) {
+        var dd = String(d.getUTCDate()).padStart(2, "0");
+        var mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        dateStr = dd + "-" + mm + "-" + d.getUTCFullYear();
+      }
     }
-  }, [pc]);
+    document.title = "Pay stub - " + name + (dateStr ? " - " + dateStr : "");
+    // Fire immediately after render
+    var timer = setTimeout(function() { window.print(); }, 100);
+    return function() { clearTimeout(timer); };
+  }, [pc, isPrintMode]);
 
   if (loading) {
     return <div style={{ padding: 40, textAlign: "center", color: TEXT_SECONDARY, fontFamily: "inherit" }}>Loading...</div>;
