@@ -306,7 +306,7 @@ export default function PaychequeDetail() {
         }
       `}</style>
 
-      <div className="pay-stub-print-only">
+      <div className="paystub-container" style={{ padding: "24px", background: "#F4F6F8", display: "flex", justifyContent: "center" }}>
         <PayStub data={pc} />
       </div>
 
@@ -366,77 +366,7 @@ export default function PaychequeDetail() {
             </div>
           )}
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 18 }}>
-          <div>
-            <div style={{ fontSize: 10, color: TEXT_SECONDARY, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 5 }}>Pay to</div>
-            <div style={{ fontSize: 22, color: TEXT_PRIMARY, fontWeight: 500 }}>{name}</div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 10, color: BRAND_DARK, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 5 }}>Net pay</div>
-            <div style={{ fontSize: 24, color: BRAND_DARK, fontWeight: 500 }}>{netLabel}</div>
-          </div>
-        </div>
-
-        <div style={{ background: BG_PAGE, border: "0.5px solid " + BORDER, borderRadius: 8, padding: "12px 16px", marginBottom: 18 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 24px" }}>
-            <div>
-              <div style={{ fontSize: 10, color: TEXT_SECONDARY, textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 500 }}>Employee address</div>
-              <div style={{ fontSize: 12, color: TEXT_PRIMARY, marginTop: 3, lineHeight: 1.4, whiteSpace: "pre-line" }}>{pc.employee_address || pc.address || "-"}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 10, color: TEXT_SECONDARY, textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 500 }}>Pay date</div>
-              <div style={{ fontSize: 12, color: TEXT_PRIMARY, marginTop: 3 }}>{formatDate(pc.pay_date)}</div>
-              <div style={{ fontSize: 10, color: TEXT_SECONDARY, textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 500, marginTop: 8 }}>Pay period</div>
-              <div style={{ fontSize: 12, color: TEXT_PRIMARY, marginTop: 3 }}>{formatPeriodLong(pc.pay_period_start || (pc.payPeriod && pc.payPeriod.start), pc.pay_period_end || (pc.payPeriod && pc.payPeriod.end))}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 10, color: TEXT_SECONDARY, textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 500 }}>Paid from</div>
-              <div style={{ fontSize: 12, color: TEXT_PRIMARY, marginTop: 3 }}>{pc.paid_from || "-"}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 10, color: TEXT_SECONDARY, textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 500 }}>Paid by</div>
-              <div style={{ fontSize: 12, color: TEXT_PRIMARY, marginTop: 3 }}>
-                {pc.pay_method === "direct_deposit" ? "Direct deposit" : "Cheque"}
-                {pc.net_pay && (" (" + formatCurrency(pc.net_pay, pc.currency) + ")")}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <Section title="Pay" expanded={expanded.pay} onToggle={() => setExpanded({ ...expanded, pay: !expanded.pay })}>
-          <PayTable lines={(pc.pay && pc.pay.lines) || []} total={pc.pay && pc.pay.total} />
-        </Section>
-
-        <Section title="Employee taxes" expanded={expanded.employee_taxes} onToggle={() => setExpanded({ ...expanded, employee_taxes: !expanded.employee_taxes })}>
-          <TaxTable lines={(pc.employee_taxes && pc.employee_taxes.lines) || []} total={pc.employee_taxes && pc.employee_taxes.total} />
-        </Section>
-
-        <Section title="Employer taxes" expanded={expanded.employer_taxes} onToggle={() => setExpanded({ ...expanded, employer_taxes: !expanded.employer_taxes })}>
-          <TaxTable lines={(pc.employer_taxes && pc.employer_taxes.lines) || []} total={pc.employer_taxes && pc.employer_taxes.total} />
-        </Section>
-
-        {pc.deductions_contributions && pc.deductions_contributions.lines && pc.deductions_contributions.lines.length > 0 && (
-          <Section title="Deductions and contributions" expanded={expanded.deductions} onToggle={() => setExpanded({ ...expanded, deductions: !expanded.deductions })}>
-            <TaxTable lines={pc.deductions_contributions.lines} total={pc.deductions_contributions.total} />
-          </Section>
-        )}
-
-        <div style={{ background: "#F0FAFA", border: "0.5px solid " + BRAND_SOFT_BORDER, borderRadius: 8, padding: "12px 16px", marginBottom: 16 }}>
-          <div style={{ fontSize: 10, color: BRAND_DARK, fontWeight: 500, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>Net pay calculation</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 100px", rowGap: 6, fontSize: 12 }}>
-            <div style={{ color: TEXT_PRIMARY }}>Gross pay</div>
-            <div style={{ textAlign: "right", color: TEXT_PRIMARY, fontWeight: 500 }}>{grossLabel}</div>
-            <div style={{ color: TEXT_SECONDARY }}>Less: employee taxes</div>
-            <div style={{ textAlign: "right", color: WARNING }}>({formatCurrency(empTaxTotal)})</div>
-            <div style={{ color: TEXT_SECONDARY }}>Less: deductions</div>
-            <div style={{ textAlign: "right", color: WARNING }}>({formatCurrency(totalDeductions)})</div>
-            <div style={{ gridColumn: "1 / span 2", height: 1, background: BRAND_SOFT_BORDER, margin: "3px 0" }}></div>
-            <div style={{ color: BRAND_DARK, fontWeight: 500 }}>Net pay</div>
-            <div style={{ textAlign: "right", color: BRAND_DARK, fontWeight: 500 }}>{netLabel}</div>
-          </div>
-        </div>
-
-        <div style={{ marginBottom: 4 }}>
+<div style={{ marginBottom: 4 }}>
           <label style={{ display: "block", fontSize: 10, color: TEXT_SECONDARY, textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 500, marginBottom: 6 }}>Memo</label>
           <textarea
             rows={2}
