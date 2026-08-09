@@ -226,30 +226,36 @@ export default function PaychequeList() {
     } finally { setSavingChq(false); }
   }
 
-  function printPayStub(p) {
+  async function printPayStub(p) {
     setOpenKebabId(null);
-    // Set employee name in title for PDF filename
-    var name = (p.employee_name || "Employee").replace(/[^a-zA-Z0-9 -]/g, "");
-    var dateStr = "";
-    if (p.pay_date) {
-      var d = new Date(p.pay_date);
-      if (!isNaN(d)) {
-        var dd = String(d.getUTCDate()).padStart(2, "0");
-        var mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-        dateStr = dd + "-" + mm + "-" + d.getUTCFullYear();
+    try {
+      const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + p.id + "/pdf", {
+        headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error("Could not generate PDF");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      // Open in new tab - browser will show PDF viewer with download/print icons
+      const w = window.open(url, "_blank");
+      // Set filename for download (Chrome uses this as suggested filename)
+      var name = (p.employee_name || "Employee").replace(/[^a-zA-Z0-9 -]/g, "");
+      var dateStr = "";
+      if (p.pay_date) {
+        var d = new Date(p.pay_date);
+        if (!isNaN(d)) {
+          var dd = String(d.getUTCDate()).padStart(2, "0");
+          var mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+          dateStr = dd + "-" + mm + "-" + d.getUTCFullYear();
+        }
       }
+      if (w) {
+        w.document.title = "Pay stub - " + name + (dateStr ? " - " + dateStr : "");
+      }
+      // Release blob URL after a bit
+      setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+    } catch (e) {
+      alert("Could not open pay stub PDF: " + e.message);
     }
-    var originalTitle = document.title;
-    document.title = "Pay stub - " + name + (dateStr ? " - " + dateStr : "");
-    setPrintTarget(p);
-    // Wait for React to render the hidden PayStub, then print
-    setTimeout(function() {
-      document.body.classList.add("printing-paystub");
-      window.print();
-      document.body.classList.remove("printing-paystub");
-      setPrintTarget(null);
-      document.title = originalTitle;
-    }, 50);
   }
 
   async function handleVoid(stubId, reason) {
@@ -625,22 +631,6 @@ export default function PaychequeList() {
           </div>
         </div>
       )}
-
-      {/* Hidden PayStub for print (only visible when printing) */}
-      <div className="print-hidden-paystub" style={{ position: "fixed", left: -99999, top: 0, width: 816, height: "auto" }}>
-        {printTarget && <PayStub data={printTarget} />}
-      </div>
-
-      {/* Print-only CSS */}
-      <style>{`
-        @media print {
-          body.printing-paystub > * { display: none !important; }
-          body.printing-paystub .print-hidden-paystub { display: block !important; position: static !important; left: 0 !important; top: 0 !important; width: 100% !important; }
-          body.printing-paystub .print-hidden-paystub * { visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-          body.printing-paystub { background: white !important; }
-          @page { size: letter; margin: 0.5in; }
-        }
-      `}</style>
 
       {/* Fixed footer */}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: C.card, padding: "16px 32px", borderTop: "1px solid " + C.line, boxShadow: "0 -4px 12px rgba(0,0,0,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 90 }}>
