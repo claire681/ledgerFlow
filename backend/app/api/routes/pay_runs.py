@@ -1296,6 +1296,16 @@ async def update_cheque_number(
     old_cheque = stub.cheque_number
     if body.cheque_number is not None:
         cn = body.cheque_number.strip()
+        if cn:
+            # Validate: numbers only, 3-10 digits
+            if not cn.isdigit():
+                raise HTTPException(status_code=400, detail="Cheque number must contain only digits (0-9)")
+            if len(cn) < 3:
+                raise HTTPException(status_code=400, detail="Cheque number must be at least 3 digits")
+            if len(cn) > 10:
+                raise HTTPException(status_code=400, detail="Cheque number cannot be more than 10 digits")
+            if int(cn) == 0:
+                raise HTTPException(status_code=400, detail="Cheque number cannot be zero")
         stub.cheque_number = cn if cn else None
 
     if body.cheque_date:

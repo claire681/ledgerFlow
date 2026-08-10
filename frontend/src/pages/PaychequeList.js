@@ -204,16 +204,38 @@ export default function PaychequeList() {
   const sectionTitle = tab === "pending" ? "Pending paycheques" : tab === "paid" ? "Paid paycheques" : tab === "voided" ? "Voided paycheques" : "Paycheque history";
 
   async function saveChequeNumber(stubId, value) {
+    // Client-side validation
+    const trimmed = String(value || "").trim();
+    if (trimmed) {
+      if (!/^\d+$/.test(trimmed)) {
+        alert("Cheque number must contain only digits (0-9). No letters, spaces, or dashes.");
+        return;
+      }
+      if (trimmed.length < 3) {
+        alert("Cheque number must be at least 3 digits.");
+        return;
+      }
+      if (trimmed.length > 10) {
+        alert("Cheque number cannot be more than 10 digits.");
+        return;
+      }
+      if (parseInt(trimmed, 10) === 0) {
+        alert("Cheque number cannot be zero.");
+        return;
+      }
+    }
     setSavingChq(true);
     try {
       const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + stubId + "/cheque-number", {
         method: "PATCH",
         headers: authHeaders(),
-        body: JSON.stringify({ cheque_number: value }),
+        body: JSON.stringify({ cheque_number: trimmed || null }),
       });
-      if (!res.ok) throw new Error("Save failed");
+      if (!res.ok) {
+        const errData = await res.json().catch(function() { return {}; });
+        throw new Error(errData.detail || "Save failed");
+      }
       const data = await res.json();
-      // Update local state
       setPaycheques(function(prev) {
         return prev.map(function(p) {
           return p.id === stubId ? Object.assign({}, p, { cheque_number: data.cheque_number }) : p;
@@ -471,15 +493,17 @@ export default function PaychequeList() {
                       <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                         <input
                           type="text" value={chqInput}
-                          onChange={function(e) { setChqInput(e.target.value); }}
+                          onChange={function(e) { setChqInput(e.target.value.replace(/[^\d]/g, "").slice(0, 10)); }}
                           onKeyDown={function(e) {
                             if (e.key === "Enter") saveChequeNumber(p.id, chqInput);
                             if (e.key === "Escape") { setEditingChq(null); setChqInput(""); }
                           }}
                           autoFocus
                           disabled={savingChq}
-                          placeholder="Number"
-                          style={{ width: 100, padding: "6px 8px", border: "1.5px solid " + C.brand, borderRadius: 6, fontFamily: FONT, fontSize: 13, color: C.ink, outline: "none" }}
+                          placeholder="1042"
+                          maxLength={10}
+                          inputMode="numeric"
+                          style={{ width: 100, padding: "6px 8px", border: "1.5px solid " + C.brand, borderRadius: 6, fontFamily: FONT, fontSize: 13, color: C.ink, outline: "none", fontVariantNumeric: "tabular-nums" }}
                         />
                         <button onClick={function() { saveChequeNumber(p.id, chqInput); }} disabled={savingChq} style={{ padding: "4px 8px", background: C.brand, border: "none", borderRadius: 6, color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>{savingChq ? "..." : "Save"}</button>
                       </div>
