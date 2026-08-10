@@ -56,7 +56,7 @@ async def get_current_user_or_token(
     if not jwt_token:
         raise HTTPException(status_code=401, detail="Not authenticated")
     try:
-        payload = jwt.decode(jwt_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(jwt_token, settings.secret_key, algorithms=["HS256"])
         user_id = payload.get("sub")
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token")
