@@ -1292,6 +1292,7 @@ async def update_cheque_number(
     if not stub:
         raise HTTPException(status_code=404, detail="Paycheque not found")
 
+    old_cheque = stub.cheque_number
     if body.cheque_number is not None:
         cn = body.cheque_number.strip()
         stub.cheque_number = cn if cn else None
@@ -1302,6 +1303,22 @@ async def update_cheque_number(
             stub.cheque_date = date.fromisoformat(body.cheque_date)
         except ValueError:
             raise HTTPException(status_code=400, detail="cheque_date must be YYYY-MM-DD")
+
+    # Log cheque number change to audit
+    if stub.cheque_number != old_cheque:
+        await log_event(
+            db=db,
+            user_id=current_user.id,
+            event_type="paycheque.cheque_number",
+            entity_type="paycheque",
+            entity_id=stub.id,
+            action="update",
+            details={
+                "employee_name": stub.employee_name,
+                "old_cheque_number": old_cheque,
+                "new_cheque_number": stub.cheque_number,
+            },
+        )
 
     await db.commit()
     await db.refresh(stub)
@@ -2194,6 +2211,21 @@ async def finalize_pay_run(
         notes=f"Finalized {len(stubs)} pay stubs",
     )
     db.add(audit)
+    # Also write to unified audit log (visible in Audit Log page)
+    await log_event(
+        db=db,
+        user_id=current_user.id,
+        event_type="pay_run.finalize",
+        entity_type="pay_run",
+        entity_id=run.id,
+        action="finalize",
+        details={
+            "employee_count": run.employee_count,
+            "total_net": str(run.total_net),
+            "pay_date": run.pay_date.isoformat() if run.pay_date else None,
+            "notes": f"Finalized {len(stubs)} pay stubs",
+        },
+    )
 
     await db.commit()
     await db.refresh(run)
@@ -3961,6 +3993,21 @@ async def void_paycheque(
         notes=f"Paycheque voided: {reason[:200]}",
     )
     db.add(audit)
+    # Also write to unified audit log
+    await log_event(
+        db=db,
+        user_id=current_user.id,
+        event_type="paycheque.void",
+        entity_type="paycheque",
+        entity_id=stub.id,
+        action="void",
+        details={
+            "employee_name": stub.employee_name,
+            "reason": reason,
+            "gross_pay_reversed": str(stub.gross_pay),
+            "net_pay_reversed": str(stub.net_pay),
+        },
+    )
 
     await db.commit()
     await db.refresh(stub)
@@ -4042,6 +4089,20 @@ async def void_pay_run(
         notes=f"Voided pay run (prior status: {prior_status})",
     )
     db.add(audit)
+    # Also write to unified audit log
+    await log_event(
+        db=db,
+        user_id=current_user.id,
+        event_type="pay_run.void",
+        entity_type="pay_run",
+        entity_id=run.id,
+        action="void",
+        details={
+            "reason": body.reason,
+            "prior_status": prior_status,
+            "pay_date": run.pay_date.isoformat() if run.pay_date else None,
+        },
+    )
 
     await db.commit()
     await db.refresh(run)
