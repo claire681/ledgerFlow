@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @page {
+    size: 8.5in 4in;
+    margin: 0.3in;
+  }
+  body {
+    font-family: Georgia, serif;
+    color: #12262B;
+    margin: 0;
+    padding: 0;
+    background: #FFFEF7;
+  }
+  .cheque {
+    background: #FFFEF7;
+    padding: 20px 30px;
+    border: 1px solid #C7CBD1;
+    height: calc(100% - 40px);
+    position: relative;
+  }
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .company-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+  .company-addr {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .cheque-no-label {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-family: sans-serif;
+    text-align: right;
+  }
+  .cheque-no-value {
+    font-size: 22px;
+    font-weight: 700;
+    text-align: right;
+  }
+  .payee-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 20px;
+  }
+  .field-label {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-family: sans-serif;
+  }
+  .field-value {
+    font-size: 14px;
+    font-weight: 600;
+    border-bottom: 1px solid #12262B;
+    padding-bottom: 4px;
+  }
+  .payee { flex: 1; }
+  .date-field { width: 160px; }
+  .amount-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .words {
+    flex: 1;
+    font-size: 12px;
+    font-style: italic;
+    border-bottom: 1px solid #12262B;
+    padding-bottom: 4px;
+  }
+  .amount-box {
+    min-width: 140px;
+    border: 2px solid #12262B;
+    padding: 8px 12px;
+    text-align: right;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 30px;
+  }
+  .memo { flex: 1; }
+  .memo-value {
+    font-size: 11px;
+    font-style: italic;
+    border-bottom: 1px solid #12262B;
+    padding-bottom: 4px;
+    min-height: 16px;
+  }
+  .signature { width: 200px; }
+  .signature-line {
+    height: 20px;
+    border-bottom: 1px solid #12262B;
+  }
+  .sig-label {
+    font-size: 8px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    text-align: center;
+    font-family: sans-serif;
+  }
+</style>
+</head>
+<body>
+<div class="cheque">
+  <div class="top-row">
+    <div>
+      <div class="company-name">{{ company_name }}</div>
+      <div class="company-addr">{{ company_address|replace("
+", "<br>")|safe }}</div>
+    </div>
+    <div>
+      <div class="cheque-no-label">Cheque no</div>
+      <div class="cheque-no-value">{{ cheque_number }}</div>
+    </div>
+  </div>
+
+  <div class="payee-row">
+    <div class="payee">
+      <div class="field-label">Pay to the order of</div>
+      <div class="field-value">{{ employee_name }}</div>
+    </div>
+    <div class="date-field">
+      <div class="field-label">Date</div>
+      <div class="field-value">{{ pay_date }}</div>
+    </div>
+  </div>
+
+  <div class="amount-row">
+    <div class="words">{{ amount_words }}</div>
+    <div class="amount-box">${{ amount }}</div>
+  </div>
+
+  <div class="bottom-row">
+    <div class="memo">
+      <div class="field-label">Memo</div>
+      <div class="memo-value">Payroll paycheque</div>
+    </div>
+    <div class="signature">
+      <div class="signature-line"></div>
+      <div class="sig-label">Authorized signature</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

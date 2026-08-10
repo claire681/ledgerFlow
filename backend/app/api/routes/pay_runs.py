@@ -1,5 +1,4 @@
 """Pay run lifecycle endpoints.
-from app.services.audit_log import log_event
 
 POST   /payroll/runs                Create a draft pay run
 GET    /payroll/runs                List all runs for current user
@@ -10,6 +9,7 @@ DELETE /payroll/runs/{id}           Delete a draft run
 
 (calculate/finalize/void shipped in the next iteration.)
 """
+from app.services.audit_log import log_event
 
 from decimal import Decimal
 from datetime import date, datetime, timezone
@@ -5624,3 +5624,97 @@ async def get_t4_employer_slips_pdf_v2(
         media_type="application/pdf",
         headers={"Content-Disposition": f'inline; filename="{filename}"'},
     )
+
+# ======================================================
+# GET /paycheques/{stub_id}/cheque-pdf - Cheque PDF for download
+# ======================================================
+@router.get("/paycheques/{stub_id}/cheque-pdf")
+async def get_cheque_pdf(
+    stub_id: UUID,
+    token: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_or_token),
+):
+    """Generate a PDF cheque (business cheque size 8.5x4in) for download."""
+    from weasyprint import HTML
+    from jinja2 import Environment, FileSystemLoader
+    from fastapi.responses import Response
+    import os as _os
+    import re as _re
+    from urllib.parse import quote as _quote
+
+    result = await db.execute(
+        select(PayStub, PayRun)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(PayStub.id == stub_id, PayRun.owner_id == current_user.id)
+    )
+    row = result.first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Paycheque not found")
+    stub, run = row
+
+    if not stub.cheque_number:
+        raise HTTPException(status_code=400, detail="This paycheque has no cheque number assigned")
+
+    # Get company info
+    from app.models.models import CompanyProfile
+    cp_result = await db.execute(select(CompanyProfile).where(CompanyProfile.owner_id == current_user.id))
+    company = cp_result.scalar_one_or_none()
+
+    company_name = (company.company_name if company and company.company_name else "Company")
+    parts = []
+    if company:
+        if company.address_line_1: parts.append(company.address_line_1)
+        city_line = ", ".join(filter(None, [company.city, company.province, company.postal_code]))
+        if city_line: parts.append(city_line)
+    company_address = "\n".join(parts)
+
+    # Amount in words
+    def num_to_words(n):
+        n_int = int(n)
+        cents = round((n - n_int) * 100)
+        ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"]
+        tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"]
+        def under1000(x):
+            if x < 20: return ones[x]
+            if x < 100: return tens[x // 10] + (("-" + ones[x % 10].lower()) if x % 10 else "")
+            return ones[x // 100] + " hundred" + ((" " + under1000(x % 100).lower()) if x % 100 else "")
+        if n_int == 0: words = "Zero"
+        elif n_int < 1000: words = under1000(n_int)
+        elif n_int < 1000000:
+            words = under1000(n_int // 1000) + " thousand"
+            if n_int % 1000: words += " " + under1000(n_int % 1000).lower()
+        else:
+            words = str(n_int)
+        return words + " and " + str(cents).zfill(2) + "/100 DOLLARS"
+
+    net = float(stub.net_pay or 0)
+    context = {
+        "company_name": company_name,
+        "company_address": company_address,
+        "cheque_number": stub.cheque_number,
+        "employee_name": stub.employee_name or "",
+        "pay_date": run.pay_date.strftime('%d-%m-%Y') if run.pay_date else "",
+        "amount": "{:,.2f}".format(net),
+        "amount_words": num_to_words(net),
+    }
+
+    template_dir = _os.path.join(_os.path.dirname(__file__), "..", "..", "templates")
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template("cheque.html")
+    html_content = template.render(**context)
+    pdf_bytes = HTML(string=html_content).write_pdf()
+
+    _safe_name = _re.sub(r'[^A-Za-z0-9 \-]', '', stub.employee_name or 'Employee').strip()
+    _date_part = f" - {run.pay_date.strftime('%d-%m-%Y')}" if run.pay_date else ""
+    filename = f"Cheque {stub.cheque_number} - {_safe_name}{_date_part}.pdf"
+    filename_encoded = _quote(filename)
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"; filename*=UTF-8\'\'{filename_encoded}',
+        },
+    )
+

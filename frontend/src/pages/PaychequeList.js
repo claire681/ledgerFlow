@@ -625,7 +625,11 @@ export default function PaychequeList() {
             </div>
             <div className="no-print-in-cheque" style={{ padding: "16px 40px 24px", borderTop: "1px solid " + C.line, background: "#FFFFFF", display: "flex", gap: 10, justifyContent: "center", fontFamily: FONT }}>
               <button onClick={function() { document.body.classList.add("printing-cheque"); setTimeout(function() { window.print(); document.body.classList.remove("printing-cheque"); }, 50); }} style={{ padding: "12px 24px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Print cheque</button>
-              <button onClick={function() { document.body.classList.add("printing-cheque"); setTimeout(function() { window.print(); document.body.classList.remove("printing-cheque"); }, 50); }} style={{ padding: "12px 24px", background: C.brand, border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Save as PDF</button>
+              <button onClick={function() {
+              const token = localStorage.getItem("access_token") || localStorage.getItem("token") || "";
+              const url = API_URL + "/api/v1/payroll/paycheques/" + chequeModal.id + "/cheque-pdf?token=" + encodeURIComponent(token);
+              window.open(url, "_blank");
+            }} style={{ padding: "12px 24px", background: C.brand, border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Save as PDF</button>
               <button onClick={function() { setChequeModal(null); }} style={{ padding: "12px 24px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Close</button>
             </div>
           </div>
