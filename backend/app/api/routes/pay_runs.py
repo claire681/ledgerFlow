@@ -1,4 +1,5 @@
 """Pay run lifecycle endpoints.
+from app.services.audit_log import log_event
 
 POST   /payroll/runs                Create a draft pay run
 GET    /payroll/runs                List all runs for current user
