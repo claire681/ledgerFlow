@@ -623,7 +623,7 @@ export default function PaychequeList() {
                 </div>
               </div>
             </div>
-            <div style={{ padding: "16px 40px 24px", borderTop: "1px solid " + C.line, background: "#FFFFFF", display: "flex", gap: 10, justifyContent: "center", fontFamily: FONT }}>
+            <div className="no-print-in-cheque" style={{ padding: "16px 40px 24px", borderTop: "1px solid " + C.line, background: "#FFFFFF", display: "flex", gap: 10, justifyContent: "center", fontFamily: FONT }}>
               <button onClick={function() { document.body.classList.add("printing-cheque"); setTimeout(function() { window.print(); document.body.classList.remove("printing-cheque"); }, 50); }} style={{ padding: "12px 24px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Print cheque</button>
               <button onClick={function() { document.body.classList.add("printing-cheque"); setTimeout(function() { window.print(); document.body.classList.remove("printing-cheque"); }, 50); }} style={{ padding: "12px 24px", background: C.brand, border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Save as PDF</button>
               <button onClick={function() { setChequeModal(null); }} style={{ padding: "12px 24px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Close</button>
@@ -639,6 +639,8 @@ export default function PaychequeList() {
           body.printing-cheque * { visibility: hidden !important; }
           body.printing-cheque .cheque-print-target,
           body.printing-cheque .cheque-print-target * { visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+          body.printing-cheque .no-print-in-cheque,
+          body.printing-cheque .no-print-in-cheque * { visibility: hidden !important; display: none !important; }
           body.printing-cheque .cheque-print-target { position: absolute !important; left: 0 !important; top: 0 !important; right: 0 !important; margin: 0 auto !important; width: 100% !important; max-width: 7.5in !important; max-height: none !important; height: auto !important; overflow: visible !important; background: white !important; box-shadow: none !important; border: none !important; padding: 0 !important; }
         }
       `}</style>
