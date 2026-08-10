@@ -527,9 +527,13 @@ export default function EmployeeProfileV2() {
   }
 
   return (
-    <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text, padding: "26px 40px 90px", maxWidth: 1500, margin: "0 auto" }}>
-      <div onClick={function() { navigate("/payroll/employees"); }} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: C.tealInk, cursor: "pointer", marginBottom: 18 }}>
-        <ChevronLeft size={16} /> Employees
+    <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text, padding: "28px 32px 100px", maxWidth: "100%", margin: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: "#12262B", marginBottom: 14 }}>
+        <span style={{ fontWeight: 600, opacity: 0.7, cursor: "pointer" }} onClick={function() { navigate("/payroll/overview"); }}>Payroll</span>
+        <span style={{ opacity: 0.4 }}>/</span>
+        <span style={{ fontWeight: 600, opacity: 0.7, cursor: "pointer" }} onClick={function() { navigate("/payroll/employees"); }}>Employees</span>
+        <span style={{ opacity: 0.4 }}>/</span>
+        <span style={{ fontWeight: 700 }}>{values.name || "Employee"}</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 20 }}>
         <div style={{ width: 64, height: 64, borderRadius: "50%", background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", fontWeight: 600, fontSize: 22, flex: "0 0 64px" }}>
@@ -537,9 +541,9 @@ export default function EmployeeProfileV2() {
         </div>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <h1 style={{ fontSize: 25, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em" }}>{values.name || "Unnamed employee"}</h1>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "4px 11px", borderRadius: 20, background: allRequiredDone ? C.greenSoft : C.amberSoft, color: allRequiredDone ? C.green : C.amber }}>
-              {allRequiredDone ? <Check size={13} /> : <DotIcon size={13} />}
+            <h1 style={{ fontSize: 34, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", margin: 0 }}>{values.name || "Unnamed employee"}</h1>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 5, letterSpacing: "0.04em", textTransform: "uppercase", background: allRequiredDone ? C.greenSoft : C.amberSoft, color: allRequiredDone ? C.green : C.amber }}>
+              <span style={{ width: 6, height: 6, background: allRequiredDone ? C.green : C.amber, borderRadius: "50%" }} />
               {allRequiredDone ? "Active" : "Draft"}
             </span>
           </div>
