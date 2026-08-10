@@ -5658,7 +5658,7 @@ async def get_cheque_pdf(
 
     # Get company info
     from app.models.models import CompanyProfile
-    cp_result = await db.execute(select(CompanyProfile).where(CompanyProfile.owner_id == current_user.id))
+    cp_result = await db.execute(select(CompanyProfile).where(CompanyProfile.user_id == current_user.id))
     company = cp_result.scalar_one_or_none()
 
     company_name = (company.company_name if company and company.company_name else "Company")
