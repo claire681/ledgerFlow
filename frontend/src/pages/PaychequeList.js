@@ -635,11 +635,11 @@ export default function PaychequeList() {
       {/* Print CSS for cheque */}
       <style>{`
         @media print {
-          @page { size: letter; margin: 0.5in; }
-          body.printing-cheque > * { display: none !important; }
+          @page { size: 8.5in 3.5in; margin: 0.15in; }
+          body.printing-cheque * { visibility: hidden !important; }
           body.printing-cheque .cheque-print-target,
-          body.printing-cheque .cheque-print-target * { display: revert !important; visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-          body.printing-cheque .cheque-print-target { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; max-width: none !important; max-height: none !important; height: auto !important; overflow: visible !important; background: white !important; box-shadow: none !important; border: none !important; }
+          body.printing-cheque .cheque-print-target * { visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+          body.printing-cheque .cheque-print-target { position: fixed !important; left: 0 !important; top: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; max-width: none !important; max-height: none !important; height: auto !important; overflow: visible !important; background: white !important; box-shadow: none !important; border: none !important; margin: 0 !important; padding: 20px !important; }
         }
       `}</style>
 
