@@ -2727,7 +2727,7 @@ async def get_paycheque_detail(
             "payroll_rp_account": company.payroll_rp_account if company else None,
             "address_street": company.address_street if company else None,
             "address_city": company.address_city if company else None,
-            "address_province": company.province_state if company else None,
+            "address_province": company.province_state_state if company else None,
             "address_postal_code": company.address_postal_code if company else None,
         } if company else None,
         "is_adjustment": bool(stub.is_adjustment),
@@ -3359,8 +3359,8 @@ async def get_paycheque_pdf(
     if company:
         if company.address_city:
             parts.append(company.address_city)
-        if company.province_state:
-            parts.append(company.province_state)
+        if company.province_state_state:
+            parts.append(company.province_state_state)
         if company.address_postal_code:
             parts.append(company.address_postal_code)
     employer_line2 = " ".join(parts)
@@ -3580,7 +3580,7 @@ async def email_paycheque(
     parts = []
     if company:
         if company.address_city: parts.append(company.address_city)
-        if company.province_state: parts.append(company.province_state)
+        if company.province_state_state: parts.append(company.province_state_state)
         if company.address_postal_code: parts.append(company.address_postal_code)
     employer_line2 = " ".join(parts)
 
@@ -4209,7 +4209,7 @@ async def get_t4_preview(
         "name": company.company_name or "",
         "addr1": (company.address_street or "").strip(),
         "addr2": (company.address_city or "").strip(),
-        "prov": _t4_fmt_province(company.province_state or ""),
+        "prov": _t4_fmt_province(company.province_state_state or ""),
         "postal": _t4_fmt_postal(company.address_postal_code or ""),
         "account": cra_account,
     }
@@ -4362,7 +4362,7 @@ async def get_t4_sum_preview(
         "name": company.company_name or "",
         "addr1": (company.address_street or "").strip(),
         "addr2": (company.address_city or "").strip(),
-        "prov": _t4_fmt_province(company.province_state or ""),
+        "prov": _t4_fmt_province(company.province_state_state or ""),
         "postal": _t4_fmt_postal(company.address_postal_code or ""),
         "account": cra_account,
     }
@@ -5252,7 +5252,7 @@ async def get_t4_employer_slips_pdf(
         "name": company.company_name or "",
         "addr1": (company.address_street or "").strip(),
         "addr2": (company.address_city or "").strip(),
-        "prov": _t4_fmt_province(company.province_state or ""),
+        "prov": _t4_fmt_province(company.province_state_state or ""),
         "postal": _t4_fmt_postal(company.address_postal_code or ""),
         "account": cra_account,
     }
@@ -5518,7 +5518,7 @@ async def get_t4_employer_slips_pdf_v2(
         "name": company.company_name or "",
         "addr1": (company.address_street or "").strip(),
         "addr2": (company.address_city or "").strip(),
-        "prov": _t4_fmt_province(company.province_state or ""),
+        "prov": _t4_fmt_province(company.province_state_state or ""),
         "postal": _t4_fmt_postal(company.address_postal_code or ""),
         "account": cra_account,
     }
@@ -5664,8 +5664,8 @@ async def get_cheque_pdf(
     company_name = (company.company_name if company and company.company_name else "Company")
     parts = []
     if company:
-        if company.address_line_1: parts.append(company.address_line_1)
-        city_line = ", ".join(filter(None, [company.city, company.province, company.postal_code]))
+        if company.address_street: parts.append(company.address_street)
+        city_line = ", ".join(filter(None, [company.address_city, company.province_state, company.address_postal_code]))
         if city_line: parts.append(city_line)
     company_address = "\n".join(parts)
 
