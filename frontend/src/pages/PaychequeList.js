@@ -582,7 +582,7 @@ export default function PaychequeList() {
       {/* Cheque modal */}
       {chequeModal && (
         <div onClick={function() { setChequeModal(null); }} style={{ position: "fixed", inset: 0, background: "rgba(18,38,43,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <div onClick={function(e) { e.stopPropagation(); }} style={{ background: C.chequePaper, border: "1px solid " + C.chequeBorder, borderRadius: 4, boxShadow: "0 24px 60px rgba(0,0,0,0.3)", width: 720, maxWidth: "94vw", maxHeight: "90vh", overflow: "auto" }}>
+          <div className="cheque-print-target" onClick={function(e) { e.stopPropagation(); }} style={{ background: C.chequePaper, border: "1px solid " + C.chequeBorder, borderRadius: 4, boxShadow: "0 24px 60px rgba(0,0,0,0.3)", width: 720, maxWidth: "94vw", maxHeight: "90vh", overflow: "auto" }}>
             <div style={{ padding: "32px 40px", fontFamily: "Georgia, serif", color: C.ink }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 32 }}>
                 <div>
@@ -624,13 +624,24 @@ export default function PaychequeList() {
               </div>
             </div>
             <div style={{ padding: "16px 40px 24px", borderTop: "1px solid " + C.line, background: "#FFFFFF", display: "flex", gap: 10, justifyContent: "center", fontFamily: FONT }}>
-              <button onClick={function() { window.print(); }} style={{ padding: "12px 24px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Print cheque</button>
-              <button onClick={function() { window.print(); }} style={{ padding: "12px 24px", background: C.brand, border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Save as PDF</button>
+              <button onClick={function() { document.body.classList.add("printing-cheque"); setTimeout(function() { window.print(); document.body.classList.remove("printing-cheque"); }, 50); }} style={{ padding: "12px 24px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Print cheque</button>
+              <button onClick={function() { document.body.classList.add("printing-cheque"); setTimeout(function() { window.print(); document.body.classList.remove("printing-cheque"); }, 50); }} style={{ padding: "12px 24px", background: C.brand, border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Save as PDF</button>
               <button onClick={function() { setChequeModal(null); }} style={{ padding: "12px 24px", background: C.card, border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>Close</button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Print CSS for cheque */}
+      <style>{`
+        @media print {
+          @page { size: letter; margin: 0.5in; }
+          body.printing-cheque > * { display: none !important; }
+          body.printing-cheque .cheque-print-target,
+          body.printing-cheque .cheque-print-target * { display: revert !important; visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+          body.printing-cheque .cheque-print-target { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; max-width: none !important; max-height: none !important; height: auto !important; overflow: visible !important; background: white !important; box-shadow: none !important; border: none !important; }
+        }
+      `}</style>
 
       {/* Fixed footer */}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: C.card, padding: "16px 32px", borderTop: "1px solid " + C.line, boxShadow: "0 -4px 12px rgba(0,0,0,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 90 }}>
