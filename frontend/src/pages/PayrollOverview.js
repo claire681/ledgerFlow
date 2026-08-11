@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Shield, Play, UserPlus, Settings, ChevronRight, ChevronDown, Calendar,
   AlertTriangle, AlertCircle, FileText, User, CheckCircle,
-  Book, ListChecks, Activity, CreditCard, Star, GripVertical, Search, X, Landmark, Check,
+  Book, BookOpen, ListChecks, Activity, CreditCard, Star, GripVertical, Search, X, Landmark, Check,
 } from "lucide-react";
 import { generatePayPeriods } from "../utils/payScheduling";
 import PayrollGuide from "./PayrollGuide";
@@ -375,10 +375,10 @@ export default function PayrollOverview() {
               <h3 style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>Setup resources</h3>
               <div style={{ marginTop: 8 }}>
                 <ResourceLink icon={<Settings size={20} />} label="Payroll settings" onClick={() => navigate("/payroll/settings")} />
-                <ResourceLink icon={<Book size={20} />} label="View setup guide" onClick={() => setShowGuide(true)} />
+                <ResourceLink icon={<BookOpen size={20} />} label="View setup guide" onClick={() => setShowGuide(true)} />
                 <ResourceLink icon={<ListChecks size={20} />} label="Things you will need" onClick={() => setShowThingsNeeded(true)} />
-                <ResourceLink icon={<Activity size={20} />} label="Setting up payroll" mins="2 min" onClick={() => setShowSettingUp(true)} />
-                <ResourceLink icon={<Activity size={20} />} label="Running your first payroll" mins="3 min" onClick={() => navigate("/payroll/run")} />
+                <ResourceLink icon={<Settings size={20} />} label={paySchedule ? "Update payroll settings" : "Setting up payroll"} mins={paySchedule ? undefined : "2 min"} onClick={() => paySchedule ? navigate("/payroll/settings") : setShowSettingUp(true)} />
+                <ResourceLink icon={<Play size={20} />} label={lastRun ? "Run payroll" : "Running your first payroll"} mins={lastRun ? undefined : "3 min"} onClick={() => navigate("/payroll/run")} />
                 <ResourceLink icon={<CreditCard size={20} />} label="Set up direct deposit" onClick={() => navigate("/payroll/bank/connect")} isLast />
               </div>
             </div>
