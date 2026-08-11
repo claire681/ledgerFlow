@@ -1806,7 +1806,7 @@ function PayScheduleSection() {
 
     return (
       <>
-        <SectionHead title="Pay schedule" subtitle="How often paydays happen and what dates each pay period covers. Used to count down to payday and calculate the right pay period for each run." />
+        <SectionHead title="Default pay schedule" subtitle="How often paydays happen and what dates each pay period covers." />
 
         {/* Why this matters callout */}
         <div style={{ background: C.tealSoft, borderLeft: "2px solid " + C.teal, borderRadius: "0 8px 8px 0", padding: "14px 18px", marginBottom: 18, display: "flex", alignItems: "flex-start", gap: 11 }}>
