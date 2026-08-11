@@ -208,15 +208,18 @@ export default function PayrollOverview() {
       <div style={{ maxWidth: "100%", margin: 0, padding: "28px 32px 90px" }}>
       <CompanyProfileBanner />
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em" }}>Payroll overview</h1>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, gap: 12 }}>
+          <div>
+            <h1 style={{ fontSize: 34, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", margin: 0 }}>Payroll overview</h1>
+            <div style={{ fontSize: 14, color: C.ink, fontWeight: 500, marginTop: 4 }}>Everything you need to run payroll, at a glance.</div>
+          </div>
           <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={() => navigate("/payroll/schedules")} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", color: C.ink, border: "1px solid " + C.line, borderRadius: 9, padding: "8px 14px", fontWeight: 600, fontSize: 13.5, cursor: "pointer", fontFamily: FONT, transition: "0.12s" }}
+          <button onClick={() => navigate("/payroll/schedules")} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", color: C.ink, border: "1.5px solid " + C.ink, borderRadius: 8, padding: "8px 14px", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: FONT, transition: "0.12s" }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.teal; e.currentTarget.style.color = C.tealInk; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.line; e.currentTarget.style.color = C.ink; }}>
             <Calendar size={15} /> Pay schedules
           </button>
-          <button onClick={() => navigate("/payroll/settings")} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", color: C.ink, border: "1px solid " + C.line, borderRadius: 9, padding: "8px 14px", fontWeight: 600, fontSize: 13.5, cursor: "pointer", fontFamily: FONT, transition: "0.12s" }}
+          <button onClick={() => navigate("/payroll/settings")} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", color: C.ink, border: "1.5px solid " + C.ink, borderRadius: 8, padding: "8px 14px", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: FONT, transition: "0.12s" }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.teal; e.currentTarget.style.color = C.tealInk; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.line; e.currentTarget.style.color = C.ink; }}>
             <Settings size={15} /> Payroll settings
