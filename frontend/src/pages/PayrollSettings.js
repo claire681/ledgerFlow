@@ -1806,7 +1806,7 @@ function PayScheduleSection() {
 
     return (
       <>
-        <SectionHead title="Default pay schedule" subtitle="How often paydays happen and what dates each pay period covers." />
+        <SectionHead title="Pay schedule" subtitle="How often paydays happen and what dates each pay period covers. Used to count down to payday and calculate the right pay period for each run." />
 
         {/* Why this matters callout */}
         <div style={{ background: C.tealSoft, borderLeft: "2px solid " + C.teal, borderRadius: "0 8px 8px 0", padding: "14px 18px", marginBottom: 18, display: "flex", alignItems: "flex-start", gap: 11 }}>
@@ -1819,9 +1819,11 @@ function PayScheduleSection() {
           </div>
         </div>
 
-        <div>
+        <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "24px 26px" }}>
 
-        <CardSection label="Pay frequency">
+          {/* Pay frequency cards */}
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid " + C.lineSoft }}>Pay frequency</div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
               {FREQS.map(f => {
