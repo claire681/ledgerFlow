@@ -1388,8 +1388,8 @@ export default function PayrollSettings() {
 function SectionHead({ title, subtitle }) {
   return (
     <div style={{ marginBottom: 24 }}>
-      <h2 style={{ fontSize: 22, fontWeight: 600, color: C.ink, letterSpacing: "-0.015em", marginBottom: 4 }}>{title}</h2>
-      <p style={{ fontSize: 13.5, color: C.muted, lineHeight: 1.55, maxWidth: 560 }}>{subtitle}</p>
+      <h2 style={{ fontSize: 26, fontWeight: 700, color: C.ink, letterSpacing: "-0.015em", marginBottom: 6 }}>{title}</h2>
+      <p style={{ fontSize: 14, color: C.ink, lineHeight: 1.55, maxWidth: 560, fontWeight: 500, margin: 0 }}>{subtitle}</p>
     </div>
   );
 }
@@ -1427,8 +1427,8 @@ function SelectInput({ value, onChange, children }) {
 
 function CardSection({ label, children }) {
   return (
-    <div style={{ marginBottom: 24 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid " + C.lineSoft }}>{label}</div>
+    <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 12, padding: "24px 28px", marginBottom: 16 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: C.ink, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 16, paddingBottom: 10, borderBottom: "1.5px solid " + C.ink }}>{label}</div>
       {children}
     </div>
   );
@@ -1533,8 +1533,8 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
 
   return (
     <>
-      <SectionHead title="Company details" subtitle="Your registered business information. Novala uses this across payroll, tax filings, and on every paycheque." />
-      <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "24px 26px" }}>
+      <SectionHead title="Company details" subtitle="Your registered business information. Novala uses this on paycheques, tax filings, and CRA remittances." />
+      <div>
         <CardSection label="Business">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
             <Field label="Company name">
