@@ -1329,13 +1329,14 @@ export default function PayrollSettings() {
   return (
     <div style={{ background: C.surface, minHeight: "100vh", fontFamily: FONT, color: C.text }}>
       {/* Top bar */}
-      <div style={{ padding: "24px 32px 16px", borderBottom: "1px solid " + C.lineSoft, background: "#fff" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.muted, marginBottom: 10 }}>
-          <span onClick={() => navigate("/payroll/overview")} style={{ color: C.tealInk, cursor: "pointer", fontWeight: 500 }}>Payroll</span>
-          <ChevronRight size={11} style={{ color: C.faint }} />
-          <span>Settings</span>
+      <div style={{ padding: "28px 32px 20px", borderBottom: "1px solid " + C.lineSoft, background: "#fff" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.ink, marginBottom: 14 }}>
+          <span onClick={() => navigate("/payroll/overview")} style={{ fontWeight: 600, opacity: 0.7, cursor: "pointer" }}>Payroll</span>
+          <span style={{ opacity: 0.4 }}>/</span>
+          <span style={{ fontWeight: 700 }}>Settings</span>
         </div>
-        <h1 style={{ fontSize: 22, fontWeight: 600, color: C.ink, letterSpacing: "-0.018em" }}>Payroll settings</h1>
+        <h1 style={{ fontSize: 34, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", margin: 0 }}>Payroll settings</h1>
+        <div style={{ fontSize: 14, color: C.ink, fontWeight: 500, marginTop: 4 }}>Configure your company, tax, and payroll items.</div>
       </div>
 
       {/* Two-pane layout */}
@@ -1350,7 +1351,7 @@ export default function PayrollSettings() {
                 const isActive = s.id === activeId;
                 return (
                   <div key={s.id} onClick={() => navigate("/payroll/settings/" + s.id)}
-                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", fontSize: 13, color: isActive ? C.tealInk : C.text, fontWeight: isActive ? 600 : 500, borderRadius: 6, cursor: "pointer", marginBottom: 1, position: "relative", background: isActive ? C.tealSoft : "transparent" }}>
+                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", fontSize: 13, color: isActive ? C.tealInk : C.ink, fontWeight: isActive ? 600 : 500, borderRadius: 6, cursor: "pointer", marginBottom: 1, position: "relative", background: isActive ? C.tealSoft : "transparent" }}>
                     {isActive && <span style={{ position: "absolute", left: 0, top: 8, bottom: 8, width: 3, borderRadius: "0 2px 2px 0", background: C.teal }}></span>}
                     <Icon width={14} height={14} style={{ flex: "0 0 14px", color: isActive ? C.tealInk : C.faint }} />
                     <span style={{ flex: 1 }}>{s.label}</span>
@@ -1372,6 +1373,11 @@ export default function PayrollSettings() {
                     {activeId === "items" && <PayTypesSection businessCountry={businessCountry} />}
           {activeId === "review" && <ComingSoonSection title={SECTIONS.find(s => s.id === activeId)?.label} />}
         </div>
+      </div>
+
+      {/* Fixed footer */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#FFFFFF", padding: "16px 32px", borderTop: "1px solid " + C.line, boxShadow: "0 -4px 12px rgba(0,0,0,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 90 }}>
+        <button onClick={() => navigate("/payroll/overview")} style={{ padding: "12px 18px", background: "#FFFFFF", border: "1.5px solid " + C.ink, borderRadius: 10, color: C.ink, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>&larr; Back to Payroll</button>
       </div>
     </div>
   );
