@@ -1542,6 +1542,22 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
 
   const country = COUNTRIES.find(c => c.iso === (data.country || "").toLowerCase()) || COUNTRIES[1];
 
+  // Country-specific tax registration labels
+  const TAX_LABELS_BY_COUNTRY = {
+    ca: { sectionTitle: "CRA registration", bnLabel: "Business Number (BN)", bnHelp: "9-digit number from your CRA registration.", bnPlaceholder: "123456789", rpLabel: "Payroll account number", rpHelp: "Usually RP0001. Found on your PD7A statement.", rpPlaceholder: "RP0001" },
+    us: { sectionTitle: "IRS registration", bnLabel: "Employer Identification Number (EIN)", bnHelp: "9-digit federal tax ID.", bnPlaceholder: "12-3456789", rpLabel: "State employer ID", rpHelp: "Your state payroll tax account number.", rpPlaceholder: "State ID" },
+    gb: { sectionTitle: "HMRC registration", bnLabel: "Company number", bnHelp: "8-digit number from Companies House.", bnPlaceholder: "12345678", rpLabel: "PAYE reference", rpHelp: "Your PAYE employer reference from HMRC.", rpPlaceholder: "123/AB456" },
+    au: { sectionTitle: "ATO registration", bnLabel: "Australian Business Number (ABN)", bnHelp: "11-digit number from the ABR.", bnPlaceholder: "12 345 678 901", rpLabel: "PAYG withholding number", rpHelp: "Your ATO withholding account number.", rpPlaceholder: "PAYG number" },
+    nz: { sectionTitle: "IRD registration", bnLabel: "New Zealand Business Number (NZBN)", bnHelp: "13-digit number from NZBN registry.", bnPlaceholder: "9429000000000", rpLabel: "IRD number", rpHelp: "Your IRD (Inland Revenue) number.", rpPlaceholder: "12-345-678" },
+    sg: { sectionTitle: "IRAS registration", bnLabel: "Unique Entity Number (UEN)", bnHelp: "Business registration number from ACRA.", bnPlaceholder: "12345678A", rpLabel: "Tax reference number", rpHelp: "Your IRAS employer tax reference.", rpPlaceholder: "Tax ref" },
+    jp: { sectionTitle: "NTA registration", bnLabel: "Corporate number", bnHelp: "13-digit corporate number from Japan NTA.", bnPlaceholder: "1234567890123", rpLabel: "Tax office reference", rpHelp: "Your local tax office employer reference.", rpPlaceholder: "Tax ref" },
+    de: { sectionTitle: "Finanzamt registration", bnLabel: "Umsatzsteuer-ID (VAT ID)", bnHelp: "Your VAT identification number.", bnPlaceholder: "DE123456789", rpLabel: "Steuernummer", rpHelp: "Your Finanzamt tax number.", rpPlaceholder: "12/345/67890" },
+    fr: { sectionTitle: "URSSAF registration", bnLabel: "SIRET number", bnHelp: "14-digit business identifier from INSEE.", bnPlaceholder: "12345678901234", rpLabel: "URSSAF number", rpHelp: "Your URSSAF employer contribution number.", rpPlaceholder: "URSSAF ref" },
+    za: { sectionTitle: "SARS registration", bnLabel: "Company registration number", bnHelp: "Number from CIPC.", bnPlaceholder: "2020/123456/07", rpLabel: "PAYE reference number", rpHelp: "Your SARS PAYE reference.", rpPlaceholder: "7 followed by 9 digits" }
+  };
+  const taxLabels = TAX_LABELS_BY_COUNTRY[(data.country || "").toLowerCase()] || { sectionTitle: "Tax registration", bnLabel: "Business Number", bnHelp: "Your tax registration number.", bnPlaceholder: "", rpLabel: "Payroll account number", rpHelp: "Your payroll tax account number.", rpPlaceholder: "" };
+
+
   return (
     <>
       <SectionHead title="Company details" subtitle="Your registered business information. Novala uses this on paycheques, tax filings, and CRA remittances." />
