@@ -1819,11 +1819,9 @@ function PayScheduleSection() {
           </div>
         </div>
 
-        <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "24px 26px" }}>
+        <div>
 
-          {/* Pay frequency cards */}
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid " + C.lineSoft }}>Pay frequency</div>
+        <CardSection label="Pay frequency">
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
               {FREQS.map(f => {
