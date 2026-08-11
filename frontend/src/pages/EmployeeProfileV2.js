@@ -569,6 +569,11 @@ export default function EmployeeProfileV2() {
           })}
         </div>
       </div>
+            <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#FFFFFF", padding: "16px 32px", borderTop: "1px solid #E7EAF0", boxShadow: "0 -4px 12px rgba(0,0,0,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 90 }}>
+        <button onClick={function() { navigate("/payroll/employees"); }} style={{ padding: "12px 18px", background: "#FFFFFF", border: "1.5px solid #12262B", borderRadius: 10, color: "#12262B", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT }}>&larr; Back to Employees</button>
+        <div style={{ fontSize: 12, color: "#12262B", opacity: 0.7 }}>{allRequiredDone ? "All required sections complete" : "Some sections still need to be filled"}</div>
+      </div>
+
       <BasePayModal
         isOpen={basePayModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
