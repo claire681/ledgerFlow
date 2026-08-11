@@ -1463,7 +1463,11 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
         if (d) {
           const initial = {
             company_name: d.company_name || "",
-            address: d.address || "",
+            address_street: d.address_street || "",
+            address_city: d.address_city || "",
+            address_postal_code: d.address_postal_code || "",
+            business_number: d.business_number || "",
+            payroll_rp_account: d.payroll_rp_account || "",
             country: (d.country || "US").toLowerCase(),
             province_state: d.province_state || "",
             currency: d.currency || "USD",
@@ -1488,7 +1492,11 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
       // Backend expects country uppercase (e.g. "CA") and accepts only fields on CompanyProfile
       const payload = {
         company_name: data.company_name,
-        address: data.address,
+        address_street: data.address_street,
+        address_city: data.address_city,
+        address_postal_code: data.address_postal_code,
+        business_number: data.business_number,
+        payroll_rp_account: data.payroll_rp_account,
         country: (data.country || "").toUpperCase(),
         province_state: data.province_state,
         currency: data.currency,
@@ -1504,7 +1512,11 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
         const updated = await res.json();
         const refreshed = {
           company_name: updated.company_name || "",
-          address: updated.address || "",
+          address_street: updated.address_street || "",
+          address_city: updated.address_city || "",
+          address_postal_code: updated.address_postal_code || "",
+          business_number: updated.business_number || "",
+          payroll_rp_account: updated.payroll_rp_account || "",
           country: (updated.country || "US").toLowerCase(),
           province_state: updated.province_state || "",
           currency: updated.currency || "USD",
@@ -1535,7 +1547,7 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
       <SectionHead title="Company details" subtitle="Your registered business information. Novala uses this on paycheques, tax filings, and CRA remittances." />
       <div>
         <CardSection label="Business">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <Field label="Company name">
               <TextInput value={data.company_name} onChange={v => set("company_name", v)} placeholder="Your registered business name" />
             </Field>
@@ -1543,9 +1555,32 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
               <TextInput value={data.industry} onChange={v => set("industry", v)} placeholder="What industry you operate in" />
             </Field>
           </div>
-          <Field label="Business address" help="Physical address only. We use this to determine your tax responsibilities.">
-            <TextInput value={data.address} onChange={v => set("address", v)} placeholder="Street, city, province or state, postal code" />
+        </CardSection>
+        <CardSection label="Business address">
+          <Field label="Street address">
+            <TextInput value={data.address_street} onChange={v => set("address_street", v)} placeholder="e.g. 4805 152 Ave NW" />
           </Field>
+          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 14 }}>
+            <Field label="City">
+              <TextInput value={data.address_city} onChange={v => set("address_city", v)} placeholder="City" />
+            </Field>
+            <Field label="Province/State">
+              <TextInput value={data.province_state} onChange={v => set("province_state", v)} placeholder="e.g. Alberta" />
+            </Field>
+            <Field label="Postal code">
+              <TextInput value={data.address_postal_code} onChange={v => set("address_postal_code", v)} placeholder="T5X 0X0" />
+            </Field>
+          </div>
+        </CardSection>
+        <CardSection label={taxLabels.sectionTitle}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <Field label={taxLabels.bnLabel} help={taxLabels.bnHelp}>
+              <TextInput value={data.business_number} onChange={v => set("business_number", v)} placeholder={taxLabels.bnPlaceholder} />
+            </Field>
+            <Field label={taxLabels.rpLabel} help={taxLabels.rpHelp}>
+              <TextInput value={data.payroll_rp_account} onChange={v => set("payroll_rp_account", v)} placeholder={taxLabels.rpPlaceholder} />
+            </Field>
+          </div>
         </CardSection>
 
         <CardSection label="Location and currency">
