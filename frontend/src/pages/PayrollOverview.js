@@ -40,7 +40,7 @@ const loadFavourites = () => {
 };
 
 const C = {
-  ink: "#12262B", text: "#1B2533", muted: "#66748B", faint: "#94A0B2",
+  ink: "#12262B", text: "#1B2533", muted: "#1B2533", faint: "#2A3846",
   teal: "#15A08C", tealD: "#0F8474", tealInk: "#0E8A78", tealSoft: "#E3F4F0",
   line: "#E7EAF0", lineSoft: "#F1F3F7", surface: "#F4F6F8",
   amber: "#B7791F", amberSoft: "#FBF1DD",
