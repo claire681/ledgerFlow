@@ -1345,15 +1345,14 @@ export default function PayrollSettings() {
         <div style={{ width: 240, flex: "0 0 240px", background: "#fff", borderRight: "1px solid " + C.line, padding: "18px 12px", overflowY: "auto" }}>
           {Object.entries(grouped).map(([group, items]) => (
             <div key={group} style={{ marginBottom: 18 }}>
-              <div style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", padding: "0 10px", marginBottom: 6 }}>{group}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.08em", textTransform: "uppercase", padding: "0 10px", marginBottom: 8 }}>{group}</div>
               {items.map(s => {
                 const Icon = s.Icon;
                 const isActive = s.id === activeId;
                 return (
                   <div key={s.id} onClick={() => navigate("/payroll/settings/" + s.id)}
-                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", fontSize: 13, color: isActive ? C.tealInk : C.ink, fontWeight: isActive ? 600 : 500, borderRadius: 6, cursor: "pointer", marginBottom: 1, position: "relative", background: isActive ? C.tealSoft : "transparent" }}>
+                    style={{ display: "flex", alignItems: "center", padding: "9px 12px", fontSize: 13.5, color: isActive ? C.tealInk : C.ink, fontWeight: isActive ? 700 : 500, borderRadius: 6, cursor: "pointer", marginBottom: 1, position: "relative", background: isActive ? C.tealSoft : "transparent" }}>
                     {isActive && <span style={{ position: "absolute", left: 0, top: 8, bottom: 8, width: 3, borderRadius: "0 2px 2px 0", background: C.teal }}></span>}
-                    <Icon width={14} height={14} style={{ flex: "0 0 14px", color: isActive ? C.tealInk : C.faint }} />
                     <span style={{ flex: 1 }}>{s.label}</span>
                     {s.comingSoon && <span style={{ fontSize: 9.5, fontWeight: 700, color: C.amber, background: C.amberSoft, padding: "1px 6px", borderRadius: 4, letterSpacing: "0.04em" }}>SOON</span>}
                   </div>
