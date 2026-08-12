@@ -1588,16 +1588,7 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
             </Field>
           </div>
         </CardSection>
-        <CardSection label={taxLabels.sectionTitle}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <Field label={taxLabels.bnLabel} help={taxLabels.bnHelp}>
-              <TextInput value={data.business_number} onChange={v => set("business_number", v)} placeholder={taxLabels.bnPlaceholder} />
-            </Field>
-            <Field label={taxLabels.rpLabel} help={taxLabels.rpHelp}>
-              <TextInput value={data.payroll_rp_account} onChange={v => set("payroll_rp_account", v)} placeholder={taxLabels.rpPlaceholder} />
-            </Field>
-          </div>
-        </CardSection>
+
 
         <CardSection label="Location and currency">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
