@@ -1906,164 +1906,205 @@ function validateTaxField(key, value) {
 }
 
 function TaxRegistrationSection({ businessCountry }) {
-  const country = (businessCountry || "ca").toLowerCase();
-  const STORAGE_KEY = "novala_tax_registration";
-  const [data, setData] = useState({});
-  const [original, setOriginal] = useState({});
+  const initialState = { business_number: "", payroll_rp_account: "", remitter_type: "monthly" };
+  const [data, setData] = useState(initialState);
+  const [original, setOriginal] = useState(initialState);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [validation, setValidation] = useState({ ok: true, errors: {} });
+  const [validated, setValidated] = useState(false);
+  const country = (businessCountry || "ca").toLowerCase();
 
   useEffect(() => {
-    // Load from backend; migrate any leftover localStorage value if present
-    (async () => {
-      try {
-        const res = await fetch(API_URL + "/api/v1/company/profile", { headers: authHeaders() });
-        if (res.ok) {
-          const profile = await res.json();
-          let initial = profile.tax_registration || {};
-
-          // One-time migration: if DB is empty but localStorage has data, push it up
-          if ((!initial || Object.keys(initial).length === 0)) {
-            try {
-              const stored = localStorage.getItem(STORAGE_KEY);
-              if (stored) {
-                const parsed = JSON.parse(stored);
-                if (parsed && Object.keys(parsed).length > 0) {
-                  await fetch(API_URL + "/api/v1/company/profile", {
-                    method: "PATCH",
-                    headers: authHeaders(),
-                    body: JSON.stringify({ tax_registration: parsed }),
-                  });
-                  initial = parsed;
-                  localStorage.removeItem(STORAGE_KEY);
-                }
-              }
-            } catch (e) {}
-          }
-
-          setData(initial);
-          setOriginal(initial);
+    fetch(API_URL + "/api/v1/company/profile", { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d) {
+          const initial = {
+            business_number: d.business_number || "",
+            payroll_rp_account: d.payroll_rp_account || "",
+            remitter_type: d.remitter_type || "monthly",
+          };
+          setData(initial); setOriginal(initial);
         }
-      } catch (e) {}
-      setLoading(false);
-    })();
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   const dirty = JSON.stringify(data) !== JSON.stringify(original);
+  const set = (k, v) => setData({ ...data, [k]: v });
 
   const onSave = async () => {
     setSaving(true);
     try {
       const res = await fetch(API_URL + "/api/v1/company/profile", {
-        method: "PATCH",
-        headers: authHeaders(),
-        body: JSON.stringify({ tax_registration: data }),
+        method: "PATCH", headers: authHeaders(),
+        body: JSON.stringify(data),
       });
       if (res.ok) {
         const updated = await res.json();
-        const fresh = updated.tax_registration || {};
-        setData(fresh);
-        setOriginal(fresh);
+        const refreshed = {
+          business_number: updated.business_number || "",
+          payroll_rp_account: updated.payroll_rp_account || "",
+          remitter_type: updated.remitter_type || "monthly",
+        };
+        setData(refreshed); setOriginal(refreshed);
+        setValidated(false); setValidation({ ok: true, errors: {} });
       } else {
-        const err = await res.text();
-        alert("Save failed: " + err);
+        const err = await res.json();
+        alert("Save failed: " + JSON.stringify(err));
       }
     } catch (e) { alert("Save failed: " + e.message); }
     setSaving(false);
   };
-  const onDiscard = () => setData(original);
-  const set = (k, v) => setData(s => ({ ...s, [k]: v }));
 
-  if (loading) return <div style={{ color: C.muted, fontSize: 13 }}>Loading...</div>;
+  const onDiscard = () => { setData(original); setValidated(false); setValidation({ ok: true, errors: {} }); };
 
-  const FIELDS_BY_COUNTRY = {
-    ca: [
-      { key: "cra_bn", label: "CRA Business Number (BN)", help: "9 digits from the CRA, appears on your tax notices.", ph: "123456789" },
-      { key: "cra_payroll", label: "CRA Payroll account number", help: "Your Business Number followed by RP and a 4-digit suffix.", ph: "123456789RP0001" },
-      { key: "rq_account", label: "Revenu Quebec payroll account (optional)", help: "Only required if you have employees in Quebec.", ph: "Leave blank if not applicable" },
-    ],
-    us: [
-      { key: "ein", label: "Federal EIN", help: "Federal Employer Identification Number.", ph: "12-3456789" },
-      { key: "state_tax_id", label: "State tax ID", help: "Required for each state where you have employees.", ph: "Your state tax ID" },
-      { key: "sui_rate", label: "State Unemployment Insurance rate", ph: "e.g. 2.5" },
-    ],
-    gb: [
-      { key: "paye_ref", label: "PAYE reference number", help: "From HMRC, format like 123/AB45678", ph: "123/AB45678" },
-      { key: "accounts_office_ref", label: "Accounts Office reference", help: "13-character reference from HMRC.", ph: "123PA00012345" },
-      { key: "tax_office", label: "Tax office name", ph: "Your HMRC tax office" },
-    ],
-    au: [
-      { key: "abn", label: "Australian Business Number (ABN)", help: "11 digits.", ph: "12 345 678 901" },
-      { key: "wpn", label: "Withholding payer number (WPN)", help: "Only if you don't have an ABN.", ph: "Leave blank if you have an ABN" },
-      { key: "stp_bms_id", label: "Single Touch Payroll BMS ID", help: "From the ATO portal." },
-    ],
-    nz: [
-      { key: "ird_number", label: "IRD number for your business", help: "From Inland Revenue.", ph: "12-345-678" },
-      { key: "esct_rate", label: "Employer ESCT rate", help: "Employer Superannuation Contribution Tax rate." },
-    ],
-    sg: [
-      { key: "uen", label: "Company UEN", help: "Unique Entity Number.", ph: "201912345A" },
-      { key: "cpf_employer", label: "CPF employer number" },
-      { key: "iras_tax_ref", label: "IRAS Tax Reference Number" },
-    ],
-    jp: [
-      { key: "hojin_bango", label: "Corporate number (Hojin Bango)", help: "13 digits from the Tax Agency.", ph: "1234567890123" },
-      { key: "withholding_office", label: "Withholding tax office", help: "Tax office where you submit withholding." },
-    ],
-    de: [
-      { key: "steuernummer", label: "Steuernummer", help: "Your business tax number." },
-      { key: "betriebsnummer", label: "Betriebsnummer", help: "From Bundesagentur für Arbeit." },
-      { key: "ust_idnr", label: "USt-IdNr (VAT ID)", help: "Optional, only if you are VAT-registered." },
-    ],
-    fr: [
-      { key: "siret", label: "SIRET number", help: "14 digits identifying your business.", ph: "12345678901234" },
-      { key: "ape_naf", label: "APE/NAF code", ph: "62.01Z" },
-      { key: "urssaf_account", label: "URSSAF account number" },
-      { key: "convention_collective", label: "Convention collective code", help: "Your industry's collective agreement code." },
-    ],
-    za: [
-      { key: "paye_ref", label: "PAYE reference", help: "10 digits from SARS.", ph: "7012345678" },
-      { key: "uif_ref", label: "UIF reference number" },
-      { key: "sdl_ref", label: "SDL reference (if applicable)", help: "Skills Development Levy reference." },
-    ],
+  if (loading) return <div style={{ color: C.muted, fontSize: 13 }}>Loading tax info...</div>;
+
+  // Country-specific labels
+  const TAX_LABELS = {
+    ca: {
+      sectionTitle: "CRA registration",
+      description: "Your CRA business identifiers and payroll remittance schedule.",
+      bnLabel: "Business Number (BN)", bnHelp: "9-digit number from your CRA registration.", bnPh: "123456789",
+      rpLabel: "Payroll account number", rpHelp: "Usually RP0001. Found on your PD7A statement.", rpPh: "RP0001",
+    },
+    us: {
+      sectionTitle: "IRS registration",
+      description: "Your federal and state employer identifiers.",
+      bnLabel: "Employer Identification Number (EIN)", bnHelp: "9-digit federal tax ID.", bnPh: "12-3456789",
+      rpLabel: "State employer ID", rpHelp: "Your state payroll tax account.", rpPh: "State ID",
+    },
+    gb: {
+      sectionTitle: "HMRC registration",
+      description: "Your PAYE employer references.",
+      bnLabel: "Company number", bnHelp: "8-digit number from Companies House.", bnPh: "12345678",
+      rpLabel: "PAYE reference", rpHelp: "Your PAYE employer reference from HMRC.", rpPh: "123/AB456",
+    },
+    au: {
+      sectionTitle: "ATO registration",
+      description: "Your ABN and PAYG withholding registration.",
+      bnLabel: "Australian Business Number (ABN)", bnHelp: "11-digit number from the ABR.", bnPh: "12 345 678 901",
+      rpLabel: "PAYG withholding number", rpHelp: "Your ATO withholding account number.", rpPh: "PAYG number",
+    },
+    nz: {
+      sectionTitle: "IRD registration",
+      description: "Your NZ business and IRD identifiers.",
+      bnLabel: "NZ Business Number (NZBN)", bnHelp: "13-digit NZBN.", bnPh: "9429000000000",
+      rpLabel: "IRD number", rpHelp: "Your IRD (Inland Revenue) number.", rpPh: "12-345-678",
+    },
+    sg: {
+      sectionTitle: "IRAS registration",
+      description: "Your Singapore employer identifiers.",
+      bnLabel: "Unique Entity Number (UEN)", bnHelp: "Business registration number from ACRA.", bnPh: "12345678A",
+      rpLabel: "Tax reference number", rpHelp: "Your IRAS employer tax reference.", rpPh: "Tax ref",
+    },
+    jp: {
+      sectionTitle: "NTA registration",
+      description: "Your Japan corporate and tax office references.",
+      bnLabel: "Corporate number", bnHelp: "13-digit corporate number from Japan NTA.", bnPh: "1234567890123",
+      rpLabel: "Tax office reference", rpHelp: "Your local tax office employer reference.", rpPh: "Tax ref",
+    },
+    de: {
+      sectionTitle: "Finanzamt registration",
+      description: "Your German tax identifiers.",
+      bnLabel: "Umsatzsteuer-ID (VAT ID)", bnHelp: "Your VAT identification number.", bnPh: "DE123456789",
+      rpLabel: "Steuernummer", rpHelp: "Your Finanzamt tax number.", rpPh: "12/345/67890",
+    },
+    fr: {
+      sectionTitle: "URSSAF registration",
+      description: "Your French business and social security identifiers.",
+      bnLabel: "SIRET number", bnHelp: "14-digit business identifier from INSEE.", bnPh: "12345678901234",
+      rpLabel: "URSSAF number", rpHelp: "Your URSSAF employer contribution number.", rpPh: "URSSAF ref",
+    },
+    za: {
+      sectionTitle: "SARS registration",
+      description: "Your SARS registration numbers.",
+      bnLabel: "Company registration number", bnHelp: "Number from CIPC.", bnPh: "2020/123456/07",
+      rpLabel: "PAYE reference number", rpHelp: "Your SARS PAYE reference.", rpPh: "7 followed by 9 digits",
+    },
+  };
+  const labels = TAX_LABELS[country] || {
+    sectionTitle: "Tax registration",
+    description: "Your business and payroll tax identifiers.",
+    bnLabel: "Business Number", bnHelp: "Your tax registration number.", bnPh: "",
+    rpLabel: "Payroll account number", rpHelp: "Your payroll tax account number.", rpPh: "",
   };
 
-  const fields = FIELDS_BY_COUNTRY[country] || FIELDS_BY_COUNTRY.ca;
-  const countryName = COUNTRIES.find(c => c.iso === country)?.name || "your country";
+  // Country-specific remittance options
+  const REMITTANCE_OPTIONS = {
+    ca: [
+      { value: "quarterly", label: "Quarterly", desc: "15th of the month after quarter end. For small remitters." },
+      { value: "monthly", label: "Monthly", desc: "15th of the following month. Most common." },
+      { value: "accelerated_th1", label: "Accelerated Threshold 1", desc: "25th of current month and 10th of next. For larger remitters." },
+      { value: "accelerated_th2", label: "Accelerated Threshold 2", desc: "3rd business day after each payday. Largest remitters." },
+    ],
+    us: [
+      { value: "quarterly", label: "Form 941 - Quarterly", desc: "Filed each quarter with the IRS." },
+      { value: "semiweekly", label: "Semi-weekly", desc: "Deposits due Wednesday or Friday depending on payday." },
+      { value: "monthly", label: "Monthly", desc: "15th of the following month. Most small employers." },
+    ],
+    gb: [
+      { value: "monthly", label: "Monthly RTI", desc: "Real Time Information filed with each payroll." },
+      { value: "quarterly", label: "Quarterly", desc: "For very small employers under HMRC thresholds." },
+    ],
+    au: [
+      { value: "monthly", label: "Monthly BAS", desc: "For employers withholding more than $25K annually." },
+      { value: "quarterly", label: "Quarterly BAS", desc: "Standard for most small businesses." },
+    ],
+  };
+  const remittanceOptions = REMITTANCE_OPTIONS[country] || [
+    { value: "monthly", label: "Monthly", desc: "Send deductions to tax authority every month." },
+    { value: "quarterly", label: "Quarterly", desc: "Send deductions every 3 months." },
+  ];
 
   return (
     <>
-      <SectionHead title="Tax registration" subtitle={"These numbers auto-fill every T4 slip, PD7A remittance, and CRA filing Novala generates. Fields below are based on " + countryName + "."} />
-      <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "24px 26px" }}>
-        <CardSection label="Tax identifiers">
-          {fields.map(f => {
-            const err = validateTaxField(f.key, data[f.key]);
+      <SectionHead title="Tax registration" subtitle={labels.description} />
+
+      {validated && !validation.ok && (
+        <div style={{ background: C.amberSoft, borderLeft: "3px solid " + C.amber, borderRadius: "0 8px 8px 0", padding: "14px 18px", marginBottom: 18 }}>
+          <div style={{ fontSize: 13, color: C.ink, lineHeight: 1.6 }}>
+            <strong style={{ fontWeight: 700, display: "block", marginBottom: 3 }}>Some fields need attention</strong>
+            {Object.entries(validation.errors).map(([k, v]) => <div key={k}>{v}</div>)}
+          </div>
+        </div>
+      )}
+
+      <CardSection label={labels.sectionTitle}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <Field label={labels.bnLabel} help={labels.bnHelp}>
+            <TextInput value={data.business_number} onChange={v => set("business_number", v)} placeholder={labels.bnPh} />
+          </Field>
+          <Field label={labels.rpLabel} help={labels.rpHelp}>
+            <TextInput value={data.payroll_rp_account} onChange={v => set("payroll_rp_account", v)} placeholder={labels.rpPh} />
+          </Field>
+        </div>
+      </CardSection>
+
+      <CardSection label="Remittance schedule">
+        <div style={{ fontSize: 13, color: C.ink, marginBottom: 14, lineHeight: 1.6 }}>How often you send payroll deductions to the tax authority. Your remitter type is assigned by them based on your withholding amount.</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {remittanceOptions.map(opt => {
+            const selected = data.remitter_type === opt.value;
             return (
-              <Field key={f.key} label={f.label} help={f.help} error={err}>
-                <TextInput value={data[f.key]} onChange={v => set(f.key, v)} placeholder={f.ph || ""} error={!!err} />
-              </Field>
+              <div key={opt.value} onClick={() => set("remitter_type", opt.value)} style={{ background: "#fff", border: "1.5px solid " + (selected ? C.ink : C.line), borderRadius: 10, padding: "14px 16px", cursor: "pointer", boxShadow: selected ? "0 0 0 3px rgba(10,26,30,.06)" : "none", display: "flex", alignItems: "flex-start", gap: 12 }}>
+                <div style={{ width: 18, height: 18, borderRadius: "50%", border: "1.5px solid " + (selected ? C.ink : C.line), background: selected ? C.ink : "#fff", flex: "0 0 18px", display: "grid", placeItems: "center", marginTop: 1 }}>
+                  {selected && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#fff" }} />}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{opt.label}</div>
+                  <div style={{ fontSize: 12.5, color: C.ink }}>{opt.desc}</div>
+                </div>
+              </div>
             );
           })}
-        </CardSection>
-
-        <CardSection label="Remittance schedule">
-          <Field label="Remitter type" help={<>Determines when you must remit CPP, EI, and income tax to CRA. Assigned by CRA based on your average monthly withholding two calendar years ago. <a href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/remitting-source-deductions/how-often.html" target="_blank" rel="noopener noreferrer" style={{ color: C.teal, fontWeight: 600, textDecoration: "none" }}>View CRA guide &rarr;</a></>}>
-            <SelectInput value={data.remitter_type || "regular"} onChange={v => set("remitter_type", v)}>
-              <option value="regular">Regular (monthly, less than $25,000 avg)</option>
-              <option value="quarterly">Quarterly (eligible small employers)</option>
-              <option value="threshold_1">Accelerated: Threshold 1 ($25,000 to $99,999)</option>
-              <option value="threshold_2">Accelerated: Threshold 2 ($100,000 or more)</option>
-            </SelectInput>
-          </Field>
-        </CardSection>
-
-        <div style={{ background: C.tealSoft, borderLeft: "2px solid " + C.teal, borderRadius: "0 6px 6px 0", padding: "12px 14px", marginBottom: 8 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.tealInk, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4 }}>Why this matters</div>
-          <div style={{ fontSize: 12.5, color: C.text, lineHeight: 1.55 }}>Novala uses these IDs to calculate correct tax remittances and to file with the tax authority on your behalf. Keep them current; if your business gets a new account or moves, update here first.</div>
         </div>
+      </CardSection>
 
-        <SaveBar dirty={dirty} saving={saving} onSave={onSave} onDiscard={onDiscard} label="Save tax registration" />
-      </div>
+      <SaveBar dirty={dirty} saving={saving} onSave={onSave} onDiscard={onDiscard} label="Save tax registration" />
     </>
   );
 }
