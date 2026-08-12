@@ -859,45 +859,49 @@ function PayTypesSection({ businessCountry = "CA" }) {
     <div>
 
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, marginBottom: 8, paddingBottom: 24, borderBottom: "1px solid " + C.line }}>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, marginBottom: 20 }}>
         <div style={{ flex: 1, maxWidth: 560 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 600, color: C.ink, letterSpacing: "-0.018em", marginBottom: 6 }}>Pay types &amp; deductions</h1>
-          <p style={{ fontSize: 13.5, color: C.muted, lineHeight: 1.6 }}>Define the earnings and deductions that drive every pay run. Each item carries the tax treatment rules Novala applies automatically when you process payroll.</p>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: C.ink, letterSpacing: "-0.015em", margin: 0, marginBottom: 6 }}>Pay types &amp; deductions</h1>
+          <p style={{ fontSize: 14, color: C.ink, lineHeight: 1.55, fontWeight: 500, margin: 0 }}>Define the earnings and deductions that drive every pay run.</p>
         </div>
-        <button onClick={() => openAddDrawer(activeTab === "earnings" ? "earning" : "deduction")} style={{ background: "#0E1A1A", color: "#fff", border: 0, borderRadius: 6, padding: "10px 16px", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 7, boxShadow: "0 1px 2px rgba(10,26,30,.08)" }}>
+        <button onClick={() => openAddDrawer(activeTab === "earnings" ? "earning" : "deduction")} style={{ background: C.ink, color: "#fff", border: 0, borderRadius: 8, padding: "10px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap" }}>
           <Plus size={13} strokeWidth={2.2} />
           New item
         </button>
       </div>
 
       {/* Context strip */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 0 24px", fontSize: 12, color: C.muted, borderBottom: "1px solid " + C.line, marginBottom: 32 }}>
-        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#0D8050", flex: "0 0 5px" }}></span>
-        <span>Configured for <strong style={{ color: C.ink, fontWeight: 600 }}>{companyConfig.name}</strong>. Tax flags follow CRA payroll rules.</span>
-        {companyProvince && (<><span style={{ color: C.line, fontSize: 16, lineHeight: 1 }}>·</span>
-        <span>Province: <strong style={{ color: C.ink, fontWeight: 600 }}>{companyProvince}</strong></span></>)}
-        <span style={{ color: C.line, fontSize: 16, lineHeight: 1 }}>·</span>
-        <span>{payTypes.length + deductions.length} items configured</span>
-        {lastUpdated && (<><span style={{ color: C.line, fontSize: 16, lineHeight: 1 }}>·</span>
-        <span>Last updated <strong style={{ color: C.ink, fontWeight: 600 }}>{lastUpdated}</strong></span></>)}
+      <div style={{ fontSize: 13, color: C.ink, paddingBottom: 16, marginBottom: 20, borderBottom: "1.5px solid " + C.ink }}>
+        <span style={{ fontWeight: 500 }}>Configured for </span>
+        <strong style={{ fontWeight: 700 }}>{companyConfig.name}</strong>
+        {companyProvince && <span> &middot; {companyProvince}</span>}
+        <span> &middot; CRA payroll rules apply</span>
       </div>
 
       {/* Summary cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 32 }}>
-        <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "18px 20px" }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: C.faint, letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 8 }}>Earnings configured</div>
-          <div style={{ fontSize: 24, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em", fontFamily: "'JetBrains Mono', monospace", lineHeight: 1, marginBottom: 6 }}>{payTypes.length}</div>
-          <div style={{ fontSize: 12, color: C.muted }}>{defaultPayTypeCount} default · {customPayTypeCount} custom</div>
+      <div style={{ display: "flex", gap: 48, marginBottom: 32, padding: "8px 0" }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Earnings</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <span style={{ fontSize: 32, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums" }}>{payTypes.length}</span>
+            <span style={{ fontSize: 12, color: C.ink, fontWeight: 500 }}>{defaultPayTypeCount} default, {customPayTypeCount} custom</span>
+          </div>
         </div>
-        <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "18px 20px" }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: C.faint, letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 8 }}>Deductions configured</div>
-          <div style={{ fontSize: 24, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em", fontFamily: "'JetBrains Mono', monospace", lineHeight: 1, marginBottom: 6 }}>{deductions.length}</div>
-          <div style={{ fontSize: 12, color: C.muted }}>{defaultDeductionCount} default · {customDeductionCount} custom</div>
+        <div style={{ width: 1, background: C.line }}></div>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Deductions</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <span style={{ fontSize: 32, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums" }}>{deductions.length}</span>
+            <span style={{ fontSize: 12, color: C.ink, fontWeight: 500 }}>{defaultDeductionCount} default, {customDeductionCount} custom</span>
+          </div>
         </div>
-        <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "18px 20px" }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: C.faint, letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 8 }}>In active use</div>
-          <div style={{ fontSize: 24, fontWeight: 600, color: C.ink, letterSpacing: "-0.02em", fontFamily: "'JetBrains Mono', monospace", lineHeight: 1, marginBottom: 6 }}>{payTypes.filter(function(p) { return p.is_active; }).length + deductions.filter(function(d) { return d.is_active; }).length}</div>
-          <div style={{ fontSize: 12, color: C.muted }}>across your employees</div>
+        <div style={{ width: 1, background: C.line }}></div>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>In use</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <span style={{ fontSize: 32, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums" }}>{payTypes.filter(function(p) { return p.is_active; }).length + deductions.filter(function(d) { return d.is_active; }).length}</span>
+            <span style={{ fontSize: 12, color: C.ink, fontWeight: 500 }}>across employees</span>
+          </div>
         </div>
       </div>
 
