@@ -719,7 +719,7 @@ function TaxSectionCard({ section, isOpen, onToggleOpen, employee, onEditClick }
   return (
     <div style={{ background: "#FFFFFF", border: "1px solid " + C.line, borderRadius: 12, marginBottom: 12 }}>
       <div style={{ display: "flex", alignItems: "center", padding: "16px 20px", cursor: "pointer" }} onClick={onToggleOpen}>
-        <div style={{ width: 32, height: 32, borderRadius: 8, background: isOpen ? C.tealSoft : "#E7EAF0", color: isOpen ? C.tealInk : "#000000", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginRight: 12, transition: "background 0.15s ease, color 0.15s ease" }}><Icon size={16} strokeWidth={isOpen ? 2 : 2.5} /></div>
+        
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{section.title}</div>
         </div>
@@ -782,7 +782,7 @@ function BasePaySectionCard({ section, isOpen, onToggleOpen, employee, onEditCli
     <div style={{ background: "#FFFFFF", border: "1px solid " + C.line, borderRadius: 12, overflow: "hidden", marginBottom: 12 }}>
       <div onClick={onToggleOpen} style={{ display: "flex", alignItems: "center", gap: 13, padding: "18px 22px", cursor: "pointer" }}>
         <span style={{ width: 30, height: 30, borderRadius: 9, background: isOpen ? C.tealSoft : "#E7EAF0", color: isOpen ? C.tealInk : "#000000", display: "grid", placeItems: "center", flex: "0 0 30px", transition: "background 0.15s ease, color 0.15s ease" }}>
-          <Icon size={17} strokeWidth={isOpen ? 2 : 2.5} />
+          
         </span>
         <h3 style={{ flex: 1, fontSize: 16, fontWeight: 700, color: C.ink }}>{section.title}</h3>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: pillStyle.bg, color: pillStyle.fg }}>
@@ -997,7 +997,7 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
       <div onClick={onToggleOpen}
            style={{ display: "flex", alignItems: "center", gap: 13, padding: "18px 22px", cursor: "pointer" }}>
         <span style={{ width: 30, height: 30, borderRadius: 9, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 30px" }}>
-          <Icon size={17} />
+          
         </span>
         <h3 style={{ flex: 1, fontSize: 16, fontWeight: 700, color: C.ink }}>{section.title}</h3>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: (earnings.length + deductions.length) > 0 ? C.tealSoft : C.amberSoft, color: (earnings.length + deductions.length) > 0 ? C.tealInk : C.amber }}>
@@ -1740,7 +1740,7 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
           fontWeight: 700, marginRight: 12,
           transition: "background 0.15s ease, color 0.15s ease",
         }}>
-          <Icon size={16} strokeWidth={isOpen ? 2 : 2.5} />
+          
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#0E1A1A" }}>{section.title}</div>
