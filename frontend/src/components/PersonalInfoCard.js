@@ -64,15 +64,7 @@ export default function PersonalInfoCard(props) {
   return (
     <div style={{ background: "#FFFFFF", border: "1px solid " + C.line, borderRadius: 12, marginBottom: 12, fontFamily: FONT }}>
       <div style={{ display: "flex", alignItems: "center", padding: "16px 20px", cursor: "pointer", borderBottom: isOpen ? "1px solid " + C.line : "0" }} onClick={onToggleOpen}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 8,
-          background: isOpen ? C.brandBg : C.chipBg,
-          color: isOpen ? C.brandDark : "#000000",
-          display: "flex", alignItems: "center", justifyContent: "center", marginRight: 12,
-          transition: "background 0.15s ease, color 0.15s ease",
-        }}>
-          
-        </div>
+        
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>Personal information</div>
           <div style={{ fontSize: 12, color: C.muted, fontWeight: 500, marginTop: 2 }}>Name, contact, address, and identification for this employee.</div>
