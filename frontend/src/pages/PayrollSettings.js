@@ -2309,181 +2309,119 @@ function ComingSoonSection({ title }) {
 
 // === Bank account section ===
 function BankAccountSection() {
-  const navigate = useNavigate();
-  const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+  const [status, setStatus] = useState(null);
+  const [account, setAccount] = useState(null);
+  const navigate = useNavigate();
 
-  const load = () => {
-    setLoading(true);
-    fetch(API_URL + "/api/v1/payroll/settings", { headers: authHeaders() })
+  useEffect(() => {
+    fetch(API_URL + "/api/v1/payroll/bank/status", { headers: authHeaders() })
       .then(r => r.ok ? r.json() : null)
-      .then(d => { setSettings(d); setLoading(false); })
-      .catch(() => setLoading(false));
-  };
+      .then(d => {
+        if (d) {
+          setStatus(d.status || "disconnected");
+          setAccount(d.account_masked ? d : null);
+        } else {
+          setStatus("disconnected");
+        }
+        setLoading(false);
+      })
+      .catch(() => { setStatus("disconnected"); setLoading(false); });
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  if (loading) return <div style={{ color: C.muted, fontSize: 13 }}>Loading bank status...</div>;
 
-  const onDisconnect = async () => {
-    try {
-      await fetch(API_URL + "/api/v1/payroll/settings", {
-        method: "POST", headers: authHeaders(),
-        body: JSON.stringify({
-          company_bank_name: null, company_transit_number: null,
-          company_institution_number: null, company_routing_number: null,
-        }),
-      });
-      setConfirmDisconnect(false);
-      load();
-    } catch (e) { alert("Disconnect failed: " + e.message); }
-  };
-
-  if (loading) return <div style={{ color: C.muted, fontSize: 13 }}>Loading...</div>;
-
-  const hasAccount = !!(settings && settings.company_bank_name);
-  const bankDetails = settings && settings.bank_details ? settings.bank_details : {};
-  const verification = bankDetails.verification || {};
-  const verificationStatus = verification.status || (hasAccount ? "verified" : null);
-  const isVerified = verificationStatus === "verified";
-  const isVerifying = verificationStatus === "verifying";
-  const isLocked = verificationStatus === "locked";
+  const isConnected = status && status !== "disconnected";
+  const isVerifying = status === "verifying";
+  const isVerified = status === "verified";
+  const isLocked = status === "locked";
 
   return (
     <>
-      <div style={{ marginBottom: 6 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 600, color: C.ink, letterSpacing: "-0.015em", marginBottom: 4 }}>Bank account</h2>
-        <p style={{ fontSize: 13.5, color: C.muted, lineHeight: 1.55, maxWidth: 560 }}>The business account Novala draws from to fund payroll. You can keep more than one on file in the future; the primary handles every pay run unless you change it.</p>
-      </div>
+      <SectionHead title="Bank account" subtitle="Connect your business bank account to send direct deposits automatically from Novala." />
 
-      {/* Security strip */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14, marginBottom: 28, padding: "10px 14px", background: "#fff", border: "1px solid " + C.line, borderRadius: 8, fontSize: 12, flexWrap: "wrap" }}>
-        <div style={{ width: 28, height: 28, borderRadius: 6, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 28px" }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-        </div>
-        <div>
-          <strong style={{ color: C.ink, fontWeight: 600 }}>Bank-grade security.</strong>{" "}
-          <span style={{ color: C.muted }}>Your account details are encrypted and never stored in plain text.</span>
-        </div>
-        <div style={{ width: 1, height: 14, background: C.line, margin: "0 6px" }} />
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: C.green }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>
-          <span>256-bit TLS</span>
-        </span>
-        <div style={{ width: 1, height: 14, background: C.line, margin: "0 6px" }} />
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: C.green }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>
-          <span>AES-256 at rest</span>
-        </span>
-      </div>
-
-      {/* Connected accounts section */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase" }}>Connected accounts</span>
-          <span style={{ fontSize: 12, color: C.faint, fontVariantNumeric: "tabular-nums" }}>{hasAccount ? "1 of 1" : "0 of 1"}</span>
-        </div>
-        {!hasAccount && (
-          <button onClick={() => navigate("/payroll/bank/connect")} style={{ background: C.ink, color: "#fff", border: "none", borderRadius: 6, padding: "7px 13px", fontWeight: 500, fontSize: 12.5, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FONT }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>
-            Connect account
-          </button>
-        )}
-      </div>
-
-      {hasAccount ? (
+      {isConnected ? (
+        // CONNECTED STATE
         <>
-          {/* Account table */}
-          <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 8, overflow: "hidden", marginBottom: 24 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 160px 130px 110px 60px", gap: 14, padding: "10px 16px", background: "#F4F6F8", borderBottom: "1px solid " + C.line, fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", alignItems: "center" }}>
-              <div>Account</div>
-              <div>Number</div>
-              <div>Status</div>
-              <div>Role</div>
-              <div></div>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 160px 130px 110px 60px", gap: 14, padding: "14px 16px", alignItems: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: "#F4F6F8", color: "#1A2D32", display: "grid", placeItems: "center", flex: "0 0 36px", border: "1px solid " + C.line }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 21h18M5 21V10M19 21V10M3 10l9-6 9 6M9 21v-5h6v5"/></svg>
+          <CardSection label="Connected bank account">
+            <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "6px 0" }}>
+              <div style={{ width: 46, height: 46, borderRadius: 10, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 46px", fontSize: 20 }}>&#127974;</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{account?.bank_name || "Your bank"}</div>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 5, letterSpacing: "0.04em", textTransform: "uppercase", background: isVerified ? C.greenSoft : isLocked ? C.amberSoft : C.amberSoft, color: isVerified ? C.green : isLocked ? C.amber : C.amber }}>
+                    <span style={{ width: 6, height: 6, background: isVerified ? C.green : isLocked ? C.amber : C.amber, borderRadius: "50%" }} />
+                    {isLocked ? "Locked" : isVerified ? "Verified" : "Verifying"}
+                  </span>
                 </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: C.ink, letterSpacing: "-0.005em" }}>{settings.company_bank_name}</div>
-                  <div style={{ fontSize: 11.5, color: C.muted, marginTop: 1 }}>Business account</div>
-                </div>
+                <div style={{ fontSize: 13, color: C.ink, fontVariantNumeric: "tabular-nums" }}>{account?.account_masked || "Account details hidden"}</div>
               </div>
-              <div>
-                <div style={{ fontSize: 12.5, color: C.ink, fontFamily: "JetBrains Mono, monospace", fontVariantNumeric: "tabular-nums" }}>Account on file</div>
-                {(settings.company_transit_number || settings.company_institution_number) && (
-                  <div style={{ fontSize: 11, color: C.faint, marginTop: 2, fontFamily: "JetBrains Mono, monospace" }}>
-                    {settings.company_transit_number || ""}{settings.company_institution_number ? " · " + settings.company_institution_number : ""}
-                  </div>
-                )}
-                {settings.company_routing_number && (
-                  <div style={{ fontSize: 11, color: C.faint, marginTop: 2, fontFamily: "JetBrains Mono, monospace" }}>{settings.company_routing_number}</div>
-                )}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: isLocked ? C.red : isVerifying ? C.amber : C.green, fontWeight: 500 }}>
-                <span style={{ width: 7, height: 7, borderRadius: "50%", background: isLocked ? C.red : isVerifying ? C.amber : C.green, boxShadow: isLocked ? "0 0 0 3px rgba(181,59,46,.12)" : isVerifying ? "0 0 0 3px rgba(156,90,15,.12)" : "0 0 0 3px rgba(13,128,80,.12)", flex: "0 0 7px" }} />
-                {isLocked ? "Locked" : isVerifying ? <span onClick={() => navigate("/payroll/bank/verify")} style={{ cursor: "pointer", textDecoration: "underline" }}>Verify now</span> : "Verified"}
-              </div>
-              <div style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>
-                <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", padding: "2px 6px", borderRadius: 3, background: C.ink, color: "#fff" }}>Primary</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button onClick={() => setConfirmDisconnect(true)} title="Disconnect" style={{ background: "none", border: "1px solid transparent", borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.muted, display: "grid", placeItems: "center" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.line; e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = C.ink; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.muted; }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
-                </button>
-              </div>
+              <button onClick={() => navigate("/payroll/bank/connect")} style={{ background: "#fff", color: C.ink, border: "1.5px solid " + C.ink, borderRadius: 8, padding: "8px 14px", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: FONT }}>Change bank</button>
             </div>
-          </div>
+          </CardSection>
+
+          {isVerifying && (
+            <CardSection label="Verify your account">
+              <div style={{ fontSize: 13.5, color: C.ink, lineHeight: 1.6, marginBottom: 14 }}>
+                We sent a small deposit (less than $1.00) to your account within 1-2 business days. Once you see it, confirm the amount to finish verification.
+              </div>
+              <button onClick={() => navigate("/payroll/bank/verify")} style={{ background: C.teal, color: "#fff", border: 0, borderRadius: 8, padding: "10px 18px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: FONT }}>Verify now</button>
+            </CardSection>
+          )}
+
+          {isVerified && (
+            <CardSection label="Ready to run payroll">
+              <div style={{ fontSize: 13.5, color: C.ink, lineHeight: 1.6 }}>
+                Your bank is connected and verified. When you finalize a pay run, Novala will send direct deposits from this account.
+              </div>
+            </CardSection>
+          )}
         </>
       ) : (
-        <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 8, padding: "48px 24px", textAlign: "center", marginBottom: 24 }}>
-          <div style={{ width: 48, height: 48, borderRadius: 10, background: "#F4F6F8", color: "#2A3F45", display: "grid", placeItems: "center", margin: "0 auto 16px", border: "1px solid " + C.line }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M3 21h18M5 21V10M19 21V10M3 10l9-6 9 6M9 21v-5h6v5"/></svg>
-          </div>
-          <h3 style={{ fontSize: 15, fontWeight: 600, color: C.ink, marginBottom: 6, letterSpacing: "-0.005em" }}>No bank account connected</h3>
-          <p style={{ fontSize: 12.5, color: C.muted, maxWidth: 380, margin: "0 auto 18px", lineHeight: 1.55 }}>Connect a business bank account so Novala can fund payroll runs. Verification takes 1 to 2 business days.</p>
-          <button onClick={() => navigate("/payroll/bank/connect")} style={{ background: C.ink, color: "#fff", border: "none", borderRadius: 6, padding: "9px 18px", fontWeight: 500, fontSize: 13, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: FONT }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>
-            Connect bank account
-          </button>
-        </div>
-      )}
-
-      {/* Trust footer */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginTop: 8 }}>
-        {[
-          { icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l8 4v6c0 5-3.5 9.5-8 10-4.5-.5-8-5-8-10V6l8-4z"/></svg>, title: "Verified by micro-deposit", body: "Two small test deposits confirm ownership before any payroll funds move." },
-          { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M21 2l-9.5 9.5M15 7l3 3M11.5 11.5a5 5 0 1 1-7 7 5 5 0 0 1 7-7z"/></svg>, title: "You stay in control", body: "Novala never moves money without a pay run you've authorized." },
-          { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.66 4.03 3 9 3s9-1.34 9-3V5M3 11v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6"/></svg>, title: "Encrypted at rest", body: "Bank credentials are encrypted in our PostgreSQL database." },
-        ].map((card, i) => (
-          <div key={i} style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 8, padding: "14px 16px" }}>
-            <div style={{ width: 24, height: 24, borderRadius: 6, background: "#F4F6F8", color: "#2A3F45", display: "grid", placeItems: "center", marginBottom: 10, border: "1px solid " + C.line }}>{card.icon}</div>
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: C.ink, marginBottom: 4, letterSpacing: "-0.005em" }}>{card.title}</div>
-            <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.55 }}>{card.body}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Disconnect confirm modal */}
-      {confirmDisconnect && (
-        <div onClick={() => setConfirmDisconnect(false)} style={{ position: "fixed", inset: 0, background: "rgba(10,26,30,0.4)", zIndex: 1000, display: "grid", placeItems: "center" }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 10, padding: "28px 32px", maxWidth: 440, boxShadow: "0 20px 50px rgba(10,26,30,0.2)" }}>
-            <h3 style={{ fontSize: 17, fontWeight: 600, color: C.ink, marginBottom: 10 }}>Disconnect this bank account?</h3>
-            <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.55, marginBottom: 20 }}>You will need to reconnect a bank account before running your next payroll. Payroll history is not affected.</p>
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button onClick={() => setConfirmDisconnect(false)} style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "8px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: FONT }}>Cancel</button>
-              <button onClick={onDisconnect} style={{ background: "#B53B2E", color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: FONT }}>Disconnect</button>
+        // DISCONNECTED STATE - onboarding
+        <>
+          <div style={{ background: C.tealSoft, borderLeft: "3px solid " + C.teal, borderRadius: "0 8px 8px 0", padding: "14px 18px", marginBottom: 18 }}>
+            <div style={{ fontSize: 13, color: C.ink, lineHeight: 1.6 }}>
+              <strong style={{ fontWeight: 700, display: "block", marginBottom: 3 }}>Connect your bank to enable direct deposit</strong>
+              Direct deposit lets Novala send money straight from your bank to your employees on payday. No more writing cheques or setting up transfers manually.
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Connect bank stub - opens Payroll Overview to use existing bank connect panel */}
-      
+          <CardSection label="How it works">
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {[
+                ["1", "Connect your bank", "Link your business chequing account through our secure banking partner. Same tech used by QuickBooks, Wave, and Xero."],
+                ["2", "Verify your business", "A quick check confirms you own the business. Required for compliance and fraud protection."],
+                ["3", "Pay employees with one click", "On payday, click Pay all. Money moves from your bank to your employees within 1-2 business days."],
+                ["4", "CRA remittance automated", "Novala also sends your monthly payroll deductions to CRA on the due date, so you never miss a deadline."],
+              ].map(([n, title, desc]) => (
+                <div key={n} style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", fontSize: 15, fontWeight: 700, flexShrink: 0 }}>{n}</div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{title}</div>
+                    <div style={{ fontSize: 13, color: C.ink, lineHeight: 1.55 }}>{desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardSection>
+
+          <CardSection label="While you wait">
+            <div style={{ fontSize: 13.5, color: C.ink, lineHeight: 1.6, marginBottom: 14 }}>You can still run payroll today. Novala calculates everything correctly. You just need to:</div>
+            <ul style={{ margin: "0 0 14px", paddingLeft: 24, fontSize: 13.5, color: C.ink, lineHeight: 1.7 }}>
+              <li>Pay employees manually via cheque, e-transfer, or your bank's online banking</li>
+              <li>Add the cheque number in Novala when you write one (for audit trail)</li>
+              <li>File PD7A remittance and pay CRA through their online portal</li>
+            </ul>
+          </CardSection>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+            <button onClick={() => navigate("/payroll/bank/connect")} style={{ background: C.teal, color: "#fff", border: 0, borderRadius: 10, padding: "12px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: FONT, display: "inline-flex", alignItems: "center", gap: 8 }}>
+              Connect your bank &rarr;
+            </button>
+          </div>
+        </>
+      )}
     </>
   );
 }
