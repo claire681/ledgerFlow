@@ -1935,7 +1935,35 @@ function TaxRegistrationSection({ businessCountry }) {
   const dirty = JSON.stringify(data) !== JSON.stringify(original);
   const set = (k, v) => setData({ ...data, [k]: v });
 
+  // Country-specific validation
+  const validate = () => {
+    const errors = {};
+    const bn = (data.business_number || "").replace(/\s|-/g, "");
+    const rp = (data.payroll_rp_account || "").trim();
+
+    if (country === "ca") {
+      if (bn && !/^\d{9}$/.test(bn)) errors.business_number = "Business Number must be exactly 9 digits";
+      if (rp && !/^RP\d{4}$/i.test(rp)) errors.payroll_rp_account = "Payroll account must be format RP followed by 4 digits (e.g. RP0001)";
+    } else if (country === "us") {
+      if (bn && !/^\d{9}$/.test(bn)) errors.business_number = "EIN must be exactly 9 digits (12-3456789)";
+    } else if (country === "gb") {
+      if (bn && !/^\d{8}$/.test(bn)) errors.business_number = "Company number must be exactly 8 digits";
+    } else if (country === "au") {
+      if (bn && !/^\d{11}$/.test(bn)) errors.business_number = "ABN must be exactly 11 digits";
+    } else if (country === "nz") {
+      if (bn && !/^\d{13}$/.test(bn)) errors.business_number = "NZBN must be exactly 13 digits";
+    } else if (country === "jp") {
+      if (bn && !/^\d{13}$/.test(bn)) errors.business_number = "Corporate number must be exactly 13 digits";
+    }
+    return { ok: Object.keys(errors).length === 0, errors };
+  };
+
   const onSave = async () => {
+    setValidated(true);
+    const v = validate();
+    setValidation(v);
+    if (!v.ok) return;
+
     setSaving(true);
     try {
       const res = await fetch(API_URL + "/api/v1/company/profile", {
@@ -2075,11 +2103,11 @@ function TaxRegistrationSection({ businessCountry }) {
 
       <CardSection label={labels.sectionTitle}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          <Field label={labels.bnLabel} help={labels.bnHelp}>
-            <TextInput value={data.business_number} onChange={v => set("business_number", v)} placeholder={labels.bnPh} />
+          <Field label={labels.bnLabel} help={validated && validation.errors.business_number ? validation.errors.business_number : labels.bnHelp}>
+            <TextInput value={data.business_number} onChange={v => set("business_number", v)} placeholder={labels.bnPh} style={validated && validation.errors.business_number ? { borderColor: "#DC2626" } : {}} />
           </Field>
-          <Field label={labels.rpLabel} help={labels.rpHelp}>
-            <TextInput value={data.payroll_rp_account} onChange={v => set("payroll_rp_account", v)} placeholder={labels.rpPh} />
+          <Field label={labels.rpLabel} help={validated && validation.errors.payroll_rp_account ? validation.errors.payroll_rp_account : labels.rpHelp}>
+            <TextInput value={data.payroll_rp_account} onChange={v => set("payroll_rp_account", v)} placeholder={labels.rpPh} style={validated && validation.errors.payroll_rp_account ? { borderColor: "#DC2626" } : {}} />
           </Field>
         </div>
       </CardSection>
