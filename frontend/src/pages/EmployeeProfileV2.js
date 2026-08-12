@@ -1728,16 +1728,7 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
     <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
       <div onClick={function() { if (!isEditing && !disabledByOtherEdit) onToggleOpen(); }}
         style={{ display: "flex", alignItems: "center", padding: "16px 20px", cursor: isEditing || disabledByOtherEdit ? "default" : "pointer" }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 8,
-          background: isOpen ? "#E1F5EE" : "#E7EAF0",
-          color: isOpen ? "#0F6E56" : "#000000",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontWeight: 700, marginRight: 12,
-          transition: "background 0.15s ease, color 0.15s ease",
-        }}>
-          
-        </div>
+        
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#0E1A1A" }}>{section.title}</div>
           {section.intro && (
