@@ -1057,11 +1057,11 @@ function PayTypesSection({ businessCountry = "CA" }) {
                 <div style={{ fontSize: 18, fontWeight: 600, color: C.ink, letterSpacing: "-0.015em" }}>
                   {drawerMode === "add" ? "New" : "Edit"} {drawerCategory === "earning" ? "earning" : "deduction"}
                 </div>
-                <button onClick={closeDrawer} style={{ width: 30, height: 30, borderRadius: 6, border: 0, background: "transparent", color: C.muted, cursor: "pointer", display: "grid", placeItems: "center", fontFamily: FONT }}>
+                <button onClick={closeDrawer} style={{ width: 30, height: 30, borderRadius: 6, border: 0, background: "transparent", color: C.ink, cursor: "pointer", display: "grid", placeItems: "center", fontFamily: FONT }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
               </div>
-              <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.55 }}>
+              <div style={{ fontSize: 13, color: C.ink, lineHeight: 1.55 }}>
                 Configure how this item is calculated. Tax treatment options coming next.
               </div>
             </div>
@@ -1071,38 +1071,38 @@ function PayTypesSection({ businessCountry = "CA" }) {
 
               {/* Section: Item type */}
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Item type</div>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Item type</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   <div onClick={() => drawerMode === "add" && setDrawerCategory("earning")} style={{ padding: "14px 16px", border: "1.5px solid " + (drawerCategory === "earning" ? C.ink : C.line), borderRadius: 8, cursor: drawerMode === "add" ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 12, background: drawerCategory === "earning" ? "#FAFBFC" : "#fff", opacity: drawerMode === "add" ? 1 : 0.6 }}>
                     <div style={{ width: 10, height: 10, borderRadius: 2, background: "#0D8050", flex: "0 0 10px" }}></div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13.5, fontWeight: 600, color: C.ink, marginBottom: 2 }}>Earning</div>
-                      <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.45 }}>Money paid to employees</div>
+                      <div style={{ fontSize: 11.5, color: C.ink, lineHeight: 1.45 }}>Money paid to employees</div>
                     </div>
                   </div>
                   <div onClick={() => drawerMode === "add" && setDrawerCategory("deduction")} style={{ padding: "14px 16px", border: "1.5px solid " + (drawerCategory === "deduction" ? C.ink : C.line), borderRadius: 8, cursor: drawerMode === "add" ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 12, background: drawerCategory === "deduction" ? "#FAFBFC" : "#fff", opacity: drawerMode === "add" ? 1 : 0.6 }}>
                     <div style={{ width: 10, height: 10, borderRadius: 2, background: "#9C5A0F", flex: "0 0 10px" }}></div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13.5, fontWeight: 600, color: C.ink, marginBottom: 2 }}>Deduction</div>
-                      <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.45 }}>Money taken from paycheck</div>
+                      <div style={{ fontSize: 11.5, color: C.ink, lineHeight: 1.45 }}>Money taken from paycheck</div>
                     </div>
                   </div>
                 </div>
-                {drawerMode === "edit" && <div style={{ fontSize: 11.5, color: C.muted, fontStyle: "italic" }}>Item type cannot be changed after creation.</div>}
+                {drawerMode === "edit" && <div style={{ fontSize: 11.5, color: C.ink, fontStyle: "italic" }}>Item type cannot be changed after creation.</div>}
               </div>
 
               {/* Section: Details */}
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Details</div>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Details</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>Name</label>
+                  <label style={{ fontSize: 11.5, fontWeight: 600, color: C.ink }}>Name</label>
                   <input type="text" value={draft.name || ""} onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                     placeholder={drawerCategory === "earning" ? "e.g., Care visit bonus" : "e.g., Parking fee"}
                     style={{ padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%" }} />
-                  <span style={{ fontSize: 11.5, color: C.muted, marginTop: 2 }}>Appears on pay stubs and pay runs</span>
+                  <span style={{ fontSize: 11.5, color: C.ink, marginTop: 2 }}>Appears on pay stubs and pay runs</span>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>Description (optional)</label>
+                  <label style={{ fontSize: 11.5, fontWeight: 600, color: C.ink }}>Description (optional)</label>
                   <input type="text" value={draft.description || ""} onChange={(e) => setDraft({ ...draft, description: e.target.value })}
                     placeholder="Brief internal description"
                     style={{ padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%" }} />
@@ -1111,7 +1111,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
 
               {/* Section: Calculation method */}
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Calculation method</div>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Calculation method</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {(drawerCategory === "earning" ? [
                     { key: "fixed", name: "Fixed amount", formula: "amount per pay period" },
@@ -1130,7 +1130,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 13, fontWeight: 500, color: C.ink, marginBottom: 1 }}>{opt.name}</div>
-                          <div style={{ fontSize: 11.5, color: C.muted, fontFamily: "'JetBrains Mono', monospace" }}>{opt.formula}</div>
+                          <div style={{ fontSize: 11.5, color: C.ink, fontFamily: "'JetBrains Mono', monospace" }}>{opt.formula}</div>
                         </div>
                       </div>
                     );
@@ -1141,11 +1141,11 @@ function PayTypesSection({ businessCountry = "CA" }) {
                 {(draft.calc_method === "rate_hours" || draft.calc_method === "rate_units" || draft.calc_method === "percent_gross" || (draft.calc_method === "fixed" && drawerCategory === "deduction")) && (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 6 }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>
+                      <label style={{ fontSize: 11.5, fontWeight: 600, color: C.ink }}>
                         {draft.calc_method === "percent_gross" ? "Default percentage" : "Default rate"}
                       </label>
                       <div style={{ position: "relative" }}>
-                        {draft.calc_method !== "percent_gross" && <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: C.muted, fontSize: 13.5, pointerEvents: "none", fontFamily: "'JetBrains Mono', monospace" }}>$</span>}
+                        {draft.calc_method !== "percent_gross" && <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: C.ink, fontSize: 13.5, pointerEvents: "none", fontFamily: "'JetBrains Mono', monospace" }}>$</span>}
                         <input type="text" inputMode="decimal" value={drawerCategory === "earning" ? (draft.default_rate || "") : (draft.default_amount || "")}
                           onChange={(e) => setDraft(drawerCategory === "earning" ? { ...draft, default_rate: e.target.value } : { ...draft, default_amount: e.target.value })}
                           placeholder={draft.calc_method === "percent_gross" ? "5.00" : "25.00"}
@@ -1153,7 +1153,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
                       </div>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>Unit label</label>
+                      <label style={{ fontSize: 11.5, fontWeight: 600, color: C.ink }}>Unit label</label>
                       <input type="text" value={draft.unit_label || ""} onChange={(e) => setDraft({ ...draft, unit_label: e.target.value })}
                         placeholder={draft.calc_method === "percent_gross" ? "% of gross" : (draft.calc_method === "rate_hours" ? "per hour" : "per visit, per km")}
                         style={{ padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%" }} />
@@ -1165,7 +1165,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
               {/* Section: Tax treatment - EARNINGS */}
               {drawerCategory === "earning" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Tax treatment · Canada</div>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Tax treatment · Canada</div>
 
                   <div style={{ padding: "12px 14px", background: C.tealSoft, borderLeft: "2px solid " + C.teal, borderRadius: "0 6px 6px 0", fontSize: 12, color: C.tealInk, lineHeight: 1.55, display: "flex", gap: 10, alignItems: "flex-start" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ flex: "0 0 14px", marginTop: 1 }}><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
@@ -1185,7 +1185,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
                         <div key={flag.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 14px", borderBottom: idx === arr.length - 1 ? "none" : "1px solid " + C.lineSoft, gap: 14 }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: 500, color: C.ink, marginBottom: 1 }}>{flag.name}</div>
-                            <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.45 }}>{flag.desc}</div>
+                            <div style={{ fontSize: 11.5, color: C.ink, lineHeight: 1.45 }}>{flag.desc}</div>
                           </div>
                           <div onClick={() => setDraft({ ...draft, [flag.key]: !isOn })} style={{ position: "relative", width: 38, height: 22, flex: "0 0 38px", cursor: "pointer" }}>
                             <div style={{ position: "absolute", inset: 0, background: isOn ? C.teal : "#D7DCE3", borderRadius: 11, transition: "background .18s" }}></div>
@@ -1201,7 +1201,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
               {/* Section: Tax treatment - DEDUCTIONS */}
               {drawerCategory === "deduction" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Tax treatment · Canada</div>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Tax treatment · Canada</div>
 
                   <div style={{ padding: "12px 14px", background: C.tealSoft, borderLeft: "2px solid " + C.teal, borderRadius: "0 6px 6px 0", fontSize: 12, color: C.tealInk, lineHeight: 1.55, display: "flex", gap: 10, alignItems: "flex-start" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ flex: "0 0 14px", marginTop: 1 }}><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
@@ -1218,7 +1218,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
                         <div key={flag.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 14px", borderBottom: idx === arr.length - 1 ? "none" : "1px solid " + C.lineSoft, gap: 14 }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: 500, color: C.ink, marginBottom: 1 }}>{flag.name}</div>
-                            <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.45 }}>{flag.desc}</div>
+                            <div style={{ fontSize: 11.5, color: C.ink, lineHeight: 1.45 }}>{flag.desc}</div>
                           </div>
                           <div onClick={() => setDraft({ ...draft, [flag.key]: !isOn })} style={{ position: "relative", width: 38, height: 22, flex: "0 0 38px", cursor: "pointer" }}>
                             <div style={{ position: "absolute", inset: 0, background: isOn ? C.teal : "#D7DCE3", borderRadius: 11, transition: "background .18s" }}></div>
@@ -1234,9 +1234,9 @@ function PayTypesSection({ businessCountry = "CA" }) {
               {/* Section: Reporting (earnings only) */}
               {drawerCategory === "earning" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Reporting</div>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Reporting</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    <label style={{ fontSize: 11.5, fontWeight: 600, color: C.text }}>T4 box (year-end reporting)</label>
+                    <label style={{ fontSize: 11.5, fontWeight: 600, color: C.ink }}>T4 box (year-end reporting)</label>
                     <select value={draft.t4_box || "14"} onChange={(e) => setDraft({ ...draft, t4_box: e.target.value })}
                       style={{ padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 13.5, color: C.ink, background: "#fff", outline: "none", width: "100%", cursor: "pointer" }}>
                       <option value="14">Box 14 - Employment income (default)</option>
@@ -1245,7 +1245,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
                       <option value="40">Box 40 - Other taxable allowances and benefits</option>
                       <option value="custom">Custom box</option>
                     </select>
-                    <span style={{ fontSize: 11.5, color: C.muted, marginTop: 2 }}>Used when generating T4 slips at year-end</span>
+                    <span style={{ fontSize: 11.5, color: C.ink, marginTop: 2 }}>Used when generating T4 slips at year-end</span>
                   </div>
                 </div>
               )}
@@ -1268,7 +1268,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
                 </button>
               )}
               {drawerMode === "edit" && editingIsDefault && (
-                <span style={{ fontSize: 11.5, color: C.faint, fontStyle: "italic", marginRight: "auto" }}>Default items cannot be deleted</span>
+                <span style={{ fontSize: 11.5, color: C.ink, fontStyle: "italic", marginRight: "auto" }}>Default items cannot be deleted</span>
               )}
               <button onClick={closeDrawer} disabled={saving || deleting} style={{ padding: "9px 16px", borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: (saving || deleting) ? "not-allowed" : "pointer", fontFamily: FONT, border: "1px solid " + C.line, background: "#fff", color: C.ink, marginLeft: drawerMode === "add" ? "auto" : 0 }}>
                 Cancel
@@ -1288,7 +1288,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
         <div onClick={() => setConfirmDelete(false)} style={{ position: "fixed", inset: 0, background: "rgba(10,26,30,.42)", zIndex: 2000, display: "grid", placeItems: "center" }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 12, padding: "24px 28px", maxWidth: 460, width: "90%", boxShadow: "0 24px 60px rgba(0,0,0,.3)", fontFamily: FONT }}>
             <h3 style={{ fontSize: 16, fontWeight: 600, color: C.ink, marginBottom: 8 }}>Delete this {drawerCategory}?</h3>
-            <p style={{ fontSize: 13, color: C.muted, marginBottom: 20, lineHeight: 1.55 }}>
+            <p style={{ fontSize: 13, color: C.ink, marginBottom: 20, lineHeight: 1.55 }}>
               This will permanently remove <strong style={{ color: C.ink }}>{draft.name}</strong> from your catalog. Employees currently assigned to this {drawerCategory} will need to be reassigned. This cannot be undone.
             </p>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
@@ -1305,7 +1305,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
       )}
 
       {/* Footer note */}
-      <div style={{ marginTop: 24, padding: "18px 22px", background: "#fff", border: "1px solid " + C.line, borderRadius: 10, display: "flex", alignItems: "flex-start", gap: 14, fontSize: 12.5, color: C.muted, lineHeight: 1.6 }}>
+      <div style={{ marginTop: 24, padding: "18px 22px", background: "#fff", border: "1px solid " + C.line, borderRadius: 10, display: "flex", alignItems: "flex-start", gap: 14, fontSize: 12.5, color: C.ink, lineHeight: 1.6 }}>
         <div style={{ width: 32, height: 32, borderRadius: 8, background: C.surface2 || "#F4F6F8", color: "#2A3F45", display: "grid", placeItems: "center", flex: "0 0 32px" }}>
           <Shield size={16} strokeWidth={1.8} />
         </div>
