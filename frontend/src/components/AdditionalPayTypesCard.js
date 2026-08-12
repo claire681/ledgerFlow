@@ -125,7 +125,7 @@ export default function AdditionalPayTypesCard(props) {
     <div style={{ background: "#FFFFFF", border: "1px solid " + C.line, borderRadius: 12, marginBottom: 12, fontFamily: FONT }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", padding: "16px 20px", cursor: "pointer" }} onClick={onToggleOpen}>
-        <div style={{ width: 32, height: 32, borderRadius: 8, background: isOpen ? C.brandBg : "#E7EAF0", color: isOpen ? C.brandDark : "#000000", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginRight: 12 }}><Banknote size={16} /></div>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: isOpen ? C.brandBg : "#E7EAF0", color: isOpen ? C.brandDark : "#000000", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginRight: 12 }}></div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{section.title}</div>
           <div style={{ fontSize: 12, color: C.muted, fontWeight: 500, marginTop: 2 }}>Bonus, overtime, stat pay, and other earnings for this employee.</div>

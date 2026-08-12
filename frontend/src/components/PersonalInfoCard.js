@@ -71,7 +71,7 @@ export default function PersonalInfoCard(props) {
           display: "flex", alignItems: "center", justifyContent: "center", marginRight: 12,
           transition: "background 0.15s ease, color 0.15s ease",
         }}>
-          <User size={16} strokeWidth={isOpen ? 2 : 2.5} />
+          
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>Personal information</div>
@@ -101,21 +101,21 @@ export default function PersonalInfoCard(props) {
           </div>
 
           {/* Contact */}
-          <SubCard title="Contact" icon={<Mail size={13} strokeWidth={2.5} />}>
+          <SubCard title="Contact" icon={}>
             <Row label="Email" value={email} />
             <Row label="Phone" value={phone} mono />
             <Row label="Date of birth" value={dob} mono isLast />
           </SubCard>
 
           {/* Address */}
-          <SubCard title="Address" icon={<Home size={13} strokeWidth={2.5} />} rightTag={mailingSame ? "Mailing same" : "Different mailing"}>
+          <SubCard title="Address" icon={} rightTag={mailingSame ? "Mailing same" : "Different mailing"}>
             <Row label="Street" value={line2 ? (street + " " + line2) : street} />
             <Row label="City / Province" value={city && prov ? (city + " · " + prov) : (city || prov)} />
             <Row label="Postal code" value={postal} mono isLast />
           </SubCard>
 
           {/* Identification */}
-          <SubCard title="Identification" icon={<IdCard size={13} strokeWidth={2.5} />}>
+          <SubCard title="Identification" icon={}>
             <Row label="Social Insurance Number" value={sin} mono isLast />
           </SubCard>
         </div>

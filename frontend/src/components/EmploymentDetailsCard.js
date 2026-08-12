@@ -86,7 +86,7 @@ export default function EmploymentDetailsCard(props) {
           display: "flex", alignItems: "center", justifyContent: "center", marginRight: 12,
           transition: "background 0.15s ease, color 0.15s ease",
         }}>
-          <Briefcase size={16} strokeWidth={isOpen ? 2 : 2.5} />
+          
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>Employment details</div>
@@ -116,7 +116,7 @@ export default function EmploymentDetailsCard(props) {
           </div>
 
           {/* Role */}
-          <SubCard title="Role" icon={<User size={13} strokeWidth={2.5} />}>
+          <SubCard title="Role" icon={}>
             <Row label="Position title" value={title} />
             <Row label="Department" value={dept} />
             <Row label="Employee ID number" value={empId} mono />
@@ -124,7 +124,7 @@ export default function EmploymentDetailsCard(props) {
           </SubCard>
 
           {/* Dates */}
-          <SubCard title="Dates" icon={<Calendar size={13} strokeWidth={2.5} />}>
+          <SubCard title="Dates" icon={}>
             <Row label="Start date" value={startFmt} mono />
             <Row label="Tenure" value={tenure} isLast />
           </SubCard>

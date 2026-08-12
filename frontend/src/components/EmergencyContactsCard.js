@@ -46,7 +46,7 @@ export default function EmergencyContactsCard(props) {
           display: "flex", alignItems: "center", justifyContent: "center", marginRight: 12,
           transition: "background 0.15s ease, color 0.15s ease",
         }}>
-          <Phone size={16} strokeWidth={isOpen ? 2 : 2.5} />
+          
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>Emergency contacts</div>
@@ -113,7 +113,7 @@ function EmptyPrimary(props) {
   return (
     <div style={{ marginTop: 14, padding: "36px 22px", textAlign: "center", background: C.page, borderRadius: 10, border: "1px solid " + C.line }}>
       <div style={{ width: 44, height: 44, margin: "0 auto 12px", borderRadius: 10, background: C.chipBg, color: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Heart size={20} strokeWidth={2.5} />
+        
       </div>
       <div style={{ fontSize: 14.5, fontWeight: 700, color: C.ink, marginBottom: 4 }}>No emergency contact set</div>
       <div style={{ fontSize: 12.5, color: C.muted, fontWeight: 500, maxWidth: 380, margin: "0 auto 16px", lineHeight: 1.5 }}>
