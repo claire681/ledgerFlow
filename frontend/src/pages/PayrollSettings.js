@@ -1349,7 +1349,7 @@ export default function PayrollSettings() {
         <div style={{ width: 240, flex: "0 0 240px", background: "#fff", borderRight: "1px solid " + C.line, padding: "18px 12px", overflowY: "auto" }}>
           {Object.entries(grouped).map(([group, items]) => (
             <div key={group} style={{ marginBottom: 18 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.08em", textTransform: "uppercase", padding: "0 10px", marginBottom: 8 }}>{group}</div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: C.ink, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0 10px 10px", margin: "4px 0 10px", borderBottom: "1.5px solid " + C.ink }}>{group}</div>
               {items.map(s => {
                 const Icon = s.Icon;
                 const isActive = s.id === activeId;
