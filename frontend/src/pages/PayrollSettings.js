@@ -233,17 +233,17 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
   const config = COUNTRY_CONFIG[(intlMode ? (form.country || "US") : businessCountry || "CA").toUpperCase()] || COUNTRY_CONFIG.OTHER;
   const companyConfig = COUNTRY_CONFIG[(businessCountry || "CA").toUpperCase()] || COUNTRY_CONFIG.OTHER;
 
-  if (loading) return <div style={{ color: C.muted, fontSize: 13, padding: 20 }}>Loading work locations...</div>;
+  if (loading) return <div style={{ color: C.ink, fontSize: 13, padding: 20 }}>Loading work locations...</div>;
 
   return (
     <>
       <SectionHead title="Work locations" subtitle="Physical workplaces where your employees report. Used to determine provincial tax rates, workers' compensation, and where each employee's payroll is processed." />
 
       {/* Company context strip */}
-      <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 8, padding: "10px 14px", marginBottom: 18, display: "flex", alignItems: "center", gap: 11, fontSize: 12, color: C.muted }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase" }}>Your company</span>
+      <div style={{ background: "#fff", border: "1.5px solid " + C.ink, borderRadius: 8, padding: "10px 14px", marginBottom: 18, display: "flex", alignItems: "center", gap: 11, fontSize: 12, color: C.ink }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase" }}>Your company</span>
         <strong style={{ color: C.ink, fontWeight: 600 }}>{companyName || "Your company"}</strong>
-        <span style={{ fontSize: 11.5, color: C.muted }}>· {companyConfig.name}</span>
+        <span style={{ fontSize: 11.5, color: C.ink }}>· {companyConfig.name}</span>
         <span style={{ marginLeft: "auto", fontSize: 11.5, color: C.tealInk, cursor: "pointer", fontWeight: 500 }} onClick={() => window.location.href = "/payroll/settings/company"}>Change in Company details ›</span>
       </div>
 
@@ -262,12 +262,12 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase" }}>All locations</span>
-          <span style={{ fontSize: 12, color: C.faint, fontVariantNumeric: "tabular-nums" }}>{filtered.length} of {locations.length}</span>
+          <span style={{ fontSize: 12, color: C.ink, fontVariantNumeric: "tabular-nums" }}>{filtered.length} of {locations.length}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ position: "relative" }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: C.faint, pointerEvents: "none" }}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search locations..." style={{ padding: "8px 12px 8px 36px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: "inherit", fontSize: 12.5, color: C.ink, width: 220, outline: "none", background: "#fff" }} />
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: C.ink, pointerEvents: "none" }}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search locations..." style={{ padding: "8px 12px 8px 36px", border: "1.5px solid " + C.ink, borderRadius: 6, fontFamily: "inherit", fontSize: 12.5, color: C.ink, width: 220, outline: "none", background: "#fff" }} />
           </div>
           <button onClick={openNew} style={{ background: C.ink, color: "#fff", border: 0, borderRadius: 6, padding: "8px 14px", fontWeight: 500, fontSize: 13, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 7, fontFamily: "inherit" }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>
@@ -278,28 +278,28 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
 
       {/* Empty state OR table */}
       {locations.length === 0 ? (
-        <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, padding: "48px 24px", textAlign: "center", marginBottom: 24 }}>
-          <div style={{ width: 56, height: 56, borderRadius: 13, background: C.surface2 || "#F4F6F8", color: C.slate700 || "#2A3F45", display: "grid", placeItems: "center", margin: "0 auto 18px", border: "1px solid " + C.line }}>
+        <div style={{ background: "#fff", border: "1.5px solid " + C.ink, borderRadius: 10, padding: "48px 24px", textAlign: "center", marginBottom: 24 }}>
+          <div style={{ width: 56, height: 56, borderRadius: 13, background: C.surface2 || "#F4F6F8", color: C.slate700 || "#2A3F45", display: "grid", placeItems: "center", margin: "0 auto 18px", border: "1.5px solid " + C.ink }}>
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h.01M15 15h.01"/><path d="M10 21v-4h4v4"/></svg>
           </div>
           <h3 style={{ fontSize: 15, fontWeight: 600, color: C.ink, marginBottom: 6, letterSpacing: "-0.005em" }}>No work locations yet</h3>
-          <p style={{ fontSize: 12.5, color: C.muted, maxWidth: 420, margin: "0 auto 18px", lineHeight: 1.6 }}>Add the physical address where employees report. Most businesses have one location to start. You can add more as you grow.</p>
+          <p style={{ fontSize: 12.5, color: C.ink, maxWidth: 420, margin: "0 auto 18px", lineHeight: 1.6 }}>Add the physical address where employees report. Most businesses have one location to start. You can add more as you grow.</p>
           <button onClick={openNew} style={{ background: C.ink, color: "#fff", border: 0, borderRadius: 6, padding: "9px 18px", fontWeight: 500, fontSize: 13, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 7, fontFamily: "inherit" }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>
             Add your first location
           </button>
         </div>
       ) : (
-        <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 8, overflow: "hidden", marginBottom: 24 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 280px 140px 130px 60px", gap: 14, padding: "11px 18px", background: C.surface2 || "#F4F6F8", borderBottom: "1px solid " + C.line, fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        <div style={{ background: "#fff", border: "1.5px solid " + C.ink, borderRadius: 8, overflow: "hidden", marginBottom: 24 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 280px 140px 130px 60px", gap: 14, padding: "11px 18px", background: C.surface2 || "#F4F6F8", borderBottom: "1.5px solid " + C.ink, fontSize: 10.5, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase" }}>
             <div>Location</div><div>Address</div><div>Region</div><div>Headcount</div><div></div>
           </div>
           {filtered.map(loc => {
             const isIntl = loc.is_international;
             return (
-              <div key={loc.id} onClick={() => openEdit(loc)} style={{ display: "grid", gridTemplateColumns: "1fr 280px 140px 130px 60px", gap: 14, padding: "14px 18px", borderBottom: "1px solid " + C.lineSoft, alignItems: "center", cursor: "pointer", background: isIntl ? "rgba(156,90,15,0.03)" : "#fff" }}>
+              <div key={loc.id} onClick={() => openEdit(loc)} style={{ display: "grid", gridTemplateColumns: "1fr 280px 140px 130px 60px", gap: 14, padding: "14px 18px", borderBottom: "1.5px solid " + C.inkSoft, alignItems: "center", cursor: "pointer", background: isIntl ? "rgba(156,90,15,0.03)" : "#fff" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: C.surface2 || "#F4F6F8", color: "#1A2D32", display: "grid", placeItems: "center", flex: "0 0 36px", border: "1px solid " + C.line }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: C.surface2 || "#F4F6F8", color: "#1A2D32", display: "grid", placeItems: "center", flex: "0 0 36px", border: "1.5px solid " + C.ink }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h.01M15 15h.01"/><path d="M10 21v-4h4v4"/></svg>
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
@@ -307,24 +307,24 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
                       {loc.name || "(Unnamed location)"}
                       {loc.is_primary && <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", padding: "2px 6px", borderRadius: 3, background: C.ink, color: "#fff" }}>Primary</span>}
                     </div>
-                    <div style={{ fontSize: 11.5, color: C.muted, fontWeight: 500 }}>Work location</div>
+                    <div style={{ fontSize: 11.5, color: C.ink, fontWeight: 500 }}>Work location</div>
                   </div>
                 </div>
-                <div style={{ fontSize: 12.5, color: C.text, lineHeight: 1.5, minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, color: C.ink, lineHeight: 1.5, minWidth: 0 }}>
                   <span style={{ display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{loc.street_address || ""}{loc.suite ? ", " + loc.suite : ""}</span>
-                  <span style={{ display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: C.muted, fontSize: 11.5 }}>{loc.municipality || ""}{loc.province ? ", " + loc.province : ""} {loc.postal_code || ""}</span>
+                  <span style={{ display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: C.ink, fontSize: 11.5 }}>{loc.municipality || ""}{loc.province ? ", " + loc.province : ""} {loc.postal_code || ""}</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 12.5, color: C.text, fontWeight: 500, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 12.5, color: C.ink, fontWeight: 500, minWidth: 0 }}>
                   
                   <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{loc.province || ""}{isIntl && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", color: "#9C5A0F", background: "#FBF1DD", padding: "1px 5px", borderRadius: 3, marginLeft: 6 }}>INTL</span>}</span>
                 </div>
                 
                 <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: C.faint, flex: "0 0 14px" }}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: C.ink, flex: "0 0 14px" }}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
                   {(loc.assigned_employees || []).length} {(loc.assigned_employees || []).length === 1 ? "employee" : "employees"}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-                  <button style={{ background: "none", border: "1px solid transparent", borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.muted, display: "grid", placeItems: "center" }} title="Edit">
+                  <button style={{ background: "none", border: "1px solid transparent", borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.ink, display: "grid", placeItems: "center" }} title="Edit">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                   </button>
                 </div>
@@ -339,9 +339,9 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
         <>
           <div onClick={closeDrawer} style={{ position: "fixed", inset: 0, background: "rgba(10,26,30,.42)", zIndex: 1000 }} />
           <div style={{ position: "fixed", top: 0, right: 0, height: "100vh", width: "min(520px, 96vw)", background: "#fff", boxShadow: "-12px 0 40px rgba(10,26,30,.18)", display: "flex", flexDirection: "column", zIndex: 1001 }}>
-            <div style={{ padding: "18px 24px", borderBottom: "1px solid " + C.line, display: "flex", alignItems: "center", justifyContent: "space-between", flex: "0 0 auto" }}>
+            <div style={{ padding: "18px 24px", borderBottom: "1.5px solid " + C.ink, display: "flex", alignItems: "center", justifyContent: "space-between", flex: "0 0 auto" }}>
               <h3 style={{ fontSize: 16, fontWeight: 600, color: C.ink }}>{editingId ? "Edit work location" : "Add work location"}</h3>
-              <button onClick={closeDrawer} style={{ background: "none", border: "1px solid " + C.line, borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.muted, display: "grid", placeItems: "center" }}>
+              <button onClick={closeDrawer} style={{ background: "none", border: "1.5px solid " + C.ink, borderRadius: 5, width: 28, height: 28, cursor: "pointer", color: C.ink, display: "grid", placeItems: "center" }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>
               </button>
             </div>
@@ -349,28 +349,28 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
             <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px", minHeight: 0 }}>
 
               <div style={{ marginBottom: 24 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Basics</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12, paddingBottom: 8, borderBottom: "1.5px solid " + C.inkSoft }}>Basics</div>
                 <div style={{ marginBottom: 18 }}>
                   <label style={{ fontSize: 12.5, fontWeight: 600, color: C.ink, display: "block", marginBottom: 6 }}>Location name <span style={{ color: "#B53B2E", fontSize: 11, fontWeight: 500 }}>required</span></label>
-                  <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="For example, Edmonton head office" style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", outline: "none" }} />
-                  <div style={{ fontSize: 11.5, color: C.muted, marginTop: 6, lineHeight: 1.5 }}>A friendly name your team will recognize.</div>
+                  <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="For example, Edmonton head office" style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1.5px solid " + C.ink, borderRadius: 6, background: "#fff", outline: "none" }} />
+                  <div style={{ fontSize: 11.5, color: C.ink, marginTop: 6, lineHeight: 1.5 }}>A friendly name your team will recognize.</div>
                 </div>
               </div>
 
               <div style={{ marginBottom: 24 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Address</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12, paddingBottom: 8, borderBottom: "1.5px solid " + C.inkSoft }}>Address</div>
 
                 {/* Country indicator (default) or override panel */}
                 {!intlMode ? null : (
                   <div style={{ background: "#FBF1DD", border: "1px solid #E8C896", borderRadius: 8, padding: "14px 16px", marginBottom: 18 }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                       <strong style={{ fontSize: 12.5, color: "#9C5A0F", fontWeight: 600 }}>International location</strong>
-                      <span onClick={() => { setIntlMode(false); setForm({ ...form, country: businessCountry, province: "" }); }} style={{ fontSize: 11, color: C.muted, cursor: "pointer" }}>Cancel override</span>
+                      <span onClick={() => { setIntlMode(false); setForm({ ...form, country: businessCountry, province: "" }); }} style={{ fontSize: 11, color: C.ink, cursor: "pointer" }}>Cancel override</span>
                     </div>
-                    <div style={{ fontSize: 11.5, color: C.text, lineHeight: 1.55, marginBottom: 12 }}>
+                    <div style={{ fontSize: 11.5, color: C.ink, lineHeight: 1.55, marginBottom: 12 }}>
                       Use for locations outside <strong>{companyConfig.name}</strong>. Address fields will adapt to the chosen country's format and tax jurisdiction.
                     </div>
-                    <select value={form.country || "US"} onChange={(e) => setForm({ ...form, country: e.target.value, province: "" })} style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "9px 12px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", outline: "none" }}>
+                    <select value={form.country || "US"} onChange={(e) => setForm({ ...form, country: e.target.value, province: "" })} style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "9px 12px", border: "1.5px solid " + C.ink, borderRadius: 6, background: "#fff", outline: "none" }}>
                       {Object.keys(COUNTRY_CONFIG).filter(k => k !== (businessCountry || "CA").toUpperCase()).map(k => <option key={k} value={k}>{COUNTRY_CONFIG[k].name}</option>)}
                     </select>
                   </div>
@@ -378,57 +378,57 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
 
                 <div style={{ marginBottom: 18 }}>
                   <label style={{ fontSize: 12.5, fontWeight: 600, color: C.ink, display: "block", marginBottom: 6 }}>Street address <span style={{ color: "#B53B2E", fontSize: 11, fontWeight: 500 }}>required</span></label>
-                  <input type="text" value={form.street_address} onChange={(e) => setForm({ ...form, street_address: e.target.value })} placeholder={config.streetPlaceholder} style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", outline: "none" }} />
+                  <input type="text" value={form.street_address} onChange={(e) => setForm({ ...form, street_address: e.target.value })} placeholder={config.streetPlaceholder} style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1.5px solid " + C.ink, borderRadius: 6, background: "#fff", outline: "none" }} />
                 </div>
 
                 <div style={{ marginBottom: 18 }}>
                   <label style={{ fontSize: 12.5, fontWeight: 600, color: C.ink, display: "block", marginBottom: 6 }}>Apt, suite, or unit (optional)</label>
-                  <input type="text" value={form.suite} onChange={(e) => setForm({ ...form, suite: e.target.value })} placeholder="Suite 200" style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", outline: "none" }} />
+                  <input type="text" value={form.suite} onChange={(e) => setForm({ ...form, suite: e.target.value })} placeholder="Suite 200" style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1.5px solid " + C.ink, borderRadius: 6, background: "#fff", outline: "none" }} />
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 18 }}>
                   <div>
                     <label style={{ fontSize: 12.5, fontWeight: 600, color: C.ink, display: "block", marginBottom: 6 }}>City <span style={{ color: "#B53B2E", fontSize: 11, fontWeight: 500 }}>required</span></label>
-                    <input type="text" value={form.municipality} onChange={(e) => setForm({ ...form, municipality: e.target.value })} placeholder={config.cityPlaceholder} style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", outline: "none" }} />
+                    <input type="text" value={form.municipality} onChange={(e) => setForm({ ...form, municipality: e.target.value })} placeholder={config.cityPlaceholder} style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1.5px solid " + C.ink, borderRadius: 6, background: "#fff", outline: "none" }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 12.5, fontWeight: 600, color: C.ink, display: "block", marginBottom: 6 }}>{config.subdivLabel} <span style={{ color: "#B53B2E", fontSize: 11, fontWeight: 500 }}>required</span></label>
                     {config.subdivisions ? (
-                      <select value={form.province} onChange={(e) => setForm({ ...form, province: e.target.value })} style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", outline: "none" }}>
+                      <select value={form.province} onChange={(e) => setForm({ ...form, province: e.target.value })} style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1.5px solid " + C.ink, borderRadius: 6, background: "#fff", outline: "none" }}>
                         <option value="">Select...</option>
                         {config.subdivisions.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
                     ) : (
-                      <input type="text" value={form.province} onChange={(e) => setForm({ ...form, province: e.target.value })} placeholder="Enter region or state" style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", outline: "none" }} />
+                      <input type="text" value={form.province} onChange={(e) => setForm({ ...form, province: e.target.value })} placeholder="Enter region or state" style={{ width: "100%", fontFamily: "inherit", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1.5px solid " + C.ink, borderRadius: 6, background: "#fff", outline: "none" }} />
                     )}
                   </div>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
                   <div>
-                    <label style={{ fontSize: 12.5, fontWeight: 600, color: C.ink, display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>{config.postalLabel} <span style={{ color: "#B53B2E", fontSize: 11, fontWeight: 500 }}>required</span> <span style={{ fontSize: 10.5, color: C.faint, fontFamily: "JetBrains Mono, monospace", background: C.surface2 || "#F4F6F8", padding: "2px 6px", borderRadius: 4, fontWeight: 500 }}>{config.postalFormat}</span></label>
-                    <input type="text" value={form.postal_code} onChange={(e) => setForm({ ...form, postal_code: e.target.value })} placeholder={config.postalPlaceholder} style={{ width: "100%", fontFamily: "JetBrains Mono, monospace", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", outline: "none" }} />
+                    <label style={{ fontSize: 12.5, fontWeight: 600, color: C.ink, display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>{config.postalLabel} <span style={{ color: "#B53B2E", fontSize: 11, fontWeight: 500 }}>required</span> <span style={{ fontSize: 10.5, color: C.ink, fontFamily: "JetBrains Mono, monospace", background: C.surface2 || "#F4F6F8", padding: "2px 6px", borderRadius: 4, fontWeight: 500 }}>{config.postalFormat}</span></label>
+                    <input type="text" value={form.postal_code} onChange={(e) => setForm({ ...form, postal_code: e.target.value })} placeholder={config.postalPlaceholder} style={{ width: "100%", fontFamily: "JetBrains Mono, monospace", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1.5px solid " + C.ink, borderRadius: 6, background: "#fff", outline: "none" }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 12.5, fontWeight: 600, color: C.ink, display: "block", marginBottom: 6 }}>Phone (optional)</label>
-                    <input type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder={config.phonePlaceholder} style={{ width: "100%", fontFamily: "JetBrains Mono, monospace", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1px solid " + C.line, borderRadius: 6, background: "#fff", outline: "none" }} />
+                    <input type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder={config.phonePlaceholder} style={{ width: "100%", fontFamily: "JetBrains Mono, monospace", fontSize: 13.5, color: C.ink, padding: "10px 12px", border: "1.5px solid " + C.ink, borderRadius: 6, background: "#fff", outline: "none" }} />
                   </div>
                 </div>
 
                 {/* International override link (only shown if not already in intlMode) */}
                 {!intlMode && (
-                  <div style={{ textAlign: "center", marginTop: 14, padding: "10px 0", fontSize: 11.5, color: C.muted }}>
+                  <div style={{ textAlign: "center", marginTop: 14, padding: "10px 0", fontSize: 11.5, color: C.ink }}>
                     Located outside <strong style={{ color: C.ink }}>{companyConfig.name}</strong>? <span onClick={() => { if (editingId) { setConfirmIntlChange(true); } else { const newCountry = (businessCountry || "CA").toUpperCase() === "CA" ? "US" : "CA"; setIntlMode(true); setForm({ ...form, country: newCountry, province: "" }); } }} style={{ color: C.tealInk, cursor: "pointer", fontWeight: 500 }}>Add as international location ›</span>
                   </div>
                 )}
               </div>
 
               <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid " + C.lineSoft }}>Settings</div>
-                <div style={{ background: C.surface2 || "#F4F6F8", border: "1px solid " + C.line, borderRadius: 8, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12, paddingBottom: 8, borderBottom: "1.5px solid " + C.inkSoft }}>Settings</div>
+                <div style={{ background: C.surface2 || "#F4F6F8", border: "1.5px solid " + C.ink, borderRadius: 8, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, marginBottom: 2 }}>Set as primary location</div>
-                    <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.5 }}>The primary location is used when no other location is assigned to an employee.</div>
+                    <div style={{ fontSize: 11.5, color: C.ink, lineHeight: 1.5 }}>The primary location is used when no other location is assigned to an employee.</div>
                   </div>
                   <div onClick={() => setForm({ ...form, is_primary: !form.is_primary })} style={{ width: 38, height: 22, background: form.is_primary ? C.ink : C.line, borderRadius: 11, position: "relative", cursor: "pointer", flex: "0 0 38px", transition: ".18s" }}>
                     <div style={{ width: 16, height: 16, background: "#fff", borderRadius: "50%", position: "absolute", top: 3, left: form.is_primary ? 19 : 3, boxShadow: "0 1px 2px rgba(0,0,0,.15)", transition: ".18s" }} />
@@ -438,14 +438,14 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
 
             </div>
 
-            <div style={{ padding: "14px 24px", borderTop: "1px solid " + C.line, background: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flex: "0 0 auto" }}>
+            <div style={{ padding: "14px 24px", borderTop: "1.5px solid " + C.ink, background: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flex: "0 0 auto" }}>
               {editingId && (
-                <button onClick={() => setConfirmDelete(editingId)} style={{ background: "#fff", color: "#B53B2E", border: "1px solid " + C.line, borderRadius: 6, padding: "9px 14px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6, marginRight: "auto" }}>
+                <button onClick={() => setConfirmDelete(editingId)} style={{ background: "#fff", color: "#B53B2E", border: "1.5px solid " + C.ink, borderRadius: 6, padding: "9px 14px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6, marginRight: "auto" }}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
                   Delete
                 </button>
               )}
-              <button onClick={closeDrawer} style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "9px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit", marginLeft: editingId ? 0 : "auto" }}>Cancel</button>
+              <button onClick={closeDrawer} style={{ background: "#fff", color: C.ink, border: "1.5px solid " + C.ink, borderRadius: 6, padding: "9px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit", marginLeft: editingId ? 0 : "auto" }}>Cancel</button>
               <button onClick={onSave} disabled={saving} style={{ background: C.ink, color: "#fff", border: 0, borderRadius: 6, padding: "9px 20px", fontWeight: 500, fontSize: 13, cursor: saving ? "wait" : "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 7, opacity: saving ? 0.7 : 1 }}>
                 {saving ? "Saving..." : "Save location"}
                 {!saving && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M20 6L9 17l-5-5"/></svg>}
@@ -459,9 +459,9 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
         <div onClick={() => setConfirmIntlChange(false)} style={{ position: "fixed", inset: 0, background: "rgba(10,26,30,.42)", zIndex: 2000, display: "grid", placeItems: "center" }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 12, padding: "24px 28px", maxWidth: 460, width: "90%", boxShadow: "0 24px 60px rgba(0,0,0,.3)" }}>
             <h3 style={{ fontSize: 16, fontWeight: 600, color: C.ink, marginBottom: 8 }}>Change this location to international?</h3>
-            <p style={{ fontSize: 13, color: C.muted, marginBottom: 20, lineHeight: 1.55 }}>You are about to change this location from {companyConfig.name} to a different country. The province/state and postal code will need to be re-entered to match the new country.</p>
+            <p style={{ fontSize: 13, color: C.ink, marginBottom: 20, lineHeight: 1.55 }}>You are about to change this location from {companyConfig.name} to a different country. The province/state and postal code will need to be re-entered to match the new country.</p>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button onClick={() => setConfirmIntlChange(false)} style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "9px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Keep as {companyConfig.name}</button>
+              <button onClick={() => setConfirmIntlChange(false)} style={{ background: "#fff", color: C.ink, border: "1.5px solid " + C.ink, borderRadius: 6, padding: "9px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Keep as {companyConfig.name}</button>
               <button onClick={() => { const newCountry = (businessCountry || "CA").toUpperCase() === "CA" ? "US" : "CA"; setIntlMode(true); setForm({ ...form, country: newCountry, province: "", postal_code: "" }); setConfirmIntlChange(false); }} style={{ background: C.ink, color: "#fff", border: 0, borderRadius: 6, padding: "9px 20px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Yes, change to international</button>
             </div>
           </div>
@@ -472,9 +472,9 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
         <div onClick={() => setConfirmDelete(null)} style={{ position: "fixed", inset: 0, background: "rgba(10,26,30,.42)", zIndex: 2000, display: "grid", placeItems: "center" }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 12, padding: "24px 28px", maxWidth: 420, width: "90%", boxShadow: "0 24px 60px rgba(0,0,0,.3)" }}>
             <h3 style={{ fontSize: 16, fontWeight: 600, color: C.ink, marginBottom: 8 }}>Delete this location?</h3>
-            <p style={{ fontSize: 13, color: C.muted, marginBottom: 20, lineHeight: 1.55 }}>Any employees assigned to this location will need to be reassigned. This action cannot be undone.</p>
+            <p style={{ fontSize: 13, color: C.ink, marginBottom: 20, lineHeight: 1.55 }}>Any employees assigned to this location will need to be reassigned. This action cannot be undone.</p>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ background: "#fff", color: C.text, border: "1px solid " + C.line, borderRadius: 6, padding: "9px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ background: "#fff", color: C.ink, border: "1.5px solid " + C.ink, borderRadius: 6, padding: "9px 16px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
               <button onClick={() => onDelete(confirmDelete)} style={{ background: "#B53B2E", color: "#fff", border: 0, borderRadius: 6, padding: "9px 20px", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Delete location</button>
             </div>
           </div>
