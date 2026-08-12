@@ -781,9 +781,7 @@ function BasePaySectionCard({ section, isOpen, onToggleOpen, employee, onEditCli
   return (
     <div style={{ background: "#FFFFFF", border: "1px solid " + C.line, borderRadius: 12, overflow: "hidden", marginBottom: 12 }}>
       <div onClick={onToggleOpen} style={{ display: "flex", alignItems: "center", gap: 13, padding: "18px 22px", cursor: "pointer" }}>
-        <span style={{ width: 30, height: 30, borderRadius: 9, background: isOpen ? C.tealSoft : "#E7EAF0", color: isOpen ? C.tealInk : "#000000", display: "grid", placeItems: "center", flex: "0 0 30px", transition: "background 0.15s ease, color 0.15s ease" }}>
-          
-        </span>
+        
         <h3 style={{ flex: 1, fontSize: 16, fontWeight: 700, color: C.ink }}>{section.title}</h3>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: pillStyle.bg, color: pillStyle.fg }}>
           {pillStyle.label}
@@ -996,9 +994,7 @@ function CompensationSectionCard({ section, isOpen, onToggleOpen, employeeId }) 
     <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 15, boxShadow: "0 1px 2px rgba(16,26,43,0.04)", overflow: "hidden" }}>
       <div onClick={onToggleOpen}
            style={{ display: "flex", alignItems: "center", gap: 13, padding: "18px 22px", cursor: "pointer" }}>
-        <span style={{ width: 30, height: 30, borderRadius: 9, background: C.tealSoft, color: C.tealInk, display: "grid", placeItems: "center", flex: "0 0 30px" }}>
-          
-        </span>
+        
         <h3 style={{ flex: 1, fontSize: 16, fontWeight: 700, color: C.ink }}>{section.title}</h3>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: (earnings.length + deductions.length) > 0 ? C.tealSoft : C.amberSoft, color: (earnings.length + deductions.length) > 0 ? C.tealInk : C.amber }}>
           {(earnings.length + deductions.length) === 0 ? "Not started" : (earnings.length + " earning" + (earnings.length === 1 ? "" : "s") + " · " + deductions.length + " deduction" + (deductions.length === 1 ? "" : "s"))}
