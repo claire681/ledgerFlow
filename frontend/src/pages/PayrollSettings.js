@@ -918,20 +918,20 @@ function PayTypesSection({ businessCountry = "CA" }) {
       {/* Toolbar */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, gap: 14 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>All {activeTab === "earnings" ? "earnings" : "deductions"}</span>
-          <span style={{ fontSize: 12, color: C.muted, fontVariantNumeric: "tabular-nums" }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>All {activeTab === "earnings" ? "earnings" : "deductions"}</span>
+          <span style={{ fontSize: 12, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>
             {activeTab === "earnings" ? filteredPayTypes.length : filteredDeductions.length} items
           </span>
         </div>
         <div style={{ position: "relative" }}>
           <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: C.faint, pointerEvents: "none" }} />
-          <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ padding: "8px 12px 8px 36px", border: "1px solid " + C.line, borderRadius: 6, fontFamily: FONT, fontSize: 12.5, color: C.ink, width: 240, outline: "none", background: "#fff" }} />
+          <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ padding: "9px 12px 9px 36px", border: "1.5px solid " + C.ink, borderRadius: 8, fontFamily: FONT, fontSize: 13, color: C.ink, fontWeight: 500, width: 240, outline: "none", background: "#fff" }} />
         </div>
       </div>
 
       {/* Table */}
       <div style={{ background: "#fff", border: "1px solid " + C.line, borderRadius: 10, overflow: "hidden" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.2fr 56px", gap: 18, padding: "13px 22px", background: "#FCFCFD", borderBottom: "1px solid " + C.line, fontSize: 10.5, fontWeight: 700, color: C.faint, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.2fr 56px", gap: 18, padding: "13px 22px", background: "#F4F6F8", borderBottom: "1px solid " + C.line, fontSize: 11, fontWeight: 700, color: C.ink, letterSpacing: "0.08em", textTransform: "uppercase" }}>
           <div>Name</div>
           <div>Calculation</div>
           <div>Tax treatment</div>
@@ -947,7 +947,7 @@ function PayTypesSection({ businessCountry = "CA" }) {
                 <div style={{ width: 8, height: 8, borderRadius: 2, background: tax.nonTax ? C.faint : "#0D8050", flex: "0 0 8px" }}></div>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: C.ink, marginBottom: 2, letterSpacing: "-0.005em" }}>{pt.name}</div>
-                  <div style={{ fontSize: 12, color: C.muted, fontWeight: 400 }}>{pt.description || (pt.is_default ? "" : "Custom")}</div>
+                  <div style={{ fontSize: 12, color: C.ink, fontWeight: 500 }}>{pt.description || (pt.is_default ? "" : "Custom")}</div>
                 </div>
               </div>
               <div style={{ fontSize: 13, color: C.ink, fontWeight: 500, fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums" }}>
