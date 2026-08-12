@@ -116,7 +116,7 @@ export default function EmploymentDetailsCard(props) {
           </div>
 
           {/* Role */}
-          <SubCard title="Role" icon={}>
+          <SubCard title="Role">
             <Row label="Position title" value={title} />
             <Row label="Department" value={dept} />
             <Row label="Employee ID number" value={empId} mono />
@@ -124,7 +124,7 @@ export default function EmploymentDetailsCard(props) {
           </SubCard>
 
           {/* Dates */}
-          <SubCard title="Dates" icon={}>
+          <SubCard title="Dates">
             <Row label="Start date" value={startFmt} mono />
             <Row label="Tenure" value={tenure} isLast />
           </SubCard>

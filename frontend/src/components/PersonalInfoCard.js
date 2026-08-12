@@ -101,21 +101,21 @@ export default function PersonalInfoCard(props) {
           </div>
 
           {/* Contact */}
-          <SubCard title="Contact" icon={}>
+          <SubCard title="Contact">
             <Row label="Email" value={email} />
             <Row label="Phone" value={phone} mono />
             <Row label="Date of birth" value={dob} mono isLast />
           </SubCard>
 
           {/* Address */}
-          <SubCard title="Address" icon={} rightTag={mailingSame ? "Mailing same" : "Different mailing"}>
+          <SubCard title="Address" rightTag={mailingSame ? "Mailing same" : "Different mailing"}>
             <Row label="Street" value={line2 ? (street + " " + line2) : street} />
             <Row label="City / Province" value={city && prov ? (city + " · " + prov) : (city || prov)} />
             <Row label="Postal code" value={postal} mono isLast />
           </SubCard>
 
           {/* Identification */}
-          <SubCard title="Identification" icon={}>
+          <SubCard title="Identification">
             <Row label="Social Insurance Number" value={sin} mono isLast />
           </SubCard>
         </div>
