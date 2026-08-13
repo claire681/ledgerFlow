@@ -120,9 +120,7 @@ function SubCard(props) {
   return (
     <div style={{ marginTop: 14, border: "1px solid " + C.line, borderRadius: 10, padding: "4px 18px 8px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 0 12px", borderBottom: "1px solid " + C.line }}>
-        <div style={{ width: 26, height: 26, borderRadius: 7, background: C.chipBg, color: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          {props.icon}
-        </div>
+        
         <span style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{props.title}</span>
         {props.rightTag && (
           <span style={{ marginLeft: "auto", padding: "3px 9px", background: C.brandBg, color: C.brandDark, borderRadius: 6, fontSize: 11, fontWeight: 700 }}>{props.rightTag}</span>
