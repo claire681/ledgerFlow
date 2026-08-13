@@ -305,8 +305,8 @@ export default function EmployeesList() {
 
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18, gap: 16, flexWrap: "wrap" }}>
           <div>
-            <h1 style={{ fontSize: 26, fontWeight: 700, color: TEXT_INK, margin: "0 0 4px", letterSpacing: "-0.02em" }}>Employees</h1>
-            <div style={{ fontSize: 13.5, color: TEXT_SECONDARY }}>Manage your team's profiles, pay, tax info, credentials, and direct deposit.</div>
+            <h1 style={{ fontSize: 34, fontWeight: 700, color: TEXT_INK, margin: "0 0 6px", letterSpacing: "-0.02em" }}>Employees</h1>
+            <div style={{ fontSize: 14, color: TEXT_INK, fontWeight: 500 }}>Manage your team's profiles, pay, tax info, credentials, and direct deposit.</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -330,9 +330,9 @@ export default function EmployeesList() {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 4, borderBottom: "1px solid " + BORDER, marginBottom: 18 }}>
-          <div onClick={() => setActiveTab("list")} style={{ padding: "9px 14px", fontSize: 14, fontWeight: 600, color: activeTab === "list" ? BRAND_DARK : TEXT_SECONDARY, cursor: "pointer", borderBottom: activeTab === "list" ? "2px solid " + BRAND : "2px solid transparent", marginBottom: -1 }}>List</div>
-          <div onClick={() => navigate("/payroll/employees/directory")} style={{ padding: "9px 14px", fontSize: 14, fontWeight: 600, color: activeTab === "directory" ? BRAND_DARK : TEXT_SECONDARY, cursor: "pointer", borderBottom: activeTab === "directory" ? "2px solid " + BRAND : "2px solid transparent", marginBottom: -1 }}>Directory</div>
+        <div style={{ display: "flex", gap: 4, borderBottom: "1.5px solid " + TEXT_INK, marginBottom: 18 }}>
+          <div onClick={() => setActiveTab("list")} style={{ padding: "9px 14px", fontSize: 14, fontWeight: 600, color: activeTab === "list" ? BRAND_DARK : TEXT_SECONDARY, cursor: "pointer", borderBottom: activeTab === "list" ? "3px solid " + TEXT_INK : "3px solid transparent", marginBottom: -1 }}>List</div>
+          <div onClick={() => navigate("/payroll/employees/directory")} style={{ padding: "9px 14px", fontSize: 14, fontWeight: 600, color: activeTab === "directory" ? BRAND_DARK : TEXT_SECONDARY, cursor: "pointer", borderBottom: activeTab === "directory" ? "3px solid " + TEXT_INK : "3px solid transparent", marginBottom: -1 }}>Directory</div>
         </div>
 
         <div style={{ background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 10, padding: "13px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
@@ -348,7 +348,7 @@ export default function EmployeesList() {
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find an employee" style={{ flex: 1, border: "none", outline: "none", fontFamily: "inherit", fontSize: 14, color: TEXT_PRIMARY, background: "transparent" }} />
           </div>
           <div ref={activeMenuRef} style={{ position: "relative" }}>
-            <button onClick={() => setActiveMenuOpen(!activeMenuOpen)} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, padding: "9px 13px", border: "0.5px solid " + BORDER, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}>{activeFilter} <ChevronDown size={14} /></button>
+            <button onClick={() => setActiveMenuOpen(!activeMenuOpen)} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, padding: "9px 13px", border: "1.5px solid " + TEXT_INK, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap", fontWeight: 700 }}>{activeFilter} <ChevronDown size={18} strokeWidth={2.5} /></button>
             {activeMenuOpen && (
               <div style={{ position: "absolute", top: 44, left: 0, background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", padding: 4, minWidth: 210, zIndex: 50 }}>
                 {["Active employees", "Inactive employees", "All employees"].map(opt => (
@@ -360,14 +360,14 @@ export default function EmployeesList() {
               </div>
             )}
           </div>
-          <span onClick={togglePrivacy} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, cursor: "pointer" }}>
+          <span onClick={togglePrivacy} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 700, color: TEXT_INK, cursor: "pointer", padding: "9px 14px", border: "1.5px solid " + TEXT_INK, borderRadius: 9, background: BG_CARD }}>
             <span style={{ width: 38, height: 22, borderRadius: 20, background: privacy ? BRAND : BORDER, position: "relative", transition: "0.15s" }}>
-              <span style={{ position: "absolute", top: 2, left: privacy ? 18 : 2, width: 18, height: 18, borderRadius: "50%", background: "white", transition: "0.15s" }} />
+              <span style={{ position: "absolute", top: 2, left: privacy ? 18 : 2, width: 18, height: 18, borderRadius: "50%", background: "white", boxShadow: "0 1px 2px rgba(0,0,0,0.2)", transition: "0.15s" }} />
             </span>
             Privacy
           </span>
-          <button onClick={() => navigate("/payroll/items")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, padding: "9px 13px", border: "0.5px solid " + BORDER, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}><SlidersHorizontal size={16} />Payroll items</button>
-          <button onClick={() => navigate("/payroll/employees/add")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: BRAND_DARK, padding: "9px 13px", border: "0.5px solid " + BRAND, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap" }}><UserPlus size={16} />Add employee</button>
+          <button onClick={() => navigate("/payroll/items")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, padding: "9px 13px", border: "1.5px solid " + TEXT_INK, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap", fontWeight: 700 }}><ListOrdered size={16} />Payroll items</button>
+          <button onClick={() => navigate("/payroll/employees/add")} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 700, color: "#fff", padding: "9px 16px", border: 0, borderRadius: 9, cursor: "pointer", background: TEXT_INK, fontFamily: "inherit", whiteSpace: "nowrap" }}><UserPlus size={16} />Add employee</button>
         </div>
 
         {error && (
