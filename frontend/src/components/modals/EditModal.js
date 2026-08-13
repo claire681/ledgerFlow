@@ -79,13 +79,21 @@ export default function EditModal(props) {
     };
   }, [isOpen, hasUnsavedChanges]);
 
+  const [showDiscardConfirm, setShowDiscardConfirm] = React.useState(false);
   function handleClose() {
     if (saving) return;
     if (hasUnsavedChanges) {
-      const confirmed = window.confirm("You have unsaved changes. Discard and close?");
-      if (!confirmed) return;
+      setShowDiscardConfirm(true);
+      return;
     }
     onClose && onClose();
+  }
+  function confirmDiscardClose() {
+    setShowDiscardConfirm(false);
+    onClose && onClose();
+  }
+  function cancelDiscardClose() {
+    setShowDiscardConfirm(false);
   }
 
   function handleOverlayClick(e) {
@@ -97,6 +105,7 @@ export default function EditModal(props) {
   if (!isOpen) return null;
 
   return (
+    <>
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
@@ -294,6 +303,28 @@ export default function EditModal(props) {
         </div>
       </div>
     </div>
+
+      {showDiscardConfirm && (
+        <div onClick={cancelDiscardClose} style={{ position: "fixed", inset: 0, background: "rgba(10,26,30,0.42)", zIndex: 2000, display: "flex", justifyContent: "center", alignItems: "flex-start", paddingTop: 100, fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>
+          <div onClick={function(e) { e.stopPropagation(); }} style={{ width: 440, background: "#fff", borderRadius: 16, boxShadow: "0 20px 60px rgba(10,26,30,0.28)", overflow: "hidden" }}>
+            <div style={{ padding: "28px 28px 20px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: "#FEF6E7", color: "#A67312", display: "grid", placeItems: "center", flexShrink: 0, fontSize: 20, fontWeight: 700 }}>!</div>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: "#12262B", marginBottom: 4, letterSpacing: "-0.01em" }}>Discard changes?</div>
+                  <div style={{ fontSize: 13.5, color: "#12262B", lineHeight: 1.55, fontWeight: 500 }}>You have unsaved changes. If you close now, everything you have entered will be lost.</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: "16px 28px", background: "#F4F6F8", display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <button onClick={cancelDiscardClose} style={{ padding: "10px 18px", background: "#fff", color: "#12262B", border: "1.5px solid #12262B", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Keep editing</button>
+              <button onClick={confirmDiscardClose} style={{ padding: "10px 18px", background: "#DC2626", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Discard changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+    
+    </>
   );
 }
 
