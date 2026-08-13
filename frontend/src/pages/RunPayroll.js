@@ -144,8 +144,31 @@ function FilterPopover(props) {
                       <span>{o.label}</span>
                     </span>
                   </div>
-                );
-              })}
+      {expandedRowId === r.id && (
+        <div style={{ padding: "16px 20px 20px 84px", background: C.page, borderBottom: isLast ? "none" : "1px solid " + C.line }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 0.08, textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>Additional hours</div>
+          <div style={{ display: "flex", gap: 20, alignItems: "flex-end" }}>
+            <div>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: C.ink, marginBottom: 6 }}>Overtime</div>
+              <input type="text" inputMode="decimal" value={r.overtime ? r.overtime + "h" : ""} onChange={function(e) { const digits = e.target.value.replace(/[^0-9.]/g, ""); updateRow(r.id, "overtime", digits); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 110 })} />
+              <div style={{ fontSize: 10.5, color: C.muted, marginTop: 4 }}>Paid at 1.5x rate</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: C.ink, marginBottom: 6 }}>Vacation</div>
+              <input type="text" inputMode="decimal" value={r.vacation ? r.vacation + "h" : ""} onChange={function(e) { const digits = e.target.value.replace(/[^0-9.]/g, ""); updateRow(r.id, "vacation", digits); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 110 })} />
+              <div style={{ fontSize: 10.5, color: C.muted, marginTop: 4 }}>Reduces vacation balance</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: C.ink, marginBottom: 6 }}>Sick</div>
+              <input type="text" inputMode="decimal" value={r.sick ? r.sick + "h" : ""} onChange={function(e) { const digits = e.target.value.replace(/[^0-9.]/g, ""); updateRow(r.id, "sick", digits); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 110 })} />
+              <div style={{ fontSize: 10.5, color: C.muted, marginTop: 4 }}>Paid at regular rate</div>
+            </div>
+          </div>
+        </div>
+      )}
+      </React.Fragment>
+      );
+    })}
             </div>
           </div>
           <div style={{ padding: "12px 18px", borderTop: "1px solid " + C.line, display: "flex", justifyContent: "space-between", gap: 10 }}>
@@ -209,6 +232,7 @@ export default function RunPayroll() {
   const [schedule, setSchedule] = useState(null);
   const [rows, setRows] = useState([]);
   const [statHolidayPopupOpen, setStatHolidayPopupOpen] = useState(false);
+  const [expandedRowId, setExpandedRowId] = useState(null);
   const [statHolidayApplied, setStatHolidayApplied] = useState(null);
   const [statHolidayOverrides, setStatHolidayOverrides] = useState({});
   const [statSubModal, setStatSubModal] = useState(null);
@@ -415,7 +439,10 @@ export default function RunPayroll() {
   const totalGross = includedRows.reduce(function(s, r) {
     const regular = parseFloat(r.regular) || 0;
     const stat = parseFloat(r.statHoliday) || 0;
-    return s + (regular * r.hourlyRate) + (stat * (Number(r.statAvgDaily) / 8 || 0));
+    const overtime = parseFloat(r.overtime) || 0;
+    const vacation = parseFloat(r.vacation) || 0;
+    const sick = parseFloat(r.sick) || 0;
+    return s + (regular * r.hourlyRate) + (overtime * r.hourlyRate * 1.5) + (vacation * r.hourlyRate) + (sick * r.hourlyRate) + (stat * (Number(r.statAvgDaily) / 8 || 0));
   }, 0);
 
   async function handleReview() {
@@ -424,7 +451,7 @@ export default function RunPayroll() {
     setSaving(true); setError("");
     try {
       const employeeInputs = includedRows.map(function(r) {
-        return { employee_id: r.id, hours: { regular: parseFloat(r.regular) || 0, stat_holiday: parseFloat(r.statHoliday) || 0 }, bonus: 0, commission: 0, reimbursement: 0, stat_pay_amount: parseFloat(r.statAvgDaily) || 0 };
+        return { employee_id: r.id, hours: { regular: parseFloat(r.regular) || 0, overtime: parseFloat(r.overtime) || 0, stat_holiday: parseFloat(r.statHoliday) || 0, vacation: parseFloat(r.vacation) || 0, sick: parseFloat(r.sick) || 0 }, bonus: 0, commission: 0, reimbursement: 0, stat_pay_amount: parseFloat(r.statAvgDaily) || 0 };
       });
       const resp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/calculate", {
         method: "POST", headers: authHeaders(),
@@ -456,7 +483,7 @@ export default function RunPayroll() {
   if (loading) return <div style={{ padding: "28px 32px", fontFamily: FONT }}><div style={{ padding: 40, color: C.muted }}>Loading...</div></div>;
   if (error && !payRun) return <div style={{ padding: "28px 32px", fontFamily: FONT }}><div style={{ padding: 16, background: "#FCEBEB", borderRadius: 10, color: "#791F1F" }}>{error}</div></div>;
 
-  const gridCols = "30px 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 40px";
+  const gridCols = "30px 30px 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 40px";
   const displayBox = { display: "inline-block", boxSizing: "border-box", padding: "6px 10px", border: "1px solid " + C.line, borderRadius: 6, fontSize: 13, textAlign: "right", color: C.faint, background: C.page, fontFamily: FONT, fontVariantNumeric: "tabular-nums" };
   const inputBox = { boxSizing: "border-box", padding: "6px 10px", border: "1px solid " + C.line, borderRadius: 6, fontSize: 13, textAlign: "right", color: C.ink, fontFamily: FONT };
 
@@ -594,7 +621,8 @@ export default function RunPayroll() {
       <div style={{ border: "1px solid " + C.line, borderRadius: 12, background: "#fff", overflow: "visible" }}>
         <div style={{ padding: "14px 20px", background: C.page, borderBottom: "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 0.4, position: "relative" }}>
           <div></div>
-          <div>EMPLOYEE &middot; {includedRows.length} OF {readyRows.length}</div>
+          <div></div>
+            <div>EMPLOYEE &middot; {includedRows.length} OF {readyRows.length}</div>
           <ColumnHeader label="REGULAR HOURS" />
           <ColumnHeader label="STAT HOLIDAY HOURS" />
           <ColumnHeader label="STAT PAY (AVG)" />
@@ -609,18 +637,25 @@ export default function RunPayroll() {
 
         {filteredRows.map(function(r, idx) {
           const regular = parseFloat(r.regular) || 0;
-          const stat = parseFloat(r.statHoliday) || 0;
-          const total = regular + stat;
-          const regPay = regular * r.hourlyRate;
+        const overtime = parseFloat(r.overtime) || 0;
+        const vacation = parseFloat(r.vacation) || 0;
+        const sick = parseFloat(r.sick) || 0;
+        const stat = parseFloat(r.statHoliday) || 0;
+        const total = regular + overtime + vacation + sick + stat;
+        const regPay = (regular * r.hourlyRate) + (overtime * r.hourlyRate * 1.5) + (vacation * r.hourlyRate) + (sick * r.hourlyRate);
           const statPay = stat * ((Number(r.statAvgDaily) || 0) / 8);
           const gross = regPay + statPay;
           const isLast = idx === filteredRows.length - 1;
           return (
-            <div key={r.id} id={"row-" + r.id} onClick={function() { setSelectedRowId(selectedRowId === r.id ? null : r.id); }} style={{ padding: "16px 20px", borderBottom: isLast ? "none" : "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, alignItems: "center", opacity: r.ready ? 1 : 0.5, position: "relative", background: selectedRowId === r.id ? C.brandBg : "transparent", borderLeft: selectedRowId === r.id ? "3px solid " + C.brand : "3px solid transparent", cursor: "pointer" }}>
+      <React.Fragment key={r.id}>
+      <div id={"row-" + r.id} onClick={function() { setSelectedRowId(selectedRowId === r.id ? null : r.id); }} style={{ padding: "16px 20px", borderBottom: isLast ? "none" : "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, alignItems: "center", opacity: r.ready ? 1 : 0.5, position: "relative", background: selectedRowId === r.id ? C.brandBg : "transparent", borderLeft: selectedRowId === r.id ? "3px solid " + C.brand : "3px solid transparent", cursor: "pointer" }}>
               <div>
                 <input type="checkbox" checked={r.included} disabled={!r.ready} onChange={function() { toggleIncluded(r.id); }} style={{ width: 16, height: 16, accentColor: C.brand, cursor: r.ready ? "pointer" : "not-allowed" }} />
               </div>
-              <div>
+              <div onClick={function(e) { e.stopPropagation(); setExpandedRowId(expandedRowId === r.id ? null : r.id); }} style={{ cursor: "pointer", color: expandedRowId === r.id ? C.brand : C.muted, fontSize: 16, fontWeight: 700, textAlign: "center", userSelect: "none" }} title="Additional hours">
+          {expandedRowId === r.id ? "\u25be" : "\u25b8"}
+        </div>
+        <div>
                 <div onClick={function(e) { e.stopPropagation(); setEditDrawerEmployeeId(r.id); }} style={{ fontSize: 14, fontWeight: 600, color: C.ink, cursor: "pointer", textDecoration: "none" }} onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; }} onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}>{r.name}</div>
                 <div style={{ fontSize: 12, color: C.muted }}>${r.hourlyRate.toFixed(2)}/hr {r.position ? "\u00b7 " + r.position : ""}</div>
               </div>
