@@ -55,6 +55,40 @@ const STATUS_OPTIONS = [
   { key: "not_ready", label: "Not ready" },
 ];
 
+// Single source of truth for every money and hours figure on a row.
+// Used by the row itself, the summary cards, and the readiness banner
+// so the numbers can never drift apart.
+function rowAmounts(r) {
+  const regular = parseFloat(r.regular) || 0;
+  const overtime = parseFloat(r.overtime) || 0;
+  const vacation = parseFloat(r.vacation) || 0;
+  const sick = parseFloat(r.sick) || 0;
+  const stat = parseFloat(r.statHoliday) || 0;
+  const rate = Number(r.hourlyRate) || 0;
+  const statDaily = Number(r.statAvgDaily) || 0;
+  const regPay = regular * rate;
+  const otPay = overtime * rate * 1.5;
+  const vacPay = vacation * rate;
+  const sickPay = sick * rate;
+  const statPay = stat * (statDaily / 8);
+  return {
+    regular: regular,
+    overtime: overtime,
+    vacation: vacation,
+    sick: sick,
+    stat: stat,
+    rate: rate,
+    regPay: regPay,
+    otPay: otPay,
+    vacPay: vacPay,
+    sickPay: sickPay,
+    statPay: statPay,
+    extraHours: overtime + vacation + sick,
+    totalHours: regular + overtime + vacation + sick + stat,
+    gross: regPay + otPay + vacPay + sickPay + statPay,
+  };
+}
+
 function ColumnHeader(props) {
   const [open, setOpen] = useState(false);
   const [hover, setHover] = useState(false);
@@ -91,6 +125,35 @@ function ColumnHeader(props) {
         </div>
       )}
     </div>
+  );
+}
+
+// Shared hours input. Keeps the "40h" suffix and the caret-before-suffix
+// behaviour that the Regular and Stat holiday cells already use.
+function HourInput(props) {
+  const raw = props.value == null ? "" : String(props.value);
+  const suffixLen = raw ? 1 : 0;
+  function caretBeforeSuffix(inp) {
+    const pos = inp.value.length - suffixLen;
+    try { inp.setSelectionRange(pos, pos); } catch (err) {}
+  }
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      value={raw ? raw + "h" : ""}
+      onChange={function(e) { props.onChange(e.target.value.replace(/[^0-9.]/g, "")); }}
+      onKeyDown={function(e) {
+        if (e.key === "ArrowRight" || e.key === "End") {
+          const inp = e.target;
+          setTimeout(function() { caretBeforeSuffix(inp); }, 0);
+        }
+      }}
+      onClick={function(e) { e.stopPropagation(); caretBeforeSuffix(e.target); }}
+      disabled={props.disabled}
+      placeholder="0h"
+      style={props.style}
+    />
   );
 }
 
@@ -208,11 +271,20 @@ export default function RunPayroll() {
   const [payRun, setPayRun] = useState(null);
   const [schedule, setSchedule] = useState(null);
   const [rows, setRows] = useState([]);
+  const [expandedRows, setExpandedRows] = useState({});
   const [statHolidayPopupOpen, setStatHolidayPopupOpen] = useState(false);
   const [statHolidayApplied, setStatHolidayApplied] = useState(null);
   const [statHolidayOverrides, setStatHolidayOverrides] = useState({});
   const [statSubModal, setStatSubModal] = useState(null);
   const [changePeriodOpen, setChangePeriodOpen] = useState(false);
+
+  function toggleExpanded(id) {
+    setExpandedRows(function(prev) {
+      const next = Object.assign({}, prev);
+      if (next[id]) { delete next[id]; } else { next[id] = true; }
+      return next;
+    });
+  }
 
   function applyStatHolidayToRows(overrides) {
     setRows(function(prevRows) {
@@ -250,7 +322,10 @@ export default function RunPayroll() {
       return {
         employee_id: r.id,
         hours_regular: parseFloat(r.regular) || 0,
+        hours_overtime: parseFloat(r.overtime) || 0,
         hours_stat_holiday: parseFloat(r.statHoliday) || 0,
+        hours_vacation: parseFloat(r.vacation) || 0,
+        hours_sick: parseFloat(r.sick) || 0,
         stat_pay_amount: parseFloat(r.statAvgDaily) || 0,
         memo: r.memo || null,
       };
@@ -343,7 +418,10 @@ export default function RunPayroll() {
           const name = (last && first) ? (last + ", " + first) : (first || last || "Unnamed");
           const rate = e.hourly_rate || e.pay_rate || e.rate;
           const hoursRegularVal = stripHourZeros(line.hours_regular);
+          const hoursOvertimeVal = stripHourZeros(line.hours_overtime);
           const hoursStatVal = stripHourZeros(line.hours_stat_holiday);
+          const hoursVacationVal = stripHourZeros(line.hours_vacation);
+          const hoursSickVal = stripHourZeros(line.hours_sick);
           const statAvgDaily = e.stat_pay_avg_daily || (rate ? Number(rate) * 8 : 0);
           const setupComplete = e.setup_complete !== false;
           const payMethodRaw = (e.default_pay_method || e.pay_method || "direct_deposit").toString().toLowerCase();
@@ -352,13 +430,27 @@ export default function RunPayroll() {
             id: eid, name: name, position: e.position_title || "",
             hourlyRate: rate ? Number(rate) : 0,
             regular: hoursRegularVal != null && hoursRegularVal > 0 ? String(hoursRegularVal) : "",
+            overtime: hoursOvertimeVal != null && hoursOvertimeVal > 0 ? String(hoursOvertimeVal) : "",
             statHoliday: hoursStatVal != null && hoursStatVal > 0 ? String(hoursStatVal) : "",
+            vacation: hoursVacationVal != null && hoursVacationVal > 0 ? String(hoursVacationVal) : "",
+            sick: hoursSickVal != null && hoursSickVal > 0 ? String(hoursSickVal) : "",
             statAvgDaily: line.stat_pay_avg != null ? line.stat_pay_avg : "", payMethod: payMethod,
             ready: setupComplete, included: setupComplete, skipped: false,
             memo: line.memo || "",
           };
         });
         setRows(mapped);
+
+        // Auto-expand any row that already has overtime, vacation, or sick
+        // hours saved so the values are visible without hunting for them.
+        const autoExpand = {};
+        mapped.forEach(function(m) {
+          if ((parseFloat(m.overtime) || 0) > 0 || (parseFloat(m.vacation) || 0) > 0 || (parseFloat(m.sick) || 0) > 0) {
+            autoExpand[m.id] = true;
+          }
+        });
+        setExpandedRows(autoExpand);
+
         setLoading(false);
       } catch (err) { setError(err.message); setLoading(false); }
     }
@@ -406,17 +498,12 @@ export default function RunPayroll() {
   const readyRows = rows.filter(function(r) { return r.ready; });
   const includedRows = rows.filter(function(r) { return r.included && r.ready; });
   const hasAnyHours = includedRows.some(function(r) {
-    const hrs = (parseFloat(r.regular) || 0) + (parseFloat(r.overtime) || 0) + (parseFloat(r.statHoliday) || 0) + (parseFloat(r.vacation) || 0) + (parseFloat(r.sick) || 0);
-    const statPay = parseFloat(r.statAvgDaily) || 0;
-    return hrs > 0 || statPay > 0;
+    const a = rowAmounts(r);
+    return a.totalHours > 0 || (parseFloat(r.statAvgDaily) || 0) > 0;
   });
-  const needsHoursRows = readyRows.filter(function(r) { return (parseFloat(r.regular) || 0) === 0 && (parseFloat(r.statHoliday) || 0) === 0; });
-  const totalHours = includedRows.reduce(function(s, r) { return s + (parseFloat(r.regular) || 0) + (parseFloat(r.statHoliday) || 0); }, 0);
-  const totalGross = includedRows.reduce(function(s, r) {
-    const regular = parseFloat(r.regular) || 0;
-    const stat = parseFloat(r.statHoliday) || 0;
-    return s + (regular * r.hourlyRate) + (stat * (Number(r.statAvgDaily) / 8 || 0));
-  }, 0);
+  const needsHoursRows = readyRows.filter(function(r) { return rowAmounts(r).totalHours === 0; });
+  const totalHours = includedRows.reduce(function(s, r) { return s + rowAmounts(r).totalHours; }, 0);
+  const totalGross = includedRows.reduce(function(s, r) { return s + rowAmounts(r).gross; }, 0);
 
   async function handleReview() {
     if (saving) return;
@@ -424,7 +511,21 @@ export default function RunPayroll() {
     setSaving(true); setError("");
     try {
       const employeeInputs = includedRows.map(function(r) {
-        return { employee_id: r.id, hours: { regular: parseFloat(r.regular) || 0, stat_holiday: parseFloat(r.statHoliday) || 0 }, bonus: 0, commission: 0, reimbursement: 0, stat_pay_amount: parseFloat(r.statAvgDaily) || 0 };
+        const a = rowAmounts(r);
+        return {
+          employee_id: r.id,
+          hours: {
+            regular: a.regular,
+            overtime: a.overtime,
+            stat_holiday: a.stat,
+            vacation: a.vacation,
+            sick: a.sick,
+          },
+          bonus: 0,
+          commission: 0,
+          reimbursement: 0,
+          stat_pay_amount: parseFloat(r.statAvgDaily) || 0,
+        };
       });
       const resp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/calculate", {
         method: "POST", headers: authHeaders(),
@@ -456,9 +557,12 @@ export default function RunPayroll() {
   if (loading) return <div style={{ padding: "28px 32px", fontFamily: FONT }}><div style={{ padding: 40, color: C.muted }}>Loading...</div></div>;
   if (error && !payRun) return <div style={{ padding: "28px 32px", fontFamily: FONT }}><div style={{ padding: 16, background: "#FCEBEB", borderRadius: 10, color: "#791F1F" }}>{error}</div></div>;
 
-  const gridCols = "30px 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 40px";
+  const gridCols = "30px 26px 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 40px";
   const displayBox = { display: "inline-block", boxSizing: "border-box", padding: "6px 10px", border: "1px solid " + C.line, borderRadius: 6, fontSize: 13, textAlign: "right", color: C.faint, background: C.page, fontFamily: FONT, fontVariantNumeric: "tabular-nums" };
   const inputBox = { boxSizing: "border-box", padding: "6px 10px", border: "1px solid " + C.line, borderRadius: 6, fontSize: 13, textAlign: "right", color: C.ink, fontFamily: FONT };
+  // Left offset that lines the sub-panel up under the employee name column:
+  // 20 (row padding) + 30 (checkbox) + 16 (gap) + 26 (chevron) + 16 (gap)
+  const subPanelIndent = 108;
 
   return (
     <>
@@ -594,6 +698,7 @@ export default function RunPayroll() {
       <div style={{ border: "1px solid " + C.line, borderRadius: 12, background: "#fff", overflow: "visible" }}>
         <div style={{ padding: "14px 20px", background: C.page, borderBottom: "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 0.4, position: "relative" }}>
           <div></div>
+          <div></div>
           <div>EMPLOYEE &middot; {includedRows.length} OF {readyRows.length}</div>
           <ColumnHeader label="REGULAR HOURS" />
           <ColumnHeader label="STAT HOLIDAY HOURS" />
@@ -608,63 +713,113 @@ export default function RunPayroll() {
         {filteredRows.length === 0 && <div style={{ padding: 30, textAlign: "center", color: C.muted, fontSize: 14 }}>No employees found.</div>}
 
         {filteredRows.map(function(r, idx) {
-          const regular = parseFloat(r.regular) || 0;
-          const stat = parseFloat(r.statHoliday) || 0;
-          const total = regular + stat;
-          const regPay = regular * r.hourlyRate;
-          const statPay = stat * ((Number(r.statAvgDaily) || 0) / 8);
-          const gross = regPay + statPay;
+          const a = rowAmounts(r);
           const isLast = idx === filteredRows.length - 1;
+          const isExpanded = !!expandedRows[r.id];
+          const isSelected = selectedRowId === r.id;
+          const rowBg = isSelected ? C.brandBg : "transparent";
+
           return (
-            <div key={r.id} id={"row-" + r.id} onClick={function() { setSelectedRowId(selectedRowId === r.id ? null : r.id); }} style={{ padding: "16px 20px", borderBottom: isLast ? "none" : "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, alignItems: "center", opacity: r.ready ? 1 : 0.5, position: "relative", background: selectedRowId === r.id ? C.brandBg : "transparent", borderLeft: selectedRowId === r.id ? "3px solid " + C.brand : "3px solid transparent", cursor: "pointer" }}>
-              <div>
-                <input type="checkbox" checked={r.included} disabled={!r.ready} onChange={function() { toggleIncluded(r.id); }} style={{ width: 16, height: 16, accentColor: C.brand, cursor: r.ready ? "pointer" : "not-allowed" }} />
-              </div>
-              <div>
-                <div onClick={function(e) { e.stopPropagation(); setEditDrawerEmployeeId(r.id); }} style={{ fontSize: 14, fontWeight: 600, color: C.ink, cursor: "pointer", textDecoration: "none" }} onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; }} onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}>{r.name}</div>
-                <div style={{ fontSize: 12, color: C.muted }}>${r.hourlyRate.toFixed(2)}/hr {r.position ? "\u00b7 " + r.position : ""}</div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <input type="text" inputMode="decimal" value={r.regular ? r.regular + "h" : ""} onChange={function(e) { const digits = e.target.value.replace(/[^0-9.]/g, ""); updateRow(r.id, "regular", digits); }} onKeyDown={function(e) { if (e.key === "ArrowRight" || e.key === "End") { const inp = e.target; setTimeout(function() { const pos = inp.value.length - (r.regular ? 1 : 0); inp.setSelectionRange(pos, pos); }, 0); } }} onClick={function(e) { const inp = e.target; const pos = inp.value.length - (r.regular ? 1 : 0); inp.setSelectionRange(pos, pos); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 90 })} />
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <input type="text" inputMode="decimal" value={r.statHoliday ? r.statHoliday + "h" : ""} onChange={function(e) { const digits = e.target.value.replace(/[^0-9.]/g, ""); updateRow(r.id, "statHoliday", digits); }} onKeyDown={function(e) { if (e.key === "ArrowRight" || e.key === "End") { const inp = e.target; setTimeout(function() { const pos = inp.value.length - (r.statHoliday ? 1 : 0); inp.setSelectionRange(pos, pos); }, 0); } }} onClick={function(e) { const inp = e.target; const pos = inp.value.length - (r.statHoliday ? 1 : 0); inp.setSelectionRange(pos, pos); }} disabled={!r.ready} placeholder="0h" style={Object.assign({}, inputBox, { width: 90 })} />
-              </div>
-              <div style={{ textAlign: "right", position: "relative" }}>
-                <div style={{ position: "relative", display: "inline-block" }}>
-                  <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: r.statAvgDaily === "" || r.statAvgDaily == null ? C.faint : C.ink, pointerEvents: "none", fontFamily: FONT }}>$</span>
-                  <input type="text" inputMode="decimal" value={r.statAvgDaily === "" || r.statAvgDaily == null ? "" : String(r.statAvgDaily)} onChange={function(e) { const v = e.target.value; updateRow(r.id, "statAvgDaily", v === "" ? "" : (parseFloat(v) || 0)); }} disabled={!r.ready} placeholder="0.00" style={Object.assign({}, inputBox, { width: 90, paddingLeft: 20 })} />
+            <React.Fragment key={r.id}>
+              <div id={"row-" + r.id} onClick={function() { setSelectedRowId(isSelected ? null : r.id); }} style={{ padding: "16px 20px", borderBottom: (isLast && !isExpanded) || isExpanded ? "none" : "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, alignItems: "center", opacity: r.ready ? 1 : 0.5, position: "relative", background: rowBg, borderLeft: isSelected ? "3px solid " + C.brand : "3px solid transparent", cursor: "pointer" }}>
+                <div>
+                  <input type="checkbox" checked={r.included} disabled={!r.ready} onChange={function() { toggleIncluded(r.id); }} onClick={function(e) { e.stopPropagation(); }} style={{ width: 16, height: 16, accentColor: C.brand, cursor: r.ready ? "pointer" : "not-allowed" }} />
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    title={isExpanded ? "Hide additional hours" : "Add overtime, vacation, or sick hours"}
+                    aria-expanded={isExpanded}
+                    onClick={function(e) { e.stopPropagation(); toggleExpanded(r.id); }}
+                    style={{ background: "transparent", border: "none", padding: 0, width: 24, height: 24, display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative", color: isExpanded ? C.brandDark : C.muted }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s ease" }}>
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                    {!isExpanded && a.extraHours > 0 && (
+                      <span style={{ position: "absolute", top: 1, right: 0, width: 6, height: 6, borderRadius: "50%", background: C.brand }} />
+                    )}
+                  </button>
+                </div>
+                <div>
+                  <div onClick={function(e) { e.stopPropagation(); setEditDrawerEmployeeId(r.id); }} style={{ fontSize: 14, fontWeight: 600, color: C.ink, cursor: "pointer", textDecoration: "none", display: "inline-block" }} onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; }} onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}>{r.name}</div>
+                  <div style={{ fontSize: 12, color: C.muted }}>${r.hourlyRate.toFixed(2)}/hr {r.position ? "\u00b7 " + r.position : ""}</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <HourInput value={r.regular} onChange={function(v) { updateRow(r.id, "regular", v); }} disabled={!r.ready} style={Object.assign({}, inputBox, { width: 90 })} />
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <HourInput value={r.statHoliday} onChange={function(v) { updateRow(r.id, "statHoliday", v); }} disabled={!r.ready} style={Object.assign({}, inputBox, { width: 90 })} />
+                </div>
+                <div style={{ textAlign: "right", position: "relative" }}>
+                  <div style={{ position: "relative", display: "inline-block" }}>
+                    <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: r.statAvgDaily === "" || r.statAvgDaily == null ? C.faint : C.ink, pointerEvents: "none", fontFamily: FONT }}>$</span>
+                    <input type="text" inputMode="decimal" value={r.statAvgDaily === "" || r.statAvgDaily == null ? "" : String(r.statAvgDaily)} onChange={function(e) { const v = e.target.value; updateRow(r.id, "statAvgDaily", v === "" ? "" : (parseFloat(v) || 0)); }} onClick={function(e) { e.stopPropagation(); }} disabled={!r.ready} placeholder="0.00" style={Object.assign({}, inputBox, { width: 90, paddingLeft: 20 })} />
+                  </div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={Object.assign({}, displayBox, { width: 90 })}>{a.totalHours > 0 ? (a.totalHours % 1 === 0 ? String(a.totalHours) : a.totalHours.toFixed(2)) + "h" : "0h"}</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={Object.assign({}, displayBox, { width: 90 })}>{fmtMoney(a.gross)}</div>
+                </div>
+                <div style={{ textAlign: "center" }} onClick={function(e) { e.stopPropagation(); }}>
+                  <MemoPopover value={r.memo} onSave={function(text, applyAll) { saveMemo(r.id, text, applyAll); }} />
+                </div>
+                <div style={{ position: "relative" }} onClick={function(e) { e.stopPropagation(); }}>
+                  <span onClick={function() { setOpenPayMethodId(openPayMethodId === r.id ? null : r.id); }} style={{ background: r.payMethod === "Cheque" ? C.amberBg : C.brandBg, color: r.payMethod === "Cheque" ? C.amberText : C.brandDarkText, fontSize: 12, padding: "5px 12px", borderRadius: 6, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>{r.payMethod} &#9662;</span>
+                  {openPayMethodId === r.id && (
+                    <div style={{ position: "absolute", top: 28, left: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 6, boxShadow: "0 6px 18px rgba(0,0,0,0.08)", width: 150, zIndex: 10, overflow: "hidden" }}>
+                      <div onClick={function() { updateRow(r.id, "payMethod", "Direct deposit"); setOpenPayMethodId(null); }} style={{ padding: "8px 12px", fontSize: 13, color: C.ink, cursor: "pointer" }}>Direct deposit</div>
+                      <div onClick={function() { updateRow(r.id, "payMethod", "Cheque"); setOpenPayMethodId(null); }} style={{ padding: "8px 12px", fontSize: 13, color: C.ink, cursor: "pointer", borderTop: "1px solid " + C.line }}>Cheque</div>
+                    </div>
+                  )}
+                </div>
+                <div style={{ textAlign: "center", position: "relative" }} onClick={function(e) { e.stopPropagation(); }}>
+                  <button onClick={function() { setOpenMenuId(openMenuId === r.id ? null : r.id); }} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 18, color: C.muted, padding: 4 }}>&#8942;</button>
+                  {openMenuId === r.id && (
+                    <div style={{ position: "absolute", top: 30, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", width: 200, overflow: "hidden", zIndex: 20, textAlign: "left" }}>
+                      <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer" }} onClick={function() { setEditDrawerEmployeeId(r.id); setOpenMenuId(null); }}>Edit paycheque</div>
+                      <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { navigate("/payroll/employees/" + r.id); }}>View profile</div>
+                      <div style={{ padding: "10px 14px", fontSize: 13, color: C.danger, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { skipFromRun(r.id); setOpenMenuId(null); }}>Skip from payroll run</div>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={Object.assign({}, displayBox, { width: 90 })}>{total > 0 ? (total % 1 === 0 ? String(total) : total.toFixed(2)) + "h" : "0h"}</div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={Object.assign({}, displayBox, { width: 90 })}>{fmtMoney(gross)}</div>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <MemoPopover value={r.memo} onSave={function(text, applyAll) { saveMemo(r.id, text, applyAll); }} />
-              </div>
-              <div style={{ position: "relative" }}>
-                <span onClick={function() { setOpenPayMethodId(openPayMethodId === r.id ? null : r.id); }} style={{ background: r.payMethod === "Cheque" ? C.amberBg : C.brandBg, color: r.payMethod === "Cheque" ? C.amberText : C.brandDarkText, fontSize: 12, padding: "5px 12px", borderRadius: 6, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>{r.payMethod} &#9662;</span>
-                {openPayMethodId === r.id && (
-                  <div style={{ position: "absolute", top: 28, left: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 6, boxShadow: "0 6px 18px rgba(0,0,0,0.08)", width: 150, zIndex: 10, overflow: "hidden" }}>
-                    <div onClick={function() { updateRow(r.id, "payMethod", "Direct deposit"); setOpenPayMethodId(null); }} style={{ padding: "8px 12px", fontSize: 13, color: C.ink, cursor: "pointer" }}>Direct deposit</div>
-                    <div onClick={function() { updateRow(r.id, "payMethod", "Cheque"); setOpenPayMethodId(null); }} style={{ padding: "8px 12px", fontSize: 13, color: C.ink, cursor: "pointer", borderTop: "1px solid " + C.line }}>Cheque</div>
+
+              {isExpanded && (
+                <div
+                  onClick={function(e) { e.stopPropagation(); }}
+                  style={{ padding: "4px 20px 18px " + subPanelIndent + "px", borderBottom: isLast ? "none" : "1px solid " + C.line, background: isSelected ? C.brandBg : C.page, borderLeft: isSelected ? "3px solid " + C.brand : "3px solid transparent", opacity: r.ready ? 1 : 0.5 }}
+                >
+                  <div style={{ border: "1px solid " + C.line, borderRadius: 10, background: "#fff", padding: "14px 18px", display: "inline-block" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 12 }}>Additional hours</div>
+                    <div style={{ display: "flex", gap: 26, alignItems: "flex-start" }}>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: C.ink, marginBottom: 6 }}>Overtime <span style={{ color: C.faint, fontWeight: 500 }}>(1.5x)</span></div>
+                        <HourInput value={r.overtime} onChange={function(v) { updateRow(r.id, "overtime", v); }} disabled={!r.ready} style={Object.assign({}, inputBox, { width: 100 })} />
+                        <div style={{ fontSize: 12, color: C.faint, marginTop: 6, textAlign: "right", width: 100, fontVariantNumeric: "tabular-nums" }}>{fmtMoney(a.otPay)}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: C.ink, marginBottom: 6 }}>Vacation</div>
+                        <HourInput value={r.vacation} onChange={function(v) { updateRow(r.id, "vacation", v); }} disabled={!r.ready} style={Object.assign({}, inputBox, { width: 100 })} />
+                        <div style={{ fontSize: 12, color: C.faint, marginTop: 6, textAlign: "right", width: 100, fontVariantNumeric: "tabular-nums" }}>{fmtMoney(a.vacPay)}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: C.ink, marginBottom: 6 }}>Sick</div>
+                        <HourInput value={r.sick} onChange={function(v) { updateRow(r.id, "sick", v); }} disabled={!r.ready} style={Object.assign({}, inputBox, { width: 100 })} />
+                        <div style={{ fontSize: 12, color: C.faint, marginTop: 6, textAlign: "right", width: 100, fontVariantNumeric: "tabular-nums" }}>{fmtMoney(a.sickPay)}</div>
+                      </div>
+                      <div style={{ borderLeft: "1px solid " + C.line, paddingLeft: 26, alignSelf: "stretch", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: C.ink, marginBottom: 4 }}>Additional pay</div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: C.ink, fontVariantNumeric: "tabular-nums" }}>{fmtMoney(a.otPay + a.vacPay + a.sickPay)}</div>
+                        <div style={{ fontSize: 12, color: C.faint, marginTop: 4, fontVariantNumeric: "tabular-nums" }}>{a.extraHours % 1 === 0 ? String(a.extraHours) : a.extraHours.toFixed(2)}h at ${r.hourlyRate.toFixed(2)}/hr base</div>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-              <div style={{ textAlign: "center", position: "relative" }}>
-                <button onClick={function() { setOpenMenuId(openMenuId === r.id ? null : r.id); }} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 18, color: C.muted, padding: 4 }}>&#8942;</button>
-                {openMenuId === r.id && (
-                  <div style={{ position: "absolute", top: 30, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", width: 200, overflow: "hidden", zIndex: 20, textAlign: "left" }}>
-                    <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer" }} onClick={function() { setEditDrawerEmployeeId(r.id); setOpenMenuId(null); }}>Edit paycheque</div>
-                    <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { navigate("/payroll/employees/" + r.id); }}>View profile</div>
-                    <div style={{ padding: "10px 14px", fontSize: 13, color: C.danger, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { skipFromRun(r.id); setOpenMenuId(null); }}>Skip from payroll run</div>
-                  </div>
-                )}
-              </div>
-            </div>
+                </div>
+              )}
+            </React.Fragment>
           );
         })}
       </div>
