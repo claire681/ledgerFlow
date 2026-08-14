@@ -3,6 +3,9 @@ frontend:
   phases:
     preBuild:
       commands:
+        - echo "=== DEBUG: Check RunPayroll ==="
+        - grep -c "Additional hours" frontend/src/pages/RunPayroll.js || echo "GREP FAILED"
+        - git log --oneline -1
         - cd frontend
         - npm install
     build:
