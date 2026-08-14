@@ -273,6 +273,12 @@ export default function RunPayroll() {
   const [schedule, setSchedule] = useState(null);
   const [rows, setRows] = useState([]);
   const [expandedRows, setExpandedRows] = useState({});
+  const [hintDismissed, setHintDismissed] = useState(function() { try { return localStorage.getItem("novala_run_payroll_hint_dismissed") === "1"; } catch(e) { return false; } });
+  function dismissHint() {
+    setHintDismissed(true);
+    try { localStorage.setItem("novala_run_payroll_hint_dismissed", "1"); } catch(e) {}
+  }
+
   const [statHolidayPopupOpen, setStatHolidayPopupOpen] = useState(false);
   const [statHolidayApplied, setStatHolidayApplied] = useState(null);
   const [statHolidayOverrides, setStatHolidayOverrides] = useState({});
@@ -696,7 +702,14 @@ export default function RunPayroll() {
         </button>
       </div>
 
-      <div style={{ border: "1px solid " + C.line, borderRadius: 12, background: "#fff", overflow: "visible" }}>
+      {!hintDismissed && (
+          <div style={{ background: "#E1F5EE", borderLeft: "3px solid " + C.brand, borderRadius: "0 8px 8px 0", padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: C.ink }}>
+            <span style={{ fontSize: 15 }}>&#128161;</span>
+            <span style={{ flex: 1, fontWeight: 500 }}>Click the <strong>&#9656; arrow</strong> next to any employee to add overtime, vacation, or sick hours.</span>
+            <button onClick={dismissHint} style={{ background: "transparent", border: 0, color: C.ink, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "4px 8px", opacity: 0.7 }}>Got it &times;</button>
+          </div>
+        )}
+        <div style={{ border: "1px solid " + C.line, borderRadius: 12, background: "#fff", overflow: "visible" }}>
         <div style={{ padding: "14px 20px", background: C.page, borderBottom: "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 0.4, position: "relative" }}>
           <div></div>
           <div></div>
