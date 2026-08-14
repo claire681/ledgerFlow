@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import StatHolidayEligibilityPopup from "../components/payroll/StatHolidayEligibilityPopup";
 import { AdjustStatPayModal, MarkNotEligibleModal, OverrideEligibleModal } from "../components/payroll/StatHolidaySubModals";
 import ChangePeriodModal from "../components/payroll/ChangePeriodModal";
+console.log("NOVALA_BUILD_TEST_" + Date.now());
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const FONT = "Inter, -apple-system, sans-serif";
