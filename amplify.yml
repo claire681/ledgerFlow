@@ -3,13 +3,12 @@ frontend:
   phases:
     preBuild:
       commands:
-        - 'grep -c "Additional hours" frontend/src/pages/RunPayroll.js || echo NOT_FOUND'
-        - 'md5sum frontend/src/pages/RunPayroll.js'
-        - 'git log --oneline -1'
-        - 'cd frontend && npm install'
+        - cd frontend
+        - npm install
     build:
       commands:
-        - 'cd frontend && npm run build'
+        - cd frontend
+        - npm run build
   artifacts:
     baseDirectory: frontend/build
     files:
