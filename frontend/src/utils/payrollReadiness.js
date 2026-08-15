@@ -55,25 +55,30 @@ export const isSectionFilled = (sectionId, emp) => {
 // where section is the EmployeeProfile section id to deep-link into.
 export const getReadiness = (emp) => {
   if (!emp) return { ready: false, missing: [{ section: "personal", label: "personal info" }] };
+
   const missing = [];
 
+  // Name required
   if (!emp.first_name || !emp.last_name) {
     missing.push({ section: "personal", label: "name" });
   }
+
+  // SIN required
   if (!emp.sin && !emp.social_insurance_number) {
     missing.push({ section: "personal", label: "SIN" });
   }
 
+  // Address required (street + city + province + postal code)
+  const hasAddress = !!(emp.street_address || emp.address_line_1) && !!emp.city && !!(emp.province || emp.province_state) && !!(emp.postal_code || emp.postal_zip);
+  if (!hasAddress) {
+    missing.push({ section: "personal", label: "address" });
+  }
+
+  // Base pay required
   const hasBasePay = !!emp.pay_type && (parseFloat(emp.hourly_rate) > 0 || parseFloat(emp.salary_amount) > 0);
-  if (!hasBasePay) missing.push({ section: "base_pay", label: "pay rate" });
-
-  if (!emp.pay_schedule) missing.push({ section: "employment", label: "pay schedule" });
-
-  if (!emp.work_location && !emp.work_location_id) missing.push({ section: "employment", label: "work location" });
-
-  if (!isSectionFilled("tax", emp)) missing.push({ section: "tax", label: "tax withholdings" });
-
-  if (!emp.payment_method) missing.push({ section: "payment_method", label: "payment method" });
+  if (!hasBasePay) {
+    missing.push({ section: "base_pay", label: "pay rate" });
+  }
 
   return { ready: missing.length === 0, missing };
 };
