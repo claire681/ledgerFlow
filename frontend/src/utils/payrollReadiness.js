@@ -64,12 +64,12 @@ export const getReadiness = (emp) => {
   }
 
   // SIN required
-  if (!emp.sin && !emp.social_insurance_number) {
+  if (!emp.sin_or_ssn && !emp.sin && !emp.social_insurance_number) {
     missing.push({ section: "personal", label: "SIN" });
   }
 
   // Address required (street + city + province + postal code)
-  const hasAddress = !!(emp.street_address || emp.address_line_1) && !!emp.city && !!(emp.province || emp.province_state) && !!(emp.postal_code || emp.postal_zip);
+  const hasAddress = !!(emp.address_line1 || emp.street_address || emp.address_line_1) && !!emp.city && !!(emp.province_or_state || emp.province || emp.province_state) && !!(emp.postal_or_zip || emp.postal_code || emp.postal_zip);
   if (!hasAddress) {
     missing.push({ section: "personal", label: "address" });
   }
