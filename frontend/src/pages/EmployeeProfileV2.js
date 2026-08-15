@@ -26,6 +26,8 @@ import {
   DollarSign, PlusCircle, Calendar, CalendarCheck, Receipt, MinusCircle, Banknote, FileCheck
 } from "lucide-react";
 import { getCountryConfig, validateField } from "../utils/countryPayroll";
+import { getReadiness } from "../utils/payrollReadiness";
+
 
 const FONT = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -511,8 +513,10 @@ export default function EmployeeProfileV2() {
 
   const requiredSections = sections.filter(function(s) { return s.required; });
   const allRequiredDone = useMemo(function() {
-    return requiredSections.every(function(s) { return sectionStatus(s, values) === "done"; });
-  }, [values, requiredSections]);
+    if (!employee) return false;
+    const readiness = getReadiness(employee);
+    return readiness.ready;
+  }, [employee]);
 
   if (loading) {
     return <div style={{ padding: 40, fontFamily: FONT, color: C.muted, textAlign: "center" }}>Loading employee...</div>;

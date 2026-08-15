@@ -55,29 +55,40 @@ export const isSectionFilled = (sectionId, emp) => {
 // where section is the EmployeeProfile section id to deep-link into.
 export const getReadiness = (emp) => {
   if (!emp) return { ready: false, missing: [{ section: "personal", label: "personal info" }] };
-
   const missing = [];
 
-  // Name required
+  // 1. Name
   if (!emp.first_name || !emp.last_name) {
     missing.push({ section: "personal", label: "name" });
   }
 
-  // SIN required
+  // 2. SIN
   if (!emp.sin_or_ssn && !emp.sin && !emp.social_insurance_number) {
     missing.push({ section: "personal", label: "SIN" });
   }
 
-  // Address required (street + city + province + postal code)
+  // 3. Address (all four parts)
   const hasAddress = !!(emp.address_line1 || emp.street_address || emp.address_line_1) && !!emp.city && !!(emp.province_or_state || emp.province || emp.province_state) && !!(emp.postal_or_zip || emp.postal_code || emp.postal_zip);
   if (!hasAddress) {
     missing.push({ section: "personal", label: "address" });
   }
 
-  // Base pay required
+  // 4. Base pay
   const hasBasePay = !!emp.pay_type && (parseFloat(emp.hourly_rate) > 0 || parseFloat(emp.salary_amount) > 0);
   if (!hasBasePay) {
     missing.push({ section: "base_pay", label: "pay rate" });
+  }
+
+  // 5. Employment (job title, work location, hire/start date)
+  const hasEmployment = !!(emp.position_title || emp.job_title) && !!(emp.work_location || emp.work_location_id) && !!(emp.start_date || emp.hire_date);
+  if (!hasEmployment) {
+    missing.push({ section: "employment", label: "employment details" });
+  }
+
+  // 6. Payment method (cheque or direct deposit)
+  const hasPayment = !!(emp.payment_method || emp.account_type);
+  if (!hasPayment) {
+    missing.push({ section: "payment_method", label: "payment method" });
   }
 
   return { ready: missing.length === 0, missing };
