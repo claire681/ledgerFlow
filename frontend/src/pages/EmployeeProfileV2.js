@@ -1629,7 +1629,7 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
         section={section}
         isOpen={isOpen}
         onToggleOpen={onToggleOpen}
-        employee={values}
+        employee={fullEmployee || values}
         onEditClick={function() { window.dispatchEvent(new CustomEvent("novala:openBasePayModal")); }}
       />
     );
@@ -1641,7 +1641,7 @@ function Section({ section, values, draft, country, isOpen, isEditing, isSaving,
         section={section}
         isOpen={isOpen}
         onToggleOpen={onToggleOpen}
-        employee={values}
+        employee={fullEmployee || values}
         onEditClick={function() { window.dispatchEvent(new CustomEvent("novala:openTaxModal")); }}
       />
     );
