@@ -548,7 +548,7 @@ export default function EmployeeProfileV2() {
             <h1 style={{ fontSize: 34, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em", margin: 0 }}>{values.name || "Unnamed employee"}</h1>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 5, letterSpacing: "0.04em", textTransform: "uppercase", background: allRequiredDone ? C.greenSoft : C.amberSoft, color: allRequiredDone ? C.green : C.amber }}>
               <span style={{ width: 6, height: 6, background: allRequiredDone ? C.green : C.amber, borderRadius: "50%" }} />
-              {allRequiredDone ? "Active" : "Draft"}
+              {allRequiredDone ? "Active" : "Setup incomplete"}
             </span>
           </div>
           <div style={{ fontSize: 13.5, color: C.muted, marginTop: 2 }}>Employee, {country.name}</div>
