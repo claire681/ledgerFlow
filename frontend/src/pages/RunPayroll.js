@@ -273,6 +273,7 @@ export default function RunPayroll() {
   const [schedule, setSchedule] = useState(null);
   const [rows, setRows] = useState([]);
   const [expandedRows, setExpandedRows] = useState({});
+  const [showCancelModal, setShowCancelModal] = useState(false);
   // hint always shows on Run Payroll
 
   const [statHolidayPopupOpen, setStatHolidayPopupOpen] = useState(false);
@@ -542,7 +543,9 @@ export default function RunPayroll() {
     } catch (err) { setError(err.message); setSaving(false); }
   }
 
-  function handleCancel() { if (window.confirm("Cancel this pay run? Any unsaved changes will be lost.")) navigate("/payroll/overview"); }
+  function handleCancel() { setShowCancelModal(true); }
+  function confirmCancelPayRun() { setShowCancelModal(false); navigate("/payroll/overview"); }
+  function dismissCancelModal() { setShowCancelModal(false); }
   function handleSaveForLater() {
     // Cancel any pending debounced autosave to avoid a double request
     if (saveTimerRef.current) {
@@ -954,5 +957,25 @@ export default function RunPayroll() {
         )}
 </div>
     </>
+
+      {showCancelModal && (
+        <div onClick={dismissCancelModal} style={{ position: "fixed", inset: 0, background: "rgba(10,26,30,0.42)", zIndex: 3000, display: "flex", justifyContent: "center", alignItems: "flex-start", paddingTop: 100, fontFamily: FONT }}>
+          <div onClick={function(e) { e.stopPropagation(); }} style={{ width: 440, background: "#fff", borderRadius: 16, boxShadow: "0 20px 60px rgba(10,26,30,0.28)", overflow: "hidden" }}>
+            <div style={{ padding: "28px 28px 20px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: "#FEF6E7", color: "#A67312", display: "grid", placeItems: "center", flexShrink: 0, fontSize: 20, fontWeight: 700 }}>!</div>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: "#12262B", marginBottom: 4, letterSpacing: "-0.01em" }}>Cancel this pay run?</div>
+                  <div style={{ fontSize: 13.5, color: "#12262B", lineHeight: 1.55, fontWeight: 500 }}>Any unsaved changes will be lost. You can start a new pay run any time.</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: "16px 28px", background: "#F4F6F8", display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <button onClick={dismissCancelModal} style={{ padding: "10px 18px", background: "#fff", color: "#12262B", border: "1.5px solid #12262B", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Keep working</button>
+              <button onClick={confirmCancelPayRun} style={{ padding: "10px 18px", background: "#DC2626", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Cancel pay run</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
