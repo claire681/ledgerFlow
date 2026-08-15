@@ -72,12 +72,16 @@ function buildSections(country) {
 function sectionStatus(section, values) {
   const reqKeys = section.fields.filter(function(f) { return f.req; }).map(function(f) { return f.k; });
   const anyFilled = section.fields.some(function(f) { return isFilled(values[f.k]); });
+  // If user has filled ANY field, show as "edit" (interacted)
+  // Only show "start" if truly nothing is filled
   if (reqKeys.length > 0) {
     const allReq = reqKeys.every(function(k) { return isFilled(values[k]); });
     if (allReq) return "done";
     return anyFilled ? "edit" : "start";
   }
-  return anyFilled ? "done" : "start";
+  // For sections with no required fields, if any field filled, mark done
+  // Otherwise mark as "edit" so it shows "Edit" not "Start" (assuming user visited)
+  return anyFilled ? "done" : "edit";
 }
 
 function formatDateForInput(d) {
