@@ -154,7 +154,7 @@ function HourInput(props) {
       disabled={props.disabled}
       placeholder="0h"
       style={props.style}
-    />
+     onFocus={function(e) { const inp = e.target; const v = raw ? raw + "h" : "" || ""; const pos = v.length - (v.endsWith("h") ? 1 : 0); setTimeout(function() { try { inp.setSelectionRange(pos, pos); } catch(err) {} }, 0); }} onClick={function(e) { const inp = e.target; const v = raw ? raw + "h" : "" || ""; const pos = v.length - (v.endsWith("h") ? 1 : 0); try { inp.setSelectionRange(pos, pos); } catch(err) {} }}/>
   );
 }
 
@@ -273,11 +273,7 @@ export default function RunPayroll() {
   const [schedule, setSchedule] = useState(null);
   const [rows, setRows] = useState([]);
   const [expandedRows, setExpandedRows] = useState({});
-  const [hintDismissed, setHintDismissed] = useState(function() { try { return localStorage.getItem("novala_run_payroll_hint_dismissed") === "1"; } catch(e) { return false; } });
-  function dismissHint() {
-    setHintDismissed(true);
-    try { localStorage.setItem("novala_run_payroll_hint_dismissed", "1"); } catch(e) {}
-  }
+  // hint always shows on Run Payroll
 
   const [statHolidayPopupOpen, setStatHolidayPopupOpen] = useState(false);
   const [statHolidayApplied, setStatHolidayApplied] = useState(null);
@@ -702,13 +698,10 @@ export default function RunPayroll() {
         </button>
       </div>
 
-      {!hintDismissed && (
-          <div style={{ background: "#E1F5EE", borderLeft: "3px solid " + C.brand, borderRadius: "0 8px 8px 0", padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: C.ink }}>
-            <span style={{ fontSize: 15 }}>&#128161;</span>
-            <span style={{ flex: 1, fontWeight: 500 }}>Click the <strong>&#9656; arrow</strong> next to any employee to add overtime, vacation, or sick hours.</span>
-            <button onClick={dismissHint} style={{ background: "transparent", border: 0, color: C.ink, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "4px 8px", opacity: 0.7 }}>Got it &times;</button>
-          </div>
-        )}
+      <div style={{ background: "#E1F5EE", borderLeft: "3px solid " + C.brand, borderRadius: "0 8px 8px 0", padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: C.ink }}>
+          <span style={{ fontSize: 15 }}>&#128161;</span>
+          <span style={{ flex: 1, fontWeight: 500 }}>Click the arrow next to any employee to add overtime, vacation, or sick hours.</span>
+        </div>
         <div style={{ border: "1px solid " + C.line, borderRadius: 12, background: "#fff", overflow: "visible" }}>
         <div style={{ padding: "14px 20px", background: C.page, borderBottom: "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 0.4, position: "relative" }}>
           <div></div>
@@ -747,7 +740,7 @@ export default function RunPayroll() {
                     onClick={function(e) { e.stopPropagation(); toggleExpanded(r.id); }}
                     style={{ background: "transparent", border: "none", padding: 0, width: 24, height: 24, display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative", color: isExpanded ? C.brandDark : C.muted }}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s ease" }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s ease" }}>
                       <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
                     {!isExpanded && a.extraHours > 0 && (
