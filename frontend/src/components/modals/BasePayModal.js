@@ -215,6 +215,12 @@ export default function BasePayModal(props) {
       footerContent={footerContent}
       saveLabel="Save Base pay"
     >
+      {attempted && Object.keys(fieldErrors).length > 0 && (
+        <div style={{ background: "#FEE2E2", borderLeft: "3px solid #DC2626", borderRadius: "0 8px 8px 0", padding: "12px 14px", marginBottom: 18, display: "flex", gap: 10, alignItems: "center" }}>
+          <span style={{ fontSize: 16 }}>&#9888;</span>
+          <div style={{ fontSize: 13, color: "#991B1B", fontWeight: 600 }}>Please fix the fields highlighted below ({Object.keys(fieldErrors).length} missing)</div>
+        </div>
+      )}
       <CollapsibleSection title="Compensation type">
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <TypeChip label="Hourly" selected={payType === "hourly"} onClick={function() { setPayType("hourly"); }} />
@@ -227,7 +233,8 @@ export default function BasePayModal(props) {
         {payType === "hourly" && (
           <div style={{ marginBottom: 16 }}>
             <FormLabel>Rate per hour</FormLabel>
-            <MoneyInput value={hourlyRate} onChange={setHourlyRate} suffix="/hr" />
+            <MoneyInput value={hourlyRate} onChange={setHourlyRate} suffix="/hr" error={fieldErrors.hourlyRate} />
+              {fieldErrors.hourlyRate && <div style={{ fontSize: 12, color: "#DC2626", marginTop: 4, fontWeight: 600 }}>{fieldErrors.hourlyRate}</div>}
           </div>
         )}
 
@@ -252,7 +259,8 @@ export default function BasePayModal(props) {
             </div>
             <div>
               <FormLabel>Salary</FormLabel>
-              <MoneyInput value={salaryAmount} onChange={setSalaryAmount} />
+              <MoneyInput value={salaryAmount} onChange={setSalaryAmount} error={fieldErrors.salaryAmount} />
+              {fieldErrors.salaryAmount && <div style={{ fontSize: 12, color: "#DC2626", marginTop: 4, fontWeight: 600 }}>{fieldErrors.salaryAmount}</div>}
             </div>
           </div>
         )}
@@ -383,10 +391,11 @@ function FormLabel(props) {
 }
 
 function MoneyInput(props) {
+  const errored = !!props.error;
   return (
     <div style={{
       display: "flex", alignItems: "center", height: 44,
-      padding: "0 14px", border: "1px solid " + C.line, borderRadius: 10, background: "#FFFFFF",
+      padding: "0 14px", border: (errored ? "1.5px solid #DC2626" : "1px solid " + C.line), borderRadius: 10, background: (errored ? "#FEF5F5" : "#FFFFFF"),
     }}>
       <span style={{ color: C.muted, marginRight: 8, fontWeight: 600 }}>$</span>
       <input
