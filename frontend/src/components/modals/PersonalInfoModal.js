@@ -39,6 +39,8 @@ export default function PersonalInfoModal(props) {
   const [postal, setPostal] = useState("");
   const [mailingSame, setMailingSame] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [attempted, setAttempted] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
   useEffect(function() {
@@ -56,10 +58,26 @@ export default function PersonalInfoModal(props) {
     setPostal(employee.postal_or_zip || employee.postal_code || "");
     setMailingSame(employee.mailing_address_same !== false);
     setSaving(false); setSaveError(null);
+    setFieldErrors({}); setAttempted(false);
   }, [isOpen, employee]);
 
   async function handleSave() {
     if (!employee.id) return;
+    // Validate required fields
+    const errors = {};
+    if (!firstName || !firstName.trim()) errors.firstName = "First name is required";
+    if (!lastName || !lastName.trim()) errors.lastName = "Last name is required";
+    if (!sin || !sin.trim()) errors.sin = "SIN is required";
+    if (!street || !street.trim()) errors.street = "Street address is required";
+    if (!city || !city.trim()) errors.city = "City is required";
+    if (!prov || !prov.trim()) errors.prov = "Province is required";
+    if (!postal || !postal.trim()) errors.postal = "Postal code is required";
+    setFieldErrors(errors);
+    setAttempted(true);
+    if (Object.keys(errors).length > 0) {
+      setSaveError("Please fix the fields highlighted below");
+      return;
+    }
     setSaving(true); setSaveError(null);
     var body = {
       first_name: firstName || null,
@@ -111,10 +129,16 @@ export default function PersonalInfoModal(props) {
         </a>
       }
     >
+      {attempted && Object.keys(fieldErrors).length > 0 && (
+        <div style={{ background: "#FEE2E2", borderLeft: "3px solid #DC2626", borderRadius: "0 8px 8px 0", padding: "12px 14px", marginBottom: 18, display: "flex", gap: 10, alignItems: "center" }}>
+          <span style={{ fontSize: 16 }}>&#9888;</span>
+          <div style={{ fontSize: 13, color: "#991B1B", fontWeight: 600 }}>Please fix the fields highlighted below ({Object.keys(fieldErrors).length} missing)</div>
+        </div>
+      )}
       <CollapsibleSection title="Basic details" defaultOpen={true}>
         <TwoCol>
-          <Field label="First name"><TextInput value={firstName} onChange={setFirstName} /></Field>
-          <Field label="Last name"><TextInput value={lastName} onChange={setLastName} /></Field>
+          <Field label="First name" required error={fieldErrors.firstName}><TextInput value={firstName} onChange={setFirstName} error={fieldErrors.firstName} /></Field>
+          <Field label="Last name" required error={fieldErrors.lastName}><TextInput value={lastName} onChange={setLastName} error={fieldErrors.lastName} /></Field>
         </TwoCol>
         <TwoCol>
           <Field label="Email"><TextInput type="email" value={email} onChange={setEmail} /></Field>
@@ -122,22 +146,22 @@ export default function PersonalInfoModal(props) {
         </TwoCol>
         <TwoCol>
           <Field label="Date of birth"><TextInput type="date" value={dob} onChange={setDob} /></Field>
-          <Field label="Social Insurance Number"><TextInput value={sin} onChange={setSin} placeholder="XXX-XXX-XXX" /></Field>
+          <Field label="Social Insurance Number" required error={fieldErrors.sin}><TextInput value={sin} onChange={setSin} placeholder="XXX-XXX-XXX" error={fieldErrors.sin} /></Field>
         </TwoCol>
       </CollapsibleSection>
 
       <CollapsibleSection title="Home address" defaultOpen={true}>
-        <Field label="Street"><TextInput value={street} onChange={setStreet} placeholder="10245 Whyte Avenue" /></Field>
+        <Field label="Street" required error={fieldErrors.street}><TextInput value={street} onChange={setStreet} placeholder="10245 Whyte Avenue" error={fieldErrors.street} /></Field>
         <Field label="Unit / Suite (optional)"><TextInput value={line2} onChange={setLine2} /></Field>
         <TwoCol>
-          <Field label="City"><TextInput value={city} onChange={setCity} placeholder="Edmonton" /></Field>
-          <Field label="Province">
+          <Field label="City" required error={fieldErrors.city}><TextInput value={city} onChange={setCity} placeholder="Edmonton" error={fieldErrors.city} /></Field>
+          <Field label="Province" required error={fieldErrors.prov}>
             <SelectInput value={prov} onChange={setProv}>
               {CA_PROVINCES.map(function(p) { return <option key={p} value={p}>{p}</option>; })}
             </SelectInput>
           </Field>
         </TwoCol>
-        <Field label="Postal code"><TextInput value={postal} onChange={setPostal} placeholder="T6E 1Z9" /></Field>
+        <Field label="Postal code" required error={fieldErrors.postal}><TextInput value={postal} onChange={setPostal} placeholder="T6E 1Z9" error={fieldErrors.postal} /></Field>
 
         <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 10 }}>
           <div onClick={function() { setMailingSame(!mailingSame); }}
@@ -169,14 +193,17 @@ function TwoCol(props) {
 function Field(props) {
   return (
     <div style={{ marginTop: 12 }}>
-      <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#12262B", marginBottom: 7 }}>{props.label}</label>
+      <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#12262B", marginBottom: 7 }}>
+        {props.label}{props.required && <span style={{ color: "#DC2626", marginLeft: 4 }}>*</span>}
+      </label>
       {props.children}
+      {props.error && <div style={{ fontSize: 12, color: "#DC2626", marginTop: 4, fontWeight: 600 }}>{props.error}</div>}
     </div>
   );
 }
 function TextInput(props) {
   return (
-    <div style={{ display: "flex", alignItems: "center", height: 44, padding: "0 14px", border: "1px solid " + C.line, borderRadius: 10, background: "#FFFFFF" }}>
+    <div style={{ display: "flex", alignItems: "center", height: 44, padding: "0 14px", border: (props.error ? "1.5px solid #DC2626" : "1px solid " + C.line), borderRadius: 10, background: (props.error ? "#FEF5F5" : "#FFFFFF") }}>
       <input
         type={props.type || "text"}
         value={props.value || ""}
