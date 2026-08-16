@@ -67,11 +67,27 @@ export default function PersonalInfoModal(props) {
     const errors = {};
     if (!firstName || !firstName.trim()) errors.firstName = "First name is required";
     if (!lastName || !lastName.trim()) errors.lastName = "Last name is required";
-    if (!sin || !sin.trim()) errors.sin = "SIN is required";
+    // SIN: required + must be 9 digits
+    if (!sin || !sin.trim()) {
+      errors.sin = "SIN is required";
+    } else {
+      const sinDigits = sin.replace(/\D/g, "");
+      if (sinDigits.length !== 9) errors.sin = "SIN must be 9 digits";
+    }
     if (!street || !street.trim()) errors.street = "Street address is required";
     if (!city || !city.trim()) errors.city = "City is required";
     if (!prov || !prov.trim()) errors.prov = "Province is required";
-    if (!postal || !postal.trim()) errors.postal = "Postal code is required";
+    // Postal: required + Canadian format A1A 1A1 (with or without space)
+    if (!postal || !postal.trim()) {
+      errors.postal = "Postal code is required";
+    } else {
+      const postalClean = postal.replace(/\s/g, "").toUpperCase();
+      if (!/^[A-Z]\d[A-Z]\d[A-Z]\d$/.test(postalClean)) errors.postal = "Postal code must be in format A1A 1A1";
+    }
+    // Email: optional, but if filled must be valid
+    if (email && email.trim()) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errors.email = "Enter a valid email address";
+    }
     setFieldErrors(errors);
     setAttempted(true);
     if (Object.keys(errors).length > 0) {
@@ -141,7 +157,7 @@ export default function PersonalInfoModal(props) {
           <Field label="Last name" required error={fieldErrors.lastName}><TextInput value={lastName} onChange={setLastName} error={fieldErrors.lastName} /></Field>
         </TwoCol>
         <TwoCol>
-          <Field label="Email"><TextInput type="email" value={email} onChange={setEmail} /></Field>
+          <Field label="Email" error={fieldErrors.email}><TextInput type="email" value={email} onChange={setEmail} error={fieldErrors.email} /></Field>
           <Field label="Phone"><TextInput value={phone} onChange={setPhone} placeholder="+1 (___) ___ ____" /></Field>
         </TwoCol>
         <TwoCol>
