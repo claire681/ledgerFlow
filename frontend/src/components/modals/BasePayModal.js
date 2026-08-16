@@ -65,6 +65,8 @@ export default function BasePayModal(props) {
   const [effectiveOn, setEffectiveOn] = useState("immediately");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [attempted, setAttempted] = useState(false);
 
   useEffect(function() {
     if (isOpen) {
@@ -78,6 +80,8 @@ export default function BasePayModal(props) {
       setEffectiveOn("immediately");
       setSaving(false);
       setSaveError(null);
+      setFieldErrors({});
+      setAttempted(false);
     }
   }, [isOpen, initial]);
 
@@ -93,6 +97,21 @@ export default function BasePayModal(props) {
   const saveDisabled = !hasUnsavedChanges;
 
   async function handleSave() {
+    // Validate
+    const errors = {};
+    if (payType === "hourly") {
+      const rate = parseFloat(hourlyRate);
+      if (!hourlyRate || isNaN(rate) || rate <= 0) errors.hourlyRate = "Hourly rate must be greater than 0";
+    } else if (payType === "salary") {
+      const amt = parseFloat(salaryAmount);
+      if (!salaryAmount || isNaN(amt) || amt <= 0) errors.salaryAmount = "Salary amount must be greater than 0";
+    }
+    setFieldErrors(errors);
+    setAttempted(true);
+    if (Object.keys(errors).length > 0) {
+      setSaveError("Please fix the fields highlighted below");
+      return;
+    }
     setSaving(true);
     setSaveError(null);
 
