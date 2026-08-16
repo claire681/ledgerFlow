@@ -23,7 +23,7 @@ export default function PaymentMethodModal(props) {
 
   useEffect(function() {
     if (!isOpen) return;
-    setMethod(employee.payment_method || employee.method || "Cheque");
+    setMethod(function() { const at = (employee.account_type || employee.payment_method || employee.method || "").toLowerCase(); return at === "cheque" ? "Cheque" : (at === "direct_deposit" ? "Direct deposit" : "Cheque"); }());
     setSaving(false); setSaveError(null);
   }, [isOpen, employee]);
 
@@ -33,7 +33,7 @@ export default function PaymentMethodModal(props) {
     try {
       const r = await fetch(API + "/api/v1/payroll/employees/" + employee.id, {
         method: "PATCH", headers: authHeaders(),
-        body: JSON.stringify({ payment_method: method }),
+        body: JSON.stringify({ account_type: (method || "").toLowerCase() }),
       });
       if (!r.ok) { const t = await r.text(); throw new Error("Save failed: " + (t || r.status)); }
       setSaving(false); onSaved && onSaved();
