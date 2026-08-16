@@ -696,6 +696,7 @@ class Employee(Base):
     effective_date = Column(Date)
     # Work location
     work_location_id = Column(UUID(as_uuid=True), ForeignKey("work_locations.id", ondelete="SET NULL"), nullable=True, index=True)
+    work_city = Column(String(120), nullable=True)  # free-text city where employee actually works
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -851,6 +852,10 @@ class PayStub(Base):
     voided_reason = Column(String(1000), nullable=True)
 
     # Adjustment cheque fields
+    # Cheque tracking (for paper cheques)
+    cheque_number = Column(String(30), nullable=True, index=True)
+    cheque_date = Column(Date, nullable=True)
+
     is_adjustment          = Column(Boolean, nullable=False, server_default="false")
     adjustment_of_stub_id  = Column(UUID(as_uuid=True), ForeignKey("pay_stubs.id"), nullable=True)
     adjustment_reason      = Column(Text, nullable=True)

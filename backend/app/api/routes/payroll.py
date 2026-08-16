@@ -68,6 +68,8 @@ class EmployeeUpdateBody(BaseModel):
     employee_number: Optional[str] = None
     position_title: Optional[str] = None
     department: Optional[str] = None
+    work_location_id: Optional[str] = None
+    work_city: Optional[str] = None
     employment_type: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
@@ -161,7 +163,7 @@ def serialize_employee(e):
         "postal_or_zip": e.postal_or_zip, "country": e.country,
         "employee_number": e.employee_number, "position_title": e.position_title,
         "department": e.department,
-        "work_location_id": str(e.work_location_id) if e.work_location_id else None, "employment_type": e.employment_type,
+        "work_location_id": str(e.work_location_id) if e.work_location_id else None, "work_city": e.work_city, "employment_type": e.employment_type,
         "start_date": e.start_date.isoformat() if e.start_date else None,
         "end_date": e.end_date.isoformat() if e.end_date else None,
         "status": e.status, "manager_name": e.manager_name,

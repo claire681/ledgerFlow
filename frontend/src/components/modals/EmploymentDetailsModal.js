@@ -30,6 +30,7 @@ export default function EmploymentDetailsModal(props) {
   const [payFreq, setPayFreq] = useState("Semi-monthly");
   const [startDate, setStartDate] = useState("");
   const [locId, setLocId] = useState("");
+  const [workCity, setWorkCity] = useState("");
   const [locations, setLocations] = useState(providedLocations);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -44,6 +45,7 @@ export default function EmploymentDetailsModal(props) {
     setPayFreq(employee.pay_frequency || "Semi-monthly");
     setStartDate(employee.start_date ? String(employee.start_date).slice(0, 10) : "");
     setLocId(employee.work_location_id || "");
+    setWorkCity(employee.work_city || "");
     setSaving(false); setSaveError(null);
 
     // Reload locations if not provided
@@ -67,6 +69,7 @@ export default function EmploymentDetailsModal(props) {
       pay_frequency: payFreq || null,
       start_date: startDate || null,
       work_location_id: locId || null,
+      work_city: workCity || null,
     };
     try {
       const r = await fetch(API + "/api/v1/payroll/employees/" + employee.id, {
@@ -131,19 +134,12 @@ export default function EmploymentDetailsModal(props) {
       </CollapsibleSection>
 
       <CollapsibleSection title="Work location" defaultOpen={true}>
-        <Field label="Location">
-          <SelectInput value={locId} onChange={setLocId}>
-            <option value="">Select a work location</option>
-            {locations.map(function(l) {
-              return <option key={l.id} value={l.id}>{l.name}{l.province_or_state ? " \u00b7 " + l.province_or_state : ""}</option>;
-            })}
-          </SelectInput>
+        <Field label="City">
+          <TextInput value={workCity} onChange={setWorkCity} placeholder="e.g., Edmonton, Calgary, Toronto" />
         </Field>
-        {locations.length === 0 && (
-          <div style={{ marginTop: 10, fontSize: 12.5, color: C.muted, fontWeight: 500, lineHeight: 1.5 }}>
-            No work locations set up yet. Add one in Payroll settings.
-          </div>
-        )}
+        <div style={{ marginTop: 10, fontSize: 12.5, color: C.muted, fontWeight: 500, lineHeight: 1.5 }}>
+          City where this employee actually works. Can be different from your office location.
+        </div>
       </CollapsibleSection>
     </EditModal>
   );
