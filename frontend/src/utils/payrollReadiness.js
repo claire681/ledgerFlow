@@ -80,7 +80,7 @@ export const getReadiness = (emp) => {
   }
 
   // 5. Employment (job title, work location, hire/start date)
-  const hasEmployment = !!(emp.position_title || emp.job_title) && !!(emp.work_location || emp.work_location_id) && !!(emp.start_date || emp.hire_date);
+  const hasEmployment = !!(emp.position_title || emp.job_title) && !!(emp.work_city || emp.work_location || emp.work_location_id) && !!(emp.start_date || emp.hire_date);
   if (!hasEmployment) {
     missing.push({ section: "employment", label: "employment details" });
   }
