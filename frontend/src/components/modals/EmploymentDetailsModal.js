@@ -33,6 +33,8 @@ export default function EmploymentDetailsModal(props) {
   const [workCity, setWorkCity] = useState("");
   const [locations, setLocations] = useState(providedLocations);
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [attempted, setAttempted] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
   useEffect(function() {
@@ -47,6 +49,7 @@ export default function EmploymentDetailsModal(props) {
     setLocId(employee.work_location_id || "");
     setWorkCity(employee.work_city || "");
     setSaving(false); setSaveError(null);
+    setFieldErrors({}); setAttempted(false);
 
     // Reload locations if not provided
     if (!providedLocations || providedLocations.length === 0) {
@@ -59,6 +62,17 @@ export default function EmploymentDetailsModal(props) {
 
   async function handleSave() {
     if (!employee.id) return;
+    // Validate required fields
+    const errors = {};
+    if (!title || !title.trim()) errors.title = "Job title is required";
+    if (!startDate) errors.startDate = "Start date is required";
+    if (!workCity || !workCity.trim()) errors.workCity = "City is required";
+    setFieldErrors(errors);
+    setAttempted(true);
+    if (Object.keys(errors).length > 0) {
+      setSaveError("Please fix the fields highlighted below");
+      return;
+    }
     setSaving(true); setSaveError(null);
     var body = {
       position_title: title || null,
@@ -97,8 +111,14 @@ export default function EmploymentDetailsModal(props) {
         </a>
       }
     >
+      {attempted && Object.keys(fieldErrors).length > 0 && (
+        <div style={{ background: "#FEE2E2", borderLeft: "3px solid #DC2626", borderRadius: "0 8px 8px 0", padding: "12px 14px", marginBottom: 18, display: "flex", gap: 10, alignItems: "center" }}>
+          <span style={{ fontSize: 16 }}>&#9888;</span>
+          <div style={{ fontSize: 13, color: "#991B1B", fontWeight: 600 }}>Please fix the fields highlighted below ({Object.keys(fieldErrors).length} missing)</div>
+        </div>
+      )}
       <CollapsibleSection title="Role" defaultOpen={true}>
-        <Field label="Position title"><TextInput value={title} onChange={setTitle} placeholder="Home care worker" /></Field>
+        <Field label="Position title" required error={fieldErrors.title}><TextInput value={title} onChange={setTitle} placeholder="Home care worker" error={fieldErrors.title} /></Field>
         <Field label="Employee ID number"><TextInput value={empNumber} onChange={setEmpNumber} placeholder="Optional. Auto-generated if left blank." /></Field>
         <TwoCol>
           <Field label="Department"><TextInput value={dept} onChange={setDept} placeholder="Care team" /></Field>
@@ -123,7 +143,7 @@ export default function EmploymentDetailsModal(props) {
       </CollapsibleSection>
 
       <CollapsibleSection title="Dates" defaultOpen={true}>
-        <Field label="Start date">
+        <Field label="Start date" required error={fieldErrors.startDate}>
           <div style={{ display: "flex", alignItems: "center", height: 44, padding: "0 14px", border: "1px solid " + C.line, borderRadius: 10, background: "#FFFFFF" }}>
             <CalendarIcon size={14} color={C.muted} style={{ marginRight: 10 }} />
             <input type="date" value={startDate}
@@ -134,8 +154,8 @@ export default function EmploymentDetailsModal(props) {
       </CollapsibleSection>
 
       <CollapsibleSection title="Work location" defaultOpen={true}>
-        <Field label="City">
-          <TextInput value={workCity} onChange={setWorkCity} placeholder="e.g., Edmonton, Calgary, Toronto" />
+        <Field label="City" required error={fieldErrors.workCity}>
+          <TextInput value={workCity} onChange={setWorkCity} placeholder="e.g., Edmonton, Calgary, Toronto" error={fieldErrors.workCity} />
         </Field>
         <div style={{ marginTop: 10, fontSize: 12.5, color: C.muted, fontWeight: 500, lineHeight: 1.5 }}>
           City where this employee actually works. Can be different from your office location.
@@ -149,14 +169,18 @@ function TwoCol(props) { return <div style={{ display: "grid", gridTemplateColum
 function Field(props) {
   return (
     <div style={{ marginTop: 12 }}>
-      <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#12262B", marginBottom: 7 }}>{props.label}</label>
+      <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#12262B", marginBottom: 7 }}>
+        {props.label}{props.required && <span style={{ color: "#DC2626", marginLeft: 4 }}>*</span>}
+      </label>
       {props.children}
+      {props.error && <div style={{ fontSize: 12, color: "#DC2626", marginTop: 4, fontWeight: 600 }}>{props.error}</div>}
     </div>
   );
 }
 function TextInput(props) {
+  const errored = !!props.error;
   return (
-    <div style={{ display: "flex", alignItems: "center", height: 44, padding: "0 14px", border: "1px solid " + C.line, borderRadius: 10, background: "#FFFFFF" }}>
+    <div style={{ display: "flex", alignItems: "center", height: 44, padding: "0 14px", border: (errored ? "1.5px solid #DC2626" : "1px solid " + C.line), borderRadius: 10, background: (errored ? "#FEF5F5" : "#FFFFFF") }}>
       <input type={props.type || "text"} value={props.value || ""} placeholder={props.placeholder || ""}
         onChange={function(e) { props.onChange(e.target.value); }}
         style={{ border: 0, outline: "none", fontSize: 14, color: C.ink, flex: 1, fontFamily: FONT, fontWeight: 500, background: "transparent" }} />
