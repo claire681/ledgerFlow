@@ -257,13 +257,8 @@ export default function EmployeesList() {
 
   const renderStatus = (emp) => {
     const ti = emp.tax_info || {};
-    const personalDone = emp.first_name && emp.last_name && emp.date_of_birth && emp.sin_or_ssn;
-    const employmentDone = emp.employment_type && emp.start_date;
-    const paymentDone = emp.account_type;
-    const basepayDone = emp.pay_type && (emp.hourly_rate || emp.salary_amount);
-    const taxDone = ti.province_of_employment || ti.stateEmp || ti.taxCode || ti.tfnDeclared;
-    const allDone = personalDone && employmentDone && paymentDone && basepayDone && taxDone;
-    if (allDone) return <span style={{ fontSize: 12, fontWeight: 600, color: SUCCESS_TEXT, background: SUCCESS_SOFT, padding: "3px 10px", borderRadius: 20 }}>Active</span>;
+    // Use unified _ready (same as avatar tick and Employee Profile page)
+    if (emp._ready) return <span style={{ fontSize: 12, fontWeight: 600, color: SUCCESS_TEXT, background: SUCCESS_SOFT, padding: "3px 10px", borderRadius: 20 }}>Active</span>;
     return <span style={{ fontSize: 12, fontWeight: 600, color: WARN_TEXT, background: WARN_SOFT, padding: "3px 10px", borderRadius: 20 }}>Needs setup</span>;
   };
 
