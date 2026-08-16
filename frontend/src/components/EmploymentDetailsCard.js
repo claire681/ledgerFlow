@@ -71,7 +71,10 @@ export default function EmploymentDetailsCard(props) {
 
   var locName = null;
   var locProv = null;
-  if (employee.work_location_id) {
+  // Prefer new work_city field (free text) over legacy work_location_id
+  if (employee.work_city) {
+    locName = employee.work_city;
+  } else if (employee.work_location_id) {
     var m = locations.find(function(l) { return String(l.id) === String(employee.work_location_id); });
     if (m) { locName = m.name; locProv = m.province_or_state || m.province || null; }
   }
@@ -123,7 +126,7 @@ export default function EmploymentDetailsCard(props) {
 
           {/* Work location */}
           <SubCard title="Work location" icon={<MapPin size={13} strokeWidth={2.5} />}>
-            <Row label="Location" value={locName ? (locName + (locProv ? " \u00b7 " + locProv : "")) : null} isLast />
+            <Row label="City" value={locName ? (locName + (locProv ? " \u00b7 " + locProv : "")) : null} isLast />
           </SubCard>
         </div>
       )}
