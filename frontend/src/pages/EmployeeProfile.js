@@ -420,8 +420,17 @@ export default function EmployeeProfile() {
   useEffect(() => {
     if (activeTab !== "profile") return;
     const section = searchParams.get("section");
+    const shouldEdit = searchParams.get("edit") === "1";
     if (section && SECTIONS.some((s) => s.id === section)) {
-      const t = setTimeout(() => scrollToSection(section), 120);
+      const t = setTimeout(() => {
+        scrollToSection(section);
+        if (shouldEdit && typeof openEditor === "function") {
+          openEditor(section);
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete("edit");
+          setSearchParams(newParams, { replace: true });
+        }
+      }, 200);
       return () => clearTimeout(t);
     }
   }, [activeTab, searchParams]);
