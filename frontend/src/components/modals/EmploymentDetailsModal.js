@@ -31,6 +31,13 @@ export default function EmploymentDetailsModal(props) {
   const [startDate, setStartDate] = useState("");
   const [locId, setLocId] = useState("");
   const [workCity, setWorkCity] = useState("");
+  const [workStreet, setWorkStreet] = useState("");
+  const [workProvince, setWorkProvince] = useState("Alberta");
+  const [workPostal, setWorkPostal] = useState("");
+  const [status, setStatus] = useState("active");
+  const [lastDayOfWork, setLastDayOfWork] = useState("");
+  const [statusReason, setStatusReason] = useState("");
+  const [showInListsOnly, setShowInListsOnly] = useState(false);
   const [locations, setLocations] = useState(providedLocations);
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -48,6 +55,13 @@ export default function EmploymentDetailsModal(props) {
     setStartDate(employee.start_date ? String(employee.start_date).slice(0, 10) : "");
     setLocId(employee.work_location_id || "");
     setWorkCity(employee.work_city || "");
+    setWorkStreet(employee.work_street || "");
+    setWorkProvince(employee.work_province || "Alberta");
+    setWorkPostal(employee.work_postal || "");
+    setStatus(employee.employment_status || "active");
+    setLastDayOfWork(employee.last_day_of_work ? String(employee.last_day_of_work).slice(0,10) : "");
+    setStatusReason(employee.status_change_reason || "");
+    setShowInListsOnly(!!employee.show_in_lists_only);
     setSaving(false); setSaveError(null);
     setFieldErrors({}); setAttempted(false);
 
@@ -67,6 +81,14 @@ export default function EmploymentDetailsModal(props) {
     if (!title || !title.trim()) errors.title = "Job title is required";
     if (!startDate) errors.startDate = "Start date is required";
     if (!workCity || !workCity.trim()) errors.workCity = "City is required";
+    if (!workStreet || !workStreet.trim()) errors.workStreet = "Street is required";
+    if (!workPostal || !workPostal.trim()) errors.workPostal = "Postal code is required";
+    if (!status) errors.status = "Select a status";
+    const groupB = ["unpaid_leave", "terminated", "not_on_payroll", "deceased"];
+    if (groupB.indexOf(status) !== -1) {
+      if (!lastDayOfWork) errors.lastDayOfWork = "Enter the last day of work";
+      if (!statusReason) errors.statusReason = "Select a reason";
+    }
     setFieldErrors(errors);
     setAttempted(true);
     if (Object.keys(errors).length > 0) {
@@ -84,6 +106,13 @@ export default function EmploymentDetailsModal(props) {
       start_date: startDate || null,
       work_location_id: locId || null,
       work_city: workCity || null,
+      work_street: workStreet || null,
+      work_province: workProvince || null,
+      work_postal: workPostal || null,
+      employment_status: status,
+      last_day_of_work: lastDayOfWork || null,
+      status_change_reason: statusReason || null,
+      show_in_lists_only: showInListsOnly,
     };
     try {
       const r = await fetch(API + "/api/v1/payroll/employees/" + employee.id, {
@@ -154,12 +183,97 @@ export default function EmploymentDetailsModal(props) {
       </CollapsibleSection>
 
       <CollapsibleSection title="Work location" defaultOpen={true}>
-        <Field label="City" required error={fieldErrors.workCity}>
-          <TextInput value={workCity} onChange={setWorkCity} placeholder="e.g., Edmonton, Calgary, Toronto" error={fieldErrors.workCity} />
+        <Field label="Street address" required error={fieldErrors.workStreet}>
+          <TextInput value={workStreet} onChange={setWorkStreet} placeholder="123 Main Street" error={fieldErrors.workStreet} />
         </Field>
-        <div style={{ marginTop: 10, fontSize: 12.5, color: C.muted, fontWeight: 500, lineHeight: 1.5 }}>
-          City where this employee actually works. Can be different from your office location.
-        </div>
+        <TwoCol>
+          <Field label="City" required error={fieldErrors.workCity}>
+            <TextInput value={workCity} onChange={setWorkCity} placeholder="Edmonton" error={fieldErrors.workCity} />
+          </Field>
+          <Field label="Province">
+            <SelectInput value={workProvince} onChange={setWorkProvince}>
+              <option value="Alberta">Alberta</option>
+              <option value="British Columbia">British Columbia</option>
+              <option value="Manitoba">Manitoba</option>
+              <option value="New Brunswick">New Brunswick</option>
+              <option value="Newfoundland and Labrador">Newfoundland and Labrador</option>
+              <option value="Nova Scotia">Nova Scotia</option>
+              <option value="Northwest Territories">Northwest Territories</option>
+              <option value="Nunavut">Nunavut</option>
+              <option value="Ontario">Ontario</option>
+              <option value="Prince Edward Island">Prince Edward Island</option>
+              <option value="Quebec">Quebec</option>
+              <option value="Saskatchewan">Saskatchewan</option>
+              <option value="Yukon">Yukon</option>
+            </SelectInput>
+          </Field>
+        </TwoCol>
+        <Field label="Postal code" required error={fieldErrors.workPostal}>
+          <TextInput value={workPostal} onChange={setWorkPostal} placeholder="T5H 0S4" error={fieldErrors.workPostal} />
+        </Field>
+      </CollapsibleSection>
+      <CollapsibleSection title="Status" defaultOpen={true}>
+        {(function() {
+          const helperMap = {
+            active: "Actively working and receiving pay.",
+            paid_leave: "Temporarily not working but receiving pay.",
+            unpaid_leave: "Temporarily not working and not receiving pay.",
+            terminated: "Employment has ended.",
+            not_on_payroll: "No regular pay (for example, an owner or board member).",
+            deceased: "Employee has passed away."
+          };
+          const groupB = ["unpaid_leave", "terminated", "not_on_payroll", "deceased"].indexOf(status) !== -1;
+          const reasonOptions = [
+            { key: "shortage_of_work", label: "Shortage of work or end of contract" },
+            { key: "illness_or_injury", label: "Illness or injury" },
+            { key: "quit", label: "Quit" },
+            { key: "maternity", label: "Maternity" },
+            { key: "retirement", label: "Retirement" },
+            { key: "dismissal", label: "Dismissal" },
+            { key: "leave_of_absence", label: "Leave of absence" },
+            { key: "parental", label: "Parental" },
+            { key: "other", label: "Other" }
+          ];
+          return (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <div>
+                <Field label="Status" required error={fieldErrors.status}>
+                  <SelectInput value={status} onChange={function(v) { setStatus(v); setLastDayOfWork(""); setStatusReason(""); setShowInListsOnly(false); }}>
+                    <option value="active">Active</option>
+                    <option value="paid_leave">Paid leave of absence</option>
+                    <option value="unpaid_leave">Unpaid leave of absence</option>
+                    <option value="terminated">Terminated</option>
+                    <option value="not_on_payroll">Not on payroll</option>
+                    <option value="deceased">Deceased</option>
+                  </SelectInput>
+                </Field>
+                <div style={{ marginTop: 6, fontSize: 12.5, color: C.muted, fontWeight: 500, lineHeight: 1.5 }}>{helperMap[status] || ""}</div>
+                {groupB && (
+                  <div>
+                    <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 8 }}>
+                      <input type="checkbox" checked={showInListsOnly} onChange={function(e) { setShowInListsOnly(e.target.checked); }} style={{ width: 16, height: 16, accentColor: "#15A08C" }} />
+                      <label style={{ fontSize: 13, fontWeight: 500, color: "#12262B", cursor: "pointer" }} onClick={function() { setShowInListsOnly(!showInListsOnly); }}>Show in employee lists only</label>
+                      <span title="Keeps this person visible in employee lists and reports, but excludes them from new pay runs." style={{ width: 14, height: 14, background: "#6B7280", color: "white", borderRadius: "50%", fontSize: 10, textAlign: "center", lineHeight: "14px", cursor: "help" }}>i</span>
+                    </div>
+                    <Field label="Reason for status change" required error={fieldErrors.statusReason}>
+                      <SelectInput value={statusReason} onChange={setStatusReason}>
+                        <option value="">Select one</option>
+                        {reasonOptions.map(function(r) { return <option key={r.key} value={r.key}>{r.label}</option>; })}
+                      </SelectInput>
+                    </Field>
+                  </div>
+                )}
+              </div>
+              <div>
+                {groupB && (
+                  <Field label="Last day of work" required error={fieldErrors.lastDayOfWork}>
+                    <TextInput type="date" value={lastDayOfWork} onChange={setLastDayOfWork} error={fieldErrors.lastDayOfWork} />
+                  </Field>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </CollapsibleSection>
     </EditModal>
   );
