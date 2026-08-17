@@ -419,17 +419,23 @@ export default function EmployeeProfile() {
 
   useEffect(() => {
     if (activeTab !== "profile") return;
-    if (!employee) return;
     const section = searchParams.get("section");
     const shouldEdit = searchParams.get("edit") === "1";
-    if (!section || !SECTIONS.some((s) => s.id === section)) return;
-    scrollToSection(section);
-    if (shouldEdit) {
-      setDraft({ ...employee });
-      setEditing(section);
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete("edit");
-      setSearchParams(newParams, { replace: true });
+    console.log("DBG-auto-open", {activeTab, section, shouldEdit, hasEmp: !!employee});
+    if (section && SECTIONS.some((s) => s.id === section)) {
+      const t = setTimeout(() => {
+        console.log("DBG-timeout-fired", {shouldEdit, hasEmp: !!employee});
+        scrollToSection(section);
+        if (shouldEdit && employee) {
+          console.log("DBG-opening-editor", section);
+          setDraft({ ...employee });
+          setEditing(section);
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete("edit");
+          setSearchParams(newParams, { replace: true });
+        }
+      }, 300);
+      return () => clearTimeout(t);
     }
   }, [activeTab, searchParams, employee]);
 
