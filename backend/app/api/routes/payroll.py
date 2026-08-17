@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, text
 from datetime import datetime, timedelta, date
 from typing import Optional, Dict, Any, List
 from decimal import Decimal
@@ -70,6 +70,13 @@ class EmployeeUpdateBody(BaseModel):
     department: Optional[str] = None
     work_location_id: Optional[str] = None
     work_city: Optional[str] = None
+    work_street: Optional[str] = None
+    work_province: Optional[str] = None
+    work_postal: Optional[str] = None
+    employment_status: Optional[str] = None
+    last_day_of_work: Optional[date] = None
+    status_change_reason: Optional[str] = None
+    show_in_lists_only: Optional[bool] = None
     employment_type: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
@@ -163,7 +170,7 @@ def serialize_employee(e):
         "postal_or_zip": e.postal_or_zip, "country": e.country,
         "employee_number": e.employee_number, "position_title": e.position_title,
         "department": e.department,
-        "work_location_id": str(e.work_location_id) if e.work_location_id else None, "work_city": e.work_city, "employment_type": e.employment_type,
+        "work_location_id": str(e.work_location_id) if e.work_location_id else None, "work_city": e.work_city, "work_street": e.work_street, "work_province": e.work_province, "work_postal": e.work_postal, "employment_status": e.employment_status, "last_day_of_work": e.last_day_of_work.isoformat() if e.last_day_of_work else None, "status_change_reason": e.status_change_reason, "show_in_lists_only": e.show_in_lists_only, "employment_type": e.employment_type,
         "start_date": e.start_date.isoformat() if e.start_date else None,
         "end_date": e.end_date.isoformat() if e.end_date else None,
         "status": e.status, "manager_name": e.manager_name,
@@ -301,12 +308,20 @@ async def update_employee(employee_id: str, body: EmployeeUpdateBody, current_us
         raise HTTPException(404, "Employee not found")
 
     data = body.dict(exclude_unset=True)
+    old_status = emp.employment_status
     for key, value in data.items():
         if key in ("salary_amount", "hourly_rate", "hours_per_week") and value is not None:
             value = Decimal(str(value))
         if key == "personal_email" and value:
             value = value.lower().strip()
         setattr(emp, key, value)
+    # Audit trail: write history row on status change
+    new_status = emp.employment_status
+    if 'employment_status' in data and old_status != new_status:
+        await db.execute(
+            text("INSERT INTO employment_status_history (employee_id, from_status, to_status, reason, last_day_of_work, changed_by) VALUES (:eid, :fs, :ts, :r, :ldow, :cb)"),
+            {"eid": emp.id, "fs": old_status, "ts": new_status, "r": emp.status_change_reason, "ldow": emp.last_day_of_work, "cb": current_user.id}
+        )
     await db.commit()
     await db.refresh(emp)
     return serialize_employee(emp)

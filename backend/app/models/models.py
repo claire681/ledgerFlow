@@ -697,6 +697,13 @@ class Employee(Base):
     # Work location
     work_location_id = Column(UUID(as_uuid=True), ForeignKey("work_locations.id", ondelete="SET NULL"), nullable=True, index=True)
     work_city = Column(String(120), nullable=True)  # free-text city where employee actually works
+    work_street = Column(String(200), nullable=True)
+    work_province = Column(String(80), nullable=True)
+    work_postal = Column(String(20), nullable=True)
+    employment_status = Column(String(40), nullable=False, default='active')
+    last_day_of_work = Column(Date, nullable=True)
+    status_change_reason = Column(String(80), nullable=True)
+    show_in_lists_only = Column(Boolean, nullable=False, default=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
