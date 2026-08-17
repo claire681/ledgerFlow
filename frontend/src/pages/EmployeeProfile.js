@@ -400,41 +400,18 @@ export default function EmployeeProfile() {
 
   useEffect(() => {
     if (activeTab !== "profile") return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible.length > 0) {
-          const id = visible[0].target.id.replace("section-card-", "");
-          setActiveSection(id);
-        }
-      },
-      { rootMargin: "-15% 0px -70% 0px", threshold: 0 }
-    );
-    SECTIONS.forEach((s) => {
-      const el = document.getElementById("section-card-" + s.id);
-      if (el) observer.observe(el);
-    });
-    return () => observer.disconnect();
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (activeTab !== "profile") return;
+    if (!employee) return;
+    const openEditorFlag = sessionStorage.getItem("novala_open_editor");
+    if (openEditorFlag && SECTIONS.some((s) => s.id === openEditorFlag)) {
+      sessionStorage.removeItem("novala_open_editor");
+      setDraft({ ...employee });
+      setEditing(openEditorFlag);
+      setTimeout(function(){ scrollToSection(openEditorFlag); }, 100);
+      return;
+    }
     const section = searchParams.get("section");
-    const shouldEdit = searchParams.get("edit") === "1";
-    console.log("DBG-auto-open", {activeTab, section, shouldEdit, hasEmp: !!employee});
     if (section && SECTIONS.some((s) => s.id === section)) {
-      const t = setTimeout(() => {
-        console.log("DBG-timeout-fired", {shouldEdit, hasEmp: !!employee});
-        scrollToSection(section);
-        if (shouldEdit && employee) {
-          console.log("DBG-opening-editor", section);
-          setDraft({ ...employee });
-          setEditing(section);
-          const newParams = new URLSearchParams(searchParams);
-          newParams.delete("edit");
-          setSearchParams(newParams, { replace: true });
-        }
-      }, 300);
+      const t = setTimeout(() => scrollToSection(section), 120);
       return () => clearTimeout(t);
     }
   }, [activeTab, searchParams, employee]);

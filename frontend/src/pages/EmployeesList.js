@@ -221,7 +221,7 @@ export default function EmployeesList() {
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         {renderAvatar(emp)}
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 600, color: TEXT_INK, fontSize: 14, cursor: "pointer" }} onClick={() => navigate("/payroll/employees/" + emp.id + "?section=employment&edit=1")}>{employeeName(emp)}</div>
+          <div style={{ fontWeight: 600, color: TEXT_INK, fontSize: 14, cursor: "pointer" }} onClick={() => (function(){ sessionStorage.setItem("novala_open_editor", "employment"); navigate("/payroll/employees/" + emp.id); })()}>{employeeName(emp)}</div>
           <div style={{ fontSize: 12, color: role ? TEXT_TERTIARY : WARN_TEXT, marginTop: 2 }}>{role || "Role not set"}</div>
         </div>
       </div>
@@ -276,14 +276,14 @@ export default function EmployeesList() {
           <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} style={{ position: "absolute", right: 0, top: 26, zIndex: 50, background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", padding: 4, minWidth: 200 }}>
             {emp._ready ? (
               <>
-                <div style={item} onClick={() => { setOpenMenuId(null); navigate("/payroll/employees/" + emp.id + "?section=employment&edit=1"); }}><User size={14} style={{ color: TEXT_SECONDARY }} />View profile</div>
+                <div style={item} onClick={() => { setOpenMenuId(null); (function(){ sessionStorage.setItem("novala_open_editor", "employment"); navigate("/payroll/employees/" + emp.id); })(); }}><User size={14} style={{ color: TEXT_SECONDARY }} />View profile</div>
                 <div style={item} onClick={() => { setOpenMenuId(null); startNewPayroll(navigate); }}><Play size={14} style={{ color: TEXT_SECONDARY }} />Run payroll for {first}</div>
-                <div style={item} onClick={() => { setOpenMenuId(null); navigate("/payroll/employees/" + emp.id + "?section=employment&edit=1"); }}><UserX size={14} style={{ color: TEXT_SECONDARY }} />Make inactive</div>
+                <div style={item} onClick={() => { setOpenMenuId(null); (function(){ sessionStorage.setItem("novala_open_editor", "employment"); navigate("/payroll/employees/" + emp.id); })(); }}><UserX size={14} style={{ color: TEXT_SECONDARY }} />Make inactive</div>
               </>
             ) : (
               <>
                 <div style={item} onClick={() => { setOpenMenuId(null); navigate("/payroll/employees/" + emp.id + "?section=personal"); }}><UserCog size={14} style={{ color: TEXT_SECONDARY }} />Finish setup</div>
-                <div style={item} onClick={() => { setOpenMenuId(null); navigate("/payroll/employees/" + emp.id + "?section=employment&edit=1"); }}><UserX size={14} style={{ color: TEXT_SECONDARY }} />Make inactive</div>
+                <div style={item} onClick={() => { setOpenMenuId(null); (function(){ sessionStorage.setItem("novala_open_editor", "employment"); navigate("/payroll/employees/" + emp.id); })(); }}><UserX size={14} style={{ color: TEXT_SECONDARY }} />Make inactive</div>
               </>
             )}
           </div>
