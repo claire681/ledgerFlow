@@ -25,6 +25,8 @@ class EmployeePayItemCreate(BaseModel):
     rate_override: Optional[Decimal] = None
     unit_label_override: Optional[str] = None
     notes: Optional[str] = None
+    effective_date: Optional["date"] = None
+    end_date: Optional["date"] = None
 
 
 class EmployeePayItemUpdate(BaseModel):
@@ -33,6 +35,8 @@ class EmployeePayItemUpdate(BaseModel):
     is_active: Optional[bool] = None
     paused_at: Optional[datetime] = None
     notes: Optional[str] = None
+    effective_date: Optional[date] = None
+    end_date: Optional[date] = None
 
 
 def _serialize(item: EmployeePayItem, pay_type: Optional[PayType] = None) -> dict:
@@ -48,6 +52,8 @@ def _serialize(item: EmployeePayItem, pay_type: Optional[PayType] = None) -> dic
         "notes": item.notes,
         "created_at": item.created_at.isoformat() if item.created_at else None,
         "updated_at": item.updated_at.isoformat() if item.updated_at else None,
+        "effective_date": item.effective_date.isoformat() if item.effective_date else None,
+        "end_date": item.end_date.isoformat() if item.end_date else None,
     }
     if pay_type:
         base["pay_type"] = {

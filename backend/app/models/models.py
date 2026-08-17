@@ -671,6 +671,8 @@ class Employee(Base):
 
     # Notes
     notes = Column(Text, nullable=True)
+    effective_date = Column(Date, nullable=True)
+    end_date = Column(Date, nullable=True)
 
     # Timestamps
     # Time off policies (Screen 4e)

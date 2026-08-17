@@ -1393,4 +1393,3 @@ async def get_time_off_info(
         },
         "configured": (accrual_rate > 0 or balance_hours > 0 or sick_days_per_year > 0),
     }
-
