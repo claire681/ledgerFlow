@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Calendar, AlertTriangle } from "lucide-react";
+import DatePicker from "../DatePicker";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const FONT = "Inter, -apple-system, BlinkMacSystemFont, sans-serif";
@@ -96,16 +97,13 @@ export default function ChangePeriodModal(props) {
           </div>
 
           <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: C.ink, marginBottom: 8 }}>Period start</label>
-          <input type="date" value={start} onChange={function(e) { setStart(e.target.value); }}
-            style={{ width: "100%", boxSizing: "border-box", height: 44, padding: "0 14px", border: "1px solid " + C.line, borderRadius: 10, fontSize: 14, color: C.ink, fontFamily: FONT, fontWeight: 500, outline: 0, background: "#FFFFFF", marginBottom: 16 }} />
+          <DatePicker value={start} onChange={setStart} />
 
           <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: C.ink, marginBottom: 8 }}>Period end</label>
-          <input type="date" value={end} onChange={function(e) { setEnd(e.target.value); }}
-            style={{ width: "100%", boxSizing: "border-box", height: 44, padding: "0 14px", border: "1px solid " + C.line, borderRadius: 10, fontSize: 14, color: C.ink, fontFamily: FONT, fontWeight: 500, outline: 0, background: "#FFFFFF", marginBottom: 16 }} />
+          <DatePicker value={end} onChange={setEnd} />
 
           <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: C.ink, marginBottom: 8 }}>Pay date</label>
-          <input type="date" value={payDate} onChange={function(e) { setPayDate(e.target.value); }}
-            style={{ width: "100%", boxSizing: "border-box", height: 44, padding: "0 14px", border: "1px solid " + C.line, borderRadius: 10, fontSize: 14, color: C.ink, fontFamily: FONT, fontWeight: 500, outline: 0, background: "#FFFFFF" }} />
+          <DatePicker value={payDate} onChange={setPayDate} />
 
           {error && (
             <div style={{ marginTop: 12, fontSize: 12.5, color: C.danger, fontWeight: 700 }}>{error}</div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, ChevronDown, ChevronUp, Check, Calendar } from "lucide-react";
+import DatePicker from "../DatePicker";
 
 const BRAND = "#0F9599";
 const BRAND_SOFT = "#E1F5EE";
@@ -257,14 +258,14 @@ export default function PaychequeFilterPopover({
             <div>
               <label style={labelStyle}>From</label>
               <div style={{ position: "relative" }}>
-                <input type="date" value={draft.from} disabled={!isCustom} onChange={(e) => setDraft({ ...draft, from: e.target.value })} style={{ ...inputStyle, background: isCustom ? "white" : "#F9FAFB", color: isCustom ? TEXT_PRIMARY : TEXT_SECONDARY }} />
+                <DatePicker value={draft.from} disabled={!isCustom} onChange={function(iso) { setDraft({ ...draft, from: iso }); }} />
                 <Calendar size={12} style={{ color: "#9CA3AF", position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
               </div>
             </div>
             <div>
               <label style={labelStyle}>To</label>
               <div style={{ position: "relative" }}>
-                <input type="date" value={draft.to} disabled={!isCustom} onChange={(e) => setDraft({ ...draft, to: e.target.value })} style={{ ...inputStyle, background: isCustom ? "white" : "#F9FAFB", color: isCustom ? TEXT_PRIMARY : TEXT_SECONDARY }} />
+                <DatePicker value={draft.to} disabled={!isCustom} onChange={function(iso) { setDraft({ ...draft, to: iso }); }} />
                 <Calendar size={12} style={{ color: "#9CA3AF", position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
               </div>
             </div>

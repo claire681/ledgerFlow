@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PayScheduleModal from "../components/PayScheduleModal";
+import DatePicker from "../components/DatePicker";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -447,7 +448,7 @@ function OverrideDateModal({ schedule, onClose, onSaved }) {
 
         <div style={{ marginBottom: 18 }}>
           <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#1A2332", letterSpacing: 0.3, textTransform: "uppercase", marginBottom: 8 }}>NEW NEXT PAY DATE</label>
-          <input type="date" value={newDate} onChange={function(e) { setNewDate(e.target.value); }} style={{ width: "100%", boxSizing: "border-box", padding: "10px 14px", border: "1px solid #E5E7EB", borderRadius: 8, fontSize: 14, color: "#0E1A1A", fontFamily: "inherit" }} />
+          <DatePicker value={newDate} onChange={setNewDate} />
         </div>
 
         {error && (
