@@ -4,6 +4,7 @@ import {
   ChevronLeft, ChevronRight, Search, Filter, Printer, FileText,
 } from "lucide-react";
 import ResourcesDrawer from "../components/payroll/ResourcesDrawer";
+import DatePicker from "../components/DatePicker";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -164,42 +165,12 @@ export default function ArchivedForms() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <label style={{ fontSize: 12, color: DARK, fontWeight: 700 }}>Start date</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              style={{
-                padding: "9px 12px",
-                border: "1px solid " + LINE_STRONG,
-                borderRadius: 10,
-                fontSize: 14,
-                fontFamily: "inherit",
-                background: "white",
-                color: INK,
-                fontWeight: 600,
-                outline: "none",
-              }}
-            />
+            <DatePicker value={startDate} onChange={setStartDate} />
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <label style={{ fontSize: 12, color: DARK, fontWeight: 700 }}>End date</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              style={{
-                padding: "9px 12px",
-                border: "1px solid " + LINE_STRONG,
-                borderRadius: 10,
-                fontSize: 14,
-                fontFamily: "inherit",
-                background: "white",
-                color: INK,
-                fontWeight: 600,
-                outline: "none",
-              }}
-            />
+            <DatePicker value={endDate} onChange={setEndDate} />
           </div>
 
           <button

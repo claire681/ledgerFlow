@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
+import DatePicker from "../components/DatePicker";
 
 // Compress image to under 1MB before upload (saves bandwidth on mobile)
 async function compressImage(file) {
@@ -494,7 +495,7 @@ export default function ReceiptScanner() {
                   {[
                     { label:'Vendor',   icon:<Store size={12}/>,      display:<span style={{ fontSize:13, fontWeight:600, color:L.text }}>{vendor||'—'}</span>,                                                 input:<input value={vendor} onChange={e=>setVendor(e.target.value)} style={inputStyle} placeholder="Vendor name"/> },
                     { label:'Amount',   icon:<DollarSign size={12}/>,  display:<span style={{ fontSize:18, fontWeight:700, color:ACCENT, fontFamily:L.fontMono }}>${Number(amount||0).toLocaleString()}</span>,  input:<input type="number" value={amount} onChange={e=>setAmount(e.target.value)} style={inputStyle} placeholder="0.00"/> },
-                    { label:'Date',     icon:<Calendar size={12}/>,    display:<span style={{ fontSize:13, fontWeight:500, color:L.text }}>{date||'—'}</span>,                                                    input:<input type="date" value={date} onChange={e=>setDate(e.target.value)} style={inputStyle}/> },
+                    { label:'Date',     icon:<Calendar size={12}/>,    display:<span style={{ fontSize:13, fontWeight:500, color:L.text }}>{date||'—'}</span>,                                                    input:<DatePicker value={date} onChange={setDate} /> },
                     { label:'Category', icon:<Tag size={12}/>,         display:<span style={{ fontSize:13, fontWeight:500, color:L.text }}>{category||'—'}</span>,                                               input:<select value={category} onChange={e=>setCategory(e.target.value)} style={{ ...inputStyle, cursor:'pointer' }}>{CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}</select> },
                   ].map(row => (
                     <div key={row.label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:`1px solid ${L.border}`, gap:8 }}>

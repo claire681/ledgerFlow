@@ -8,6 +8,7 @@ import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import DatePicker from "../components/DatePicker";
 
 const ACCENT    = '#0AB98A';
 const BASE      = 'https://api.getnovala.com/api/v1';
@@ -441,7 +442,7 @@ export default function BillPay() {
         <Modal title="Add New Bill" onClose={() => setModal(null)}>
           <Field label="Vendor / Payee" required placeholder="e.g. AWS, Office Landlord" value={vendor} onChange={e => setVendor(e.target.value)}/>
           <Field label="Amount" required type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)}/>
-          <Field label="Due Date" required type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}/>
+          <Field label="Due Date" required><DatePicker value={dueDate} onChange={setDueDate} /></Field>
           <div style={{ marginBottom:16 }}>
             <div style={{ fontSize:10, fontWeight:700, color:L.textMuted, letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:6 }}>Category</div>
             <select value={category} onChange={e => setCategory(e.target.value)}

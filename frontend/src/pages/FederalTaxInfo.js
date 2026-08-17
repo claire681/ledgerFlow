@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import { X, HelpCircle } from "lucide-react";
 import NovalaVerifyModal from "../components/NovalaVerifyModal";
 import { SaveChangesDialog } from "../components/SaveChangesDialog";
+import DatePicker from "../components/DatePicker";
 
 const BRAND = "#0F5959";
 const TEAL_LINK = "#0F9599";
@@ -242,7 +243,7 @@ export function FederalTaxInfo({ onClose }) {
 
               <div style={{marginBottom: 24}}>
                 <label style={labelStyle}>Effective date</label>
-                <input type="date" value={f.effective_date} onChange={(e) => set("effective_date", e.target.value)} style={{...inputStyle, maxWidth: 400}} />
+                <DatePicker value={f.effective_date} onChange={function(iso) { set("effective_date", iso); }} />
               </div>
 
               <div style={{marginTop: 24, border: `1px solid ${BORDER}`, borderRadius: 12, overflow: "hidden"}}>
