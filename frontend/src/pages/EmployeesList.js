@@ -130,6 +130,7 @@ export default function EmployeesList() {
   const [splitMenuOpen, setSplitMenuOpen] = useState(false);
   const splitMenuRef = useRef(null);
   const [activeFilter, setActiveFilter] = useState("Active Employees");
+  const [searchFocused, setSearchFocused] = useState(false);
   const [activeMenuOpen, setActiveMenuOpen] = useState(false);
   const activeMenuRef = useRef(null);
 
