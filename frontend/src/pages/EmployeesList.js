@@ -130,6 +130,7 @@ export default function EmployeesList() {
   const [splitMenuOpen, setSplitMenuOpen] = useState(false);
   const splitMenuRef = useRef(null);
   const [activeFilter, setActiveFilter] = useState("Active Employees");
+  const [searchFocused, setSearchFocused] = useState(false);
   const [activeMenuOpen, setActiveMenuOpen] = useState(false);
   const activeMenuRef = useRef(null);
 
@@ -339,9 +340,10 @@ export default function EmployeesList() {
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-          <div style={{ width: 260, height: 42, display: "flex", alignItems: "center", gap: 8, border: "1px solid " + BORDER, borderRadius: 999, padding: "0 16px", fontSize: 14, background: "#FFFFFF" }}>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find an employee" style={{ flex: 1, border: "none", outline: "none", fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: TEXT_PRIMARY, background: "transparent" }} />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, marginBottom: 14, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flex: searchFocused ? 1 : "none", minWidth: 280 }}>
+          <div style={{ width: searchFocused ? "100%" : 260, maxWidth: searchFocused ? 500 : 260, height: 42, display: "flex", alignItems: "center", gap: 8, border: searchFocused ? "1px solid " + BRAND_DARK : "1px solid " + BORDER, borderRadius: 999, padding: "0 16px", fontSize: 14, background: "#FFFFFF", transition: "width 0.2s, max-width 0.2s, border-color 0.15s" }}>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} placeholder="Find an employee" style={{ flex: 1, border: "none", outline: "none", fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: TEXT_PRIMARY, background: "transparent" }} />
           <Search size={16} style={{ color: "#94A0B2" }} />
         </div>
           <div ref={activeMenuRef} style={{ position: "relative" }}>
@@ -354,7 +356,8 @@ export default function EmployeesList() {
               </div>
             )}
           </div>
-          <span onClick={togglePrivacy} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 700, color: TEXT_INK, cursor: "pointer", padding: "9px 14px", border: "1.5px solid " + TEXT_INK, borderRadius: 9, background: BG_CARD }}>
+        <div style={{ flex: 1 }} />
+        <span onClick={togglePrivacy} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 700, color: TEXT_INK, cursor: "pointer", padding: "9px 14px", border: "1.5px solid " + TEXT_INK, borderRadius: 9, background: BG_CARD }}>
             <span style={{ width: 38, height: 22, borderRadius: 20, background: privacy ? BRAND : BORDER, position: "relative", transition: "0.15s" }}>
               <span style={{ position: "absolute", top: 2, left: privacy ? 18 : 2, width: 18, height: 18, borderRadius: "50%", background: "white", boxShadow: "0 1px 2px rgba(0,0,0,0.2)", transition: "0.15s" }} />
             </span>
