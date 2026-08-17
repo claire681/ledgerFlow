@@ -11,6 +11,7 @@ import { L, card, page, topBar } from '../styles/light';
 import { useAI } from '../hooks/useAI';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import DatePicker from "../components/DatePicker";
 
 const STATUS = {
   draft:   { label:'Draft',   color:'#94A3B8', bg:'rgba(148,163,184,0.08)', border:'rgba(148,163,184,0.2)', icon:Clock        },
@@ -635,8 +636,8 @@ export default function Invoices() {
       <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr 1fr':'1fr 1fr 1fr 1fr', gap:12, marginBottom:16 }}>
         <Field label="Invoice #"><input style={{ ...inp, background:'#f7fafc', color:L.textMuted }} value={form.invoice_number} readOnly/></Field>
         <Field label="Terms"><input style={inp} placeholder="Net 30" value={form.terms} onChange={e=>sf('terms',e.target.value)}/></Field>
-        <Field label="Invoice Date" required><input style={inp} type="date" value={form.date} onChange={e=>sf('date',e.target.value)}/></Field>
-        <Field label="Due Date"><input style={inp} type="date" value={form.due_date} onChange={e=>sf('due_date',e.target.value)}/></Field>
+        <Field label="Invoice Date" required><DatePicker value={form.date} onChange={function(iso) { sf("date", iso); }} /></Field>
+        <Field label="Due Date"><DatePicker value={form.due_date} onChange={function(iso) { sf("due_date", iso); }} /></Field>
       </div>
 
       <div style={{ display:'grid', gridTemplateColumns:isMobile?'1fr':'1fr 1fr', gap:16, marginBottom:16 }}>
@@ -942,7 +943,7 @@ export default function Invoices() {
 
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                 <Field label="Date to Send *">
-                  <input style={inp} type="date" value={followUpDate} onChange={e => setFollowUpDate(e.target.value)}/>
+                  <DatePicker value={followUpDate} onChange={setFollowUpDate} />
                 </Field>
                 <Field label="Time to Send">
                   <div style={{ display:'flex', gap:8 }}>

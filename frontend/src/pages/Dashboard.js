@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { getFirstName } from '../utils/userDisplay';
 import TrialBanner from '../components/TrialBanner';
+import DatePicker from "../components/DatePicker";
 
 const ACCENT  = '#0AB98A';
 const FONT    = "'Inter', -apple-system, sans-serif";
@@ -179,7 +180,7 @@ function BriefingModal({ onClose, onSave, initial }) {
                 <div style={{ fontSize:11, fontWeight:700, color:'#64748B', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8 }}>{frequency==='monthly'||frequency==='yearly'?'Date':'Start Date'}</div>
                 <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                   <Calendar size={16} color="#94A3B8"/>
-                  <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ ...sel, flex:1 }} onFocus={e => e.target.style.borderColor=ACCENT} onBlur={e => e.target.style.borderColor='#E5E7EB'}/>
+                  <DatePicker value={startDate} onChange={setStartDate} />
                 </div>
               </div>
               <div style={{ marginBottom:20 }}>

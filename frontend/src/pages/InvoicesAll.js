@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Filter, Sliders, Printer, Share2, X, ChevronDown, Calendar, Search } from "lucide-react";
+import DatePicker from "../components/DatePicker";
 
 const BORDER = "#e2e8f0";
 const TEXT = "#0F172A";
@@ -336,11 +337,11 @@ export default function InvoicesAll() {
                 </div>
                 <div>
                   <label style={labelStyle}>From</label>
-                  <input type="date" value={tmpDateFrom} onChange={e => setTmpDateFrom(e.target.value)} disabled={tmpDatePreset !== "custom"} style={{ ...inputStyle, opacity: tmpDatePreset !== "custom" ? 0.5 : 1 }} />
+                  <DatePicker value={tmpDateFrom} onChange={setTmpDateFrom} disabled={tmpDatePreset !== "custom"} />
                 </div>
                 <div>
                   <label style={labelStyle}>To</label>
-                  <input type="date" value={tmpDateTo} onChange={e => setTmpDateTo(e.target.value)} disabled={tmpDatePreset !== "custom"} style={{ ...inputStyle, opacity: tmpDatePreset !== "custom" ? 0.5 : 1 }} />
+                  <DatePicker value={tmpDateTo} onChange={setTmpDateTo} disabled={tmpDatePreset !== "custom"} />
                 </div>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
