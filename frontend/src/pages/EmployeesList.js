@@ -340,19 +340,16 @@ export default function EmployeesList() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-          <div style={{ flex: 1, minWidth: 220, display: "flex", alignItems: "center", gap: 9, border: "0.5px solid " + BORDER, borderRadius: 9, padding: "9px 13px", fontSize: 14 }}>
-            <Search size={16} style={{ color: TEXT_TERTIARY }} />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find an employee" style={{ flex: 1, border: "none", outline: "none", fontFamily: "inherit", fontSize: 14, color: TEXT_PRIMARY, background: "transparent" }} />
-          </div>
+          <div style={{ width: 260, height: 42, display: "flex", alignItems: "center", gap: 8, border: "1px solid " + BORDER, borderRadius: 999, padding: "0 16px", fontSize: 14, background: "#FFFFFF" }}>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find an employee" style={{ flex: 1, border: "none", outline: "none", fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: TEXT_PRIMARY, background: "transparent" }} />
+          <Search size={16} style={{ color: "#94A0B2" }} />
+        </div>
           <div ref={activeMenuRef} style={{ position: "relative" }}>
             <button onClick={() => setActiveMenuOpen(!activeMenuOpen)} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, color: TEXT_INK, padding: "0 18px", height: 42, border: activeMenuOpen ? "1px solid " + BRAND : "1px solid " + BORDER, borderRadius: 999, cursor: "pointer", background: activeMenuOpen ? "#E1F5EE" : "#FFFFFF", fontFamily: "inherit", whiteSpace: "nowrap" }}>{activeFilter} <ChevronDown size={16} strokeWidth={2} style={{ transform: activeMenuOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} /></button>
             {activeMenuOpen && (
               <div style={{ position: "absolute", top: 44, left: 0, background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", padding: 4, minWidth: 210, zIndex: 50 }}>
                 {["Active Employees", "Inactive Employees", "All Employees"].map(opt => (
-                  <div key={opt} onClick={() => { setActiveFilter(opt); setActiveMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: activeFilter === opt ? BRAND_DARK : TEXT_PRIMARY, fontWeight: activeFilter === opt ? 600 : 400 }}>
-                    {activeFilter === opt ? <Check size={14} style={{ color: BRAND }} /> : <span style={{ width: 14, display: "inline-block" }} />}
-                    {opt}
-                  </div>
+                  <div key={opt} onClick={() => { setActiveFilter(opt); setActiveMenuOpen(false); }} onMouseEnter={(e) => { if (activeFilter !== opt) e.currentTarget.style.background = "#F8F9FA"; }} onMouseLeave={(e) => { if (activeFilter !== opt) e.currentTarget.style.background = "transparent"; }} style={{ display: "flex", alignItems: "center", height: 40, padding: "0 18px", cursor: "pointer", fontSize: 14, color: TEXT_INK, fontWeight: activeFilter === opt ? 600 : 500, background: activeFilter === opt ? "#E1F5EE" : "transparent", whiteSpace: "nowrap" }}>{opt}</div>
                 ))}
               </div>
             )}
