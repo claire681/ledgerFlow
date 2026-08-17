@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
+import DatePicker from "../components/DatePicker";
 import {
   ChevronRight, ChevronLeft, Building2, Calendar, FileText, Landmark,
   Plus, MapPin, CheckCircle2, AlertTriangle, Search, Shield,
@@ -1830,7 +1831,7 @@ function PayScheduleSection() {
               </div>
               <div>
                 <label style={labelStyle}>First payday under this schedule</label>
-                <input type="date" value={data.first_payday} onChange={(e) => setFirstPayday(e.target.value)} style={inputStyle} />
+                <DatePicker value={data.first_payday} onChange={setFirstPayday} />
               </div>
             </div>
           </>

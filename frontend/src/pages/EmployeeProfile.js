@@ -15,6 +15,7 @@ import { DENTAL_CODES, DENTAL_CODE_OPTIONS } from "../utils/dentalCodes";
 import { generatePayPeriods, formatPeriodDate, DAY_OF_MONTH_OPTIONS, DEFAULT_SEMI_MONTHLY_SCHEDULE } from "../utils/payScheduling";
 import { isSectionFilled } from "../utils/payrollReadiness";
 import { subdivisionsByCountry } from "../data/subdivisions";
+import DatePicker from "../components/DatePicker";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -1091,7 +1092,7 @@ export default function EmployeeProfile() {
         <Input label={<>City<Req /></>} value={draft.mailing_city || ""} onChange={(e) => set("mailing_city", e.target.value)} />
         <Input label={<>Province<Req /></>} value={draft.mailing_province || ""} onChange={(e) => set("mailing_province", e.target.value)} />
         <Input label={<>Postal code<Req /></>} value={draft.mailing_postal_code || ""} onChange={(e) => set("mailing_postal_code", e.target.value)} placeholder="T0B 4A0" />
-        <Input label={<>Birth date<Req /></>} type="date" value={draft.birth_date || ""} onChange={(e) => set("birth_date", e.target.value)} />
+        <div style={ marginBottom: 14 }><label style={ display: "block", fontSize: 13, fontWeight: 700, color: "#12262B", marginBottom: 7 }><>Birth date<Req /></></label><DatePicker value={draft.birth_date || ""} onChange={function(iso) { set("birth_date", iso); }} /></div>
         <Select label="Gender" value={draft.gender || ""} onChange={(e) => set("gender", e.target.value)} options={[
           { value: "", label: "Select" },
           { value: "male", label: "Male" },
@@ -1897,12 +1898,7 @@ export default function EmployeeProfile() {
           ]}
         />
         {draft.effective_option === "specific_date" && (
-          <Input
-            label={<>Date<Req /></>}
-            type="date"
-            value={draft.effective_date || ""}
-            onChange={(e) => set("effective_date", e.target.value)}
-          />
+          <div style={ marginBottom: 14 }><label style={ display: "block", fontSize: 13, fontWeight: 700, color: "#12262B", marginBottom: 7 }><>Date<Req /></></label><DatePicker value={draft.effective_date || ""} onChange={function(iso) { set("effective_date", iso); }} /></div>
         )}
 
         <div style={{
