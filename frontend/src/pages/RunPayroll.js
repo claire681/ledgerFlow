@@ -733,7 +733,7 @@ export default function RunPayroll() {
             <React.Fragment key={r.id}>
               <div id={"row-" + r.id} onClick={function() { setSelectedRowId(isSelected ? null : r.id); }} style={{ padding: "16px 20px", borderBottom: (isLast && !isExpanded) || isExpanded ? "none" : "1px solid " + C.line, display: "grid", gridTemplateColumns: gridCols, gap: 16, alignItems: "center", opacity: r.ready ? 1 : 0.5, position: "relative", background: rowBg, borderLeft: isSelected ? "3px solid " + C.brand : "3px solid transparent", cursor: "pointer" }}>
                 <div>
-                  <input type="checkbox" checked={r.included} disabled={!r.ready} onChange={function() { toggleIncluded(r.id); }} onClick={function(e) { e.stopPropagation(); }} style={{ width: 16, height: 16, accentColor: C.brand, cursor: r.ready ? "pointer" : "not-allowed" }} />
+                  <input type="checkbox" checked={r.included} disabled={!r.ready || r.skipped} onChange={function() { toggleIncluded(r.id); }} onClick={function(e) { e.stopPropagation(); }} style={{ width: 16, height: 16, accentColor: C.brand, cursor: r.ready ? "pointer" : "not-allowed" }} />
                 </div>
                 <div>
                   <button
@@ -759,15 +759,15 @@ export default function RunPayroll() {
                   <div style={{ fontSize: 12, color: C.muted }}>${r.hourlyRate.toFixed(2)}/hr {r.position ? "\u00b7 " + r.position : ""}</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <HourInput value={r.regular} onChange={function(v) { updateRow(r.id, "regular", v); }} disabled={!r.ready} style={Object.assign({}, inputBox, { width: 90 })} />
+                  <HourInput value={r.regular} onChange={function(v) { updateRow(r.id, "regular", v); }} disabled={!r.ready || r.skipped} style={Object.assign({}, inputBox, { width: 90 })} />
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <HourInput value={r.statHoliday} onChange={function(v) { updateRow(r.id, "statHoliday", v); }} disabled={!r.ready} style={Object.assign({}, inputBox, { width: 90 })} />
+                  <HourInput value={r.statHoliday} onChange={function(v) { updateRow(r.id, "statHoliday", v); }} disabled={!r.ready || r.skipped} style={Object.assign({}, inputBox, { width: 90 })} />
                 </div>
                 <div style={{ textAlign: "right", position: "relative" }}>
                   <div style={{ position: "relative", display: "inline-block" }}>
                     <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: r.statAvgDaily === "" || r.statAvgDaily == null ? C.faint : C.ink, pointerEvents: "none", fontFamily: FONT }}>$</span>
-                    <input type="text" inputMode="decimal" value={r.statAvgDaily === "" || r.statAvgDaily == null ? "" : String(r.statAvgDaily)} onChange={function(e) { const v = e.target.value; updateRow(r.id, "statAvgDaily", v === "" ? "" : (parseFloat(v) || 0)); }} onClick={function(e) { e.stopPropagation(); }} disabled={!r.ready} placeholder="0.00" style={Object.assign({}, inputBox, { width: 90, paddingLeft: 20 })} />
+                    <input type="text" inputMode="decimal" value={r.statAvgDaily === "" || r.statAvgDaily == null ? "" : String(r.statAvgDaily)} onChange={function(e) { const v = e.target.value; updateRow(r.id, "statAvgDaily", v === "" ? "" : (parseFloat(v) || 0)); }} onClick={function(e) { e.stopPropagation(); }} disabled={!r.ready || r.skipped} placeholder="0.00" style={Object.assign({}, inputBox, { width: 90, paddingLeft: 20 })} />
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
@@ -794,7 +794,10 @@ export default function RunPayroll() {
                     <div style={{ position: "absolute", top: 30, right: 0, background: "#fff", border: "1px solid " + C.line, borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", width: 200, overflow: "hidden", zIndex: 20, textAlign: "left" }}>
                       <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer" }} onClick={function() { setEditDrawerEmployeeId(r.id); setOpenMenuId(null); }}>Edit paycheque</div>
                       <div style={{ padding: "10px 14px", fontSize: 13, color: C.ink, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { navigate("/payroll/employees/" + r.id); }}>View profile</div>
-                      <div style={{ padding: "10px 14px", fontSize: 13, color: C.danger, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { skipFromRun(r.id); setOpenMenuId(null); }}>Skip from payroll run</div>
+                      {r.skipped
+              ? <div style={{ padding: "10px 14px", fontSize: 13, color: C.brand, cursor: "pointer", borderTop: "1px solid " + C.line, fontWeight: 600 }} onClick={function() { setRows(function(rs) { return rs.map(function(x) { return x.id === r.id ? Object.assign({}, x, { included: true, skipped: false }) : x; }); }); setOpenMenuId(null); }}>Add back to payroll</div>
+              : <div style={{ padding: "10px 14px", fontSize: 13, color: C.danger, cursor: "pointer", borderTop: "1px solid " + C.line }} onClick={function() { skipFromRun(r.id); setOpenMenuId(null); }}>Skip from payroll run</div>
+            }
                     </div>
                   )}
                 </div>
@@ -810,17 +813,17 @@ export default function RunPayroll() {
                     <div style={{ display: "flex", gap: 26, alignItems: "flex-start" }}>
                       <div>
                         <div style={{ fontSize: 12, fontWeight: 600, color: C.ink, marginBottom: 6 }}>Overtime <span style={{ color: C.faint, fontWeight: 500 }}>(1.5x)</span></div>
-                        <HourInput value={r.overtime} onChange={function(v) { updateRow(r.id, "overtime", v); }} disabled={!r.ready} style={Object.assign({}, inputBox, { width: 100 })} />
+                        <HourInput value={r.overtime} onChange={function(v) { updateRow(r.id, "overtime", v); }} disabled={!r.ready || r.skipped} style={Object.assign({}, inputBox, { width: 100 })} />
                         <div style={{ fontSize: 12, color: C.faint, marginTop: 6, textAlign: "right", width: 100, fontVariantNumeric: "tabular-nums" }}>{fmtMoney(a.otPay)}</div>
                       </div>
                       <div>
                         <div style={{ fontSize: 12, fontWeight: 600, color: C.ink, marginBottom: 6 }}>Vacation</div>
-                        <HourInput value={r.vacation} onChange={function(v) { updateRow(r.id, "vacation", v); }} disabled={!r.ready} style={Object.assign({}, inputBox, { width: 100 })} />
+                        <HourInput value={r.vacation} onChange={function(v) { updateRow(r.id, "vacation", v); }} disabled={!r.ready || r.skipped} style={Object.assign({}, inputBox, { width: 100 })} />
                         <div style={{ fontSize: 12, color: C.faint, marginTop: 6, textAlign: "right", width: 100, fontVariantNumeric: "tabular-nums" }}>{fmtMoney(a.vacPay)}</div>
                       </div>
                       <div>
                         <div style={{ fontSize: 12, fontWeight: 600, color: C.ink, marginBottom: 6 }}>Sick</div>
-                        <HourInput value={r.sick} onChange={function(v) { updateRow(r.id, "sick", v); }} disabled={!r.ready} style={Object.assign({}, inputBox, { width: 100 })} />
+                        <HourInput value={r.sick} onChange={function(v) { updateRow(r.id, "sick", v); }} disabled={!r.ready || r.skipped} style={Object.assign({}, inputBox, { width: 100 })} />
                         <div style={{ fontSize: 12, color: C.faint, marginTop: 6, textAlign: "right", width: 100, fontVariantNumeric: "tabular-nums" }}>{fmtMoney(a.sickPay)}</div>
                       </div>
                       <div style={{ borderLeft: "1px solid " + C.line, paddingLeft: 26, alignSelf: "stretch", display: "flex", flexDirection: "column", justifyContent: "center" }}>
