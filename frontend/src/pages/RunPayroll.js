@@ -727,7 +727,7 @@ export default function RunPayroll() {
           const isLast = idx === filteredRows.length - 1;
           const isExpanded = !!expandedRows[r.id];
           const isSelected = selectedRowId === r.id;
-          const rowBg = isSelected ? C.brandBg : "transparent";
+          const rowBg = r.skipped ? "#FAFBFC" : (isSelected ? C.brandBg : "transparent");
 
           return (
             <React.Fragment key={r.id}>
@@ -752,7 +752,10 @@ export default function RunPayroll() {
                   </button>
                 </div>
                 <div>
-                  <div onClick={function(e) { e.stopPropagation(); setEditDrawerEmployeeId(r.id); }} style={{ fontSize: 14, fontWeight: 600, color: C.ink, cursor: "pointer", textDecoration: "none", display: "inline-block" }} onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; }} onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}>{r.name}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div onClick={function(e) { e.stopPropagation(); setEditDrawerEmployeeId(r.id); }} style={{ fontSize: 14, fontWeight: 600, color: r.skipped ? "#4B5563" : C.ink, cursor: "pointer", textDecoration: "none", display: "inline-block" }} onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; }} onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}>{r.name}</div>
+              {r.skipped && <span style={{ padding: "2px 8px", background: "#E5E7EB", color: "#4B5563", borderRadius: 4, fontSize: 10.5, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>Skipped</span>}
+            </div>
                   <div style={{ fontSize: 12, color: C.muted }}>${r.hourlyRate.toFixed(2)}/hr {r.position ? "\u00b7 " + r.position : ""}</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
