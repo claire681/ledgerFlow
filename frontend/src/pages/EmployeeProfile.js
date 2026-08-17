@@ -434,7 +434,7 @@ export default function EmployeeProfile() {
       }, 300);
       return () => clearTimeout(t);
     }
-  }, [activeTab, searchParams]);
+  }, [activeTab, searchParams, employee]);
 
   const openEditor = (section) => {
     let newDraft = { ...employee };
