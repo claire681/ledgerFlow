@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { MessageSquare, Calendar as CalendarIcon } from "lucide-react";
 import EditModal, { CollapsibleSection } from "./EditModal";
+import DatePicker from "../DatePicker";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const FONT = "Inter, -apple-system, BlinkMacSystemFont, sans-serif";
@@ -198,7 +199,7 @@ export default function EmploymentDetailsModal(props) {
               <div>
                 {groupB && (
                   <Field label="Last day of work" required error={fieldErrors.lastDayOfWork}>
-                    <TextInput type="date" value={lastDayOfWork} onChange={setLastDayOfWork} error={fieldErrors.lastDayOfWork} />
+                    <DatePicker value={lastDayOfWork} onChange={setLastDayOfWork} error={fieldErrors.lastDayOfWork} />
                   </Field>
                 )}
               </div>
