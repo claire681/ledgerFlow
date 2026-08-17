@@ -28,9 +28,8 @@ const SUCCESS_SOFT = "#DCFCE7";
 
 const PRIVACY_KEY = "novala_privacy";
 const PRIVATE_MASK = (
-  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#9CA3AF", fontSize: 13 }}>
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-    Hidden
+  <span style={{ display: "inline-flex", alignItems: "center", color: "#9CA3AF" }}>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-9-2a3 3 0 0 1 6 0v2H9V6zm4 10h-2v-3h2v3z"/></svg>
   </span>
 );
 
