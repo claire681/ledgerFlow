@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Briefcase, User, Calendar, MapPin } from "lucide-react";
-
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const FONT = "Inter, -apple-system, BlinkMacSystemFont, sans-serif";
 const C = {
-  ink: "#0E1A1A", muted: "#12262B", line: "#E7EAF0", page: "#F8F9FA",
-  brand: "#15A08C", brandDark: "#0F6E56", brandBg: "#E1F5EE",
-  chipBg: "#E7EAF0",
+  ink: "#0E1A1A", label: "#12262B", line: "#E7EAF0", muted: "#6B7280",
+  brand: "#15A08C", brandDark: "#0F6E56",
 };
 
 function authHeaders() {
@@ -24,136 +21,145 @@ function fmtDateDDMMYYYY(iso) {
   } catch (e) { return null; }
 }
 
-function tenureFrom(iso) {
-  if (!iso) return null;
-  try {
-    var start = new Date(iso);
-    var now = new Date();
-    var years = now.getFullYear() - start.getFullYear();
-    var months = now.getMonth() - start.getMonth();
-    if (months < 0) { years -= 1; months += 12; }
-    if (years <= 0 && months <= 0) return "Less than a month";
-    if (years === 0) return months + (months === 1 ? " month" : " months");
-    if (months === 0) return years + (years === 1 ? " year" : " years");
-    return years + "y " + months + "m";
-  } catch (e) { return null; }
-}
+var PROVINCE_ABBREV = {
+  "Alberta": "AB", "British Columbia": "BC", "Manitoba": "MB",
+  "New Brunswick": "NB", "Newfoundland and Labrador": "NL",
+  "Nova Scotia": "NS", "Northwest Territories": "NT", "Nunavut": "NU",
+  "Ontario": "ON", "Prince Edward Island": "PE", "Quebec": "QC",
+  "Saskatchewan": "SK", "Yukon": "YT",
+};
+
+var STATUS_LABELS = {
+  active: "Active",
+  paid_leave: "Paid leave of absence",
+  unpaid_leave: "Unpaid leave of absence",
+  terminated: "Terminated",
+  not_on_payroll: "Not on payroll",
+  deceased: "Deceased",
+};
+
+var PAY_SCHEDULE_LABELS = {
+  weekly: "Weekly",
+  bi_weekly: "Bi-weekly",
+  biweekly: "Bi-weekly",
+  semi_monthly: "Semi-monthly",
+  semimonthly: "Semi-monthly",
+  monthly: "Monthly",
+};
 
 export default function EmploymentDetailsCard(props) {
-  const section = props.section;
-  const isOpen = props.isOpen;
-  const onToggleOpen = props.onToggleOpen;
   const employee = props.employee || {};
+  const openEdit = props.openEdit || function() { window.dispatchEvent(new CustomEvent("novala:openEmploymentDetailsModal", { detail: {} })); };
 
-  const [locations, setLocations] = useState([]);
+  const status = STATUS_LABELS[employee.employment_status] || "Active";
+  const hireDate = fmtDateDDMMYYYY(employee.start_date);
+  const paySchedule = PAY_SCHEDULE_LABELS[employee.pay_schedule] || employee.pay_schedule || null;
 
-  useEffect(function() {
-    if (!isOpen) return;
-    fetch(API + "/api/v1/work-locations", { headers: authHeaders() })
-      .then(function(r) { return r.ok ? r.json() : []; })
-      .then(function(data) { setLocations(Array.isArray(data) ? data : (data.items || [])); })
-      .catch(function() {});
-  }, [isOpen]);
+  // Work location - 2 lines
+  const workStreet = employee.work_street || null;
+  const workCity = employee.work_city || null;
+  const workProvinceRaw = employee.work_province || null;
+  const workProvinceAbbrev = workProvinceRaw ? (PROVINCE_ABBREV[workProvinceRaw] || workProvinceRaw) : null;
+  const workPostal = employee.work_postal || null;
 
-  function openEdit() {
-    window.dispatchEvent(new CustomEvent("novala:openEmploymentDetailsModal", { detail: { locations: locations } }));
+  const manager = employee.manager_name || null;
+  const department = employee.department || null;
+  const jobTitle = employee.position_title || null;
+  const empId = employee.employee_number || null;
+
+  const cellStyle = { fontFamily: FONT };
+  const labelStyle = { fontSize: 13, fontWeight: 700, color: C.label, marginBottom: 6 };
+  const valueStyle = { fontSize: 15, fontWeight: 500, color: C.ink, lineHeight: 1.45 };
+  const emptyStyle = { fontSize: 14, fontWeight: 500, color: C.muted, fontStyle: "italic" };
+
+  function renderValue(v) {
+    if (v === null || v === undefined || v === "") {
+      return <div style={emptyStyle}>Not set</div>;
+    }
+    return <div style={valueStyle}>{v}</div>;
   }
 
-  const title = employee.position_title || "-";
-  const dept = employee.department || null;
-  const empType = employee.employment_type || null;
-  const payType = employee.pay_type || null;
-  const payFreq = employee.pay_frequency || null;
-  const startDate = employee.start_date || null;
-  const startFmt = fmtDateDDMMYYYY(startDate);
-  const tenure = tenureFrom(startDate);
-  const empId = employee.id ? String(employee.id).slice(0, 8).toUpperCase() : "-";
-
-  var locName = null;
-  var locProv = null;
-  // Prefer new work_city field (free text) over legacy work_location_id
-  if (employee.work_city) {
-    locName = employee.work_city;
-  } else if (employee.work_location_id) {
-    var m = locations.find(function(l) { return String(l.id) === String(employee.work_location_id); });
-    if (m) { locName = m.name; locProv = m.province_or_state || m.province || null; }
+  function renderWorkLocation() {
+    if (!workStreet && !workCity && !workProvinceAbbrev && !workPostal) {
+      return <div style={emptyStyle}>Not set</div>;
+    }
+    var line2Parts = [];
+    if (workCity) line2Parts.push(workCity);
+    var provPostal = "";
+    if (workProvinceAbbrev) provPostal += workProvinceAbbrev;
+    if (workPostal) provPostal += (provPostal ? " " : "") + workPostal;
+    if (line2Parts.length && provPostal) line2Parts[line2Parts.length - 1] = line2Parts[line2Parts.length - 1] + ", " + provPostal;
+    else if (provPostal) line2Parts.push(provPostal);
+    var line2 = line2Parts.join(", ");
+    return (
+      <div>
+        {workStreet && <div style={valueStyle}>{workStreet}</div>}
+        {line2 && <div style={valueStyle}>{line2}</div>}
+      </div>
+    );
   }
 
   return (
-    <div style={{ background: "#FFFFFF", border: "1px solid " + C.line, borderRadius: 12, marginBottom: 12, fontFamily: FONT }}>
-      <div style={{ display: "flex", alignItems: "center", padding: "16px 20px", cursor: "pointer", borderBottom: isOpen ? "1px solid " + C.line : "0" }} onClick={onToggleOpen}>
-        
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>Employment details</div>
-          <div style={{ fontSize: 12, color: C.muted, fontWeight: 500, marginTop: 2 }}>Role, dates, work location, and tenure.</div>
-        </div>
-        <a onClick={function(e) { e.stopPropagation(); openEdit(); }}
-          style={{ fontSize: 13, color: C.brandDark, fontWeight: 700, textDecoration: "underline", cursor: "pointer", marginRight: 12 }}>
-          Edit
-        </a>
-        <span style={{ color: C.muted, fontSize: 14 }}>{isOpen ? "\u25be" : "\u25b8"}</span>
+    <div style={{
+      background: "#FFFFFF", border: "1px solid " + C.line, borderRadius: 12,
+      marginBottom: 12, padding: "24px 28px", fontFamily: FONT,
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: C.ink }}>Employment details</div>
+        <div
+          onClick={openEdit}
+          style={{ fontSize: 14, fontWeight: 600, color: C.brandDark, cursor: "pointer" }}
+          onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; }}
+          onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}
+        >Edit</div>
       </div>
 
-      {isOpen && (
-        <div style={{ padding: "4px 22px 22px" }}>
-          {/* Hero */}
-          <div style={{ marginTop: 14, padding: "18px 20px", background: C.page, borderRadius: 10, border: "1px solid " + C.line }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: C.ink, letterSpacing: "-0.01em" }}>{title}</div>
-            <div style={{ fontSize: 13, color: C.muted, fontWeight: 500, marginTop: 4 }}>
-              {startFmt ? ("Started " + startFmt + (tenure ? " \u00b7 " + tenure + " tenure" : "")) : "No start date set"}
-            </div>
-            <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-              <span style={{ padding: "4px 10px", background: C.brandBg, color: C.brandDark, borderRadius: 6, fontSize: 11.5, fontWeight: 700 }}>Active</span>
-              {empType && <PillDark>{empType}</PillDark>}
-              {payType && <PillDark>{cap(payType)}</PillDark>}
-              {payFreq && <PillDark>{payFreq}</PillDark>}
-            </div>
-          </div>
-
-          {/* Role */}
-          <SubCard title="Role">
-            <Row label="Position title" value={title} />
-            <Row label="Department" value={dept} />
-            <Row label="Employee ID number" value={empId} mono />
-            <Row label="Employment type" value={empType} isLast />
-          </SubCard>
-
-          {/* Dates */}
-          <SubCard title="Dates">
-            <Row label="Start date" value={startFmt} mono />
-            <Row label="Tenure" value={tenure} isLast />
-          </SubCard>
-
-          {/* Work location */}
-          <SubCard title="Work location" icon={<MapPin size={13} strokeWidth={2.5} />}>
-            <Row label="City" value={locName ? (locName + (locProv ? " \u00b7 " + locProv : "")) : null} isLast />
-          </SubCard>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr 1fr",
+        columnGap: 24,
+        rowGap: 28,
+        marginTop: 24,
+      }}>
+        {/* Row 1: Status, Hire date, Pay schedule */}
+        <div style={cellStyle}>
+          <div style={labelStyle}>Status</div>
+          {renderValue(status)}
         </div>
-      )}
-    </div>
-  );
-}
+        <div style={cellStyle}>
+          <div style={labelStyle}>Hire date</div>
+          {renderValue(hireDate)}
+        </div>
+        <div style={cellStyle}>
+          <div style={labelStyle}>Pay schedule</div>
+          {renderValue(paySchedule)}
+        </div>
 
-function cap(s) { if (!s) return s; return String(s).charAt(0).toUpperCase() + String(s).slice(1); }
-function PillDark(props) {
-  return <span style={{ padding: "4px 10px", background: C.chipBg, color: C.muted, borderRadius: 6, fontSize: 11.5, fontWeight: 700 }}>{props.children}</span>;
-}
-function SubCard(props) {
-  return (
-    <div style={{ marginTop: 14, border: "1px solid " + C.line, borderRadius: 10, padding: "4px 18px 8px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 0 12px", borderBottom: "1px solid " + C.line }}>
-        
-        <span style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{props.title}</span>
+        {/* Row 2: Work location, Manager, Department */}
+        <div style={cellStyle}>
+          <div style={labelStyle}>Work location</div>
+          {renderWorkLocation()}
+        </div>
+        <div style={cellStyle}>
+          <div style={labelStyle}>Manager</div>
+          {renderValue(manager)}
+        </div>
+        <div style={cellStyle}>
+          <div style={labelStyle}>Department</div>
+          {renderValue(department)}
+        </div>
+
+        {/* Row 3: Job title, Employee ID, empty */}
+        <div style={cellStyle}>
+          <div style={labelStyle}>Job title</div>
+          {renderValue(jobTitle)}
+        </div>
+        <div style={cellStyle}>
+          <div style={labelStyle}>Employee ID</div>
+          {renderValue(empId)}
+        </div>
+        <div></div>
       </div>
-      <div style={{ paddingTop: 6 }}>{props.children}</div>
-    </div>
-  );
-}
-function Row(props) {
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", gap: "10px 24px", padding: "12px 0", borderBottom: props.isLast ? "0" : "1px solid " + C.line }}>
-      <span style={{ fontSize: 13.5, color: C.muted, fontWeight: 700 }}>{props.label}</span>
-      <span style={{ fontSize: 13.5, color: props.value ? C.ink : "#94A0B2", fontWeight: 500, fontVariantNumeric: props.mono ? "tabular-nums" : "normal" }}>{props.value || "Not set"}</span>
     </div>
   );
 }
