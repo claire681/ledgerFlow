@@ -418,22 +418,18 @@ export default function EmployeeProfile() {
   }, [activeTab]);
 
   useEffect(() => {
-    console.log("[NOVALA-DBG] effect fires", {activeTab, hasEmployee: !!employee, url: window.location.search});
-    if (activeTab !== "profile") { console.log("[NOVALA-DBG] not profile tab, exit"); return; }
-    if (!employee) { console.log("[NOVALA-DBG] no employee yet, exit"); return; }
+    if (activeTab !== "profile") return;
+    if (!employee) return;
     const section = searchParams.get("section");
     const shouldEdit = searchParams.get("edit") === "1";
-    console.log("[NOVALA-DBG] section=", section, "shouldEdit=", shouldEdit);
-    if (!section || !SECTIONS.some((s) => s.id === section)) { console.log("[NOVALA-DBG] invalid section, exit"); return; }
+    if (!section || !SECTIONS.some((s) => s.id === section)) return;
     scrollToSection(section);
     if (shouldEdit) {
-      console.log("[NOVALA-DBG] calling setEditing with", section);
       setDraft({ ...employee });
       setEditing(section);
       const newParams = new URLSearchParams(searchParams);
       newParams.delete("edit");
       setSearchParams(newParams, { replace: true });
-      console.log("[NOVALA-DBG] done - editing should now be", section);
     }
   }, [activeTab, searchParams, employee]);
 
