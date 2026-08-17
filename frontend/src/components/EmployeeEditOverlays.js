@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { X as XIcon, HelpCircle, ChevronDown, Pencil, Info, Plus, Trash2, Calendar } from "lucide-react";
 import { FeedbackWidget } from "./FeedbackWidget";
 import { PayrollSettings } from "../pages/PayrollSettings";
+import DatePicker from "./DatePicker";
 
 const BRAND = "#0F9599";
 const BRAND_DARK = "#0A4040";
@@ -294,7 +295,7 @@ export function EditPersonalInfo({ employee, onClose, onSaved }) {
       <Field label="Birth date" required>
         <div style={{ display: "flex", gap: 12, alignItems: "center", maxWidth: 360 }}>
           {revealDOB ? (
-            <TextInput type="date" value={f.date_of_birth} onChange={e => set("date_of_birth", e.target.value)} autoFocus />
+            <DatePicker value={f.date_of_birth} onChange={function(iso) { set("date_of_birth", iso); }} />
           ) : (
             <div style={maskedBox}>{f.date_of_birth ? "**/**/****" : "-"}</div>
           )}
@@ -374,7 +375,7 @@ export function EditEmploymentDetails({ employee, onClose, onSaved }) {
         </Select>
       </Field>
       <Field label="Hire date" required>
-        <TextInput type="date" value={f.hire_date} onChange={e => set("hire_date", e.target.value)} style={{ maxWidth: 260 }} />
+        <DatePicker value={f.hire_date} onChange={function(iso) { set("hire_date", iso); }} />
       </Field>
       <Field label="Pay schedule" required hint="Manage pay schedules in Payroll Settings.">
         <div style={{ display: "flex", gap: 8, alignItems: "center", maxWidth: 480 }}>
@@ -1024,7 +1025,7 @@ function EffectiveOnSection({ effectiveOption, setEffectiveOption, effectiveDate
       </Field>
       {effectiveOption === "specific_date" && (
         <Field label="Date" required>
-          <TextInput type="date" value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} style={{ maxWidth: 240 }} />
+          <DatePicker value={effectiveDate} onChange={setEffectiveDate} />
         </Field>
       )}
       <InfoBox>
