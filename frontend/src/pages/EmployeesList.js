@@ -275,12 +275,12 @@ export default function EmployeesList() {
               <>
                 <div style={item} onClick={() => { setOpenMenuId(null); navigate("/payroll/employees/" + emp.id); }}><User size={14} style={{ color: TEXT_SECONDARY }} />View profile</div>
                 <div style={item} onClick={() => { setOpenMenuId(null); startNewPayroll(navigate); }}><Play size={14} style={{ color: TEXT_SECONDARY }} />Run payroll for {first}</div>
-                <div style={item} onClick={() => { setOpenMenuId(null); alert("Make inactive coming soon"); }}><UserX size={14} style={{ color: TEXT_SECONDARY }} />Make inactive</div>
+                <div style={item} onClick={() => { setOpenMenuId(null); navigate("/payroll/employees/" + emp.id); }}><UserX size={14} style={{ color: TEXT_SECONDARY }} />Make inactive</div>
               </>
             ) : (
               <>
                 <div style={item} onClick={() => { setOpenMenuId(null); navigate("/payroll/employees/" + emp.id + "?section=personal"); }}><UserCog size={14} style={{ color: TEXT_SECONDARY }} />Finish setup</div>
-                <div style={item} onClick={() => { setOpenMenuId(null); alert("Make inactive coming soon"); }}><UserX size={14} style={{ color: TEXT_SECONDARY }} />Make inactive</div>
+                <div style={item} onClick={() => { setOpenMenuId(null); navigate("/payroll/employees/" + emp.id); }}><UserX size={14} style={{ color: TEXT_SECONDARY }} />Make inactive</div>
               </>
             )}
           </div>

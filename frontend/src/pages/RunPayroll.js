@@ -428,6 +428,9 @@ export default function RunPayroll() {
           const hoursSickVal = stripHourZeros(line.hours_sick);
           const statAvgDaily = e.stat_pay_avg_daily || (rate ? Number(rate) * 8 : 0);
           const setupComplete = e.setup_complete !== false;
+        const empStatus = e.employment_status || "active";
+        const isInactive = empStatus === "terminated" || empStatus === "deceased" || empStatus === "not_on_payroll" || empStatus === "unpaid_leave";
+        const canBePaid = setupComplete && !isInactive;
           const payMethodRaw = (e.default_pay_method || e.pay_method || "direct_deposit").toString().toLowerCase();
           const payMethod = payMethodRaw.includes("cheque") || payMethodRaw.includes("check") ? "Cheque" : "Direct deposit";
           return {
@@ -439,7 +442,7 @@ export default function RunPayroll() {
             vacation: hoursVacationVal != null && hoursVacationVal > 0 ? String(hoursVacationVal) : "",
             sick: hoursSickVal != null && hoursSickVal > 0 ? String(hoursSickVal) : "",
             statAvgDaily: line.stat_pay_avg != null ? line.stat_pay_avg : "", payMethod: payMethod,
-            ready: setupComplete, included: setupComplete, skipped: false,
+            ready: canBePaid, included: canBePaid, skipped: false, employment_status: empStatus,
             memo: line.memo || "",
           };
         });
