@@ -146,6 +146,66 @@ export default function EmploymentDetailsModal(props) {
           <div style={{ fontSize: 13, color: "#991B1B", fontWeight: 600 }}>Please fix the fields highlighted below ({Object.keys(fieldErrors).length} missing)</div>
         </div>
       )}
+      <CollapsibleSection title="Status" defaultOpen={true}>
+        {(function() {
+          const helperMap = {
+            active: "Actively working and receiving pay.",
+            paid_leave: "Temporarily not working but receiving pay.",
+            unpaid_leave: "Temporarily not working and not receiving pay.",
+            terminated: "Employment has ended.",
+            not_on_payroll: "No regular pay (for example, an owner or board member).",
+            deceased: "Employee has passed away."
+          };
+          const groupB = ["unpaid_leave", "terminated", "not_on_payroll", "deceased"].indexOf(status) !== -1;
+          const reasonOptions = [
+            { key: "shortage_of_work", label: "Shortage of work or end of contract" },
+            { key: "illness_or_injury", label: "Illness or injury" },
+            { key: "quit", label: "Quit" },
+            { key: "maternity", label: "Maternity" },
+            { key: "retirement", label: "Retirement" },
+            { key: "dismissal", label: "Dismissal" },
+            { key: "leave_of_absence", label: "Leave of absence" },
+            { key: "parental", label: "Parental" },
+            { key: "other", label: "Other" }
+          ];
+          return (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <div>
+                <Field label="Status" required error={fieldErrors.status}>
+                  <PillSelect value={status} onChange={function(v) { setStatus(v); setLastDayOfWork(""); setStatusReason(""); setShowInListsOnly(false); }} options={[
+                    { value: "active", label: "Active" },
+                    { value: "paid_leave", label: "Paid leave of absence" },
+                    { value: "unpaid_leave", label: "Unpaid leave of absence" },
+                    { value: "terminated", label: "Terminated" },
+                    { value: "not_on_payroll", label: "Not on payroll" },
+                    { value: "deceased", label: "Deceased" }
+                  ]} />
+                </Field>
+                <div style={{ marginTop: 6, fontSize: 12.5, color: C.muted, fontWeight: 500, lineHeight: 1.5 }}>{helperMap[status] || ""}</div>
+                {groupB && (
+                  <div>
+                    <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 8 }}>
+                      <input type="checkbox" checked={showInListsOnly} onChange={function(e) { setShowInListsOnly(e.target.checked); }} style={{ width: 16, height: 16, accentColor: "#15A08C" }} />
+                      <label style={{ fontSize: 13, fontWeight: 500, color: "#12262B", cursor: "pointer" }} onClick={function() { setShowInListsOnly(!showInListsOnly); }}>Show in employee lists only</label>
+                      <span title="Keeps this person visible in employee lists and reports, but excludes them from new pay runs." style={{ width: 14, height: 14, background: "#6B7280", color: "white", borderRadius: "50%", fontSize: 10, textAlign: "center", lineHeight: "14px", cursor: "help" }}>i</span>
+                    </div>
+                    <Field label="Reason for status change" required error={fieldErrors.statusReason}>
+                      <PillSelect value={statusReason} onChange={setStatusReason} placeholder="Select one" options={reasonOptions.map(function(r) { return { value: r.key, label: r.label }; })} />
+                    </Field>
+                  </div>
+                )}
+              </div>
+              <div>
+                {groupB && (
+                  <Field label="Last day of work" required error={fieldErrors.lastDayOfWork}>
+                    <TextInput type="date" value={lastDayOfWork} onChange={setLastDayOfWork} error={fieldErrors.lastDayOfWork} />
+                  </Field>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+      </CollapsibleSection>
       <CollapsibleSection title="Role" defaultOpen={true}>
         <Field label="Position title" required error={fieldErrors.title}><TextInput value={title} onChange={setTitle} placeholder="Home care worker" error={fieldErrors.title} /></Field>
         <Field label="Employee ID number"><TextInput value={empNumber} onChange={setEmpNumber} placeholder="Optional. Auto-generated if left blank." /></Field>
@@ -212,70 +272,7 @@ export default function EmploymentDetailsModal(props) {
           <TextInput value={workPostal} onChange={setWorkPostal} placeholder="T5H 0S4" error={fieldErrors.workPostal} />
         </Field>
       </CollapsibleSection>
-      <CollapsibleSection title="Status" defaultOpen={true}>
-        {(function() {
-          const helperMap = {
-            active: "Actively working and receiving pay.",
-            paid_leave: "Temporarily not working but receiving pay.",
-            unpaid_leave: "Temporarily not working and not receiving pay.",
-            terminated: "Employment has ended.",
-            not_on_payroll: "No regular pay (for example, an owner or board member).",
-            deceased: "Employee has passed away."
-          };
-          const groupB = ["unpaid_leave", "terminated", "not_on_payroll", "deceased"].indexOf(status) !== -1;
-          const reasonOptions = [
-            { key: "shortage_of_work", label: "Shortage of work or end of contract" },
-            { key: "illness_or_injury", label: "Illness or injury" },
-            { key: "quit", label: "Quit" },
-            { key: "maternity", label: "Maternity" },
-            { key: "retirement", label: "Retirement" },
-            { key: "dismissal", label: "Dismissal" },
-            { key: "leave_of_absence", label: "Leave of absence" },
-            { key: "parental", label: "Parental" },
-            { key: "other", label: "Other" }
-          ];
-          return (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              <div>
-                <Field label="Status" required error={fieldErrors.status}>
-                  <SelectInput value={status} onChange={function(v) { setStatus(v); setLastDayOfWork(""); setStatusReason(""); setShowInListsOnly(false); }}>
-                    <option value="active">Active</option>
-                    <option value="paid_leave">Paid leave of absence</option>
-                    <option value="unpaid_leave">Unpaid leave of absence</option>
-                    <option value="terminated">Terminated</option>
-                    <option value="not_on_payroll">Not on payroll</option>
-                    <option value="deceased">Deceased</option>
-                  </SelectInput>
-                </Field>
-                <div style={{ marginTop: 6, fontSize: 12.5, color: C.muted, fontWeight: 500, lineHeight: 1.5 }}>{helperMap[status] || ""}</div>
-                {groupB && (
-                  <div>
-                    <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 8 }}>
-                      <input type="checkbox" checked={showInListsOnly} onChange={function(e) { setShowInListsOnly(e.target.checked); }} style={{ width: 16, height: 16, accentColor: "#15A08C" }} />
-                      <label style={{ fontSize: 13, fontWeight: 500, color: "#12262B", cursor: "pointer" }} onClick={function() { setShowInListsOnly(!showInListsOnly); }}>Show in employee lists only</label>
-                      <span title="Keeps this person visible in employee lists and reports, but excludes them from new pay runs." style={{ width: 14, height: 14, background: "#6B7280", color: "white", borderRadius: "50%", fontSize: 10, textAlign: "center", lineHeight: "14px", cursor: "help" }}>i</span>
-                    </div>
-                    <Field label="Reason for status change" required error={fieldErrors.statusReason}>
-                      <SelectInput value={statusReason} onChange={setStatusReason}>
-                        <option value="">Select one</option>
-                        {reasonOptions.map(function(r) { return <option key={r.key} value={r.key}>{r.label}</option>; })}
-                      </SelectInput>
-                    </Field>
-                  </div>
-                )}
-              </div>
-              <div>
-                {groupB && (
-                  <Field label="Last day of work" required error={fieldErrors.lastDayOfWork}>
-                    <TextInput type="date" value={lastDayOfWork} onChange={setLastDayOfWork} error={fieldErrors.lastDayOfWork} />
-                  </Field>
-                )}
-              </div>
-            </div>
-          );
-        })()}
-      </CollapsibleSection>
-    </EditModal>
+      </EditModal>
   );
 }
 
@@ -309,3 +306,63 @@ function SelectInput(props) {
     </select>
   );
 }
+
+function PillSelect(props) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  React.useEffect(function() {
+    function onDoc(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener("mousedown", onDoc);
+    return function() { document.removeEventListener("mousedown", onDoc); };
+  }, []);
+  const options = props.options || [];
+  const selected = options.find(function(o) { return o.value === props.value; });
+  const label = selected ? selected.label : (props.placeholder || "Select");
+  const isPlaceholder = !selected;
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <div
+        onClick={function() { setOpen(!open); }}
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          height: 44, padding: "0 14px",
+          border: open ? "1px solid #0F6E56" : "1px solid #E7EAF0",
+          borderRadius: 10, background: "#FFFFFF", cursor: "pointer",
+          fontSize: 14, fontWeight: 500, color: isPlaceholder ? "#9CA3AF" : "#0E1A1A",
+          transition: "border-color 0.15s"
+        }}
+      >
+        <span>{label}</span>
+        <span style={{ color: "#6B7280", fontSize: 12, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}>&#9662;</span>
+      </div>
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 100,
+          background: "#FFFFFF", border: "1px solid #E7EAF0", borderRadius: 8,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.08)", overflow: "hidden"
+        }}>
+          {options.map(function(opt) {
+            const isSel = opt.value === props.value;
+            return (
+              <div
+                key={opt.value}
+                onClick={function() { props.onChange(opt.value); setOpen(false); }}
+                onMouseEnter={function(e) { e.currentTarget.style.background = "#F8F9FA"; }}
+                onMouseLeave={function(e) { e.currentTarget.style.background = "transparent"; }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  height: 44, padding: "0 14px", cursor: "pointer",
+                  fontSize: 14, color: "#0E1A1A"
+                }}
+              >
+                <span style={{ width: 18, display: "inline-flex", justifyContent: "center", color: "#15A08C", fontSize: 14 }}>{isSel ? "✓" : ""}</span>
+                <span>{opt.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
