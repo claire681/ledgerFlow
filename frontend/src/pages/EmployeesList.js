@@ -129,7 +129,7 @@ export default function EmployeesList() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [splitMenuOpen, setSplitMenuOpen] = useState(false);
   const splitMenuRef = useRef(null);
-  const [activeFilter, setActiveFilter] = useState("Active employees");
+  const [activeFilter, setActiveFilter] = useState("Active Employees");
   const [activeMenuOpen, setActiveMenuOpen] = useState(false);
   const activeMenuRef = useRef(null);
 
@@ -172,9 +172,12 @@ export default function EmployeesList() {
   }), [employees]);
 
   const visible = useMemo(() => withReadiness.filter(emp => {
-    const inactive = emp.status === "inactive" || emp.status === "terminated";
-    if (activeFilter === "Active employees" && inactive) return false;
-    if (activeFilter === "Inactive employees" && !inactive) return false;
+    const s = emp.employment_status || "active";
+    const isActiveGroup = s === "active" || s === "paid_leave" || s === "unpaid_leave";
+    const isInactiveGroup = s === "terminated" || s === "not_on_payroll" || s === "deceased";
+    if (activeFilter === "Active Employees" && !isActiveGroup) return false;
+    if (activeFilter === "Inactive Employees" && !isInactiveGroup) return false;
+    // "All Employees" - no filter
     if (search) {
       const name = employeeName(emp).toLowerCase();
       if (!name.includes(search.toLowerCase())) return false;
@@ -342,10 +345,10 @@ export default function EmployeesList() {
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find an employee" style={{ flex: 1, border: "none", outline: "none", fontFamily: "inherit", fontSize: 14, color: TEXT_PRIMARY, background: "transparent" }} />
           </div>
           <div ref={activeMenuRef} style={{ position: "relative" }}>
-            <button onClick={() => setActiveMenuOpen(!activeMenuOpen)} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 600, color: TEXT_PRIMARY, padding: "9px 13px", border: "1.5px solid " + TEXT_INK, borderRadius: 9, cursor: "pointer", background: BG_CARD, fontFamily: "inherit", whiteSpace: "nowrap", fontWeight: 700 }}>{activeFilter} <ChevronDown size={18} strokeWidth={2.5} /></button>
+            <button onClick={() => setActiveMenuOpen(!activeMenuOpen)} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, color: TEXT_INK, padding: "0 18px", height: 42, border: activeMenuOpen ? "1px solid " + BRAND : "1px solid " + BORDER, borderRadius: 999, cursor: "pointer", background: activeMenuOpen ? "#E1F5EE" : "#FFFFFF", fontFamily: "inherit", whiteSpace: "nowrap" }}>{activeFilter} <ChevronDown size={16} strokeWidth={2} style={{ transform: activeMenuOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} /></button>
             {activeMenuOpen && (
               <div style={{ position: "absolute", top: 44, left: 0, background: BG_CARD, border: "0.5px solid " + BORDER, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.08)", padding: 4, minWidth: 210, zIndex: 50 }}>
-                {["Active employees", "Inactive employees", "All employees"].map(opt => (
+                {["Active Employees", "Inactive Employees", "All Employees"].map(opt => (
                   <div key={opt} onClick={() => { setActiveFilter(opt); setActiveMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 5, cursor: "pointer", fontSize: 13, color: activeFilter === opt ? BRAND_DARK : TEXT_PRIMARY, fontWeight: activeFilter === opt ? 600 : 400 }}>
                     {activeFilter === opt ? <Check size={14} style={{ color: BRAND }} /> : <span style={{ width: 14, display: "inline-block" }} />}
                     {opt}
