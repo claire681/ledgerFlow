@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import DatePicker from "../components/DatePicker";
 import {
   ArrowLeft, X, ChevronDown, Check, Plus, ExternalLink, ArrowRight,
 } from "lucide-react";

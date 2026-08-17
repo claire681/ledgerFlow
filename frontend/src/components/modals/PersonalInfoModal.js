@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { MessageSquare } from "lucide-react";
 import EditModal, { CollapsibleSection } from "./EditModal";
+import DatePicker from "../DatePicker";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const FONT = "Inter, -apple-system, BlinkMacSystemFont, sans-serif";
@@ -161,7 +162,7 @@ export default function PersonalInfoModal(props) {
           <Field label="Phone"><TextInput value={phone} onChange={setPhone} placeholder="+1 (___) ___ ____" /></Field>
         </TwoCol>
         <TwoCol>
-          <Field label="Date of birth"><TextInput type="date" value={dob} onChange={setDob} /></Field>
+          <Field label="Date of birth"><DatePicker value={dob} onChange={setDob} /></Field>
           <Field label="Social Insurance Number" required error={fieldErrors.sin}><TextInput value={sin} onChange={setSin} placeholder="XXX-XXX-XXX" error={fieldErrors.sin} /></Field>
         </TwoCol>
       </CollapsibleSection>
