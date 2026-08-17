@@ -190,7 +190,18 @@ export default function DatePicker(props) {
           }}
           aria-label="Open calendar"
         >
-          &#128197;
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8 2v4"/>
+            <path d="M16 2v4"/>
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <path d="M3 10h18"/>
+            <path d="M8 14h.01"/>
+            <path d="M12 14h.01"/>
+            <path d="M16 14h.01"/>
+            <path d="M8 18h.01"/>
+            <path d="M12 18h.01"/>
+            <path d="M16 18h.01"/>
+          </svg>
         </button>
       </div>
 
@@ -263,12 +274,13 @@ export default function DatePicker(props) {
               return (
                 <div
                   key={i}
-                  onClick={function() { pickDate(d); }}
-                  onMouseEnter={function(e) { if (!isSelected) e.currentTarget.style.background = C.brandBg; }}
-                  onMouseLeave={function(e) { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
+                  onClick={function() { if (inMonth) pickDate(d); }}
+                  onMouseEnter={function(e) { if (inMonth && !isSelected) e.currentTarget.style.background = C.brandBg; }}
+                  onMouseLeave={function(e) { if (inMonth && !isSelected) e.currentTarget.style.background = "transparent"; }}
                   style={{
                     height: 32, display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 13, borderRadius: 6, cursor: "pointer",
+                    fontSize: 13, borderRadius: 6,
+                    cursor: inMonth ? "pointer" : "default",
                     color: isSelected ? "#FFFFFF" : (inMonth ? C.ink : C.faint),
                     fontWeight: isSelected ? 700 : 500,
                     background: isSelected ? C.brand : "transparent",
