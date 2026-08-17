@@ -424,13 +424,14 @@ export default function EmployeeProfile() {
     if (section && SECTIONS.some((s) => s.id === section)) {
       const t = setTimeout(() => {
         scrollToSection(section);
-        if (shouldEdit && typeof openEditor === "function") {
-          openEditor(section);
+        if (shouldEdit && employee) {
+          setDraft({ ...employee });
+          setEditing(section);
           const newParams = new URLSearchParams(searchParams);
           newParams.delete("edit");
           setSearchParams(newParams, { replace: true });
         }
-      }, 200);
+      }, 300);
       return () => clearTimeout(t);
     }
   }, [activeTab, searchParams]);
