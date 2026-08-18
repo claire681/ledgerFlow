@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import PayTypesDrawer from "../components/PayTypesDrawer";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, User, Phone, Briefcase, CreditCard, DollarSign, PlusCircle, Plus, Receipt, Wallet,
@@ -1909,25 +1910,8 @@ export default function EmployeeProfile() {
 
       </EditDrawer>
 
-      {/* 6. Additional pay types drawer */}
-      <EditDrawer open={editing === "additional_pay"} onClose={closeEditor} title="Edit additional pay types" onSave={save} saving={saving} saveError={saveError}>
-        <div style={{ ...typography.bodySm, color: colors.textSecondary, marginBottom: spacing[2] }}>
-          Select which additional pay types apply to this employee.
-        </div>
-        {ADDITIONAL_PAY_OPTIONS.map((option) => {
-          const isChecked = (draft.additional_pay_types || []).includes(option.id);
-          return (
-            <div key={option.id} style={{
-              display: "flex", alignItems: "center", gap: spacing[3],
-              padding: `${spacing[2]}px 0`,
-              borderBottom: `1px solid ${colors.borderSubtle}`,
-            }}>
-              <Checkbox checked={isChecked} onChange={() => toggleAdditionalPay(option.id)} />
-              <div style={{ ...typography.body, color: colors.textPrimary }}>{option.label}</div>
-            </div>
-          );
-        })}
-      </EditDrawer>
+      {/* 6. Additional pay types drawer - uses new PayTypesDrawer component */}
+      <PayTypesDrawer open={editing === "additional_pay"} onClose={closeEditor} employeeId={employee && employee.id} />
 
       {/* 7. Time off drawer - matches legacy boxes */}
       <EditDrawer open={editing === "time_off"} onClose={closeEditor} title="Edit time off" onSave={save} saving={saving} saveError={saveError}>
