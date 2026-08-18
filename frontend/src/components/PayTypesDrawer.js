@@ -11,7 +11,7 @@ const BORDER = "#E7EAF0";
 const BG_PAGE = "#F4F6F8";
 const RED = "#DC2626";
 
-const API_URL = process.env.REACT_APP_API_URL || "";
+const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
 function getToken() {
   return localStorage.getItem("access_token") || localStorage.getItem("token") || "";
