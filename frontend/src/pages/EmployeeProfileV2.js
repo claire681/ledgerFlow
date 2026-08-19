@@ -465,6 +465,13 @@ export default function EmployeeProfileV2() {
     if (typeof setAddDeductionOpen === "function") setAddDeductionOpen(false);
     if (typeof setDentalCodeOpen === "function") setDentalCodeOpen(false);
     setOpenId(function(cur) { return cur === sid ? null : sid; });
+    setTimeout(function() {
+      const idx = sections.findIndex(function(x) { return x.id === sid; });
+      if (idx < 0) return;
+      // Sections are rendered inside a flex column. Query all button ancestors that contain the section title text.
+      const allCards = document.querySelectorAll(".novala-section-stack > *");
+      if (allCards[idx]) allCards[idx].scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
   };
   const onFieldChange = function(k, val) {
     setDraft(function(d) { return Object.assign({}, d, { [k]: val }); });
@@ -560,7 +567,7 @@ export default function EmployeeProfileV2() {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "262px 1fr", gap: 26, alignItems: "start" }}>
         <Rail sections={sections} values={values} openId={openId} onPick={setOpen} editingId={editingId} />
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div className="novala-section-stack" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {sections.map(function(s) {
             return (
               <Section workLocations={workLocations} key={s.id} section={s} values={values} draft={draft} country={country} employeeId={id} fullEmployee={employee}
