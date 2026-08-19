@@ -191,7 +191,7 @@ export default function AdditionalPayTypesCard(props) {
                     </div>
                     <div style={{ fontSize: 13.5, color: C.ink, fontWeight: 500 }}>{nameOf(item)}</div>
                     <div style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{rateAmountFor(item)}</div>
-                    <div style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{fmtDate(item.created_at)}</div>
+                    <div style={{ fontSize: 13.5, color: C.ink, fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{fmtDate(item.effective_date || item.created_at)}</div>
                     <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12, position: "relative" }}>
                       <a onClick={function() { openEdit(item); }} style={{ fontSize: 13, color: C.brandDark, fontWeight: 700, textDecoration: "underline", cursor: "pointer" }}>Edit</a>
                       {!required && (
