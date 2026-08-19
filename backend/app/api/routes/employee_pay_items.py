@@ -4,7 +4,7 @@ CRUD endpoints for employee_pay_items: links between employees and pay types.
 from typing import Optional
 from uuid import UUID
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, date
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,8 +25,8 @@ class EmployeePayItemCreate(BaseModel):
     rate_override: Optional[Decimal] = None
     unit_label_override: Optional[str] = None
     notes: Optional[str] = None
-    effective_date: Optional["date"] = None
-    end_date: Optional["date"] = None
+    effective_date: Optional[date] = None
+    end_date: Optional[date] = None
 
 
 class EmployeePayItemUpdate(BaseModel):
