@@ -465,6 +465,11 @@ export default function EmployeeProfileV2() {
     if (typeof setAddDeductionOpen === "function") setAddDeductionOpen(false);
     if (typeof setDentalCodeOpen === "function") setDentalCodeOpen(false);
     setOpenId(function(cur) { return cur === sid ? null : sid; });
+    // Scroll the opened section into view
+    setTimeout(function() {
+      const el = document.getElementById("section-" + sid);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
   };
   const onFieldChange = function(k, val) {
     setDraft(function(d) { return Object.assign({}, d, { [k]: val }); });
@@ -563,7 +568,8 @@ export default function EmployeeProfileV2() {
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {sections.map(function(s) {
             return (
-              <Section workLocations={workLocations} key={s.id} section={s} values={values} draft={draft} country={country} employeeId={id} fullEmployee={employee}
+              <div key={s.id} id={"section-" + s.id} style={{ scrollMarginTop: 20 }}>
+              <Section workLocations={workLocations} section={s} values={values} draft={draft} country={country} employeeId={id} fullEmployee={employee}
                 isOpen={openId === s.id} isEditing={editingId === s.id} isSaving={savingId === s.id}
                 disabledByOtherEdit={!!editingId && editingId !== s.id}
                 fieldErrors={fieldErrors}
@@ -595,6 +601,7 @@ export default function EmployeeProfileV2() {
         onSaved={function() { setTaxModalOpen(false); window.location.reload(); }}
       />
       <PayTypesDrawer open={addPayModalOpen} onClose={function() { setAddPayModalOpen(false); window.location.reload(); }} employeeId={id} />
+              </div>
       <EditPayTypeModal
         isOpen={editPayModalOpen}
         item={editingPayItem}
