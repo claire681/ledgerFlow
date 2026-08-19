@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import BasePayModal from "../components/modals/BasePayModal";
 import TaxWithholdingsModal from "../components/modals/TaxWithholdingsModal";
 import AdditionalPayTypesCard from "../components/AdditionalPayTypesCard";
-import AddPayTypeModal from "../components/modals/AddPayTypeModal";
+import PayTypesDrawer from "../components/PayTypesDrawer";
 import EditPayTypeModal from "../components/modals/EditPayTypeModal";
 import StatHolidayPayCard from "../components/StatHolidayPayCard";
 import StatHolidayModal from "../components/modals/StatHolidayModal";
@@ -594,13 +594,7 @@ export default function EmployeeProfileV2() {
         onClose={function() { setTaxModalOpen(false); }}
         onSaved={function() { setTaxModalOpen(false); window.location.reload(); }}
       />
-      <AddPayTypeModal
-        isOpen={addPayModalOpen}
-        employee={{ ...(employee || {}), ...(values || {}), id: id }}
-        alreadyAssignedPayTypeIds={assignedPayTypeIds}
-        onClose={function() { setAddPayModalOpen(false); }}
-        onSaved={function() { setAddPayModalOpen(false); window.location.reload(); }}
-      />
+      <PayTypesDrawer open={addPayModalOpen} onClose={function() { setAddPayModalOpen(false); window.location.reload(); }} employeeId={id} />
       <EditPayTypeModal
         isOpen={editPayModalOpen}
         item={editingPayItem}
