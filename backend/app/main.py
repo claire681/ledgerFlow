@@ -78,8 +78,9 @@ app.add_middleware(
         "https://getnovala.com",
         "https://www.getnovala.com",
         "https://app.getnovala.com",
-        "https://main.deueoqmz37o7w.amplifyapp.com",  # replace with your Amplify URL later
+        "https://main.deueoqmz37o7w.amplifyapp.com",
     ],
+    allow_origin_regex = r"https://.*\.deueoqmz37o7w\.amplifyapp\.com",
     allow_credentials = True,
     allow_methods     = ["*"],
     allow_headers     = ["*"],
