@@ -341,7 +341,7 @@ export default function EmployeeProfileV2() {
       fetch((process.env.REACT_APP_API_URL || "https://api.getnovala.com") + "/api/v1/employee-deduction-items/" + it.id, {
         method: "DELETE",
         headers: { "Authorization": "Bearer " + t },
-      }).then(function() { window.location.reload(); });
+      }).then(function() { fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); });
     }
     function handleOpenPersonalInfo() { setPersonalInfoModalOpen(true); }
     function handleOpenEmergency() { setEmergencyContactsModalOpen(true); }
@@ -593,73 +593,73 @@ export default function EmployeeProfileV2() {
         isOpen={basePayModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setBasePayModalOpen(false); }}
-        onSaved={function() { setBasePayModalOpen(false); window.location.reload(); }}
+        onSaved={function() { setBasePayModalOpen(false); fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
       />
       <TaxWithholdingsModal
         isOpen={taxModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setTaxModalOpen(false); }}
-        onSaved={function() { setTaxModalOpen(false); window.location.reload(); }}
+        onSaved={function() { setTaxModalOpen(false); fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
       />
-      <PayTypesDrawer open={addPayModalOpen} onClose={function() { setAddPayModalOpen(false); window.location.reload(); }} employeeId={id} />
+      <PayTypesDrawer open={addPayModalOpen} onClose={function() { setAddPayModalOpen(false); fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }} employeeId={id} />
       <EditPayTypeModal
         isOpen={editPayModalOpen}
         item={editingPayItem}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setEditPayModalOpen(false); setEditingPayItem(null); }}
-        onSaved={function() { setEditPayModalOpen(false); setEditingPayItem(null); window.location.reload(); }}
+        onSaved={function() { setEditPayModalOpen(false); setEditingPayItem(null); fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
       />
       <StatHolidayModal
         isOpen={statHolidayModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         data={statHolidayData}
         onClose={function() { setStatHolidayModalOpen(false); }}
-        onSaved={function() { setStatHolidayModalOpen(false); window.location.reload(); }}
+        onSaved={function() { setStatHolidayModalOpen(false); fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
       />
       <TimeOffModal
         isOpen={timeOffModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         data={timeOffData}
         onClose={function() { setTimeOffModalOpen(false); }}
-        onSaved={function() { setTimeOffModalOpen(false); window.location.reload(); }}
+        onSaved={function() { setTimeOffModalOpen(false); fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
       />
       <AddDeductionModal
         isOpen={addDeductionOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setAddDeductionOpen(false); }}
-        onSaved={function() { setAddDeductionOpen(false); window.location.reload(); }}
+        onSaved={function() { setAddDeductionOpen(false); fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
       />
       <DentalT4CodeModal
         isOpen={dentalCodeOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         current={dentalCodeCurrent}
         onClose={function() { setDentalCodeOpen(false); }}
-        onSaved={function() { setDentalCodeOpen(false); window.location.reload(); }}
+        onSaved={function() { setDentalCodeOpen(false); fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
       />
       <PersonalInfoModal
         isOpen={personalInfoModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setPersonalInfoModalOpen(false); }}
-        onSaved={function() { setPersonalInfoModalOpen(false); window.location.reload(); }}
+        onSaved={function() { setPersonalInfoModalOpen(false); fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
       />
       <EmergencyContactsModal
         isOpen={emergencyContactsModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setEmergencyContactsModalOpen(false); }}
-        onSaved={function() { setEmergencyContactsModalOpen(false); window.location.reload(); }}
+        onSaved={function() { setEmergencyContactsModalOpen(false); fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
       />
       <EmploymentDetailsModal
         isOpen={employmentModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         locations={employmentLocations}
         onClose={function() { setEmploymentModalOpen(false); }}
-        onSaved={function() { setEmploymentModalOpen(false); window.location.reload(); }}
+        onSaved={function() { setEmploymentModalOpen(false); fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
       />
       <PaymentMethodModal
         isOpen={paymentMethodModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setPaymentMethodModalOpen(false); }}
-        onSaved={function() { setPaymentMethodModalOpen(false); window.location.reload(); }}
+        onSaved={function() { setPaymentMethodModalOpen(false); fetch(API_URL + "/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
       />
       {toast && (
         <div style={{ position: "fixed", bottom: 26, left: "50%", transform: "translateX(-50%)", background: toast.kind === "err" ? "#7F1D1D" : C.ink, color: "#fff", fontSize: 13, fontWeight: 500, padding: "11px 18px", borderRadius: 10, zIndex: 80, display: "flex", alignItems: "center", gap: 9, boxShadow: "0 8px 24px rgba(16,26,43,0.3)" }}>
