@@ -633,7 +633,7 @@ export default function EmployeeProfileV2() {
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         data={timeOffData}
         onClose={function() { setTimeOffModalOpen(false); }}
-        onSaved={function() { setTimeOffModalOpen(false); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
+        onSaved={function() { setTimeOffModalOpen(false); queryClient.invalidateQueries({ queryKey: ["time-off"] }); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
       />
       <AddDeductionModal
         isOpen={addDeductionOpen}

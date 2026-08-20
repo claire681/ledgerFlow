@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Palmtree, Stethoscope, Clock, Calendar } from "lucide-react";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -62,26 +63,16 @@ export default function TimeOffCard(props) {
   const onToggleOpen = props.onToggleOpen;
   const employeeId = props.employeeId;
 
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const loadItems = React.useCallback(function() {
-    if (!employeeId) { setLoading(false); return; }
-    setLoading(true); setError(null);
-    fetch(API + "/api/v1/payroll/time-off/" + employeeId, { headers: authHeaders() })
-      .then(function(r) { if (!r.ok) throw new Error("Failed to load time off info"); return r.json(); })
-      .then(function(d) { setData(d); setLoading(false); })
-      .catch(function(e) { setError(e.message || "Load failed"); setLoading(false); });
-  }, [employeeId]);
-
-  useEffect(function() { loadItems(); }, [loadItems]);
-
-  useEffect(function() {
-    function refresh() { loadItems(); }
-    window.addEventListener("novala:timeOffItemsChanged", refresh);
-    return function() { window.removeEventListener("novala:timeOffItemsChanged", refresh); };
-  }, [loadItems]);
+  const { data, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ["time-off", employeeId],
+    queryFn: async function() {
+      const r = await fetch(API + "/api/v1/payroll/time-off/" + employeeId, { headers: authHeaders() });
+      if (!r.ok) throw new Error("Failed to load time off info");
+      return r.json();
+    },
+    enabled: !!employeeId,
+  });
+  const error = queryError ? queryError.message : null;
 
   function openEdit() {
     window.dispatchEvent(new CustomEvent("novala:openTimeOffModal", { detail: { data: data } }));
