@@ -154,12 +154,14 @@ export default function EditPayTypeModal(props) {
         method: "DELETE",
         headers: authHeaders(),
       });
-      if (!r.ok && r.status !== 204) {
+      // 404 means item is already gone - treat as success and refetch to sync UI
+      if (!r.ok && r.status !== 204 && r.status !== 404) {
         const txt = await r.text();
         throw new Error("Unassign failed: " + (txt || r.status));
       }
       setUnassigning(false);
       setConfirmUnassign(false);
+      window.dispatchEvent(new CustomEvent("novala:payItemsChanged"));
       onSaved && onSaved();
     } catch (e) {
       setUnassigning(false);
