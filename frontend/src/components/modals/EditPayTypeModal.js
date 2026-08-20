@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Lock, CalendarClock, MessageSquare, ChevronDown, ChevronRight, Check } from "lucide-react";
 import EditModal from "./EditModal";
@@ -64,6 +65,7 @@ function inferReleveBoxes(pt) {
 }
 
 export default function EditPayTypeModal(props) {
+  const queryClient = useQueryClient();
   const isOpen = props.isOpen;
   const onClose = props.onClose;
   const onSaved = props.onSaved;
@@ -161,7 +163,7 @@ export default function EditPayTypeModal(props) {
       }
       setUnassigning(false);
       setConfirmUnassign(false);
-      window.dispatchEvent(new CustomEvent("novala:payItemsChanged"));
+      queryClient.invalidateQueries({ queryKey: ["pay-items"] });
       onSaved && onSaved();
     } catch (e) {
       setUnassigning(false);

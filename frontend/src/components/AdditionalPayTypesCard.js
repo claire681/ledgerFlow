@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Plus, MoreVertical, Banknote } from "lucide-react";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -73,42 +74,32 @@ export default function AdditionalPayTypesCard(props) {
   const onToggleOpen = props.onToggleOpen;
   const employeeId = props.employeeId;
 
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [menuOpenFor, setMenuOpenFor] = useState(null);
 
-  const loadItems = React.useCallback(function() {
-    if (!employeeId) { setLoading(false); return; }
-    setLoading(true);
-    fetch(API + "/api/v1/employee-pay-items/employee/" + employeeId, { headers: authHeaders() })
-      .then(function(r) { if (!r.ok) throw new Error("Failed to load pay items"); return r.json(); })
-      .then(function(data) {
-        var list = Array.isArray(data) ? data : (data.items || []);
-        var filtered = list.filter(function(it) { return !HIDE_NAMES.has(nameOf(it)); });
-        filtered.sort(function(a, b) {
-          var ra = isRequiredOf(a) ? 1 : 0;
-          var rb = isRequiredOf(b) ? 1 : 0;
-          if (ra !== rb) return rb - ra;
-          return nameOf(a).localeCompare(nameOf(b));
-        });
-        setItems(filtered);
-        setLoading(false);
-        try {
-          var ids = list.map(function(it) { return (it.pay_type && it.pay_type.id) || it.pay_type_id; }).filter(Boolean);
-          window.dispatchEvent(new CustomEvent("novala:payItemsLoaded", { detail: { assignedPayTypeIds: ids } }));
-        } catch (err) { /* noop */ }
-      })
-      .catch(function(e) { setError(e.message || "Load failed"); setLoading(false); });
-  }, [employeeId]);
-
-  useEffect(function() { loadItems(); }, [loadItems]);
-
-  useEffect(function() {
-    function refresh() { loadItems(); }
-    window.addEventListener("novala:payItemsChanged", refresh);
-    return function() { window.removeEventListener("novala:payItemsChanged", refresh); };
-  }, [loadItems]);
+  const { data, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ["pay-items", employeeId],
+    queryFn: async function() {
+      const r = await fetch(API + "/api/v1/employee-pay-items/employee/" + employeeId, { headers: authHeaders() });
+      if (!r.ok) throw new Error("Failed to load pay items");
+      const raw = await r.json();
+      const list = Array.isArray(raw) ? raw : (raw.items || []);
+      const filtered = list.filter(function(it) { return !HIDE_NAMES.has(nameOf(it)); });
+      filtered.sort(function(a, b) {
+        var ra = isRequiredOf(a) ? 1 : 0;
+        var rb = isRequiredOf(b) ? 1 : 0;
+        if (ra !== rb) return rb - ra;
+        return nameOf(a).localeCompare(nameOf(b));
+      });
+      try {
+        var ids = list.map(function(it) { return (it.pay_type && it.pay_type.id) || it.pay_type_id; }).filter(Boolean);
+        window.dispatchEvent(new CustomEvent("novala:payItemsLoaded", { detail: { assignedPayTypeIds: ids } }));
+      } catch (err) { /* noop */ }
+      return filtered;
+    },
+    enabled: !!employeeId,
+  });
+  const items = data || [];
+  const error = queryError ? queryError.message : null;
 
   useEffect(function() {
     function closeMenu() { setMenuOpenFor(null); }

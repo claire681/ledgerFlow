@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { X, Plus, Edit2, MoreVertical, AlertTriangle, CheckCircle } from "lucide-react";
 import DatePicker from "./DatePicker";
 import apiFetch from "../utils/apiFetch";
@@ -98,6 +99,7 @@ function Toast({ toasts, onDismiss }) {
 
 // ===== Main component =====
 export default function PayTypesDrawer({ open, onClose, employeeId }) {
+  const queryClient = useQueryClient();
   const [availableTypes, setAvailableTypes] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -276,7 +278,7 @@ export default function PayTypesDrawer({ open, onClose, employeeId }) {
           : category.value + ", effective " + formatDDMMYYYY(effectiveDate);
         addToast(newName.trim() + " added", detail);
         await loadData();
-        window.dispatchEvent(new CustomEvent("novala:payItemsChanged"));
+        queryClient.invalidateQueries({ queryKey: ["pay-items"] });
         onClose();
       } catch (e) { setError(e.message); }
       finally { setSaving(false); }
@@ -323,7 +325,7 @@ export default function PayTypesDrawer({ open, onClose, employeeId }) {
         : payType.name + ", effective " + formatDDMMYYYY(effectiveDate);
       addToast(ptName + (formMode === "edit" ? " updated" : " added"), detail);
       await loadData();
-      window.dispatchEvent(new CustomEvent("novala:payItemsChanged"));
+      queryClient.invalidateQueries({ queryKey: ["pay-items"] });
       onClose();
     } catch (e) { setError(e.message); }
     finally { setSaving(false); }
@@ -338,7 +340,7 @@ export default function PayTypesDrawer({ open, onClose, employeeId }) {
       if (!res.ok) throw new Error("Delete failed");
       addToast(name + " removed", null);
       await loadData();
-      window.dispatchEvent(new CustomEvent("novala:payItemsChanged"));
+      queryClient.invalidateQueries({ queryKey: ["pay-items"] });
     } catch (e) { setError(e.message); }
   }
 
