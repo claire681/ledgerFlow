@@ -67,20 +67,40 @@ export default function AddDeductionModal(props) {
   async function handleSave() {
     if (!employee.id || !category) return;
     setSaving(true); setSaveError(null);
-    var body = {
-      employee_id: employee.id,
-      name: name,
-      category: category.key,
-      employee_amount: empAmount === "" ? null : Number(empAmount),
-      employee_unit: empUnit === "%" ? "percent" : "dollars",
-      employer_amount: erAmount === "" ? null : Number(erAmount),
-      employer_unit: erUnit === "%" ? "percent" : "dollars",
-      is_pre_tax: preTax,
-    };
     try {
+      // Step 1: Create the deduction type in the catalog
+      const empUnitPct = empUnit === "%";
+      const dtBody = {
+        name: name,
+        calc_method: empUnitPct ? "percent_gross" : "fixed",
+        default_amount: empAmount === "" ? null : Number(empAmount),
+        unit_label: empUnitPct ? "% of gross" : null,
+        is_pre_tax: preTax,
+        is_default: false,
+        country: "CA",
+      };
+      const dtRes = await fetch(API + "/api/v1/deduction-types", {
+        method: "POST",
+        headers: Object.assign({ "Content-Type": "application/json" }, authHeaders()),
+        body: JSON.stringify(dtBody),
+      });
+      if (!dtRes.ok) {
+        const txt = await dtRes.text();
+        throw new Error("Could not create deduction type: " + (txt || dtRes.status));
+      }
+      const newDeductionType = await dtRes.json();
+
+      // Step 2: Assign it to the employee
+      var body = {
+        employee_id: employee.id,
+        deduction_type_id: newDeductionType.id,
+        amount_override: empAmount === "" ? null : Number(empAmount),
+        unit_label_override: empUnitPct ? "%" : null,
+        notes: null,
+      };
       const r = await fetch(API + "/api/v1/employee-deduction-items", {
         method: "POST",
-        headers: authHeaders(),
+        headers: Object.assign({ "Content-Type": "application/json" }, authHeaders()),
         body: JSON.stringify(body),
       });
       if (!r.ok) {
