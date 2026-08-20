@@ -108,6 +108,7 @@ export default function AddDeductionModal(props) {
         throw new Error("Add failed: " + (txt || r.status));
       }
       setSaving(false);
+      window.dispatchEvent(new CustomEvent("novala:deductionItemsChanged"));
       onSaved && onSaved();
     } catch (e) {
       setSaving(false); setSaveError(e.message || "Add failed");

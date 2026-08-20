@@ -286,6 +286,15 @@ export default function EmployeeProfileV2() {
       .catch(function() {});
   }, []);
   const [openId, setOpenId] = useState("personal");
+  // openId sync to URL - so refresh restores same section
+  useEffect(function() {
+    if (!openId) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("section") !== openId) {
+      url.searchParams.set("section", openId);
+      window.history.replaceState({}, "", url);
+    }
+  }, [openId]);
   const [basePayModalOpen, setBasePayModalOpen] = useState(false);
   const [taxModalOpen, setTaxModalOpen] = useState(false);
   const [addPayModalOpen, setAddPayModalOpen] = useState(false);

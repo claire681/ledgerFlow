@@ -101,7 +101,7 @@ export default function DeductionsCard(props) {
   const [error, setError] = useState(null);
   const [menuOpenFor, setMenuOpenFor] = useState(null);
 
-  useEffect(function() {
+  const loadItems = React.useCallback(function() {
     if (!employeeId) { setLoading(false); return; }
     setLoading(true); setError(null);
     fetch(API + "/api/v1/employee-deduction-items/employee/" + employeeId, { headers: authHeaders() })
@@ -113,6 +113,14 @@ export default function DeductionsCard(props) {
       })
       .catch(function(e) { setError(e.message || "Load failed"); setLoading(false); });
   }, [employeeId]);
+
+  useEffect(function() { loadItems(); }, [loadItems]);
+
+  useEffect(function() {
+    function refresh() { loadItems(); }
+    window.addEventListener("novala:deductionItemsChanged", refresh);
+    return function() { window.removeEventListener("novala:deductionItemsChanged", refresh); };
+  }, [loadItems]);
 
   useEffect(function() {
     function closeMenu() { setMenuOpenFor(null); }
