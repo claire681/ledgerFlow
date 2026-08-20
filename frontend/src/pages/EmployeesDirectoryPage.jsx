@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import EmployeesDirectory from "../components/EmployeesDirectory";
 import { getReadiness } from "../utils/payrollReadiness";
-import apiFetch from "../utils/apiFetch";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const BRAND = "#0F9599";
@@ -20,7 +19,7 @@ export default function EmployeesDirectoryPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("access_token") || localStorage.getItem("token");
-    apiFetch("/api/v1/payroll/employees", { headers: token ? { Authorization: "Bearer " + token } : {} })
+    fetch(API_URL + "/api/v1/payroll/employees", { headers: token ? { Authorization: "Bearer " + token } : {} })
       .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then((data) => {
         const list = Array.isArray(data) ? data : (data.employees || data.results || []);

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import {
-import apiFetch from "../utils/apiFetch";
   Shield, Play, UserPlus, Settings, ChevronRight, ChevronDown, Calendar,
   AlertTriangle, AlertCircle, FileText, User, CheckCircle,
   Book, BookOpen, ListChecks, Activity, CreditCard, Star, GripVertical, Search, X, Landmark, Check,
@@ -84,7 +83,7 @@ export default function PayrollOverview() {
   useEffect(() => {
     async function loadDraftsCount() {
       try {
-        const r = await apiFetch("/api/v1/payroll/runs?status=draft", { headers: authHeaders() });
+        const r = await fetch(API_URL + "/api/v1/payroll/runs?status=draft", { headers: authHeaders() });
         if (r.ok) {
           const data = await r.json();
           setDraftsCount(Array.isArray(data) ? data.length : 0);
@@ -98,9 +97,9 @@ export default function PayrollOverview() {
     const fetchAll = async () => {
       try {
         const [empRes, scheduleRes, runsRes] = await Promise.all([
-          apiFetch("/api/v1/payroll/employees", { headers: authHeaders() }),
-          apiFetch("/api/v1/payroll/settings", { headers: authHeaders() }).catch(() => null),
-          apiFetch("/api/v1/payroll/runs", { headers: authHeaders() }).catch(() => null),
+          fetch(API_URL + "/api/v1/payroll/employees", { headers: authHeaders() }),
+          fetch(API_URL + "/api/v1/payroll/settings", { headers: authHeaders() }).catch(() => null),
+          fetch(API_URL + "/api/v1/payroll/runs", { headers: authHeaders() }).catch(() => null),
         ]);
         if (empRes && empRes.ok) {
           const empData = await empRes.json();
@@ -124,7 +123,7 @@ export default function PayrollOverview() {
         const now = new Date();
         const year = now.getFullYear();
         const month = now.getMonth() + 1;
-        const resp = await apiFetch("/api/v1/payroll/taxes/pd7a?year=" + year + "&month=" + month, { headers: authHeaders() });
+        const resp = await fetch(API_URL + "/api/v1/payroll/taxes/pd7a?year=" + year + "&month=" + month, { headers: authHeaders() });
         if (!resp.ok) { setAttentionItems([]); return; }
         const data = await resp.json();
         const amount = Number(data.current_payment || 0);

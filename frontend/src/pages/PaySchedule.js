@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, X, Search, MessageSquareText, ArrowUp } from "lucide-react";
 import { SCHEDULES } from "../data/payrollItemsData";
 import AssignEmployeesPanel from "../components/AssignEmployeesPanel";
-import apiFetch from "../utils/apiFetch";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -55,7 +54,7 @@ export default function PaySchedule() {
     if (id !== "default") { setEmployees([]); setLoading(false); return; }
     (async () => {
       try {
-        const res = await apiFetch("/api/v1/payroll/employees", {
+        const res = await fetch(API_URL + "/api/v1/payroll/employees", {
           headers: { Authorization: "Bearer " + getToken() },
         });
         if (!res.ok) throw new Error("Could not load employees.");

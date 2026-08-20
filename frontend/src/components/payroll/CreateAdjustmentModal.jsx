@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { X, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
-import apiFetch from "../../utils/apiFetch";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -69,7 +68,7 @@ export default function CreateAdjustmentModal({ open, onClose, onCreated, origin
     setSubmitting(true);
     setError("");
     try {
-      const res = await apiFetch("/api/v1/payroll/paycheques/" + originalStub.id + "/adjust", {
+      const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + originalStub.id + "/adjust", {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify({

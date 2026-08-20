@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import PayStub from "../components/payroll/PayStub";
 import { Search, ChevronDown, Check, MoreVertical, Filter, Download, Printer, Eye, Mail, RotateCcw, FileText, X as XIcon, Lock, Play } from "lucide-react";
-import apiFetch from "../utils/apiFetch";
 
 const FONT = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -134,7 +133,7 @@ export default function PaychequeList() {
   async function fetchPaycheques() {
     setLoading(true); setError(null);
     try {
-      const res = await apiFetch("/api/v1/payroll/paycheques", { headers: authHeaders() });
+      const res = await fetch(API_URL + "/api/v1/payroll/paycheques", { headers: authHeaders() });
       if (!res.ok) throw new Error("Could not load paycheques");
       const data = await res.json();
       const list = Array.isArray(data) ? data : (data.paycheques || data.items || []);
@@ -146,7 +145,7 @@ export default function PaychequeList() {
 
   async function fetchCompany() {
     try {
-      const res = await apiFetch("/api/v1/payroll/settings", { headers: authHeaders() });
+      const res = await fetch(API_URL + "/api/v1/payroll/settings", { headers: authHeaders() });
       if (res.ok) {
         const data = await res.json();
         setCompany({
@@ -227,7 +226,7 @@ export default function PaychequeList() {
     }
     setSavingChq(true);
     try {
-      const res = await apiFetch("/api/v1/payroll/paycheques/" + stubId + "/cheque-number", {
+      const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + stubId + "/cheque-number", {
         method: "PATCH",
         headers: authHeaders(),
         body: JSON.stringify({ cheque_number: trimmed || null }),
@@ -260,7 +259,7 @@ export default function PaychequeList() {
   async function handleVoid(stubId, reason) {
     setVoiding(true);
     try {
-      const res = await apiFetch("/api/v1/payroll/paycheques/" + stubId + "/void", {
+      const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + stubId + "/void", {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify({ reason: reason.trim() }),

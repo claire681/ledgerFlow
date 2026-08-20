@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Building2, ArrowRight, X } from "lucide-react";
-import apiFetch from "../../utils/apiFetch";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -43,7 +42,7 @@ export default function CompanyProfileBanner() {
     let cancelled = false;
     const load = async () => {
       try {
-        const res = await apiFetch("/api/v1/company/profile/completeness", { headers: authHeaders() });
+        const res = await fetch(API_URL + "/api/v1/company/profile/completeness", { headers: authHeaders() });
         if (!res.ok) return;
         const data = await res.json();
         if (!cancelled) setStatus(data);

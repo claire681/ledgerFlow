@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import apiFetch from "../utils/apiFetch";
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const getToken = () =>
   localStorage.getItem("access_token") || localStorage.getItem("token") || "";
@@ -41,7 +40,7 @@ const computeDefaults = () => {
  */
 async function findExistingDraft() {
   try {
-    const res = await apiFetch("/api/v1/payroll/runs", {
+    const res = await fetch(API_URL + "/api/v1/payroll/runs", {
       headers: { Authorization: "Bearer " + getToken() },
     });
     if (!res.ok) return null;
@@ -73,7 +72,7 @@ export async function startNewPayroll(navigate) {
 
     // 2. None found - create a new draft.
     const body = computeDefaults();
-    const res = await apiFetch("/api/v1/payroll/pay-runs/draft", {
+    const res = await fetch(API_URL + "/api/v1/payroll/pay-runs/draft", {
       method: "POST",
       headers: {
         Authorization: "Bearer " + getToken(),

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { X, AlertTriangle } from "lucide-react";
-import apiFetch from "../../utils/apiFetch";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -63,7 +62,7 @@ export default function BulkVoidModal({ open, onClose, onDone, stubs }) {
     const results = { success: 0, failed: 0, errors: [] };
     for (const s of eligible) {
       try {
-        const res = await apiFetch("/api/v1/payroll/paycheques/" + s.id + "/void", {
+        const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + s.id + "/void", {
           method: "POST",
           headers: authHeaders(),
           body: JSON.stringify({ reason: reason.trim() }),

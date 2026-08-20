@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
-import apiFetch from "../utils/apiFetch";
   Search, UserPlus, SlidersHorizontal, MoreVertical,
   ShieldCheck, Check, AlertTriangle, ChevronDown, Clock,
   User, UserCog, UserX, Play, Zap, CalendarClock, ListOrdered } from "lucide-react";
@@ -139,7 +138,7 @@ export default function EmployeesList() {
   const loadEmployees = async () => {
     setLoading(true); setError(null);
     try {
-      const res = await apiFetch("/api/v1/payroll/employees", { headers: authHeaders() });
+      const res = await fetch(API_URL + "/api/v1/payroll/employees", { headers: authHeaders() });
       if (!res.ok) {
         if (res.status === 401) throw new Error("Invalid or expired token. Please log in again.");
         throw new Error("Could not load employees.");

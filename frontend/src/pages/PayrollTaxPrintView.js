@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import apiFetch from "../utils/apiFetch";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -52,7 +51,7 @@ export default function PayrollTaxPrintView() {
       const now = new Date();
       const year = now.getFullYear();
       const month = now.getMonth() + 1;
-      apiFetch(`/api/v1/payroll/taxes/pd7a?year=${year}&month=${month}`, {
+      fetch(`${API_URL}/api/v1/payroll/taxes/pd7a?year=${year}&month=${month}`, {
         headers: authHeaders(),
       })
         .then((r) => {

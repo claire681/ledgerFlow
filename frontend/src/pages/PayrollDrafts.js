@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Play, Filter, ChevronDown, Check, MoreVertical, FileText, Trash2, Eye, Download } from "lucide-react";
-import apiFetch from "../utils/apiFetch";
 
 const FONT = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -78,7 +77,7 @@ export default function PayrollDrafts() {
   async function fetchRuns() {
     setLoading(true); setError(null);
     try {
-      const res = await apiFetch("/api/v1/payroll/runs", { headers: authHeaders() });
+      const res = await fetch(API_URL + "/api/v1/payroll/runs", { headers: authHeaders() });
       if (!res.ok) throw new Error("Could not load pay runs");
       const data = await res.json();
       setRuns(Array.isArray(data) ? data : []);
@@ -90,7 +89,7 @@ export default function PayrollDrafts() {
   async function handleDelete(runId) {
     setDeleting(true);
     try {
-      const res = await apiFetch("/api/v1/payroll/runs/" + runId, {
+      const res = await fetch(API_URL + "/api/v1/payroll/runs/" + runId, {
         method: "DELETE",
         headers: authHeaders(),
       });
