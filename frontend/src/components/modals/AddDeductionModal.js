@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { MessageSquare, ArrowLeft } from "lucide-react";
 import EditModal from "./EditModal";
 
@@ -27,6 +28,7 @@ function authHeaders() {
 }
 
 export default function AddDeductionModal(props) {
+  const queryClient = useQueryClient();
   const isOpen = props.isOpen;
   const onClose = props.onClose;
   const onSaved = props.onSaved;
@@ -108,7 +110,7 @@ export default function AddDeductionModal(props) {
         throw new Error("Add failed: " + (txt || r.status));
       }
       setSaving(false);
-      window.dispatchEvent(new CustomEvent("novala:deductionItemsChanged"));
+      queryClient.invalidateQueries({ queryKey: ["deduction-items"] });
       onSaved && onSaved();
     } catch (e) {
       setSaving(false); setSaveError(e.message || "Add failed");

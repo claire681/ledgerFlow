@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { MoreVertical, Info, Minus, MinusCircle } from "lucide-react";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -96,31 +97,21 @@ export default function DeductionsCard(props) {
   const employeeId = props.employeeId;
   const employee = props.employee || {};
 
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [menuOpenFor, setMenuOpenFor] = useState(null);
 
-  const loadItems = React.useCallback(function() {
-    if (!employeeId) { setLoading(false); return; }
-    setLoading(true); setError(null);
-    fetch(API + "/api/v1/employee-deduction-items/employee/" + employeeId, { headers: authHeaders() })
-      .then(function(r) { if (!r.ok) throw new Error("Failed to load deductions"); return r.json(); })
-      .then(function(data) {
-        var list = Array.isArray(data) ? data : (data.items || []);
-        setItems(list);
-        setLoading(false);
-      })
-      .catch(function(e) { setError(e.message || "Load failed"); setLoading(false); });
-  }, [employeeId]);
-
-  useEffect(function() { loadItems(); }, [loadItems]);
-
-  useEffect(function() {
-    function refresh() { loadItems(); }
-    window.addEventListener("novala:deductionItemsChanged", refresh);
-    return function() { window.removeEventListener("novala:deductionItemsChanged", refresh); };
-  }, [loadItems]);
+  // React Query fetch - handles cache, refetch, invalidation
+  const { data, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ["deduction-items", employeeId],
+    queryFn: async function() {
+      const r = await fetch(API + "/api/v1/employee-deduction-items/employee/" + employeeId, { headers: authHeaders() });
+      if (!r.ok) throw new Error("Failed to load deductions");
+      const data = await r.json();
+      return Array.isArray(data) ? data : (data.items || []);
+    },
+    enabled: !!employeeId,
+  });
+  const items = data || [];
+  const error = queryError ? queryError.message : null;
 
   useEffect(function() {
     function closeMenu() { setMenuOpenFor(null); }
