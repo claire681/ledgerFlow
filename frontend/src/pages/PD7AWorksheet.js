@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, Printer, Download } from "lucide-react";
+import apiFetch from "../utils/apiFetch";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -41,7 +42,7 @@ export default function PD7AWorksheet() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    fetch(`${API_URL}/api/v1/payroll/taxes/archived-forms/${id}`, {
+    apiFetch(`/api/v1/payroll/taxes/archived-forms/${id}`, {
       headers: authHeaders(),
     })
       .then((r) => {

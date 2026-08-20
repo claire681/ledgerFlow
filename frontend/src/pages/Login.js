@@ -98,7 +98,10 @@ export default function Login({ onLogin }) {
     try {
       const res = await login(email, password);
       const token = res.data.access_token;
+      const refreshToken = res.data.refresh_token;
       localStorage.setItem('token', token);
+      localStorage.setItem('access_token', token);
+      if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
       localStorage.setItem('user_email', email);
       localStorage.setItem('saved_account_email', email);
       // Fetch user profile so name displays consistently everywhere
@@ -176,6 +179,8 @@ export default function Login({ onLogin }) {
       }
       const token = data.access_token;
       localStorage.setItem('token', token);
+      const _rt_ = data.refresh_token; if (_rt_) localStorage.setItem("refresh_token", _rt_);
+      localStorage.setItem("access_token", token);
       localStorage.setItem('user_email', email);
       localStorage.setItem('saved_account_email', email);
       onLogin(token, email);

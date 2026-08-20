@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+import apiFetch from "../utils/apiFetch";
   HelpCircle, X, ChevronDown, BookOpen, Printer,
   RotateCcw, Trash2, Edit, AlertTriangle,
 } from "lucide-react";
@@ -146,7 +147,7 @@ export default function PaychequeDetail() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + id, { headers: authHeaders() });
+      const res = await apiFetch("/api/v1/payroll/paycheques/" + id, { headers: authHeaders() });
       if (!res.ok) {
         if (res.status === 401) throw new Error("Invalid or expired token. Please log in again.");
         if (res.status === 404) throw new Error("Paycheque not found.");
@@ -172,7 +173,7 @@ export default function PaychequeDetail() {
     if (!pc) return;
     if (memo === (pc.memo || "")) return;
     try {
-      await fetch(API_URL + "/api/v1/payroll/paycheques/" + pc.id, {
+      await apiFetch("/api/v1/payroll/paycheques/" + pc.id, {
         method: "PATCH",
         headers: authHeaders(),
         body: JSON.stringify({ memo }),
@@ -184,7 +185,7 @@ export default function PaychequeDetail() {
   };
 
   const handleVoid = async (reason) => {
-    const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + pc.id + "/void", {
+    const res = await apiFetch("/api/v1/payroll/paycheques/" + pc.id + "/void", {
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify({ reason }),
@@ -197,7 +198,7 @@ export default function PaychequeDetail() {
   };
 
   const handleDelete = async () => {
-    const res = await fetch(API_URL + "/api/v1/payroll/paycheques/" + pc.id, {
+    const res = await apiFetch("/api/v1/payroll/paycheques/" + pc.id, {
       method: "DELETE",
       headers: authHeaders(),
     });

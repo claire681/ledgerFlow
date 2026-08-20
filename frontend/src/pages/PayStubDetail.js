@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
+import apiFetch from "../utils/apiFetch";
   ArrowLeft, Printer, Receipt, User, MinusCircle, Building2,
   AlertCircle, Wallet,
 } from "lucide-react";
@@ -185,9 +186,9 @@ export default function PayStubDetail() {
     try {
       // Load run (for context: pay dates, status, currency)
       let runData = null;
-      let runRes = await fetch(`${API_URL}/api/v1/payroll/runs/${runId}`, { headers: authHeaders() });
+      let runRes = await apiFetch(`/api/v1/payroll/runs/${runId}`, { headers: authHeaders() });
       if (runRes.status === 404 || runRes.status === 405) {
-        const listRes = await fetch(`${API_URL}/api/v1/payroll/runs`, { headers: authHeaders() });
+        const listRes = await apiFetch(`/api/v1/payroll/runs`, { headers: authHeaders() });
         if (listRes.ok) {
           const list = await listRes.json();
           runData = (Array.isArray(list) ? list : []).find((r) => String(r.id) === String(runId));
@@ -198,7 +199,7 @@ export default function PayStubDetail() {
       setRun(runData);
 
       // Load stubs and find the matching one
-      const stubsRes = await fetch(`${API_URL}/api/v1/payroll/runs/${runId}/stubs`, { headers: authHeaders() });
+      const stubsRes = await apiFetch(`/api/v1/payroll/runs/${runId}/stubs`, { headers: authHeaders() });
       if (!stubsRes.ok) {
         throw new Error(`Could not load pay stubs (HTTP ${stubsRes.status})`);
       }

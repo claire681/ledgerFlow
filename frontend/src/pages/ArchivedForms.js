@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+import apiFetch from "../utils/apiFetch";
   ChevronLeft, ChevronRight, Search, Filter, Printer, FileText,
 } from "lucide-react";
 import ResourcesDrawer from "../components/payroll/ResourcesDrawer";
@@ -60,7 +61,7 @@ export default function ArchivedForms() {
   useEffect(() => {
     setLoading(true);
     setError("");
-    fetch(`${API_URL}/api/v1/payroll/taxes/archived-forms`, {
+    apiFetch(`/api/v1/payroll/taxes/archived-forms`, {
       headers: authHeaders(),
     })
       .then((r) => {

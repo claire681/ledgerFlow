@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import apiFetch from "../utils/apiFetch";
 
 // T4Summary
 // CRA T4 Summary (T4 SUM 25). Page 1 is the form inside one outer box; page 2 is the
@@ -388,7 +389,7 @@ function T4Summary() {
     let cancelled = false;
     setLoading(true);
     setError("");
-    fetch(`${API_URL}/api/v1/payroll/taxes/t4-sum-preview?year=${year}`, {
+    apiFetch(`/api/v1/payroll/taxes/t4-sum-preview?year=${year}`, {
       headers: authHeaders(),
     })
       .then((r) => {

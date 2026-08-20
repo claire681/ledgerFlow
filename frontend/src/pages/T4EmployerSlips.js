@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import apiFetch from "../utils/apiFetch";
 
 // T4EmployerSlips
 // Employer copy of the CRA T4 slip (T4 25), filing copy, two slips per page with
@@ -345,7 +346,7 @@ function T4EmployerSlips() {
     let cancelled = false;
     setLoading(true);
     setError("");
-    fetch(`${API_URL}/api/v1/payroll/taxes/t4-preview?year=${year}`, {
+    apiFetch(`/api/v1/payroll/taxes/t4-preview?year=${year}`, {
       headers: authHeaders(),
     })
       .then((r) => {
@@ -398,7 +399,7 @@ function T4EmployerSlips() {
         <button
           onClick={async () => {
             const token = localStorage.getItem("access_token") || localStorage.getItem("token");
-            const res = await fetch(`${API_URL}/api/v1/payroll/taxes/t4-employer-slips-v2.pdf?year=${year}`, {
+            const res = await apiFetch(`/api/v1/payroll/taxes/t4-employer-slips-v2.pdf?year=${year}`, {
               headers: { Authorization: "Bearer " + token },
             });
             if (!res.ok) { alert("Could not generate PDF"); return; }

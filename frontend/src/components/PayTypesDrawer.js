@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, Plus, Edit2, MoreVertical, AlertTriangle, CheckCircle } from "lucide-react";
 import DatePicker from "./DatePicker";
+import apiFetch from "../utils/apiFetch";
 
 const BRAND = "#15A08C";
 const BRAND_DARK = "#0F8474";
@@ -157,8 +158,8 @@ export default function PayTypesDrawer({ open, onClose, employeeId }) {
     setError(null);
     try {
       const [tRes, aRes] = await Promise.all([
-        fetch(API_URL + "/api/v1/pay-types", { headers: authHeaders() }),
-        fetch(API_URL + "/api/v1/employee-pay-items/employee/" + employeeId, { headers: authHeaders() }),
+        apiFetch("/api/v1/pay-types", { headers: authHeaders() }),
+        apiFetch("/api/v1/employee-pay-items/employee/" + employeeId, { headers: authHeaders() }),
       ]);
       if (!tRes.ok) throw new Error("Could not load pay types");
       if (!aRes.ok) throw new Error("Could not load assignments");
@@ -240,7 +241,7 @@ export default function PayTypesDrawer({ open, onClose, employeeId }) {
           country: "CA",
           ...category.taxDefaults,
         };
-        const ptRes = await fetch(API_URL + "/api/v1/pay-types", {
+        const ptRes = await apiFetch("/api/v1/pay-types", {
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeaders() },
           body: JSON.stringify(ptBody),
@@ -259,7 +260,7 @@ export default function PayTypesDrawer({ open, onClose, employeeId }) {
           effective_date: effectiveDate,
           end_date: endDate || null,
         };
-        const epiRes = await fetch(API_URL + "/api/v1/employee-pay-items", {
+        const epiRes = await apiFetch("/api/v1/employee-pay-items", {
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeaders() },
           body: JSON.stringify(epiBody),
@@ -298,13 +299,13 @@ export default function PayTypesDrawer({ open, onClose, employeeId }) {
       };
       let res;
       if (formMode === "edit" && editingItem) {
-        res = await fetch(API_URL + "/api/v1/employee-pay-items/" + editingItem.id, {
+        res = await apiFetch("/api/v1/employee-pay-items/" + editingItem.id, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", ...authHeaders() },
           body: JSON.stringify(body),
         });
       } else {
-        res = await fetch(API_URL + "/api/v1/employee-pay-items", {
+        res = await apiFetch("/api/v1/employee-pay-items", {
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeaders() },
           body: JSON.stringify(body),
@@ -331,7 +332,7 @@ export default function PayTypesDrawer({ open, onClose, employeeId }) {
     const name = payType ? payType.name : "Pay type";
     if (!window.confirm("Remove " + name + "?")) return;
     try {
-      const res = await fetch(API_URL + "/api/v1/employee-pay-items/" + item.id, { method: "DELETE", headers: authHeaders() });
+      const res = await apiFetch("/api/v1/employee-pay-items/" + item.id, { method: "DELETE", headers: authHeaders() });
       if (!res.ok) throw new Error("Delete failed");
       addToast(name + " removed", null);
       await loadData();

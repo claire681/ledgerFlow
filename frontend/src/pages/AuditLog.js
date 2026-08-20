@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Check, Filter, Search, X as XIcon, Archive, RotateCcw, CheckCircle2, Plus, FileText, DollarSign, Settings, User } from "lucide-react";
+import apiFetch from "../utils/apiFetch";
 
 const FONT = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -105,7 +106,7 @@ export default function AuditLog() {
   useEffect(function() {
     setLoading(true);
     setError("");
-    fetch(API_URL + "/api/v1/payroll/audit-events?limit=200", { headers: authHeaders() })
+    apiFetch("/api/v1/payroll/audit-events?limit=200", { headers: authHeaders() })
       .then(function(r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
