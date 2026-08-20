@@ -5,6 +5,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './utils/queryClient';
+import { ConfirmProvider } from './utils/useConfirm';
 
 // === NOVALA MOBILE RESCUE CSS ===
 // Forces all elements to respect mobile viewport when screen < 768px
@@ -84,7 +85,9 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <ConfirmProvider>
+        <App />
+      </ConfirmProvider>
     </QueryClientProvider>
   </React.StrictMode>
 );

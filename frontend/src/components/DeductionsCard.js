@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useConfirm } from "../utils/useConfirm";
 import { MoreVertical, Info, Minus, MinusCircle } from "lucide-react";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
@@ -98,6 +99,7 @@ export default function DeductionsCard(props) {
   const employee = props.employee || {};
 
   const [menuOpenFor, setMenuOpenFor] = useState(null);
+  const confirm = useConfirm();
 
   // React Query fetch - handles cache, refetch, invalidation
   const { data, isLoading: loading, error: queryError } = useQuery({
@@ -122,9 +124,15 @@ export default function DeductionsCard(props) {
   function openAdd() { window.dispatchEvent(new CustomEvent("novala:openAddDeductionModal")); }
   function openEdit(item) { window.dispatchEvent(new CustomEvent("novala:openEditDeductionModal", { detail: item })); }
   function openDentalCode() { window.dispatchEvent(new CustomEvent("novala:openDentalCodeModal", { detail: { current: employee.dental_benefit_code || null } })); }
-  function unassign(item) {
+  async function unassign(item) {
     var name = (item.deduction_type && item.deduction_type.name) || "this item";
-    if (!window.confirm("Unassign " + name + " from this employee?")) return;
+    const ok = await confirm({
+      title: "Unassign " + name + "?",
+      subtitle: "This deduction will no longer appear on future pay runs. Past pay runs are not affected.",
+      confirmLabel: "Unassign",
+      danger: true,
+    });
+    if (!ok) return;
     window.dispatchEvent(new CustomEvent("novala:unassignDeductionItem", { detail: item }));
   }
 
