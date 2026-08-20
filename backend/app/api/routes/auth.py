@@ -53,8 +53,10 @@ async def register(
         except Exception as seed_err:
             print(f"Seed payroll defaults failed on resume: {seed_err}")
         token = create_access_token(data={"sub": str(existing.id)})
+        refresh = await create_refresh_token_for_user(db, existing.id)
         return {
             "access_token": token,
+            "refresh_token": refresh,
             "token_type": "bearer",
             "user_id": str(existing.id),
             "email": existing.email,
@@ -70,8 +72,10 @@ async def register(
     await db.commit()
     await db.refresh(user)
     token = create_access_token(data={"sub": str(user.id)})
+    refresh = await create_refresh_token_for_user(db, user.id)
     return {
         "access_token": token,
+        "refresh_token": refresh,
         "token_type":   "bearer",
         "user_id":      str(user.id),
         "email":        user.email,
@@ -443,3 +447,77 @@ async def get_me(current_user=Depends(get_current_user)):
             else None
         ),
     }
+
+
+# ============ Refresh Token System ============
+import hashlib, secrets
+from datetime import datetime, timedelta, timezone
+from app.models.models import RefreshToken
+
+REFRESH_TOKEN_DAYS = 60
+
+
+def hash_refresh_token(raw_token: str) -> str:
+    return hashlib.sha256(raw_token.encode()).hexdigest()
+
+
+def generate_refresh_token() -> str:
+    return secrets.token_urlsafe(64)
+
+
+async def create_refresh_token_for_user(db: AsyncSession, user_id) -> str:
+    raw = generate_refresh_token()
+    rt = RefreshToken(
+        user_id=user_id,
+        token_hash=hash_refresh_token(raw),
+        expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_DAYS),
+    )
+    db.add(rt)
+    await db.commit()
+    return raw
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+@router.post("/refresh")
+async def refresh_access_token(body: RefreshRequest, db: AsyncSession = Depends(get_db)):
+    token_hash = hash_refresh_token(body.refresh_token)
+    result = await db.execute(
+        select(RefreshToken).where(RefreshToken.token_hash == token_hash)
+    )
+    rt = result.scalar_one_or_none()
+    if not rt:
+        raise HTTPException(401, "Invalid refresh token")
+    if rt.revoked_at is not None:
+        raise HTTPException(401, "Refresh token revoked")
+    now = datetime.now(timezone.utc)
+    if rt.expires_at < now:
+        raise HTTPException(401, "Refresh token expired")
+
+    # Update last used
+    rt.last_used_at = now
+    await db.commit()
+
+    # Issue new access token
+    access = create_access_token(data={"sub": str(rt.user_id)})
+    return {"access_token": access, "token_type": "bearer"}
+
+
+class LogoutRequest(BaseModel):
+    refresh_token: Optional[str] = None
+
+
+@router.post("/logout")
+async def logout(body: LogoutRequest, db: AsyncSession = Depends(get_db)):
+    if body.refresh_token:
+        token_hash = hash_refresh_token(body.refresh_token)
+        result = await db.execute(
+            select(RefreshToken).where(RefreshToken.token_hash == token_hash)
+        )
+        rt = result.scalar_one_or_none()
+        if rt and rt.revoked_at is None:
+            rt.revoked_at = datetime.now(timezone.utc)
+            await db.commit()
+    return {"detail": "Logged out"}
