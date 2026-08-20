@@ -93,8 +93,10 @@ async def login(
     if not user or not verify_password(body.password, user.hashed_pw):
         raise HTTPException(status_code=401, detail="Invalid email or password.")
     token = create_access_token(data={"sub": str(user.id)})
+    refresh = await create_refresh_token_for_user(db, user.id)
     return {
         "access_token": token,
+        "refresh_token": refresh,
         "token_type":   "bearer",
         "user_id":      str(user.id),
         "email":        user.email,
