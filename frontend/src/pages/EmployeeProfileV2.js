@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import React, { useState, useEffect, useMemo } from "react";
 import BasePayModal from "../components/modals/BasePayModal";
 import TaxWithholdingsModal from "../components/modals/TaxWithholdingsModal";
@@ -275,6 +276,7 @@ function formatViewValue(field, value) {
 
 export default function EmployeeProfileV2() {
   const { id } = useParams();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [employee, setEmployee] = useState(null);
   const [values, setValues] = useState({});
@@ -351,7 +353,7 @@ export default function EmployeeProfileV2() {
       fetch((process.env.REACT_APP_API_URL || "https://api.getnovala.com") + "/api/v1/employee-deduction-items/" + it.id, {
         method: "DELETE",
         headers: { "Authorization": "Bearer " + t },
-      }).then(function() { apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); });
+      }).then(function() { queryClient.invalidateQueries({ queryKey: ["deduction-items"] }); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); });
     }
     function handleOpenPersonalInfo() { setPersonalInfoModalOpen(true); }
     function handleOpenEmergency() { setEmergencyContactsModalOpen(true); }
