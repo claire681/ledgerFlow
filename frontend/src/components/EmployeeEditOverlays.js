@@ -3,6 +3,7 @@ import { X as XIcon, HelpCircle, ChevronDown, Pencil, Info, Plus, Trash2, Calend
 import { FeedbackWidget } from "./FeedbackWidget";
 import { PayrollSettings } from "../pages/PayrollSettings";
 import DatePicker from "./DatePicker";
+import apiFetch from "../utils/apiFetch";
 
 const BRAND = "#0F9599";
 const BRAND_DARK = "#0A4040";
@@ -112,7 +113,7 @@ function Select({ children, style, ...props }) {
 }
 
 async function patchEmployee(id, body) {
-  const r = await fetch(`${API_URL}/api/v1/payroll/employees/${id}`, {
+  const r = await apiFetch(`/api/v1/payroll/employees/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(body),

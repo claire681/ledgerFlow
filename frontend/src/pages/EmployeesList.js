@@ -6,6 +6,7 @@ import {
   User, UserCog, UserX, Play, Zap, CalendarClock, ListOrdered } from "lucide-react";
 import { getReadiness } from "../utils/payrollReadiness";
 import { startNewPayroll } from "../utils/payrollLauncher";
+import apiFetch from "../utils/apiFetch";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -138,7 +139,7 @@ export default function EmployeesList() {
   const loadEmployees = async () => {
     setLoading(true); setError(null);
     try {
-      const res = await fetch(API_URL + "/api/v1/payroll/employees", { headers: authHeaders() });
+      const res = await apiFetch("/api/v1/payroll/employees", { headers: authHeaders() });
       if (!res.ok) {
         if (res.status === 401) throw new Error("Invalid or expired token. Please log in again.");
         throw new Error("Could not load employees.");

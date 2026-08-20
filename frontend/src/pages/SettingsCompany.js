@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, AlertCircle } from "lucide-react";
+import apiFetch from "../utils/apiFetch";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -99,7 +100,7 @@ export default function SettingsCompany() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(API_URL + "/api/v1/company/profile", { headers: authHeaders() });
+        const res = await apiFetch("/api/v1/company/profile", { headers: authHeaders() });
         if (!res.ok) throw new Error("Could not load profile");
         const data = await res.json();
         const loaded = {
@@ -178,7 +179,7 @@ export default function SettingsCompany() {
     setSaving(true);
     setSaveError(null);
     try {
-      const res = await fetch(API_URL + "/api/v1/company/profile", {
+      const res = await apiFetch("/api/v1/company/profile", {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify(form),

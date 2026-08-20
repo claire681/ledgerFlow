@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
+import apiFetch from "../utils/apiFetch";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const getToken = () => localStorage.getItem("access_token") || localStorage.getItem("token") || "";
@@ -419,7 +420,7 @@ function Step2Review() {
           },
         },
       };
-      const res = await fetch(API_URL + "/api/v1/payroll/settings", {
+      const res = await apiFetch("/api/v1/payroll/settings", {
         method: "POST", headers: authHeaders(), body: JSON.stringify(payload),
       });
       if (res.ok) {
@@ -608,7 +609,7 @@ function Step4Verify() {
   const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
-    fetch(API_URL + "/api/v1/payroll/settings", { headers: authHeaders() })
+    apiFetch("/api/v1/payroll/settings", { headers: authHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (d) {
@@ -653,7 +654,7 @@ function Step4Verify() {
         },
       };
       try {
-        const res = await fetch(API_URL + "/api/v1/payroll/settings", {
+        const res = await apiFetch("/api/v1/payroll/settings", {
           method: "POST", headers: authHeaders(), body: JSON.stringify(payload),
         });
         if (res.ok) {
@@ -682,7 +683,7 @@ function Step4Verify() {
         },
       };
       try {
-        await fetch(API_URL + "/api/v1/payroll/settings", {
+        await apiFetch("/api/v1/payroll/settings", {
           method: "POST", headers: authHeaders(), body: JSON.stringify(payload),
         });
       } catch (e) {}

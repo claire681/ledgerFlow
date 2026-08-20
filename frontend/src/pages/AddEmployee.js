@@ -4,6 +4,7 @@ import DatePicker from "../components/DatePicker";
 import {
   ArrowLeft, X, ChevronDown, Check, Plus, ExternalLink, ArrowRight,
 } from "lucide-react";
+import apiFetch from "../utils/apiFetch";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -222,7 +223,7 @@ export default function AddEmployee() {
       if (mobile.trim()) payload.mobile_phone = mobile.trim();
       if (role.trim()) payload.position_title = role.trim();
       if (hireDate) payload.start_date = hireDate;
-      const res = await fetch(API_URL + "/api/v1/payroll/employees", {
+      const res = await apiFetch("/api/v1/payroll/employees", {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify(payload),

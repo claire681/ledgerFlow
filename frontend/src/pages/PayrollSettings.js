@@ -6,6 +6,7 @@ import {
   ChevronRight, ChevronLeft, Building2, Calendar, FileText, Landmark,
   Plus, MapPin, CheckCircle2, AlertTriangle, Search, Shield,
 } from "lucide-react";
+import apiFetch from "../utils/apiFetch";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const getToken = () => localStorage.getItem("access_token") || localStorage.getItem("token") || "";
@@ -138,7 +139,7 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
   // === Load locations ===
   const loadLocations = async () => {
     try {
-      const res = await fetch(API_URL + "/api/v1/work-locations", { headers: authHeaders() });
+      const res = await apiFetch("/api/v1/work-locations", { headers: authHeaders() });
       if (res.ok) {
         const data = await res.json();
         setLocations(data || []);
@@ -150,7 +151,7 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
   useEffect(() => { loadLocations(); }, []);
 
   useEffect(() => {
-    fetch(API_URL + "/api/v1/company/profile", { headers: authHeaders() })
+    apiFetch("/api/v1/company/profile", { headers: authHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d && d.company_name) setCompanyName(d.company_name); })
       .catch(() => {});
@@ -216,7 +217,7 @@ function WorkLocationsSection({ businessCountry = "CA" }) {
   // === Delete ===
   const onDelete = async (id) => {
     try {
-      const res = await fetch(API_URL + "/api/v1/work-locations/" + id, { method: "DELETE", headers: authHeaders() });
+      const res = await apiFetch("/api/v1/work-locations/" + id, { method: "DELETE", headers: authHeaders() });
       if (res.ok || res.status === 204) { await loadLocations(); setConfirmDelete(null); closeDrawer(); }
     } catch (e) {}
   };
@@ -509,9 +510,9 @@ function PayTypesSection({ businessCountry = "CA" }) {
     async function load() {
       try {
         const [ptRes, dtRes, cpRes] = await Promise.all([
-          fetch(API_URL + "/api/v1/pay-types", { headers: authHeaders() }),
-          fetch(API_URL + "/api/v1/deduction-types", { headers: authHeaders() }),
-          fetch(API_URL + "/api/v1/company/profile", { headers: authHeaders() }),
+          apiFetch("/api/v1/pay-types", { headers: authHeaders() }),
+          apiFetch("/api/v1/deduction-types", { headers: authHeaders() }),
+          apiFetch("/api/v1/company/profile", { headers: authHeaders() }),
         ]);
         if (ptRes.ok) setPayTypes(await ptRes.json());
         if (dtRes.ok) setDeductions(await dtRes.json());
@@ -1462,7 +1463,7 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch(API_URL + "/api/v1/company/profile", { headers: authHeaders() })
+    apiFetch("/api/v1/company/profile", { headers: authHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (d) {
@@ -1510,7 +1511,7 @@ function CompanyDetailsSection({ businessCountry, setBusinessCountry }) {
         industry: data.industry,
         website: data.website,
       };
-      const res = await fetch(API_URL + "/api/v1/company/profile", {
+      const res = await apiFetch("/api/v1/company/profile", {
         method: "PATCH", headers: authHeaders(), body: JSON.stringify(payload),
       });
       if (res.ok) {
@@ -1657,7 +1658,7 @@ function PayScheduleSection() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch(API_URL + "/api/v1/payroll/settings", { headers: authHeaders() })
+    apiFetch("/api/v1/payroll/settings", { headers: authHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (d) {
@@ -1698,7 +1699,7 @@ function PayScheduleSection() {
   const onSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch(API_URL + "/api/v1/payroll/settings", {
+      const res = await apiFetch("/api/v1/payroll/settings", {
         method: "POST", headers: authHeaders(),
         body: JSON.stringify({
           default_pay_schedule: data.frequency,
@@ -1921,7 +1922,7 @@ function TaxRegistrationSection({ businessCountry }) {
   const country = (businessCountry || "ca").toLowerCase();
 
   useEffect(() => {
-    fetch(API_URL + "/api/v1/company/profile", { headers: authHeaders() })
+    apiFetch("/api/v1/company/profile", { headers: authHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (d) {
@@ -1971,7 +1972,7 @@ function TaxRegistrationSection({ businessCountry }) {
 
     setSaving(true);
     try {
-      const res = await fetch(API_URL + "/api/v1/company/profile", {
+      const res = await apiFetch("/api/v1/company/profile", {
         method: "PATCH", headers: authHeaders(),
         body: JSON.stringify(data),
       });
@@ -2153,7 +2154,7 @@ function StatHolidayMethodSection({ businessCountry = "CA" }) {
   React.useEffect(function() {
     async function load() {
       try {
-        const r = await fetch(API_URL + "/api/v1/payroll/settings", { headers: authHeaders() });
+        const r = await apiFetch("/api/v1/payroll/settings", { headers: authHeaders() });
         if (r.ok) {
           const data = await r.json();
           if (data && typeof data.stat_holiday_option === "number") {
@@ -2170,7 +2171,7 @@ function StatHolidayMethodSection({ businessCountry = "CA" }) {
     setSaving(true);
     setSavedNotice(false);
     try {
-      const r = await fetch(API_URL + "/api/v1/payroll/settings", {
+      const r = await apiFetch("/api/v1/payroll/settings", {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify({ stat_holiday_option: option }),
@@ -2320,7 +2321,7 @@ function BankAccountSection() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(API_URL + "/api/v1/payroll/bank/status", { headers: authHeaders() })
+    apiFetch("/api/v1/payroll/bank/status", { headers: authHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (d) {

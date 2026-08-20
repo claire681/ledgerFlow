@@ -16,6 +16,7 @@ import { DENTAL_CODES, DENTAL_CODE_OPTIONS } from "../utils/dentalCodes";
 import { generatePayPeriods, formatPeriodDate, DAY_OF_MONTH_OPTIONS, DEFAULT_SEMI_MONTHLY_SCHEDULE } from "../utils/payScheduling";
 import { isSectionFilled } from "../utils/payrollReadiness";
 import { subdivisionsByCountry } from "../data/subdivisions";
+import apiFetch from "../utils/apiFetch";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -241,7 +242,7 @@ export default function EmployeeProfile() {
 
   const reloadWorkLocations = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/v1/work-locations`, { headers: authHeaders() });
+      const res = await apiFetch(`/api/v1/work-locations`, { headers: authHeaders() });
       if (res.ok) setWorkLocations(await res.json());
     } catch (e) { console.error(e); }
   };
@@ -308,7 +309,7 @@ export default function EmployeeProfile() {
     if (!window.confirm("Delete this work location? This cannot be undone.")) return;
     setWorkLocationSaving(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/work-locations/${workLocationDraft.id}`, { method: "DELETE", headers: authHeaders() });
+      const res = await apiFetch(`/api/v1/work-locations/${workLocationDraft.id}`, { method: "DELETE", headers: authHeaders() });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: "Delete failed" }));
         throw new Error(err.detail || "Delete failed");
@@ -366,9 +367,9 @@ export default function EmployeeProfile() {
     setError(null);
     try {
       let emp = null;
-      let res = await fetch(`${API_URL}/api/v1/payroll/employees/${id}`, { headers: authHeaders() });
+      let res = await apiFetch(`/api/v1/payroll/employees/${id}`, { headers: authHeaders() });
       if (res.status === 404 || res.status === 405) {
-        const listRes = await fetch(`${API_URL}/api/v1/payroll/employees`, { headers: authHeaders() });
+        const listRes = await apiFetch(`/api/v1/payroll/employees`, { headers: authHeaders() });
         if (!listRes.ok) throw new Error(`Could not load (HTTP ${listRes.status})`);
         const list = await listRes.json();
         const arr = Array.isArray(list) ? list : (list.employees || list.data || []);
@@ -393,7 +394,7 @@ export default function EmployeeProfile() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/work-locations`, { headers: authHeaders() });
+        const res = await apiFetch(`/api/v1/work-locations`, { headers: authHeaders() });
         if (res.ok) setWorkLocations(await res.json());
       } catch (e) { console.error("Failed to load work locations", e); }
     })();
@@ -452,7 +453,7 @@ export default function EmployeeProfile() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch(`${API_URL}/api/v1/payroll/employees/${id}/photo`, {
+      const res = await apiFetch(`/api/v1/payroll/employees/${id}/photo`, {
         method: "POST",
         headers: { Authorization: `Bearer ${getToken()}` },
         body: formData,
@@ -506,7 +507,7 @@ export default function EmployeeProfile() {
     setSaving(true);
     setSaveError(null);
     try {
-      const res = await fetch(`${API_URL}/api/v1/payroll/employees/${id}`, {
+      const res = await apiFetch(`/api/v1/payroll/employees/${id}`, {
         method: "PATCH",
         headers: authHeaders(),
         body: JSON.stringify(draft),

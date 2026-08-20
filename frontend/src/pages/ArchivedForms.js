@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import ResourcesDrawer from "../components/payroll/ResourcesDrawer";
 import DatePicker from "../components/DatePicker";
+import apiFetch from "../utils/apiFetch";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -60,7 +61,7 @@ export default function ArchivedForms() {
   useEffect(() => {
     setLoading(true);
     setError("");
-    fetch(`${API_URL}/api/v1/payroll/taxes/archived-forms`, {
+    apiFetch(`/api/v1/payroll/taxes/archived-forms`, {
       headers: authHeaders(),
     })
       .then((r) => {
