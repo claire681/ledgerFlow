@@ -66,7 +66,7 @@ export default function TimeOffCard(props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(function() {
+  const loadItems = React.useCallback(function() {
     if (!employeeId) { setLoading(false); return; }
     setLoading(true); setError(null);
     fetch(API + "/api/v1/payroll/time-off/" + employeeId, { headers: authHeaders() })
@@ -74,6 +74,14 @@ export default function TimeOffCard(props) {
       .then(function(d) { setData(d); setLoading(false); })
       .catch(function(e) { setError(e.message || "Load failed"); setLoading(false); });
   }, [employeeId]);
+
+  useEffect(function() { loadItems(); }, [loadItems]);
+
+  useEffect(function() {
+    function refresh() { loadItems(); }
+    window.addEventListener("novala:timeOffItemsChanged", refresh);
+    return function() { window.removeEventListener("novala:timeOffItemsChanged", refresh); };
+  }, [loadItems]);
 
   function openEdit() {
     window.dispatchEvent(new CustomEvent("novala:openTimeOffModal", { detail: { data: data } }));

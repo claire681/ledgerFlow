@@ -276,6 +276,7 @@ export default function PayTypesDrawer({ open, onClose, employeeId }) {
           : category.value + ", effective " + formatDDMMYYYY(effectiveDate);
         addToast(newName.trim() + " added", detail);
         await loadData();
+        window.dispatchEvent(new CustomEvent("novala:payItemsChanged"));
         onClose();
       } catch (e) { setError(e.message); }
       finally { setSaving(false); }
@@ -322,6 +323,7 @@ export default function PayTypesDrawer({ open, onClose, employeeId }) {
         : payType.name + ", effective " + formatDDMMYYYY(effectiveDate);
       addToast(ptName + (formMode === "edit" ? " updated" : " added"), detail);
       await loadData();
+      window.dispatchEvent(new CustomEvent("novala:payItemsChanged"));
       onClose();
     } catch (e) { setError(e.message); }
     finally { setSaving(false); }
@@ -336,6 +338,7 @@ export default function PayTypesDrawer({ open, onClose, employeeId }) {
       if (!res.ok) throw new Error("Delete failed");
       addToast(name + " removed", null);
       await loadData();
+      window.dispatchEvent(new CustomEvent("novala:payItemsChanged"));
     } catch (e) { setError(e.message); }
   }
 

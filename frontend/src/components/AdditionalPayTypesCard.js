@@ -78,7 +78,7 @@ export default function AdditionalPayTypesCard(props) {
   const [error, setError] = useState(null);
   const [menuOpenFor, setMenuOpenFor] = useState(null);
 
-  useEffect(function() {
+  const loadItems = React.useCallback(function() {
     if (!employeeId) { setLoading(false); return; }
     setLoading(true);
     fetch(API + "/api/v1/employee-pay-items/employee/" + employeeId, { headers: authHeaders() })
@@ -101,6 +101,14 @@ export default function AdditionalPayTypesCard(props) {
       })
       .catch(function(e) { setError(e.message || "Load failed"); setLoading(false); });
   }, [employeeId]);
+
+  useEffect(function() { loadItems(); }, [loadItems]);
+
+  useEffect(function() {
+    function refresh() { loadItems(); }
+    window.addEventListener("novala:payItemsChanged", refresh);
+    return function() { window.removeEventListener("novala:payItemsChanged", refresh); };
+  }, [loadItems]);
 
   useEffect(function() {
     function closeMenu() { setMenuOpenFor(null); }
