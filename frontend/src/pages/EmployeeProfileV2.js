@@ -278,7 +278,19 @@ export default function EmployeeProfileV2() {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [employee, setEmployee] = useState(null);
+  const { data: employee, isLoading: employeeLoading, error: employeeError } = useQuery({
+    queryKey: ["employee", id],
+    queryFn: async function() {
+      const r = await apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const data = await r.json();
+      return data.employee || data;
+    },
+    enabled: !!id,
+  });
+  const setEmployee = function(newData) {
+    queryClient.setQueryData(["employee", id], newData);
+  };
   const [values, setValues] = useState({});
   const [draft, setDraft] = useState({});
   const [workLocations, setWorkLocations] = useState([]);
@@ -411,18 +423,11 @@ export default function EmployeeProfileV2() {
   const country = useMemo(function() { return getCountryConfig(companyCountry); }, [companyCountry]);
   const sections = useMemo(function() { return buildSections(country); }, [country]);
 
+  // Sync loading/error state from useQuery for existing UI
   useEffect(function() {
-    if (!id) return;
-    setLoading(true);
-    apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() })
-      .then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-      .then(function(data) {
-        const emp = data.employee || data;
-        setEmployee(emp);
-        setLoading(false);
-      })
-      .catch(function(err) { setLoadError(err.message); setLoading(false); });
-  }, [id]);
+    setLoading(employeeLoading);
+    if (employeeError) setLoadError(employeeError.message);
+  }, [employeeLoading, employeeError]);
 
   useEffect(function() {
     apiFetch("/api/v1/company/profile", { headers: authHeaders() })
