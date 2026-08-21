@@ -365,7 +365,7 @@ export default function EmployeeProfileV2() {
       fetch((process.env.REACT_APP_API_URL || "https://api.getnovala.com") + "/api/v1/employee-deduction-items/" + it.id, {
         method: "DELETE",
         headers: { "Authorization": "Bearer " + t },
-      }).then(function() { queryClient.invalidateQueries({ queryKey: ["deduction-items"] }); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); });
+      }).then(function() { queryClient.invalidateQueries({ queryKey: ["deduction-items"] }); queryClient.invalidateQueries({ queryKey: ["employee", id] }); });
     }
     function handleOpenPersonalInfo() { setPersonalInfoModalOpen(true); }
     function handleOpenEmergency() { setEmergencyContactsModalOpen(true); }
@@ -610,73 +610,73 @@ export default function EmployeeProfileV2() {
         isOpen={basePayModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setBasePayModalOpen(false); }}
-        onSaved={function() { setBasePayModalOpen(false); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
+        onSaved={function() { setBasePayModalOpen(false); queryClient.invalidateQueries({ queryKey: ["employee", id] }); }}
       />
       <TaxWithholdingsModal
         isOpen={taxModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setTaxModalOpen(false); }}
-        onSaved={function() { setTaxModalOpen(false); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
+        onSaved={function() { setTaxModalOpen(false); queryClient.invalidateQueries({ queryKey: ["employee", id] }); }}
       />
-      <PayTypesDrawer open={addPayModalOpen} onClose={function() { setAddPayModalOpen(false); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }} employeeId={id} />
+      <PayTypesDrawer open={addPayModalOpen} onClose={function() { setAddPayModalOpen(false); queryClient.invalidateQueries({ queryKey: ["employee", id] }); }} employeeId={id} />
       <EditPayTypeModal
         isOpen={editPayModalOpen}
         item={editingPayItem}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setEditPayModalOpen(false); setEditingPayItem(null); }}
-        onSaved={function() { setEditPayModalOpen(false); setEditingPayItem(null); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
+        onSaved={function() { setEditPayModalOpen(false); setEditingPayItem(null); queryClient.invalidateQueries({ queryKey: ["employee", id] }); }}
       />
       <StatHolidayModal
         isOpen={statHolidayModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         data={statHolidayData}
         onClose={function() { setStatHolidayModalOpen(false); }}
-        onSaved={function() { setStatHolidayModalOpen(false); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
+        onSaved={function() { setStatHolidayModalOpen(false); queryClient.invalidateQueries({ queryKey: ["employee", id] }); }}
       />
       <TimeOffModal
         isOpen={timeOffModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         data={timeOffData}
         onClose={function() { setTimeOffModalOpen(false); }}
-        onSaved={function() { setTimeOffModalOpen(false); queryClient.invalidateQueries({ queryKey: ["time-off"] }); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
+        onSaved={function() { setTimeOffModalOpen(false); queryClient.invalidateQueries({ queryKey: ["time-off"] }); queryClient.invalidateQueries({ queryKey: ["employee", id] }); }}
       />
       <AddDeductionModal
         isOpen={addDeductionOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setAddDeductionOpen(false); }}
-        onSaved={function() { setAddDeductionOpen(false); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
+        onSaved={function() { setAddDeductionOpen(false); queryClient.invalidateQueries({ queryKey: ["employee", id] }); }}
       />
       <DentalT4CodeModal
         isOpen={dentalCodeOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         current={dentalCodeCurrent}
         onClose={function() { setDentalCodeOpen(false); }}
-        onSaved={function() { setDentalCodeOpen(false); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
+        onSaved={function() { setDentalCodeOpen(false); queryClient.invalidateQueries({ queryKey: ["employee", id] }); }}
       />
       <PersonalInfoModal
         isOpen={personalInfoModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setPersonalInfoModalOpen(false); }}
-        onSaved={function() { setPersonalInfoModalOpen(false); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
+        onSaved={function() { setPersonalInfoModalOpen(false); queryClient.invalidateQueries({ queryKey: ["employee", id] }); }}
       />
       <EmergencyContactsModal
         isOpen={emergencyContactsModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setEmergencyContactsModalOpen(false); }}
-        onSaved={function() { setEmergencyContactsModalOpen(false); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
+        onSaved={function() { setEmergencyContactsModalOpen(false); queryClient.invalidateQueries({ queryKey: ["employee", id] }); }}
       />
       <EmploymentDetailsModal
         isOpen={employmentModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         locations={employmentLocations}
         onClose={function() { setEmploymentModalOpen(false); }}
-        onSaved={function() { setEmploymentModalOpen(false); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
+        onSaved={function() { setEmploymentModalOpen(false); queryClient.invalidateQueries({ queryKey: ["employee", id] }); }}
       />
       <PaymentMethodModal
         isOpen={paymentMethodModalOpen}
         employee={{ ...(employee || {}), ...(values || {}), id: id }}
         onClose={function() { setPaymentMethodModalOpen(false); }}
-        onSaved={function() { setPaymentMethodModalOpen(false); apiFetch("/api/v1/payroll/employees/" + id, { headers: authHeaders() }).then(function(r) { return r.json(); }).then(function(d) { setEmployee(d.employee || d); }).catch(function() {}); }}
+        onSaved={function() { setPaymentMethodModalOpen(false); queryClient.invalidateQueries({ queryKey: ["employee", id] }); }}
       />
       {toast && (
         <div style={{ position: "fixed", bottom: 26, left: "50%", transform: "translateX(-50%)", background: toast.kind === "err" ? "#7F1D1D" : C.ink, color: "#fff", fontSize: 13, fontWeight: 500, padding: "11px 18px", borderRadius: 10, zIndex: 80, display: "flex", alignItems: "center", gap: 9, boxShadow: "0 8px 24px rgba(16,26,43,0.3)" }}>
