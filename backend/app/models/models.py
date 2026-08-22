@@ -635,6 +635,7 @@ class Employee(Base):
     end_date = Column(Date, nullable=True)
     status = Column(String, nullable=False, default="active")
     manager_name = Column(String, nullable=True)
+    manager_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="SET NULL"), nullable=True, index=True)
 
     # Compensation
     pay_type = Column(String, nullable=False, default="salary")
