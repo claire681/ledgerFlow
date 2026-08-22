@@ -555,6 +555,7 @@ async def create_owner_employee_record(db, user):
         first_name=first_name,
         last_name=last_name,
         personal_email=user.email,
+        position_title="Owner",
         status="active",
         employment_status="active",
         show_in_lists_only=True,  # hides from payroll runs by default
