@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import apiFetch from "../utils/apiFetch";
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const FONT = "Inter, -apple-system, BlinkMacSystemFont, sans-serif";
 const C = {
@@ -62,7 +64,24 @@ export default function EmploymentDetailsCard(props) {
   const workProvinceAbbrev = workProvinceRaw ? (PROVINCE_ABBREV[workProvinceRaw] || workProvinceRaw) : null;
   const workPostal = employee.work_postal || null;
 
-  const manager = employee.manager_name || null;
+  const { data: employees = [] } = useQuery({
+    queryKey: ["employees-list"],
+    queryFn: async function() {
+      const r = await apiFetch("/api/v1/payroll/employees");
+      if (!r.ok) return [];
+      const data = await r.json();
+      return Array.isArray(data) ? data : (data.items || data.employees || []);
+    },
+  });
+  const managerRecord = employees.find(function(e) { return e.id === employee.manager_id; }) || null;
+
+  const managerFullName = managerRecord
+    ? ([managerRecord.first_name, managerRecord.last_name].filter(Boolean).join(" ") || "Unnamed")
+    : (employee.manager_name || null);
+  const managerInitials = managerFullName
+    ? managerFullName.split(/\s+/).map(function(p) { return p[0]; }).slice(0, 2).join("").toUpperCase()
+    : "";
+  const manager = managerFullName
   const department = employee.department || null;
   const jobTitle = employee.position_title || null;
   const empId = employee.employee_number || null;
@@ -142,7 +161,12 @@ export default function EmploymentDetailsCard(props) {
         </div>
         <div style={cellStyle}>
           <div style={labelStyle}>Manager</div>
-          {renderValue(manager)}
+          {manager ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#E1F5EE", color: "#0F6E56", fontSize: 10, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{managerInitials}</div>
+            <span>{manager}</span>
+          </div>
+        ) : renderValue(null)}
         </div>
         <div style={cellStyle}>
           <div style={labelStyle}>Department</div>

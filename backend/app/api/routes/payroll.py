@@ -82,6 +82,7 @@ class EmployeeUpdateBody(BaseModel):
     end_date: Optional[date] = None
     status: Optional[str] = None
     manager_name: Optional[str] = None
+    manager_id: Optional[UUID] = None
     pay_type: Optional[str] = None
     salary_amount: Optional[float] = None
     hourly_rate: Optional[float] = None
@@ -173,7 +174,7 @@ def serialize_employee(e):
         "work_location_id": str(e.work_location_id) if e.work_location_id else None, "work_city": e.work_city, "work_street": e.work_street, "work_province": e.work_province, "work_postal": e.work_postal, "employment_status": e.employment_status, "last_day_of_work": e.last_day_of_work.isoformat() if e.last_day_of_work else None, "status_change_reason": e.status_change_reason, "show_in_lists_only": e.show_in_lists_only, "employment_type": e.employment_type,
         "start_date": e.start_date.isoformat() if e.start_date else None,
         "end_date": e.end_date.isoformat() if e.end_date else None,
-        "status": e.status, "manager_name": e.manager_name,
+        "status": e.status, "manager_name": e.manager_name, "manager_id": str(e.manager_id) if e.manager_id else None,
         "pay_type": e.pay_type,
         "salary_amount": float(e.salary_amount) if e.salary_amount is not None else None,
         "hourly_rate": float(e.hourly_rate) if e.hourly_rate is not None else None,

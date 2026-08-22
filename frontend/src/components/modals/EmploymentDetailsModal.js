@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { MessageSquare, Calendar as CalendarIcon } from "lucide-react";
 import EditModal, { CollapsibleSection } from "./EditModal";
 import DatePicker from "../DatePicker";
+import ManagerCombobox from "../ManagerCombobox";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 const FONT = "Inter, -apple-system, BlinkMacSystemFont, sans-serif";
@@ -24,6 +25,7 @@ export default function EmploymentDetailsModal(props) {
   const providedLocations = props.locations || [];
 
   const [title, setTitle] = useState("");
+  const [managerId, setManagerId] = useState(null);
   const [empNumber, setEmpNumber] = useState("");
   const [dept, setDept] = useState("");
   const [empType, setEmpType] = useState("Full-time");
@@ -48,6 +50,7 @@ export default function EmploymentDetailsModal(props) {
   useEffect(function() {
     if (!isOpen) return;
     setTitle(employee.position_title || "");
+    setManagerId(employee.manager_id || null);
     setEmpNumber(employee.employee_number || "");
     setDept(employee.department || "");
     setEmpType(employee.employment_type || "Full-time");
@@ -114,6 +117,7 @@ export default function EmploymentDetailsModal(props) {
       last_day_of_work: lastDayOfWork || null,
       status_change_reason: statusReason || null,
       show_in_lists_only: showInListsOnly,
+      manager_id: managerId || null,
     };
     try {
       const r = await fetch(API + "/api/v1/payroll/employees/" + employee.id, {
@@ -212,6 +216,9 @@ export default function EmploymentDetailsModal(props) {
         <Field label="Employee ID number"><TextInput value={empNumber} onChange={setEmpNumber} placeholder="Optional. Auto-generated if left blank." /></Field>
         <TwoCol>
           <Field label="Department"><TextInput value={dept} onChange={setDept} placeholder="Care team" /></Field>
+          <Field label="Manager" help="Choose who this employee reports to. Used for time approvals and org reporting.">
+            <ManagerCombobox value={managerId} onChange={setManagerId} currentEmployeeId={employee.id} />
+          </Field>
           <Field label="Employment type">
             <SelectInput value={empType} onChange={setEmpType}>
               {EMPLOYMENT_TYPES.map(function(e) { return <option key={e} value={e}>{e}</option>; })}
