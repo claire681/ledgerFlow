@@ -72,6 +72,10 @@ async def register(
     db.add(user)
     await db.commit()
     await db.refresh(user)
+    try:
+        await create_owner_employee_record(db, user)
+    except Exception as e:
+        print(f"Owner employee creation failed: {e}")
     token = create_access_token(data={"sub": str(user.id)})
     refresh = await create_refresh_token_for_user(db, user.id)
     return {
@@ -524,3 +528,40 @@ async def logout(body: LogoutRequest, db: AsyncSession = Depends(get_db)):
             rt.revoked_at = datetime.now(timezone.utc)
             await db.commit()
     return {"detail": "Logged out"}
+
+async def create_owner_employee_record(db, user):
+    """
+    Create an Employee record for a new user account.
+    This is so the owner appears in Manager dropdowns.
+    They can enable/disable payroll on their own record later.
+    """
+    from app.models.models import Employee
+    # Check if already exists (idempotent)
+    result = await db.execute(
+        select(Employee).where(Employee.user_id == user.id)
+    )
+    if result.scalar_one_or_none():
+        return None
+    
+    # Split full_name into first + last
+    full = (user.full_name or "").strip()
+    parts = full.split(None, 1)
+    first_name = parts[0] if parts else "Owner"
+    last_name = parts[1] if len(parts) > 1 else ""
+    
+    emp = Employee(
+        owner_id=user.id,
+        user_id=user.id,
+        first_name=first_name,
+        last_name=last_name,
+        personal_email=user.email,
+        position_title="Owner",
+        status="active",
+        employment_status="active",
+        show_in_lists_only=True,  # hides from payroll runs by default
+        manager_id=None,
+    )
+    db.add(emp)
+    await db.commit()
+    return emp
+
