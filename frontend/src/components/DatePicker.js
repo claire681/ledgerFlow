@@ -153,7 +153,7 @@ export default function DatePicker(props) {
   // Year options: current year +/- 20
   const currentYear = viewDate.getFullYear();
   const years = [];
-  for (var y = currentYear - 20; y <= currentYear + 20; y++) years.push(y);
+  for (var y = currentYear - 100; y <= currentYear + 20; y++) years.push(y);
 
   const errored = !!props.error;
 
