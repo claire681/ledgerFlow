@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import PayStub from "../components/payroll/PayStub";
 import { Search, ChevronDown, Check, MoreVertical, Filter, Download, Printer, Eye, Mail, RotateCcw, FileText, X as XIcon, Lock, Play } from "lucide-react";
@@ -94,6 +95,7 @@ export default function PaychequeList() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [openKebabId, setOpenKebabId] = useState(null);
   const [editingChq, setEditingChq] = useState(null); // stub_id being edited
+  const queryClient = useQueryClient();
   const [chqInput, setChqInput] = useState("");
   const [savingChq, setSavingChq] = useState(false);
   const [chequeModal, setChequeModal] = useState(null); // stub object
@@ -107,8 +109,6 @@ export default function PaychequeList() {
   const exportRef = useRef(null);
   const moreRef = useRef(null);
   const searchRef = useRef(null);
-
-  useEffect(function() { fetchPaycheques(); fetchCompany(); }, []);
 
   useEffect(function() {
     function onClick(e) {
@@ -131,30 +131,50 @@ export default function PaychequeList() {
     };
   }, []);
 
-  async function fetchPaycheques() {
-    setLoading(true); setError(null);
-    try {
+  // React Query: paycheques list
+  const { data: paychequesData, isLoading: paychequesLoading, error: paychequesError } = useQuery({
+    queryKey: ["paycheques"],
+    queryFn: async function() {
       const res = await apiFetch("/api/v1/payroll/paycheques", { headers: authHeaders() });
       if (!res.ok) throw new Error("Could not load paycheques");
       const data = await res.json();
-      const list = Array.isArray(data) ? data : (data.paycheques || data.items || []);
-      setPaycheques(list);
-    } catch (e) {
-      setError(e.message);
-    } finally { setLoading(false); }
+      return Array.isArray(data) ? data : (data.paycheques || data.items || []);
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(function() {
+    if (paychequesData) setPaycheques(paychequesData);
+    setLoading(paychequesLoading);
+    if (paychequesError) setError(paychequesError.message);
+  }, [paychequesData, paychequesLoading, paychequesError]);
+
+  function fetchPaycheques() {
+    queryClient.invalidateQueries({ queryKey: ["paycheques"] });
   }
 
-  async function fetchCompany() {
-    try {
+  // React Query: company settings
+  const { data: companyData } = useQuery({
+    queryKey: ["company-settings"],
+    queryFn: async function() {
       const res = await apiFetch("/api/v1/payroll/settings", { headers: authHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        setCompany({
-          name: data.company_name || localStorage.getItem("company_name") || "",
-          address: data.company_address || "",
-        });
-      }
-    } catch (e) {}
+      if (!res.ok) return null;
+      return await res.json();
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(function() {
+    if (companyData) {
+      setCompany({
+        name: companyData.company_name || localStorage.getItem("company_name") || "",
+        address: companyData.company_address || "",
+      });
+    }
+  }, [companyData]);
+
+  function fetchCompany() {
+    queryClient.invalidateQueries({ queryKey: ["company-settings"] });
   }
 
   function togglePrivacy() {
@@ -166,6 +186,7 @@ export default function PaychequeList() {
   const counts = useMemo(function() {
     return {
       all: paycheques.length,
+      issued: paycheques.filter(function(p) { return p.status === "issued"; }).length,
       pending: paycheques.filter(function(p) { return (p.status || "pending") === "pending"; }).length,
       paid: paycheques.filter(function(p) { return p.status === "paid"; }).length,
       voided: paycheques.filter(function(p) { return p.status === "voided"; }).length,
@@ -202,7 +223,7 @@ export default function PaychequeList() {
     return list;
   }, [paycheques, tab, methodFilter, search, sort]);
 
-  const sectionTitle = tab === "pending" ? "Pending paycheques" : tab === "paid" ? "Paid paycheques" : tab === "voided" ? "Voided paycheques" : "Paycheque history";
+  const sectionTitle = tab === "pending" ? "Pending paycheques" : tab === "issued" ? "Issued paycheques" : tab === "paid" ? "Paid paycheques" : tab === "voided" ? "Voided paycheques" : "Paycheque history";
 
   async function saveChequeNumber(stubId, value) {
     // Client-side validation
@@ -394,6 +415,7 @@ export default function PaychequeList() {
       <div style={{ display: "flex", gap: 6, marginBottom: 20, borderBottom: "1px solid " + C.line }}>
         <button onClick={function() { setTab("all"); }} style={tabStyle(tab === "all")}>All <span style={{ color: C.ink, fontWeight: 700, marginLeft: 4 }}>{counts.all}</span></button>
         <button onClick={function() { setTab("pending"); }} style={tabStyle(tab === "pending")}>Pending <span style={{ color: C.ink, fontWeight: 700, marginLeft: 4 }}>{counts.pending}</span></button>
+          <button onClick={function() { setTab("issued"); }} style={tabStyle(tab === "issued")}>Issued <span style={{ color: C.ink, fontWeight: 700, marginLeft: 4 }}>{counts.issued}</span></button>
         <button onClick={function() { setTab("paid"); }} style={tabStyle(tab === "paid")}>Paid <span style={{ color: C.ink, fontWeight: 700, marginLeft: 4 }}>{counts.paid}</span></button>
         <button onClick={function() { setTab("voided"); }} style={tabStyle(tab === "voided")}>Voided <span style={{ color: C.ink, fontWeight: 700, marginLeft: 4 }}>{counts.voided}</span></button>
       </div>
@@ -517,9 +539,9 @@ export default function PaychequeList() {
                     )}
                   </td>
                   <td style={tdStyle}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, color: status === "paid" ? C.brandDark : status === "voided" ? C.grey : C.amber, background: status === "paid" ? C.brandBg : status === "voided" ? C.greyBg : C.amberBg, padding: "3px 10px", borderRadius: 5, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                      <span style={{ width: 6, height: 6, background: status === "paid" ? C.brandDark : status === "voided" ? C.grey : C.amber, borderRadius: "50%" }} />
-                      {status === "paid" ? "Paid" : status === "voided" ? "Voided" : "Pending"}
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, color: (status === "paid" || status === "issued") ? C.brandDark : status === "voided" ? C.grey : C.amber, background: (status === "paid" || status === "issued") ? C.brandBg : status === "voided" ? C.greyBg : C.amberBg, padding: "3px 10px", borderRadius: 5, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                      <span style={{ width: 6, height: 6, background: (status === "paid" || status === "issued") ? C.brandDark : status === "voided" ? C.grey : C.amber, borderRadius: "50%" }} />
+                      {status === "paid" ? "Paid" : status === "issued" ? "Issued" : status === "voided" ? "Voided" : "Pending"}
                     </span>
                   </td>
                   <td style={{ ...tdStyle, textAlign: "right", position: "relative", width: 60 }} className="row-kebab">
