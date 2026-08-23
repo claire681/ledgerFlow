@@ -186,6 +186,7 @@ export default function PaychequeList() {
   const counts = useMemo(function() {
     return {
       all: paycheques.length,
+      issued: paycheques.filter(function(p) { return p.status === "issued"; }).length,
       pending: paycheques.filter(function(p) { return (p.status || "pending") === "pending"; }).length,
       paid: paycheques.filter(function(p) { return p.status === "paid"; }).length,
       voided: paycheques.filter(function(p) { return p.status === "voided"; }).length,
@@ -222,7 +223,7 @@ export default function PaychequeList() {
     return list;
   }, [paycheques, tab, methodFilter, search, sort]);
 
-  const sectionTitle = tab === "pending" ? "Pending paycheques" : tab === "paid" ? "Paid paycheques" : tab === "voided" ? "Voided paycheques" : "Paycheque history";
+  const sectionTitle = tab === "pending" ? "Pending paycheques" : tab === "issued" ? "Issued paycheques" : tab === "paid" ? "Paid paycheques" : tab === "voided" ? "Voided paycheques" : "Paycheque history";
 
   async function saveChequeNumber(stubId, value) {
     // Client-side validation
@@ -414,6 +415,7 @@ export default function PaychequeList() {
       <div style={{ display: "flex", gap: 6, marginBottom: 20, borderBottom: "1px solid " + C.line }}>
         <button onClick={function() { setTab("all"); }} style={tabStyle(tab === "all")}>All <span style={{ color: C.ink, fontWeight: 700, marginLeft: 4 }}>{counts.all}</span></button>
         <button onClick={function() { setTab("pending"); }} style={tabStyle(tab === "pending")}>Pending <span style={{ color: C.ink, fontWeight: 700, marginLeft: 4 }}>{counts.pending}</span></button>
+          <button onClick={function() { setTab("issued"); }} style={tabStyle(tab === "issued")}>Issued <span style={{ color: C.ink, fontWeight: 700, marginLeft: 4 }}>{counts.issued}</span></button>
         <button onClick={function() { setTab("paid"); }} style={tabStyle(tab === "paid")}>Paid <span style={{ color: C.ink, fontWeight: 700, marginLeft: 4 }}>{counts.paid}</span></button>
         <button onClick={function() { setTab("voided"); }} style={tabStyle(tab === "voided")}>Voided <span style={{ color: C.ink, fontWeight: 700, marginLeft: 4 }}>{counts.voided}</span></button>
       </div>
@@ -537,9 +539,9 @@ export default function PaychequeList() {
                     )}
                   </td>
                   <td style={tdStyle}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, color: status === "paid" ? C.brandDark : status === "voided" ? C.grey : C.amber, background: status === "paid" ? C.brandBg : status === "voided" ? C.greyBg : C.amberBg, padding: "3px 10px", borderRadius: 5, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                      <span style={{ width: 6, height: 6, background: status === "paid" ? C.brandDark : status === "voided" ? C.grey : C.amber, borderRadius: "50%" }} />
-                      {status === "paid" ? "Paid" : status === "voided" ? "Voided" : "Pending"}
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, color: (status === "paid" || status === "issued") ? C.brandDark : status === "voided" ? C.grey : C.amber, background: (status === "paid" || status === "issued") ? C.brandBg : status === "voided" ? C.greyBg : C.amberBg, padding: "3px 10px", borderRadius: 5, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                      <span style={{ width: 6, height: 6, background: (status === "paid" || status === "issued") ? C.brandDark : status === "voided" ? C.grey : C.amber, borderRadius: "50%" }} />
+                      {status === "paid" ? "Paid" : status === "issued" ? "Issued" : status === "voided" ? "Voided" : "Pending"}
                     </span>
                   </td>
                   <td style={{ ...tdStyle, textAlign: "right", position: "relative", width: 60 }} className="row-kebab">
