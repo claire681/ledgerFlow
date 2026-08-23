@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import EditPaychequeDrawer from "../components/EditPaychequeDrawer";
 import { useNavigate, useParams } from "react-router-dom";
 import StatHolidayEligibilityPopup from "../components/payroll/StatHolidayEligibilityPopup";
@@ -263,6 +264,7 @@ function MemoPopover(props) {
 
 export default function RunPayroll() {
   const { payRunId } = useParams();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
