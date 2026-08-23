@@ -496,7 +496,11 @@ export default function RunPayroll() {
   }
 
   const filteredRows = useMemo(function() {
-    let list = rows;
+    // Exclude terminated/inactive employees from RunPayroll display
+    let list = rows.filter(function(r) {
+      const status = r.employment_status || "active";
+      return status !== "terminated" && status !== "deceased" && status !== "not_on_payroll";
+    });
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       list = list.filter(function(r) { return r.name.toLowerCase().includes(q); });
@@ -525,7 +529,17 @@ export default function RunPayroll() {
 
   async function handleReview() {
     if (saving) return;
-    if (includedRows.length === 0) { window.alert("No employees ready to pay. Add hours and mark employees as included."); return; }
+    if (includedRows.length === 0) { window.alert("No employees selected. Check at least one employee to include in this pay run."); return; }
+    // Validate every included employee has hours
+    const includedWithoutHours = includedRows.filter(function(r) {
+      const a = rowAmounts(r);
+      return a.totalHours === 0 && (parseFloat(r.statAvgDaily) || 0) === 0;
+    });
+    if (includedWithoutHours.length > 0) {
+      const names = includedWithoutHours.map(function(r) { return r.name; }).join(", ");
+      window.alert("These employees have no hours entered:\n\n" + names + "\n\nAdd hours or uncheck them to continue.");
+      return;
+    }
     setSaving(true); setError("");
     try {
       const employeeInputs = includedRows.map(function(r) {
