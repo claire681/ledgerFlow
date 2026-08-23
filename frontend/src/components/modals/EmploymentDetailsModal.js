@@ -241,12 +241,7 @@ export default function EmploymentDetailsModal(props) {
 
       <CollapsibleSection title="Dates" defaultOpen={true}>
         <Field label="Start date" required error={fieldErrors.startDate}>
-          <div style={{ display: "flex", alignItems: "center", height: 44, padding: "0 14px", border: "1px solid " + C.line, borderRadius: 10, background: "#FFFFFF" }}>
-            <CalendarIcon size={14} color={C.muted} style={{ marginRight: 10 }} />
-            <input type="date" value={startDate}
-              onChange={function(e) { setStartDate(e.target.value); }}
-              style={{ border: 0, outline: "none", fontSize: 14, color: C.ink, flex: 1, fontFamily: FONT, fontWeight: 500, background: "transparent" }} />
-          </div>
+          <DatePicker value={startDate} onChange={setStartDate} error={fieldErrors.startDate} />
         </Field>
       </CollapsibleSection>
 
