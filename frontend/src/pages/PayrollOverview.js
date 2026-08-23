@@ -96,75 +96,96 @@ export default function PayrollOverview() {
     if (draftsData) setDraftsCount(draftsData.length);
   }, [draftsData]);
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const [empRes, scheduleRes, runsRes] = await Promise.all([
-          apiFetch("/api/v1/payroll/employees", { headers: authHeaders() }),
-          apiFetch("/api/v1/payroll/settings", { headers: authHeaders() }).catch(() => null),
-          apiFetch("/api/v1/payroll/runs", { headers: authHeaders() }).catch(() => null),
-        ]);
-        if (empRes && empRes.ok) {
-          const empData = await empRes.json();
-          setEmployees(Array.isArray(empData) ? empData : (empData.items || empData.data || []));
-        }
-        if (scheduleRes && scheduleRes.ok) {
-          const settings = await scheduleRes.json();
-          setPaySchedule(settings.pay_schedule || settings.paySchedule || { frequency: "bi_weekly", anchorPayDate: new Date().toISOString().slice(0, 10), name: "Bi-weekly" });
-        } else {
-          setPaySchedule({ frequency: "bi_weekly", anchorPayDate: new Date().toISOString().slice(0, 10), name: "Bi-weekly" });
-        }
-        if (runsRes && runsRes.ok) {
-          const runs = await runsRes.json();
-          const runArr = Array.isArray(runs) ? runs : (runs.items || runs.data || []);
-          const finalized = runArr.filter(r => r.status === "approved" || r.status === "paid" || r.status === "finalized");
-          if (finalized.length > 0) setLastRun(finalized[0]);
-        }
-        setAutoPayroll(localStorage.getItem("novala_auto_payroll") === "true");
-        (async function loadPd7aAttention() {
-      try {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth() + 1;
-        const resp = await apiFetch("/api/v1/payroll/taxes/pd7a?year=" + year + "&month=" + month, { headers: authHeaders() });
-        if (!resp.ok) { setAttentionItems([]); return; }
-        const data = await resp.json();
-        const amount = Number(data.current_payment || 0);
-        if (amount <= 0) { setAttentionItems([]); return; }
-        const dueDateStr = data.due_date || null;
-        let dueDate = null;
-        if (dueDateStr) { dueDate = new Date(dueDateStr + (dueDateStr.length === 10 ? "T00:00:00" : "")); }
-        const daysUntil = dueDate ? Math.floor((dueDate.getTime() - Date.now()) / 86400000) : null;
-        let urgency = "normal";
-        if (daysUntil !== null) {
-          if (daysUntil < 0) urgency = "overdue";
-          else if (daysUntil <= 2) urgency = "urgent";
-          else if (daysUntil <= 7) urgency = "approaching";
-        }
-        const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-        const monthName = monthNames[month - 1];
-        const dueDisplay = dueDate ? dueDate.toLocaleDateString("en-CA", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }) : "";
-        setAttentionItems([{
-          id: "fed_tax",
-          icon: urgency === "urgent" || urgency === "overdue" ? "red" : "amber",
-          title: "Pay federal taxes for " + monthName + " " + year,
-          amount: amount,
-          dueDate: dueDisplay,
-          daysUntil: daysUntil,
-          urgency: urgency,
-          action: urgency === "urgent" || urgency === "overdue" ? "Pay now" : "Pay",
-          onClick: function() { navigate("/payroll/taxes/payments"); }
-        }]);
-      } catch (e) {
-        console.error("Failed to load PD7A", e);
-        setAttentionItems([]);
+  // React Query: fetch employees + settings + runs in parallel
+  const { data: overviewData, isLoading: overviewLoading } = useQuery({
+    queryKey: ["payroll-overview"],
+    queryFn: async function() {
+      const [empRes, scheduleRes, runsRes] = await Promise.all([
+        apiFetch("/api/v1/payroll/employees", { headers: authHeaders() }),
+        apiFetch("/api/v1/payroll/settings", { headers: authHeaders() }).catch(() => null),
+        apiFetch("/api/v1/payroll/runs", { headers: authHeaders() }).catch(() => null),
+      ]);
+      let empData = [];
+      if (empRes && empRes.ok) {
+        const raw = await empRes.json();
+        empData = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
       }
-    })();
-      } catch (err) { console.error("[PayrollOverview] load error:", err); }
-      finally { setLoading(false); }
-    };
-    fetchAll();
-  }, [navigate]);
+      let schedule = null;
+      if (scheduleRes && scheduleRes.ok) {
+        const settings = await scheduleRes.json();
+        schedule = settings.pay_schedule || settings.paySchedule || { frequency: "bi_weekly", anchorPayDate: new Date().toISOString().slice(0, 10), name: "Bi-weekly" };
+      } else {
+        schedule = { frequency: "bi_weekly", anchorPayDate: new Date().toISOString().slice(0, 10), name: "Bi-weekly" };
+      }
+      let finalizedRun = null;
+      if (runsRes && runsRes.ok) {
+        const runs = await runsRes.json();
+        const runArr = Array.isArray(runs) ? runs : (runs.items || runs.data || []);
+        const finalized = runArr.filter(function(r) { return r.status === "approved" || r.status === "paid" || r.status === "finalized"; });
+        if (finalized.length > 0) finalizedRun = finalized[0];
+      }
+      return { empData, schedule, finalizedRun };
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  // React Query: PD7A tax data (attention items)
+  const { data: pd7aData } = useQuery({
+    queryKey: ["payroll-pd7a-current"],
+    queryFn: async function() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const resp = await apiFetch("/api/v1/payroll/taxes/pd7a?year=" + year + "&month=" + month, { headers: authHeaders() });
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      data._year = year;
+      data._month = month;
+      return data;
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  // Sync queries into legacy state so downstream UI works unchanged
+  useEffect(function() {
+    if (overviewData) {
+      setEmployees(overviewData.empData);
+      setPaySchedule(overviewData.schedule);
+      if (overviewData.finalizedRun) setLastRun(overviewData.finalizedRun);
+    }
+    setLoading(overviewLoading);
+    setAutoPayroll(localStorage.getItem("novala_auto_payroll") === "true");
+  }, [overviewData, overviewLoading]);
+
+  useEffect(function() {
+    if (!pd7aData) { setAttentionItems([]); return; }
+    const amount = Number(pd7aData.current_payment || 0);
+    if (amount <= 0) { setAttentionItems([]); return; }
+    const dueDateStr = pd7aData.due_date || null;
+    let dueDate = null;
+    if (dueDateStr) { dueDate = new Date(dueDateStr + (dueDateStr.length === 10 ? "T00:00:00" : "")); }
+    const daysUntil = dueDate ? Math.floor((dueDate.getTime() - Date.now()) / 86400000) : null;
+    let urgency = "normal";
+    if (daysUntil !== null) {
+      if (daysUntil < 0) urgency = "overdue";
+      else if (daysUntil <= 2) urgency = "urgent";
+      else if (daysUntil <= 7) urgency = "approaching";
+    }
+    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const monthName = monthNames[pd7aData._month - 1];
+    const dueDisplay = dueDate ? dueDate.toLocaleDateString("en-CA", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }) : "";
+    setAttentionItems([{
+      id: "fed_tax",
+      icon: urgency === "urgent" || urgency === "overdue" ? "red" : "amber",
+      title: "Pay federal taxes for " + monthName + " " + pd7aData._year,
+      amount: amount,
+      dueDate: dueDisplay,
+      daysUntil: daysUntil,
+      urgency: urgency,
+      action: urgency === "urgent" || urgency === "overdue" ? "Pay now" : "Pay",
+      onClick: function() { navigate("/payroll/taxes/payments"); }
+    }]);
+  }, [pd7aData, navigate]);
 
   const nextPayday = useMemo(() => {
     if (!paySchedule) return { date: null, daysUntil: null };
