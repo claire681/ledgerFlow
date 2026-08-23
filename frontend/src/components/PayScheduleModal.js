@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import DatePicker from "./DatePicker";
 
 const API = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
@@ -292,8 +293,7 @@ export default function PayScheduleModal({ schedule, onClose }) {
 
                     <div style={{ marginBottom: 20 }}>
                         <div style={{ fontSize: 13, color: "#1A2332", marginBottom: 8, fontWeight: 500 }}>First pay date</div>
-                        <input type="date" value={firstPayDate} onChange={(e) => setFirstPayDate(e.target.value)}
-                            style={{ width: "100%", padding: "10px 12px", border: "1px solid #E5E7EB", borderRadius: 8, fontSize: 14, color: "#000000", fontFamily: "inherit" }} />
+                        <DatePicker value={firstPayDate} onChange={setFirstPayDate} />
                         <div style={{ fontSize: 11, color: "#1A2332", marginTop: 4 }}>The first payday for this schedule</div>
                     </div>
 

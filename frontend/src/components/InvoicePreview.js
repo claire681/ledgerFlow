@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import DatePicker from "./DatePicker";
 import { Edit2, Trash2, Plus, ChevronDown, X, Upload } from "lucide-react";
 import CustomerCombobox from "./customers/CustomerCombobox";
 import { LogoUploadModal } from "./LogoUploadModal";
@@ -40,7 +41,7 @@ const EditableText = ({ value, field, onFieldChange, style, placeholder, fallbac
 const EditableDate = ({ value, field, onFieldChange, style }) => {
   const d = value ? String(value).slice(0, 10) : "";
   if (!onFieldChange) return <span style={style}>{formatDate(d) || "-"}</span>;
-  return <input type="date" value={d} onChange={e => onFieldChange(field, e.target.value)} style={inputBase(style)} onFocus={onFocusBg} onBlur={onBlurBg} />;
+  return <DatePicker value={d} onChange={(iso) => onFieldChange(field, iso)} />;
 };
 
 const FormRow = ({ label, isMobile, children }) => (
