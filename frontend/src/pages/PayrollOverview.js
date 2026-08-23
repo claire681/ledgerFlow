@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import {
@@ -81,18 +82,19 @@ export default function PayrollOverview() {
   const [showThingsNeeded, setShowThingsNeeded] = useState(false);
   const [showSettingUp, setShowSettingUp] = useState(false);
 
-  useEffect(() => {
-    async function loadDraftsCount() {
-      try {
-        const r = await apiFetch("/api/v1/payroll/runs?status=draft", { headers: authHeaders() });
-        if (r.ok) {
-          const data = await r.json();
-          setDraftsCount(Array.isArray(data) ? data.length : 0);
-        }
-      } catch (e) { console.error("Failed to load drafts count", e); }
-    }
-    loadDraftsCount();
-  }, []);
+  const { data: draftsData } = useQuery({
+    queryKey: ["payroll-drafts-count"],
+    queryFn: async function() {
+      const r = await apiFetch("/api/v1/payroll/runs?status=draft", { headers: authHeaders() });
+      if (!r.ok) return [];
+      const data = await r.json();
+      return Array.isArray(data) ? data : [];
+    },
+    refetchOnWindowFocus: false,
+  });
+  useEffect(function() {
+    if (draftsData) setDraftsCount(draftsData.length);
+  }, [draftsData]);
 
   useEffect(() => {
     const fetchAll = async () => {
