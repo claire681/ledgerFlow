@@ -131,6 +131,7 @@ export default function NovalaConfirmDialog(props) {
           </div>
         )}
         <div style={{ padding: "16px 24px", background: PAGE, display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid " + LINE }}>
+          {!hideCancel && (
           <button
             ref={cancelRef}
             onClick={function () { if (!busy) onCancel && onCancel(); }}
@@ -149,6 +150,7 @@ export default function NovalaConfirmDialog(props) {
           >
             {cancelLabel}
           </button>
+          )}
           <button
             onClick={function () { if (!busy) onConfirm && onConfirm(); }}
             disabled={busy}

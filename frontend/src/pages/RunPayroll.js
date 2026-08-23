@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useConfirm } from "../utils/useConfirm";
 import EditPaychequeDrawer from "../components/EditPaychequeDrawer";
 import { useNavigate, useParams } from "react-router-dom";
 import StatHolidayEligibilityPopup from "../components/payroll/StatHolidayEligibilityPopup";
@@ -265,6 +266,7 @@ function MemoPopover(props) {
 export default function RunPayroll() {
   const { payRunId } = useParams();
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -529,7 +531,7 @@ export default function RunPayroll() {
 
   async function handleReview() {
     if (saving) return;
-    if (includedRows.length === 0) { window.alert("No employees selected. Check at least one employee to include in this pay run."); return; }
+    if (includedRows.length === 0) { await confirm({ title: "No employees selected", message: "Check at least one employee to include in this pay run.", confirmLabel: "Got it", hideCancel: true }); return; }
     // Validate every included employee has hours
     const includedWithoutHours = includedRows.filter(function(r) {
       const a = rowAmounts(r);
@@ -537,7 +539,7 @@ export default function RunPayroll() {
     });
     if (includedWithoutHours.length > 0) {
       const names = includedWithoutHours.map(function(r) { return r.name; }).join(", ");
-      window.alert("These employees have no hours entered:\n\n" + names + "\n\nAdd hours or uncheck them to continue.");
+      await confirm({ title: "Employees missing hours", message: "These employees have no hours entered: " + names + ". Add hours or uncheck them to continue.", confirmLabel: "Got it", hideCancel: true });
       return;
     }
     setSaving(true); setError("");

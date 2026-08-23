@@ -29,6 +29,7 @@ export function ConfirmProvider({ children }) {
         message: opts.message,
         confirmLabel: opts.confirmLabel,
         cancelLabel: opts.cancelLabel,
+      hideCancel: opts.hideCancel,
         danger: opts.danger,
       });
     });
@@ -56,6 +57,7 @@ export function ConfirmProvider({ children }) {
         message={state.message}
         confirmLabel={state.confirmLabel}
         cancelLabel={state.cancelLabel}
+      hideCancel={state.hideCancel}
         danger={state.danger}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
