@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Play, Filter, ChevronDown, Check, MoreVertical, FileText, Trash2, Eye, Download } from "lucide-react";
 import apiFetch from "../utils/apiFetch";
@@ -57,8 +58,7 @@ export default function PayrollDrafts() {
   const [deleting, setDeleting] = useState(false);
   const filterRef = useRef(null);
   const [company] = useState(localStorage.getItem("company_name") || "");
-
-  useEffect(function() { fetchRuns(); }, []);
+  const queryClient = useQueryClient();
 
   useEffect(function() {
     if (!filterOpen && openMenuId == null) return;
@@ -75,16 +75,27 @@ export default function PayrollDrafts() {
     };
   }, [filterOpen, openMenuId]);
 
-  async function fetchRuns() {
-    setLoading(true); setError(null);
-    try {
+  // React Query: pay runs list
+  const { data: runsData, isLoading: runsLoading, error: runsError } = useQuery({
+    queryKey: ["payroll-runs"],
+    queryFn: async function() {
       const res = await apiFetch("/api/v1/payroll/runs", { headers: authHeaders() });
       if (!res.ok) throw new Error("Could not load pay runs");
       const data = await res.json();
-      setRuns(Array.isArray(data) ? data : []);
-    } catch (e) {
-      setError(e.message || "Could not load pay runs");
-    } finally { setLoading(false); }
+      return Array.isArray(data) ? data : [];
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  // Sync into legacy state
+  useEffect(function() {
+    if (runsData) setRuns(runsData);
+    setLoading(runsLoading);
+    if (runsError) setError(runsError.message);
+  }, [runsData, runsLoading, runsError]);
+
+  function fetchRuns() {
+    queryClient.invalidateQueries({ queryKey: ["payroll-runs"] });
   }
 
   async function handleDelete(runId) {

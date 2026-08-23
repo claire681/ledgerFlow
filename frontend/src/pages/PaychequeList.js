@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import PayStub from "../components/payroll/PayStub";
 import { Search, ChevronDown, Check, MoreVertical, Filter, Download, Printer, Eye, Mail, RotateCcw, FileText, X as XIcon, Lock, Play } from "lucide-react";
@@ -94,6 +95,7 @@ export default function PaychequeList() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [openKebabId, setOpenKebabId] = useState(null);
   const [editingChq, setEditingChq] = useState(null); // stub_id being edited
+  const queryClient = useQueryClient();
   const [chqInput, setChqInput] = useState("");
   const [savingChq, setSavingChq] = useState(false);
   const [chequeModal, setChequeModal] = useState(null); // stub object
@@ -107,8 +109,6 @@ export default function PaychequeList() {
   const exportRef = useRef(null);
   const moreRef = useRef(null);
   const searchRef = useRef(null);
-
-  useEffect(function() { fetchPaycheques(); fetchCompany(); }, []);
 
   useEffect(function() {
     function onClick(e) {
@@ -131,30 +131,50 @@ export default function PaychequeList() {
     };
   }, []);
 
-  async function fetchPaycheques() {
-    setLoading(true); setError(null);
-    try {
+  // React Query: paycheques list
+  const { data: paychequesData, isLoading: paychequesLoading, error: paychequesError } = useQuery({
+    queryKey: ["paycheques"],
+    queryFn: async function() {
       const res = await apiFetch("/api/v1/payroll/paycheques", { headers: authHeaders() });
       if (!res.ok) throw new Error("Could not load paycheques");
       const data = await res.json();
-      const list = Array.isArray(data) ? data : (data.paycheques || data.items || []);
-      setPaycheques(list);
-    } catch (e) {
-      setError(e.message);
-    } finally { setLoading(false); }
+      return Array.isArray(data) ? data : (data.paycheques || data.items || []);
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(function() {
+    if (paychequesData) setPaycheques(paychequesData);
+    setLoading(paychequesLoading);
+    if (paychequesError) setError(paychequesError.message);
+  }, [paychequesData, paychequesLoading, paychequesError]);
+
+  function fetchPaycheques() {
+    queryClient.invalidateQueries({ queryKey: ["paycheques"] });
   }
 
-  async function fetchCompany() {
-    try {
+  // React Query: company settings
+  const { data: companyData } = useQuery({
+    queryKey: ["company-settings"],
+    queryFn: async function() {
       const res = await apiFetch("/api/v1/payroll/settings", { headers: authHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        setCompany({
-          name: data.company_name || localStorage.getItem("company_name") || "",
-          address: data.company_address || "",
-        });
-      }
-    } catch (e) {}
+      if (!res.ok) return null;
+      return await res.json();
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(function() {
+    if (companyData) {
+      setCompany({
+        name: companyData.company_name || localStorage.getItem("company_name") || "",
+        address: companyData.company_address || "",
+      });
+    }
+  }, [companyData]);
+
+  function fetchCompany() {
+    queryClient.invalidateQueries({ queryKey: ["company-settings"] });
   }
 
   function togglePrivacy() {
