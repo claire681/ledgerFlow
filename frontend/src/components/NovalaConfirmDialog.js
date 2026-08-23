@@ -36,6 +36,7 @@ export default function NovalaConfirmDialog(props) {
   const message = props.message || null;
   const confirmLabel = props.confirmLabel || "Confirm";
   const cancelLabel = props.cancelLabel || "Cancel";
+  const hideCancel = !!props.hideCancel;
   const danger = !!props.danger;
   const onConfirm = props.onConfirm;
   const onCancel = props.onCancel;
