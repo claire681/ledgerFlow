@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useConfirm } from "../utils/useConfirm";
 import EditPaychequeDrawer from "../components/EditPaychequeDrawer";
 import { useNavigate, useParams } from "react-router-dom";
 import StatHolidayEligibilityPopup from "../components/payroll/StatHolidayEligibilityPopup";
@@ -263,6 +265,8 @@ function MemoPopover(props) {
 
 export default function RunPayroll() {
   const { payRunId } = useParams();
+  const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -385,84 +389,93 @@ export default function RunPayroll() {
   const [statusFilter, setStatusFilter] = useState([]);
   const [focusedField, setFocusedField] = useState(null);
 
-  useEffect(() => {
-    async function loadAll() {
-      setLoading(true);
-      setError("");
-      try {
-        const runResp = await fetch(API + "/api/v1/payroll/runs/" + payRunId, { headers: authHeaders() });
-        if (!runResp.ok) throw new Error("Could not load pay run (HTTP " + runResp.status + ")");
-        const runData = await runResp.json();
-        setPayRun(runData);
+  const { data: loadedData, isLoading: queryLoading, error: queryError } = useQuery({
+    queryKey: ["pay-run-full", payRunId],
+    queryFn: async function() {
+      const runResp = await fetch(API + "/api/v1/payroll/runs/" + payRunId, { headers: authHeaders() });
+      if (!runResp.ok) throw new Error("Could not load pay run (HTTP " + runResp.status + ")");
+      const runData = await runResp.json();
 
-        if (runData.pay_schedule_id) {
-          const schedResp = await fetch(API + "/api/v1/payroll/schedules/" + runData.pay_schedule_id, { headers: authHeaders() });
-          if (schedResp.ok) setSchedule(await schedResp.json());
-        }
+      let schedData = null;
+      if (runData.pay_schedule_id) {
+        const schedResp = await fetch(API + "/api/v1/payroll/schedules/" + runData.pay_schedule_id, { headers: authHeaders() });
+        if (schedResp.ok) schedData = await schedResp.json();
+      }
 
-        const empResp = await fetch(API + "/api/v1/payroll/employees", { headers: authHeaders() });
-        if (!empResp.ok) throw new Error("Could not load employees");
-        const empData = await empResp.json();
-        const empArr = Array.isArray(empData) ? empData : (empData.employees || []);
+      const empResp = await fetch(API + "/api/v1/payroll/employees", { headers: authHeaders() });
+      if (!empResp.ok) throw new Error("Could not load employees");
+      const empData = await empResp.json();
+      const empArr = Array.isArray(empData) ? empData : (empData.employees || []);
 
-        const linesResp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/stubs", { headers: authHeaders() });
-        let lines = [];
-        if (linesResp.ok) {
-          const linesData = await linesResp.json();
-          lines = Array.isArray(linesData) ? linesData : (linesData.lines || []);
-        }
-        const linesByEmp = {};
-        lines.forEach(function(l) { linesByEmp[l.employee_id] = l; });
+      const linesResp = await fetch(API + "/api/v1/payroll/runs/" + payRunId + "/stubs", { headers: authHeaders() });
+      let lines = [];
+      if (linesResp.ok) {
+        const linesData = await linesResp.json();
+        lines = Array.isArray(linesData) ? linesData : (linesData.lines || []);
+      }
 
-        const mapped = empArr.map(function(e) {
-          const eid = e.id || e.employee_id;
-          const line = linesByEmp[eid] || {};
-          const first = e.preferred_name || e.first_name || "";
-          const last = e.last_name || "";
-          const name = (last && first) ? (last + ", " + first) : (first || last || "Unnamed");
-          const rate = e.hourly_rate || e.pay_rate || e.rate;
-          const hoursRegularVal = stripHourZeros(line.hours_regular);
-          const hoursOvertimeVal = stripHourZeros(line.hours_overtime);
-          const hoursStatVal = stripHourZeros(line.hours_stat_holiday);
-          const hoursVacationVal = stripHourZeros(line.hours_vacation);
-          const hoursSickVal = stripHourZeros(line.hours_sick);
-          const statAvgDaily = e.stat_pay_avg_daily || (rate ? Number(rate) * 8 : 0);
-          const setupComplete = e.setup_complete !== false;
-        const empStatus = e.employment_status || "active";
-        const isInactive = empStatus === "terminated" || empStatus === "deceased" || empStatus === "not_on_payroll" || empStatus === "unpaid_leave";
-        const canBePaid = setupComplete && !isInactive;
-          const payMethodRaw = (e.default_pay_method || e.pay_method || "direct_deposit").toString().toLowerCase();
-          const payMethod = payMethodRaw.includes("cheque") || payMethodRaw.includes("check") ? "Cheque" : "Direct deposit";
-          return {
-            id: eid, name: name, position: e.position_title || "",
-            hourlyRate: rate ? Number(rate) : 0,
-            regular: hoursRegularVal != null && hoursRegularVal > 0 ? String(hoursRegularVal) : "",
-            overtime: hoursOvertimeVal != null && hoursOvertimeVal > 0 ? String(hoursOvertimeVal) : "",
-            statHoliday: hoursStatVal != null && hoursStatVal > 0 ? String(hoursStatVal) : "",
-            vacation: hoursVacationVal != null && hoursVacationVal > 0 ? String(hoursVacationVal) : "",
-            sick: hoursSickVal != null && hoursSickVal > 0 ? String(hoursSickVal) : "",
-            statAvgDaily: line.stat_pay_avg != null ? line.stat_pay_avg : "", payMethod: payMethod,
-            ready: canBePaid, included: canBePaid, skipped: false, employment_status: empStatus,
-            memo: line.memo || "",
-          };
-        });
-        setRows(mapped);
+      return { runData, schedData, empArr, lines };
+    },
+    enabled: !!payRunId,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
 
-        // Auto-expand any row that already has overtime, vacation, or sick
-        // hours saved so the values are visible without hunting for them.
-        const autoExpand = {};
-        mapped.forEach(function(m) {
-          if ((parseFloat(m.overtime) || 0) > 0 || (parseFloat(m.vacation) || 0) > 0 || (parseFloat(m.sick) || 0) > 0) {
-            autoExpand[m.id] = true;
-          }
-        });
-        setExpandedRows(autoExpand);
+  useEffect(function() {
+    setLoading(queryLoading);
+    if (queryError) setError(queryError.message);
+  }, [queryLoading, queryError]);
 
-        setLoading(false);
-      } catch (err) { setError(err.message); setLoading(false); }
-    }
-    loadAll();
-  }, [payRunId]);
+  useEffect(function() {
+    if (!loadedData) return;
+    const { runData, schedData, empArr, lines } = loadedData;
+    setPayRun(runData);
+    if (schedData) setSchedule(schedData);
+
+    const linesByEmp = {};
+    lines.forEach(function(l) { linesByEmp[l.employee_id] = l; });
+
+    const mapped = empArr.map(function(e) {
+      const eid = e.id || e.employee_id;
+      const line = linesByEmp[eid] || {};
+      const first = e.preferred_name || e.first_name || "";
+      const last = e.last_name || "";
+      const name = (last && first) ? (last + ", " + first) : (first || last || "Unnamed");
+      const rate = e.hourly_rate || e.pay_rate || e.rate;
+      const hoursRegularVal = stripHourZeros(line.hours_regular);
+      const hoursOvertimeVal = stripHourZeros(line.hours_overtime);
+      const hoursStatVal = stripHourZeros(line.hours_stat_holiday);
+      const hoursVacationVal = stripHourZeros(line.hours_vacation);
+      const hoursSickVal = stripHourZeros(line.hours_sick);
+      const setupComplete = e.setup_complete !== false;
+      const empStatus = e.employment_status || "active";
+      const isInactive = empStatus === "terminated" || empStatus === "deceased" || empStatus === "not_on_payroll" || empStatus === "unpaid_leave";
+      const canBePaid = setupComplete && !isInactive;
+      const payMethodRaw = (e.default_pay_method || e.pay_method || "direct_deposit").toString().toLowerCase();
+      const payMethod = payMethodRaw.includes("cheque") || payMethodRaw.includes("check") ? "Cheque" : "Direct deposit";
+      return {
+        id: eid, name: name, position: e.position_title || "",
+        hourlyRate: rate ? Number(rate) : 0,
+        regular: hoursRegularVal != null && hoursRegularVal > 0 ? String(hoursRegularVal) : "",
+        overtime: hoursOvertimeVal != null && hoursOvertimeVal > 0 ? String(hoursOvertimeVal) : "",
+        statHoliday: hoursStatVal != null && hoursStatVal > 0 ? String(hoursStatVal) : "",
+        vacation: hoursVacationVal != null && hoursVacationVal > 0 ? String(hoursVacationVal) : "",
+        sick: hoursSickVal != null && hoursSickVal > 0 ? String(hoursSickVal) : "",
+        statAvgDaily: line.stat_pay_avg != null ? line.stat_pay_avg : "", payMethod: payMethod,
+        ready: canBePaid, included: canBePaid, skipped: false, employment_status: empStatus,
+        memo: line.memo || "",
+      };
+    });
+    setRows(mapped);
+
+    const autoExpand = {};
+    mapped.forEach(function(m) {
+      if ((parseFloat(m.overtime) || 0) > 0 || (parseFloat(m.vacation) || 0) > 0 || (parseFloat(m.sick) || 0) > 0) {
+        autoExpand[m.id] = true;
+      }
+    });
+    setExpandedRows(autoExpand);
+  }, [loadedData]);
 
   function updateRow(id, field, value) {
     setRows(function(rs) {
@@ -485,7 +498,11 @@ export default function RunPayroll() {
   }
 
   const filteredRows = useMemo(function() {
-    let list = rows;
+    // Exclude terminated/inactive employees from RunPayroll display
+    let list = rows.filter(function(r) {
+      const status = r.employment_status || "active";
+      return status !== "terminated" && status !== "deceased" && status !== "not_on_payroll";
+    });
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       list = list.filter(function(r) { return r.name.toLowerCase().includes(q); });
@@ -514,7 +531,17 @@ export default function RunPayroll() {
 
   async function handleReview() {
     if (saving) return;
-    if (includedRows.length === 0) { window.alert("No employees ready to pay. Add hours and mark employees as included."); return; }
+    if (includedRows.length === 0) { await confirm({ title: "No employees selected", message: "Check at least one employee to include in this pay run.", confirmLabel: "Got it", hideCancel: true }); return; }
+    // Validate every included employee has hours
+    const includedWithoutHours = includedRows.filter(function(r) {
+      const a = rowAmounts(r);
+      return a.totalHours === 0 && (parseFloat(r.statAvgDaily) || 0) === 0;
+    });
+    if (includedWithoutHours.length > 0) {
+      const names = includedWithoutHours.map(function(r) { return r.name; }).join(", ");
+      await confirm({ title: "Employees missing hours", message: "These employees have no hours entered: " + names + ". Add hours or uncheck them to continue.", confirmLabel: "Got it", hideCancel: true });
+      return;
+    }
     setSaving(true); setError("");
     try {
       const employeeInputs = includedRows.map(function(r) {
