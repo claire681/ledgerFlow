@@ -819,7 +819,7 @@ export default function Sidebar({ onLogout, mobileOpen, onMobileClose, isMobile 
       {/* Mobile dark drawer */}
       <div style={{ position:'fixed', top:0, left:0, width:300, height:'100vh', background:'linear-gradient(180deg,#0F1A2E 0%,#0D1526 100%)', zIndex:50, transform:mobileOpen?'translateX(0)':'translateX(-100%)', transition:'transform 0.28s cubic-bezier(0.4,0,0.2,1)', display:mobile?'flex':'none', flexDirection:'column', fontFamily:FONT, boxShadow:'4px 0 32px rgba(0,0,0,0.4)' }}>
         <div style={{ padding:'18px 20px 14px', borderBottom:'1px solid rgba(255,255,255,0.06)', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
-          <div style={{ fontSize:18, fontWeight:800, color:'#F1F5F9', letterSpacing:'-0.02em' }}>No<span style={{ color:ACCENT }}>vala</span></div>
+          <div style={{ fontSize:18, fontWeight:800, color:'#F1F5F9', letterSpacing:'-0.02em' }}><img src="/novala-mark.png" alt="Novala" style={{ height: 26, width: "auto", objectFit: "contain", verticalAlign: "middle" }} /></div>
           <button onClick={onMobileClose} style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, cursor:'pointer', color:'#94A3B8', display:'flex', alignItems:'center', justifyContent:'center', width:34, height:34, flexShrink:0 }}><X size={18}/></button>
         </div>
         <nav style={{ flex:1, overflowY:'auto', padding:'8px 12px', scrollbarWidth:'none' }}>

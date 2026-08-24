@@ -143,7 +143,7 @@ export default function AcceptInvite() {
             </svg>
           </div>
           <div style={{ fontSize: 20, fontWeight: 800, color: TEAL, letterSpacing: "-0.02em" }}>
-            No<span style={{ color: ACCENT }}>vala</span>
+            <img src="/novala-mark.png" alt="Novala" style={{ height: 26, width: "auto", objectFit: "contain", verticalAlign: "middle" }} />
           </div>
         </div>
 

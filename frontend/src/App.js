@@ -312,9 +312,7 @@ const handleOnboardingComplete = () => {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F8FAFC' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', marginBottom: 8 }}>
-            No<span style={{ color: ACCENT }}>vala</span>
-          </div>
+          <img src="/novala-mark.png" alt="Novala" style={{ height: 40, width: 'auto', objectFit: 'contain', marginBottom: 8 }} />
           <div style={{ fontSize: 13, color: '#94A3B8' }}>Loading your account...</div>
         </div>
       </div>

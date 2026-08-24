@@ -85,7 +85,7 @@ export default function ResetPassword() {
               <TrendingUp size={18} color="#0F1729"/>
             </div>
             <span style={{ fontSize:22, fontWeight:800, color:'#fff', letterSpacing:'-0.02em' }}>
-              No<span style={{ color:MINT }}>vala</span>
+              <img src="/novala-mark.png" alt="Novala" style={{ height: 26, width: "auto", objectFit: "contain", verticalAlign: "middle" }} />
             </span>
           </div>
         </div>
