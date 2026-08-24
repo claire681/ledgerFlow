@@ -143,30 +143,41 @@ export default function PaychequeDetail() {
     return () => document.removeEventListener("mousedown", onClick);
   }, [adjustOpen]);
 
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const queryClient = useQueryClient();
+
+  // React Query: paycheque detail
+  const { data: paychequeData, isLoading: qLoading, error: qError } = useQuery({
+    queryKey: ["paycheque-detail", id],
+    queryFn: async function() {
       const res = await apiFetch("/api/v1/payroll/paycheques/" + id, { headers: authHeaders() });
       if (!res.ok) {
         if (res.status === 401) throw new Error("Invalid or expired token. Please log in again.");
         if (res.status === 404) throw new Error("Paycheque not found.");
         throw new Error("Could not load paycheque");
       }
-      const data = await res.json();
-      setPc(data);
-        // Set page title so browser Print > Save uses proper filename
-        try {
-          const safeName = (data.employee_name || 'employee').replace(/[^A-Za-z0-9_-]/g, '_');
-          const dateStr = data.pay_date || data.pay_period_end || '';
-          document.title = 'paystub_' + safeName + '_' + dateStr;
-        } catch (e) {}
-      setMemo(data.memo || "");
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
+      return await res.json();
+    },
+    enabled: !!id,
+    refetchOnWindowFocus: false,
+  });
+
+  // Sync into legacy state
+  useEffect(function() {
+    if (paychequeData) {
+      setPc(paychequeData);
+      setMemo(paychequeData.memo || "");
+      try {
+        const safeName = (paychequeData.employee_name || 'employee').replace(/[^A-Za-z0-9_-]/g, '_');
+        const dateStr = paychequeData.pay_date || paychequeData.pay_period_end || '';
+        document.title = 'paystub_' + safeName + '_' + dateStr;
+      } catch (e) {}
     }
+    setLoading(qLoading);
+    if (qError) setError(qError.message);
+  }, [paychequeData, qLoading, qError]);
+
+  function load() {
+    queryClient.invalidateQueries({ queryKey: ["paycheque-detail", id] });
   };
 
   const saveMemo = async () => {
