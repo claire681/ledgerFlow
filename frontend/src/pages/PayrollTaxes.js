@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   Filter, Printer, FileText, History, Archive,
   ChevronDown, ChevronRight, CheckCircle2, Clock, AlertTriangle, X,
+  Calendar, Settings, Play,
 } from "lucide-react";
 import ResourcesDrawer from "../components/payroll/ResourcesDrawer";
 import SchedulePaymentPanel from "../components/payroll/SchedulePaymentPanel";
@@ -107,9 +108,34 @@ export default function PayrollTaxes() {
       fontWeight: 500,
     }}>
       <div style={{ maxWidth: "100%", margin: 0, padding: "28px 32px 90px" }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: TOKENS.ink }}>
-          Payroll taxes
-        </h1>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, gap: 12 }}>
+          <div>
+            <h1 style={{ fontSize: 34, fontWeight: 700, color: TOKENS.ink, letterSpacing: "-0.02em", margin: 0 }}>
+              Payroll taxes
+            </h1>
+            <div style={{ fontSize: 14, color: TOKENS.ink, fontWeight: 500, marginTop: 4 }}>
+              Track federal taxes, remittances, and filings, all in one place.
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={() => navigate("/payroll/taxes/archived")}
+              style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", color: TOKENS.ink, border: "1.5px solid " + TOKENS.ink, borderRadius: 8, padding: "8px 14px", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit", transition: "0.12s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = TOKENS.teal; e.currentTarget.style.color = TOKENS.tealInk; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = TOKENS.ink; e.currentTarget.style.color = TOKENS.ink; }}
+            >
+              <Calendar size={15} /> Tax calendar
+            </button>
+            <button
+              onClick={() => navigate("/payroll/settings")}
+              style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", color: TOKENS.ink, border: "1.5px solid " + TOKENS.ink, borderRadius: 8, padding: "8px 14px", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit", transition: "0.12s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = TOKENS.teal; e.currentTarget.style.color = TOKENS.tealInk; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = TOKENS.ink; e.currentTarget.style.color = TOKENS.ink; }}
+            >
+              <Settings size={15} /> Tax settings
+            </button>
+          </div>
+        </div>
 
         <div style={{
           display: "inline-flex",
@@ -117,7 +143,7 @@ export default function PayrollTaxes() {
           background: "#EDF0F3",
           borderRadius: 10,
           padding: 4,
-          marginTop: 16,
+          marginBottom: 22,
         }}>
           <button onClick={() => switchTab("payments")} style={tabStyle(activeTab === "payments")}>
             Payments
@@ -190,30 +216,38 @@ function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen, onPrint 
 
   return (
     <>
+      {hasData && (
+        <HeroCard
+          dueDate={dueDateDisplay}
+          amount={currentPayment}
+          status={status}
+          periodLabel={periodLabel}
+          onPayFile={() => setPayObligation({
+            taxName: "Federal Taxes",
+            period: periodLabel,
+            liability: periodLabel,
+            dueDate: dueDateDisplay,
+            amount: currentPayment.toFixed(2),
+            status: status === "overdue" ? "pastDue" : "due",
+            breakdown: [
+              ["Income tax deducted (federal)", pd7a.tax_deductions.toFixed(2)],
+              ["CPP contributions (employee and employer)", (pd7a.cpp_employee + pd7a.cpp_employer).toFixed(2)],
+              ["EI premiums (employee and employer)", (pd7a.ei_employee + pd7a.ei_employer).toFixed(2)],
+            ],
+          })}
+        />
+      )}
+
       <div style={{
         display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
-        gap: 12, marginTop: 18,
+        gap: 12, marginTop: hasData ? 0 : 18,
       }}>
         <MetricTile label="Due now" value={loading ? "Loading..." : money(hasData ? currentPayment : 0)} />
-        <MetricTile label="Next payment due" value={loading ? "Loading..." : (hasData ? dueDateDisplay : "None")} />
+        <MetricTile label="Paid this year" value={loading ? "Loading..." : (pd7a && pd7a.ytd_total ? money(pd7a.ytd_total) : "$0.00")} />
         <MetricTile label="Upcoming filings" value={String(UPCOMING_FILINGS_COUNT)} />
       </div>
 
       <div style={toolbarStyle}>
-        <ToolbarBtn
-          bordered
-          icon={<Filter size={14} strokeWidth={2.5} />}
-          label="Filter"
-          onClick={() => setFilterOpen(!filterOpen)}
-          active={filterOpen}
-        />
-        {filterOpen && (
-          <PaymentsFilterPopover
-            filters={filters}
-            setFilters={setFilters}
-            onClose={() => setFilterOpen(false)}
-          />
-        )}
         <div style={{ flex: 1 }} />
         <ToolbarBtn icon={<Printer size={14} strokeWidth={2.5} />} label="Print" onClick={onPrint} />
         <ToolbarBtn icon={<FileText size={14} strokeWidth={2.5} />} label="Resources" onClick={onResourcesOpen} />
@@ -335,20 +369,6 @@ function FilingsTab({ navigate, onResourcesOpen, onPrint }) {
       </div>
 
       <div style={toolbarStyle}>
-        <ToolbarBtn
-          bordered
-          icon={<Filter size={14} strokeWidth={2.5} />}
-          label="Filter"
-          onClick={() => setFilterOpen(!filterOpen)}
-          active={filterOpen}
-        />
-        {filterOpen && (
-          <FilingsFilterPopover
-            filters={filters}
-            setFilters={setFilters}
-            onClose={() => setFilterOpen(false)}
-          />
-        )}
         <div style={{ flex: 1 }} />
         <ToolbarBtn icon={<Printer size={14} strokeWidth={2.5} />} label="Print" onClick={onPrint} />
         <ToolbarBtn icon={<FileText size={14} strokeWidth={2.5} />} label="Resources" onClick={onResourcesOpen} />
@@ -560,9 +580,103 @@ function FilterFooter({ onClear, onApply }) {
 // SUB-COMPONENTS
 // ============================================================
 const toolbarStyle = {
-  display: "flex", alignItems: "center", gap: 8, marginTop: 16,
+  display: "flex", alignItems: "center", gap: 8, marginTop: 18,
   position: "relative", flexWrap: "wrap",
+  background: "#fff",
+  border: "1px solid " + TOKENS.line,
+  borderRadius: 12,
+  padding: "10px 14px",
 };
+
+function HeroCard({ dueDate, amount, status, periodLabel, onPayFile }) {
+  // Compute days until due from dueDate string DD/MM/YYYY
+  let daysUntil = null;
+  let headline = "Next remittance";
+  let isOverdue = false;
+
+  if (dueDate) {
+    const parts = dueDate.split("/");
+    if (parts.length === 3) {
+      const dueDateObj = new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diffMs = dueDateObj - today;
+      daysUntil = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+      if (daysUntil < 0) {
+        headline = Math.abs(daysUntil) + " day" + (Math.abs(daysUntil) === 1 ? "" : "s") + " overdue";
+        isOverdue = true;
+      } else if (daysUntil === 0) {
+        headline = "Due today";
+      } else if (daysUntil === 1) {
+        headline = "1 day until due";
+      } else {
+        headline = daysUntil + " days until due";
+      }
+    }
+  }
+
+  return (
+    <div style={{
+      background: "linear-gradient(135deg, #EAF8F4, #F1F8F6)",
+      border: "1px solid #D5EDE6",
+      borderRadius: 18,
+      padding: "28px 30px",
+      marginBottom: 22,
+      marginTop: 18,
+      position: "relative",
+      overflow: "hidden",
+    }}>
+      <div style={{
+        fontSize: 11, fontWeight: 700, letterSpacing: "0.1em",
+        textTransform: "uppercase", color: TOKENS.tealInk, marginBottom: 8,
+      }}>
+        Next remittance
+      </div>
+      <div style={{
+        display: "flex", justifyContent: "space-between",
+        alignItems: "flex-start", gap: 24, flexWrap: "wrap",
+      }}>
+        <div>
+          <div style={{
+            fontSize: 34, fontWeight: 600,
+            color: isOverdue ? "#C5483B" : TOKENS.ink,
+            letterSpacing: "-0.02em", lineHeight: 1.1,
+            fontVariantNumeric: "tabular-nums",
+          }}>
+            {headline}
+          </div>
+          {dueDate && (
+            <div style={{ fontSize: 14, color: TOKENS.dark, marginTop: 6, fontWeight: 500 }}>
+              Due <b style={{ color: TOKENS.ink, fontWeight: 600 }}>{dueDate}</b>
+              {periodLabel && (
+                <> &middot; Period <b style={{ color: TOKENS.ink, fontWeight: 600 }}>{periodLabel}</b></>
+              )}
+            </div>
+          )}
+          <div style={{ fontSize: 14, color: TOKENS.dark, marginTop: 4, fontWeight: 500 }}>
+            Amount <b style={{ color: TOKENS.ink, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>${amount.toFixed(2)}</b>
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
+          <button
+            onClick={onPayFile}
+            style={{
+              background: TOKENS.teal, color: "#fff",
+              padding: "12px 22px", border: "none", borderRadius: 11,
+              fontWeight: 600, fontSize: 14, cursor: "pointer",
+              display: "inline-flex", alignItems: "center", gap: 9,
+              fontFamily: "inherit",
+              boxShadow: "0 2px 8px rgba(21,160,140,0.28)",
+            }}
+          >
+            <Play size={17} /> Pay and file
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function MetricTile({ label, value }) {
   return (
