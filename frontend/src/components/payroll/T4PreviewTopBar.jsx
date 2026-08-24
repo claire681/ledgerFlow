@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronLeft, Download, ChevronRight } from "lucide-react";
+import { ArrowLeft, FileDown, Calendar, ChevronDown, ChevronRight } from "lucide-react";
 
 /**
  * T4PreviewTopBar
@@ -43,6 +43,8 @@ export default function T4PreviewTopBar({
       position: "sticky",
       top: 0,
       zIndex: 5,
+      width: "100%",
+      boxSizing: "border-box",
     }}>
       {/* Breadcrumb */}
       <div style={{
@@ -97,7 +99,7 @@ export default function T4PreviewTopBar({
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#15A08C"; e.currentTarget.style.color = "#0E8A78"; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#12262B"; e.currentTarget.style.color = "#12262B"; }}
         >
-          <ChevronLeft size={15} /> Back
+          <ArrowLeft size={15} strokeWidth={2.5} /> Back
         </button>
 
         <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
@@ -124,33 +126,53 @@ export default function T4PreviewTopBar({
         <div style={{ flex: 1 }} />
 
         {onYearChange ? (
-          <select
-            value={year}
-            onChange={(e) => onYearChange(parseInt(e.target.value))}
-            style={{
+          <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+            <div style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
               border: "1px solid #D5DBE3",
               borderRadius: 8,
-              padding: "8px 12px",
+              padding: "8px 14px",
               fontSize: 13,
               fontWeight: 600,
               color: "#12262B",
               background: "#fff",
               fontFamily: "inherit",
-              cursor: "pointer",
-            }}
-          >
-            {yearOptions.map((y) => <option key={y} value={y}>{y}</option>)}
-          </select>
+              pointerEvents: "none",
+            }}>
+              <Calendar size={14} strokeWidth={2} />
+              <span>{year}</span>
+              <ChevronDown size={14} strokeWidth={2.5} style={{ marginLeft: 2 }} />
+            </div>
+            <select
+              value={year}
+              onChange={(e) => onYearChange(parseInt(e.target.value))}
+              style={{
+                position: "absolute",
+                inset: 0,
+                opacity: 0,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              {yearOptions.map((y) => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
         ) : (
           <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 10,
             border: "1px solid #D5DBE3",
             borderRadius: 8,
-            padding: "8px 12px",
+            padding: "8px 14px",
             fontSize: 13,
             fontWeight: 600,
             color: "#12262B",
             background: "#fff",
           }}>
+            <Calendar size={14} strokeWidth={2} />
             {year}
           </div>
         )}
@@ -174,7 +196,7 @@ export default function T4PreviewTopBar({
             boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
           }}
         >
-          <Download size={15} /> {downloadLabel}
+          <FileDown size={16} strokeWidth={2.2} /> {downloadLabel}
         </button>
       </div>
     </div>

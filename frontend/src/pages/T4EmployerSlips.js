@@ -372,7 +372,7 @@ function T4EmployerSlips() {
   for (let i = 0; i < employees.length; i += 2) pages.push(employees.slice(i, i + 2));
 
   return (
-    <div style={{ background: "#EDEFF2", fontFamily: "Arial, Helvetica, sans-serif", color: "#000" }}>
+    <div style={{ background: "#EDEFF2", fontFamily: "Arial, Helvetica, sans-serif", color: "#000", width: "100%", minHeight: "100vh" }}>
       <style>{`
         @media print {
           @page { size: letter; margin: 0; }

@@ -415,7 +415,7 @@ function T4Summary() {
   const hasData = !loading && !error && employer && summary && contact;
 
   return (
-    <div style={{ background: "#EDEFF2", fontFamily: "Arial, Helvetica, sans-serif", color: "#000" }}>
+    <div style={{ background: "#EDEFF2", fontFamily: "Arial, Helvetica, sans-serif", color: "#000", width: "100%", minHeight: "100vh" }}>
       <style>{`
         .t4-page { background:#fff; width:900px; max-width:100%; min-height:1160px; margin:24px auto; padding:26px 28px; box-shadow:0 1px 6px rgba(16,30,40,.16); font-size:10px; }
         @media print {
@@ -461,7 +461,6 @@ function T4Summary() {
         loading={loading}
         error={!!error}
         downloadDisabled={!hasData}
-        downloadLabel="Print"
         onDownload={() => window.print()}
       />
 

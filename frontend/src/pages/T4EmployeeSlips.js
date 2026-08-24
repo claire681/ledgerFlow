@@ -452,7 +452,7 @@ function T4EmployeeSlips() {
   }
 
   return (
-    <div style={{ background: "#EDEFF2", fontFamily: "Arial, Helvetica, sans-serif", color: "#000" }}>
+    <div style={{ background: "#EDEFF2", fontFamily: "Arial, Helvetica, sans-serif", color: "#000", width: "100%", minHeight: "100vh" }}>
       <style>{`
         .t4-page { background:#fff; width:880px; max-width:100%; min-height:1120px; margin:12px auto 24px; padding:30px 32px; box-shadow:0 1px 6px rgba(16,30,40,.16); font-size:9px; }
         @media print {
@@ -506,7 +506,6 @@ function T4EmployeeSlips() {
         loading={loading}
         error={!!error}
         downloadDisabled={loading || employees.length === 0}
-        downloadLabel="Print"
         onDownload={() => window.print()}
       />
 
