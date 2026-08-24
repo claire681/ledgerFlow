@@ -10,6 +10,10 @@ import SchedulePaymentPanel from "../components/payroll/SchedulePaymentPanel";
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.getnovala.com";
 
+// Count of upcoming filings shown on the Filings tab (T4 summary, T4 employer, T4 employee).
+// Keep in sync with FilingsTab COMING UP section when adding new filing types.
+const UPCOMING_FILINGS_COUNT = 3;
+
 const authHeaders = () => {
   const token = localStorage.getItem("access_token") || localStorage.getItem("token");
   return {
@@ -102,7 +106,7 @@ export default function PayrollTaxes() {
       lineHeight: 1.5,
       fontWeight: 500,
     }}>
-      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 24px 60px" }}>
+      <div style={{ maxWidth: "100%", margin: 0, padding: "28px 32px 90px" }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: TOKENS.ink }}>
           Payroll taxes
         </h1>
@@ -192,7 +196,7 @@ function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen, onPrint 
       }}>
         <MetricTile label="Due now" value={loading ? "Loading..." : money(hasData ? currentPayment : 0)} />
         <MetricTile label="Next payment due" value={loading ? "Loading..." : (hasData ? dueDateDisplay : "None")} />
-        <MetricTile label="Upcoming filings" value="3" />
+        <MetricTile label="Upcoming filings" value={String(UPCOMING_FILINGS_COUNT)} />
       </div>
 
       <div style={toolbarStyle}>
@@ -213,7 +217,7 @@ function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen, onPrint 
         <div style={{ flex: 1 }} />
         <ToolbarBtn icon={<Printer size={14} strokeWidth={2.5} />} label="Print" onClick={onPrint} />
         <ToolbarBtn icon={<FileText size={14} strokeWidth={2.5} />} label="Resources" onClick={onResourcesOpen} />
-        <ToolbarBtn icon={<History size={14} strokeWidth={2.5} />} label="Payment history" />
+        <ToolbarBtn icon={<History size={14} strokeWidth={2.5} />} label="Payment history" onClick={() => navigate("/payroll/taxes/archived")} />
       </div>
 
       {error && <ErrorStrip text={error} />}
@@ -261,10 +265,10 @@ function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen, onPrint 
       )}
 
       <SectionHead label="COMING UP" count={0} />
-      <EmptyBox text="Coast is clear!" />
+      <EmptyBox text="Upcoming payments will show here as they're calculated." />
 
       <SectionHead label="SCHEDULED" count={0} />
-      <EmptyBox text="Nothing to see here (yet)!" />
+      <EmptyBox text="Payments you schedule ahead of time will show here." />
 
       <SchedulePaymentPanel
         open={!!payObligation}
@@ -294,7 +298,9 @@ function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen, onPrint 
 // ============================================================
 function FilingsTab({ navigate, onResourcesOpen, onPrint }) {
   const currentYear = new Date().getFullYear();
-  const t4DueDate = "01/03/" + (currentYear + 1);
+  const nextYear = currentYear + 1;
+  const isLeapYear = nextYear % 4 === 0 && (nextYear % 100 !== 0 || nextYear % 400 === 0);
+  const t4DueDate = (isLeapYear ? "29" : "28") + "/02/" + nextYear;
   const t4PeriodStart = "01/01/" + currentYear;
   const t4PeriodEnd = "31/12/" + currentYear;
 
@@ -318,7 +324,12 @@ function FilingsTab({ navigate, onResourcesOpen, onPrint }) {
           </div>
           <div style={{ color: TOKENS.dark, fontSize: 13, marginTop: 2, fontWeight: 600 }}>
             The CRA needs to know who has access to any dental benefits you offer. This info is required to file T4 slips. Add it on each employee's deductions and contributions page.{" "}
-            <a style={{ color: TOKENS.tealInk, fontWeight: 700, cursor: "pointer" }}>Find out more</a>
+            <a
+              onClick={() => navigate("/payroll/employees?filter=missing-dental")}
+              style={{ color: TOKENS.tealInk, fontWeight: 700, cursor: "pointer" }}
+            >
+              Set dental codes
+            </a>
           </div>
         </div>
       </div>
@@ -345,7 +356,7 @@ function FilingsTab({ navigate, onResourcesOpen, onPrint }) {
       </div>
 
       <SectionHead label="ACTION NEEDED" count={0} />
-      <EmptyBox text="Woohoo! All caught up." />
+      <EmptyBox text="Filings that need your attention will show here." />
 
       <SectionHead label="COMING UP" count={3} />
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -355,7 +366,7 @@ function FilingsTab({ navigate, onResourcesOpen, onPrint }) {
       </div>
 
       <SectionHead label="DONE" count={0} />
-      <EmptyBox text="Nothing to see here (yet)!" />
+      <EmptyBox text="Filings you've completed this year will show here." />
 
       <SectionHead label="FILING RESOURCES" />
       <ResourceLinkList
