@@ -92,12 +92,6 @@ export default function TopBar({ onLogout, onMobileMenu, isMobile }) {
         onClick={() => navigate('/')}
         style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', flexShrink:0 }}
       >
-        <div style={{ width:30, height:30, borderRadius:9, background:TEAL, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 8px rgba(15,89,89,0.3)', flexShrink:0 }}>
-          <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
-            <path d="M3 16 L7 7 L11 12 L15 5 L19 9" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
-            <circle cx="19" cy="9" r="2" fill="#fff"/>
-          </svg>
-        </div>
         {!isMobile && (
           <span style={{ fontSize:16, fontWeight:800, color:TEAL, letterSpacing:'-0.02em', whiteSpace:'nowrap' }}>
             <img src="/novala-mark.png" alt="Novala" style={{ height: 26, width: "auto", objectFit: "contain", verticalAlign: "middle" }} />
