@@ -100,7 +100,7 @@ export default function TopBar({ onLogout, onMobileMenu, isMobile }) {
         </div>
         {!isMobile && (
           <span style={{ fontSize:16, fontWeight:800, color:TEAL, letterSpacing:'-0.02em', whiteSpace:'nowrap' }}>
-            No<span style={{ color:ACCENT }}>vala</span>
+            <img src="/novala-mark.png" alt="Novala" style={{ height: 26, width: "auto", objectFit: "contain", verticalAlign: "middle" }} />
           </span>
         )}
       </div>

@@ -404,7 +404,7 @@ export default function Onboarding({ onComplete }) {
               <TrendingUp size={18} color="#FFFFFF"/>
             </div>
             <span style={{ fontSize:22, fontWeight:800, color:'#0E1A1A', letterSpacing:'-0.02em' }}>
-              No<span style={{ color:MINT }}>vala</span>
+              <img src="/novala-mark.png" alt="Novala" style={{ height: 26, width: "auto", objectFit: "contain", verticalAlign: "middle" }} />
             </span>
           </div>
         </div>

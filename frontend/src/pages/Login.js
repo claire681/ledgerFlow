@@ -234,17 +234,10 @@ export default function Login({ onLogin }) {
   };
 
   const Logo = () => (
-    <div style={{ textAlign:'center', marginBottom:32 }}>
-      <div style={{ display:'inline-flex', alignItems:'center', gap:10 }}>
-        <div style={{ width:36, height:36, borderRadius:10, background:MINT, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 16px rgba(0,212,164,0.3)' }}>
-          <TrendingUp size={18} color="#0F1729"/>
-        </div>
-        <span style={{ fontSize:22, fontWeight:800, color:'#fff', letterSpacing:'-0.02em' }}>
-          No<span style={{ color:MINT }}>vala</span>
-        </span>
-      </div>
-    </div>
-  );
+  <div style={{ textAlign:'center', marginBottom:32 }}>
+    <img src="/novala-mark.png" alt="Novala" style={{ height: 48, width: 'auto', objectFit: 'contain' }} />
+  </div>
+);
 
   return (
     <div style={pageStyle}>
