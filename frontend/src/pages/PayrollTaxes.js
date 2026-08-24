@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Filter, Printer, FileText, History, Archive,
@@ -58,29 +59,29 @@ export default function PayrollTaxes() {
   const [error, setError] = useState("");
   const [resourcesOpen, setResourcesOpen] = useState(false);
 
-  useEffect(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    setLoading(true);
-    setError("");
-    fetch(
-      `${API_URL}/api/v1/payroll/taxes/pd7a?year=${year}&month=${month}`,
-      { headers: authHeaders() }
-    )
-      .then((r) => {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
-      .then((data) => {
-        setPd7a(data);
-        setLoading(false);
-      })
-      .catch((e) => {
-        setError("Could not load remittance: " + e.message);
-        setLoading(false);
-      });
-  }, []);
+  // React Query: PD7A remittance for current month
+  const { data: pd7aData, isLoading: qLoading, error: qError } = useQuery({
+    queryKey: ["payroll-taxes-pd7a-current"],
+    queryFn: async function() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const r = await fetch(
+        `${API_URL}/api/v1/payroll/taxes/pd7a?year=${year}&month=${month}`,
+        { headers: authHeaders() }
+      );
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.json();
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  // Sync into legacy state
+  useEffect(function() {
+    if (pd7aData) setPd7a(pd7aData);
+    setLoading(qLoading);
+    if (qError) setError("Could not load remittance: " + qError.message);
+  }, [pd7aData, qLoading, qError]);
 
   const switchTab = (name) => {
     setActiveTab(name);
