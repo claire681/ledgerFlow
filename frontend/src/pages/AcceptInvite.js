@@ -126,22 +126,6 @@ export default function AcceptInvite() {
         padding: "40px 32px",
       }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div style={{
-            width: 48,
-            height: 48,
-            borderRadius: 14,
-            background: TEAL,
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: 12,
-            boxShadow: "0 4px 14px rgba(15,89,89,0.25)",
-          }}>
-            <svg width="24" height="24" viewBox="0 0 22 22" fill="none">
-              <path d="M3 16 L7 7 L11 12 L15 5 L19 9" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="19" cy="9" r="2" fill="#fff" />
-            </svg>
-          </div>
           <div style={{ fontSize: 20, fontWeight: 800, color: TEAL, letterSpacing: "-0.02em" }}>
             <img src="/novala-mark.png" alt="Novala" style={{ height: 26, width: "auto", objectFit: "contain", verticalAlign: "middle" }} />
           </div>
