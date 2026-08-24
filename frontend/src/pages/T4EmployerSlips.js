@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import apiFetch from "../utils/apiFetch";
 
 // T4EmployerSlips
@@ -342,30 +343,29 @@ function T4EmployerSlips() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError("");
-    apiFetch(`/api/v1/payroll/taxes/t4-preview?year=${year}`, {
-      headers: authHeaders(),
-    })
-      .then((r) => {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
-      .then((data) => {
-        if (cancelled) return;
-        setEmployer(data.employer || null);
-        setEmployees(data.employees || []);
-        setLoading(false);
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        setError("Could not load T4 data: " + e.message);
-        setLoading(false);
+  // React Query: T4 preview data for the year
+  const { data: t4Data, isLoading: qLoading, error: qError } = useQuery({
+    queryKey: ["t4-preview", year],
+    queryFn: async function() {
+      const r = await apiFetch(`/api/v1/payroll/taxes/t4-preview?year=${year}`, {
+        headers: authHeaders(),
       });
-    return () => { cancelled = true; };
-  }, [year]);
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.json();
+    },
+    enabled: !!year,
+    refetchOnWindowFocus: false,
+  });
+
+  // Sync into legacy state
+  useEffect(function() {
+    if (t4Data) {
+      setEmployer(t4Data.employer || null);
+      setEmployees(t4Data.employees || []);
+    }
+    setLoading(qLoading);
+    if (qError) setError("Could not load T4 data: " + qError.message);
+  }, [t4Data, qLoading, qError]);
 
   const pages = [];
   for (let i = 0; i < employees.length; i += 2) pages.push(employees.slice(i, i + 2));
