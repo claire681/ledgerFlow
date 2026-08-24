@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Calendar, Users, Receipt, AlertCircle, CheckCircle,
@@ -111,10 +112,12 @@ export default function PayRunDetail() {
   const [processing, setProcessing] = useState(false);
   const [actionError, setActionError] = useState(null);
 
-  const loadAll = async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const queryClient = useQueryClient();
+
+  // React Query: pay run detail + stubs
+  const { data: payRunData, isLoading: qLoading, error: qError } = useQuery({
+    queryKey: ["pay-run-detail", id],
+    queryFn: async function() {
       let runData = null;
       let runRes = await apiFetch(`/api/v1/payroll/runs/${id}`, { headers: authHeaders() });
       if (runRes.status === 404 || runRes.status === 405) {
@@ -129,21 +132,34 @@ export default function PayRunDetail() {
       } else {
         runData = await runRes.json();
       }
-      setRun(runData);
 
       const stubsRes = await apiFetch(`/api/v1/payroll/runs/${id}/stubs`, { headers: authHeaders() });
+      let stubsList = [];
       if (stubsRes.ok) {
         const stubsData = await stubsRes.json();
-        setStubs(Array.isArray(stubsData) ? stubsData : (stubsData.stubs || stubsData.data || []));
-      } else { setStubs([]); }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+        stubsList = Array.isArray(stubsData) ? stubsData : (stubsData.stubs || stubsData.data || []);
+      }
+      return { run: runData, stubs: stubsList };
+    },
+    enabled: !!id,
+    refetchOnWindowFocus: false,
+  });
+
+  // Sync into legacy state
+  useEffect(function() {
+    if (payRunData) {
+      setRun(payRunData.run);
+      setStubs(payRunData.stubs);
     }
+    setLoading(qLoading);
+    if (qError) setError(qError.message);
+  }, [payRunData, qLoading, qError]);
+
+  function loadAll() {
+    queryClient.invalidateQueries({ queryKey: ["pay-run-detail", id] });
   };
 
-  useEffect(() => { loadAll(); }, [id]);
+
 
   const runAction = async (path, method, navigateAfter) => {
     setProcessing(true);
