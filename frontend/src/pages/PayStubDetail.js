@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Printer, Receipt, User, MinusCircle, Building2,
@@ -180,11 +181,10 @@ export default function PayStubDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Load run (for context: pay dates, status, currency)
+  // React Query: fetches pay run + finds matching stub
+  const { data: paystubData, isLoading: qLoading, error: qError } = useQuery({
+    queryKey: ["pay-stub-detail", runId, stubId],
+    queryFn: async function() {
       let runData = null;
       let runRes = await apiFetch(`/api/v1/payroll/runs/${runId}`, { headers: authHeaders() });
       if (runRes.status === 404 || runRes.status === 405) {
@@ -196,9 +196,7 @@ export default function PayStubDetail() {
       } else if (runRes.ok) {
         runData = await runRes.json();
       }
-      setRun(runData);
 
-      // Load stubs and find the matching one
       const stubsRes = await apiFetch(`/api/v1/payroll/runs/${runId}/stubs`, { headers: authHeaders() });
       if (!stubsRes.ok) {
         throw new Error(`Could not load pay stubs (HTTP ${stubsRes.status})`);
@@ -207,15 +205,22 @@ export default function PayStubDetail() {
       const list = Array.isArray(stubsData) ? stubsData : (stubsData.stubs || stubsData.data || []);
       const found = list.find((s) => String(s.id) === String(stubId));
       if (!found) throw new Error("Pay stub not found");
-      setStub(found);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  useEffect(() => { load(); }, [runId, stubId]);
+      return { run: runData, stub: found };
+    },
+    enabled: !!(runId && stubId),
+    refetchOnWindowFocus: false,
+  });
+
+  // Sync useQuery results into existing state
+  useEffect(function() {
+    if (paystubData) {
+      setRun(paystubData.run);
+      setStub(paystubData.stub);
+    }
+    setLoading(qLoading);
+    if (qError) setError(qError.message);
+  }, [paystubData, qLoading, qError]);
 
   if (loading) {
     return (
