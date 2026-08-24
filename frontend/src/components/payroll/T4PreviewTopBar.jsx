@@ -43,12 +43,14 @@ export default function T4PreviewTopBar({
       position: "sticky",
       top: 0,
       zIndex: 5,
-      width: "100%",
+      width: "100vw",
+      marginLeft: "calc(50% - 50vw)",
+      marginRight: "calc(50% - 50vw)",
       boxSizing: "border-box",
     }}>
       {/* Breadcrumb */}
       <div style={{
-        padding: "10px 32px 0",
+        padding: "10px 20px 0",
         fontSize: 12,
         color: "#1B2533",
         fontWeight: 500,
@@ -73,7 +75,7 @@ export default function T4PreviewTopBar({
 
       {/* Main row */}
       <div style={{
-        padding: "12px 32px 16px",
+        padding: "12px 20px 16px",
         display: "flex",
         alignItems: "center",
         gap: 16,
