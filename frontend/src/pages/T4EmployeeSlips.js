@@ -1,4 +1,14 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import apiFetch from "../utils/apiFetch";
+import T4PreviewTopBar from "../components/payroll/T4PreviewTopBar";
+
+const authHeaders = () => {
+  const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+  return {
+    "Content-Type": "application/json",
+    Authorization: token ? "Bearer " + token : "",
+  };
+};
 
 // T4EmployeeSlips
 // Employee copies of the CRA T4 slip (T4 25). The document alternates: a slip page with two
@@ -402,7 +412,39 @@ function ReversePage() {
   );
 }
 
-function T4EmployeeSlips({ year = 2026, employer = SAMPLE_EMPLOYER, employees = SAMPLE_EMPLOYEES }) {
+function T4EmployeeSlips() {
+  const currentYear = new Date().getFullYear();
+  const [year, setYear] = useState(currentYear);
+  const [employer, setEmployer] = useState(null);
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    apiFetch(`/api/v1/payroll/taxes/t4-preview?year=${year}`, {
+      headers: authHeaders(),
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        setEmployer(data.employer || null);
+        setEmployees(Array.isArray(data.employees) ? data.employees : []);
+        setLoading(false);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError("Could not load T4 employee slips: " + e.message);
+        setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [year]);
+
   const blocks = [];
   for (let i = 0; i < employees.length; i += 2) {
     blocks.push({ type: "slips", pair: employees.slice(i, i + 2), key: "s" + i });
@@ -452,23 +494,46 @@ function T4EmployeeSlips({ year = 2026, employer = SAMPLE_EMPLOYER, employees = 
         .t4-rcut:after { content:"\\2702"; position:absolute; left:6px; top:-9px; font-size:12px; background:#fff; padding:0 4px; color:#555; }
       `}</style>
 
-      <div className="t4-noprint" style={{ background: "#fff", borderBottom: "1px solid #E3E7EC", padding: "12px 20px", display: "flex", gap: 10, alignItems: "center", position: "sticky", top: 0, zIndex: 5 }}>
-        <button
-          onClick={() => window.location.href = "/payroll/taxes/filings"}
-          style={{
-            font: "inherit", fontWeight: 600, fontSize: 14,
-            border: "1px solid #E3E7EC", borderRadius: 10, padding: "9px 14px",
-            cursor: "pointer", background: "#fff", color: "#0E1A1A",
-            display: "inline-flex", alignItems: "center", gap: 6,
-          }}
-        >
-          {"\u2190"} Back
-        </button>
-        <button onClick={() => window.print()} style={{ font: "inherit", fontWeight: 600, fontSize: 14, border: "none", borderRadius: 10, padding: "9px 18px", cursor: "pointer", background: "#15A08C", color: "#fff" }}>Print</button>
-        <span style={{ color: "#5F6B7A", fontSize: 13, marginLeft: "auto" }}>Employee copies · cut along the dashed line and give to each employee</span>
-      </div>
+      <T4PreviewTopBar
+        title="T4 employee slips"
+        subtitle={
+          employees.length === 0
+            ? "No employee data for " + year
+            : "Employee copies · cut along the dashed line · " + employees.length + " employee" + (employees.length === 1 ? "" : "s")
+        }
+        year={year}
+        onYearChange={setYear}
+        loading={loading}
+        error={!!error}
+        downloadDisabled={loading || employees.length === 0}
+        downloadLabel="Print"
+        onDownload={() => window.print()}
+      />
 
-      {blocks.map((b) => b.type === "reverse"
+      {loading && (
+        <div className="t4-page" style={{ textAlign: "center", padding: 60, fontSize: 14, fontFamily: "Inter, system-ui, sans-serif" }}>
+          Loading T4 data for {year}...
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="t4-page" style={{ padding: 40, fontFamily: "Inter, system-ui, sans-serif" }}>
+          <div style={{
+            background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: 8,
+            padding: "12px 16px", color: "#991B1B", fontSize: 14, fontWeight: 600,
+          }}>
+            {error}
+          </div>
+        </div>
+      )}
+
+      {!loading && !error && employees.length === 0 && (
+        <div className="t4-page" style={{ textAlign: "center", padding: 60, fontSize: 14, fontFamily: "Inter, system-ui, sans-serif" }}>
+          No paycheques have been issued for {year} yet. Complete a payroll run before previewing T4 slips.
+        </div>
+      )}
+
+      {!loading && !error && employer && blocks.map((b) => b.type === "reverse"
         ? <ReversePage key={b.key} />
         : (
           <div key={b.key} className="t4-page">

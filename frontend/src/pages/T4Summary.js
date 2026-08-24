@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import apiFetch from "../utils/apiFetch";
+import T4PreviewTopBar from "../components/payroll/T4PreviewTopBar";
 
 // T4Summary
 // CRA T4 Summary (T4 SUM 25). Page 1 is the form inside one outer box; page 2 is the
@@ -378,7 +379,7 @@ function Page2() {
 
 function T4Summary() {
   const currentYear = new Date().getFullYear();
-  const [year] = useState(currentYear);
+  const [year, setYear] = useState(currentYear);
   const [employer, setEmployer] = useState(null);
   const [summary, setSummary] = useState(null);
   const [contact, setContact] = useState(null);
@@ -452,37 +453,17 @@ function T4Summary() {
         }
       `}</style>
 
-      <div className="t4-noprint" style={{ background: "#fff", borderBottom: "1px solid #E3E7EC", padding: "12px 20px", display: "flex", gap: 10, alignItems: "center", position: "sticky", top: 0, zIndex: 5 }}>
-        <button
-          onClick={() => window.location.href = "/payroll/taxes/filings"}
-          style={{
-            font: "inherit", fontWeight: 600, fontSize: 14,
-            border: "1px solid #E3E7EC", borderRadius: 10, padding: "9px 14px",
-            cursor: "pointer", background: "#fff", color: "#0E1A1A",
-            display: "inline-flex", alignItems: "center", gap: 6,
-          }}
-        >
-          {"\u2190"} Back
-        </button>
-        <button
-          onClick={() => window.print()}
-          disabled={!hasData}
-          style={{
-            font: "inherit", fontWeight: 600, fontSize: 14,
-            border: "none", borderRadius: 10, padding: "9px 18px",
-            cursor: hasData ? "pointer" : "not-allowed",
-            background: hasData ? "#15A08C" : "#9ec8be",
-            color: "#fff",
-          }}
-        >
-          Print
-        </button>
-        <span style={{ color: "#5F6B7A", fontSize: 13, marginLeft: "auto" }}>
-          {loading ? "Loading T4 Summary data..." :
-           error ? "Error loading T4 Summary" :
-           `T4 Summary preview for ${year}, 2 pages. Print or Save as PDF.`}
-        </span>
-      </div>
+      <T4PreviewTopBar
+        title="T4 summary"
+        subtitle={`2 pages · print or save as PDF · ${year}`}
+        year={year}
+        onYearChange={setYear}
+        loading={loading}
+        error={!!error}
+        downloadDisabled={!hasData}
+        downloadLabel="Print"
+        onDownload={() => window.print()}
+      />
 
       {loading && (
         <div className="t4-page" style={{ textAlign: "center", padding: 60, fontSize: 14 }}>
