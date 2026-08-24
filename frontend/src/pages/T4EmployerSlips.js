@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import apiFetch from "../utils/apiFetch";
+import T4PreviewTopBar from "../components/payroll/T4PreviewTopBar";
 
 // T4EmployerSlips
 // Employer copy of the CRA T4 slip (T4 25), filing copy, two slips per page with
@@ -337,7 +338,7 @@ function ReversePage() {
 
 function T4EmployerSlips() {
   const currentYear = new Date().getFullYear();
-  const [year] = useState(currentYear);
+  const [year, setYear] = useState(currentYear);
   const [employer, setEmployer] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -371,7 +372,7 @@ function T4EmployerSlips() {
   for (let i = 0; i < employees.length; i += 2) pages.push(employees.slice(i, i + 2));
 
   return (
-    <div style={{ background: "#EDEFF2", fontFamily: "Arial, Helvetica, sans-serif", color: "#000" }}>
+    <div style={{ background: "#EDEFF2", fontFamily: "Arial, Helvetica, sans-serif", color: "#000", width: "100%", minHeight: "100vh" }}>
       <style>{`
         @media print {
           @page { size: letter; margin: 0; }
@@ -384,46 +385,28 @@ function T4EmployerSlips() {
         .t4-cutline:after { content: "\\2702"; position: absolute; left: 6px; top: -10px; font-size: 14px; background: #fff; padding: 0 5px; color: #555; }
       `}</style>
 
-      <div className="t4-noprint" style={{ background: "#fff", borderBottom: "1px solid #E3E7EC", padding: "12px 20px", display: "flex", gap: 10, alignItems: "center", position: "sticky", top: 0, zIndex: 5 }}>
-        <button
-          onClick={() => window.location.href = "/payroll/taxes/filings"}
-          style={{
-            font: "inherit", fontWeight: 600, fontSize: 14,
-            border: "1px solid #E3E7EC", borderRadius: 10, padding: "9px 14px",
-            cursor: "pointer", background: "#fff", color: "#0E1A1A",
-            display: "inline-flex", alignItems: "center", gap: 6,
-          }}
-        >
-          {"\u2190"} Back
-        </button>
-        <button
-          onClick={async () => {
-            const token = localStorage.getItem("access_token") || localStorage.getItem("token");
-            const res = await apiFetch(`/api/v1/payroll/taxes/t4-employer-slips-v2.pdf?year=${year}`, {
-              headers: { Authorization: "Bearer " + token },
-            });
-            if (!res.ok) { alert("Could not generate PDF"); return; }
-            const blob = await res.blob();
-            window.open(URL.createObjectURL(blob), "_blank");
-          }}
-          disabled={loading || employees.length === 0}
-          style={{
-            font: "inherit", fontWeight: 600, fontSize: 14,
-            border: "none", borderRadius: 10, padding: "9px 18px",
-            cursor: (loading || employees.length === 0) ? "not-allowed" : "pointer",
-            background: (loading || employees.length === 0) ? "#9ec8be" : "#15A08C",
-            color: "#fff",
-          }}
-        >
-          Print
-        </button>
-        <span style={{ color: "#5F6B7A", fontSize: 13, marginLeft: "auto" }}>
-          {loading ? "Loading T4 data..." :
-           error ? "Error loading T4 data" :
-           employees.length === 0 ? "No employee data for " + year :
-           `Employer copy · file with XML · two slips per page (${employees.length} employees)`}
-        </span>
-      </div>
+      <T4PreviewTopBar
+        title="T4 employer slips"
+        subtitle={
+          employees.length === 0
+            ? "No employee data for " + year
+            : "Employer copy · file with XML · two slips per page · " + employees.length + " employee" + (employees.length === 1 ? "" : "s")
+        }
+        year={year}
+        onYearChange={setYear}
+        loading={loading}
+        error={!!error}
+        downloadDisabled={loading || employees.length === 0}
+        onDownload={async () => {
+          const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+          const res = await apiFetch(`/api/v1/payroll/taxes/t4-employer-slips-v2.pdf?year=${year}`, {
+            headers: { Authorization: "Bearer " + token },
+          });
+          if (!res.ok) { alert("Could not generate PDF"); return; }
+          const blob = await res.blob();
+          window.open(URL.createObjectURL(blob), "_blank");
+        }}
+      />
 
       {loading && (
         <div style={{ ...s.page, textAlign: "center", padding: 60, fontSize: 14 }}>
