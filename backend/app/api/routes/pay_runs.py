@@ -5518,6 +5518,233 @@ async def get_t4_employee_slips_pdf(
         headers={"Content-Disposition": f'inline; filename="{filename}"'},
     )
 
+# ======================================================
+# T4 SUMMARY PDF RENDERER
+# ======================================================
+async def _render_t4_summary_pdf(data: dict) -> bytes:
+    """
+    Render the T4 Summary (T4 SUM 25) PDF using Playwright.
+
+    Loads t4-summary-print.html, injects data as window.__T4SUMDATA__
+    via add_init_script (so it's set BEFORE the template's inline script
+    runs), waits for the form to appear, then generates a Letter-size PDF.
+    """
+    template_path = Path(__file__).resolve().parent.parent.parent / "templates" / "t4-summary-print.html"
+    if not template_path.exists():
+        raise HTTPException(
+            status_code=500,
+            detail=f"T4 Summary template not found at {template_path}",
+        )
+
+    template_url = f"file://{template_path.absolute()}"
+
+    async with _pw_semaphore:
+        browser = await _get_browser()
+        context = await browser.new_context()
+        try:
+            page = await context.new_page()
+
+            import json
+            init_script = f"window.__T4SUMDATA__ = {json.dumps(data)};"
+            await page.add_init_script(init_script)
+
+            await page.goto(template_url, wait_until="domcontentloaded")
+
+            # Wait for the form to be populated by the inline script
+            await page.wait_for_selector(".formbox", timeout=5000)
+            await page.wait_for_timeout(200)
+
+            pdf_bytes = await page.pdf(
+                format="Letter",
+                print_background=True,
+                margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
+                prefer_css_page_size=True,
+            )
+            return pdf_bytes
+        finally:
+            await context.close()
+
+
+# ======================================================
+# GET /taxes/t4-summary.pdf - T4 Summary (T4 SUM 25) as PDF
+# ======================================================
+@router.get("/taxes/t4-summary.pdf")
+async def get_t4_summary_pdf(
+    year: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Generate the T4 Summary (CRA T4 SUM 25) as a PDF using Playwright + Chromium.
+
+    Aggregates the same data as GET /taxes/t4-sum-preview, then renders it
+    through the t4-summary-print.html template.
+    """
+    from datetime import date
+    from fastapi.responses import Response
+    from app.models.models import CompanyProfile, ArchivedForm
+
+    if year < 2020 or year > 2030:
+        raise HTTPException(status_code=400, detail="year must be between 2020 and 2030")
+
+    period_start = date(year, 1, 1)
+    period_end = date(year, 12, 31)
+
+    # ==========================================================
+    # 1) Company profile
+    # ==========================================================
+    comp_res = await db.execute(
+        select(CompanyProfile).where(CompanyProfile.user_id == current_user.id)
+    )
+    company = comp_res.scalar_one_or_none()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company profile not set")
+
+    bn = (company.business_number or "").strip()
+    rp = (company.payroll_rp_account or "").strip()
+    cra_account = bn + rp if bn and rp else (bn or rp or "")
+
+    employer = {
+        "name": company.company_name or "",
+        "addr1": (company.address_street or "").strip(),
+        "addr2": (company.address_city or "").strip(),
+        "prov": _t4_fmt_province(company.province_state or ""),
+        "postal": _t4_fmt_postal(company.address_postal_code or ""),
+        "account": cra_account,
+    }
+
+    # ==========================================================
+    # 2) Aggregate paycheque totals across all employees
+    # ==========================================================
+    stubs_res = await db.execute(
+        select(
+            func.count(func.distinct(PayStub.employee_id)).label("slip_count"),
+            func.coalesce(func.sum(PayStub.gross_pay), 0).label("gross"),
+            func.coalesce(func.sum(PayStub.social_security_employee), 0).label("cpp_employee"),
+            func.coalesce(func.sum(PayStub.social_security_2_employee), 0).label("cpp2_employee"),
+            func.coalesce(func.sum(PayStub.social_security_employer), 0).label("cpp_employer"),
+            func.coalesce(func.sum(PayStub.unemployment_employee), 0).label("ei_employee"),
+            func.coalesce(func.sum(PayStub.unemployment_employer), 0).label("ei_employer"),
+            func.coalesce(func.sum(PayStub.federal_tax), 0).label("federal_tax"),
+            func.coalesce(func.sum(PayStub.provincial_or_state_tax), 0).label("provincial_tax"),
+        )
+        .select_from(PayStub)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(
+            PayRun.owner_id == current_user.id,
+            PayRun.pay_date >= period_start,
+            PayRun.pay_date <= period_end,
+            PayStub.voided == False,
+            PayRun.status != "voided",
+        )
+    )
+    totals = stubs_res.first()
+
+    slip_count = int(totals.slip_count or 0)
+
+    if slip_count == 0:
+        raise HTTPException(status_code=404, detail=f"No paycheques found for {year}")
+
+    def _r2(v):
+        return round(float(v or 0), 2)
+
+    b14 = _r2(totals.gross)
+    b16 = _r2(totals.cpp_employee)
+    b16A = _r2(totals.cpp2_employee)
+    b27 = _r2(totals.cpp_employer)
+    b27A = 0.0  # Second CPP for employer, if applicable
+    b18 = _r2(totals.ei_employee)
+    b19 = _r2(totals.ei_employer)
+    b22 = _r2(float(totals.federal_tax or 0) + float(totals.provincial_tax or 0))
+    b80 = round(b16 + b16A + b27 + b27A + b18 + b19 + b22, 2)
+
+    # ==========================================================
+    # 3) Box 82: remittances from archived PD7A forms
+    # ==========================================================
+    remitt_res = await db.execute(
+        select(ArchivedForm).where(
+            ArchivedForm.user_id == current_user.id,
+            ArchivedForm.country == "CA",
+            ArchivedForm.form_type == "PD7A",
+            ArchivedForm.period_start >= period_start,
+            ArchivedForm.period_end <= period_end,
+        )
+    )
+    archived = remitt_res.scalars().all()
+    b82 = 0.0
+    for form in archived:
+        d = form.form_data or {}
+        p = d.get("current_payment") or 0
+        try:
+            b82 += float(p)
+        except (TypeError, ValueError):
+            pass
+    b82 = round(b82, 2)
+
+    difference = round(b80 - b82, 2)
+    if difference > 0:
+        b84 = None
+        b86 = difference
+    elif difference < 0:
+        b84 = abs(difference)
+        b86 = None
+    else:
+        b84 = None
+        b86 = None
+
+    def _bz(v):
+        return v if (v is not None and v > 0) else None
+
+    summary = {
+        "slips": slip_count,
+        "b14": _bz(b14),
+        "b16": _bz(b16),
+        "b16A": _bz(b16A),
+        "b27": _bz(b27),
+        "b27A": _bz(b27A),
+        "b18": _bz(b18),
+        "b19": _bz(b19),
+        "b22": _bz(b22),
+        "b20": None,
+        "b52": None,
+        "b80": _bz(b80),
+        "b82": _bz(b82),
+        "difference": abs(difference) if difference != 0 else None,
+        "b84": b84,
+        "b86": b86,
+    }
+
+    # Contact: current user's name and phone
+    contact_name = ""
+    if hasattr(current_user, "full_name") and current_user.full_name:
+        contact_name = current_user.full_name
+    elif hasattr(current_user, "first_name") or hasattr(current_user, "last_name"):
+        first = getattr(current_user, "first_name", "") or ""
+        last = getattr(current_user, "last_name", "") or ""
+        contact_name = (first + " " + last).strip()
+
+    contact = {
+        "name": contact_name,
+        "phone": getattr(current_user, "phone", "") or "",
+    }
+
+    data = {
+        "year": year,
+        "employer": employer,
+        "summary": summary,
+        "contact": contact,
+    }
+
+    pdf_bytes = await _render_t4_summary_pdf(data)
+
+    filename = f"T4-Summary-{year}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )
+
+
 # =============================================================
 # T4 employer slips PDF - Playwright edition
 # =============================================================
