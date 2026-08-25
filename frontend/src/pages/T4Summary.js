@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import apiFetch from "../utils/apiFetch";
 import T4PreviewTopBar from "../components/payroll/T4PreviewTopBar";
 
@@ -380,37 +381,25 @@ function Page2() {
 function T4Summary() {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
-  const [employer, setEmployer] = useState(null);
-  const [summary, setSummary] = useState(null);
-  const [contact, setContact] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError("");
-    apiFetch(`/api/v1/payroll/taxes/t4-sum-preview?year=${year}`, {
-      headers: authHeaders(),
-    })
-      .then((r) => {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
-      .then((data) => {
-        if (cancelled) return;
-        setEmployer(data.employer || null);
-        setSummary(data.summary || null);
-        setContact(data.contact || null);
-        setLoading(false);
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        setError("Could not load T4 Summary data: " + e.message);
-        setLoading(false);
+  // React Query: T4 Summary preview data for the year
+  const { data: sumData, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ["t4-sum-preview", year],
+    queryFn: async function() {
+      const r = await apiFetch(`/api/v1/payroll/taxes/t4-sum-preview?year=${year}`, {
+        headers: authHeaders(),
       });
-    return () => { cancelled = true; };
-  }, [year]);
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.json();
+    },
+    enabled: !!year,
+    refetchOnWindowFocus: false,
+  });
+
+  const employer = sumData ? (sumData.employer || null) : null;
+  const summary = sumData ? (sumData.summary || null) : null;
+  const contact = sumData ? (sumData.contact || null) : null;
+  const error = queryError ? "Could not load T4 Summary data: " + queryError.message : "";
 
   const hasData = !loading && !error && employer && summary && contact;
 
