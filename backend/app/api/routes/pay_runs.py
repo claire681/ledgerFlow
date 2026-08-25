@@ -5359,7 +5359,166 @@ async def get_t4_employer_slips_pdf(
         content=pdf_bytes,
         media_type="application/pdf",
         headers={"Content-Disposition": f'inline; filename="{filename}"'},
-    )# =============================================================
+    )
+
+# ======================================================
+# GET /taxes/t4-employee-slips.pdf - Employee copies of T4 slips
+# ======================================================
+@router.get("/taxes/t4-employee-slips.pdf")
+async def get_t4_employee_slips_pdf(
+    year: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Generate the T4 Employee Slips PDF (the copies employers hand out to employees
+    for their personal tax returns).
+
+    Physically identical to the employer copy: two slips per page with the
+    bilingual "Report these amounts on your tax return" reverse page after
+    every pair. Employer cuts along the dashed line and hands one slip to each
+    employee, with the reverse page facing the slip.
+
+    Reuses _render_t4_slips_pdf and the same aggregation logic as the
+    employer PDF endpoint. Only the filename differs so the downloaded file
+    is clearly labeled as the employee copy.
+    """
+    from datetime import date
+    from fastapi.responses import Response
+    from app.models.models import CompanyProfile
+
+    if year < 2020 or year > 2030:
+        raise HTTPException(status_code=400, detail="year must be between 2020 and 2030")
+
+    period_start = date(year, 1, 1)
+    period_end = date(year, 12, 31)
+
+    # ==========================================================
+    # 1) Company profile
+    # ==========================================================
+    comp_res = await db.execute(
+        select(CompanyProfile).where(CompanyProfile.user_id == current_user.id)
+    )
+    company = comp_res.scalar_one_or_none()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company profile not set")
+
+    bn = (company.business_number or "").strip()
+    rp = (company.payroll_rp_account or "").strip()
+    cra_account = bn + rp if bn and rp else (bn or rp or "")
+
+    employer = {
+        "name": company.company_name or "",
+        "addr1": (company.address_street or "").strip(),
+        "addr2": (company.address_city or "").strip(),
+        "prov": _t4_fmt_province(company.province_state or ""),
+        "postal": _t4_fmt_postal(company.address_postal_code or ""),
+        "account": cra_account,
+    }
+
+    # ==========================================================
+    # 2) Aggregate paycheque data per employee
+    # ==========================================================
+    result = await db.execute(
+        select(
+            PayStub.employee_id.label("employee_id"),
+            func.coalesce(func.sum(PayStub.gross_pay), 0).label("gross"),
+            func.coalesce(func.sum(PayStub.federal_tax), 0).label("federal_tax"),
+            func.coalesce(func.sum(PayStub.provincial_or_state_tax), 0).label("provincial_tax"),
+            func.coalesce(func.sum(PayStub.social_security_employee), 0).label("cpp_employee"),
+            func.coalesce(func.sum(PayStub.social_security_2_employee), 0).label("cpp2_employee"),
+            func.coalesce(func.sum(PayStub.unemployment_employee), 0).label("ei_employee"),
+        )
+        .select_from(PayStub)
+        .join(PayRun, PayStub.pay_run_id == PayRun.id)
+        .where(
+            PayRun.owner_id == current_user.id,
+            PayRun.pay_date >= period_start,
+            PayRun.pay_date <= period_end,
+            PayStub.voided == False,
+            PayRun.status != "voided",
+        )
+        .group_by(PayStub.employee_id)
+    )
+    stub_agg = {row.employee_id: row for row in result.all()}
+
+    if not stub_agg:
+        raise HTTPException(status_code=404, detail=f"No paycheques found for {year}")
+
+    # ==========================================================
+    # 3) Fetch employee records
+    # ==========================================================
+    employee_ids = list(stub_agg.keys())
+    emp_res = await db.execute(select(Employee).where(Employee.id.in_(employee_ids)))
+    employees = emp_res.scalars().all()
+
+    def r2(v):
+        v = float(v or 0)
+        return round(v, 2) if v > 0 else None
+
+    # ==========================================================
+    # 4) Build employee_slips - same shape as employer PDF
+    # ==========================================================
+    employee_slips = []
+    for emp in employees:
+        agg = stub_agg.get(emp.id)
+        if not agg:
+            continue
+        gross = float(agg.gross or 0)
+        federal_tax = float(agg.federal_tax or 0)
+        provincial_tax = float(agg.provincial_tax or 0)
+        income_tax_deducted = federal_tax + provincial_tax
+
+        employee_slips.append({
+            "last": (emp.last_name or "").strip(),
+            "first": (emp.first_name or "").strip(),
+            "init": "",
+            "sin": _t4_fmt_sin(emp.sin_or_ssn or ""),
+            "addr1": (emp.address_line1 or "").strip(),
+            "addr2": (emp.city or "").strip(),
+            "province": _t4_fmt_province(emp.province_or_state or ""),
+            "postal": _t4_fmt_postal(emp.postal_or_zip or ""),
+            "b14": _money_pair(r2(gross)),
+            "b16": _money_pair(r2(agg.cpp_employee)),
+            "b16A": _money_pair(r2(agg.cpp2_employee)),
+            "b17": None,
+            "b17A": None,
+            "b18": _money_pair(r2(agg.ei_employee)),
+            "b20": None,
+            "b22": _money_pair(r2(income_tax_deducted)),
+            "b24": _money_pair(r2(gross)),
+            "b26": _money_pair(r2(gross)),
+            "b44": None,
+            "b46": None,
+            "b50": None,
+            "b52": None,
+            "b55": None,
+            "b56": None,
+            "b45": (emp.dental_benefit_code or "1"),
+        })
+
+    employee_slips.sort(key=lambda e: (e["last"].upper(), e["first"].upper()))
+
+    data = {
+        "year": year,
+        "acct": cra_account,
+        "employer": employer,
+        "employees": employee_slips,
+    }
+
+    # ==========================================================
+    # 5) Render PDF via the shared Playwright function
+    # ==========================================================
+    pdf_bytes = await _render_t4_slips_pdf(data)
+
+    filename = f"T4-Employee-Slips-{year}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )
+
+# =============================================================
 # T4 employer slips PDF - Playwright edition
 # =============================================================
 # Uses Playwright + Chromium headless to render the approved

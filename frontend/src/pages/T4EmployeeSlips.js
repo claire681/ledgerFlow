@@ -506,7 +506,22 @@ function T4EmployeeSlips() {
         loading={loading}
         error={!!error}
         downloadDisabled={loading || employees.length === 0}
-        onDownload={() => window.print()}
+        onDownload={async () => {
+          const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+          try {
+            const res = await apiFetch(`/api/v1/payroll/taxes/t4-employee-slips.pdf?year=${year}`, {
+              headers: { Authorization: "Bearer " + token },
+            });
+            if (!res.ok) {
+              alert("Could not generate PDF");
+              return;
+            }
+            const blob = await res.blob();
+            window.open(URL.createObjectURL(blob), "_blank");
+          } catch (e) {
+            alert("Could not generate PDF: " + e.message);
+          }
+        }}
       />
 
       {loading && (
