@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import apiFetch from "../utils/apiFetch";
 import T4PreviewTopBar from "../components/payroll/T4PreviewTopBar";
 
@@ -415,35 +416,24 @@ function ReversePage() {
 function T4EmployeeSlips() {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
-  const [employer, setEmployer] = useState(null);
-  const [employees, setEmployees] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError("");
-    apiFetch(`/api/v1/payroll/taxes/t4-preview?year=${year}`, {
-      headers: authHeaders(),
-    })
-      .then((r) => {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
-      .then((data) => {
-        if (cancelled) return;
-        setEmployer(data.employer || null);
-        setEmployees(Array.isArray(data.employees) ? data.employees : []);
-        setLoading(false);
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        setError("Could not load T4 employee slips: " + e.message);
-        setLoading(false);
+  // React Query: T4 preview data for the year
+  const { data: t4Data, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ["t4-preview", year],
+    queryFn: async function() {
+      const r = await apiFetch(`/api/v1/payroll/taxes/t4-preview?year=${year}`, {
+        headers: authHeaders(),
       });
-    return () => { cancelled = true; };
-  }, [year]);
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.json();
+    },
+    enabled: !!year,
+    refetchOnWindowFocus: false,
+  });
+
+  const employer = t4Data ? (t4Data.employer || null) : null;
+  const employees = t4Data && Array.isArray(t4Data.employees) ? t4Data.employees : [];
+  const error = queryError ? "Could not load T4 employee slips: " + queryError.message : "";
 
   const blocks = [];
   for (let i = 0; i < employees.length; i += 2) {
