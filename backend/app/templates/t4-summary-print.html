@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T4 Summary</title>
+<style>
+  * { box-sizing: border-box; }
+  @page { size: Letter; margin: 0; }
+  html, body { margin: 0; padding: 0; background: #fff; font-family: Arial, Helvetica, sans-serif; color: #000; }
+  body { font-size: 10px; }
+
+  .page {
+    width: 8.5in;
+    min-height: 11in;
+    padding: 0.4in 0.45in;
+    page-break-after: always;
+    background: #fff;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  .formbox { border: 1.5px solid #000; padding: 14px 16px; }
+
+  .hdr { display: flex; align-items: flex-start; gap: 16px; }
+  .hdr-left { flex: 0 0 auto; }
+  .hdr-middle { flex: 1; text-align: center; }
+  .hdr-right { flex: 0 0 auto; text-align: right; font-size: 10px; line-height: 1.35; }
+
+  .flag {
+    display: inline-flex; width: 32px; height: 17px;
+    border: 0.5px solid #999;
+    background: linear-gradient(to right, #000 25%, #fff 25%, #fff 75%, #000 75%);
+    align-items: center; justify-content: center; overflow: hidden;
+    vertical-align: middle;
+  }
+  .flag .leaf { font-size: 12px; line-height: 1; filter: grayscale(1) brightness(0); }
+
+  .crarow { display: flex; gap: 8px; align-items: center; font-size: 8.5px; line-height: 1.2; margin-bottom: 6px; }
+  .crarow span { display: inline-block; }
+
+  .yrrow { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .yrrow .lbl { font-size: 8px; line-height: 1.25; }
+  .yrrow .yrbox { border: 1px solid #000; padding: 2px 12px; font-size: 18px; font-weight: bold; }
+
+  .formno { border: 1px solid #000; padding: 4px 9px; font-weight: bold; font-size: 13px; display: inline-block; margin-top: 6px; }
+
+  .htitle-big { font-size: 22px; font-weight: bold; }
+  .htitle-sub { font-size: 10px; font-weight: bold; display: inline-block; margin-left: 4px; text-align: left; vertical-align: middle; }
+  .htitle-line { font-weight: bold; font-size: 10px; margin-top: 3px; }
+
+  .body { display: flex; gap: 12px; margin-top: 14px; align-items: flex-start; }
+  .colL { width: 32%; }
+  .colR { flex: 1; }
+
+  .instr { border: 1px solid #000; padding: 9px 11px; font-size: 9.5px; line-height: 1.35; margin-bottom: 14px; }
+  .instr p { margin: 0 0 8px; }
+  .instr p:last-child { margin: 0; }
+
+  .acctbox { border: 1.5px solid #000; padding: 6px 8px; margin-bottom: 10px; font-size: 9px; }
+  .acctlbl { font-size: 7.5px; line-height: 1.15; margin-bottom: 2px; font-weight: 600; }
+  .acctval { font-family: 'Courier New', monospace; font-size: 12px; padding: 2px 4px; border-bottom: 1px solid #000; letter-spacing: 1px; }
+  .empaddr { margin-top: 6px; font-size: 9.5px; line-height: 1.35; padding: 2px 4px; min-height: 44px; }
+
+  /* Money field */
+  .fb { display: flex; flex-direction: column; margin-bottom: 6px; }
+  .lbl { text-align: center; font-size: 8px; line-height: 1.15; padding: 2px; min-height: 14px; display: flex; align-items: flex-end; justify-content: center; }
+  .field { border: 1px solid #000; display: flex; align-items: stretch; min-height: 26px; }
+  .bn { border-right: 1px solid #000; font-weight: bold; font-size: 9px; padding: 2px 4px; display: flex; align-items: flex-start; min-width: 32px; }
+  .val { flex: 1; text-align: right; font-family: 'Courier New', monospace; font-size: 13px; padding: 3px 6px; display: flex; align-items: center; justify-content: flex-end; }
+  .val.center { justify-content: center; }
+  .cents { border-left: 1px solid #000; width: 34px; text-align: right; font-family: 'Courier New', monospace; font-size: 13px; padding: 3px 4px; display: flex; align-items: center; justify-content: flex-end; }
+  .cents.shaded { background: #D9D9D9; }
+
+  .note2 { display: flex; gap: 12px; font-size: 8.5px; line-height: 1.3; margin-top: 8px; }
+  .note2 span { flex: 1; }
+
+  /* Signature / footer */
+  .sigrow { display: flex; gap: 20px; margin-top: 24px; }
+  .sigcell { flex: 1; }
+  .sigline { border-bottom: 1px solid #000; min-height: 26px; padding-left: 4px; padding-bottom: 2px; }
+  .siglbl { font-size: 8.5px; padding-top: 3px; text-align: center; line-height: 1.25; }
+
+  .foot { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 12px; font-size: 9.5px; padding: 0 2px; }
+  .foot .cn { font-size: 20px; font-weight: bold; letter-spacing: -1px; }
+
+  /* Page 2 - bilingual instructions */
+  .page-instructions { padding: 0.5in 0.6in; font-size: 10.5px; line-height: 1.45; }
+  .page-instructions h2 { font-size: 15px; margin: 0 0 14px; }
+  .page-instructions .cols { display: flex; gap: 28px; }
+  .page-instructions .col { flex: 1; }
+  .page-instructions p { margin: 0 0 10px; }
+  .page-instructions ul { margin: 0 0 10px 18px; padding: 0; }
+  .page-instructions li { margin-bottom: 4px; }
+  .page-instructions b { font-weight: bold; }
+
+  .protected { font-weight: bold; }
+</style>
+</head>
+<body>
+
+<script>
+  // Data is injected via window.__T4SUMDATA__ before this script runs
+  (function() {
+    var data = window.__T4SUMDATA__;
+    if (!data) {
+      document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#c00;">No data provided</div>';
+      return;
+    }
+
+    var year = data.year || new Date().getFullYear();
+    var employer = data.employer || {};
+    var summary = data.summary || {};
+    var contact = data.contact || {};
+
+    // Money formatter: returns { d: dollars, c: cents } or blank
+    function money(v) {
+      if (v == null || v === '' || v === 0) return { d: '', c: '' };
+      var num = Number(v);
+      if (isNaN(num)) return { d: '', c: '' };
+      var parts = num.toFixed(2).split('.');
+      var withCommas = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return { d: withCommas, c: parts[1] };
+    }
+
+    // Money field HTML builder
+    function mfield(num, label, value, opts) {
+      opts = opts || {};
+      var m = money(value);
+      var d = m.d, c = m.c;
+      var shaded = opts.shaded ? ' shaded' : '';
+      var center = opts.center ? ' center' : '';
+      var isCount = opts.count;
+      var html = '<div class="fb"><div class="lbl">' + label + '</div>';
+      html += '<div class="field">';
+      if (num) html += '<span class="bn">' + num + '</span>';
+      if (isCount) {
+        html += '<span class="val center">' + (value != null ? value : '') + '</span>';
+      } else {
+        html += '<span class="val' + center + '">' + d + '</span>';
+        html += '<span class="cents' + shaded + '">' + c + '</span>';
+      }
+      html += '</div></div>';
+      return html;
+    }
+
+    // Header block
+    var yy = String(year).slice(-2);
+    var headerHtml =
+      '<div class="hdr">' +
+        '<div class="hdr-left">' +
+          '<div class="crarow">' +
+            '<span class="flag"><span class="leaf">\uD83C\uDF41</span></span>' +
+            '<span>Canada Revenue<br>Agency</span>' +
+            '<span>Agence du revenu<br>du Canada</span>' +
+          '</div>' +
+          '<div class="yrrow">' +
+            '<span class="lbl">For the year ending December 31,<br>Pour l\'ann&eacute;e se terminant le 31 d&eacute;cembre</span>' +
+            '<span class="yrbox">20<span style="font-weight:normal;text-decoration:underline;padding-left:4px">' + yy + '</span></span>' +
+          '</div>' +
+          '<div class="formno">0505</div>' +
+        '</div>' +
+        '<div class="hdr-middle">' +
+          '<div><span class="htitle-big">T4</span><span class="htitle-sub">Summary<br>Sommaire</span></div>' +
+          '<div class="htitle-line">Summary of Remuneration Paid</div>' +
+          '<div class="htitle-line">Sommaire de la r&eacute;mun&eacute;ration pay&eacute;e</div>' +
+        '</div>' +
+        '<div class="hdr-right">' +
+          '<span class="protected">Protected B</span> when completed<br>' +
+          '<span class="protected">Prot&eacute;g&eacute; B</span> une fois rempli' +
+        '</div>' +
+      '</div>';
+
+    // Employer/account box
+    var acctHtml =
+      '<div class="acctbox">' +
+        '<div class="acctlbl">Employer\'s account number (15 characters) &ndash; Num&eacute;ro de compte de l\'employeur (15 caract&egrave;res)</div>' +
+        '<div class="acctval">' + (employer.account || '') + '</div>' +
+        '<div class="acctlbl" style="margin-top:8px">Name and address of employer &ndash; Nom et adresse de l\'employeur</div>' +
+        '<div class="empaddr">' +
+          (employer.name || '') + '<br>' +
+          (employer.addr1 || '') + '<br>' +
+          (employer.addr2 || '') + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' +
+          (employer.prov || '') + ' &nbsp;&nbsp; ' + (employer.postal || '') +
+        '</div>' +
+      '</div>';
+
+    // Instructions box (left column)
+    var instrHtml =
+      '<div class="instr">' +
+        '<p>You have to file your T4 information return on or before the last day of <b>February</b>. See the CRA website for detailed instructions.</p>' +
+        '<p>Vous devez produire votre d&eacute;claration de renseignements T4 au plus tard le dernier jour de <b>f&eacute;vrier</b>. Consultez le site Web de l\'ARC pour des instructions d&eacute;taill&eacute;es.</p>' +
+      '</div>';
+
+    // Left column: instructions + slip count + employment income + RPP + PA
+    var leftHtml = instrHtml +
+      mfield('88', 'Total number of T4 slips filed<br>Nombre total de feuillets T4 produits', summary.slips, { count: true }) +
+      mfield('14', 'Employment income &ndash; Revenus d\'emploi', summary.b14) +
+      mfield('20', 'Registered pension plan (RPP) contributions<br>Cotisations &agrave; un r&eacute;gime de pension agr&eacute;&eacute; (RPA)', summary.b20, { shaded: true }) +
+      mfield('52', 'Pension adjustment &ndash; Facteur d\'&eacute;quivalence', summary.b52, { shaded: true });
+
+    // Right column: account box + all deduction boxes + total + remittance + difference
+    var rightHtml = acctHtml +
+      mfield('16', 'Employees\' CPP contributions<br>Cotisations des employ&eacute;s au RPC', summary.b16) +
+      mfield('16A', 'Employees\' second CPP contributions<br>Deuxi&egrave;mes cotisations des employ&eacute;s au RPC', summary.b16A) +
+      mfield('27', 'Employer\'s CPP contributions<br>Cotisations de l\'employeur au RPC', summary.b27) +
+      mfield('27A', 'Employer\'s second CPP contributions<br>Deuxi&egrave;mes cotisations de l\'employeur au RPC', summary.b27A) +
+      mfield('18', 'Employees\' EI premiums &ndash; Cotisations des employ&eacute;s &agrave; l\'AE', summary.b18) +
+      mfield('19', 'Employer\'s EI premiums &ndash; Cotisations de l\'employeur &agrave; l\'AE', summary.b19) +
+      mfield('22', 'Income tax deducted &ndash; Imp&ocirc;t sur le revenu retenu', summary.b22) +
+      mfield('80', 'Total deductions reported (16+16A+27+27A+18+19+22)<br>Total des retenues d&eacute;clar&eacute;es', summary.b80) +
+      mfield('82', '<b>Minus:</b> remittances &ndash; <b>Moins :</b> versements', summary.b82) +
+      '<div class="note2">' +
+        '<span>Generally, we do not charge or refund a difference of $2 or less.</span>' +
+        '<span>G&eacute;n&eacute;ralement, une diff&eacute;rence de 2 $ ou moins n\'est ni exig&eacute;e ni rembours&eacute;e.</span>' +
+      '</div>' +
+      mfield('', 'Difference &ndash; Diff&eacute;rence', summary.difference) +
+      mfield('84', '<b>Overpayment</b> &ndash; <b>Paiement en trop</b>', summary.b84) +
+      mfield('86', '<b>Balance due</b> &ndash; <b>Solde d&ucirc;</b>', summary.b86);
+
+    // Signature footer
+    var sigHtml =
+      '<div class="sigrow">' +
+        '<div class="sigcell">' +
+          '<div class="sigline"></div>' +
+          '<div class="siglbl">Signature of authorized person<br>Signature d\'une personne autoris&eacute;e</div>' +
+        '</div>' +
+        '<div class="sigcell">' +
+          '<div class="sigline">' + (contact.name || '') + '</div>' +
+          '<div class="siglbl">Name of person to contact<br>Nom de la personne-ressource</div>' +
+        '</div>' +
+        '<div class="sigcell">' +
+          '<div class="sigline">' + (contact.phone || '') + '</div>' +
+          '<div class="siglbl">Telephone number &ndash; Num&eacute;ro de t&eacute;l&eacute;phone</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="foot">' +
+        '<span>T4 SUM E (' + year + ')</span>' +
+        '<span class="cn">Canada</span>' +
+      '</div>';
+
+    // Full page 1
+    document.getElementById('page1').innerHTML =
+      '<div class="formbox">' +
+        headerHtml +
+        '<div class="body">' +
+          '<div class="colL">' + leftHtml + '</div>' +
+          '<div class="colR">' + rightHtml + '</div>' +
+        '</div>' +
+        sigHtml +
+      '</div>';
+
+    // Page 2 - CRA instructions (bilingual)
+    document.getElementById('page2').innerHTML =
+      '<h2>Filing your T4 information return &ndash; Production de votre d&eacute;claration T4</h2>' +
+      '<div class="cols">' +
+        '<div class="col">' +
+          '<p><b>When to file</b><br>File your T4 information return no later than the last day of February following the calendar year to which the information return applies. If the last day of February falls on a Saturday, Sunday, or public holiday, your return is due the next business day.</p>' +
+          '<p><b>How to file</b><br>You must file your T4 information return electronically if you file more than 5 T4 slips. You can file electronically using CRA-approved commercial payroll software, the CRA\'s Web Forms application, or the Internet file transfer service.</p>' +
+          '<p><b>What to send</b></p>' +
+          '<ul>' +
+            '<li>T4 Summary (this form)</li>' +
+            '<li>T4 slips for each employee</li>' +
+            '<li>Any related documentation required by the CRA</li>' +
+          '</ul>' +
+          '<p><b>Amounts you owe</b><br>If you have an amount on line 86 (balance due), pay it with your remittance to a Canadian financial institution or to the CRA on or before the last day of February.</p>' +
+          '<p><b>Penalties</b><br>The CRA may charge a penalty if you file late or do not follow the filing requirements. See CRA guidance for details.</p>' +
+        '</div>' +
+        '<div class="col">' +
+          '<p><b>Quand produire</b><br>Produisez votre d&eacute;claration T4 au plus tard le dernier jour de f&eacute;vrier suivant l\'ann&eacute;e civile vis&eacute;e par la d&eacute;claration. Si le dernier jour de f&eacute;vrier tombe un samedi, un dimanche ou un jour f&eacute;ri&eacute;, votre d&eacute;claration est due le jour ouvrable suivant.</p>' +
+          '<p><b>Comment produire</b><br>Vous devez produire votre d&eacute;claration T4 par voie &eacute;lectronique si vous produisez plus de 5 feuillets T4. Vous pouvez produire par voie &eacute;lectronique en utilisant un logiciel de paie commercial approuv&eacute; par l\'ARC, l\'application Formulaires Web de l\'ARC ou le service de transfert de fichiers par Internet.</p>' +
+          '<p><b>Ce qu\'il faut envoyer</b></p>' +
+          '<ul>' +
+            '<li>Sommaire T4 (ce formulaire)</li>' +
+            '<li>Feuillets T4 pour chaque employ&eacute;</li>' +
+            '<li>Tout document connexe exig&eacute; par l\'ARC</li>' +
+          '</ul>' +
+          '<p><b>Montants dus</b><br>Si vous avez un montant &agrave; la ligne 86 (solde d&ucirc;), payez-le avec votre versement &agrave; une institution financi&egrave;re canadienne ou &agrave; l\'ARC au plus tard le dernier jour de f&eacute;vrier.</p>' +
+          '<p><b>P&eacute;nalit&eacute;s</b><br>L\'ARC peut imposer une p&eacute;nalit&eacute; si vous produisez en retard ou si vous ne respectez pas les exigences de production. Consultez les directives de l\'ARC pour plus de d&eacute;tails.</p>' +
+        '</div>' +
+      '</div>';
+  })();
+</script>
+
+<div class="page" id="page1"></div>
+<div class="page page-instructions" id="page2"></div>
+
+</body>
+</html>
