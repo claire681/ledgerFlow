@@ -31,6 +31,7 @@ import PayrollDrafts from "./pages/PayrollDrafts";
 import PayrollGuide from "./pages/PayrollGuide";
 import PayrollSettingsStub from "./pages/PayrollSettingsStub";
 import PayrollSettings from "./pages/PayrollSettings";
+import BankAccounts from "./pages/BankAccounts";
 import ConnectBankFlow from "./pages/ConnectBankFlow";
 import PaychequeList from "./pages/PaychequeList";
 import PaychequeDetail from "./pages/PaychequeDetail";
@@ -208,6 +209,7 @@ function AppLayout({ onLogout }) {
         <Route path="/payroll/taxes/t4-preview/employer" element={<T4EmployerSlips />} />
         <Route path="/payroll/taxes/t4-preview/summary" element={<T4Summary />} />
         <Route path="/payroll/taxes/t4-preview/employee" element={<T4EmployeeSlips />} />
+      <Route path="/payroll/bank-accounts" element={<BankAccounts />} />
             <Route path="/payroll/compliance" element={<Compliance />} />
         <Route path="/tools/audit-log" element={<AuditLog />} />
         <Route path="/payroll/employees" element={<EmployeesList />} />

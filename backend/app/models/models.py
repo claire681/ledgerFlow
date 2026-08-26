@@ -1199,3 +1199,31 @@ class RefreshToken(Base):
     revoked_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     last_used_at = Column(DateTime(timezone=True), nullable=True)
+
+# ---------------------------------------------------------------------------
+# Bank accounts (added for bookkeeping v1)
+# ---------------------------------------------------------------------------
+
+class BankAccountType(str, enum.Enum):
+    chequing = "chequing"
+    savings  = "savings"
+    credit   = "credit"
+    other    = "other"
+
+
+class BankAccount(Base):
+    __tablename__ = "bank_accounts"
+
+    id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id         = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    name            = Column(String,  nullable=False)
+    type            = Column(String,  nullable=False, default="chequing")
+    institution     = Column(String,  nullable=False)
+    last_4          = Column(String(4), nullable=True)
+    opening_balance = Column(Numeric(15, 2), nullable=False, default=0)
+    current_balance = Column(Numeric(15, 2), nullable=False, default=0)
+    is_default      = Column(Boolean, default=False, nullable=False)
+    is_active       = Column(Boolean, default=True,  nullable=False)
+    created_at      = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at      = Column(DateTime(timezone=True), onupdate=func.now())
+
