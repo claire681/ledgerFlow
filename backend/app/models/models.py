@@ -1199,3 +1199,61 @@ class RefreshToken(Base):
     revoked_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     last_used_at = Column(DateTime(timezone=True), nullable=True)
+
+# ---------------------------------------------------------------------------
+# Bank accounts (added for bookkeeping v1)
+# ---------------------------------------------------------------------------
+
+class BankAccountType(str, enum.Enum):
+    chequing = "chequing"
+    savings  = "savings"
+    credit   = "credit"
+    other    = "other"
+
+
+class BankAccount(Base):
+    __tablename__ = "bank_accounts"
+
+    id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id         = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    name            = Column(String,  nullable=False)
+    type            = Column(String,  nullable=False, default="chequing")
+    institution     = Column(String,  nullable=False)
+    last_4          = Column(String(4), nullable=True)
+    opening_balance = Column(Numeric(15, 2), nullable=False, default=0)
+    current_balance = Column(Numeric(15, 2), nullable=False, default=0)
+    is_default      = Column(Boolean, default=False, nullable=False)
+    is_active       = Column(Boolean, default=True,  nullable=False)
+    created_at      = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at      = Column(DateTime(timezone=True), onupdate=func.now())
+
+# ---------------------------------------------------------------------------
+# Payments (added for bookkeeping v1 phase 2)
+# ---------------------------------------------------------------------------
+
+class Payment(Base):
+    __tablename__ = "payments"
+
+    id                 = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id           = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    bank_account_id    = Column(UUID(as_uuid=True), ForeignKey("bank_accounts.id"), nullable=True, index=True)
+
+    # Freeform source description so payments work across many origins
+    # (pd7a, gst_hst, wcb, payroll, vendor_bill, etc.) without FK constraints.
+    source_type        = Column(String, nullable=False)   # e.g. "pd7a"
+    source_ref         = Column(String, nullable=True)    # e.g. "PD7A-2026-08"
+    source_name        = Column(String, nullable=False)   # display name
+
+    amount             = Column(Numeric(15, 2), nullable=False)
+    payment_date       = Column(Date, nullable=False)
+    cheque_no          = Column(String, nullable=True)
+    notes              = Column(Text, nullable=True)
+    print_cheque_queue = Column(Boolean, default=False, nullable=False)
+
+    status             = Column(String, default="recorded", nullable=False)   # recorded | voided
+    voided_at          = Column(DateTime(timezone=True), nullable=True)
+    voided_reason      = Column(Text, nullable=True)
+
+    created_at         = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at         = Column(DateTime(timezone=True), onupdate=func.now())
+
