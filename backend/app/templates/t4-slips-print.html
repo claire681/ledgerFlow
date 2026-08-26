@@ -15,8 +15,8 @@
   .copytag{background:#12262B;color:#fff;font-size:11px;font-weight:700;letter-spacing:.5px;padding:6px 12px;border-radius:6px;margin:18px auto 0;width:880px;max-width:100%}
   .page{background:#fff;width:880px;max-width:100%;min-height:1120px;margin:12px auto 24px;padding:30px 32px;box-shadow:0 1px 6px rgba(16,30,40,.16);font-size:9px}
   .mono{font-family:"Courier New",monospace}
-  .slip{border:1px solid #000;position:relative;padding:6px 8px 7px 20px}
-  .cutline{border-top:1px dashed #666;margin:22px 0;position:relative}
+  .slip{border:1px solid #000;position:relative;padding:6px 8px 7px 20px;break-inside:avoid;page-break-inside:avoid}
+  .cutline{border-top:1px dashed #666;margin:22px 0;position:relative;break-before:avoid;page-break-before:avoid}
   .cutline:after{content:"\2702";position:absolute;left:6px;top:-10px;font-size:14px;background:#fff;padding:0 5px;color:#555}
   .vprot{position:absolute;left:0;top:0;bottom:0;width:16px;border-right:1px solid #000;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-size:7.5px;padding:6px 2px;display:flex;flex-direction:column;justify-content:space-between}
   .topband{display:flex;gap:0;align-items:stretch;margin-bottom:3px}
@@ -92,7 +92,7 @@
   .rev h3{font-size:12px;margin:14px 0 6px}
   .rev .box{margin-bottom:4px}
   .rev .bn{font-weight:bold}
-  .rev .cols{column-count:2;column-gap:28px}
+  .rev .cols{display:grid;grid-template-columns:1fr 1fr;gap:4px 28px}
   .rev .grp{border:1px solid #000;padding:8px 10px;margin-top:10px}
   .revfoot{display:flex;justify-content:space-between;font-size:9px;margin-top:12px;border-top:1px solid #000;padding-top:4px}
   @media print{
@@ -122,7 +122,10 @@
 <div class="dc"><div class="ritem"><b>59</b> &ndash; Employment Income &ndash; July 5 to August 29, 2020</div><div class="ritem"><b>60</b> &ndash; Employment Income &ndash; August 30 to September 26, 2020</div><div class="ritem"><b>86</b> &ndash; Security options election</div><div class="ritem"><b>90</b> &ndash; Security option benefits</div></div>
 </div></div>
       <div class="rfoot"><span><b>T4 (25)</b></span><span>Privacy Act, personal information bank numbers CRA PPU 005 and CRA PPU 047</span></div>
-      <div class="rcut"></div>
+    </div>
+  </div>
+  <div class="page">
+    <div class="rev">
       <h3>Veuillez déclarer ces montants dans votre déclaration de revenus.</h3>
       <div class="rtwo">
         <div class="rc"><div class="ritem"><b>14</b> &ndash; Revenus d'emploi &ndash; Inscrivez à la ligne 10100.</div><div class="ritem"><b>16</b> &ndash; Cotisations de l'employé &ndash; comprend les cotisations de base au RPC (Allez à canada.ca/ligne-30800) et les premières cotisations supplémentaires au RPC (Allez à canada.ca/ligne-22215).</div><div class="ritem"><b>16A</b> &ndash; Deuxièmes cotisations de l'employé au RPC &ndash; Deuxièmes cotisations supplémentaires de l'employé au RPC (RPC2). Allez à canada.ca/ligne-22215.</div><div class="ritem"><b>17</b> &ndash; Cotisations de l'employé au RRQ &ndash; comprend les cotisations de base au RRQ (Allez à canada.ca/ligne-30800) et les premières cotisations supplémentaires au RRQ (Allez à canada.ca/ligne-22215).</div><div class="ritem"><b>17A</b> &ndash; Deuxièmes cotisations de l'employé au RRQ &ndash; Deuxièmes cotisations supplémentaires de l'employé au RRQ (RRQ2). Allez à canada.ca/ligne-22215.</div><div class="ritem"><b>18</b> &ndash; Cotisations de l'employé à l'AE &ndash; Allez à canada.ca/ligne-31200.</div><div class="ritem"><b>20</b> &ndash; Cotisations à un RPA &ndash; Comprend les cotisations pour services passés. Allez à canada.ca/ligne-20700.</div><div class="ritem"><b>22</b> &ndash; Impôt sur le revenu retenu &ndash; Inscrivez à la ligne 43700.</div><div class="ritem"><b>39</b> &ndash; Déduction pour options d'achat de titres 110(1)d) &ndash; Inscrivez à la ligne 24900.</div><div class="ritem"><b>41</b> &ndash; Déduction pour options d'achat de titres 110(1)d.1) &ndash; Inscrivez à la ligne 24900.</div><div class="ritem"><b>42</b> &ndash; Commissions d'emploi &ndash; Inscrivez à la ligne 10120. Ce montant est déjà compris dans la case 14.</div><div class="ritem"><b>43</b> &ndash; Déduction pour le personnel des Forces armées canadiennes et des forces policières &ndash; Inscrivez à la ligne 24400. Ce montant est déjà compris dans la case 14.</div><div class="ritem"><b>44</b> &ndash; Cotisations syndicales &ndash; Inscrivez à la ligne 21200.</div><div class="ritem"><b>45</b> &ndash; Prestations dentaires offertes par l'employeur &ndash; Allez à canada.ca/t4-information-employeurs.</div><div class="ritem"><b>46</b> &ndash; Dons de bienfaisance &ndash; Allez à canada.ca/t4-information-employeurs.</div><div class="ritem"><b>52</b> &ndash; Facteur d'équivalence &ndash; Inscrivez à la ligne 20600.</div><div class="ritem"><b>55</b> &ndash; Régime provincial d'assurance parentale (RPAP) &ndash; Résidents du Québec, allez à canada.ca/ligne-31205. Résidents des autres provinces ou territoires, allez à canada.ca/ligne-31200.</div><div class="ritem"><b>66</b> &ndash; Allocations de retraite admissibles &ndash; Allez à canada.ca/ligne-13000.</div></div>
@@ -177,7 +180,7 @@
     return '<div class="slip"><div class="vprot"><span>Protected B when completed / Protégé B une fois rempli</span><span style="font-weight:normal">T4 (25)</span></div>'
     +'<div class="topband">'
     +'<div class="empbox"><div class="cap">Employer\'s name &ndash; Nom de l\'employeur</div><div class="mono" style="font-size:10.5px;line-height:1.35">'+employer.name+'<br>'+employer.addr1+'<br>'+employer.addr2+'</div></div>'
-    +'<div class="cracell"><div class="crarow1"><span class="flag"><svg viewBox="0 0 256 136" style="display:block;width:100%;height:100%"><rect width="256" height="136" fill="#fff"/><rect width="64" height="136" fill="#000"/><rect x="192" width="64" height="136" fill="#000"/><g transform="translate(64,4) scale(0.25)"><path fill="#000" d="M256 21.3l-24.3 45.4c-2.8 4.9-7.7 4.4-12.6 1.7l-17.6-9.1 13.1 69.6c2.8 12.7-6.1 12.7-10.5 7.2l-30.7-34.4-5 17.5c-.6 2.3-3.1 4.7-6.9 4.1l-38.8-8.2 10.2 37.1c2.2 8.3 3.9 11.7-2.2 13.9l-13.9 6.5 67.1 54.5c2.7 2.1 4 5.9 3 9.3l-5.9 19.3c23.1-2.7 43.8-6.7 66.9-9.2 2-.2 5.5 3.1 5.4 5.4l-3.1 68.9h11.3l-1.8-68.8c-.1-2.3 3.3-5.7 5.4-5.5 23.1 2.5 43.8 6.5 66.9 9.2l-5.9-19.3c-1-3.4.3-7.2 3-9.3l67.1-54.5-13.9-6.5c-6.1-2.2-4.4-5.6-2.2-13.9l10.2-37.1-38.8 8.2c-3.8.6-6.3-1.8-6.9-4.1l-5-17.5-30.7 34.4c-4.4 5.5-13.3 5.5-10.5-7.2l13.1-69.6-17.6 9.1c-4.9 2.7-9.8 3.2-12.6-1.7z"/></g></svg></span><div class="craname"><span>Canada Revenue Agency</span><span>Agence du revenu du Canada</span></div></div><div class="crarow2"><span class="yrlbl">Year<br>Année</span><span class="yrbox mono">'+year+'</span></div></div>'
+    +'<div class="cracell"><div class="crarow1"><span class="flag"><svg viewBox="0 0 256 136" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:100%"><rect width="256" height="136" fill="#fff"/><rect x="0" y="0" width="64" height="136" fill="#000"/><rect x="192" y="0" width="64" height="136" fill="#000"/><path fill="#000" transform="translate(152 76) scale(0.20)" d="M-90,210 l15,-95 l-190,35 l25,-70 l-165,-115 l40,-30 l-25,-80 l125,25 l25,-60 l100,110 l-20,-215 l50,25 l50,-25 l-20,215 l100,-110 l25,60 l125,-25 l-25,80 l40,30 l-165,115 l25,70 l-190,-35 l15,95 z"/></svg></span><div class="craname"><span>Canada Revenue Agency</span><span>Agence du revenu du Canada</span></div></div><div class="crarow2"><span class="yrlbl">Year<br>Année</span><span class="yrbox mono">'+year+'</span></div></div>'
     +'<div class="t4title"><div class="t4">T4</div><div class="st">Statement of Remuneration Paid</div><div style="font-size:10px">État de la rémunération payée</div></div>'
     +'</div>'
     +'<div class="bodyrow">'
@@ -207,7 +210,7 @@
   var pages = [];
   for(var i=0;i<employees.length;i+=2){
     var pair = employees.slice(i,i+2);
-    var slips = pair.map(function(e){return slip(e)+'<div class="cutline"></div>';}).join('');
+    var slips = pair.map(function(e){return slip(e);}).join('<div class="cutline"></div>');
     pages.push('<div class="page">'+slips+'</div>');
     pages.push(REVERSE);
   }
