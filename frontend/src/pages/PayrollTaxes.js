@@ -308,7 +308,6 @@ function PaymentsTab({ pd7a, loading, error, navigate, onResourcesOpen, onPrint 
         open={!!payObligation}
         onClose={() => setPayObligation(null)}
         obligation={payObligation}
-        recordTo={{ name: "BrightCare-RBC Chequing", balance: "-13,340.91", negative: true }}
         onPaid={() => { setPayObligation(null); }}
       />
 
