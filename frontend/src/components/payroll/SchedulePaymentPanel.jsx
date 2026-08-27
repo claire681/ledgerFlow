@@ -5,6 +5,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "../../utils/apiFetch";
 import DatePicker from "../DatePicker";
+import HowToPayCRA from "./HowToPayCRA";
 
 // Federal Taxes Pay & File drawer.
 // Right-side sliding panel over dimmed backdrop.
@@ -292,8 +293,8 @@ export default function SchedulePaymentPanel({ open, onClose, obligation, onPaid
 
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".6px", color: T.muted, textTransform: "uppercase" }}>File</div>
-                <div style={{ fontSize: 16, fontWeight: 600, marginTop: 12 }}>PD7A</div>
-                <div style={{ fontSize: 13, color: T.slate, marginTop: 2 }}>Statement of Account for Current Source Deductions</div>
+                <div style={{ fontSize: 16, fontWeight: 600, marginTop: 12 }}>Payroll remittance</div>
+                <div style={{ fontSize: 13, color: T.slate, marginTop: 2 }}>Statement of Account (PD7A)</div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
                   <div>
                     <div style={S.kvCap}>Liability period</div>
@@ -406,27 +407,9 @@ export default function SchedulePaymentPanel({ open, onClose, obligation, onPaid
 
           {/* Confirmation view */}
           {view === "confirm" && (
-            <div>
-              <div style={{ width: 56, height: 56, borderRadius: "50%", background: T.tealTint, display: "flex", alignItems: "center", justifyContent: "center", margin: "6px auto 16px" }}>
-                <CheckCircle2 size={30} color={T.teal} />
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <span style={{ fontSize: 16, fontWeight: 600 }}>{obligation.taxName}</span>
-                <Money v={obligation.amount} size={18} />
-              </div>
-              <div style={{ ...tnum, textAlign: "right", fontSize: 12.5, fontWeight: 600, marginTop: 4 }}>Due {obligation.dueDate}</div>
-              <ConfRow capL="Liability period" valL={obligation.liability} capR="Payment method" valR="Outside of Novala" mono />
-              <ConfRow capL="Payment date" valL={fmtDate(paymentDate)} capR="Recorded to" valR={selectedBank?.name || "—"} mono />
-              {chequeNo && <ConfRow capL="Cheque number" valL={chequeNo} mono />}
-              <div style={S.divider} />
-              <div style={{ fontSize: 16, fontWeight: 600 }}>PD7A</div>
-              <div style={{ fontSize: 13, color: T.slate, marginTop: 2 }}>Statement of Account for Current Source Deductions</div>
-              <ConfRow capL="Liability period" valL={obligation.liability} capR="Filing method" valR="Outside of Novala" mono />
-              <ConfRow capL="Filing date" valL={fmtDate(paymentDate)} mono />
-            </div>
+            <HowToPayCRA obligation={obligation} />
           )}
 
-          {/* Error view */}
           {view === "error" && (
             <div>
               <div style={{ background: T.redTint, border: "1px solid " + T.redBorder, color: T.redInk, padding: "14px 16px", borderRadius: 10, fontSize: 13.5, display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 20 }}>
