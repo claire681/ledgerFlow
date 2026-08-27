@@ -35,8 +35,9 @@ from uuid import UUID
 # ---------------------------------------------------------------------------
 
 class PaymentStatus(str, Enum):
-    RECORDED     = "recorded"       # legacy manual, pre-provider
-    PENDING      = "pending"        # accepted, not yet at provider
+    RECORDED         = "recorded"           # legacy manual, pre-provider
+    PENDING_APPROVAL = "pending_approval"   # created, awaiting approval
+    PENDING          = "pending"            # accepted, not yet at provider
     PROCESSING   = "processing"     # provider working on it
     IN_TRANSIT   = "in_transit"     # sent, awaiting confirmation
     SETTLED      = "settled"        # complete

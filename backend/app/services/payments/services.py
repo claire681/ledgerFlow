@@ -20,7 +20,7 @@ registry includes Manual and Mock. Real provider adapters (VoPay, Plooto, ...)
 register themselves here once implemented.
 """
 from __future__ import annotations
-from datetime import date
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID
@@ -28,7 +28,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.models import Payment, PaymentAuditLog, BankAccount
+from app.models.models import Payment, PaymentAuditLog, PaymentApproval, BankAccount, User
 
 from .interfaces import (
     PaymentProvider,
@@ -52,6 +52,8 @@ from .adapters import (
 # ---------------------------------------------------------------------------
 # Adapter registry
 # ---------------------------------------------------------------------------
+
+MAX_RETRY_ATTEMPTS = 5
 
 _PAYMENT_ADAPTERS: dict[str, PaymentProvider] = {}
 _REMITTANCE_ADAPTERS: dict[str, RemittanceProvider] = {}
@@ -172,7 +174,20 @@ class PayrollPaymentService:
         source_bank: SourceAccount,
         memo: Optional[str] = None,
         reference: Optional[str] = None,
+        idempotency_key: Optional[str] = None,
+        parent_payment_id: Optional[UUID] = None,
+        retry_count: int = 0,
     ) -> Payment:
+        # Idempotency: if same key already used by this user, return that payment
+        if idempotency_key:
+            stmt = select(Payment).where(
+                Payment.owner_id == user_id,
+                Payment.idempotency_key == idempotency_key,
+            )
+            existing = (await self.db.execute(stmt)).scalar_one_or_none()
+            if existing:
+                return existing
+
         payment = Payment(
             owner_id=user_id,
             bank_account_id=bank_account_id,
@@ -183,6 +198,10 @@ class PayrollPaymentService:
             payment_date=payment_date,
             provider=provider_name,
             status=PaymentStatus.PENDING.value,
+            idempotency_key=idempotency_key,
+            parent_payment_id=parent_payment_id,
+            retry_count=retry_count,
+            last_retry_at=datetime.now(timezone.utc) if retry_count > 0 else None,
         )
         self.db.add(payment)
         await self.db.flush()
@@ -276,7 +295,20 @@ class RemittanceService:
         cheque_no: Optional[str] = None,
         notes: Optional[str] = None,
         print_cheque_queue: bool = False,
+        idempotency_key: Optional[str] = None,
+        parent_payment_id: Optional[UUID] = None,
+        retry_count: int = 0,
     ) -> Payment:
+        # Idempotency: if same key already used by this user, return that payment
+        if idempotency_key:
+            stmt = select(Payment).where(
+                Payment.owner_id == user_id,
+                Payment.idempotency_key == idempotency_key,
+            )
+            existing = (await self.db.execute(stmt)).scalar_one_or_none()
+            if existing:
+                return existing
+
         payment = Payment(
             owner_id=user_id,
             bank_account_id=bank_account_id,
@@ -290,6 +322,10 @@ class RemittanceService:
             print_cheque_queue=print_cheque_queue,
             provider=provider_name,
             status=PaymentStatus.PENDING.value,
+            idempotency_key=idempotency_key,
+            parent_payment_id=parent_payment_id,
+            retry_count=retry_count,
+            last_retry_at=datetime.now(timezone.utc) if retry_count > 0 else None,
         )
         self.db.add(payment)
         await self.db.flush()
@@ -354,3 +390,245 @@ class RemittanceService:
         await self.db.commit()
         await self.db.refresh(payment)
         return payment
+
+
+# ---------------------------------------------------------------------------
+# Retry helpers
+# ---------------------------------------------------------------------------
+
+RETRYABLE_STATUSES = {
+    PaymentStatus.FAILED.value,
+    PaymentStatus.CANCELLED.value,
+    PaymentStatus.NEEDS_ACTION.value,
+}
+
+
+async def retry_remittance(
+    db: AsyncSession,
+    original: Payment,
+    authority: str,
+    account_reference: str,
+    period: str,
+    source_bank: SourceAccount,
+) -> Payment:
+    """Retry a failed remittance. Creates a new payment linked to the original."""
+    if original.status not in RETRYABLE_STATUSES:
+        raise ValueError(f"Payment status '{original.status}' is not retryable")
+    if original.retry_count >= MAX_RETRY_ATTEMPTS:
+        raise ValueError(f"Maximum retry attempts ({MAX_RETRY_ATTEMPTS}) reached")
+
+    service = RemittanceService(db)
+    new_payment = await service.initiate(
+        user_id=original.owner_id,
+        provider_name=original.provider,
+        bank_account_id=original.bank_account_id,
+        source_type=original.source_type,
+        source_ref=original.source_ref,
+        source_name=original.source_name,
+        amount=original.amount,
+        payment_date=date.today(),
+        authority=authority,
+        account_reference=account_reference,
+        period=period,
+        source_bank=source_bank,
+        cheque_no=original.cheque_no,
+        notes=original.notes,
+        print_cheque_queue=original.print_cheque_queue,
+        parent_payment_id=original.id,
+        retry_count=original.retry_count + 1,
+    )
+    # Record a "retry" audit event on the new payment
+    _record_audit(
+        db, new_payment.id, original.owner_id,
+        event_type="retry",
+        from_status=None,
+        to_status=new_payment.status,
+        actor_type="user",
+        details={"parent_payment_id": str(original.id), "attempt": original.retry_count + 1},
+    )
+    await db.commit()
+    await db.refresh(new_payment)
+    return new_payment
+
+
+async def retry_payroll_payment(
+    db: AsyncSession,
+    original: Payment,
+    recipient: RecipientAccount,
+    source_bank: SourceAccount,
+) -> Payment:
+    """Retry a failed payroll payment. Creates a new payment linked to the original."""
+    if original.status not in RETRYABLE_STATUSES:
+        raise ValueError(f"Payment status '{original.status}' is not retryable")
+    if original.retry_count >= MAX_RETRY_ATTEMPTS:
+        raise ValueError(f"Maximum retry attempts ({MAX_RETRY_ATTEMPTS}) reached")
+
+    service = PayrollPaymentService(db)
+    new_payment = await service.initiate(
+        user_id=original.owner_id,
+        provider_name=original.provider,
+        bank_account_id=original.bank_account_id,
+        source_type=original.source_type,
+        source_ref=original.source_ref,
+        source_name=original.source_name,
+        amount=original.amount,
+        payment_date=date.today(),
+        recipient=recipient,
+        source_bank=source_bank,
+        memo=original.notes,
+        parent_payment_id=original.id,
+        retry_count=original.retry_count + 1,
+    )
+    _record_audit(
+        db, new_payment.id, original.owner_id,
+        event_type="retry",
+        from_status=None,
+        to_status=new_payment.status,
+        actor_type="user",
+        details={"parent_payment_id": str(original.id), "attempt": original.retry_count + 1},
+    )
+    await db.commit()
+    await db.refresh(new_payment)
+    return new_payment
+
+
+# ---------------------------------------------------------------------------
+# Approval workflow helpers
+# ---------------------------------------------------------------------------
+
+APPROVER_ROLES = {"owner", "admin"}
+
+
+def can_approve(user: User) -> bool:
+    """Check if the user's role permits approving payments."""
+    role = (user.role or "").lower()
+    return role in APPROVER_ROLES
+
+
+async def approve_payment(
+    db: AsyncSession,
+    payment: Payment,
+    approver: User,
+    reason: Optional[str] = None,
+) -> Payment:
+    """Approve a payment awaiting approval.
+
+    Enforces:
+    - approver has role owner|admin
+    - approver is not the creator (segregation of duties)
+    - payment status is pending_approval
+
+    Transitions the payment to PENDING (adapter still needs to execute separately)
+    and records a PaymentApproval row.
+    """
+    if not can_approve(approver):
+        raise ValueError(f"User role '{approver.role}' cannot approve payments")
+    if payment.owner_id == approver.id:
+        raise ValueError("Segregation of duties: the payment creator cannot approve their own payment")
+    if payment.status != PaymentStatus.PENDING_APPROVAL.value:
+        raise ValueError(f"Payment status '{payment.status}' is not awaiting approval")
+
+    # Record the approval
+    approval = PaymentApproval(
+        payment_id=payment.id,
+        approver_id=approver.id,
+        action="approved",
+        reason=reason,
+    )
+    db.add(approval)
+
+    old_status = payment.status
+    payment.status = PaymentStatus.PENDING.value
+
+    _record_audit(
+        db, payment.id, payment.owner_id,
+        event_type="approved",
+        from_status=old_status,
+        to_status=payment.status,
+        actor_type="user",
+        actor_id=approver.id,
+        details={"reason": reason} if reason else None,
+    )
+
+    await db.commit()
+    await db.refresh(payment)
+    return payment
+
+
+async def reject_payment(
+    db: AsyncSession,
+    payment: Payment,
+    approver: User,
+    reason: str,
+) -> Payment:
+    """Reject a payment awaiting approval.
+
+    Enforces:
+    - approver has role owner|admin
+    - approver is not the creator (segregation of duties)
+    - payment status is pending_approval
+    - reason is required (non-empty)
+
+    Transitions the payment to CANCELLED and records a PaymentApproval row.
+    """
+    if not can_approve(approver):
+        raise ValueError(f"User role '{approver.role}' cannot reject payments")
+    if payment.owner_id == approver.id:
+        raise ValueError("Segregation of duties: the payment creator cannot reject their own payment")
+    if payment.status != PaymentStatus.PENDING_APPROVAL.value:
+        raise ValueError(f"Payment status '{payment.status}' is not awaiting approval")
+    if not reason or not reason.strip():
+        raise ValueError("A reason is required to reject a payment")
+
+    approval = PaymentApproval(
+        payment_id=payment.id,
+        approver_id=approver.id,
+        action="rejected",
+        reason=reason.strip(),
+    )
+    db.add(approval)
+
+    old_status = payment.status
+    payment.status = PaymentStatus.CANCELLED.value
+
+    _record_audit(
+        db, payment.id, payment.owner_id,
+        event_type="rejected",
+        from_status=old_status,
+        to_status=payment.status,
+        actor_type="user",
+        actor_id=approver.id,
+        details={"reason": reason.strip()},
+    )
+
+    await db.commit()
+    await db.refresh(payment)
+    return payment
+
+
+# ---------------------------------------------------------------------------
+# Webhook helper (used by the /webhooks/{provider} router)
+# ---------------------------------------------------------------------------
+
+async def process_webhook_result(
+    db: AsyncSession,
+    payment: "Payment",
+    result: PaymentResult,
+    provider: str,
+) -> "Payment":
+    """Apply a webhook-delivered PaymentResult to an existing Payment.
+    Logs an audit entry if the status changed. Commits and refreshes."""
+    old_status = _apply_result_to_payment(payment, result)
+    if old_status != payment.status:
+        _record_audit(
+            db, payment.id, payment.owner_id,
+            event_type="webhook_received",
+            from_status=old_status,
+            to_status=payment.status,
+            actor_type="webhook",
+            details={"provider": provider, "provider_status": result.provider_status},
+        )
+    await db.commit()
+    await db.refresh(payment)
+    return payment
+

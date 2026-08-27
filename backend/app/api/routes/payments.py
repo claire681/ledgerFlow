@@ -22,15 +22,15 @@ from uuid import UUID
 from decimal import Decimal
 from datetime import date, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
-from app.models.models import Payment, BankAccount, User
+from app.models.models import Payment, PaymentAuditLog, BankAccount, User
 from app.core.security import get_current_user
-from app.services.payments import RemittanceService, SourceAccount
+from app.services.payments import RemittanceService, SourceAccount, retry_remittance, RETRYABLE_STATUSES, MAX_RETRY_ATTEMPTS, approve_payment, reject_payment, can_approve
 
 
 router = APIRouter(tags=["payments"])
@@ -62,6 +62,28 @@ class VoidRequest(BaseModel):
     reason: Optional[str] = None
 
 
+class ApprovalRequest(BaseModel):
+    reason: Optional[str] = None
+
+
+class RejectionRequest(BaseModel):
+    reason: str
+
+
+class AuditLogResponse(BaseModel):
+    id: UUID
+    payment_id: UUID
+    event_type: str
+    from_status: Optional[str]
+    to_status: Optional[str]
+    actor_type: str
+    actor_id: Optional[UUID]
+    details: Optional[dict]
+    created_at: Optional[datetime]
+
+    model_config = {"from_attributes": True}
+
+
 class PaymentResponse(BaseModel):
     id: UUID
     bank_account_id: Optional[UUID]
@@ -89,6 +111,7 @@ class PaymentResponse(BaseModel):
 @router.post("/payments", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
 async def create_payment(
     payload: PaymentCreate,
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -158,6 +181,7 @@ async def create_payment(
         cheque_no=payload.cheque_no,
         notes=payload.notes,
         print_cheque_queue=payload.print_cheque_queue,
+        idempotency_key=idempotency_key,
     )
     return payment
 
@@ -231,6 +255,160 @@ async def update_payment(
     await db.commit()
     await db.refresh(payment)
     return payment
+
+
+@router.post("/payments/{payment_id}/retry", response_model=PaymentResponse)
+async def retry_payment(
+    payment_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Retry a failed/cancelled/needs_action payment.
+
+    Creates a NEW Payment record linked to the original via parent_payment_id.
+    Original payment is unchanged (audit trail preserved).
+    """
+    # Load the original
+    stmt = select(Payment).where(
+        Payment.id == payment_id,
+        Payment.owner_id == current_user.id,
+    )
+    original = (await db.execute(stmt)).scalar_one_or_none()
+    if not original:
+        raise HTTPException(status_code=404, detail="Payment not found")
+
+    if original.status not in RETRYABLE_STATUSES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Payment status '{original.status}' is not retryable. Must be failed, cancelled, or needs_action.",
+        )
+    if original.retry_count >= MAX_RETRY_ATTEMPTS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Maximum retry attempts ({MAX_RETRY_ATTEMPTS}) already reached for this payment chain.",
+        )
+
+    # Rebuild the source_bank + authority + account_reference + period
+    if original.bank_account_id is not None:
+        bank_stmt = select(BankAccount).where(BankAccount.id == original.bank_account_id)
+        account = (await db.execute(bank_stmt)).scalar_one_or_none()
+        if not account:
+            raise HTTPException(status_code=400, detail="Original bank account no longer exists")
+        source_bank = SourceAccount(bank_account_id=account.id, display_name=account.name)
+    else:
+        source_bank = SourceAccount(bank_account_id=None, display_name="(no account selected)")  # type: ignore
+
+    authority_map = {
+        "pd7a": "cra_source_deductions",
+        "gst_hst": "cra_gst_hst",
+        "wcb": "wcb_alberta",
+    }
+    authority = authority_map.get(original.source_type, original.source_type)
+
+    if original.source_type in ("pd7a", "gst_hst"):
+        account_reference = current_user.cra_payroll_account or (original.source_ref or "")
+    else:
+        account_reference = original.source_ref or ""
+
+    period = original.source_ref if original.source_ref and "-" in original.source_ref else original.payment_date.strftime("%Y-%m")
+
+    new_payment = await retry_remittance(
+        db, original,
+        authority=authority,
+        account_reference=account_reference,
+        period=period,
+        source_bank=source_bank,
+    )
+    return new_payment
+
+
+@router.get("/payments/pending-approval", response_model=List[PaymentResponse])
+async def list_pending_approval(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """List all payments awaiting approval that the current user can act on.
+
+    Only visible to users with owner/admin role. Excludes payments the user
+    created (segregation of duties would prevent them from approving anyway).
+    """
+    if not can_approve(current_user):
+        return []
+    stmt = select(Payment).where(
+        Payment.status == "pending_approval",
+        Payment.owner_id != current_user.id,
+    ).order_by(Payment.created_at.desc())
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
+
+@router.get("/payments/{payment_id}/audit-log", response_model=List[AuditLogResponse])
+async def get_payment_audit_log(
+    payment_id: UUID,
+    limit: int = 100,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get audit log entries for a payment, newest first.
+
+    Includes every event: created, status_changed, approved, rejected, retry,
+    webhook_received, etc. Owner-scoped: only the payment creator can see the log.
+    """
+    # First verify the payment exists and belongs to this user
+    stmt = select(Payment).where(
+        Payment.id == payment_id,
+        Payment.owner_id == current_user.id,
+    )
+    payment = (await db.execute(stmt)).scalar_one_or_none()
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+
+    log_stmt = (
+        select(PaymentAuditLog)
+        .where(PaymentAuditLog.payment_id == payment_id)
+        .order_by(PaymentAuditLog.created_at.desc())
+        .limit(min(limit, 500))
+        .offset(offset)
+    )
+    result = await db.execute(log_stmt)
+    return result.scalars().all()
+
+
+@router.post("/payments/{payment_id}/approve", response_model=PaymentResponse)
+async def approve_payment_endpoint(
+    payment_id: UUID,
+    payload: ApprovalRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Approve a payment awaiting approval."""
+    stmt = select(Payment).where(Payment.id == payment_id)
+    payment = (await db.execute(stmt)).scalar_one_or_none()
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    try:
+        return await approve_payment(db, payment, current_user, payload.reason)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/payments/{payment_id}/reject", response_model=PaymentResponse)
+async def reject_payment_endpoint(
+    payment_id: UUID,
+    payload: RejectionRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Reject a payment awaiting approval. Reason is required."""
+    stmt = select(Payment).where(Payment.id == payment_id)
+    payment = (await db.execute(stmt)).scalar_one_or_none()
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    try:
+        return await reject_payment(db, payment, current_user, payload.reason)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/payments/{payment_id}/void", response_model=PaymentResponse)

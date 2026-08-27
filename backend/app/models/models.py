@@ -1268,6 +1268,12 @@ class Payment(Base):
     needs_action_reason     = Column(Text, nullable=True)
     settled_at              = Column(DateTime(timezone=True), nullable=True)
 
+    # Session B1: idempotency + retry tracking
+    idempotency_key         = Column(String, nullable=True, unique=True, index=True)
+    retry_count             = Column(Integer, nullable=False, default=0, server_default='0')
+    last_retry_at           = Column(DateTime(timezone=True), nullable=True)
+    parent_payment_id       = Column(UUID(as_uuid=True), ForeignKey("payments.id"), nullable=True, index=True)
+
     created_at              = Column(DateTime(timezone=True), server_default=func.now())
     updated_at         = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -1292,5 +1298,23 @@ class PaymentAuditLog(Base):
     actor_id      = Column(UUID(as_uuid=True), nullable=True)
 
     details       = Column(JSON, nullable=True)
+    created_at    = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
+# ---------------------------------------------------------------------------
+# Payment Approval (added for bookkeeping v1 phase 2.5 session B1)
+# One row per approve/reject action taken on a payment.
+# Segregation-of-duties: the person who created a payment cannot approve it.
+# ---------------------------------------------------------------------------
+
+class PaymentApproval(Base):
+    __tablename__ = "payment_approvals"
+
+    id            = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    payment_id    = Column(UUID(as_uuid=True), ForeignKey("payments.id"), nullable=False, index=True)
+    approver_id   = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+
+    action        = Column(String, nullable=False)   # approved | rejected
+    reason        = Column(Text, nullable=True)
+
     created_at    = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
 
