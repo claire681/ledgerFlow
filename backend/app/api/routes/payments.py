@@ -30,6 +30,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_db
 from app.models.models import Payment, BankAccount, User
 from app.core.security import get_current_user
+from app.services.payments import RemittanceService, SourceAccount
 
 
 router = APIRouter(tags=["payments"])
@@ -49,6 +50,7 @@ class PaymentCreate(BaseModel):
     cheque_no: Optional[str] = Field(default=None, max_length=50)
     notes: Optional[str] = None
     print_cheque_queue: bool = False
+    provider: str = "manual"     # "manual" | "mock" | ... (future: "vopay", "plooto", ...)
 
 
 class PaymentUpdate(BaseModel):
@@ -90,10 +92,13 @@ async def create_payment(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Record a new payment. Deducts from bank_account.current_balance if linked."""
+    """Record a new payment.
 
-    # If a bank_account_id was passed, verify it belongs to this user
-    account = None
+    Routes through RemittanceService which handles adapter selection, audit
+    logging, and status tracking. The manual adapter records the payment as
+    "recorded" and leaves it to the user to complete outside Novala.
+    """
+    # Verify the bank account belongs to this user, if one was provided
     if payload.bank_account_id is not None:
         stmt = select(BankAccount).where(
             BankAccount.id == payload.bank_account_id,
@@ -107,28 +112,53 @@ async def create_payment(
                 status_code=404,
                 detail="Bank account not found or has been deleted",
             )
+        source_bank = SourceAccount(
+            bank_account_id=account.id,
+            display_name=account.name,
+        )
+    else:
+        # No bank account chosen -- create a placeholder source
+        source_bank = SourceAccount(
+            bank_account_id=None,   # type: ignore
+            display_name="(no account selected)",
+        )
 
-    payment = Payment(
-        owner_id=current_user.id,
+    # Map source_type -> authority. Only pd7a mapped so far; others fall through.
+    authority_map = {
+        "pd7a": "cra_source_deductions",
+        "gst_hst": "cra_gst_hst",
+        "wcb": "wcb_alberta",
+    }
+    authority = authority_map.get(payload.source_type, payload.source_type)
+
+    # Account reference for CRA remittances comes from the user's profile.
+    # For other authorities, use source_ref if provided.
+    if payload.source_type in ("pd7a", "gst_hst"):
+        account_reference = current_user.cra_payroll_account or (payload.source_ref or "")
+    else:
+        account_reference = payload.source_ref or ""
+
+    # Period = YYYY-MM of payment date (frontend can override via source_ref)
+    period = payload.source_ref if payload.source_ref and "-" in payload.source_ref else payload.payment_date.strftime("%Y-%m")
+
+    service = RemittanceService(db)
+    payment = await service.initiate(
+        user_id=current_user.id,
+        provider_name=payload.provider,
         bank_account_id=payload.bank_account_id,
         source_type=payload.source_type,
         source_ref=payload.source_ref,
         source_name=payload.source_name,
         amount=payload.amount,
         payment_date=payload.payment_date,
+        authority=authority,
+        account_reference=account_reference,
+        period=period,
+        source_bank=source_bank,
         cheque_no=payload.cheque_no,
         notes=payload.notes,
         print_cheque_queue=payload.print_cheque_queue,
-        status="recorded",
     )
-    db.add(payment)
-
-    # Deduct from account balance in the same transaction
-    if account is not None:
-        account.current_balance = Decimal(account.current_balance) - Decimal(payload.amount)
-
-    await db.commit()
-    await db.refresh(payment)
     return payment
 
 

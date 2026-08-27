@@ -135,6 +135,8 @@ class User(Base):
     last_briefing_at   = Column(DateTime(timezone=True), nullable=True)
     created_at         = Column(DateTime(timezone=True), server_default=func.now())
     updated_at         = Column(DateTime(timezone=True), onupdate=func.now())
+    # CRA payroll program account number (e.g. "746043769RP0001")
+    cra_payroll_account = Column(String, nullable=True)
 
     documents          = relationship("Document",          back_populates="user", cascade="all, delete-orphan")
     transactions       = relationship("Transaction",       back_populates="user", cascade="all, delete-orphan")
@@ -1250,10 +1252,45 @@ class Payment(Base):
     notes              = Column(Text, nullable=True)
     print_cheque_queue = Column(Boolean, default=False, nullable=False)
 
-    status             = Column(String, default="recorded", nullable=False)   # recorded | voided
-    voided_at          = Column(DateTime(timezone=True), nullable=True)
-    voided_reason      = Column(Text, nullable=True)
+    # Status: pending | processing | in_transit | settled | failed | cancelled | needs_action | voided
+    #         (also "recorded" for legacy manual payments before provider abstraction)
+    status                  = Column(String, default="recorded", nullable=False)
+    voided_at               = Column(DateTime(timezone=True), nullable=True)
+    voided_reason           = Column(Text, nullable=True)
 
-    created_at         = Column(DateTime(timezone=True), server_default=func.now())
+    # Provider-agnostic fields (populated by whichever provider adapter handled the payment)
+    provider                = Column(String, default="manual", nullable=False, index=True)  # manual | mock | vopay | plooto | trolley | ...
+    provider_transaction_id = Column(String, nullable=True, index=True)
+    provider_status         = Column(String, nullable=True)   # raw status string from the provider
+    provider_fee            = Column(Numeric(15, 2), nullable=True)
+    provider_metadata       = Column(JSON, nullable=True)
+    failure_reason          = Column(Text, nullable=True)
+    needs_action_reason     = Column(Text, nullable=True)
+    settled_at              = Column(DateTime(timezone=True), nullable=True)
+
+    created_at              = Column(DateTime(timezone=True), server_default=func.now())
     updated_at         = Column(DateTime(timezone=True), onupdate=func.now())
+
+# ---------------------------------------------------------------------------
+# Payment Audit Log (added for bookkeeping v1 phase 2.5)
+# Every payment state transition and important action is logged here.
+# ---------------------------------------------------------------------------
+
+class PaymentAuditLog(Base):
+    __tablename__ = "payment_audit_log"
+
+    id            = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    payment_id    = Column(UUID(as_uuid=True), ForeignKey("payments.id"), nullable=False, index=True)
+    owner_id      = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+
+    event_type    = Column(String, nullable=False)  # created | status_changed | retry | cancelled | webhook_received | manual_action
+    from_status   = Column(String, nullable=True)
+    to_status     = Column(String, nullable=True)
+
+    # Who or what caused this event
+    actor_type    = Column(String, nullable=False)  # user | system | provider | webhook
+    actor_id      = Column(UUID(as_uuid=True), nullable=True)
+
+    details       = Column(JSON, nullable=True)
+    created_at    = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
 
