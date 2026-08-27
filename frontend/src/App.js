@@ -9,6 +9,7 @@ import PayrollLauncher from "./utils/payrollLauncher";
 import PayrollTaxes from "./pages/PayrollTaxes";
 import ArchivedForms from "./pages/ArchivedForms";
 import PD7AWorksheet from "./pages/PD7AWorksheet";
+import PaymentHistory from "./pages/PaymentHistory";
 import AuditLog from "./pages/AuditLog";
 import PayrollTaxPrintView from "./pages/PayrollTaxPrintView";
 import T4EmployerSlips from "./pages/T4EmployerSlips";
@@ -204,6 +205,7 @@ function AppLayout({ onLogout }) {
         <Route path="/payroll/taxes/filings" element={<PayrollTaxes />} />
         <Route path="/payroll/taxes/archived" element={<ArchivedForms />} />
         <Route path="/payroll/taxes/archived/:id" element={<PD7AWorksheet />} />
+      <Route path="/payroll/payments/history" element={<PaymentHistory />} />
         <Route path="/payroll/audit-log" element={<AuditLog />} />
         <Route path="/payroll/taxes/print" element={<PayrollTaxPrintView />} />
         <Route path="/payroll/taxes/t4-preview/employer" element={<T4EmployerSlips />} />
