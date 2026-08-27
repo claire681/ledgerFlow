@@ -41,6 +41,7 @@ from app.api.routes import employee_pay_items
 from app.api.routes import employee_deduction_items
 from app.api.routes import bank_accounts
 from app.api.routes import payments
+from app.api.routes import webhooks
 
 
 @asynccontextmanager
@@ -107,6 +108,7 @@ app.include_router(scenarios.router,    prefix="/api/v1")
 app.include_router(ai_context.router,   prefix="/api/v1")
 app.include_router(bank_accounts.router, prefix="/api/v1")
 app.include_router(payments.router, prefix="/api/v1")
+app.include_router(webhooks.router, prefix="/api/v1")
 app.include_router(snapshots.router,    prefix="/api/v1")
 app.include_router(preferences.router,  prefix="/api/v1")
 app.include_router(followup.router,     prefix="/api/v1")
