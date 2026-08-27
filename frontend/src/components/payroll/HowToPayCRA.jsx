@@ -344,8 +344,9 @@ export default function HowToPayCRA({ obligation }) {
               fontWeight: 500,
               marginBottom: 18,
             }}>
-              CRA's free My Payment service uses Interac Online to pay directly from your bank
-              account. Works with most major Canadian banks. Confirmation is instant.
+              CRA's free My Payment service lets you pay directly from your bank using
+              Interac Online or a Visa Debit / Debit Mastercard. Confirmation is instant.
+              Credit cards are not accepted.
             </div>
 
             <SectionTitle>You'll need</SectionTitle>
