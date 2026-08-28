@@ -7,6 +7,7 @@ calculations (engines are stateless pure functions).
 
 from typing import Optional
 from .base import PayrollEngine
+from .country_pack import CountryPack
 from .engines.canada import CanadaPayrollEngine
 from .engines.uk import UKPayrollEngine
 from .engines.australia import AustraliaPayrollEngine
@@ -23,6 +24,15 @@ ENGINE_REGISTRY = {
     "US": USAPayrollEngine(),
     "IE": IrelandPayrollEngine(),
 }
+
+
+# Validate every registered CountryPack at import time.
+# Any pack missing a required capability field fails LOUD here instead of
+# at payroll runtime. Engines that are not yet CountryPack subclasses are
+# skipped (backward-compatible).
+for _code, _engine in ENGINE_REGISTRY.items():
+    if isinstance(_engine, CountryPack):
+        _engine.__class__.validate_capabilities()
 
 
 def get_engine(country: str) -> PayrollEngine:
