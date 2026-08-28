@@ -21,6 +21,7 @@ from ....types import (
     EarningsInput,
 )
 from ....base import PayrollEngine
+from ....country_pack import CountryPack
 from . import cpp, ei, federal_tax, alberta, ontario
 
 
@@ -32,10 +33,21 @@ PROVINCIAL_TAX_HANDLERS = {
 }
 
 
-class CanadaPayrollEngine(PayrollEngine):
+class CanadaPayrollEngine(CountryPack):
     """Canadian payroll engine. Federal + provincial tax + CPP + EI."""
 
+    # PayrollEngine (legacy) attribute kept for supports_jurisdiction()
     country = "CA"
+
+    # CountryPack capability declaration (see docs/multi-country-naming.md)
+    country_code = "CA"                            # ISO 3166-1 alpha-2
+    currency = "CAD"                               # ISO 4217
+    default_locale = "en-CA"                       # BCP 47
+    supported_locales = ["en-CA", "fr-CA"]         # both official languages
+    supported_regions = ["CA-AB"]                  # only Alberta production-ready
+    tax_authority_name = "Canada Revenue Agency"
+    tax_authority_id = "cra"
+    date_format = "DD/MM/YYYY"
 
     def calculate(self, input: PayCalculationInput) -> PayCalculationResult:
         emp = input.employee
