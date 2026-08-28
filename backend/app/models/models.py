@@ -1268,6 +1268,10 @@ class Payment(Base):
     needs_action_reason     = Column(Text, nullable=True)
     settled_at              = Column(DateTime(timezone=True), nullable=True)
 
+    # Multi-country foundation: country + currency (ISO codes)
+    country_code            = Column(String(2), nullable=False, server_default='CA')   # ISO 3166-1 alpha-2
+    currency                = Column(String(3), nullable=False, server_default='CAD')  # ISO 4217
+
     # Session B1: idempotency + retry tracking
     idempotency_key         = Column(String, nullable=True, unique=True, index=True)
     retry_count             = Column(Integer, nullable=False, default=0, server_default='0')
