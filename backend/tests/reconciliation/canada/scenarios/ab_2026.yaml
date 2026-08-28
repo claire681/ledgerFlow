@@ -1,0 +1,52 @@
+# Alberta 2026 payroll reconciliation scenarios
+# Every scenario verified against CRA PDOC (Payroll Deductions Online Calculator)
+# https://www.canada.ca/en/revenue-agency/services/e-services/e-services-businesses/payroll-deductions-online-calculator.html
+#
+# Adding a new scenario:
+# 1. Enter the employee data into CRA PDOC
+# 2. Record the exact numbers CRA returns
+# 3. Copy the pattern below, fill in real values
+# 4. Set reconciled_date to today, reconciled_by to your name
+# 5. Run: pytest tests/reconciliation/canada/test_alberta_reconciliation.py
+# 6. If tests pass, commit. If not, debug Novala's engine.
+
+scenarios:
+  - id: ab_2026_low_income_biweekly
+    jurisdiction: CA-AB
+    tax_year: 2026
+    reconciled_against: CRA_PDOC
+    reconciled_date: 2026-07-18
+    reconciled_by: Claire (BrightCare)
+    notes: >
+      Migrated from legacy test_matrix.py AB_1_LOW.
+      $22/hr x 80hrs biweekly = $1760/pay, low income bracket.
+      Base CPP + BPA credit only, no CPP2 trigger.
+
+    employee:
+      age: 35
+      marital_status: single
+
+    income:
+      gross_per_period: 1760.00
+      pay_frequency: biweekly
+      pay_periods_per_year: 26
+
+    country_specific:
+      td1_federal_claim: 16452.00
+      td1_provincial_claim: 22769.00
+      cpp_exempt: false
+      ei_exempt: false
+      additional_withholding: 0.00
+
+    ytd_at_start:
+      pensionable_earnings: 0.00
+      insurable_earnings: 0.00
+      cpp_base_paid: 0.00
+      ei_paid: 0.00
+
+    expected:
+      cpp: 96.71
+      cpp2: 0.00
+      # TODO: fill in remaining expected values from CRA PDOC:
+      # ei, federal_tax, provincial_tax, net_pay
+      # (Values are in the legacy test_matrix.py - migrate them here)
