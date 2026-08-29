@@ -30,9 +30,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          # Production runs 3.14. If GitHub Actions has not released 3.14 yet,
-          # drop this to 3.13 or 3.12 - the tests use no version-specific syntax.
-          python-version: '3.14'
+          # CI runs 3.12 (production runs 3.14).
+          # pydantic-core does not yet support 3.14 (PyO3 0.21 max is 3.12).
+          # Bump to 3.14 once pydantic-core has 3.14 wheels available.
+          # Reconciliation tests use only stdlib Decimal/dataclass - identical
+          # behavior across 3.10-3.14.
+          python-version: '3.12'
 
       - name: Cache pip downloads
         uses: actions/cache@v4
