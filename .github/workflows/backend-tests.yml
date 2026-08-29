@@ -1,0 +1,64 @@
+name: Backend Tests
+
+# Runs pytest against the backend on every PR and every push to main.
+# Any test failure blocks the PR merge.
+#
+# Scope right now: reconciliation tests (Alberta vs CRA PDOC).
+# Extend by adding more pytest paths as more test suites come online.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
+
+jobs:
+  reconciliation:
+    name: Reconciliation Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # Production runs 3.14. If GitHub Actions has not released 3.14 yet,
+          # drop this to 3.13 or 3.12 - the tests use no version-specific syntax.
+          python-version: '3.14'
+
+      - name: Cache pip downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Ensure pyyaml installed (needed by reconciliation loader)
+        working-directory: backend
+        run: pip install pyyaml
+
+      - name: Run reconciliation tests
+        working-directory: backend
+        run: pytest tests/reconciliation/ -v --tb=short
+
+      - name: Report test summary
+        if: always()
+        working-directory: backend
+        run: |
+          echo "### Reconciliation Test Summary" >> $GITHUB_STEP_SUMMARY
+          pytest tests/reconciliation/ --tb=no -q 2>&1 | tail -20 >> $GITHUB_STEP_SUMMARY || true
