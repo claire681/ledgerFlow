@@ -1,16 +1,26 @@
 # Alberta 2026 payroll reconciliation scenarios
-# Every scenario verified against CRA PDOC (Payroll Deductions Online Calculator)
+# All scenarios verified against CRA PDOC (Payroll Deductions Online Calculator)
 # https://www.canada.ca/en/revenue-agency/services/e-services/e-services-businesses/payroll-deductions-online-calculator.html
 #
 # Adding a new scenario:
 # 1. Enter the employee data into CRA PDOC
 # 2. Record the exact numbers CRA returns
-# 3. Copy the pattern below, fill in real values
+# 3. Copy an existing scenario pattern below, fill in real values
 # 4. Set reconciled_date to today, reconciled_by to your name
-# 5. Run: pytest tests/reconciliation/canada/test_alberta_reconciliation.py
+# 5. Run: pytest tests/reconciliation/canada/test_alberta_reconciliation.py -v
 # 6. If tests pass, commit. If not, debug Novala's engine.
+#
+# Note on employee fields:
+#   The current Canadian payroll engine does not use employee.age or
+#   employee.marital_status directly - they're required framework fields for
+#   future use (e.g. CPP over-65 rules, marital-status-based credits).
+#   Use age=35 and marital_status=single as defaults if not relevant.
 
 scenarios:
+
+  # ==========================================================================
+  # AB_1_LOW - $22/hr x 80hrs biweekly, low income bracket
+  # ==========================================================================
   - id: ab_2026_low_income_biweekly
     jurisdiction: CA-AB
     tax_year: 2026
@@ -18,35 +28,182 @@ scenarios:
     reconciled_date: 2026-07-18
     reconciled_by: Claire (BrightCare)
     notes: >
-      Migrated from legacy test_matrix.py AB_1_LOW.
-      $22/hr x 80hrs biweekly = $1760/pay, low income bracket.
-      Base CPP + BPA credit only, no CPP2 trigger.
-
+      BrightCare Claire baseline. $22/hr x 80 hrs biweekly = $1760/pay,
+      low income bracket. Base CPP + BPA credit only, no CPP2 trigger.
     employee:
       age: 35
       marital_status: single
-
     income:
       gross_per_period: 1760.00
       pay_frequency: biweekly
       pay_periods_per_year: 26
-
     country_specific:
       td1_federal_claim: 16452.00
       td1_provincial_claim: 22769.00
       cpp_exempt: false
       ei_exempt: false
       additional_withholding: 0.00
-
     ytd_at_start:
       pensionable_earnings: 0.00
       insurable_earnings: 0.00
       cpp_base_paid: 0.00
       ei_paid: 0.00
-
     expected:
       cpp: 96.71
       cpp2: 0.00
-      # TODO: fill in remaining expected values from CRA PDOC:
-      # ei, federal_tax, provincial_tax, net_pay
-      # (Values are in the legacy test_matrix.py - migrate them here)
+      ei: 28.69
+      federal_tax: 132.17
+      provincial_tax: 60.71
+      net_pay: 1441.72
+
+  # ==========================================================================
+  # AB_2_MID - $80,000/yr semi-monthly, mid bracket
+  # ==========================================================================
+  - id: ab_2026_mid_income_semimonthly
+    jurisdiction: CA-AB
+    tax_year: 2026
+    reconciled_against: CRA_PDOC
+    reconciled_date: 2026-07-18
+    reconciled_by: Claire (BrightCare)
+    notes: >
+      $80k salary semi-monthly. Federal bracket 2 + Alberta bracket 2.
+    employee:
+      age: 35
+      marital_status: single
+    income:
+      gross_per_period: 3333.33
+      pay_frequency: semi_monthly
+      pay_periods_per_year: 24
+    country_specific:
+      td1_federal_claim: 16452.00
+      td1_provincial_claim: 22769.00
+      cpp_exempt: false
+      ei_exempt: false
+      additional_withholding: 0.00
+    ytd_at_start:
+      pensionable_earnings: 0.00
+      insurable_earnings: 0.00
+      cpp_base_paid: 0.00
+      ei_paid: 0.00
+    expected:
+      cpp: 189.66
+      cpp2: 0.00
+      ei: 54.33
+      federal_tax: 386.49
+      provincial_tax: 187.77
+      net_pay: 2515.08
+
+  # ==========================================================================
+  # AB_3_HIGH - $200,000/yr monthly, high bracket + K constants
+  # ==========================================================================
+  - id: ab_2026_high_income_monthly
+    jurisdiction: CA-AB
+    tax_year: 2026
+    reconciled_against: CRA_PDOC
+    reconciled_date: 2026-07-18
+    reconciled_by: Claire (BrightCare)
+    notes: >
+      $200k salary monthly. Federal bracket 3, Alberta bracket 4,
+      K constants applied. 1-3 cent difference from engine is within
+      T4127 Chapter 1 rounding tolerance.
+    employee:
+      age: 35
+      marital_status: single
+    income:
+      gross_per_period: 16666.67
+      pay_frequency: monthly
+      pay_periods_per_year: 12
+    country_specific:
+      td1_federal_claim: 16452.00
+      td1_provincial_claim: 22769.00
+      cpp_exempt: false
+      ei_exempt: false
+      additional_withholding: 0.00
+    ytd_at_start:
+      pensionable_earnings: 0.00
+      insurable_earnings: 0.00
+      cpp_base_paid: 0.00
+      ei_paid: 0.00
+    expected:
+      cpp: 974.31
+      cpp2: 0.00
+      ei: 271.67
+      federal_tax: 3215.15
+      provincial_tax: 1449.30
+      net_pay: 10756.24
+
+  # ==========================================================================
+  # AB_4_CPP2_TRIGGER - CPP+EI maxed, CPP2 starts (T4127 Chapter 4 K2 rule)
+  # ==========================================================================
+  - id: ab_2026_cpp2_trigger_semimonthly
+    jurisdiction: CA-AB
+    tax_year: 2026
+    reconciled_against: CRA_PDOC
+    reconciled_date: 2026-07-18
+    reconciled_by: Claire (BrightCare)
+    notes: >
+      CPP+EI maxed. CPP2 starts. Tests T4127 Chapter 4 K2 max rule.
+      YTD pensionable near ceiling. From T4127 Appendix 1 example.
+    employee:
+      age: 35
+      marital_status: single
+    income:
+      gross_per_period: 4200.00
+      pay_frequency: semi_monthly
+      pay_periods_per_year: 24
+    country_specific:
+      td1_federal_claim: 16452.00
+      td1_provincial_claim: 22769.00
+      cpp_exempt: false
+      ei_exempt: false
+      additional_withholding: 0.00
+    ytd_at_start:
+      pensionable_earnings: 71400.00
+      insurable_earnings: 68900.00
+      cpp_base_paid: 3519.45
+      ei_paid: 1123.07
+    expected:
+      cpp: 0.00
+      cpp2: 168.00
+      ei: 0.00
+      federal_tax: 536.25
+      provincial_tax: 260.83
+      net_pay: 3234.92
+
+  # ==========================================================================
+  # AB_5_CLAIM_ZERO - Non-resident, claim code 0, K1 = 0
+  # ==========================================================================
+  - id: ab_2026_claim_zero_biweekly
+    jurisdiction: CA-AB
+    tax_year: 2026
+    reconciled_against: CRA_PDOC
+    reconciled_date: 2026-07-18
+    reconciled_by: Claire (BrightCare)
+    notes: >
+      Non-resident. Claim code 0. K1 = 0, K2 still applies.
+      Same gross as AB_1 but no personal amount credits.
+    employee:
+      age: 35
+      marital_status: single
+    income:
+      gross_per_period: 1760.00
+      pay_frequency: biweekly
+      pay_periods_per_year: 26
+    country_specific:
+      td1_federal_claim: 0.00
+      td1_provincial_claim: 0.00
+      cpp_exempt: false
+      ei_exempt: false
+      additional_withholding: 0.00
+    ytd_at_start:
+      pensionable_earnings: 0.00
+      insurable_earnings: 0.00
+      cpp_base_paid: 0.00
+      ei_paid: 0.00
+    expected:
+      cpp: 96.71
+      cpp2: 0.00
+      ei: 28.69
+      federal_tax: 220.76
+      provincial_tax: 130.77
+      net_pay: 1283.07
