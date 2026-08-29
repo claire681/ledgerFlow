@@ -658,6 +658,13 @@ class Employee(Base):
     # Tax info (country-specific JSONB)
     tax_info = Column(JSONB, nullable=True, default=dict)
 
+    # Multi-country employment (Phase 1 foundation, see docs/multi-country-naming.md)
+    # Canonical ISO fields. Legacy 'country' and 'province_or_state' stay as
+    # free-form display strings for backward compatibility.
+    country_code = Column(String(2), nullable=False, server_default='CA')       # ISO 3166-1 alpha-2
+    region_code = Column(String(10), nullable=True)                              # ISO 3166-2 (e.g. 'CA-AB')
+    tax_residency = Column(String(2), nullable=False, server_default='CA')       # ISO 3166-1 alpha-2
+
     # Emergency contact
     emergency_contact_name = Column(String, nullable=True)
     emergency_contact_relationship = Column(String, nullable=True)
@@ -1271,6 +1278,18 @@ class Payment(Base):
     # Multi-country foundation: country + currency (ISO codes)
     country_code            = Column(String(2), nullable=False, server_default='CA')   # ISO 3166-1 alpha-2
     currency                = Column(String(3), nullable=False, server_default='CAD')  # ISO 4217
+
+    # FX tracking for cross-currency payments (Phase 1 foundation).
+    # For same-currency payments: source_currency = currency and fx_rate = 1.0.
+    # For cross-currency (e.g. CAD employer paying USD employee):
+    #   source_amount + source_currency = what employer's account was debited
+    #   amount + currency = what employee received (destination)
+    #   fx_rate = destination units per source unit
+    source_currency       = Column(String(3), nullable=True)                          # ISO 4217, what employer was debited
+    source_amount         = Column(Numeric(15, 2), nullable=True)                     # amount debited from source account
+    fx_rate               = Column(Numeric(15, 8), nullable=True)                     # exchange rate (destination per source)
+    fx_fee                = Column(Numeric(15, 2), nullable=True)                     # fee charged by FX provider
+    fx_provider           = Column(String, nullable=True)                             # which provider did the FX
 
     # Session B1: idempotency + retry tracking
     idempotency_key         = Column(String, nullable=True, unique=True, index=True)
