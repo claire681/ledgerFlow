@@ -24,6 +24,7 @@ from ...types import (
     EarningsInput,
 )
 from ...base import PayrollEngine
+from ...country_pack import CountryPack
 from . import federal_tax, fica, futa
 from .states import california, illinois, texas
 
@@ -45,10 +46,21 @@ STATE_TAX_HANDLERS = {
 }
 
 
-class USAPayrollEngine(PayrollEngine):
+class USAPayrollEngine(CountryPack):
     """US payroll engine. Federal + FICA + FUTA + state."""
 
+    # PayrollEngine (legacy) attribute kept for supports_jurisdiction()
     country = "US"
+
+    # CountryPack capability declaration (see docs/multi-country-naming.md)
+    country_code = "US"  # ISO 3166-1 alpha-2
+    currency = "USD"    # ISO 4217
+    default_locale = "en-US"      # BCP 47
+    supported_locales = ["en-US"]  # Languages this engine speaks
+    supported_regions = []                        # ISO 3166-2 - empty until reconciliation done
+    tax_authority_name = "Internal Revenue Service"
+    tax_authority_id = "irs"
+    date_format = "MM/DD/YYYY"
 
     def calculate(self, input: PayCalculationInput) -> PayCalculationResult:
         emp = input.employee

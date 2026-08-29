@@ -21,13 +21,25 @@ from ...types import (
     EarningsInput,
 )
 from ...base import PayrollEngine
+from ...country_pack import CountryPack
 from . import ni, paye
 
 
-class UKPayrollEngine(PayrollEngine):
+class UKPayrollEngine(CountryPack):
     """UK payroll engine (England, Wales, Northern Ireland)."""
 
+    # PayrollEngine (legacy) attribute kept for supports_jurisdiction()
     country = "GB"
+
+    # CountryPack capability declaration (see docs/multi-country-naming.md)
+    country_code = "GB"  # ISO 3166-1 alpha-2
+    currency = "GBP"    # ISO 4217
+    default_locale = "en-GB"      # BCP 47
+    supported_locales = ["en-GB", "cy-GB"]  # Languages this engine speaks
+    supported_regions = []                        # ISO 3166-2 - empty until reconciliation done
+    tax_authority_name = "HM Revenue and Customs"
+    tax_authority_id = "hmrc"
+    date_format = "DD/MM/YYYY"
 
     def calculate(self, input: PayCalculationInput) -> PayCalculationResult:
         emp = input.employee

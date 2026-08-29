@@ -20,13 +20,25 @@ from ...types import (
     EarningsInput,
 )
 from ...base import PayrollEngine
+from ...country_pack import CountryPack
 from . import paye, usc, prsi
 
 
-class IrelandPayrollEngine(PayrollEngine):
+class IrelandPayrollEngine(CountryPack):
     """Ireland payroll engine. PAYE + USC + PRSI."""
 
+    # PayrollEngine (legacy) attribute kept for supports_jurisdiction()
     country = "IE"
+
+    # CountryPack capability declaration (see docs/multi-country-naming.md)
+    country_code = "IE"  # ISO 3166-1 alpha-2
+    currency = "EUR"    # ISO 4217
+    default_locale = "en-IE"      # BCP 47
+    supported_locales = ["en-IE", "ga-IE"]  # Languages this engine speaks
+    supported_regions = []                        # ISO 3166-2 - empty until reconciliation done
+    tax_authority_name = "Revenue Commissioners"
+    tax_authority_id = "revenue"
+    date_format = "DD/MM/YYYY"
 
     def calculate(self, input: PayCalculationInput) -> PayCalculationResult:
         emp = input.employee
