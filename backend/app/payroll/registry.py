@@ -13,6 +13,12 @@ from .engines.uk import UKPayrollEngine
 from .engines.australia import AustraliaPayrollEngine
 from .engines.usa import USAPayrollEngine
 from .engines.ireland import IrelandPayrollEngine
+from .engines.new_zealand import NewZealandPayrollEngine
+from .engines.singapore import SingaporePayrollEngine
+from .engines.japan import JapanPayrollEngine
+from .engines.germany import GermanyPayrollEngine
+from .engines.france import FrancePayrollEngine
+from .engines.south_africa import SouthAfricaPayrollEngine
 
 
 # ISO 3166-1 alpha-2 country codes
@@ -23,6 +29,12 @@ ENGINE_REGISTRY = {
     "AU": AustraliaPayrollEngine(),
     "US": USAPayrollEngine(),
     "IE": IrelandPayrollEngine(),
+    "NZ": NewZealandPayrollEngine(),
+    "SG": SingaporePayrollEngine(),
+    "JP": JapanPayrollEngine(),
+    "DE": GermanyPayrollEngine(),
+    "FR": FrancePayrollEngine(),
+    "ZA": SouthAfricaPayrollEngine(),
 }
 
 

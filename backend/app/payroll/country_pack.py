@@ -50,20 +50,40 @@ class CountryPack(PayrollEngine):
 
     @classmethod
     def validate_capabilities(cls) -> None:
-        """Check that all required capability fields are set.
+        """Check that all required capability fields are properly set.
 
         Called at registration time. Raises ValueError with a clear
-        message listing every missing field.
+        message listing every field that is missing or malformed.
+
+        Validation rules:
+        - Required strings must be non-empty
+        - supported_locales must have at least one entry
+        - supported_regions must be a list (empty list is valid; it means
+          "engine exists but no regions verified against official calculator
+          yet" - a legitimate honest declaration for un-reconciled engines)
         """
-        required = [
-            "country_code", "currency", "default_locale",
-            "supported_locales", "supported_regions", "tax_authority_name",
+        required_strings = [
+            "country_code", "currency", "default_locale", "tax_authority_name",
         ]
-        missing = [f for f in required if not getattr(cls, f, None)]
-        if missing:
+        problems = []
+
+        for f in required_strings:
+            val = getattr(cls, f, None)
+            if not val or not isinstance(val, str):
+                problems.append(f)
+
+        val = getattr(cls, "supported_locales", None)
+        if not val or not isinstance(val, list):
+            problems.append("supported_locales (must have at least one entry)")
+
+        val = getattr(cls, "supported_regions", None)
+        if not isinstance(val, list):
+            problems.append("supported_regions (must be a list, may be empty)")
+
+        if problems:
             raise ValueError(
-                f"CountryPack '{cls.__name__}' missing required capability fields: "
-                f"{', '.join(missing)}. See docs/multi-country-naming.md."
+                f"CountryPack '{cls.__name__}' has invalid capability fields: "
+                f"{', '.join(problems)}. See docs/multi-country-naming.md."
             )
         # Consistency check with PayrollEngine's country attribute
         if getattr(cls, "country", "") and cls.country != cls.country_code:

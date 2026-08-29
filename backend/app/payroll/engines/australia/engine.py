@@ -20,14 +20,26 @@ from ...types import (
     EarningsInput,
 )
 from ...base import PayrollEngine
+from ...country_pack import CountryPack
 from . import paygw, medicare_levy
 from . import super as super_module  # 'super' is a Python builtin
 
 
-class AustraliaPayrollEngine(PayrollEngine):
+class AustraliaPayrollEngine(CountryPack):
     """Australia payroll engine."""
 
+    # PayrollEngine (legacy) attribute kept for supports_jurisdiction()
     country = "AU"
+
+    # CountryPack capability declaration (see docs/multi-country-naming.md)
+    country_code = "AU"  # ISO 3166-1 alpha-2
+    currency = "AUD"    # ISO 4217
+    default_locale = "en-AU"      # BCP 47
+    supported_locales = ["en-AU"]  # Languages this engine speaks
+    supported_regions = []                        # ISO 3166-2 - empty until reconciliation done
+    tax_authority_name = "Australian Taxation Office"
+    tax_authority_id = "ato"
+    date_format = "DD/MM/YYYY"
 
     def calculate(self, input: PayCalculationInput) -> PayCalculationResult:
         emp = input.employee
