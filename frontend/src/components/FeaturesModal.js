@@ -185,7 +185,7 @@ export default function FeaturesModal({ open, onClose, onSeePricing }) {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <img src="/logo512.png" width="26" height="26" alt="Novala" style={{ borderRadius: 6, display: "block" }} />
+              <img src="/logo-mark-header.png" width="26" height="26" alt="Novala" style={{ borderRadius: 6, display: "block" }} />
               <span style={{ fontSize: 16, fontWeight: 800, color: TEXT_INK, letterSpacing: "-0.01em" }}>Novala</span>
             </div>
             <nav style={{ display: "flex", gap: 22 }}>

@@ -7,11 +7,11 @@ import { Check, ChevronDown, ChevronUp, Sparkles, Star, ShieldCheck, MessageSqua
 
 import MarketingHeader from "../components/MarketingHeader";
 import NovaPill from "../components/NovaPill";
-// === Novala logo (real /logo512.png) ===
+// === Novala logo (real /logo-mark-header.png) ===
 function NovalaLogo({ size = 32, color = "#0E1A1A", showWordmark = true }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-      <img src="/logo512.png" alt="Novala" style={{ width: size, height: size, objectFit: "contain", display: "block" }} />
+      <img src="/logo-mark-header.png" alt="Novala" style={{ width: size, height: size, objectFit: "contain", display: "block" }} />
       {showWordmark && (
         <span style={{ color: color, fontWeight: 800, fontSize: Math.round(size * 0.75), letterSpacing: "-0.02em" }}>Novala</span>
       )}

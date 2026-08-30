@@ -17,7 +17,7 @@ const FONT = "'Plus Jakarta Sans', system-ui, sans-serif";
 function NovalaLogo({ size = 32, showWordmark = true }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-      <img src="/logo512.png" alt="Novala" style={{ width: size, height: size, objectFit: "contain", display: "block" }} />
+      <img src="/logo-mark-header.png" alt="Novala" style={{ width: size, height: size, objectFit: "contain", display: "block" }} />
       {showWordmark && <span style={{ color: INK, fontWeight: 800, fontSize: Math.round(size * 0.75), letterSpacing: "-0.02em" }}>Novala</span>}
     </span>
   );

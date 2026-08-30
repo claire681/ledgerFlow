@@ -112,7 +112,7 @@ export default function PayrollGuide({ embeddedInPanel = false, onClose }) {
         {embeddedInPanel && (
           <div style={{ textAlign: "center", marginBottom: 24, paddingTop: 6 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-              <img src="/logo512.png" alt="Novala" style={{ width: SZ.logoSize, height: SZ.logoSize, borderRadius: 10, objectFit: "contain", background: "#fff", padding: 4, boxShadow: "0 2px 8px rgba(16,26,43,0.08)" }} />
+              <img src="/logo-mark-header.png" alt="Novala" style={{ width: SZ.logoSize, height: SZ.logoSize, borderRadius: 10, objectFit: "contain", background: "#fff", padding: 4, boxShadow: "0 2px 8px rgba(16,26,43,0.08)" }} />
               <span style={{ fontSize: SZ.brandName, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em" }}>Novala</span>
             </div>
           </div>
