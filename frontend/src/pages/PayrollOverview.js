@@ -841,7 +841,7 @@ function ThingsYouNeedPanel({ onClose }) {
           {/* Brand */}
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 9 }}>
-              <img src="/logo512.png" alt="Novala" style={{ width: 38, height: 38, borderRadius: 9, objectFit: "contain", background: "#fff", padding: 3, boxShadow: "0 2px 8px rgba(16,26,43,0.08)" }} />
+              <img src="/logo-mark-header.png" alt="Novala" style={{ width: 38, height: 38, borderRadius: 9, objectFit: "contain", background: "#fff", padding: 3, boxShadow: "0 2px 8px rgba(16,26,43,0.08)" }} />
               <span style={{ fontSize: 19, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em" }}>Novala</span>
             </div>
           </div>
@@ -1172,7 +1172,7 @@ function SettingUpPayrollPanel({ onClose, onConnectBank }) {
         <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
           {/* Brand row */}
           <div style={{ padding: "18px 22px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid " + C.lineSoft }}>
-            <img src="/logo512.png" alt="Novala" style={{ width: 28, height: 28, borderRadius: 5, objectFit: "contain", background: "#fff", padding: 2, border: "1px solid " + C.line }} />
+            <img src="/logo-mark-header.png" alt="Novala" style={{ width: 28, height: 28, borderRadius: 5, objectFit: "contain", background: "#fff", padding: 2, border: "1px solid " + C.line }} />
             <span style={{ fontSize: 14, fontWeight: 600, color: C.ink, letterSpacing: "-0.01em" }}>Novala Payroll</span>
           </div>
 

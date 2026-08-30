@@ -297,7 +297,7 @@ function Header() {
     <header style={{ background: NIGHT, borderBottom: "0.5px solid " + BORDER_ON_DARK, padding: "16px 0" }}>
       <div style={{ ...CONTAINER, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => navigate("/")}>
-          <img src="/logo512.png" width="28" height="28" alt="Novala" style={{ borderRadius: 7, display: "block" }} />
+          <img src="/logo-mark-header.png" width="28" height="28" alt="Novala" style={{ borderRadius: 7, display: "block" }} />
           <span style={{ fontSize: 18, fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.01em" }}>Novala</span>
         </div>
         <nav style={{ display: "flex", alignItems: "center", gap: 28 }}>
@@ -852,7 +852,7 @@ function Footer() {
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", gap: 40, marginBottom: 40 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-              <img src="/logo512.png" width="28" height="28" alt="Novala" style={{ borderRadius: 7, display: "block" }} />
+              <img src="/logo-mark-header.png" width="28" height="28" alt="Novala" style={{ borderRadius: 7, display: "block" }} />
               <span style={{ fontSize: 18, fontWeight: 800, color: "#FFFFFF" }}>Novala</span>
             </div>
             <p style={{ fontSize: 13, color: "rgba(240, 250, 248, 0.6)", lineHeight: 1.6, margin: 0, maxWidth: 280 }}>
