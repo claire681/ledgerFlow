@@ -56,7 +56,7 @@ def calculate_cpp(
     if cpp_exempt or province == "QC":
         return (Decimal("0"), Decimal("0"), ytd_pensionable_earnings)
 
-    period_exemption = _q(BASIC_EXEMPTION / Decimal(pay_periods_per_year))
+    period_exemption = BASIC_EXEMPTION / Decimal(pay_periods_per_year)
 
     # Pensionable earnings this period (cannot go below zero)
     period_pensionable = max(gross_pay - period_exemption, Decimal("0"))
