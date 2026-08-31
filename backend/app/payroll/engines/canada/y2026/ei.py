@@ -24,6 +24,7 @@ from typing import Tuple, Optional
 EI_RATE_EMPLOYEE_2026 = Decimal("0.0163")
 EI_EMPLOYER_MULTIPLIER = Decimal("1.40")
 MAX_INSURABLE_EARNINGS_2026 = Decimal("68900.00")
+MAX_EI_PREMIUM_ANNUAL_2026 = Decimal("1123.07")
 
 
 def _q(amount: Decimal) -> Decimal:
@@ -35,6 +36,7 @@ def calculate_ei(
     ytd_insurable_earnings: Decimal,
     ei_exempt: bool = False,
     province: Optional[str] = None,
+    ytd_ei_paid: Decimal = Decimal("0"),
 ) -> Tuple[Decimal, Decimal, Decimal]:
     """Calculate EI for one pay period.
 
@@ -60,6 +62,15 @@ def calculate_ei(
     new_ytd = ytd_insurable_earnings + period_insurable
 
     ei_employee = _q(period_insurable * EI_RATE_EMPLOYEE_2026)
+    # T4127 Chapter 5: cap total annual EI at MAX_EI_PREMIUM_ANNUAL_2026.
+    # (a) If YTD + this period would exceed max, cap at residual.
+    # (b) If insurable is capped at 0 but YTD paid is below max (prior
+    #     rounding), still owe the residual to reach exact max premium.
+    total_ei_including_this = ytd_ei_paid + ei_employee
+    if total_ei_including_this > MAX_EI_PREMIUM_ANNUAL_2026:
+        ei_employee = max(MAX_EI_PREMIUM_ANNUAL_2026 - ytd_ei_paid, Decimal("0"))
+    elif ei_employee == 0 and ytd_ei_paid < MAX_EI_PREMIUM_ANNUAL_2026 and ytd_insurable_earnings >= MAX_INSURABLE_EARNINGS_2026:
+        ei_employee = MAX_EI_PREMIUM_ANNUAL_2026 - ytd_ei_paid
     ei_employer = _q(ei_employee * EI_EMPLOYER_MULTIPLIER)
 
     return (ei_employee, ei_employer, new_ytd)
