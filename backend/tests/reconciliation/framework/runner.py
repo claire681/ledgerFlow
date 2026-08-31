@@ -76,6 +76,7 @@ def _canada_adapter(scenario: Scenario) -> dict[str, Decimal]:
         ytd_insurable_earnings=ytd.get("insurable_earnings", Decimal("0")),
         ei_exempt=bool(cs.get("ei_exempt", False)),
         province=region,
+        ytd_ei_paid=ytd.get("ei_paid", Decimal("0")),
     )
 
     additional_withholding = Decimal(str(cs.get("additional_withholding", 0)))

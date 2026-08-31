@@ -75,6 +75,7 @@ class CanadaPayrollEngine(CountryPack):
             ytd_insurable_earnings=ytd.ytd_insurable_earnings,
             ei_exempt=emp.ei_exempt,
             province=juris.subnational,
+            ytd_ei_paid=getattr(ytd, "ytd_ei_paid", Decimal("0")),
         )
 
         # 4. Federal income tax
