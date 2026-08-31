@@ -1,209 +1,3129 @@
-# Alberta 2026 payroll reconciliation scenarios
-# All scenarios verified against CRA PDOC (Payroll Deductions Online Calculator)
-# https://www.canada.ca/en/revenue-agency/services/e-services/e-services-businesses/payroll-deductions-online-calculator.html
-#
-# Adding a new scenario:
-# 1. Enter the employee data into CRA PDOC
-# 2. Record the exact numbers CRA returns
-# 3. Copy an existing scenario pattern below, fill in real values
-# 4. Set reconciled_date to today, reconciled_by to your name
-# 5. Run: pytest tests/reconciliation/canada/test_alberta_reconciliation.py -v
-# 6. If tests pass, commit. If not, debug Novala's engine.
-#
-# Note on employee fields:
-#   The current Canadian payroll engine does not use employee.age or
-#   employee.marital_status directly - they're required framework fields for
-#   future use (e.g. CPP over-65 rules, marital-status-based credits).
-#   Use age=35 and marital_status=single as defaults if not relevant.
-
 scenarios:
+- id: ab_2026_low_income_biweekly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-07-18
+  reconciled_by: Claire (BrightCare)
+  notes: 'BrightCare Claire baseline. $22/hr x 80 hrs biweekly = $1760/pay, low income bracket. Base CPP + BPA credit only, no CPP2 trigger.
 
-  # ==========================================================================
-  # AB_1_LOW - $22/hr x 80hrs biweekly, low income bracket
-  # ==========================================================================
-  - id: ab_2026_low_income_biweekly
-    jurisdiction: CA-AB
-    tax_year: 2026
-    reconciled_against: CRA_PDOC
-    reconciled_date: 2026-07-18
-    reconciled_by: Claire (BrightCare)
-    notes: >
-      BrightCare Claire baseline. $22/hr x 80 hrs biweekly = $1760/pay,
-      low income bracket. Base CPP + BPA credit only, no CPP2 trigger.
-    employee:
-      age: 35
-      marital_status: single
-    income:
-      gross_per_period: 1760.00
-      pay_frequency: biweekly
-      pay_periods_per_year: 26
-    country_specific:
-      td1_federal_claim: 16452.00
-      td1_provincial_claim: 22769.00
-      cpp_exempt: false
-      ei_exempt: false
-      additional_withholding: 0.00
-    ytd_at_start:
-      pensionable_earnings: 0.00
-      insurable_earnings: 0.00
-      cpp_base_paid: 0.00
-      ei_paid: 0.00
-    expected:
-      cpp: 96.71
-      cpp2: 0.00
-      ei: 28.69
-      federal_tax: 132.17
-      provincial_tax: 60.71
-      net_pay: 1441.72
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1760.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 96.71
+    cpp2: 0.0
+    ei: 28.69
+    federal_tax: 132.17
+    provincial_tax: 60.71
+    net_pay: 1441.72
+- id: ab_2026_mid_income_semimonthly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-07-18
+  reconciled_by: Claire (BrightCare)
+  notes: '$80k salary semi-monthly. Federal bracket 2 + Alberta bracket 2.
 
-  # ==========================================================================
-  # AB_2_MID - $80,000/yr semi-monthly, mid bracket
-  # ==========================================================================
-  - id: ab_2026_mid_income_semimonthly
-    jurisdiction: CA-AB
-    tax_year: 2026
-    reconciled_against: CRA_PDOC
-    reconciled_date: 2026-07-18
-    reconciled_by: Claire (BrightCare)
-    notes: >
-      $80k salary semi-monthly. Federal bracket 2 + Alberta bracket 2.
-    employee:
-      age: 35
-      marital_status: single
-    income:
-      gross_per_period: 3333.33
-      pay_frequency: semi_monthly
-      pay_periods_per_year: 24
-    country_specific:
-      td1_federal_claim: 16452.00
-      td1_provincial_claim: 22769.00
-      cpp_exempt: false
-      ei_exempt: false
-      additional_withholding: 0.00
-    ytd_at_start:
-      pensionable_earnings: 0.00
-      insurable_earnings: 0.00
-      cpp_base_paid: 0.00
-      ei_paid: 0.00
-    expected:
-      cpp: 189.66
-      cpp2: 0.00
-      ei: 54.33
-      federal_tax: 386.49
-      provincial_tax: 187.77
-      net_pay: 2515.08
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 3333.33
+    pay_frequency: semi_monthly
+    pay_periods_per_year: 24
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 189.66
+    cpp2: 0.0
+    ei: 54.33
+    federal_tax: 386.49
+    provincial_tax: 187.77
+    net_pay: 2515.08
+- id: ab_2026_high_income_monthly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-07-18
+  reconciled_by: Claire (BrightCare)
+  notes: '$200k salary monthly. Federal bracket 3, Alberta bracket 4, K constants applied. 1-3 cent difference from engine is within T4127 Chapter 1 rounding tolerance.
 
-  # ==========================================================================
-  # AB_3_HIGH - $200,000/yr monthly, high bracket + K constants
-  # ==========================================================================
-  - id: ab_2026_high_income_monthly
-    jurisdiction: CA-AB
-    tax_year: 2026
-    reconciled_against: CRA_PDOC
-    reconciled_date: 2026-07-18
-    reconciled_by: Claire (BrightCare)
-    notes: >
-      $200k salary monthly. Federal bracket 3, Alberta bracket 4,
-      K constants applied. 1-3 cent difference from engine is within
-      T4127 Chapter 1 rounding tolerance.
-    employee:
-      age: 35
-      marital_status: single
-    income:
-      gross_per_period: 16666.67
-      pay_frequency: monthly
-      pay_periods_per_year: 12
-    country_specific:
-      td1_federal_claim: 16452.00
-      td1_provincial_claim: 22769.00
-      cpp_exempt: false
-      ei_exempt: false
-      additional_withholding: 0.00
-    ytd_at_start:
-      pensionable_earnings: 0.00
-      insurable_earnings: 0.00
-      cpp_base_paid: 0.00
-      ei_paid: 0.00
-    expected:
-      cpp: 974.31
-      cpp2: 0.00
-      ei: 271.67
-      federal_tax: 3215.15
-      provincial_tax: 1449.30
-      net_pay: 10756.24
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 16666.67
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 974.31
+    cpp2: 0.0
+    ei: 271.67
+    federal_tax: 3215.15
+    provincial_tax: 1449.3
+    net_pay: 10756.24
+- id: ab_2026_cpp2_trigger_semimonthly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-07-18
+  reconciled_by: Claire (BrightCare)
+  notes: 'CPP+EI maxed. CPP2 starts. Tests T4127 Chapter 4 K2 max rule. YTD pensionable near ceiling. From T4127 Appendix 1 example.
 
-  # ==========================================================================
-  # AB_4_CPP2_TRIGGER - CPP+EI maxed, CPP2 starts (T4127 Chapter 4 K2 rule)
-  # ==========================================================================
-  - id: ab_2026_cpp2_trigger_semimonthly
-    jurisdiction: CA-AB
-    tax_year: 2026
-    reconciled_against: CRA_PDOC
-    reconciled_date: 2026-07-18
-    reconciled_by: Claire (BrightCare)
-    notes: >
-      CPP+EI maxed. CPP2 starts. Tests T4127 Chapter 4 K2 max rule.
-      YTD pensionable near ceiling. From T4127 Appendix 1 example.
-    employee:
-      age: 35
-      marital_status: single
-    income:
-      gross_per_period: 4200.00
-      pay_frequency: semi_monthly
-      pay_periods_per_year: 24
-    country_specific:
-      td1_federal_claim: 16452.00
-      td1_provincial_claim: 22769.00
-      cpp_exempt: false
-      ei_exempt: false
-      additional_withholding: 0.00
-    ytd_at_start:
-      pensionable_earnings: 71400.00
-      insurable_earnings: 68900.00
-      cpp_base_paid: 3519.45
-      ei_paid: 1123.07
-    expected:
-      cpp: 0.00
-      cpp2: 168.00
-      ei: 0.00
-      federal_tax: 536.25
-      provincial_tax: 260.83
-      net_pay: 3234.92
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 4200.0
+    pay_frequency: semi_monthly
+    pay_periods_per_year: 24
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 71400.0
+    insurable_earnings: 68900.0
+    cpp_base_paid: 3519.45
+    ei_paid: 1123.07
+  expected:
+    cpp: 0.0
+    cpp2: 168.0
+    ei: 0.0
+    federal_tax: 536.25
+    provincial_tax: 260.83
+    net_pay: 3234.92
+- id: ab_2026_claim_zero_biweekly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-07-18
+  reconciled_by: Claire (BrightCare)
+  notes: 'Non-resident. Claim code 0. K1 = 0, K2 still applies. Same gross as AB_1 but no personal amount credits.
 
-  # ==========================================================================
-  # AB_5_CLAIM_ZERO - Non-resident, claim code 0, K1 = 0
-  # ==========================================================================
-  - id: ab_2026_claim_zero_biweekly
-    jurisdiction: CA-AB
-    tax_year: 2026
-    reconciled_against: CRA_PDOC
-    reconciled_date: 2026-07-18
-    reconciled_by: Claire (BrightCare)
-    notes: >
-      Non-resident. Claim code 0. K1 = 0, K2 still applies.
-      Same gross as AB_1 but no personal amount credits.
-    employee:
-      age: 35
-      marital_status: single
-    income:
-      gross_per_period: 1760.00
-      pay_frequency: biweekly
-      pay_periods_per_year: 26
-    country_specific:
-      td1_federal_claim: 0.00
-      td1_provincial_claim: 0.00
-      cpp_exempt: false
-      ei_exempt: false
-      additional_withholding: 0.00
-    ytd_at_start:
-      pensionable_earnings: 0.00
-      insurable_earnings: 0.00
-      cpp_base_paid: 0.00
-      ei_paid: 0.00
-    expected:
-      cpp: 96.71
-      cpp2: 0.00
-      ei: 28.69
-      federal_tax: 220.76
-      provincial_tax: 130.77
-      net_pay: 1283.07
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1760.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 0.0
+    td1_provincial_claim: 0.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 96.71
+    cpp2: 0.0
+    ei: 28.69
+    federal_tax: 220.76
+    provincial_tax: 130.77
+    net_pay: 1283.07
+- id: ab_2026_weekly_midincome
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-30
+  reconciled_by: Claire (BrightCare)
+  notes: '$1500 weekly pay in Alberta, claim code 1/1. Base CPP + BPA credit, no CPP2 trigger, no YTD amounts. Weekly frequency baseline.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1500.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 85.25
+    cpp2: 0.0
+    ei: 24.45
+    federal_tax: 170.57
+    provincial_tax: 82.86
+    net_pay: 1136.87
+- id: ab_2026_monthly_highincome_v2
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-30
+  reconciled_by: Claire (BrightCare)
+  notes: '$8500 monthly ($102k annually) in Alberta, claim code 1/1. Federal bracket 3+ tax rates, CPP hits max within year. Monthly frequency baseline for high income.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 8500.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 488.4
+    cpp2: 0.0
+    ei: 138.55
+    federal_tax: 1145.06
+    provincial_tax: 557.05
+    net_pay: 6170.94
+- id: ab_2026_semimonthly_low
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-30
+  reconciled_by: Claire (BrightCare)
+  notes: '$1200 semi-monthly ($28.8k annually) in Alberta, claim code 1/1. Low income, bracket 1 federal and provincial tax.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1200.0
+    pay_frequency: semi_monthly
+    pay_periods_per_year: 24
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 62.72
+    cpp2: 0.0
+    ei: 19.56
+    federal_tax: 51.76
+    provincial_tax: 13.52
+    net_pay: 1052.44
+- id: ab_2026_biweekly_high
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-30
+  reconciled_by: Claire (BrightCare)
+  notes: '$3800 bi-weekly ($98.8k annually) in Alberta, claim code 1/1. Federal bracket 3 boundary, tests bi-weekly divisor precision.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 3800.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 218.09
+    cpp2: 0.0
+    ei: 61.94
+    federal_tax: 503.51
+    provincial_tax: 244.91
+    net_pay: 2771.55
+- id: ab_2026_weekly_low
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-30
+  reconciled_by: Claire (BrightCare)
+  notes: '$800 weekly ($41.6k annually) in Alberta, claim code 1/1. Low income bracket 1 both federal and Alberta, weekly frequency.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 800.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 43.6
+    cpp2: 0.0
+    ei: 13.04
+    federal_tax: 55.74
+    provincial_tax: 24.44
+    net_pay: 663.18
+- id: ab_2026_daily_50k
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-30
+  reconciled_by: Claire (BrightCare)
+  notes: '$208.33 daily (~$50k annually) in Alberta. Tests daily pay frequency (240 periods/year) at same income as other freqs.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 208.33
+    pay_frequency: daily
+    pay_periods_per_year: 240
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 11.53
+    cpp2: 0.0
+    ei: 3.4
+    federal_tax: 16.6
+    provincial_tax: 7.88
+    net_pay: 168.92
+- id: ab_2026_weekly_sweep_400
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-weekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 400.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 19.8
+    cpp2: 0.0
+    ei: 6.52
+    federal_tax: 3.98
+    provincial_tax: 0.0
+    net_pay: 369.7
+- id: ab_2026_weekly_sweep_600
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-weekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 600.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 31.7
+    cpp2: 0.0
+    ei: 9.78
+    federal_tax: 29.86
+    provincial_tax: 9.65
+    net_pay: 519.01
+- id: ab_2026_weekly_sweep_1000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-weekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1000.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 55.5
+    cpp2: 0.0
+    ei: 16.3
+    federal_tax: 81.61
+    provincial_tax: 39.23
+    net_pay: 807.36
+- id: ab_2026_weekly_sweep_1200
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-weekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1200.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 67.4
+    cpp2: 0.0
+    ei: 19.56
+    federal_tax: 111.6
+    provincial_tax: 54.25
+    net_pay: 947.19
+- id: ab_2026_weekly_sweep_1800
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-weekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1800.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 103.1
+    cpp2: 0.0
+    ei: 29.34
+    federal_tax: 231.46
+    provincial_tax: 112.56
+    net_pay: 1323.54
+- id: ab_2026_weekly_sweep_2100
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-weekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 2100.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 120.95
+    cpp2: 0.0
+    ei: 34.23
+    federal_tax: 292.34
+    provincial_tax: 142.26
+    net_pay: 1510.22
+- id: ab_2026_weekly_sweep_2500
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-weekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 2500.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 144.75
+    cpp2: 0.0
+    ei: 40.75
+    federal_tax: 385.9
+    provincial_tax: 181.86
+    net_pay: 1746.74
+- id: ab_2026_weekly_sweep_3000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-weekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 3000.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 174.5
+    cpp2: 0.0
+    ei: 48.9
+    federal_tax: 514.6
+    provincial_tax: 231.44
+    net_pay: 2030.56
+- id: ab_2026_weekly_sweep_3500
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-weekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 3500.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 204.25
+    cpp2: 0.0
+    ei: 57.05
+    federal_tax: 643.3
+    provincial_tax: 290.84
+    net_pay: 2304.56
+- id: ab_2026_weekly_sweep_4000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-weekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 4000.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 234.0
+    cpp2: 0.0
+    ei: 65.2
+    federal_tax: 787.52
+    provincial_tax: 354.25
+    net_pay: 2559.03
+- id: ab_2026_weekly_sweep_4500
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-weekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 4500.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 263.75
+    cpp2: 0.0
+    ei: 73.35
+    federal_tax: 932.53
+    provincial_tax: 418.6
+    net_pay: 2811.77
+- id: ab_2026_weekly_sweep_5000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-weekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 5000.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 293.5
+    cpp2: 0.0
+    ei: 81.5
+    federal_tax: 1077.54
+    provincial_tax: 485.0
+    net_pay: 3062.46
+- id: ab_2026_weekly_sweep_6000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-weekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 6000.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 353.0
+    cpp2: 0.0
+    ei: 97.8
+    federal_tax: 1403.5
+    provincial_tax: 623.6
+    net_pay: 3522.1
+- id: ab_2026_60k_daily
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: freq-parity-60k. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 250.0
+    pay_frequency: daily
+    pay_periods_per_year: 240
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 14.01
+    cpp2: 0.0
+    ei: 4.08
+    federal_tax: 22.24
+    provincial_tax: 10.96
+    net_pay: 198.71
+- id: ab_2026_60k_weekly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: freq-parity-60k. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1153.85
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 64.65
+    cpp2: 0.0
+    ei: 18.81
+    federal_tax: 102.66
+    provincial_tax: 50.6
+    net_pay: 917.13
+- id: ab_2026_60k_semi_monthly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: freq-parity-60k. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 2500.0
+    pay_frequency: semi_monthly
+    pay_periods_per_year: 24
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 129.3
+    cpp2: 0.0
+    ei: 37.62
+    federal_tax: 205.32
+    provincial_tax: 101.2
+    net_pay: 1834.25
+- id: ab_2026_60k_monthly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: freq-parity-60k. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 5000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 280.15
+    cpp2: 0.0
+    ei: 81.5
+    federal_tax: 444.86
+    provincial_tax: 219.28
+    net_pay: 3974.21
+- id: ab_2026_120k_daily
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: freq-parity-120k. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 500.0
+    pay_frequency: daily
+    pay_periods_per_year: 240
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 28.88
+    cpp2: 0.0
+    ei: 8.15
+    federal_tax: 72.89
+    provincial_tax: 35.28
+    net_pay: 354.8
+- id: ab_2026_120k_weekly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: freq-parity-120k. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 2307.69
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 133.3
+    cpp2: 0.0
+    ei: 37.62
+    federal_tax: 336.4
+    provincial_tax: 162.82
+    net_pay: 1637.55
+- id: ab_2026_120k_biweekly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: freq-parity-120k. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 4615.38
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 266.61
+    cpp2: 0.0
+    ei: 75.23
+    federal_tax: 672.8
+    provincial_tax: 325.64
+    net_pay: 3275.1
+- id: ab_2026_120k_semi_monthly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: freq-parity-120k. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 5000.0
+    pay_frequency: semi_monthly
+    pay_periods_per_year: 24
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 288.82
+    cpp2: 0.0
+    ei: 81.5
+    federal_tax: 728.86
+    provincial_tax: 352.77
+    net_pay: 3548.05
+- id: ab_2026_120k_monthly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: freq-parity-120k. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 10000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 577.65
+    cpp2: 0.0
+    ei: 163.0
+    federal_tax: 1457.73
+    provincial_tax: 705.55
+    net_pay: 7096.07
+- id: ab_2026_biweekly_sweep_800
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-biweekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 800.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 39.59
+    cpp2: 0.0
+    ei: 13.04
+    federal_tax: 7.96
+    provincial_tax: 0.0
+    net_pay: 739.41
+- id: ab_2026_biweekly_sweep_1200
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-biweekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1200.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 63.39
+    cpp2: 0.0
+    ei: 19.56
+    federal_tax: 59.72
+    provincial_tax: 19.31
+    net_pay: 1038.02
+- id: ab_2026_biweekly_sweep_1600
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-biweekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1600.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 87.19
+    cpp2: 0.0
+    ei: 26.08
+    federal_tax: 111.47
+    provincial_tax: 48.88
+    net_pay: 1326.38
+- id: ab_2026_biweekly_sweep_2000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-biweekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 2000.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 110.99
+    cpp2: 0.0
+    ei: 32.6
+    federal_tax: 163.23
+    provincial_tax: 78.45
+    net_pay: 1614.73
+- id: ab_2026_biweekly_sweep_2400
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-biweekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 2400.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 134.79
+    cpp2: 0.0
+    ei: 39.12
+    federal_tax: 223.2
+    provincial_tax: 108.5
+    net_pay: 1894.39
+- id: ab_2026_biweekly_sweep_2800
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-biweekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 2800.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 158.59
+    cpp2: 0.0
+    ei: 45.64
+    federal_tax: 301.04
+    provincial_tax: 146.19
+    net_pay: 2148.54
+- id: ab_2026_biweekly_sweep_3200
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-biweekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 3200.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 182.39
+    cpp2: 0.0
+    ei: 52.16
+    federal_tax: 381.74
+    provincial_tax: 185.51
+    net_pay: 2398.2
+- id: ab_2026_biweekly_sweep_3600
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-biweekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 3600.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 206.19
+    cpp2: 0.0
+    ei: 58.68
+    federal_tax: 462.92
+    provincial_tax: 225.11
+    net_pay: 2647.1
+- id: ab_2026_biweekly_sweep_4200
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-biweekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 4200.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 241.89
+    cpp2: 0.0
+    ei: 68.46
+    federal_tax: 584.69
+    provincial_tax: 284.51
+    net_pay: 3020.45
+- id: ab_2026_biweekly_sweep_5000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-biweekly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 5000.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 289.49
+    cpp2: 0.0
+    ei: 81.5
+    federal_tax: 771.8
+    provincial_tax: 363.71
+    net_pay: 3493.5
+- id: ab_2026_monthly_sweep_2000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-monthly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 2000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 101.65
+    cpp2: 0.0
+    ei: 32.6
+    federal_tax: 51.75
+    provincial_tax: 0.0
+    net_pay: 1814.0
+- id: ab_2026_monthly_sweep_3000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-monthly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 3000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 161.15
+    cpp2: 0.0
+    ei: 48.9
+    federal_tax: 181.14
+    provincial_tax: 71.4
+    net_pay: 2537.41
+- id: ab_2026_monthly_sweep_4000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-monthly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 4000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 220.65
+    cpp2: 0.0
+    ei: 65.2
+    federal_tax: 310.53
+    provincial_tax: 145.34
+    net_pay: 3258.28
+- id: ab_2026_monthly_sweep_6500
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-monthly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 6500.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 369.4
+    cpp2: 0.0
+    ei: 105.95
+    federal_tax: 739.16
+    provincial_tax: 359.05
+    net_pay: 4926.44
+- id: ab_2026_monthly_sweep_8000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-monthly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 8000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 458.65
+    cpp2: 0.0
+    ei: 130.4
+    federal_tax: 1043.58
+    provincial_tax: 507.55
+    net_pay: 5859.82
+- id: ab_2026_monthly_sweep_12000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-monthly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 12000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 696.65
+    cpp2: 0.0
+    ei: 195.6
+    federal_tax: 1972.53
+    provincial_tax: 903.55
+    net_pay: 8231.67
+- id: ab_2026_monthly_sweep_15000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-monthly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 15000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 875.15
+    cpp2: 0.0
+    ei: 244.5
+    federal_tax: 2744.73
+    provincial_tax: 1240.52
+    net_pay: 9895.1
+- id: ab_2026_monthly_sweep_20000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-monthly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 20000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 1172.65
+    cpp2: 0.0
+    ei: 326.0
+    federal_tax: 4185.96
+    provincial_tax: 1878.3
+    net_pay: 12437.09
+- id: ab_2026_cpp2_below_ympe
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: cpp2-threshold. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 5500.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 60000.0
+    insurable_earnings: 60000.0
+    cpp_base_paid: 3570.0
+    ei_paid: 978.0
+  expected:
+    cpp: 309.9
+    cpp2: 0.0
+    ei: 89.65
+    federal_tax: 541.73
+    provincial_tax: 263.2
+    net_pay: 4295.52
+- id: ab_2026_cpp2_at_ympe
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: cpp2-threshold. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 6100.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 73200.0
+    insurable_earnings: 68900.0
+    cpp_base_paid: 4230.45
+    ei_paid: 1122.87
+  expected:
+    cpp: 0.0
+    cpp2: 188.0
+    ei: 0.2
+    federal_tax: 631.35
+    provincial_tax: 306.46
+    net_pay: 4973.99
+- id: ab_2026_cpp2_crossing_ympe
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: cpp2-threshold. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 6500.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 70000.0
+    insurable_earnings: 68900.0
+    cpp_base_paid: 4165.0
+    ei_paid: 1122.87
+  expected:
+    cpp: 65.45
+    cpp2: 76.0
+    ei: 0.2
+    federal_tax: 734.05
+    provincial_tax: 356.56
+    net_pay: 5267.74
+- id: ab_2026_cpp2_in_cpp2_zone
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: cpp2-threshold. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 7000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 75000.0
+    insurable_earnings: 68900.0
+    cpp_base_paid: 4230.45
+    ei_paid: 1122.87
+  expected:
+    cpp: 0.0
+    cpp2: 280.0
+    ei: 0.2
+    federal_tax: 796.99
+    provincial_tax: 387.26
+    net_pay: 5535.55
+- id: ab_2026_ei_below_max
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: ei-max. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 4000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 42016.81
+    insurable_earnings: 40000.0
+    cpp_base_paid: 2500.0
+    ei_paid: 652.0
+  expected:
+    cpp: 220.65
+    cpp2: 0.0
+    ei: 65.2
+    federal_tax: 310.53
+    provincial_tax: 145.34
+    net_pay: 3258.28
+- id: ab_2026_ei_near_max
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: ei-max. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 5500.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 60000.0
+    insurable_earnings: 60000.0
+    cpp_base_paid: 2500.0
+    ei_paid: 978.0
+  expected:
+    cpp: 309.9
+    cpp2: 0.0
+    ei: 89.65
+    federal_tax: 541.73
+    provincial_tax: 263.2
+    net_pay: 4295.52
+- id: ab_2026_ei_at_max
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: ei-max. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 5500.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 65000.0
+    insurable_earnings: 65000.0
+    cpp_base_paid: 2500.0
+    ei_paid: 1059.5
+  expected:
+    cpp: 309.9
+    cpp2: 0.0
+    ei: 63.57
+    federal_tax: 539.73
+    provincial_tax: 262.06
+    net_pay: 4324.74
+- id: ab_2026_ei_exceeded_max
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: ei-max. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 5500.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 70008.4
+    insurable_earnings: 68900.0
+    cpp_base_paid: 4165.0
+    ei_paid: 1122.87
+  expected:
+    cpp: 65.45
+    cpp2: 36.34
+    ei: 0.2
+    federal_tax: 537.18
+    provincial_tax: 260.52
+    net_pay: 4600.31
+- id: ab_2026_ei_max_hit_early
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: ei-max. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 8000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 66000.0
+    insurable_earnings: 66000.0
+    cpp_base_paid: 3927.0
+    ei_paid: 1075.8
+  expected:
+    cpp: 303.45
+    cpp2: 0.0
+    ei: 47.27
+    federal_tax: 1051.88
+    provincial_tax: 511.84
+    net_pay: 6085.56
+- id: ab_2026_extreme_very_low_weekly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: extreme-income. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 300.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 13.85
+    cpp2: 0.0
+    ei: 4.89
+    federal_tax: 0.0
+    provincial_tax: 0.0
+    net_pay: 281.26
+- id: ab_2026_extreme_minimum_wage_weekly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: extreme-income. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 620.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 32.89
+    cpp2: 0.0
+    ei: 10.11
+    federal_tax: 32.44
+    provincial_tax: 11.13
+    net_pay: 533.43
+- id: ab_2026_extreme_very_high_weekly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: extreme-income. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 8000.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 472.0
+    cpp2: 0.0
+    ei: 130.4
+    federal_tax: 2056.9
+    provincial_tax: 908.79
+    net_pay: 4431.91
+- id: ab_2026_extreme_executive_monthly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: extreme-income. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 25000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 1470.15
+    cpp2: 0.0
+    ei: 407.5
+    federal_tax: 5755.12
+    provincial_tax: 2563.67
+    net_pay: 14803.56
+- id: ab_2026_extreme_extreme_monthly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: extreme-income. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 50000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 2957.65
+    cpp2: 0.0
+    ei: 815.0
+    federal_tax: 13922.62
+    provincial_tax: 6215.11
+    net_pay: 26089.62
+- id: ab_2026_pen_months_start_of_year_m1
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: pensionable-months. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 3000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 161.15
+    cpp2: 0.0
+    ei: 48.9
+    federal_tax: 196.49
+    provincial_tax: 80.17
+    net_pay: 2513.29
+- id: ab_2026_pen_months_mid_year_m6
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: pensionable-months. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 3000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 161.15
+    cpp2: 0.0
+    ei: 48.9
+    federal_tax: 181.14
+    provincial_tax: 71.4
+    net_pay: 2537.41
+- id: ab_2026_pen_months_late_year_m10
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: pensionable-months. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 3000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 161.15
+    cpp2: 0.0
+    ei: 48.9
+    federal_tax: 181.14
+    provincial_tax: 71.4
+    net_pay: 2537.41
+- id: ab_2026_pen_months_short_year_m3
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: pensionable-months. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 3000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 161.15
+    cpp2: 0.0
+    ei: 48.9
+    federal_tax: 189.65
+    provincial_tax: 76.26
+    net_pay: 2524.04
+- id: ab_2026_zerotax_very_low_daily
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: zero-tax. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 100.0
+    pay_frequency: daily
+    pay_periods_per_year: 240
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 5.08
+    cpp2: 0.0
+    ei: 1.63
+    federal_tax: 2.59
+    provincial_tax: 0.0
+    net_pay: 90.7
+- id: ab_2026_zerotax_very_low_weekly_v2
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: zero-tax. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 500.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 25.75
+    cpp2: 0.0
+    ei: 8.15
+    federal_tax: 16.92
+    provincial_tax: 2.26
+    net_pay: 446.92
+- id: ab_2026_zerotax_below_bpa_annual_equiv
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: zero-tax. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1300.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 60.0
+    cpp2: 0.0
+    ei: 21.19
+    federal_tax: 0.0
+    provincial_tax: 0.0
+    net_pay: 1218.81
+- id: ab_2026_zerotax_young_employee_weekly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: zero-tax. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 700.0
+    pay_frequency: weekly
+    pay_periods_per_year: 52
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 37.65
+    cpp2: 0.0
+    ei: 11.41
+    federal_tax: 42.8
+    provincial_tax: 17.05
+    net_pay: 591.09
+- id: ab_2026_zerotax_part_time_biweekly
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: zero-tax. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 900.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 45.54
+    cpp2: 0.0
+    ei: 14.67
+    federal_tax: 20.9
+    provincial_tax: 0.0
+    net_pay: 818.89
+- id: ab_2026_semimonthly_sweep_1000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-semimonthly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1000.0
+    pay_frequency: semi_monthly
+    pay_periods_per_year: 24
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 50.82
+    cpp2: 0.0
+    ei: 16.3
+    federal_tax: 25.88
+    provincial_tax: 0.0
+    net_pay: 907.0
+- id: ab_2026_semimonthly_sweep_1800
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-semimonthly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1800.0
+    pay_frequency: semi_monthly
+    pay_periods_per_year: 24
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 98.42
+    cpp2: 0.0
+    ei: 29.34
+    federal_tax: 129.39
+    provincial_tax: 57.88
+    net_pay: 1484.97
+- id: ab_2026_semimonthly_sweep_3500
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-semimonthly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 3500.0
+    pay_frequency: semi_monthly
+    pay_periods_per_year: 24
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 199.57
+    cpp2: 0.0
+    ei: 57.05
+    federal_tax: 420.32
+    provincial_tax: 204.27
+    net_pay: 2618.79
+- id: ab_2026_semimonthly_sweep_4500
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: income-sweep-semimonthly. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 4500.0
+    pay_frequency: semi_monthly
+    pay_periods_per_year: 24
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 259.07
+    cpp2: 0.0
+    ei: 73.35
+    federal_tax: 623.27
+    provincial_tax: 303.27
+    net_pay: 3241.04
+- id: ab_2026_ytd_mid_year_q1
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: ytd-progression. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 4000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 12000.0
+    insurable_earnings: 12000.0
+    cpp_base_paid: 714.0
+    ei_paid: 195.6
+  expected:
+    cpp: 220.65
+    cpp2: 0.0
+    ei: 65.2
+    federal_tax: 310.53
+    provincial_tax: 145.34
+    net_pay: 3258.28
+- id: ab_2026_ytd_mid_year_q2
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: ytd-progression. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 4000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 24000.0
+    insurable_earnings: 24000.0
+    cpp_base_paid: 1428.0
+    ei_paid: 391.2
+  expected:
+    cpp: 220.65
+    cpp2: 0.0
+    ei: 65.2
+    federal_tax: 310.53
+    provincial_tax: 145.34
+    net_pay: 3258.28
+- id: ab_2026_ytd_mid_year_q3
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: ytd-progression. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 4000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 36000.0
+    insurable_earnings: 36000.0
+    cpp_base_paid: 2142.0
+    ei_paid: 586.8
+  expected:
+    cpp: 220.65
+    cpp2: 0.0
+    ei: 65.2
+    federal_tax: 310.53
+    provincial_tax: 145.34
+    net_pay: 3258.28
+- id: ab_2026_ytd_mid_year_q4
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: ytd-progression. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 4000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 48000.0
+    insurable_earnings: 48000.0
+    cpp_base_paid: 2856.0
+    ei_paid: 782.4
+  expected:
+    cpp: 220.65
+    cpp2: 0.0
+    ei: 65.2
+    federal_tax: 308.51
+    provincial_tax: 144.18
+    net_pay: 3261.46
+- id: ab_2026_ytd_year_end
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: ytd-progression. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 5000.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 55000.0
+    insurable_earnings: 55000.0
+    cpp_base_paid: 3272.5
+    ei_paid: 896.5
+  expected:
+    cpp: 280.15
+    cpp2: 0.0
+    ei: 81.5
+    federal_tax: 444.86
+    provincial_tax: 219.28
+    net_pay: 3974.21
+- id: ab_2026_precision_1234_56
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: precision-odd-amounts. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1234.56
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 65.45
+    cpp2: 0.0
+    ei: 20.12
+    federal_tax: 64.19
+    provincial_tax: 21.86
+    net_pay: 1062.94
+- id: ab_2026_precision_2789_43
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: precision-odd-amounts. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 2789.43
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 157.96
+    cpp2: 0.0
+    ei: 45.47
+    federal_tax: 298.97
+    provincial_tax: 145.18
+    net_pay: 2141.85
+- id: ab_2026_precision_3456_78
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: precision-odd-amounts. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 3456.78
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 197.67
+    cpp2: 0.0
+    ei: 56.35
+    federal_tax: 433.85
+    provincial_tax: 210.94
+    net_pay: 2557.97
+- id: ab_2026_precision_4321_09
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: precision-odd-amounts. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 4321.09
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 249.1
+    cpp2: 0.0
+    ei: 70.43
+    federal_tax: 609.26
+    provincial_tax: 296.5
+    net_pay: 3095.8
+- id: ab_2026_precision_5678_9
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: precision-odd-amounts. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 5678.9
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 329.89
+    cpp2: 0.0
+    ei: 92.57
+    federal_tax: 946.55
+    provincial_tax: 430.93
+    net_pay: 3878.96
+- id: ab_2026_smx_2000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: round-amounts. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 2000.0
+    pay_frequency: semi_monthly
+    pay_periods_per_year: 24
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 110.32
+    cpp2: 0.0
+    ei: 32.6
+    federal_tax: 155.27
+    provincial_tax: 72.67
+    net_pay: 1629.14
+- id: ab_2026_smx_3000
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: round-amounts. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 3000.0
+    pay_frequency: semi_monthly
+    pay_periods_per_year: 24
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 169.82
+    cpp2: 0.0
+    ei: 48.9
+    federal_tax: 319.59
+    provincial_tax: 155.2
+    net_pay: 2306.49
+- id: ab_2026_bw_1500
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: round-amounts. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 1500.0
+    pay_frequency: biweekly
+    pay_periods_per_year: 26
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 81.24
+    cpp2: 0.0
+    ei: 24.45
+    federal_tax: 98.53
+    provincial_tax: 41.49
+    net_pay: 1254.29
+- id: ab_2026_mo_7500
+  jurisdiction: CA-AB
+  tax_year: 2026
+  reconciled_against: CRA_PDOC
+  reconciled_date: 2026-08-31
+  reconciled_by: Claire (BrightCare)
+  notes: 'Category: round-amounts. Batch imported from CSV.
+
+    '
+  employee:
+    age: 35
+    marital_status: single
+  income:
+    gross_per_period: 7500.0
+    pay_frequency: monthly
+    pay_periods_per_year: 12
+  country_specific:
+    td1_federal_claim: 16452.0
+    td1_provincial_claim: 22769.0
+    cpp_exempt: false
+    ei_exempt: false
+    additional_withholding: 0.0
+  ytd_at_start:
+    pensionable_earnings: 0.0
+    insurable_earnings: 0.0
+    cpp_base_paid: 0.0
+    ei_paid: 0.0
+  expected:
+    cpp: 428.9
+    cpp2: 0.0
+    ei: 122.25
+    federal_tax: 942.11
+    provincial_tax: 458.05
+    net_pay: 5548.69
