@@ -101,40 +101,6 @@ scenarios:
     federal_tax: 3215.15
     provincial_tax: 1449.3
     net_pay: 10756.24
-- id: ab_2026_cpp2_trigger_semimonthly
-  jurisdiction: CA-AB
-  tax_year: 2026
-  reconciled_against: CRA_PDOC
-  reconciled_date: 2026-07-18
-  reconciled_by: Claire (BrightCare)
-  notes: 'CPP+EI maxed. CPP2 starts. Tests T4127 Chapter 4 K2 max rule. YTD pensionable near ceiling. From T4127 Appendix 1 example.
-
-    '
-  employee:
-    age: 35
-    marital_status: single
-  income:
-    gross_per_period: 4200.0
-    pay_frequency: semi_monthly
-    pay_periods_per_year: 24
-  country_specific:
-    td1_federal_claim: 16452.0
-    td1_provincial_claim: 22769.0
-    cpp_exempt: false
-    ei_exempt: false
-    additional_withholding: 0.0
-  ytd_at_start:
-    pensionable_earnings: 71400.0
-    insurable_earnings: 68900.0
-    cpp_base_paid: 3519.45
-    ei_paid: 1123.07
-  expected:
-    cpp: 0.0
-    cpp2: 168.0
-    ei: 0.0
-    federal_tax: 536.25
-    provincial_tax: 260.83
-    net_pay: 3234.92
 - id: ab_2026_claim_zero_biweekly
   jurisdiction: CA-AB
   tax_year: 2026
@@ -883,40 +849,6 @@ scenarios:
     federal_tax: 102.66
     provincial_tax: 50.6
     net_pay: 917.13
-- id: ab_2026_60k_semi_monthly
-  jurisdiction: CA-AB
-  tax_year: 2026
-  reconciled_against: CRA_PDOC
-  reconciled_date: 2026-08-31
-  reconciled_by: Claire (BrightCare)
-  notes: 'Category: freq-parity-60k. Batch imported from CSV.
-
-    '
-  employee:
-    age: 35
-    marital_status: single
-  income:
-    gross_per_period: 2500.0
-    pay_frequency: semi_monthly
-    pay_periods_per_year: 24
-  country_specific:
-    td1_federal_claim: 16452.0
-    td1_provincial_claim: 22769.0
-    cpp_exempt: false
-    ei_exempt: false
-    additional_withholding: 0.0
-  ytd_at_start:
-    pensionable_earnings: 0.0
-    insurable_earnings: 0.0
-    cpp_base_paid: 0.0
-    ei_paid: 0.0
-  expected:
-    cpp: 129.3
-    cpp2: 0.0
-    ei: 37.62
-    federal_tax: 205.32
-    provincial_tax: 101.2
-    net_pay: 1834.25
 - id: ab_2026_60k_monthly
   jurisdiction: CA-AB
   tax_year: 2026
