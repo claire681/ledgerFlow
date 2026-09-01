@@ -168,7 +168,8 @@ def calculate_federal_tax(
     # CPP and EI for the year with the employer, use the maximum base CPP
     # contribution and the maximum EI premium to calculate the credit for
     # the rest of the year."
-    if ytd_cpp_base >= MAX_BASE_CPP_ANNUAL_2026:
+    ytd_base_cpp = ytd_cpp_base * (BASE_CPP_RATE_2026 / TOTAL_CPP_RATE_2026)
+    if ytd_base_cpp + (cpp_contribution * (BASE_CPP_RATE_2026 / TOTAL_CPP_RATE_2026)) >= MAX_BASE_CPP_ANNUAL_2026:
         # Employee already maxed base CPP - use annual max in credit
         annual_base_cpp = MAX_BASE_CPP_ANNUAL_2026
     else:
@@ -176,7 +177,7 @@ def calculate_federal_tax(
         base_cpp_this_period = cpp_contribution * (BASE_CPP_RATE_2026 / TOTAL_CPP_RATE_2026)
         annual_base_cpp = min(P * base_cpp_this_period, MAX_BASE_CPP_ANNUAL_2026)
 
-    if ytd_ei >= MAX_EI_PREMIUM_ANNUAL_2026:
+    if ytd_ei + ei_contribution >= MAX_EI_PREMIUM_ANNUAL_2026:
         # Employee already maxed EI - use annual max in credit
         annual_ei = MAX_EI_PREMIUM_ANNUAL_2026
     else:

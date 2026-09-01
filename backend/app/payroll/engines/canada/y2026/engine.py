@@ -59,12 +59,25 @@ class CanadaPayrollEngine(CountryPack):
         gross_pay = self._compute_gross(earn)
 
         # 2. CPP and CPP2
+
         cpp_employee, cpp2_employee, new_ytd_pensionable = cpp.calculate_cpp(
+
             gross_pay=gross_pay,
+
             ytd_pensionable_earnings=ytd.ytd_pensionable_earnings,
+
             pay_periods_per_year=juris.pay_periods_per_year,
+
+            pensionable_months=getattr(ytd, "pensionable_months", 12),
+
+            ytd_cpp_paid=getattr(ytd, "ytd_cpp_paid", Decimal("0")),
+
+            ytd_cpp2_paid=getattr(ytd, "ytd_cpp2_paid", Decimal("0")),
+
             cpp_exempt=emp.cpp_exempt,
+
             province=juris.subnational,
+
         )
         cpp_employer = cpp_employee
         cpp2_employer = cpp2_employee
