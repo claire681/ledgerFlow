@@ -65,7 +65,8 @@ def calculate_cpp(
     max_contributory = YMPE_2026 - BASIC_EXEMPTION
     if ytd_pensionable_earnings + period_pensionable > max_contributory:
         period_pensionable = max(
-            max_contributory - ytd_pensionable_earnings, Decimal("0")
+            min(period_pensionable, max_contributory - ytd_pensionable_earnings),
+            Decimal("0")
         )
 
     new_ytd = ytd_pensionable_earnings + period_pensionable
