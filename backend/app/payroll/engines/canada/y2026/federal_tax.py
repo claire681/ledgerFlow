@@ -33,6 +33,12 @@ BRACKETS_2026: List[Tuple[Optional[Decimal], Decimal]] = [
 ]
 
 BASIC_PERSONAL_AMOUNT_2026 = Decimal("16452.00")
+# T4127 Chapter 2: Federal BPA phase-out for high-income earners
+# Phase-out zone aligns with 4th and 5th tax brackets (2026)
+BPAF_MAX_2026 = Decimal("16452.00")
+BPAF_MIN_2026 = Decimal("14829.00")
+BPAF_PHASE_OUT_START_2026 = Decimal("181440")
+BPAF_PHASE_OUT_END_2026 = Decimal("258482")
 LOWEST_RATE = Decimal("0.140")
 
 # Canada Employment Amount (Table 8.2 of T4127 123rd Edition)
@@ -140,6 +146,20 @@ def calculate_federal_tax(
     # Progressive brackets on annual income (this is R*A - K from T4127)
     annual_tax = _annual_tax(annual_gross)
 
+    # T4127 Chapter 2: Apply BPAF phase-out for high-income earners.
+    # When TD1 claim equals max BPA (i.e., Claim Code 1 with only BPA claimed),
+    # reduce it based on annual income. Higher claim codes (with extra credits)
+    # are left unchanged.
+    if td1_federal_claim == BPAF_MAX_2026:
+        if annual_gross <= BPAF_PHASE_OUT_START_2026:
+            pass  # BPAF stays at max
+        elif annual_gross >= BPAF_PHASE_OUT_END_2026:
+            td1_federal_claim = BPAF_MIN_2026
+        else:
+            reduction_range = BPAF_MAX_2026 - BPAF_MIN_2026
+            phase_out_span = BPAF_PHASE_OUT_END_2026 - BPAF_PHASE_OUT_START_2026
+            reduction = (annual_gross - BPAF_PHASE_OUT_START_2026) * reduction_range / phase_out_span
+            td1_federal_claim = _q(BPAF_MAX_2026 - reduction)
     # K1: TD1 claim credit at lowest bracket rate
     k1 = td1_federal_claim * LOWEST_RATE
 
