@@ -66,6 +66,9 @@ def _canada_adapter(scenario: Scenario) -> dict[str, Decimal]:
         gross_pay=scenario.gross_per_period,
         ytd_pensionable_earnings=ytd.get("pensionable_earnings", Decimal("0")),
         pay_periods_per_year=scenario.pay_periods_per_year,
+        pensionable_months=int(cs.get("pensionable_months", 12)),
+        ytd_cpp_paid=ytd.get("cpp_base_paid", Decimal("0")),
+        ytd_cpp2_paid=ytd.get("cpp2_paid", Decimal("0")),
         cpp_exempt=bool(cs.get("cpp_exempt", False)),
         province=region,
     )

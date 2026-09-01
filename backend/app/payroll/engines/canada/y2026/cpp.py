@@ -1,35 +1,62 @@
 """Canada Pension Plan (CPP and CPP2) calculation.
 
-Reference: CRA T4127 Payroll Deductions Formulas, 123rd Edition, effective July 1, 2026. Values verified against Table 8.3 (CPP contribution rates and amounts) and Table 8.4 (CPP2 second additional rates and amounts).
+Implements the exact formulas from CRA T4127 Chapter 6 (January 2026 122nd Edition,
+July 2026 123rd Edition confirms no formula change).
 
-2026 verified constants from CRA T4127 Table 8.3 and Table 8.4:
-- YMPE (Year's Maximum Pensionable Earnings): 74,600
-- YAMPE (Year's Additional Maximum Pensionable Earnings): 85,000
-- Basic exemption: 3,500
-- YMCE (Year's Maximum Contributory Earnings): 71,100 (= YMPE minus Basic exemption)
-- CPP1 rate: 5.95 percent (employee and employer each)
-- CPP1 maximum contribution: 4,230.45 per side
-- CPP2 rate: 4.0 percent (employee and employer each) on YMPE-YAMPE band
-- CPP2 maximum contribution: 416.00 per side
+CRA T4127 Chapter 6 formulas (Option 1):
 
-Pure function. Employer matches CPP and CPP2 exactly.
+    CPP for salaried employees:
+        C = lesser of:
+            (i)  MAX_CPP_ANNUAL * (PM/12) - D
+            (ii) CPP_RATE * [PI - BASIC_EXEMPTION/P]
+        If negative: C = 0
+
+    CPP2 for salaried employees:
+        C2 = lesser of:
+            (i)  MAX_CPP2_ANNUAL * (PM/12) - D2
+            (ii) (PIYTD + PI - W) * CPP2_RATE
+        where W = greater of (PIYTD, YMPE * PM/12)
+        If negative: C2 = 0
+
+Variables (CRA notation):
+    C, C2   CPP / CPP2 contributions this pay period
+    PI      Pensionable earnings this pay period
+    PIYTD   Pensionable earnings YTD BEFORE this pay period
+    P       Pay periods per year
+    PM      Pensionable months (usually 12; less for mid-year hire/termination)
+    D       YTD CPP paid BEFORE this pay period (with this employer)
+    D2      YTD CPP2 paid BEFORE this pay period (with this employer)
+    W       Factor W for CPP2 threshold
+    YMPE    Year's Maximum Pensionable Earnings
+
+2026 verified constants from CRA T4127 Tables 8.3, 8.4:
+    YMPE                : 74,600
+    YAMPE               : 85,000  (used for max cap on CPP2 earnings)
+    BASIC_EXEMPTION     : 3,500
+    CPP_RATE            : 0.0595 (employee = employer)
+    CPP2_RATE           : 0.04
+    MAX_CPP_ANNUAL_2026 : 4,230.45  = (YMPE - BASIC_EXEMPTION) * CPP_RATE
+    MAX_CPP2_ANNUAL_2026: 416.00    = (YAMPE - YMPE) * CPP2_RATE
+
+Pure function. Employer matches employee for both CPP and CPP2.
 Quebec (QC) uses QPP instead; this returns zero for QC.
 """
-
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Tuple, Optional
 
 
-# 2026 constants, verified against CRA T4127 Payroll Deductions Formulas 123rd Edition.
+# 2026 constants, verified against CRA T4127 Payroll Deductions Formulas.
 YMPE_2026 = Decimal("74600.00")
 YAMPE_2026 = Decimal("85000.00")
 BASIC_EXEMPTION = Decimal("3500.00")
 CPP_RATE = Decimal("0.0595")
 CPP2_RATE = Decimal("0.0400")
+MAX_CPP_ANNUAL_2026 = Decimal("4230.45")
+MAX_CPP2_ANNUAL_2026 = Decimal("416.00")
 
 
 def _q(amount: Decimal) -> Decimal:
-    """Quantize to 2 decimal places, banker style half-up."""
+    """Quantize to 2 decimal places, half-up rounding."""
     return amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
@@ -37,66 +64,63 @@ def calculate_cpp(
     gross_pay: Decimal,
     ytd_pensionable_earnings: Decimal,
     pay_periods_per_year: int,
+    pensionable_months: int = 12,
+    ytd_cpp_paid: Decimal = Decimal("0"),
+    ytd_cpp2_paid: Decimal = Decimal("0"),
     cpp_exempt: bool = False,
     province: Optional[str] = None,
 ) -> Tuple[Decimal, Decimal, Decimal]:
-    """Calculate CPP and CPP2 for one pay period.
+    """Calculate CPP and CPP2 for one pay period per T4127 Chapter 6.
 
     Args:
-        gross_pay: Total pensionable earnings this period.
-        ytd_pensionable_earnings: YTD pensionable earnings BEFORE this period.
-        pay_periods_per_year: 12, 24, 26, or 52.
+        gross_pay: PI - pensionable earnings this pay period.
+        ytd_pensionable_earnings: PIYTD - pensionable earnings YTD BEFORE this pay period.
+        pay_periods_per_year: P - 12, 24, 26, or 52.
+        pensionable_months: PM - months requiring CPP deduction (usually 12).
+        ytd_cpp_paid: D - YTD CPP paid BEFORE this pay period.
+        ytd_cpp2_paid: D2 - YTD CPP2 paid BEFORE this pay period.
         cpp_exempt: Under 18 or over 70.
-        province: 'QC' returns zero (QPP module handles Quebec).
+        province: 'QC' returns (0, 0) as QPP handles Quebec separately.
 
     Returns:
         (cpp_amount, cpp2_amount, new_ytd_pensionable_earnings)
-        Both amounts are the EMPLOYEE portion. Employer matches.
+        Both amounts are the EMPLOYEE portion. Employer matches exactly.
     """
     if cpp_exempt or province == "QC":
         return (Decimal("0"), Decimal("0"), ytd_pensionable_earnings)
 
-    period_exemption = BASIC_EXEMPTION / Decimal(pay_periods_per_year)
+    PI = gross_pay
+    PIYTD = ytd_pensionable_earnings
+    P = Decimal(pay_periods_per_year)
+    PM = Decimal(pensionable_months)
+    D = ytd_cpp_paid
+    D2 = ytd_cpp2_paid
 
-    # Pensionable earnings this period (cannot go below zero)
-    period_pensionable = max(gross_pay - period_exemption, Decimal("0"))
+    # ---- CPP (Factor C) ----
+    # C = lesser of:
+    #   (i)  MAX_CPP_ANNUAL * (PM/12) - D
+    #   (ii) CPP_RATE * [PI - BASIC_EXEMPTION/P]
+    # If negative: C = 0
+    ceiling_c = MAX_CPP_ANNUAL_2026 * PM / Decimal("12") - D
+    formula_ii_c = CPP_RATE * (PI - BASIC_EXEMPTION / P)
+    cpp_amount = max(min(ceiling_c, formula_ii_c), Decimal("0"))
+    cpp_amount = _q(cpp_amount)
 
-    # YMPE cap, expressed net of basic exemption since exemption is per-period
-    max_contributory = YMPE_2026 - BASIC_EXEMPTION
-    if ytd_pensionable_earnings + period_pensionable > max_contributory:
-        period_pensionable = max(
-            min(period_pensionable, max_contributory - ytd_pensionable_earnings),
-            Decimal("0")
-        )
+    # Track new YTD pensionable earnings (used by downstream calcs).
+    # PI counts toward PIYTD regardless of whether CPP was capped.
+    new_ytd_pensionable = PIYTD + PI
 
-    new_ytd = ytd_pensionable_earnings + period_pensionable
+    # ---- CPP2 (Factor C2) ----
+    # W = greater of (PIYTD, YMPE * PM/12)
+    # C2 = lesser of:
+    #   (i)  MAX_CPP2_ANNUAL * (PM/12) - D2
+    #   (ii) (PIYTD + PI - W) * CPP2_RATE
+    # If negative: C2 = 0
+    W = max(PIYTD, YMPE_2026 * PM / Decimal("12"))
+    ceiling_c2 = MAX_CPP2_ANNUAL_2026 * PM / Decimal("12") - D2
+    cpp2_earnings = PIYTD + PI - W
+    formula_ii_c2 = cpp2_earnings * CPP2_RATE
+    cpp2_amount = max(min(ceiling_c2, formula_ii_c2), Decimal("0"))
+    cpp2_amount = _q(cpp2_amount)
 
-    cpp_amount = _q(period_pensionable * CPP_RATE)
-
-    # CPP2 on the YMPE to YAMPE band
-    cpp2_amount = Decimal("0")
-    cpp2_band_max = YAMPE_2026 - YMPE_2026
-
-    # Calculate any CPP2-eligible earnings this period
-    ytd_above_ympe_before = max(
-        ytd_pensionable_earnings - max_contributory, Decimal("0")
-    )
-
-    # Total pensionable this period treats the YMPE cap separately; CPP2 needs gross
-    period_for_cpp2 = gross_pay  # CPP2 has no basic exemption (T4127 Chapter 6)
-    new_ytd_gross = (
-        ytd_pensionable_earnings + period_for_cpp2
-        if ytd_above_ympe_before == 0
-        else ytd_above_ympe_before + max_contributory + period_for_cpp2
-    )
-    ytd_above_ympe_after = max(new_ytd_gross - max_contributory, Decimal("0"))
-    ytd_above_ympe_after = min(ytd_above_ympe_after, cpp2_band_max)
-
-    period_cpp2_earnings = max(
-        ytd_above_ympe_after - ytd_above_ympe_before, Decimal("0")
-    )
-
-    if period_cpp2_earnings > 0:
-        cpp2_amount = _q(period_cpp2_earnings * CPP2_RATE)
-
-    return (cpp_amount, cpp2_amount, new_ytd)
+    return (cpp_amount, cpp2_amount, new_ytd_pensionable)
