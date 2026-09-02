@@ -1,0 +1,53 @@
+"""SHORT DESCRIPTION - what does this migration do?
+
+Revision ID: PASTE_GENERATED_ID
+Revises: PASTE_PARENT_REVISION
+Create Date: PASTE_DATE
+
+WRITTEN MANUALLY. Do NOT use --autogenerate.
+
+Safety checklist (per docs/DB_MIGRATIONS.md):
+- [ ] Only ONE change per migration
+- [ ] Change is on SAFE list (or using multi-step pattern)
+- [ ] downgrade() actually reverses upgrade()
+- [ ] Tested locally with upgrade + downgrade
+
+Change classification (check one):
+- [ ] SAFE: Add nullable column
+- [ ] SAFE: Add column with server_default
+- [ ] SAFE: Add index
+- [ ] SAFE: Add new table
+- [ ] MULTI-STEP: Renaming column (step X of Y)
+- [ ] MULTI-STEP: Dropping column (step X of Y)
+- [ ] MULTI-STEP: Type change (step X of Y)
+- [ ] OTHER: EXPLAIN HERE and confirm review by Claire
+
+Deployment plan:
+- Testing: [when tested locally]
+- Staging: [when deployed to staging]
+- Production: [when scheduled]
+- Rollback plan: `alembic downgrade -1`
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
+
+
+revision: str = "PASTE_GENERATED_ID"
+down_revision: Union[str, None] = "PASTE_PARENT_REVISION"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    # WRITE ONLY THE CHANGE FOR THIS MIGRATION
+    # Example: op.add_column("employees", sa.Column("nickname", sa.String(50), nullable=True))
+    pass
+
+
+def downgrade() -> None:
+    # MUST REVERSE upgrade() EXACTLY
+    # Example: op.drop_column("employees", "nickname")
+    pass
