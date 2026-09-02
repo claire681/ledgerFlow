@@ -49,6 +49,9 @@ class Scenario:
 
     # Optional context
     notes: str = ""
+    # Optional tolerance in cents (e.g. 500 = $5.00). Default 0 = exact match.
+    # Use only for documented CRA boundary rounding cases.
+    tolerance_cents: int = 0
 
     @property
     def country_code(self) -> str:

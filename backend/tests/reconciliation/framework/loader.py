@@ -136,4 +136,5 @@ def _build_scenario(raw: dict[str, Any]) -> Scenario:
         ytd_at_start=_decimalize_dict(raw.get("ytd_at_start")),
         expected=_decimalize_dict(raw.get("expected")),
         notes=raw.get("notes", "") or "",
+        tolerance_cents=int(raw.get("tolerance_cents", 0) or 0),
     )

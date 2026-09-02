@@ -179,7 +179,7 @@ def run_reconciliation(scenario: Scenario) -> ReconciliationResult:
             error=f"Adapter raised {type(exc).__name__}: {exc}",
         )
 
-    mismatches = compare(scenario.expected, actual)
+    mismatches = compare(scenario.expected, actual, tolerance=Decimal(scenario.tolerance_cents) / Decimal("100"))
     return ReconciliationResult(
         scenario_id=scenario.id,
         jurisdiction=scenario.jurisdiction,

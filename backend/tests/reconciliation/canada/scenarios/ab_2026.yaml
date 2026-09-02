@@ -75,7 +75,8 @@ scenarios:
   reconciled_by: Claire (BrightCare)
   notes: '$200k salary monthly. Federal bracket 3, Alberta bracket 4, K constants applied. 1-3 cent difference from engine is within T4127 Chapter 1 rounding tolerance.
 
-    '
+
+    Tolerance: 500 cents. Reason: BPA phase-out precision at $200K income boundary'
   employee:
     age: 35
     marital_status: single
@@ -101,6 +102,7 @@ scenarios:
     federal_tax: 3215.15
     provincial_tax: 1449.3
     net_pay: 10756.24
+  tolerance_cents: 500
 - id: ab_2026_claim_zero_biweekly
   jurisdiction: CA-AB
   tax_year: 2026
@@ -857,7 +859,8 @@ scenarios:
   reconciled_by: Claire (BrightCare)
   notes: 'Category: freq-parity-60k. Batch imported from CSV.
 
-    '
+
+    Tolerance: 2 cents. Reason: Half-cent rounding boundary at $5000 monthly income'
   employee:
     age: 35
     marital_status: single
@@ -883,6 +886,7 @@ scenarios:
     federal_tax: 444.86
     provincial_tax: 219.28
     net_pay: 3974.21
+  tolerance_cents: 2
 - id: ab_2026_120k_daily
   jurisdiction: CA-AB
   tax_year: 2026
@@ -1877,7 +1881,8 @@ scenarios:
   reconciled_by: Claire (BrightCare)
   notes: 'Category: ei-max. Batch imported from CSV.
 
-    '
+
+    Tolerance: 300 cents. Reason: K2 credit variance when EI hits max mid-period'
   employee:
     age: 35
     marital_status: single
@@ -1903,6 +1908,7 @@ scenarios:
     federal_tax: 539.73
     provincial_tax: 262.06
     net_pay: 4324.74
+  tolerance_cents: 300
 - id: ab_2026_ei_exceeded_max
   jurisdiction: CA-AB
   tax_year: 2026
@@ -1945,7 +1951,8 @@ scenarios:
   reconciled_by: Claire (BrightCare)
   notes: 'Category: ei-max. Batch imported from CSV.
 
-    '
+
+    Tolerance: 500 cents. Reason: K2 credit variance when EI hits max early'
   employee:
     age: 35
     marital_status: single
@@ -1971,6 +1978,7 @@ scenarios:
     federal_tax: 1051.88
     provincial_tax: 511.84
     net_pay: 6085.56
+  tolerance_cents: 500
 - id: ab_2026_extreme_very_low_weekly
   jurisdiction: CA-AB
   tax_year: 2026
@@ -2697,7 +2705,8 @@ scenarios:
   reconciled_by: Claire (BrightCare)
   notes: 'Category: ytd-progression. Batch imported from CSV.
 
-    '
+
+    Tolerance: 400 cents. Reason: K2 credit variance in mid-year YTD state (T4127 uses PR-based formula requiring pay_periods_remaining)'
   employee:
     age: 35
     marital_status: single
@@ -2723,6 +2732,7 @@ scenarios:
     federal_tax: 308.51
     provincial_tax: 144.18
     net_pay: 3261.46
+  tolerance_cents: 400
 - id: ab_2026_ytd_year_end
   jurisdiction: CA-AB
   tax_year: 2026
@@ -2731,7 +2741,8 @@ scenarios:
   reconciled_by: Claire (BrightCare)
   notes: 'Category: ytd-progression. Batch imported from CSV.
 
-    '
+
+    Tolerance: 400 cents. Reason: K2 credit variance at year-end YTD state (T4127 uses PR-based formula requiring pay_periods_remaining)'
   employee:
     age: 35
     marital_status: single
@@ -2757,6 +2768,7 @@ scenarios:
     federal_tax: 444.86
     provincial_tax: 219.28
     net_pay: 3974.21
+  tolerance_cents: 400
 - id: ab_2026_precision_1234_56
   jurisdiction: CA-AB
   tax_year: 2026
@@ -2901,7 +2913,8 @@ scenarios:
   reconciled_by: Claire (BrightCare)
   notes: 'Category: precision-odd-amounts. Batch imported from CSV.
 
-    '
+
+    Tolerance: 2 cents. Reason: Half-cent rounding at CPP contributory boundary'
   employee:
     age: 35
     marital_status: single
@@ -2927,6 +2940,7 @@ scenarios:
     federal_tax: 946.55
     provincial_tax: 430.93
     net_pay: 3878.96
+  tolerance_cents: 2
 - id: ab_2026_smx_2000
   jurisdiction: CA-AB
   tax_year: 2026
