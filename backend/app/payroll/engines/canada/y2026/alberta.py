@@ -80,6 +80,7 @@ def calculate_alberta_tax(
     ytd_cpp_base: Decimal = Decimal("0"),
     ytd_ei: Decimal = Decimal("0"),
     cpp2_contribution: Decimal = Decimal("0"),
+    pensionable_months: int = 12,
 ) -> Decimal:
     """Alberta provincial income tax for one pay period.
 
@@ -117,10 +118,11 @@ def calculate_alberta_tax(
     # T4127 Chapter 4: if YTD is at max, use annual max in credit
     ytd_base_cpp = ytd_cpp_base * (BASE_CPP_RATE_2026 / TOTAL_CPP_RATE_2026)
     if ytd_base_cpp + (cpp_contribution * (BASE_CPP_RATE_2026 / TOTAL_CPP_RATE_2026)) >= MAX_BASE_CPP_ANNUAL_2026:
-        annual_base_cpp = MAX_BASE_CPP_ANNUAL_2026
+        annual_base_cpp = MAX_BASE_CPP_ANNUAL_2026 * Decimal(pensionable_months) / Decimal("12")
     else:
         base_cpp_this_period = cpp_contribution * (BASE_CPP_RATE_2026 / TOTAL_CPP_RATE_2026)
-        annual_base_cpp = min(P * base_cpp_this_period, MAX_BASE_CPP_ANNUAL_2026)
+        max_base_cpp_prorated = MAX_BASE_CPP_ANNUAL_2026 * Decimal(pensionable_months) / Decimal("12")
+        annual_base_cpp = min(P * base_cpp_this_period, max_base_cpp_prorated)
     if ytd_ei + ei_contribution >= MAX_EI_PREMIUM_ANNUAL_2026:
         annual_ei = MAX_EI_PREMIUM_ANNUAL_2026
     else:

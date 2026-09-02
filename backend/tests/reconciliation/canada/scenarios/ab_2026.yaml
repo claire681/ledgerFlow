@@ -2163,6 +2163,7 @@ scenarios:
     cpp_exempt: false
     ei_exempt: false
     additional_withholding: 0.0
+    pensionable_months: 1
   ytd_at_start:
     pensionable_earnings: 0.0
     insurable_earnings: 0.0
@@ -2197,6 +2198,7 @@ scenarios:
     cpp_exempt: false
     ei_exempt: false
     additional_withholding: 0.0
+    pensionable_months: 6
   ytd_at_start:
     pensionable_earnings: 0.0
     insurable_earnings: 0.0
@@ -2231,6 +2233,7 @@ scenarios:
     cpp_exempt: false
     ei_exempt: false
     additional_withholding: 0.0
+    pensionable_months: 10
   ytd_at_start:
     pensionable_earnings: 0.0
     insurable_earnings: 0.0
@@ -2265,6 +2268,7 @@ scenarios:
     cpp_exempt: false
     ei_exempt: false
     additional_withholding: 0.0
+    pensionable_months: 3
   ytd_at_start:
     pensionable_earnings: 0.0
     insurable_earnings: 0.0
