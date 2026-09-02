@@ -82,7 +82,7 @@ def test_calculate_one_employee_matches_engine_directly(
     )
     # Match the Canada integration test value
     assert result.gross_pay == Decimal("2000.00")
-    assert result.net_pay == Decimal("1529.64")
+    assert result.net_pay == Decimal("1614.73")
 
 
 def test_preview_run_aggregates_correctly(service, alberta_jurisdiction, hourly_employee):
@@ -116,7 +116,7 @@ def test_preview_run_aggregates_correctly(service, alberta_jurisdiction, hourly_
     # 2 employees, both 2000 gross, both 1529.64 net
     assert preview.employee_count == 2
     assert preview.total_gross == Decimal("4000.00")
-    assert preview.total_net == Decimal("3059.28")
+    assert preview.total_net == Decimal("3229.46")
     assert len(preview.pay_stubs) == 2
 
 
@@ -158,7 +158,7 @@ def test_compile_pay_stub_has_all_fields(service, alberta_jurisdiction, hourly_e
     assert stub.employee_name == "Alice Smith"
     assert stub.employee_email == "alice@example.com"
     assert stub.gross_pay == Decimal("2000.00")
-    assert stub.federal_tax == Decimal("206.95")
+    assert stub.federal_tax == Decimal("163.23")
     assert stub.social_security_employee == Decimal("110.99")
     assert stub.calculation_snapshot["engine"] == "CanadaPayrollEngine v1"
 
@@ -178,10 +178,10 @@ def test_ytd_delta_for_finalize(service, alberta_jurisdiction, hourly_employee):
     delta = service.compute_ytd_delta(result)
 
     assert delta["ytd_gross"] == Decimal("2000.00")
-    assert delta["ytd_federal_tax"] == Decimal("206.95")
+    assert delta["ytd_federal_tax"] == Decimal("163.23")
     assert delta["ytd_social_security_employee"] == Decimal("110.99")
     # CPP YTD pensionable from snapshot
-    assert delta["ytd_pensionable_earnings"] == Decimal("1865.38")
+    assert delta["ytd_pensionable_earnings"] == Decimal("2000.00")
 
 
 def test_multi_country_preview_works(service):

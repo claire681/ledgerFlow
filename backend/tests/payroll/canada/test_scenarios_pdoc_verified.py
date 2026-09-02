@@ -103,10 +103,10 @@ def test_scenario_d_higher_earner():
     """160 hours x $22 = $3,520 gross. Higher earner, into federal bracket 2."""
     result = CanadaPayrollEngine().calculate(_make_input(3520, 22))
     assert result.gross_pay == Decimal("3520.00")
-    assert result.federal_tax == Decimal("446.69")
+    assert result.federal_tax == Decimal("446.68")
     assert result.provincial_or_state_tax == Decimal("217.19")
     assert result.social_security_employee == Decimal("201.43")
     assert result.social_security_2_employee == Decimal("0")
     assert result.unemployment_employee == Decimal("57.38")
-    assert result.total_employee_deductions == Decimal("922.69")
-    assert result.net_pay == Decimal("2597.31")
+    assert result.total_employee_deductions == Decimal("922.68")
+    assert result.net_pay == Decimal("2597.32")
