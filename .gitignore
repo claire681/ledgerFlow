@@ -20,3 +20,5 @@ backend/uploads/
 *.bak.*
 *.backup
 *.backup-*
+backend/main
+found
