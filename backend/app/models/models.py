@@ -1360,3 +1360,43 @@ class FeatureFlag(Base):
     created_at           = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at           = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     created_by           = Column(String(255), nullable=True)  # user email or system
+
+
+
+# --------------------------------------------------------------------
+# Layer 2 Monitoring (Phase 1 - Continuous production reconciliation)
+# Every real payroll calculation is compared against a reference
+# calculation to catch drift. Mismatches are recorded for investigation.
+# --------------------------------------------------------------------
+class ReconciliationRun(Base):
+    """One row per real payroll calculation that was reconciliation-checked."""
+    __tablename__ = "reconciliation_runs"
+
+    id                   = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    pay_stub_id          = Column(UUID(as_uuid=True), nullable=True, index=True)     # links to pay_stubs.id when applicable
+    customer_id          = Column(UUID(as_uuid=True), nullable=True, index=True)     # owning user/customer
+    country              = Column(String(2), nullable=False, index=True)             # ISO code
+    subnational          = Column(String(10), nullable=True, index=True)             # AB, ON, etc
+    tax_year             = Column(Integer, nullable=False, index=True)
+    engine_version       = Column(String(50), nullable=False)                        # e.g. "CanadaPayrollEngine v1"
+    gross_pay            = Column(Numeric(12, 2), nullable=False)
+    passed               = Column(Boolean, nullable=False, index=True)               # True if no mismatches
+    mismatch_count       = Column(Integer, nullable=False, default=0)
+    total_diff_cents     = Column(Integer, nullable=False, default=0)                # sum of absolute diffs across all fields
+    payroll_snapshot     = Column(JSONB, nullable=False)                             # what engine calculated
+    reference_snapshot   = Column(JSONB, nullable=False)                             # what reference calculated
+    checked_at           = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
+
+class ReconciliationMismatch(Base):
+    """One row per FIELD that differed between engine and reference."""
+    __tablename__ = "reconciliation_mismatches"
+
+    id                   = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    run_id               = Column(UUID(as_uuid=True), ForeignKey("reconciliation_runs.id"), nullable=False, index=True)
+    field_name           = Column(String(50), nullable=False)                        # e.g. "federal_tax"
+    expected_value       = Column(Numeric(12, 2), nullable=False)                    # reference value
+    actual_value         = Column(Numeric(12, 2), nullable=False)                    # engine value
+    diff_cents           = Column(Integer, nullable=False)                           # actual - expected in cents
+    severity             = Column(String(20), nullable=False, default="warning")     # info | warning | critical
+    created_at           = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
