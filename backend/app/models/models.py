@@ -1341,3 +1341,22 @@ class PaymentApproval(Base):
 
     created_at    = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
 
+
+
+# --------------------------------------------------------------------
+# Feature Flags (Phase 1 - Zero-downtime deployment infrastructure)
+# Allows toggling features per-customer, per-percentage, or per-country
+# without deployment. Cached in-memory for scale.
+# --------------------------------------------------------------------
+class FeatureFlag(Base):
+    __tablename__ = "feature_flags"
+
+    id                   = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    key                  = Column(String(100), nullable=False, unique=True, index=True)
+    description          = Column(Text, nullable=True)
+    enabled              = Column(Boolean, nullable=False, default=False)
+    rollout_percentage   = Column(Integer, nullable=False, default=0)  # 0-100
+    targeting_rules      = Column(JSONB, nullable=True, default=dict)  # e.g. {"customer_ids": [...], "countries": [...], "plans": [...]}
+    created_at           = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at           = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    created_by           = Column(String(255), nullable=True)  # user email or system
