@@ -95,6 +95,7 @@ def _canada_adapter(scenario: Scenario) -> dict[str, Decimal]:
         ytd_cpp_base=ytd.get("cpp_base_paid", Decimal("0")),
         ytd_ei=ytd.get("ei_paid", Decimal("0")),
         cpp2_contribution=cpp2_amt,
+        pensionable_months=int(cs.get("pensionable_months", 12)),
     )
 
     # Provincial tax - route to correct handler by region
@@ -118,6 +119,7 @@ def _canada_adapter(scenario: Scenario) -> dict[str, Decimal]:
         ytd_cpp_base=ytd.get("cpp_base_paid", Decimal("0")),
         ytd_ei=ytd.get("ei_paid", Decimal("0")),
         cpp2_contribution=cpp2_amt,
+        pensionable_months=int(cs.get("pensionable_months", 12)),
     )
 
     # Net pay
