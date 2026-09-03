@@ -1,0 +1,143 @@
+
+======================================================================
+COUNTRY/CURRENCY AUDIT — Novala Codebase
+======================================================================
+Files scanned: 369
+HIGH severity:   37
+MEDIUM severity: 318
+LOW severity:    0
+
+======================================================================
+HIGH SEVERITY (37 findings)
+======================================================================
+
+[default_country_param] Default country=CA in signature — 14 occurrences
+  backend/app/providers/__init__.py:7
+    → provider = get_provider(country="CA")
+  backend/app/api/routes/pay_runs.py:644
+    → country="CA",
+  backend/app/api/routes/pay_runs.py:896
+    → country="CA",
+  backend/app/api/routes/auth.py:53
+    → await seed_payroll_defaults_for_user(db, existing.id, country="CA")
+  backend/app/payroll/engines/canada/y2026/engine.py:40
+    → country = "CA"
+  frontend/src/pages/PayrollTaxes.js:176
+    → country="CA"
+  frontend/src/pages/ArchivedForms.js:271
+    → country="CA"
+  frontend/src/pages/EmployeeProfile.js:262
+    → country: "CA",
+  frontend/src/pages/SettingsCompany.js:87
+    → country: "CA",
+  frontend/src/components/AddressAutocomplete.js:96
+    → country = "CA",
+  ... and 4 more
+
+[default_currency_param] Default currency=CAD in signature — 6 occurrences
+  backend/app/payroll/engines/canada/y2026/engine.py:44
+    → currency = "CAD"                               # ISO 4217
+  frontend/src/pages/Businesses.js:26
+    → const [form, setForm]             = useState({ name: '', email: '', phone: '', address: '', currency: 'CAD', tax_number:
+  frontend/src/pages/Businesses.js:40
+    → const openCreate = () => { setForm({ name: '', email: '', phone: '', address: '', currency: 'CAD', tax_number: '', logo_
+  frontend/src/pages/PayrollSettings.js:25
+    → { iso: "ca", name: "Canada", currency: "CAD" },
+  frontend/src/data/taxRates.js:68
+    → currency:     'CAD',
+  frontend/src/utils/payrollLauncher.js:34
+    → currency: "CAD",
+
+[postal_code_canada] Canadian postal code pattern — 8 occurrences
+  backend/app/services/email_service.py:49
+    → <td style="padding:24px 40px;border-top:1px solid #E2E8F0;background:#F8FAFC;">
+  backend/app/services/email_service.py:126
+    → <td style="padding:8px 0;border-bottom:1px solid #F1F5F9;">
+  backend/app/services/email_service.py:132
+    → <td style="padding:8px 0;border-bottom:1px solid #F1F5F9;">
+  backend/app/services/email_service.py:138
+    → <td style="padding:8px 0;border-bottom:1px solid #F1F5F9;">
+  backend/app/services/email_service.py:144
+    → <td style="padding:8px 0;border-bottom:1px solid #F1F5F9;">
+  backend/app/services/email_service.py:188
+    → <div style="background:#F8FAFC;border-radius:12px;padding:24px;margin-bottom:24px;border:1px solid #E2E8F0;">
+  backend/app/services/email_service.py:258
+    → <div style="background:#F8FAFC;border-radius:12px;padding:24px;margin-bottom:24px;border:1px solid #E2E8F0;">
+  backend/app/services/email_service.py:267
+    → <div style="background:#E2E8F0;border-radius:99px;height:8px;overflow:hidden;">
+
+[timezone_edmonton] Hardcoded timezone Edmonton — 9 occurrences
+  backend/app/models/models.py:134
+    → briefing_timezone  = Column(String,  default="America/Edmonton")
+  backend/app/services/scheduler.py:35
+    → timezone_str  = getattr(user, "briefing_timezone", "America/Edmonton") or "America/Edmonton"
+  backend/app/api/routes/briefing.py:22
+    → "America/Edmonton",
+  backend/app/api/routes/briefing.py:83
+    → briefing_timezone: str  = "America/Edmonton"
+  backend/app/api/routes/briefing.py:291
+    → "briefing_timezone": getattr(current_user, "briefing_timezone", "America/Edmonton"),
+  frontend/src/pages/Settings.js:87
+    → 'America/Edmonton','America/Vancouver','America/Toronto','America/New_York',
+  frontend/src/pages/Settings.js:183
+    → const [timezone,     setTimezone]     = useState('America/Edmonton');
+  frontend/src/pages/Settings.js:216
+    → setTimezone(d.briefing_timezone || 'America/Edmonton');
+  frontend/src/pages/Dashboard.js:89
+    → 'America/Toronto','America/Vancouver','America/Edmonton','America/Halifax',
+
+======================================================================
+MEDIUM SEVERITY (318 findings)
+======================================================================
+
+[phone_canada_format] Canadian phone number format — 8 occurrences
+  frontend/src/pages/Businesses.js:138
+    → <Field label="Phone"><input style={inp} placeholder="+1 555 0000" value={form.phone} onChange={e => sf('phone', e.target
+  frontend/src/pages/Customers.js:214
+    → <Field label="Phone"><input style={inp} placeholder="+1 555 0000" value={form.phone} onChange={e => sf('phone', e.target
+  frontend/src/pages/Invoices.js:394
+    → try { const res=await fetch('https://api.getnovala.com/api/v1/invoices/',{headers:getHeaders()}); const d=await safeJson
+  frontend/src/pages/PayrollSettings.js:80
+    → streetPlaceholder: "10145 109 Street NW", cityPlaceholder: "Edmonton", phonePlaceholder: "+1 (780) 555-0100" },
+  frontend/src/pages/PayrollSettings.js:84
+    → streetPlaceholder: "1455 Market Street", cityPlaceholder: "San Francisco", phonePlaceholder: "+1 (415) 555-0100" },
+  frontend/src/pages/SettingsCompany.js:348
+    → <input type="tel" value={form.phone} onChange={(e) => setField("phone", e.target.value)} placeholder="+1 (780) 555 0100"
+  frontend/src/pages/Dashboard.js:806
+    → strokeDasharray={String(Math.min((expenses/(expenses+1000))*175,175)) + ' 175'}
+  frontend/src/components/VerifyModalTestButton.js:32
+    → phone="+17805561123"
+
+[postal_code_canada] Canadian postal code pattern — 307 occurrences
+  backend/app/api/routes/team.py:208
+    → {"".join([f'<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #F1F5F9;font-size:
+  backend/app/api/routes/team.py:210
+    → <div style="background:#F8FAFC;border-radius:10px;padding:16px;border:1px solid #E2E8F0;font-size:13px;color:#6B7280;lin
+  backend/app/api/routes/briefing.py:258
+    → <div style="background:#F8FAFC;border-radius:12px;padding:18px;border:1px solid #E2E8F0;">
+  backend/app/api/routes/briefing.py:264
+    → <div style="background:#F8FAFC;border-radius:12px;padding:18px;border:1px solid #E2E8F0;">
+  backend/app/api/routes/auth.py:377
+    → <p style="font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #0F9599; background: #F1F5F5; padding: 18px; te
+  frontend/src/theme.js:5
+    → bgElevated:   '#F1F5F9',
+  frontend/src/theme.js:10
+    → border:       '#E2E8F0',
+  frontend/src/theme.js:11
+    → borderSubtle: '#F1F5F9',
+  frontend/src/theme.js:43
+    → sideText:      '#E2E8F0',
+  frontend/src/styles/light.js:12
+    → borderLight: '#F3F4F6',
+  ... and 297 more
+
+[timezone_toronto] Hardcoded timezone Toronto — 3 occurrences
+  backend/app/api/routes/briefing.py:24
+    → "America/Toronto",
+  frontend/src/pages/Settings.js:87
+    → 'America/Edmonton','America/Vancouver','America/Toronto','America/New_York',
+  frontend/src/pages/Dashboard.js:89
+    → 'America/Toronto','America/Vancouver','America/Edmonton','America/Halifax',
+
+======================================================================
+
