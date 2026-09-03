@@ -32,6 +32,7 @@ from app.api.routes import bills
 from app.api.routes import apikeys
 from app.api.routes import feature_flags
 from app.api.routes import reconciliation
+from app.api.routes import versions
 from app.api.routes import payroll
 from app.api.routes import subscriptions
 from app.api.routes import billing
@@ -121,6 +122,7 @@ app.include_router(bills.router, prefix="/api/v1")
 app.include_router(apikeys.router, prefix="/api/v1")
 app.include_router(feature_flags.router, prefix="/api/v1")
 app.include_router(reconciliation.router, prefix="/api/v1")
+app.include_router(versions.router)
 app.include_router(payroll.router,       prefix="/api/v1")
 app.include_router(pay_runs.router, prefix="/api/v1/payroll", tags=["payroll"])
 app.include_router(pay_schedules.router, prefix="/api/v1/payroll", tags=["schedules"])
