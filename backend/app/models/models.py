@@ -1400,3 +1400,43 @@ class ReconciliationMismatch(Base):
     diff_cents           = Column(Integer, nullable=False)                           # actual - expected in cents
     severity             = Column(String(20), nullable=False, default="warning")     # info | warning | critical
     created_at           = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+
+# --------------------------------------------------------------------
+# Payment Obligation vs Attempt (Phase 1 - prevents duplicate charges)
+# Obligation = we OWE this money (recorded once, immutable)
+# Attempt = we TRIED to pay (many possible, only one succeeds)
+# --------------------------------------------------------------------
+class PaymentObligation(Base):
+    """One row per debt owed. Never modified once created."""
+    __tablename__ = "payment_obligations"
+
+    id                = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    pay_stub_id       = Column(UUID(as_uuid=True), nullable=True, index=True)
+    customer_id       = Column(UUID(as_uuid=True), nullable=True, index=True)
+    amount            = Column(Numeric(12, 2), nullable=False)
+    currency          = Column(String(3), nullable=False)
+    from_account_id   = Column(String(255), nullable=False)   # provider account ID
+    to_account_id     = Column(String(255), nullable=False)
+    description       = Column(Text, nullable=True)
+    obligation_type   = Column(String(50), nullable=False, default="payroll")   # payroll | remittance | refund | etc
+    metadata_json     = Column(JSONB, nullable=True, default=dict)
+    created_at        = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
+
+class PaymentAttempt(Base):
+    """One row per attempt to pay an obligation. Many attempts possible per obligation."""
+    __tablename__ = "payment_attempts"
+
+    id                        = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    obligation_id             = Column(UUID(as_uuid=True), ForeignKey("payment_obligations.id"), nullable=False, index=True)
+    provider_name             = Column(String(50), nullable=False, index=True)   # vopay | stripe | manual
+    provider_transaction_id   = Column(String(255), nullable=True, index=True)
+    idempotency_key           = Column(String(255), nullable=False, unique=True, index=True)
+    status                    = Column(String(20), nullable=False, index=True)   # pending | succeeded | failed
+    error_code                = Column(String(50), nullable=True)
+    error_message             = Column(Text, nullable=True)
+    raw_response              = Column(JSONB, nullable=True)
+    attempted_at              = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    completed_at              = Column(DateTime(timezone=True), nullable=True)
