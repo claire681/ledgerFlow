@@ -74,13 +74,14 @@ async def attempt_payment(
     Returns existing successful attempt if one exists.
     Otherwise creates new attempt, calls provider, records result.
     """
-    # 1. Check if already succeeded (return existing attempt)
+    # 1. Check if already succeeded OR pending (never double-charge)
+    # Only failed attempts allow retry
     existing_stmt = select(PaymentAttempt).where(
         PaymentAttempt.obligation_id == obligation.id,
-        PaymentAttempt.status == "succeeded",
+        PaymentAttempt.status.in_(["succeeded", "pending"]),
     )
     existing_result = await db.execute(existing_stmt)
-    existing = existing_result.scalar_one_or_none()
+    existing = existing_result.scalars().first()
     if existing:
         return existing
 
