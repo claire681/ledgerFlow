@@ -23,9 +23,9 @@ import avatarOps from "../assets/landing/avatar-ops.jpg";
 import "./LandingV2.mobile.css";
 
 
-const BRAND = "#0F9599";
-const BRAND_DEEP = "#0E4B4D";
-const BRAND_TINT = "rgba(15, 149, 153, 0.10)";
+const BRAND = "#046A38";
+const BRAND_DEEP = "#023E22";
+const BRAND_TINT = "rgba(4, 106, 56, 0.10)";
 const MINT = "#2FE3BE";
 const NIGHT = "#0E3B3A";
 const NIGHT_2 = "#124A47";
@@ -65,7 +65,7 @@ function Hero() {
       <div style={{
         position: "absolute", top: -200, right: -200,
         width: 600, height: 600,
-        background: "radial-gradient(circle, rgba(15, 149, 153, 0.08) 0%, transparent 70%)",
+        background: "radial-gradient(circle, rgba(4, 106, 56, 0.08) 0%, transparent 70%)",
         pointerEvents: "none",
       }} />
       <div style={CONTAINER}>
@@ -81,7 +81,7 @@ function Hero() {
               Accounting, payroll, invoicing, and reports. All connected, automated, and ready when you are.
             </p>
             <div style={{ display: "flex", gap: 12, marginBottom: 32, flexWrap: "wrap" }}>
-              <button onClick={() => navigate("/register")} style={{ background: BRAND, color: "#FFFFFF", fontSize: 15, fontWeight: 700, padding: "14px 26px", border: "none", borderRadius: 10, cursor: "pointer", fontFamily: FONT_STACK, boxShadow: "0 6px 18px rgba(15, 149, 153, 0.30)" }}>
+              <button onClick={() => navigate("/register")} style={{ background: BRAND, color: "#FFFFFF", fontSize: 15, fontWeight: 700, padding: "14px 26px", border: "none", borderRadius: 10, cursor: "pointer", fontFamily: FONT_STACK, boxShadow: "0 6px 18px rgba(4, 106, 56, 0.30)" }}>
                 Start your free trial
               </button>
               <button onClick={() => navigate("/pricing")} style={{ background: "transparent", color: TEXT_INK, fontSize: 15, fontWeight: 700, padding: "14px 26px", border: "1.5px solid " + BORDER, borderRadius: 10, cursor: "pointer", fontFamily: FONT_STACK }}>
@@ -223,7 +223,7 @@ function FeatureCard({ feature }) {
       <div style={{
         width: 50, height: 50, borderRadius: 14,
         background: "linear-gradient(135deg, " + BRAND + " 0%, " + BRAND_DEEP + " 100%)",
-        boxShadow: "0 10px 22px rgba(15, 149, 153, 0.30)",
+        boxShadow: "0 10px 22px rgba(4, 106, 56, 0.30)",
         display: "grid", placeItems: "center",
         marginBottom: 18,
       }}>
@@ -444,7 +444,7 @@ function BigCTA() {
           padding: "60px 40px",
           textAlign: "center",
           color: "#FFFFFF",
-          boxShadow: "0 30px 60px rgba(15, 149, 153, 0.30)",
+          boxShadow: "0 30px 60px rgba(4, 106, 56, 0.30)",
         }}>
           <h2 style={{ fontSize: "clamp(30px, 3.5vw, 38px)", fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.02em", lineHeight: 1.15, margin: "0 0 14px" }}>
             Find the plan that fits.
