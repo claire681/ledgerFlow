@@ -45,6 +45,8 @@ from .types import (
     PayRunPreviewResult,
 )
 from .registry import get_engine
+from app.reconciliation import reconcile_payroll
+import asyncio
 
 
 class PayrollService:
@@ -137,7 +139,38 @@ class PayrollService:
             jurisdiction=jurisdiction,
         )
         engine = get_engine(jurisdiction.country)
-        return engine.calculate(calc_input)
+        result = engine.calculate(calc_input)
+
+        # Layer 2 Monitoring: fire reconciliation in background (never blocks payroll)
+        try:
+            result_dict = {
+                "gross_pay": result.gross_pay,
+                "federal_tax": result.federal_tax,
+                "provincial_tax": result.provincial_or_state_tax,
+                "cpp": result.social_security_employee,
+                "cpp2": result.social_security_2_employee,
+                "ei": result.unemployment_employee,
+                "net_pay": result.net_pay,
+            }
+            input_dict = {
+                "country": jurisdiction.country,
+                "subnational": jurisdiction.subnational,
+                "tax_year": calc_input.ytd.tax_year if calc_input.ytd else 2026,
+                "ytd_cpp_paid": ytd.get("cpp_base_paid", 0),
+                "ytd_ei_paid": ytd.get("ei_paid", 0),
+            }
+            # Only fire if we're in an async context (has running event loop)
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(reconcile_payroll(result_dict, input_dict))
+            except RuntimeError:
+                # No event loop running (sync context / tests) - skip monitoring
+                pass
+        except Exception:
+            # Never let monitoring break payroll
+            pass
+
+        return result
 
     def compile_pay_stub(
         self,
