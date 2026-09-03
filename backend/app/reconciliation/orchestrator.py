@@ -18,6 +18,7 @@ from app.db.database import AsyncSessionLocal
 from app.models.models import ReconciliationRun, ReconciliationMismatch
 from app.reconciliation.base import BaseChecker, CheckerResult
 from app.reconciliation.checkers import SanityChecker
+from app.reconciliation.alerting import alert_critical_mismatch
 
 
 # Registry of all active checkers. Add new layers here.
@@ -100,6 +101,14 @@ async def reconcile_payroll(
                 db.add(mismatch)
 
             await db.commit()
+
+            # Fire alerts for critical mismatches (non-blocking)
+            if any(m.severity == "critical" for m in all_mismatches):
+                try:
+                    await alert_critical_mismatch(run.id)
+                except Exception:
+                    pass  # never let alerting break payroll
+
             return run.id
 
     except Exception:
