@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
-const BRAND = "#0F9599";
-const NIGHT = "#0A2618";
+const BRAND = "#00A651";
+const NIGHT = "#023E22";
 const MINT = "#2FE3BE";
 const TEXT_INK = "#0E2A2A";
 const TEXT_DARK = "#5A6970";
