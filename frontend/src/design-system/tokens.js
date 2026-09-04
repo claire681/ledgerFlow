@@ -1,6 +1,15 @@
-// Novala design system tokens
-// Single source of truth for every visual decision.
-// See 03-design-system.md for the full spec.
+// ⚠️ DEPRECATED — Use styles/light.js instead
+//
+// This file was the OLD design system. It is now DEPRECATED.
+// The primary source of truth is: frontend/src/styles/light.js
+//
+// This file remains only because 3 payroll pages still import
+// components from ../design-system (Button, Card, StatusPill, etc.).
+// Migrate those pages during Phase 2 payroll audit, then delete this folder.
+//
+// DO NOT ADD new imports from this file.
+// DO NOT reference these tokens in new code.
+// If you need a design token, import from styles/light.js
 
 export const colors = {
   // Surface and background
