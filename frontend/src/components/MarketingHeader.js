@@ -140,8 +140,7 @@ export default function MarketingHeader({ onFeaturesClick }) {
       <div style={{ padding: "16px 0" }}>
         <div style={{ ...CONTAINER, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div onClick={() => navigate("/")} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-            <img src="/logo-mark-header.png" width="28" height="28" alt="Novala" style={{ borderRadius: 7, display: "block" }} />
-            <span style={{ fontSize: 18, fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.01em" }}>Novala</span>
+            <img src="/logo-mark-header.png" alt="Novala" style={{ height: 32, width: "auto", display: "block" }} />
           </div>
           <nav style={{ display: "flex", alignItems: "center", gap: 24 }}>
             {navItems.map(item => {
