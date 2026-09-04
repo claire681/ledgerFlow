@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { ChevronDown, Globe, Check } from "lucide-react";
 
 const BRAND = "#0F9599";
-const NIGHT = "#0E3B3A";
+const NIGHT = "#023E22";
 const TEXT_INK = "#0E2A2A";
 const TEXT_ON_DARK = "rgba(240, 250, 248, 0.85)";
 const TEXT_DIM_ON_DARK = "rgba(240, 250, 248, 0.6)";
