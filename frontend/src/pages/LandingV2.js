@@ -21,17 +21,18 @@ import avatarOwner from "../assets/landing/avatar-owner.jpg";
 import avatarFounder from "../assets/landing/avatar-founder.jpg";
 import avatarOps from "../assets/landing/avatar-ops.jpg";
 import "./LandingV2.mobile.css";
+import { L } from "../styles/light";
 
 
-const BRAND = "#046A38";
-const BRAND_DEEP = "#023E22";
-const BRAND_TINT = "rgba(4, 106, 56, 0.10)";
+const BRAND = L.brand.primary;         // #046A38
+const BRAND_DEEP = L.brand.dark;       // #023E22
+const BRAND_TINT = L.brand.soft;       // rgba(4, 106, 56, 0.10)
 const MINT = "#2FE388";
 const NIGHT = "#0B3822";
 const NIGHT_2 = "#0F4A2C";
 const TEXT_INK = "#0E2A2A";
 const TEXT_DARK = "#5A6970";
-const TEXT_MUTED = "#9CA3AF";
+const TEXT_MUTED = L.textDisabled;     // #9CA3AF
 const BG_PAGE = "#F4F8F8";
 const BG_SOFT = "#F7F9F9";
 const BORDER = "#EAF0F0";
