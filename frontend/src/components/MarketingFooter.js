@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ChevronDown, Globe, Check } from "lucide-react";
+import { L } from "../styles/light";
 
-const BRAND = "#0F9599";
-const NIGHT = "#023E22";
-const TEXT_INK = "#0E2A2A";
-const TEXT_ON_DARK = "rgba(240, 250, 248, 0.85)";
-const TEXT_DIM_ON_DARK = "rgba(240, 250, 248, 0.6)";
-const BORDER_ON_DARK = "rgba(255, 255, 255, 0.12)";
-const FONT_STACK = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
+// Constants derived from design tokens (single source of truth: styles/light.js)
+const BRAND = L.brand.primary;              // #046A38 - main brand green
+const NIGHT = L.brand.dark;                 // #023E22 - deep emerald footer bg
+const TEXT_INK = "#0E2A2A";                 // deep text on light bg
+const TEXT_ON_DARK = "rgba(240, 250, 248, 0.85)";      // light text on dark bg
+const TEXT_DIM_ON_DARK = "rgba(240, 250, 248, 0.6)";   // dim text on dark bg
+const BORDER_ON_DARK = L.borderDark;        // rgba white 12%
+const FONT_STACK = L.font;                  // Plus Jakarta Sans stack
 
 const CONTAINER = { maxWidth: 1240, margin: "0 auto", padding: "0 28px" };
 

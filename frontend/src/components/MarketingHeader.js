@@ -1,18 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { L } from "../styles/light";
 
-const BRAND = "#00A651";
-const NIGHT = "#023E22";
-const MINT = "#2FE3BE";
-const TEXT_INK = "#0E2A2A";
-const TEXT_DARK = "#5A6970";
-const TEXT_DIM = "rgba(240, 250, 248, 0.65)";
-const TEXT_TERTIARY = "#9CA3AF";
-const BG_SOFT = "#F7F9F9";
-const BORDER = "#E5E7EB";
-const BORDER_ON_DARK = "rgba(255, 255, 255, 0.12)";
-const FONT_STACK = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
+// Constants derived from design tokens (single source of truth: styles/light.js)
+const BRAND = L.brand.bright;           // #00A651 - CTA button on dark bg
+const NIGHT = L.brand.dark;             // #023E22 - deep emerald header bg
+const MINT = "#2FE3BE";                 // accent (kept - not in token system yet)
+const TEXT_INK = "#0E2A2A";             // deep text on light bg
+const TEXT_DARK = L.textMuted;          // #4B5563
+const TEXT_DIM = L.textDim;             // rgba white 72% for dark bg
+const TEXT_TERTIARY = L.textDisabled;   // #9CA3AF
+const BG_SOFT = "#F7F9F9";              // soft off-white bg
+const BORDER = L.border;                // #E5E7EB
+const BORDER_ON_DARK = L.borderDark;    // rgba white 12%
+const FONT_STACK = L.font;              // Plus Jakarta Sans stack
 
 const CONTAINER = { maxWidth: 1240, margin: "0 auto", padding: "0 28px" };
 
