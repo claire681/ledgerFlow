@@ -235,7 +235,7 @@ export default function Login({ onLogin }) {
 
   const Logo = () => (
   <div style={{ textAlign:'center', marginBottom:32 }}>
-    <img src="/novala-mark.png" alt="Novala" style={{ height: 48, width: 'auto', objectFit: 'contain' }} />
+    <img src="/logo-mark-header.png" alt="Novala" style={{ height: 48, width: 'auto', objectFit: 'contain' }} />
   </div>
 );
 

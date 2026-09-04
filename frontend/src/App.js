@@ -316,7 +316,7 @@ const handleOnboardingComplete = () => {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F8FAFC' }}>
         <div style={{ textAlign: 'center' }}>
-          <img src="/novala-mark.png" alt="Novala" style={{ height: 40, width: 'auto', objectFit: 'contain', marginBottom: 8 }} />
+          <img src="/logo-mark-header.png" alt="Novala" style={{ height: 40, width: 'auto', objectFit: 'contain', marginBottom: 8 }} />
           <div style={{ fontSize: 13, color: '#94A3B8' }}>Loading your account...</div>
         </div>
       </div>

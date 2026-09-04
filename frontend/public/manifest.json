@@ -3,16 +3,14 @@
   "name": "Novala | Financial Intelligence Platform",
   "description": "Novala is the financial intelligence platform. Bookkeeping, payroll, invoicing, smart reminders, recurring revenue, bill pay, and reporting. All on autopilot.",
   "icons": [
-    { "src": "favicon.ico", "sizes": "16x16 32x32 48x48", "type": "image/x-icon" },
     { "src": "favicon-16.png", "sizes": "16x16", "type": "image/png" },
     { "src": "favicon-32.png", "sizes": "32x32", "type": "image/png" },
     { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
     { "src": "android-chrome-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "android-chrome-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "android-chrome-512.png", "sizes": "512x512", "type": "image/png" }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#027378",
+  "theme_color": "#046A38",
   "background_color": "#FFFFFF"
 }

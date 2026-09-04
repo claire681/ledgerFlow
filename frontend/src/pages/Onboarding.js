@@ -401,7 +401,7 @@ export default function Onboarding({ onComplete }) {
         <div style={{ textAlign:'center', marginBottom:36 }}>
           <div style={{ display:'inline-flex', alignItems:'center', gap:10 }}>
             <span style={{ fontSize:22, fontWeight:800, color:'#0E1A1A', letterSpacing:'-0.02em' }}>
-              <img src="/novala-mark.png" alt="Novala" style={{ height: 26, width: "auto", objectFit: "contain", verticalAlign: "middle" }} />
+              <img src="/logo-mark-header.png" alt="Novala" style={{ height: 26, width: "auto", objectFit: "contain", verticalAlign: "middle" }} />
             </span>
           </div>
         </div>

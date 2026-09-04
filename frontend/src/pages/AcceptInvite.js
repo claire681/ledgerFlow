@@ -127,7 +127,7 @@ export default function AcceptInvite() {
       }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: TEAL, letterSpacing: "-0.02em" }}>
-            <img src="/novala-mark.png" alt="Novala" style={{ height: 26, width: "auto", objectFit: "contain", verticalAlign: "middle" }} />
+            <img src="/logo-mark-header.png" alt="Novala" style={{ height: 26, width: "auto", objectFit: "contain", verticalAlign: "middle" }} />
           </div>
         </div>
 

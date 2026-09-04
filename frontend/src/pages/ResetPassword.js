@@ -82,7 +82,7 @@ export default function ResetPassword() {
         <div style={{ textAlign:'center', marginBottom:36 }}>
           <div style={{ display:'inline-flex', alignItems:'center', gap:10 }}>
             <span style={{ fontSize:22, fontWeight:800, color:'#fff', letterSpacing:'-0.02em' }}>
-              <img src="/novala-mark.png" alt="Novala" style={{ height: 26, width: "auto", objectFit: "contain", verticalAlign: "middle" }} />
+              <img src="/logo-mark-header.png" alt="Novala" style={{ height: 26, width: "auto", objectFit: "contain", verticalAlign: "middle" }} />
             </span>
           </div>
         </div>
