@@ -138,7 +138,7 @@ export default function MarketingHeader({ onFeaturesClick }) {
   return (
     <header ref={headerRef} style={{ background: NIGHT, borderBottom: "0.5px solid " + BORDER_ON_DARK, position: "relative", zIndex: 100 }}>
       <div style={{ padding: "16px 0" }}>
-        <div style={{ ...CONTAINER, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ maxWidth: "100%", padding: "0 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div onClick={() => navigate("/")} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
             <img src="/logo-mark-header.png" alt="Novala" style={{ height: 64, width: "auto", display: "block" }} />
           </div>
